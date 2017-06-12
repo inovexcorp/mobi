@@ -60,5 +60,13 @@ describe('Explore Tab directive', function() {
             
             expect(element.querySelectorAll('instance-block.col-xs-12').length).toBe(1);
         });
+        it('with a instance-view.col-xs-12', function() {
+            expect(element.querySelectorAll('instance-view.col-xs-12').length).toBe(0);
+            
+            discoverStateSvc.explore.breadcrumbs = ['', '', ''];
+            scope.$apply();
+            
+            expect(element.querySelectorAll('instance-view.col-xs-12').length).toBe(1);
+        });
     });
 });

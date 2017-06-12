@@ -357,6 +357,19 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public void removeInProgressCommit(InProgressCommit commit, RepositoryConnection conn) {
+        removeObject(commit, conn);
+        Resource additionsResource = getAdditionsResource(commit);
+        if (!conn.getStatements(null, null, additionsResource).hasNext()) {
+            remove(additionsResource, conn);
+        }
+        Resource deletionsResource = getDeletionsResource(commit);
+        if (!conn.getStatements(null, null, deletionsResource).hasNext()) {
+            remove(deletionsResource, conn);
+        }
+    }
+
+    @Override
     public void updateCommit(Commit commit, Model additions, Model deletions, RepositoryConnection conn) {
         Resource additionsResource = getAdditionsResource(commit);
         Resource deletionsResource = getDeletionsResource(commit);

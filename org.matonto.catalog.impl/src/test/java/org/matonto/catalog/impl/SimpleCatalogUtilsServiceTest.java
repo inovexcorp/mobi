@@ -42,6 +42,7 @@ import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.catalog.api.ontologies.mcat.RecordFactory;
+import org.matonto.catalog.api.ontologies.mcat.Revision;
 import org.matonto.catalog.api.ontologies.mcat.UnversionedRecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.Version;
 import org.matonto.catalog.api.ontologies.mcat.VersionFactory;
@@ -1178,6 +1179,45 @@ public class SimpleCatalogUtilsServiceTest {
         try (RepositoryConnection conn = repo.getConnection()) {
             Optional<Resource> iri = service.getInProgressCommitIRI(VERSIONED_RECORD_MISSING_VERSION_IRI, USER_IRI, conn);
             assertFalse(iri.isPresent());
+        }
+    }
+
+    /* removeInProgressCommit */
+
+    @Test
+    public void removeInProgressCommitTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            InProgressCommit commit = getThing(IN_PROGRESS_COMMIT_IRI, inProgressCommitFactory, conn);
+            Resource additionsResource = getAdditionsResource(IN_PROGRESS_COMMIT_IRI);
+            Resource deletionsResource = getDeletionsResource(IN_PROGRESS_COMMIT_IRI);
+            assertTrue(conn.size(additionsResource) > 0);
+            assertTrue(conn.size(deletionsResource ) > 0);
+
+            service.removeInProgressCommit(commit, conn);
+            assertFalse(conn.getStatements(null, null, null, IN_PROGRESS_COMMIT_IRI).hasNext());
+            assertTrue(conn.size(additionsResource) == 0);
+            assertTrue(conn.size(deletionsResource) == 0);
+        }
+    }
+
+    @Test
+    public void removeInProgressCommitWithReferencedChangesTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            InProgressCommit commit = inProgressCommitFactory.createNew(vf.createIRI("http://matonto.org/test/commits#in-progress-commit-referenced"));
+            Resource additionsResource = getAdditionsResource(COMMIT_IRI);
+            Resource deletionsResource = getDeletionsResource(COMMIT_IRI);
+            commit.getModel().add(commit.getResource(), vf.createIRI(Revision.additions_IRI), additionsResource, commit.getResource());
+            commit.getModel().add(commit.getResource(), vf.createIRI(Revision.deletions_IRI), deletionsResource, commit.getResource());
+            assertTrue(conn.getStatements(null, null, null, commit.getResource()).hasNext());
+            assertTrue(conn.size(additionsResource) > 0);
+            assertTrue(conn.size(deletionsResource ) > 0);
+
+            service.removeInProgressCommit(commit, conn);
+            assertFalse(conn.getStatements(null, null, null, commit.getResource()).hasNext());
+            assertTrue(conn.size(additionsResource) > 0);
+            assertTrue(conn.size(deletionsResource) > 0);
         }
     }
 

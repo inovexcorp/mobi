@@ -1996,7 +1996,7 @@ public class SimpleCatalogManagerTest {
 
         manager.removeInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, IN_PROGRESS_COMMIT_IRI);
         verify(utilsService).getInProgressCommit(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(IN_PROGRESS_COMMIT_IRI), any(RepositoryConnection.class));
-        verify(utilsService).removeObject(eq(commit), any(RepositoryConnection.class));
+        verify(utilsService).removeInProgressCommit(eq(commit), any(RepositoryConnection.class));
     }
 
     /* removeInProgressCommit(Resource, Resource, User) */
@@ -2011,7 +2011,7 @@ public class SimpleCatalogManagerTest {
         manager.removeInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, user);
         verify(utilsService).testRecordPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getInProgressCommit(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
-        verify(utilsService).removeObject(eq(commit), any(RepositoryConnection.class));
+        verify(utilsService).removeInProgressCommit(eq(commit), any(RepositoryConnection.class));
     }
 
     /* applyInProgressCommit */

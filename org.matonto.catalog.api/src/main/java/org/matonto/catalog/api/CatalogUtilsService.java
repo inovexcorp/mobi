@@ -362,6 +362,15 @@ public interface CatalogUtilsService {
     Optional<Resource> getInProgressCommitIRI(Resource recordId, Resource userId, RepositoryConnection conn);
 
     /**
+     * Removes the provided InProgressCommit from the Repository. Removes the delta named graphs of the InProgressCommit
+     * if they are not referenced elsewhere.
+     *
+     * @param commit The InProgressCommit to remove.
+     * @param conn A RepositoryConnection to use for lookup.
+     */
+    void removeInProgressCommit(InProgressCommit commit, RepositoryConnection conn);
+
+    /**
      * Adds the provided addition and deletion Models to the Commit identified by the provided Resource.
      *
      * @param commitId The Resource identifying the Commit which will get the changes.

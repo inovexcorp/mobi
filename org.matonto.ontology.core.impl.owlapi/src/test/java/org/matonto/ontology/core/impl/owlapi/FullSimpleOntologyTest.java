@@ -32,11 +32,14 @@ import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.matonto.ontology.core.api.Individual;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
+import org.matonto.ontology.core.api.classexpression.OClass;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
+import org.matonto.ontology.core.impl.owlapi.classexpression.SimpleClass;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
 import org.matonto.ontology.utils.api.SesameTransformer;
@@ -55,6 +58,7 @@ import java.util.Set;
 public class FullSimpleOntologyTest {
     private ValueFactory vf;
     private IRI classIRI;
+    private IRI classIRIC;
     private IRI dataProp1IRI;
     private IRI dataProp2IRI;
     private IRI objectProp1IRI;
@@ -77,6 +81,7 @@ public class FullSimpleOntologyTest {
         IRI ontologyIRI = vf.createIRI("http://test.com/ontology1");
         IRI versionIRI = vf.createIRI("http://test.com/ontology1/1.0.0");
         classIRI = vf.createIRI("http://test.com/ontology1#TestClassA");
+        classIRIC = vf.createIRI("http://test.com/ontology1#TestClassC");
         dataProp1IRI = vf.createIRI("http://test.com/ontology1#testDataProperty1");
         dataProp2IRI = vf.createIRI("http://test.com/ontology1#testDataProperty2");
         objectProp1IRI = vf.createIRI("http://test.com/ontology1#testObjectProperty1");
@@ -124,7 +129,7 @@ public class FullSimpleOntologyTest {
         // Setup:
         DataProperty dataProperty = new SimpleDataProperty(errorIRI);
 
-        Set<Resource> ranges = ontology.getDataPropertyRange(dataProperty);
+        ontology.getDataPropertyRange(dataProperty);
     }
 
     @Test
@@ -164,7 +169,7 @@ public class FullSimpleOntologyTest {
         // Setup:
         ObjectProperty objectProperty = new SimpleObjectProperty(errorIRI);
 
-        Set<Resource> ranges = ontology.getObjectPropertyRange(objectProperty);
+        ontology.getObjectPropertyRange(objectProperty);
     }
 
     @Test
@@ -174,5 +179,35 @@ public class FullSimpleOntologyTest {
 
         Set<Resource> ranges = ontology.getObjectPropertyRange(objectProperty);
         assertEquals(1, ranges.size());
+    }
+
+    @Test
+    public void getIndividualsOfTypeIRITest() throws Exception {
+        Set<Individual> individuals = ontology.getIndividualsOfType(classIRI);
+        assertEquals(1, individuals.size());
+    }
+
+    @Test
+    public void getIndividualsOfSubClassTypeIRITest() throws Exception {
+        Set<Individual> individuals = ontology.getIndividualsOfType(classIRIC);
+        assertEquals(1, individuals.size());
+    }
+
+    @Test
+    public void getIndividualsOfTypeTest() throws Exception {
+        // Setup:
+        OClass clazz = new SimpleClass(classIRI);
+
+        Set<Individual> individuals = ontology.getIndividualsOfType(clazz);
+        assertEquals(1, individuals.size());
+    }
+
+    @Test
+    public void getIndividualsOfSubClassTypeTest() throws Exception {
+        // Setup:
+        OClass clazz = new SimpleClass(classIRIC);
+
+        Set<Individual> individuals = ontology.getIndividualsOfType(clazz);
+        assertEquals(1, individuals.size());
     }
 }

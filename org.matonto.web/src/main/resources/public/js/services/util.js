@@ -43,9 +43,9 @@
          */
         .service('utilService', utilService);
 
-        utilService.$inject = ['$filter', 'prefixes', 'toastr', '$http', '$q'];
+        utilService.$inject = ['$filter', 'prefixes', 'toastr', '$http', '$q', 'REGEX'];
 
-        function utilService($filter, prefixes, toastr, $http, $q) {
+        function utilService($filter, prefixes, toastr, $http, $q, REGEX) {
             var self = this;
 
             /**
@@ -61,7 +61,10 @@
              */
             self.getBeautifulIRI = function(iri) {
                 var splitEnd = $filter('splitIRI')(iri).end;
-                return splitEnd ? $filter('beautify')(splitEnd) : iri;
+                if (splitEnd) {
+                    return splitEnd.match(REGEX.UUID) ? splitEnd : $filter('beautify')(splitEnd);
+                }
+                return iri;
             }
             /**
              * @ngdoc method

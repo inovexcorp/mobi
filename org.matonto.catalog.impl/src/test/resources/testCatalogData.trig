@@ -293,6 +293,19 @@ GRAPH commits:in-progress-commit-no-record {
         mcat:deletions deletions:in-progress-commit-no-record .
 }
 
+GRAPH commits:in-progress-commit-referenced {
+    commits:in-progress-commit-referenced a mcat:InProgressCommit, mcat:Commit ;
+        dc:title "In Progress Commit Referenced" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:in-progress-commit-referenced ;
+        prov:wasAssociatedWith users:taken ;
+        mcat:onVersionedRDFRecord records:versioned-rdf-record .
+
+    revisions:in-progress-commit-referenced a mcat:Revision ;
+        mcat:additions additions:commit ;
+        mcat:deletions deletions:commit .
+}
+
 GRAPH commits:test0 {
     commits:test0 a mcat:Commit ;
         dc:title "Commit Test 0" ;
@@ -427,50 +440,6 @@ GRAPH additions:test5a {
     <http://matonto.org/test/ontology> dc:title "Test 5a Title" .
     <http://matonto.org/test/class> a owl:Class .
 }
-
-# GRAPH commits:test6a {
-#     commits:test6a a mcat:Commit ;
-#         dc:title "Commit Test 6a" ;
-#         prov:atTime "2016-03-01T00:07:00Z"^^xsd:dateTime ;
-#         mcat:baseCommit commits:test5a ;
-#         prov:generated revisions:revision6a .
-# 
-#     revisions:revision6a a mcat:Revision ;
-#         mcat:additions additions:test6a ;
-#         mcat:deletions deletions:test6a .
-# }
-# 
-# GRAPH additions:test6a {
-#     <http://matonto.org/test/ontology> dc:title "Test 6a Title" .
-# }
-# 
-# GRAPH deletions:test6a {
-#     <http://matonto.org/test/class0> a owl:Class .
-#     <http://matonto.org/test/ontology> dc:title "Test 3 Title" .
-#     <http://matonto.org/test/ontology> dc:title "Test 5a Title" .
-# }
-
-# GRAPH commits:test5b {
-#     commits:test5b a mcat:Commit ;
-#         dc:title "Commit Test 5b" ;
-#         prov:atTime "2016-03-01T00:08:00Z"^^xsd:dateTime ;
-#         mcat:baseCommit commits:test3 ;
-#         prov:generated revisions:revision5b .
-# 
-#     revisions:revision5b a mcat:Revision ;
-#         mcat:additions additions:test5b ;
-#         mcat:deletions deletions:test5b .
-# }
-# 
-# GRAPH additions:test5b {
-#     <http://matonto.org/test/ontology> dc:title "Test 5b Title" .
-#     <http://matonto.org/test/ontology> dc:title "Test 5b Title 2" .
-#     <http://matonto.org/test/class2> a owl:Class .
-# }
-# 
-# GRAPH deletions:test5b {
-#     <http://matonto.org/test/ontology> dc:title "Test 3 Title" .
-# }
 
 # Conflict Scenario 1 - Class deletion (1 conflict)
 

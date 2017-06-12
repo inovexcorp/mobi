@@ -23,6 +23,17 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.cache.Cache;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
@@ -30,7 +41,6 @@ import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.exception.MatOntoException;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
@@ -62,17 +72,6 @@ import org.semanticweb.owlapi.rio.RioParserImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.cache.Cache;
-
 @Component(
         provide = OntologyManager.class,
         name = SimpleOntologyManager.COMPONENT_NAME)
@@ -90,6 +89,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyManager.class);
 
     private static final String GET_SUB_CLASSES_OF;
+    private static final String GET_CLASSES_FOR;
     private static final String GET_SUB_DATATYPE_PROPERTIES_OF;
     private static final String GET_SUB_OBJECT_PROPERTIES_OF;
     private static final String GET_CLASSES_WITH_INDIVIDUALS;
@@ -105,6 +105,14 @@ public class SimpleOntologyManager implements OntologyManager {
         try {
             GET_SUB_CLASSES_OF = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-sub-classes-of.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_CLASSES_FOR = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-classes-for.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -176,7 +184,8 @@ public class SimpleOntologyManager implements OntologyManager {
         }
     }
 
-    public SimpleOntologyManager() {}
+    public SimpleOntologyManager() {
+    }
 
     @Reference
     public void setValueFactory(ValueFactory valueFactory) {
@@ -354,6 +363,11 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public TupleQueryResult getSubClassesFor(Ontology ontology, IRI iri) {
+        return runQueryOnOntology(ontology, String.format(GET_CLASSES_FOR, iri.stringValue()), null);
+    }
+
+    @Override
     public TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_DATATYPE_PROPERTIES_OF, null);
     }
@@ -447,7 +461,7 @@ public class SimpleOntologyManager implements OntologyManager {
     /**
      * Executes the provided query on the provided Ontology.
      *
-     * @param ontology the ontology to query on.
+     * @param ontology    the ontology to query on.
      * @param queryString the query string that you wish to run.
      * @return the results of the query.
      */
