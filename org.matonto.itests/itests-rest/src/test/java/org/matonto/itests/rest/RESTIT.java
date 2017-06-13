@@ -23,8 +23,6 @@ package org.matonto.itests.rest;
  * #L%
  */
 
-//import static com.sun.deploy.util.URLUtil.encodePath;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -61,9 +59,7 @@ import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.itests.support.KarafTestSupport;
-import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.Repository;
@@ -114,16 +110,11 @@ public class RESTIT extends KarafTestSupport {
 
         try (CloseableHttpResponse response = uploadFile(createHttpClient(), entity)) {
             assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
-            JSONObject object = JSONObject.fromObject(EntityUtils.toString(response.getEntity()));
-            recordId = object.get("recordId").toString();
-            branchId = object.get("branchId").toString();
-            commitId = object.get("commitId").toString();
-            assertNotNull(recordId);
-            assertNotNull(branchId);
-            assertNotNull(commitId);
-            assertFalse(recordId.isEmpty());
-            assertFalse(branchId.isEmpty());
-            assertFalse(commitId.isEmpty());
+            String[] ids = parseAndValidateUploadResponse(response);
+            recordId = ids[0];
+            branchId = ids[1];
+            commitId = ids[2];
+            validateOntologyCreated(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId));
         }
 
         try (CloseableHttpResponse response = deleteOntology(createHttpClient(), recordId)) {
@@ -143,16 +134,11 @@ public class RESTIT extends KarafTestSupport {
 
         try (CloseableHttpResponse response = uploadFile(createHttpClient(), entity)) {
             assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
-            JSONObject object = JSONObject.fromObject(EntityUtils.toString(response.getEntity()));
-            recordId = object.get("recordId").toString();
-            branchId = object.get("branchId").toString();
-            commitId = object.get("commitId").toString();
-            assertNotNull(recordId);
-            assertNotNull(branchId);
-            assertNotNull(commitId);
-            assertFalse(recordId.isEmpty());
-            assertFalse(branchId.isEmpty());
-            assertFalse(commitId.isEmpty());
+            String[] ids = parseAndValidateUploadResponse(response);
+            recordId = ids[0];
+            branchId = ids[1];
+            commitId = ids[2];
+            validateOntologyCreated(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId));
         }
 
         try (CloseableHttpResponse response = deleteOntology(createHttpClient(), recordId)) {
@@ -214,17 +200,44 @@ public class RESTIT extends KarafTestSupport {
         return client.execute(delete, context);
     }
 
-    private void validateOntologyDeleted(Resource recordId, Resource branchId, Resource commitId) {
+    private String[] parseAndValidateUploadResponse(CloseableHttpResponse response) throws IOException {
+        JSONObject object = JSONObject.fromObject(EntityUtils.toString(response.getEntity()));
+        String recordId = object.get("recordId").toString();
+        String branchId = object.get("branchId").toString();
+        String commitId = object.get("commitId").toString();
+        assertNotNull(recordId);
+        assertNotNull(branchId);
+        assertNotNull(commitId);
+        assertFalse(recordId.isEmpty());
+        assertFalse(branchId.isEmpty());
+        assertFalse(commitId.isEmpty());
+
+        return new String[]{recordId, branchId, commitId};
+    }
+
+    private void validateOntologyCreated(Resource recordId, Resource branchId, Resource commitId) {
         Repository repo = getOsgiService(Repository.class);
-        ValueFactory vf = getOsgiService(ValueFactory.class);
-        IRI branchIRI = vf.createIRI(VersionedRDFRecord.branch_IRI);
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertFalse(conn.getStatements(branchId, null, null, branchId).hasNext());
-            assertFalse(conn.getStatements(branchId, null, null).hasNext());
-            assertFalse(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
-            assertFalse(conn.getStatements(null, null, null, commitId).hasNext());
+            assertTrue(conn.getStatements(null, null, null, branchId).hasNext());
+            assertTrue(conn.getStatements(branchId, null, null).hasNext());
+            assertTrue(conn.getStatements(null, null, null, recordId).hasNext());
+            assertTrue(conn.getStatements(recordId, null, null).hasNext());
+            assertTrue(conn.getStatements(null, null, null, commitId).hasNext());
+            assertTrue(conn.getStatements(commitId, null, null).hasNext());
+        }
+    }
 
+    private void validateOntologyDeleted(Resource recordId, Resource branchId, Resource commitId) {
+        Repository repo = getOsgiService(Repository.class);
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(conn.getStatements(null, null, null, branchId).hasNext());
+            assertFalse(conn.getStatements(branchId, null, null).hasNext());
+            assertFalse(conn.getStatements(null, null, null, recordId).hasNext());
+            assertFalse(conn.getStatements(recordId, null, null).hasNext());
+            assertFalse(conn.getStatements(null, null, null, commitId).hasNext());
+            assertFalse(conn.getStatements(commitId, null, null).hasNext());
         }
     }
 }
