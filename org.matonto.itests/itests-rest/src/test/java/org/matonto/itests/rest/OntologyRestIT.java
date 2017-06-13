@@ -76,7 +76,7 @@ import org.osgi.framework.BundleContext;
 
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
-public class RESTIT extends KarafTestSupport {
+public class OntologyRestIT extends KarafTestSupport {
 
     private static Boolean setupComplete = false;
     private static String userName = "admin";
