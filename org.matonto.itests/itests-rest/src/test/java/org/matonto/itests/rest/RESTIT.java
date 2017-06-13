@@ -64,9 +64,11 @@ import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.itests.support.KarafTestSupport;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.base.RepositoryResult;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
@@ -107,6 +109,7 @@ public class RESTIT extends KarafTestSupport {
 
     @Test
     public void testDeleteOntology() throws Exception {
+        Resource additionsGraphIRI;
         String recordId, branchId, commitId;
         ValueFactory vf = getOsgiService(ValueFactory.class);
         HttpEntity entity = createFormData("/test-ontology.ttl", "Test Ontology");
@@ -117,13 +120,13 @@ public class RESTIT extends KarafTestSupport {
             recordId = ids[0];
             branchId = ids[1];
             commitId = ids[2];
-            validateOntologyCreated(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId));
+            additionsGraphIRI = validateOntologyCreated(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId));
         }
 
         try (CloseableHttpResponse response = deleteOntology(createHttpClient(), recordId)) {
             assertNotNull(response);
             assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
-            validateOntologyDeleted(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId));
+            validateOntologyDeleted(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId), additionsGraphIRI);
         } catch (IOException | GeneralSecurityException e) {
             fail("Exception thrown: " + e.getLocalizedMessage());
         }
@@ -131,6 +134,7 @@ public class RESTIT extends KarafTestSupport {
 
     @Test
     public void testDeleteVocabulary() throws Exception {
+        Resource additionsGraphIRI;
         String recordId, branchId, commitId;
         ValueFactory vf = getOsgiService(ValueFactory.class);
         HttpEntity entity = createFormData("/test-vocabulary.ttl", "Test Vocabulary");
@@ -141,13 +145,13 @@ public class RESTIT extends KarafTestSupport {
             recordId = ids[0];
             branchId = ids[1];
             commitId = ids[2];
-            validateOntologyCreated(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId));
+            additionsGraphIRI = validateOntologyCreated(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId));
         }
 
         try (CloseableHttpResponse response = deleteOntology(createHttpClient(), recordId)) {
             assertNotNull(response);
             assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
-            validateOntologyDeleted(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId));
+            validateOntologyDeleted(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId), additionsGraphIRI);
         } catch (IOException | GeneralSecurityException e) {
             fail("Exception thrown: " + e.getLocalizedMessage());
         }
@@ -218,13 +222,22 @@ public class RESTIT extends KarafTestSupport {
         return new String[]{recordId, branchId, commitId};
     }
 
-    private void validateOntologyCreated(Resource recordId, Resource branchId, Resource commitId) {
+    private Resource validateOntologyCreated(Resource recordId, Resource branchId, Resource commitId) {
+        IRI additionsGraphIRI;
         Repository repo = getOsgiService(Repository.class);
         ValueFactory vf = getOsgiService(ValueFactory.class);
         IRI branchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
         IRI headIRI = vf.createIRI(Branch.head_IRI);
+        IRI additionsIRI = vf.createIRI("http://matonto.org/ontologies/catalog#additions");
 
         try (RepositoryConnection conn = repo.getConnection()) {
+            RepositoryResult<Statement> stmts = conn.getStatements(null, additionsIRI, null, commitId);
+
+            assertTrue(stmts.hasNext());
+            Statement stmt = stmts.next();
+            additionsGraphIRI = (IRI) stmt.getObject();
+            assertTrue(conn.getStatements(null, null, null, additionsGraphIRI).hasNext());
+
             assertTrue(conn.getStatements(null, null, null, recordId).hasNext());
             assertTrue(conn.getStatements(recordId, null, null).hasNext());
             assertTrue(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
@@ -234,9 +247,10 @@ public class RESTIT extends KarafTestSupport {
             assertTrue(conn.getStatements(null, null, null, commitId).hasNext());
             assertTrue(conn.getStatements(commitId, null, null).hasNext());
         }
+        return additionsGraphIRI;
     }
 
-    private void validateOntologyDeleted(Resource recordId, Resource branchId, Resource commitId) {
+    private void validateOntologyDeleted(Resource recordId, Resource branchId, Resource commitId, Resource additionsGraphIRI) {
         Repository repo = getOsgiService(Repository.class);
 
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -246,6 +260,7 @@ public class RESTIT extends KarafTestSupport {
             assertFalse(conn.getStatements(recordId, null, null).hasNext());
             assertFalse(conn.getStatements(null, null, null, commitId).hasNext());
             assertFalse(conn.getStatements(commitId, null, null).hasNext());
+            assertFalse(conn.getStatements(null, null, null, additionsGraphIRI).hasNext());
         }
     }
 }
