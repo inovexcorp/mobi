@@ -59,7 +59,10 @@ import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.matonto.catalog.api.ontologies.mcat.Branch;
+import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.itests.support.KarafTestSupport;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.Repository;
@@ -217,12 +220,17 @@ public class RESTIT extends KarafTestSupport {
 
     private void validateOntologyCreated(Resource recordId, Resource branchId, Resource commitId) {
         Repository repo = getOsgiService(Repository.class);
+        ValueFactory vf = getOsgiService(ValueFactory.class);
+        IRI branchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
+        IRI headIRI = vf.createIRI(Branch.head_IRI);
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(conn.getStatements(null, null, null, branchId).hasNext());
-            assertTrue(conn.getStatements(branchId, null, null).hasNext());
             assertTrue(conn.getStatements(null, null, null, recordId).hasNext());
             assertTrue(conn.getStatements(recordId, null, null).hasNext());
+            assertTrue(conn.getStatements(recordId, branchIRI, branchId, recordId).hasNext());
+            assertTrue(conn.getStatements(null, null, null, branchId).hasNext());
+            assertTrue(conn.getStatements(branchId, null, null).hasNext());
+            assertTrue(conn.getStatements(branchId, headIRI, commitId, branchId).hasNext());
             assertTrue(conn.getStatements(null, null, null, commitId).hasNext());
             assertTrue(conn.getStatements(commitId, null, null).hasNext());
         }
