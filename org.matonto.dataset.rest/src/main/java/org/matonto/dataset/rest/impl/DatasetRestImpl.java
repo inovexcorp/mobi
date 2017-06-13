@@ -32,25 +32,31 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.PaginatedSearchResults;
+import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.dataset.api.DatasetManager;
-import org.matonto.dataset.pagination.DatasetPaginatedSearchParams;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
+import org.matonto.dataset.api.builder.OntologyIdentifier;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
+import org.matonto.dataset.pagination.DatasetPaginatedSearchParams;
 import org.matonto.dataset.rest.DatasetRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
-import org.matonto.rest.util.RestUtils;
 import org.matonto.rest.util.jaxb.Links;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
@@ -60,8 +66,10 @@ import javax.ws.rs.core.UriInfo;
 public class DatasetRestImpl implements DatasetRest {
     private DatasetManager manager;
     private EngineManager engineManager;
+    private CatalogManager catalogManager;
     private SesameTransformer transformer;
     private ValueFactory vf;
+    private ModelFactory mf;
 
     @Reference
     public void setManager(DatasetManager manager) {
@@ -74,6 +82,11 @@ public class DatasetRestImpl implements DatasetRest {
     }
 
     @Reference
+    public void setCatalogManager(CatalogManager catalogManager) {
+        this.catalogManager = catalogManager;
+    }
+
+    @Reference
     public void setTransformer(SesameTransformer transformer) {
         this.transformer = transformer;
     }
@@ -83,8 +96,14 @@ public class DatasetRestImpl implements DatasetRest {
         this.vf = vf;
     }
 
+    @Reference
+    public void setMf(ModelFactory mf) {
+        this.mf = mf;
+    }
+
     @Override
-    public Response getDatasetRecords(UriInfo uriInfo, int offset, int limit, String sort, boolean asc, String searchText) {
+    public Response getDatasetRecords(UriInfo uriInfo, int offset, int limit, String sort, boolean asc,
+                                      String searchText) {
         try {
             LinksUtils.validateParams(limit, offset);
             DatasetPaginatedSearchParams params = new DatasetPaginatedSearchParams(vf).setOffset(offset)
@@ -100,8 +119,8 @@ public class DatasetRestImpl implements DatasetRest {
             }
             PaginatedSearchResults<DatasetRecord> results = manager.getDatasetRecords(params);
             JSONArray array = JSONArray.fromObject(results.getPage().stream()
-                    .map(datasetRecord -> modelToJsonld(transformer.sesameModel(datasetRecord.getModel())))
-                    .map(RestUtils::getObjectFromJsonld)
+                    .map(datasetRecord -> removeContext(datasetRecord.getModel()))
+                    .map(model -> modelToJsonld(transformer.sesameModel(model)))
                     .collect(Collectors.toList()));
 
             Links links = LinksUtils.buildLinks(uriInfo, array.size(), results.getTotalSize(), limit, offset);
@@ -114,15 +133,16 @@ public class DatasetRestImpl implements DatasetRest {
             }
             return response.build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Override
-    public Response createDatasetRecord(ContainerRequestContext context, String title, String repositoryId, String datasetIRI,
-                                        String description, String keywords) {
+    public Response createDatasetRecord(ContainerRequestContext context, String title, String repositoryId,
+                                        String datasetIRI, String description, String keywords,
+                                        List<FormDataBodyPart> ontologies) {
         checkStringParam(title, "Title is required");
         checkStringParam(repositoryId, "Repository id is required");
         User activeUser = getActiveUser(context, engineManager);
@@ -138,11 +158,15 @@ public class DatasetRestImpl implements DatasetRest {
             builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
         }
         try {
+            if (ontologies != null) {
+                ontologies.forEach(formDataBodyPart -> builder.ontology(
+                        getOntologyIdentifer(vf.createIRI(formDataBodyPart.getValue()))));
+            }
             DatasetRecord record = manager.createDataset(builder.build());
             return Response.status(201).entity(record.getResource().stringValue()).build();
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (Exception ex) {
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -157,7 +181,7 @@ public class DatasetRestImpl implements DatasetRest {
                 manager.safeDeleteDataset(recordIRI);
             }
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (Exception ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -174,10 +198,24 @@ public class DatasetRestImpl implements DatasetRest {
                 manager.safeClearDataset(recordIRI);
             }
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (Exception ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
         return Response.ok().build();
+    }
+
+    private OntologyIdentifier getOntologyIdentifer(Resource recordId) {
+        Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
+        Resource commitId = masterBranch.getHead_resource().orElseThrow(() ->
+                ErrorUtils.sendError("Branch " + masterBranch.getResource() + " has no head Commit set.",
+                        Response.Status.INTERNAL_SERVER_ERROR));
+        return new OntologyIdentifier(recordId, masterBranch.getResource(), commitId, vf, mf);
+    }
+
+    private Model removeContext(Model model) {
+        Model result = mf.createModel();
+        model.forEach(statement -> result.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+        return result;
     }
 }

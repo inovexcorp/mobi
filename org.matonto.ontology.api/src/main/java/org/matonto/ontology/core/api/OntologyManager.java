@@ -25,27 +25,19 @@ package org.matonto.ontology.core.api;
 
 import org.matonto.ontology.core.api.builder.OntologyRecordConfig;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import javax.annotation.Nonnull;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.util.Optional;
+
 import org.matonto.ontology.core.utils.MatontoOntologyCreationException;
-import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.util.Optional;
-import javax.annotation.Nonnull;
-
 public interface OntologyManager {
-
-    /**
-     * Returns the SesameTransformer used by the OntologyManager.
-     *
-     * @return the SesameTransformer used by the OntologyManager.
-     */
-    SesameTransformer getTransformer();
 
     /**
      * Creates a new OntologyRecord using the provided OntologyRecordConfig.
@@ -70,7 +62,7 @@ public interface OntologyManager {
      * @param file the File that contains the data to make up the Ontology.
      * @return an Ontology created with the provided File.
      * @throws MatontoOntologyCreationException - if the ontology can't be created.
-     * @throws FileNotFoundException - if the file path is invalid.
+     * @throws FileNotFoundException            - if the file path is invalid.
      */
     Ontology createOntology(File file) throws FileNotFoundException;
 
@@ -111,44 +103,37 @@ public interface OntologyManager {
     Ontology createOntology(Model model);
 
     /**
-     * Retrieves an Ontology using a record id and the head commit of its MASTER branch. Returns an Optional with
-     * Ontology object or an empty Optional instance if the record id is not found or any owlapi exception or sesame
-     * exception is caught.
+     * Retrieves an Ontology using a record id and the head commit of its MASTER branch. Returns an Optional of the
+     * Ontology if found, otherwise Optional.empty().
      *
      * @param recordId the record id for the OntologyRecord you want to retrieve.
-     * @return an Optional with Ontology if record id is found, or an empty Optional instance if not found.
+     * @return Returns an Optional of the Ontology if found, otherwise Optional.empty().
      * @throws MatontoOntologyCreationException - the ontology can't be created.
-     * @throws IllegalArgumentException - the ontology's master branch, head commit, or compiled resource can't be
-     *                                    retrieved.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId);
 
     /**
-     * Retrieves an Ontology using a record id and the head commit of a Branch identified by the provided branch id.
-     * Returns an Optional with Ontology object or an empty Optional instance if the record id is not found or any
-     * owlapi exception or sesame exception is caught.
+     * Retrieves an Ontology using a record id and the head commit of the specified branch. Returns an Optional of the
+     * Ontology if found, otherwise Optional.empty().
      *
      * @param recordId the record id for the OntologyRecord you want to retrieve.
      * @param branchId the branch id for the Branch you want to retrieve.
-     * @return an Optional with Ontology if record id is found, or an empty Optional instance if not found.
+     * @return an Optional of the Ontology if found, otherwise Optional.empty().
      * @throws MatontoOntologyCreationException - the ontology can't be created.
-     * @throws IllegalArgumentException - the ontology's identified branch, head commit, or compiled resource can't be
-     *                                    retrieved.
+     * @throws IllegalArgumentException         if the branch cannot be found.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId);
 
     /**
-     * Retrieves an Ontology using an record id, a branch id, and the id of a commit on that branch from the
-     * repository. Returns an Optional with Ontology object or an empty Optional instance if the record id is not
-     * found or any owlapi exception or sesame exception is caught.
+     * Retrieves an Ontology using a record id, branch id, and the id of a commit on that branch. Returns an Optional
+     * of the Ontology if found, otherwise Optional.empty().
      *
      * @param recordId the record id for the OntologyRecord you want to retrieve.
      * @param branchId the branch id for the Branch you want to retrieve.
      * @param commitId the commit id for the Commit you want to retrieve.
-     * @return an Optional with Ontology if record id is found, or an empty Optional instance if not found.
+     * @return an Optional of the Ontology if found, otherwise Optional.empty().
      * @throws MatontoOntologyCreationException - the ontology can't be created.
-     * @throws IllegalArgumentException - the ontology's identified branch, identified commit, or compiled resource
-     *                                    can't be retrieved.
+     * @throws IllegalArgumentException         if the branch or commit cannot be found.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                         @Nonnull Resource commitId);
@@ -161,6 +146,15 @@ public interface OntologyManager {
      * @throws IllegalArgumentException - the OntologyRecord can't be retrieved.
      */
     void deleteOntology(@Nonnull Resource recordId);
+
+    /**
+     * Deletes a branch associated with an OntologyRecord.
+     *
+     * @param recordId The record id for the OntologyRecord which contains the Branch you want to delete.
+     * @param branchId The branch id of the ontology branch you want to delete.
+     * @throws IllegalArgumentException - the OntologyRecord can't be retrieved.
+     */
+    void deleteOntologyBranch(@Nonnull Resource recordId, @Nonnull Resource branchId);
 
     /**
      * Creates a new OntologyId with a generated identifier.
@@ -189,7 +183,7 @@ public interface OntologyManager {
      * Creates a new OntologyId using the provided version IRI as the identifier.
      *
      * @param ontologyIRI the IRI for the ontology you want to create the recordId for.
-     * @param versionIRI the version IRI for the ontology you want to create the recordId for.
+     * @param versionIRI  the version IRI for the ontology you want to create the recordId for.
      * @return an OntologyId using the ontologyIRI and versionIRI to determine the proper identifier.
      */
     OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI);
@@ -203,12 +197,30 @@ public interface OntologyManager {
     TupleQueryResult getSubClassesOf(Ontology ontology);
 
     /**
+     * Gets the subClassOf relationships for a particular {@link IRI} in the provided {@link Ontology}. It will provide
+     * <em>all</em> classes that can be traced back to the provided class IRI, even if nested.
+     *
+     * @param ontology The {@link Ontology} you wish to query.
+     * @param iri      The {@link IRI} of the class for which you want the list of subclasses.
+     * @return a {@link TupleQueryResult} with the query results.
+     */
+    TupleQueryResult getSubClassesFor(Ontology ontology, IRI iri);
+
+    /**
      * Gets the subPropertyOf relationships for datatype properties in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
      * @return a Set with the query results.
      */
     TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology);
+
+    /**
+     * Gets the subPropertyOf relationships for annotation properties in the provided Ontology.
+     *
+     * @param ontology the Ontology you wish to query.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getSubAnnotationPropertiesOf(Ontology ontology);
 
     /**
      * Gets the subPropertyOf relationships for object properties in the provided Ontology.
@@ -230,7 +242,7 @@ public interface OntologyManager {
      * Gets the entity usages for the provided Resource in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
-     * @param entity the Resource for the entity you want to get the usages of.
+     * @param entity   the Resource for the entity you want to get the usages of.
      * @return a Set with the query results.
      */
     TupleQueryResult getEntityUsages(Ontology ontology, Resource entity);
@@ -239,7 +251,7 @@ public interface OntologyManager {
      * Constructs the entity usages for the provided Resource in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
-     * @param entity the Resource for the entity you want to get the usages of.
+     * @param entity   the Resource for the entity you want to get the usages of.
      * @return a Model with the constructed statements.
      */
     Model constructEntityUsages(Ontology ontology, Resource entity);
@@ -255,7 +267,7 @@ public interface OntologyManager {
     /**
      * Searches the provided Ontology using the provided searchText.
      *
-     * @param ontology the Ontology you wish to query.
+     * @param ontology   the Ontology you wish to query.
      * @param searchText the String for the text you want to search for in the Ontology.
      * @return a Set with the query results.
      */

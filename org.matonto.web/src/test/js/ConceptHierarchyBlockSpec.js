@@ -21,31 +21,24 @@
  * #L%
  */
 describe('Concept Hierarchy directive', function() {
-    var $compile,
-        scope,
-        element,
-        ontologyStateSvc,
-        ontologyManagerSvc,
-        ontologyUtilsManagerSvc,
-        controller;
+    var $compile, scope, element, ontologyStateSvc, ontologyUtilsManagerSvc, controller;
 
     beforeEach(function() {
         module('templates');
         module('conceptHierarchyBlock');
         mockOntologyState();
-        mockOntologyManager();
         mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            ontologyManagerSvc = _ontologyManagerService_;
             ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
         });
 
         element = $compile(angular.element('<concept-hierarchy-block></concept-hierarchy-block>'))(scope);
         scope.$digest();
+        controller = element.controller('conceptHierarchyBlock');
     });
 
     describe('replaces the element with the correct html', function() {
@@ -68,27 +61,20 @@ describe('Concept Hierarchy directive', function() {
         it('with a block-footer', function() {
             expect(element.find('block-footer').length).toBe(1);
         });
-        it('with a button to delete an entity', function() {
+        it('with a button to delete a concept', function() {
             var button = element.querySelectorAll('block-footer button');
             expect(button.length).toBe(1);
-            expect(angular.element(button[0]).text()).toContain('Delete Entity');
+            expect(angular.element(button[0]).text()).toContain('Delete Concept');
         });
         it('depending on whether a delete should be confirmed', function() {
             expect(element.find('confirmation-overlay').length).toBe(0);
 
-            controller = element.controller('conceptHierarchyBlock');
             controller.showDeleteConfirmation = true;
             scope.$digest();
+
             expect(element.find('confirmation-overlay').length).toBe(1);
         });
         it('depending on whether a concept is being created', function() {
-            expect(element.find('create-concept-scheme-overlay').length).toBe(0);
-
-            ontologyStateSvc.showCreateConceptSchemeOverlay = true;
-            scope.$digest();
-            expect(element.find('create-concept-scheme-overlay').length).toBe(1);
-        });
-        it('depending on whether a concept scheme is being created', function() {
             expect(element.find('create-concept-overlay').length).toBe(0);
 
             ontologyStateSvc.showCreateConceptOverlay = true;
@@ -105,28 +91,11 @@ describe('Concept Hierarchy directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('conceptHierarchyBlock');
-        });
-        describe('should delete an entity', function() {
-            beforeEach(function() {
-                controller.showDeleteConfirmation = true;
-            });
-            it('if it is a concept', function() {
-                controller.deleteEntity();
-                expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(ontologyStateSvc.selected);
-                expect(ontologyUtilsManagerSvc.deleteConcept).toHaveBeenCalled();
-                expect(ontologyUtilsManagerSvc.deleteConceptScheme).not.toHaveBeenCalled();
-                expect(controller.showDeleteConfirmation).toBe(false);
-            });
-            it('if it is a concept scheme', function() {
-                ontologyManagerSvc.isConcept.and.returnValue(false);
-                controller.deleteEntity();
-                expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(ontologyStateSvc.selected);
-                expect(ontologyUtilsManagerSvc.deleteConcept).not.toHaveBeenCalled();
-                expect(ontologyUtilsManagerSvc.deleteConceptScheme).toHaveBeenCalled();
-                expect(controller.showDeleteConfirmation).toBe(false);
-            });
+        it('should delete a concept', function() {
+            controller.showDeleteConfirmation = true;
+            controller.deleteEntity();
+            expect(ontologyUtilsManagerSvc.deleteConcept).toHaveBeenCalled();
+            expect(controller.showDeleteConfirmation).toBe(false);
         });
     });
     it('should set the correct state when the create concept link is clicked', function() {
@@ -134,13 +103,7 @@ describe('Concept Hierarchy directive', function() {
         link.triggerHandler('click');
         expect(ontologyStateSvc.showCreateConceptOverlay).toBe(true);
     });
-    it('should set the correct state when the create concept scheme link is clicked', function() {
-        var link = angular.element(element.querySelectorAll('block-header a')[1]);
-        link.triggerHandler('click');
-        expect(ontologyStateSvc.showCreateConceptSchemeOverlay).toBe(true);
-    });
-    it('should set the correct state when the delete class button is clicked', function() {
-        controller = element.controller('conceptHierarchyBlock');
+    it('should set the correct state when the delete concept button is clicked', function() {
         var button = angular.element(element.querySelectorAll('block-footer button')[0]);
         button.triggerHandler('click');
         expect(controller.showDeleteConfirmation).toBe(true);

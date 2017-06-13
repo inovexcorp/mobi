@@ -67,7 +67,6 @@
                     }
 
                     dvm.create = function() {
-                        _.set(dvm.scheme, 'matonto.originalIRI', dvm.scheme['@id']);
                         if (dvm.concepts.length) {
                             dvm.scheme[prefixes.skos + 'hasTopConcept'] = dvm.concepts;
                         }
@@ -75,7 +74,9 @@
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.scheme);
                         // update relevant lists
-                        _.get(dvm.os.listItem, 'conceptHierarchy').push({'entityIRI': dvm.scheme['@id']});
+                        var hierarchy = _.get(dvm.os.listItem, 'conceptHierarchy');
+                        hierarchy.push({'entityIRI': dvm.scheme['@id']});
+                        dvm.os.listItem.flatConceptHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
                         dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.scheme);
                         // select the new concept
                         dvm.os.selectItem(_.get(dvm.scheme, '@id'));

@@ -53,10 +53,17 @@ function injectChromaConstant() {
 function injectRegexConstant() {
     module(function($provide) {
         $provide.constant('REGEX', {
-            'IRI': new RegExp('[a-zA-Z]'),
-            'LOCALNAME': new RegExp('[a-zA-Z]'),
-            'FILENAME': new RegExp('[a-zA-Z]')
+            'IRI': /[a-zA-Z]/,
+            'LOCALNAME': /[a-zA-Z]/,
+            'FILENAME': /[a-zA-Z]/,
+            'UUID': /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
         });
+    });
+}
+
+function injectIndentConstant() {
+    module(function($provide) {
+        $provide.constant('INDENT', 1);
     });
 }
 
@@ -134,6 +141,12 @@ function injectInArrayFilter() {
 function injectUsernameSearchFilter() {
     module(function($provide) {
         $provide.value('usernameSearchFilter', jasmine.createSpy('usernameSearchFilter').and.callFake(_.identity));
+    });
+}
+
+function injectUniqueKeyFilter() {
+    module(function($provide) {
+        $provide.value('uniqueKeyFilter', jasmine.createSpy('uniqueKeyFilter').and.callFake(_.identity));
     });
 }
 
@@ -234,6 +247,8 @@ function mockOntologyManager() {
             this.getConceptSchemes = jasmine.createSpy('getConceptSchemes').and.returnValue([]);
             this.getConceptSchemeIRIs = jasmine.createSpy('getConceptSchemeIRIs').and.returnValue([]);
             this.downloadOntology = jasmine.createSpy('downloadOntology');
+            this.deleteOntology = jasmine.createSpy('deleteOntology').and.returnValue($q.when());
+            this.getAnnotationPropertyHierarchies = jasmine.createSpy('getAnnotationPropertyHierarchies');
         });
     });
 }
@@ -242,6 +257,7 @@ function mockMappingManager() {
     module(function($provide) {
         $provide.service('mappingManagerService', function($q) {
             this.mappingIds = [];
+            this.annotationProperties = [];
 
             this.reset = jasmine.createSpy('reset');
             this.initialize = jasmine.createSpy('initialize');
@@ -334,7 +350,6 @@ function mockMapperState() {
             this.step = 0;
             this.invalidProps = [];
             this.availableClasses = [];
-            this.availableColumns = [];
             this.invalidOntology = false;
             this.editMappingName = false;
             this.displayCancelConfirm = false;
@@ -356,7 +371,6 @@ function mockMapperState() {
             this.resetEdit = jasmine.createSpy('resetEdit');
             this.createMapping = jasmine.createSpy('createMapping');
             this.setInvalidProps = jasmine.createSpy('setInvalidProps');
-            this.updateAvailableColumns = jasmine.createSpy('updateAvailableColumns');
             this.getAvailableProps = jasmine.createSpy('getAvailableProps').and.returnValue([]);
             this.setAvailableProps = jasmine.createSpy('setAvailableProps');
             this.hasAvailableProps = jasmine.createSpy('hasAvailableProps');
@@ -392,6 +406,7 @@ function mockPrefixes() {
             this.skos = 'skos:';
             this.xsd = 'xsd:';
             this.ontologyEditor = 'ontEdit:';
+            this.dataset = 'dataset:';
         });
     });
 }
@@ -452,10 +467,7 @@ function mockOntologyState() {
                 type: ''
             };
             this.selected = {
-                '@id': 'id',
-                matonto: {
-                    originalIri: 'iri'
-                }
+                '@id': 'id'
             };
             this.annotationSelect = 'select';
             this.annotationValue = 'value';
@@ -493,7 +505,21 @@ function mockOntologyState() {
                         jsAnnotations: [{}]
                     }
                 }],
-                upToDate: true
+                upToDate: true,
+                individualsParentPath: [],
+                classesAndIndividuals: [],
+                flatClassHierarchy: [],
+                flatDataPropertyHierarchy: [],
+                flatObjectPropertyHierarchy: [],
+                annotationPropertyHierarchy: [],
+                annotationPropertyIndex: {},
+                flatAnnotationPropertyHierarchy: [],
+                importedOntologies: [],
+                importedOntologyIds: [],
+                upToDate: true,
+                conceptHierarchy: [],
+                flatConceptHierarchy: [],
+                iriList: []
             };
             this.states = {};
             this.list = [];
@@ -557,6 +583,16 @@ function mockOntologyState() {
             this.goTo = jasmine.createSpy('goTo');
             this.openAt = jasmine.createSpy('openAt');
             this.getDefaultPrefix = jasmine.createSpy('getDefaultPrefix');
+            this.retrieveClassesWithIndividuals = jasmine.createSpy('retrieveClassesWithIndividuals');
+            this.getIndividualsParentPath = jasmine.createSpy('getIndividualsParentPath');
+            this.flattenHierarchy = jasmine.createSpy('flattenHierarchy');
+            this.areParentsOpen = jasmine.createSpy('areParentsOpen');
+            this.createFlatEverythingTree = jasmine.createSpy('createFlatEverythingTree');
+            this.getOntologiesArray = jasmine.createSpy('getOntologiesArray').and.returnValue(this.listItem.ontology);
+            this.createFlatIndividualTree = jasmine.createSpy('createFlatIndividualTree');
+            this.updatePropertyIcon = jasmine.createSpy('updatePropertyIcon');
+            this.isDerivedConcept = jasmine.createSpy('isDerivedConcept');
+            this.isDerivedConceptScheme = jasmine.createSpy('isDerivedConceptScheme');
         });
     });
 }
@@ -580,6 +616,10 @@ function mockOntologyUtilsManager() {
             this.updateLabel = jasmine.createSpy('updateLabel');
             this.getLabelForIRI = jasmine.createSpy('getLabelForIRI');
             this.getDropDownText = jasmine.createSpy('getDropDownText');
+            this.setSuperClasses = jasmine.createSpy('setSuperClasses');
+            this.setSuperProperties = jasmine.createSpy('setSuperProperties');
+            this.updateflatIndividualsHierarchy = jasmine.createSpy('updateflatIndividualsHierarchy');
+            this.checkIri = jasmine.createSpy('checkIri');
         });
     });
 }
@@ -823,11 +863,13 @@ function mockUtil() {
 function mockDatasetManager() {
     module(function($provide) {
         $provide.service('datasetManagerService', function($q) {
+            this.datasetRecords = [];
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getDatasetRecords = jasmine.createSpy('getDatasetRecords').and.returnValue($q.when({}));
             this.createDatasetRecord = jasmine.createSpy('createDatasetRecord').and.returnValue($q.when(''));
             this.deleteDatasetRecord = jasmine.createSpy('deleteDatasetRecord').and.returnValue($q.when());
             this.clearDatasetRecord = jasmine.createSpy('clearDatasetRecord').and.returnValue($q.when());
+            this.initialize = jasmine.createSpy('initialize');
         });
     });
 }
@@ -871,4 +913,54 @@ function mockToastr() {
             this.warning = jasmine.createSpy('warning');
         });
     });
+}
+
+function mockDiscoverState() {
+    module(function($provide) {
+        $provide.service('discoverStateService', function() {
+            this.explore = {
+                active: true,
+                breadcrumbs: ['Classes'],
+                classDetails: [],
+                instance: {
+                    entity: {},
+                    metadata: {}
+                },
+                instanceDetails: {
+                    currentPage: 0,
+                    data: [],
+                    limit: 99,
+                    links: {
+                        next: '',
+                        prev: ''
+                    },
+                    total: 0
+                },
+                recordId: ''
+            };
+            this.query = {
+                active: false
+            };
+            this.resetPagedInstanceDetails = jasmine.createSpy('resetPagedInstanceDetails');
+            this.cleanUpOnDatasetDelete = jasmine.createSpy('cleanUpOnDatasetDelete');
+            this.cleanUpOnDatasetClear = jasmine.createSpy('cleanUpOnDatasetClear');
+        });
+    });
+}
+
+function mockExplore() {
+    module(function($provide) {
+        $provide.service('exploreService', function($q) {
+            this.getClassDetails = jasmine.createSpy('getClassDetails').and.returnValue($q.when([]));
+            this.getClassInstanceDetails = jasmine.createSpy('getClassInstanceDetails').and.returnValue($q.when([]));
+            this.getInstance = jasmine.createSpy('getInstance').and.returnValue($q.when({}));
+            this.createPagedResultsObject = jasmine.createSpy('createPagedResultsObject').and.returnValue({});
+        });
+    });
+}
+
+function flushAndVerify($httpBackend) {
+    $httpBackend.flush();
+    $httpBackend.verifyNoOutstandingExpectation();
+    $httpBackend.verifyNoOutstandingRequest();
 }

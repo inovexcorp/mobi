@@ -164,7 +164,6 @@ class SimpleCatalogManagerSpec extends Specification {
         service.setRecordFactory(recordFactory)
         service.setDistributionFactory(distributionFactory)
         service.setBranchFactory(branchFactory)
-        service.setUserFactory(userFactory)
         service.setCommitFactory(commitFactory)
         service.setInProgressCommitFactory(inProgressCommitFactory)
         service.setRevisionFactory(revisionFactory)

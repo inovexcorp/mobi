@@ -94,7 +94,7 @@ describe('Property Values directive', function() {
                 return string === '_:genid0' ? '<span>test</span>' : '';
             });
             scope.$digest();
-            var blankNodeValue = element.querySelectorAll('.value-container .value-display .blank-node-value');
+            var blankNodeValue = element.querySelectorAll('.value-container .value-display-wrapper .blank-node-value');
             expect(blankNodeValue.length).toBe(1);
             var editButtons = element.querySelectorAll('.value-container [title=Edit]');
             expect(editButtons.length).toBe(1);

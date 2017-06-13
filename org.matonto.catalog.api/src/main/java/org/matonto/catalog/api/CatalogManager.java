@@ -32,18 +32,17 @@ import org.matonto.catalog.api.ontologies.mcat.Distribution;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.catalog.api.ontologies.mcat.Version;
-import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.orm.OrmFactory;
 
-import java.security.InvalidParameterException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public interface CatalogManager {
 
@@ -65,17 +64,17 @@ public interface CatalogManager {
      * Retrieves the distributed Catalog containing the published Records.
      *
      * @return The Catalog object which contains the published Records.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalStateException Thrown if the Catalog could not be found.
      */
-    Catalog getDistributedCatalog() throws MatOntoException;
+    Catalog getDistributedCatalog();
 
     /**
      * Retrieves the local Catalog containing the unpublished Records.
      *
      * @return The Catalog object which contains the unpublished Records.
-     * @throws MatOntoException thrown if a connection to the repository could not be made
+     * @throws IllegalStateException Thrown if the Catalog could not be found.
      */
-    Catalog getLocalCatalog() throws MatOntoException;
+    Catalog getLocalCatalog();
 
     /**
      * Searches the provided Catalog for Records that match the provided PaginatedSearchParams. Acceptable
@@ -96,9 +95,9 @@ public interface CatalogManager {
      * @param catalogId The Resource identifying the Catalog that you would like to get the Records from.
      * @return The Set of all Resources identifying Records contained within the Catalog identified by the provided
      *         Resource.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found
      */
-    Set<Resource> getRecordIds(Resource catalogId) throws MatOntoException;
+    Set<Resource> getRecordIds(Resource catalogId);
 
     /**
      * Creates an Object that extends Record using provided RecordConfig and Factory.
@@ -113,46 +112,59 @@ public interface CatalogManager {
     /**
      * Stores the provided Record in the repository and adds it to the Catalog identified by the provided Resource.
      *
-     * @param catalogId The Resource identifying the catalog to add the Record to.
+     * @param catalogId The Resource identifying the Catalog which will get the new Record.
      * @param record The Object which extends Record to add to the Catalog.
      * @param <T> An Object which extends Record.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if Catalog could not be found or the Record already exists in the
+     *      repository.
      */
-    <T extends Record> void addRecord(Resource catalogId, T record) throws MatOntoException;
+    <T extends Record> void addRecord(Resource catalogId, T record);
 
     /**
      * Uses the provided Record to find the Resource of the existing Record and replaces it.
      *
-     * @param catalogId The Resource identifying the catalog which contains desired Record.
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
      * @param newRecord The Record with the desired changes.
      * @param <T> An Object which extends Record.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or
+     *      the Record does not belong to the Catalog.
      */
-    <T extends Record> void updateRecord(Resource catalogId, T newRecord) throws MatOntoException;
+    <T extends Record> void updateRecord(Resource catalogId, T newRecord);
 
     /**
-     * Removes the Record identified by the provided Resource from the repository if it was contained within the Catalog
-     * identified by the provided Resource.
+     * Removes the Record identified by the provided Resources from the repository.
      *
-     * @param catalogId The Resource identifying the catalog which contains the record you want to remove.
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
      * @param recordId The Resource identifying the Record which you want to remove.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or
+     *      the Record does not belong to the Catalog.
      */
-    void removeRecord(Resource catalogId, Resource recordId) throws MatOntoException;
+    void removeRecord(Resource catalogId, Resource recordId);
 
     /**
      * Gets the Record from the provided Catalog. The Record will be of type T which is determined by the provided
-     * OrmFactory.
+     * OrmFactory. Returns an empty Optional if the Record could not be found, or the Record does not belong to the
+     * Catalog.
      *
-     * @param catalogId The Resource identifying the catalog which optionally contains the Record you want to get.
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
      * @param recordId The Resource identifying the Record you want to get.
      * @param factory The OrmFactory of the Type of Record you want to get back.
      * @param <T> An Object which extends Record.
-     * @return An Optional with a Record with the recordId if it was found.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @return The Record if it exists.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found.
      */
-    <T extends Record> Optional<T> getRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory) throws
-            MatOntoException;
+    <T extends Record> Optional<T> getRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory);
+
+    /**
+     * Gets the Set of Distributions for an UnversionedRecord identified by the provided Resources.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param unversionedRecordId The Resource identifying the UnversionedRecord which has the Distributions.
+     * @return The Set of Distributions for the UnversionedRecord if they exist.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or any of the Distributions could not be found.
+     */
+    Set<Distribution> getUnversionedDistributions(Resource catalogId, Resource unversionedRecordId);
 
     /**
      * Creates a Distribution with the metadata from the provided DistributionConfig.
@@ -166,60 +178,62 @@ public interface CatalogManager {
      * Stores the provided Distribution in the repository and adds it to the UnversionedRecord identified by the
      * provided Resource.
      *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param unversionedRecordId The Resource identifying the UnversionedRecord which will get the new Distribution.
      * @param distribution The Distribution to add to the UnversionedRecord.
-     * @param unversionedRecordId The Resource identifying the UnversionedRecord which will get a new Distribution.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the Distribution already exists in the repository.
      */
-    void addDistributionToUnversionedRecord(Distribution distribution, Resource unversionedRecordId) throws
-            MatOntoException;
+    void addUnversionedDistribution(Resource catalogId, Resource unversionedRecordId, Distribution distribution);
 
     /**
-     * Stores the provided Distribution in the repository and adds it to the Version identified by the provided
-     * Resource.
+     * Uses the provided Resources and Distribution to find the Resource of an existing Distribution on an
+     * UnversionedRecord and replaces it.
      *
-     * @param distribution The Distribution to add to the Version.
-     * @param versionId The Resource identifying the Version which will get a new Distribution.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
-     */
-    void addDistributionToVersion(Distribution distribution, Resource versionId) throws MatOntoException;
-
-    /**
-     * Uses the provided Distribution to find the Resource of the existing Distribution and replaces it.
-     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param unversionedRecordId The Resource identifying the UnversionedRecord which has the Distribution.
      * @param newDistribution The Distribution with the desired changes.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the Distribution could not be found.
      */
-    void updateDistribution(Distribution newDistribution) throws MatOntoException;
+    void updateUnversionedDistribution(Resource catalogId, Resource unversionedRecordId, Distribution newDistribution);
 
     /**
-     * Removes the Distribution identified by the provided Resource from the repository if it was a Distribution for the
-     * UnversionedRecord identified by the provided Resource.
+     * Removes the Distribution of a UnversionedRecord identified by the provided Resources from the repository.
      *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param unversionedRecordId The Resource identifying the UnversionedRecord which has the Distribution.
      * @param distributionId The Resource identifying the Distribution you want to remove.
-     * @param unversionedRecordId The Resource identifying the UnversionedRecord to remove the Distribution from.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the Distribution could not be found.
      */
-    void removeDistributionFromUnversionedRecord(Resource distributionId, Resource unversionedRecordId) throws
-            MatOntoException;
+    void removeUnversionedDistribution(Resource catalogId, Resource unversionedRecordId, Resource distributionId);
 
     /**
-     * Removes the Distribution identified by the provided Resource from the repository if it was a Distribution for the
-     * Version identified by the provided Resource.
+     * Gets the Distribution of an UnversionedRecord identified by the provided Resources. Returns an empty Optional if
+     * the Distribution does not belong to the Record.
      *
-     * @param distributionId The Resource identifying the Distribution you want to remove.
-     * @param versionId The Resource identifying the Version to remove the Distribution from.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param unversionedRecordId The Resource identifying the UnversionedRecord which has the Distribution.
+     * @param distributionId The Resource identifying the Distribution to retrieve.
+     * @return The Distribution if it exists.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or the
+     *      Record does not belong to the Catalog.
+     * @throws IllegalStateException Thrown if the Distribution could not be found.
      */
-    void removeDistributionFromVersion(Resource distributionId, Resource versionId) throws MatOntoException;
+    Optional<Distribution> getUnversionedDistribution(Resource catalogId, Resource unversionedRecordId,
+                                                      Resource distributionId);
 
     /**
-     * Gets the Distribution identified by the provided Resource.
+     * Gets the Set of Versions for a VersionedRecord identified by the provided Resources.
      *
-     * @param distributionId The Resource identifying the Distribution you want to get.
-     * @return An Optional of the Distribution if it exists.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRecordId The Resource identifying the VersionedRecord which has the Versions.
+     * @return The Set of Distributions for the VersionedRecord if they exist.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or any of the Versions could not be found.
      */
-    Optional<Distribution> getDistribution(Resource distributionId) throws MatOntoException;
+    Set<Version> getVersions(Resource catalogId, Resource versionedRecordId);
 
     /**
      * Creates an Object which extends Version with the provided metadata using the provided OrmFactory.
@@ -234,45 +248,172 @@ public interface CatalogManager {
 
     /**
      * Stores the provided Version in the repository and adds it to the VersionedRecord identified by the provided
-     * Resource. This also updates the latestVersion associated with that VersionedRecord to be this Version.
+     * Resources. This also updates the latestVersion associated with that VersionedRecord to be this Version.
      *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRecordId The Resource identifying the VersionedRecord which will get the new Version.
      * @param version The Version to add to the VersionedRecord.
-     * @param versionedRecordId The Resource identifying the VersionedRecord which will get a new Version.
      * @param <T> An Object which extends Version.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the Version already exists in the repository.
      */
-    <T extends Version> void addVersion(T version, Resource versionedRecordId) throws MatOntoException;
+    <T extends Version> void addVersion(Resource catalogId, Resource versionedRecordId, T version);
 
     /**
-     * Uses the provided Version to find the Resource of the existing Version and replaces it.
+     * Uses the provided Resources and Version to find the Resource of the existing Version and replaces it.
      *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRecordId The Resource identifying the VersionedRecord which has the Version.
      * @param newVersion The Version with the desired changes.
      * @param <T> An Object which extends Version.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the Version could not be found.
      */
-    <T extends Version> void updateVersion(T newVersion) throws MatOntoException;
+    <T extends Version> void updateVersion(Resource catalogId, Resource versionedRecordId, T newVersion);
 
     /**
-     * Removes the Version identified by the provided Resource from the repository if it was a Version of the
-     * VersionedRecord identified by the provided Resource.
+     * Removes the Version identified by the provided Resources from the repository.
      *
+     * @param catalogId The Resource identifying the Catalog which has the Record.
+     * @param versionedRecordId The Resource identifying the VersionedRecord which has the Version.
      * @param versionId The Resource identifying the Version you want to remove.
-     * @param versionedRecordId The Resource identifying the VersionedRecord to remove the Version from.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the Version could not be found.
      */
-    void removeVersion(Resource versionId, Resource versionedRecordId) throws MatOntoException;
+    void removeVersion(Resource catalogId, Resource versionedRecordId, Resource versionId);
 
     /**
-     * Gets the Version identified by the provided Resource. The Version will be of type T which is determined by the
-     * provided OrmFactory.
+     * Gets the Version identified by the provided Resources. The Version will be of type T which is determined by the
+     * provided OrmFactory. Returns an empty Optional if the Version does not belong to the Record.
      *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRecordId The Resource identifying the VersionedRecord which has the Version.
      * @param versionId The Resource identifying the Version you want to get.
-     * @param factory The OrmFactory identifying the type of Version you want to get back.
+     * @param factory The OrmFactory identifying the type of Version you want to get.
      * @param <T> An Object which extends Version.
-     * @return An Optional of the Version if it exists.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @return The Version if it exists.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or the
+     *      Record does not belong to the Catalog.
+     * @throws IllegalStateException Thrown if the Version could not be found.
      */
-    <T extends Version> Optional<T> getVersion(Resource versionId, OrmFactory<T> factory) throws MatOntoException;
+    <T extends Version> Optional<T> getVersion(Resource catalogId, Resource versionedRecordId, Resource versionId,
+                                     OrmFactory<T> factory);
+
+    /**
+     * Gets the latest Version of the VersionedRecord identified by the provided Resources. The Version will be of
+     * type T which is determined by the provided OrmFactory. Returns an empty Optional if the Record has no latest
+     * Version.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRecordId The Resource identified the VersionedRecord which has the Version.
+     * @param factory The OrmFactory identified the type of version you want to get.
+     * @param <T> An Object which extends Version.
+     * @return The latest Version if it exists.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or the
+     *      Record does not belong to the Catalog.
+     * @throws IllegalStateException Thrown if the Version could not be found.
+     */
+    <T extends Version> Optional<T> getLatestVersion(Resource catalogId, Resource versionedRecordId,
+                                                     OrmFactory<T> factory);
+
+    /**
+     * Gets the Commit of the Tag identified by the provided Resources.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRecordId The Resource identified the VersionedRecord which has the Tag.
+     * @param tagId The Resource identifying the Tag which has the Commit.
+     * @return The Commit of the Tag if it exists.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the Tag does not belong to the Record.
+     * @throws IllegalStateException Thrown if the Version could not be found, the Tag does not have a Commit,
+     *      or the Commit could not be found.
+     */
+    Commit getTaggedCommit(Resource catalogId, Resource versionedRecordId, Resource tagId);
+
+    /**
+     * Gets the Set of Distributions for the Version identified by the provided Resources.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRecordId The Resource identifying the VersionedRecord which has the Version.
+     * @param versionId The Resource identifying the Version which has the Distributions.
+     * @return The Set of Distributions for the Version if they exist.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, the Version could not be found, or any of the Distributions could
+     *      not be found.
+     */
+    Set<Distribution> getVersionedDistributions(Resource catalogId, Resource versionedRecordId, Resource versionId);
+
+    /**
+     * Stores the provided Distribution in the repository and adds it to the Version identified by the provided
+     * Resources.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRecordId The Resource identifying the VersionedRecord which has the Version.
+     * @param versionId The Resource identifying the Version which will get the new Distribution.
+     * @param distribution The Distribution to add to the Version.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, the Version could not be found, or the Distribution already exists
+     *      in the repository.
+     */
+    void addVersionedDistribution(Resource catalogId, Resource versionedRecordId, Resource versionId,
+                                  Distribution distribution);
+
+    /**
+     * Uses the provided Resources and Distribution to find the Resource of an existing Distribution on a Version and
+     * replaces it.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRecordId The Resource identifying the VersionedRecord which has the Version.
+     * @param versionId The Resource identifying the Version which has the Distribution.
+     * @param newDistribution The Distribution with the desired changes.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, the Version could not be found, or the Distribution could not be
+     *      found.
+     */
+    void updateVersionedDistribution(Resource catalogId, Resource versionedRecordId, Resource versionId,
+                                     Distribution newDistribution);
+
+    /**
+     * Removes the Distribution of a Version identified by the provided Resources from the repository.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRecordId The Resource identifying the VersionedRecord which has the Version.
+     * @param versionId The Resource identifying the Version which has the Distribution.
+     * @param distributionId The Resource identifying the Distribution you want to remove.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, the Version could not be found, or the Distribution could not be
+     *      found.
+     */
+    void removeVersionedDistribution(Resource catalogId, Resource versionedRecordId, Resource versionId,
+                                     Resource distributionId);
+
+    /**
+     * Gets the Distribution of an Version identified by the provided Resources. Returns an empty Optional if the
+     * Distribution does not belong to the Version.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRecordId The Resource identifying the VersionedRecord which has the Version.
+     * @param versionId The Resource identifying the Version which has the Distribution.
+     * @param distributionId The Resource identifying the Distribution to retrieve.
+     * @return The Distribution if it exists.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the Version does not belong to the Record.
+     * @throws IllegalStateException Thrown if the Version could not be found, or the Distribution could not be
+     *      found.
+     */
+    Optional<Distribution> getVersionedDistribution(Resource catalogId, Resource versionedRecordId, Resource versionId,
+                                          Resource distributionId);
+
+    /**
+     * Gets the Set of Branches for a VersionedRDFRecord identified by the provided Resources.
+     *
+     * @param catalogId The Resource identifying the Catalog which has the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branches.
+     * @return The Set of Branches for the VersionedRDFRecord if they exist.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or any of the Branches could not be found.
+     */
+    Set<Branch> getBranches(Resource catalogId, Resource versionedRDFRecordId);
 
     /**
      * Creates a Branch with the provided metadata using the provided OrmFactory.
@@ -287,71 +428,102 @@ public interface CatalogManager {
 
     /**
      * Stores the provided Branch in the repository and adds it to the VersionedRDFRecord identified by the provided
-     * Resource.
+     * Resources.
      *
+     * @param catalogId The Resource identifying the Catalog which has the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which will get the new Branch.
      * @param branch The Branch to add to the VersionedRDFRecord.
-     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which will get a new Branch.
      * @param <T> An Object which extends Branch.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the Branch already exists in the repository.
      */
-    <T extends Branch> void addBranch(T branch, Resource versionedRDFRecordId) throws MatOntoException;
+    <T extends Branch> void addBranch(Resource catalogId, Resource versionedRDFRecordId, T branch);
 
     /**
-     * Creates a new master Branch, adds it to the VersionedRDFRecord identified by the provided Resource as the
-     * masterBranch, and stores the Branch in the repository. This method will not create a new master Branch if one
+     * Creates a new Branch, adds it to the VersionedRDFRecord identified by the provided Resources as the master
+     * Branch, and stores the Branch in the repository. This method will not create a new master Branch if one
      * already exists.
      *
-     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which will get a new Branch.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which will get the new Branch.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or the
+     *      Record does not belong to the Catalog.
+     * @throws IllegalStateException Thrown if the Branch already has a master Branch.
      */
-    void addMasterBranch(Resource versionedRDFRecordId) throws MatOntoException;
+    void addMasterBranch(Resource catalogId, Resource versionedRDFRecordId);
 
     /**
-     * Uses the provided Branch to find the Resource of the existing non-master Branch and replaces it. If the provided
-     * Branch is the master Branch, it will not be updated.
+     * Uses the provided Resources and Branch to find the Resource of the existing non-master Branch and replaces it.
+     * If the provided Branch is the master Branch, it will not be updated.
      *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord that has the Branch.
      * @param newBranch The Branch with the desired changes.
      * @param <T> An Object which extends Branch.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the Branch could not be found.
+     * @throws IllegalStateException Thrown if the Branch is the master Branch of the Record.
      */
-    <T extends Branch> void updateBranch(T newBranch) throws MatOntoException;
+    <T extends Branch> void updateBranch(Resource catalogId, Resource versionedRDFRecordId, T newBranch);
 
     /**
-     * Updates the head of a branch to point to the specified commit.
+     * Updates the head of a Branch identified by the provided Resources to point to the specified Commit.
      *
-     * @param branch The branch whose head to update.
-     * @param commit The new head commit of the specified branch.
-     * @throws MatOntoException If there is a problem communicating with the Repository, or if the Branch or Commit do
-     *      not exist.
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord that has the Branch.
+     * @param branchId The Resource identifying the Branch whose head Commit will be updated.
+     * @param commitId The Resource identifying the new head Commit.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, the Branch could not be found, or the Commit could not be found.
      */
-    void updateHead(Resource branch, Resource commit) throws MatOntoException;
+    void updateHead(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Resource commitId);
 
     /**
-     * Removes the non-master Branch identified by the provided Resource from the repository if it was a Branch of the
-     * VersionedRDFRecord identified by the provided Resource. If the provided Branch is the master Branch, it will not
-     * be removed.
+     * Removes the non-master Branch identified by the provided Resources from the repository. If the provided Branch
+     * is the master Branch, it will not be removed.
      *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
      * @param branchId The Resource identifying the Branch you want to remove.
-     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord to remove the Branch from.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the Branch could not be found.
+     * @throws IllegalStateException Thrown if a Commit in the Branch does not have the additions/deletions set.
      */
-    void removeBranch(Resource branchId, Resource versionedRDFRecordId) throws MatOntoException;
+    void removeBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId);
 
     /**
-     * Gets the Branch identified by the provided Resource. The Branch will be of type T which is determined by the
-     * provided OrmFactory.
+     * Gets the Branch identified by the provided Resources. The Branch will be of type T which is determined by the
+     * provided OrmFactory. Returns an empty Optional if the Branch does not belong to the Record.
      *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
      * @param branchId The Resource identifying the Branch you want to get.
-     * @return An Optional of the Branch if it exists.
-     * @param factory The OrmFactory identifying the type of Branch you want to get back.
+     * @return The Branch if it exists.
+     * @param factory The OrmFactory identifying the type of Branch you want to get.
      * @param <T> An Object which extends Branch.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or the
+     *      Record does not belong to the Catalog.
+     * @throws IllegalStateException Thrown if the Branch could not be found.
      */
-    <T extends Branch> Optional<T> getBranch(Resource branchId, OrmFactory<T> factory) throws MatOntoException;
+    <T extends Branch> Optional<T> getBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
+                                   OrmFactory<T> factory);
 
     /**
-     * Creates a Commit from the provided InProgressCommit along with the message whose parents are the passed
-     * Set of Commits.
+     * Gets the master Branch of the VersionedRDFRecord identified by the provided Resources.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
+     * @return The master Branch of the VersionedRDFRecord if it exists.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or the
+     *      Record does not belong to the Catalog.
+     * @throws IllegalStateException Thrown if the Branch could not be found or the VersionedRDFRecord does not have
+     *      a master Branch.
+     */
+    Branch getMasterBranch(Resource catalogId, Resource versionedRDFRecordId);
+
+    /**
+     * Creates a Commit from the provided InProgressCommit and message whose parents are the passed base and
+     * auxiliary Commit.
      *
      * @param inProgressCommit The InProgressCommit which is the basis for the created Commit.
      * @param message The String with the message text associated with the Commit.
@@ -365,95 +537,198 @@ public interface CatalogManager {
 
     /**
      * Creates an InProgressCommit which is a Commit that a User is actively working on. Once it is completed, the
-     * InProgressCommit will be used to create a Commit with associated message.
+     * InProgressCommit will be used to create a Commit with a provided message.
      *
      * @param user The User that this InProgressCommit is associated with.
-     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord that this InProgressCommit is on.
-     * @return Optional with an InProgressCommit created using the provided metadata if the identified branch exists.
-     * @throws InvalidParameterException if versionedRDFRecordId does not point to a VersionedRDFRecord entity in the
-     *         repository.
-     * @throws MatOntoException if the User already has an InProgressCommit associated with the identified
-     *         VersionedRDFRecord.
+     * @return Optional with an InProgressCommit created using the provided metadata.
      */
-    InProgressCommit createInProgressCommit(User user, Resource versionedRDFRecordId) throws InvalidParameterException,
-            MatOntoException;
+    InProgressCommit createInProgressCommit(User user);
 
     /**
-     * Adds the provided statements to the provided Commit as additions. These statements were added and will be used
-     * when creating the completed named graph.
+     * Updates the InProgressCommit identified by the provided Resources using the provided addition and deletion
+     * statements. These statements were added and deleted respectively and will be used when creating the completed
+     * named graph.
      *
-     * @param statements The statements which were added to the named graph.
-     * @param commitId The Resource identifying the Commit that these statements are associated with.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the InProgressCommit.
+     * @param commitId The Resource identifying the InProgressCommit you want to update.
+     * @param additions The statements which were added to the named graph.
+     * @param deletions The statements which were added to the named graph.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the InProgressCommit could not be found.
+     * @throws IllegalStateException Thrown if the InProgressCommit does not have the additions/deletions set.
      */
-    void addAdditions(Model statements, Resource commitId) throws MatOntoException;
+    void updateInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, Resource commitId,
+                                @Nullable Model additions, @Nullable Model deletions);
 
     /**
-     * Adds the provided statements to the provided Commit as deletions. These statements were deleted and will be used
-     * when creating the completed named graph.
+     * Updates the InProgressCommit identified by the provided Resources and User using the provided addition and
+     * deletion statements. These statements were added and deleted respectively and will be used when creating the
+     * completed named graph.
      *
-     * @param statements The statements which were added to the named graph.
-     * @param commitId The Resource identifying the Commit that these statements are associated with.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the InProgressCommit.
+     * @param user The User with the InProgressCommit.
+     * @param additions The statements which were added to the named graph.
+     * @param deletions The statements which were added to the named graph.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the InProgressCommit could not be found.
+     * @throws IllegalStateException Thrown if the InProgressCommit does not have the additions/deletions set.
      */
-    void addDeletions(Model statements, Resource commitId) throws MatOntoException;
+    void updateInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, User user, @Nullable Model additions,
+                                @Nullable Model deletions);
 
     /**
-     * Stores the provided Commit in the repository and adds it to the Branch identified by the provided Resource.
+     * Stores the provided Commit in the repository and adds it to the Branch identified by the provided Resources,
+     * updating the head of the Branch in the process.
      *
-     * @param commit The Commit to store in the repository.
-     * @param branchId The Resource identifying the Branch to add the Commit to.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
+     * @param branchId The Resource identifying the Branch which will get the new Commit.
+     * @param commit The Commit to add to the Branch.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, the Branch could not be found, or the Commit already exists in the
+     *      repository.
      */
-    void addCommitToBranch(Commit commit, Resource branchId) throws MatOntoException;
+//    void addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Commit commit);
 
     /**
-     * Adds the provided InProgressCommit to the repository.
+     * Creates a new Commit in the repository using the InProgressCommit identified by the provided Resources and User
+     * and adds it to the Branch identified by the provided Resources, updating the head of the Branch in the process.
+     * Removes the InProgressCommit after adding the new Commit successfully.
      *
-     * @param inProgressCommit The InProgressCommit to add to the repository.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch and
+     *                             InProgressCommit.
+     * @param branchId The Resource identifying the Branch which will get the new Commit.
+     * @param user The User with the InProgressCommit.
+     * @param message The String with the message text associated with the new Commit.
+     * @return The Resource of the new Commit.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, the Branch could not be found, or the InProgress could not be found.
+     * @throws IllegalStateException Thrown if the Branch does not have a head Commit.
      */
-    void addInProgressCommit(InProgressCommit inProgressCommit) throws MatOntoException;
+//    Resource addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, User user, String message);
 
     /**
-     * Gets the Commit identified by the provided Resource.
+     * Creates a new Commit for the provided User in the repository for the Branch identified by the provided Resources
+     * using the provided added and deleted statements, updating the head of the Branch in the process.
      *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
+     * @param branchId The Resource identifying the Branch which will get the new Commit.
+     * @param user The User which will be associated with the new Commit.
+     * @param message The String with the message text associated with the new Commit.
+     * @param additions The statements which were added to the named graph.
+     * @param deletions The statements which were added to the named graph.
+     * @return The Resource of the new Commit.
+     */
+    /*Resource addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, User user, String message,
+                       Model additions, Model deletions);*/
+
+    /**
+     * Adds the provided InProgressCommit to the repository for the VersionedRDFRecord identified by the provided
+     * Resources.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which will get the new
+     *                             InProgressCommit.
+     * @param inProgressCommit The InProgressCommit to add to the VersionedRDFRecord.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the InProgressCommit already exists in the repository.
+     */
+    void addInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, InProgressCommit inProgressCommit);
+
+    /**
+     * Gets the Commit identified by the provided Resources. Returns an empty Optional if the Commit does not belong
+     * to the Branch.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
+     * @param branchId The Resource identifying the Branch which has the Commit.
      * @param commitId The Resource identifying the Commit to get.
-     * @param factory The OrmFactory identifying the type of Commit you want to get back.
-     * @param <T> An Object which extends Commit.
-     * @return Commit identified by the provided Resource if it exists.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @return The Commit if it exists.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the Branch does not belong to the Record.
+     * @throws IllegalStateException Thrown if the Branch could not be found, the Branch does not have a head Commit,
+     *      or the Commit could not be found.
      */
-    <T extends Commit> Optional<T> getCommit(Resource commitId, OrmFactory<T> factory) throws MatOntoException;
+    Optional<Commit> getCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Resource commitId);
 
     /**
-     * Gets the IRI of the InProgressCommit for the User identified by the provided Resource for the VersionedRDFRecord
-     * identified by the provided Resource.
+     * Gets the head Commit of the Branch identified by the provided Resources.
      *
-     * @param userId The IRI of the User whose InProgressCommit you want to get.
-     * @param recordId The IRI of the Record the InProgressCommit should be associated with.
-     * @return The Resource of the InProgressCommti identified by the provided Resource if it exists.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
+     * @param branchId The Resource identifying the Branch which has the head Commit.
+     * @return The head Commit if it exists
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the Branch does not belong to the Record.
+     * @throws IllegalStateException Thrown if the Branch could not be found, the Branch does not have a head Commit
+     *      or the Commit could not be found.
      */
-    Optional<Resource> getInProgressCommitIRI(Resource userId, Resource recordId) throws MatOntoException;
+    Commit getHeadCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId);
+
+    /**
+     * Gets the InProgressCommit for the provided User for the VersionedRDFRecord identified by the provided Resources
+     * and User. Returns an empty Optional if there is no InProgressCommit for the Record and User.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the InProgressCommit.
+     * @param user The User with the InProgressCommit.
+     * @return The InProgressCommit if it exists
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or the
+     *      Record does not belong to the Catalog.
+     * @throws IllegalStateException Thrown if the InProgressCommit could not be found.
+     */
+    Optional<InProgressCommit> getInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, User user);
+
+    /**
+     * Gets the InProgressCommit identified by the provided Resources. Returns an empty Optional if the
+     * InProgressCommit could not be found, or the InProgressCommit does not belong to the Record.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the InProgressCommit.
+     * @param inProgressCommitId The Resource identifying the InProgressCommit.
+     * @return The InProgressCommit if it exists
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or the
+     *      Record does not belong to the Catalog.
+     * @throws IllegalStateException Thrown if the InProgressCommit has no Record set.
+     */
+    Optional<InProgressCommit> getInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
+                                         Resource inProgressCommitId);
 
     /**
      * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference.
      *
      * @param commitId The Resource identifying the Commit to retrieve the Difference from.
      * @return A Difference object containing the addition and deletion statements of a Commit.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made, the Commit could not be
-     *      found, or the Commit's Revision does not have the additions/deletions set.
+     * @throws IllegalArgumentException Thrown if the Commit could not be found
+     * @throws IllegalStateException Thrown if the Commit does not have the additions/deletions set.
      */
-    Difference getCommitDifference(Resource commitId) throws MatOntoException;
+    Difference getCommitDifference(Resource commitId);
 
     /**
-     * Removes the InProgressCommit identified by the provided Resource.
+     * Removes the InProgressCommit identified by the provided Resources.
      *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the InProgressCommit.
      * @param inProgressCommitId The Resource identifying the InProgressCommit to be removed.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the InProgressCommit could not be found
      */
-    void removeInProgressCommit(Resource inProgressCommitId) throws MatOntoException;
+    void removeInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, Resource inProgressCommitId);
+
+    /**
+     * Removes the InProgressCommit identified by the provided Resources and User.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the InProgressCommit.
+     * @param user The User with the InProgressCommit.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, or the InProgressCommit could not be found
+     */
+    void removeInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, User user);
 
     /**
      * Applies the addition and deletion statements from the InProgressCommit identified by the provided Resource to the
@@ -462,23 +737,40 @@ public interface CatalogManager {
      * @param inProgressCommitId The Resource identifying the InProgressCommit to be added.
      * @param entity The Model which you want to apply the statements to.
      * @return A Model consisting of the provided Model statements with the proper statements added and/or removed.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made or the InProgressCommit
-     *         could not be found in it's entirety.
+     * @throws IllegalArgumentException Thrown if the InProgressCommit could not be found
+     * @throws IllegalStateException Thrown if the InProgressCommit has no Revision set or the InProgressCommit's
+     *      Revision does not have the additions/deletions set.
      */
-    Model applyInProgressCommit(Resource inProgressCommitId, Model entity) throws MatOntoException;
+    Model applyInProgressCommit(Resource inProgressCommitId, Model entity);
 
     /**
-     * Gets a List of Resources which all identify different Commits ordered by date descending within the repository.
-     * The Commit identified by the provided Resource is the first item in the List and it was informed by the previous
-     * Commit in the List. This association is repeated until you get to the beginning of the List. The resulting List
-     * can then be thought about the chain of Commits on a Branch starting with the Commit identified by the provided
-     * Resource.
+     * Gets a List of Commits ordered by date descending within the repository. The Commit identified by the provided
+     * Resource is the first item in the List and it was informed by the previous Commit in the List. This association
+     * is repeated until you get to the beginning of the List. The resulting List can then be thought about the chain
+     * of Commits on a Branch starting with the Commit identified by the provided Resource.
      *
      * @param commitId The Resource identifying the Commit for the desired chain.
-     * @return List of Resources identifying the Commits which make up the commit chain for the provided Commit.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @return List of Commits which make up the commit chain for the provided Commit.
+     * @throws IllegalArgumentException Thrown if any of the Commits could not be found.
      */
-    List<Resource> getCommitChain(Resource commitId) throws MatOntoException;
+    List<Commit> getCommitChain(Resource commitId);
+
+    /**
+     * Gets a List of Commits ordered by date descending within the repository starting with the head Commit of the
+     * Branch identified by the provided Resources. The head Commit is the first one in the List and it was informed
+     * by the previous Commit in the List. This association is repeated until you get to the beginning of the List. The
+     * resulting List can then be thought as the chain of Commits on the Branch starting with the head Commit.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
+     * @param branchId The Resource identifying the Branch with the chain of Commit.
+     * @return List of Commits which make up the commit chain for the head Commit of the Branch.
+     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
+     *      Record does not belong to the Catalog, the Branch could not be found, or any of the Commits could not be
+     *      found.
+     * @throws IllegalStateException Thrown if the Branch does not have a head Commit.
+     */
+    List<Commit> getCommitChain(Resource catalogId, Resource versionedRDFRecordId, Resource branchId);
 
     /**
      * Gets the Model which represents the entity at the instance of the Commit identified by the provided Resource
@@ -486,10 +778,10 @@ public interface CatalogManager {
      *
      * @param commitId The Resource identifying the Commit identifying the spot in the entity's history that you wish
      *                 to retrieve.
-     * @return Model which represents the Resource at the Commit's point in history.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @return Model which represents the resource at the Commit's point in history.
+     * @throws IllegalArgumentException Thrown if the Commit could not be found.
      */
-    Optional<Model> getCompiledResource(Resource commitId) throws MatOntoException;
+    Model getCompiledResource(Resource commitId);
 
     /**
      * Gets all of the conflicts between the Commits identified by the two provided Resources.
@@ -497,9 +789,30 @@ public interface CatalogManager {
      * @param leftId The left (first) Commit.
      * @param rightId The right (second) Commit.
      * @return The Set of Conflicts between the two Commits identified by the provided Resources.
-     * @throws MatOntoException Thrown if a connection to the repository could not be made.
+     * @throws IllegalArgumentException Thrown if either Commit could not be found or the Commits have no common parent.
+     * @throws IllegalStateException Thrown if a Commit in either chain does not have the additions/deletions set.
      */
-    Set<Conflict> getConflicts(Resource leftId, Resource rightId) throws MatOntoException;
+    Set<Conflict> getConflicts(Resource leftId, Resource rightId);
+
+    /**
+     * Merges a Branch identified by the provided Resources into another Branch identified by the provided Resources.
+     * Both Branches must belong to the same VersionedRDFRecord. The provided addition and deletion statements should
+     * resolve any conflicts and will be used to create the merge Commit along with the InProgressCommit identified by
+     * the provided Resources and User. The head of the target Branch will be the new merge Commit, but the head of the
+     * source Branch will not change.
+     *
+     * @param catalogId The Resource identifying the Catalog which contains the Record.
+     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branches and
+     *                             InProgressCommit.
+     * @param sourceBranchId The Resource identifying the source Branch which will merge into the target Branch.
+     * @param targetBranchId The Resource identifying the target Branch which will be merge into by the source Branch.
+     * @param user The User with the InProgressCommit.
+     * @param additions The statements which were added to the named graph.
+     * @param deletions The statements which were deleted from the named graph.
+     * @return The Resource of the new merge Commit.
+     */
+    /*Resource mergeBranches(Resource catalogId, Resource versionedRDFRecordId, Resource sourceBranchId,
+                       Resource targetBranchId, User user, Model additions, Model deletions);*/
 
     /**
      * Gets the Difference, consisting of Models of additions and deletions, made between the original and the changed

@@ -26,18 +26,26 @@ describe('Dataset Manager service', function() {
         datasetManagerSvc,
         utilSvc,
         $q,
+        scope,
+        prefixes,
+        discoverStateSvc,
         recordId = 'http://matonto.org/records/test';
 
     beforeEach(function() {
         module('datasetManager');
         mockUtil();
+        mockPrefixes();
+        mockDiscoverState();
 
-        inject(function(datasetManagerService, _$httpBackend_, _$httpParamSerializer_, _$q_, _utilService_) {
+        inject(function(datasetManagerService, _$httpBackend_, _$httpParamSerializer_, _$q_, _utilService_, _$rootScope_, _prefixes_, _discoverStateService_) {
             datasetManagerSvc = datasetManagerService;
             $httpBackend = _$httpBackend_;
             $httpParamSerializer = _$httpParamSerializer_;
             $q = _$q_;
             utilSvc = _utilService_;
+            scope = _$rootScope_;
+            prefixes = _prefixes_;
+            discoverStateSvc = _discoverStateService_;
         });
 
         utilSvc.paginatedConfigToParams.and.callFake(_.identity);
@@ -88,14 +96,18 @@ describe('Dataset Manager service', function() {
         });
     });
     describe('should create a new Record', function() {
+        var record;
         beforeEach(function() {
             this.recordConfig = {
                 title: 'Title',
                 repositoryId: 'repo',
                 datasetIRI: 'dataset',
                 description: 'Description',
-                keywords: ['keyword0', 'keyword1']
+                keywords: ['keyword0', 'keyword1'],
+                ontologies: ['ontology1', 'ontology2']
             };
+            record = {'@id': recordId};
+            record[prefixes.dcterms + 'title'] = [{'@value': this.recordConfig.title}];
         });
         it('unless an error occurs', function(done) {
             $httpBackend.expectPOST('/matontorest/datasets',
@@ -111,12 +123,13 @@ describe('Dataset Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('with a datasetIRI, description, and keywords', function(done) {
+        it('with a datasetIRI, description, keywords, and ontologies', function(done) {
             $httpBackend.expectPOST('/matontorest/datasets',
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, recordId);
             datasetManagerSvc.createDatasetRecord(this.recordConfig).then(function(response) {
+                expect(datasetManagerSvc.datasetRecords).toContain(record);
                 expect(response).toBe(recordId);
                 done();
             }, function(response) {
@@ -125,15 +138,17 @@ describe('Dataset Manager service', function() {
             });
             $httpBackend.flush();
         });
-        it('without a datasetIRI, description, or keywords', function(done) {
+        it('without a datasetIRI, description, keywords, or ontologies', function(done) {
             delete this.recordConfig.datasetIRI;
             delete this.recordConfig.description;
             delete this.recordConfig.keywords;
+            delete this.recordConfig.ontologies;
             $httpBackend.expectPOST('/matontorest/datasets',
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, recordId);
             datasetManagerSvc.createDatasetRecord(this.recordConfig).then(function(response) {
+                expect(datasetManagerSvc.datasetRecords).toContain(record);
                 expect(response).toBe(recordId);
                 done();
             }, function(response) {
@@ -156,9 +171,12 @@ describe('Dataset Manager service', function() {
             $httpBackend.flush();
         });
         it('with force delete', function(done) {
+            var datasetRecord = {'@id': recordId, '@type': [prefixes.dataset + 'DatasetRecord']};
+            datasetManagerSvc.datasetRecords = [datasetRecord];
             $httpBackend.whenDELETE('/matontorest/datasets/' + encodeURIComponent(recordId) + '?force=true').respond(200);
             datasetManagerSvc.deleteDatasetRecord(recordId, true).then(function() {
-                expect(true).toBe(true);
+                expect(datasetManagerSvc.datasetRecords).toEqual([]);
+                expect(discoverStateSvc.cleanUpOnDatasetDelete).toHaveBeenCalledWith(recordId);
                 done();
             }, function(response) {
                 fail('Promise should have resolved');
@@ -167,9 +185,12 @@ describe('Dataset Manager service', function() {
             $httpBackend.flush();
         });
         it('without force delete', function(done) {
+            var datasetRecord = {'@id': recordId, '@type': [prefixes.dataset + 'DatasetRecord']};
+            datasetManagerSvc.datasetRecords = [datasetRecord];
             $httpBackend.whenDELETE('/matontorest/datasets/' + encodeURIComponent(recordId) + '?force=false').respond(200);
             datasetManagerSvc.deleteDatasetRecord(recordId).then(function() {
-                expect(true).toBe(true);
+                expect(datasetManagerSvc.datasetRecords).toEqual([]);
+                expect(discoverStateSvc.cleanUpOnDatasetDelete).toHaveBeenCalledWith(recordId);
                 done();
             }, function(response) {
                 fail('Promise should have resolved');
@@ -193,7 +214,7 @@ describe('Dataset Manager service', function() {
         it('with force delete', function(done) {
             $httpBackend.whenDELETE('/matontorest/datasets/' + encodeURIComponent(recordId) + '/data?force=true').respond(200);
             datasetManagerSvc.clearDatasetRecord(recordId, true).then(function() {
-                expect(true).toBe(true);
+                expect(discoverStateSvc.cleanUpOnDatasetClear).toHaveBeenCalledWith(recordId);
                 done();
             }, function(response) {
                 fail('Promise should have resolved');
@@ -204,13 +225,40 @@ describe('Dataset Manager service', function() {
         it('without force delete', function(done) {
             $httpBackend.whenDELETE('/matontorest/datasets/' + encodeURIComponent(recordId) + '/data?force=false').respond(200);
             datasetManagerSvc.clearDatasetRecord(recordId).then(function() {
-                expect(true).toBe(true);
+                expect(discoverStateSvc.cleanUpOnDatasetClear).toHaveBeenCalledWith(recordId);
                 done();
             }, function(response) {
                 fail('Promise should have resolved');
                 done();
             });
             $httpBackend.flush();
+        });
+    });
+    describe('initialize should call the correct method when getDatasetRecords was', function() {
+        it('resolved', function() {
+            var datasetRecord = {'@id': 'dataset', '@type': [prefixes.dataset + 'DatasetRecord']};
+            spyOn(datasetManagerSvc, 'getDatasetRecords').and.returnValue($q.when({data: [[datasetRecord]]}));
+            datasetManagerSvc.initialize();
+            scope.$apply();
+            var config = {
+                sortOption: {
+                    field: prefixes.dcterms + 'title'
+                }
+            };
+            expect(datasetManagerSvc.getDatasetRecords).toHaveBeenCalledWith(config);
+            expect(datasetManagerSvc.datasetRecords).toEqual([datasetRecord]);
+        });
+        it('rejected', function() {
+            spyOn(datasetManagerSvc, 'getDatasetRecords').and.returnValue($q.reject('error'));
+            datasetManagerSvc.initialize();
+            scope.$apply();
+            var config = {
+                sortOption: {
+                    field: prefixes.dcterms + 'title'
+                }
+            };
+            expect(datasetManagerSvc.getDatasetRecords).toHaveBeenCalledWith(config);
+            expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
         });
     });
 });

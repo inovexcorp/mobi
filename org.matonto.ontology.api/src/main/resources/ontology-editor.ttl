@@ -15,7 +15,7 @@
     rdfs:comment "The MatOnto catalog ontology describes the structure of OntologyRecords and how they relate to the MatOnto Catalog."@en;
     dct:creator [foaf:name "Megan Mercer"];
     foaf:maker [foaf:name "MatOnto"; foaf:homepage <http://matonto.org>];
-    dct:modified "2017-04-17"^^xsd:date.
+    dct:modified "2017-06-13"^^xsd:date.
 
 # OntologyRecord
 

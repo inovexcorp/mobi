@@ -52,15 +52,25 @@
          */
         .service('mappingManagerService', mappingManagerService);
 
-        mappingManagerService.$inject = ['$window', '$filter', '$http', '$q', 'utilService', 'ontologyManagerService', 'catalogManagerService', 'prefixes', 'uuid'];
+        mappingManagerService.$inject = ['$window', '$filter', '$http', '$q', 'utilService', 'ontologyManagerService', 'prefixes', 'uuid'];
 
-        function mappingManagerService($window, $filter, $http, $q, utilService, ontologyManagerService, catalogManagerService, prefixes, uuid) {
+        function mappingManagerService($window, $filter, $http, $q, utilService, ontologyManagerService, prefixes, uuid) {
             var self = this,
                 om = ontologyManagerService,
-                cm = catalogManagerService,
                 util = utilService,
                 prefix = '/matontorest/mappings';
 
+            /**
+             * @ngdoc property
+             * @name annotationProperties
+             * @propertyOf mappingManager.service:mappingManagerService
+             * @type {string[]}
+             *
+             * @description
+             * `annotationProperties` holds an array of annotation IRIs that are supported by
+             * the Mapping Tool.
+             */
+            self.annotationProperties = [prefixes.rdfs + 'label', prefixes.rdfs + 'comment', prefixes.dcterms + 'title', prefixes.dcterms + 'description'];
             /**
              * @ngdoc property
              * @name mappingIds
@@ -310,7 +320,7 @@
             self.addClass = function(mapping, ontology, classId) {
                 var classEntity = undefined;
                 // Check if class exists in ontology
-                if (om.getEntity(ontology, classId)) {
+                if (om.getEntity([ontology], classId)) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
                     var ontologyDataName = ($filter('splitIRI')(om.getOntologyIRI(ontology))).end;
@@ -369,9 +379,10 @@
              */
             self.addDataProp = function(mapping, ontology, classMappingId, propId, columnIndex) {
                 var dataEntity;
-                // Check if class mapping exists and the property exists in the ontology
-                var propObj = om.getEntity(ontology, propId);
-                if (entityExists(mapping, classMappingId) && propObj && om.isDataTypeProperty(propObj)) {
+                // Check if class mapping exists and the property exists in the ontology or the property is one of the
+                // supported annotations
+                var propObj = om.getEntity([ontology], propId);
+                if (entityExists(mapping, classMappingId) && ((propObj && om.isDataTypeProperty(propObj)) || _.includes(self.annotationProperties, propId))) {
                     // Add new data mapping id to data properties of class mapping
                     dataEntity = {
                         '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4()
@@ -411,7 +422,7 @@
                 var objectEntity;
                 // Check if class mapping exists, range class mapping exists, object property exists in ontology,
                 // and object property range matches the range class mapping
-                var propObj = om.getEntity(ontology, propId);
+                var propObj = om.getEntity([ontology], propId);
                 if (entityExists(mapping, classMappingId) && entityExists(mapping, rangeClassMappingId) && propObj && om.isObjectProperty(propObj)
                         && util.getPropertyId(propObj, prefixes.rdfs + 'range') === getEntityById(mapping, rangeClassMappingId)[prefixes.delim + 'mapsTo'][0]['@id']) {
                     // Add new object mapping id to object properties of class mapping
@@ -522,10 +533,8 @@
                 if (!validateOntologyInfo(ontologyInfo)) {
                     return $q.reject('Missing identification information');
                 }
-                var deferred = $q.defer();
-                cm.getResource(ontologyInfo.commitId, ontologyInfo.branchId, ontologyInfo.recordId, cm.localCatalog['@id'], false)
-                    .then(response => deferred.resolve({id: om.getOntologyIRI(response), entities: response, recordId: ontologyInfo.recordId}), deferred.reject);
-                return deferred.promise;
+                return om.getOntology(ontologyInfo.recordId, ontologyInfo.branchId, ontologyInfo.commitId)
+                    .then(ontology => {return {id: om.getOntologyIRI(ontology), entities: ontology, recordId: ontologyInfo.recordId}}, $q.reject);
             }
             /**
              * @ngdoc method
@@ -599,7 +608,7 @@
              * @return {Object} The ontology with the class with the passed IRI
              */
             self.findSourceOntologyWithClass = function(classIRI, ontologies) {
-                return _.find(ontologies, ontology => _.findIndex(om.getClasses(ontology.entities), {'@id': classIRI}) !== -1);
+                return _.find(ontologies, ontology => _.findIndex(om.getClasses([ontology.entities]), {'@id': classIRI}) !== -1);
             }
             /**
              * @ngdoc method
@@ -616,7 +625,7 @@
              */
             self.findSourceOntologyWithProp = function(propertyIRI, ontologies) {
                 return _.find(ontologies, ontology => {
-                    var properties = _.concat(om.getDataTypeProperties(ontology.entities), om.getObjectProperties(ontology.entities));
+                    var properties = _.concat(om.getDataTypeProperties([ontology.entities]), om.getObjectProperties([ontology.entities]));
                     return _.findIndex(properties, {'@id': propertyIRI}) !== -1;
                 });
             }
@@ -647,7 +656,7 @@
              * Finds the list of any Class, Data, or Object Mappings within the passed mapping that are no longer
              * compatible with the passed list of source ontologies. A Class, Data, or Object is incompatible if
              * its IRI doesn't exist in the ontologies. A ObjectMapping is also incompatible if its range has
-             * changed.
+             * changed. If a DataMapping uses a supported annotation property, it will not be incompatible.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {Object[]} ontologies The list of source ontologies to reference
@@ -662,10 +671,10 @@
                     _.forEach(self.getPropMappingsByClass(mapping, classMapping['@id']), propMapping => {
                         var propId = self.getPropIdByMapping(propMapping);
                         var ontology = self.findSourceOntologyWithProp(propId, ontologies);
-                        if (!ontology) {
+                        if (!ontology && !_.includes(self.annotationProperties, propId)) {
                             incompatibleMappings.push(propMapping);
-                        } else {
-                            var propObj = om.getEntity(ontology.entities, propId);
+                        } else if (ontology) {
+                            var propObj = om.getEntity([ontology.entities], propId);
                             if (om.isObjectProperty(propObj)) {
                                 var rangeClassId = self.getClassIdByMappingId(mapping, util.getPropertyId(propMapping, prefixes.delim + 'classMapping'));
                                 if (self.isDataMapping(propMapping) || util.getPropertyId(propObj, prefixes.rdfs + 'range') !== rangeClassId) {

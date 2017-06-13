@@ -164,18 +164,6 @@
             self.availableClasses = [];
             /**
              * @ngdoc property
-             * @name availableColumns
-             * @propertyOf mapperState.service:mapperStateService
-             * @type {string[]}
-             *
-             * @description
-             * `availableColumns` holds an array of the header strings for all the columns
-             * that haven't been mapped yet in the currently selected
-             * {@link mapperState.service:mapperStateService#mapping mapping}.
-             */
-            self.availableColumns = [];
-            /**
-             * @ngdoc property
              * @name availablePropsByClass
              * @propertyOf mapperState.service:mapperStateService
              * @type {Object}
@@ -406,7 +394,6 @@
                 self.newMapping = false;
                 self.step = 0;
                 self.invalidProps = [];
-                self.availableColumns = [];
                 self.availablePropsByClass = {};
                 self.availableClasses = [];
                 self.mapping = undefined;
@@ -480,27 +467,7 @@
              * @return {string[]} an array of strings of column indexes that haven't been mapped yet
              */
             self.getMappedColumns = function() {
-                return _.map(mm.getAllDataMappings(self.mapping.jsonld), dataMapping => util.getPropertyValue(dataMapping, prefixes.delim + 'columnIndex'));
-            }
-            /**
-             * @ngdoc method
-             * @name updateAvailableColumns
-             * @methodOf mapperState.service:mapperStateService
-             *
-             * @description
-             * Updates the list of {@link mapperState.service:mapperStateService#availableColumns available columns}
-             * for the currently selected {@link mapperState.service:mapperStateService#mapping mapping}
-             * and saved {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}. If a data
-             * property mapping has been selected, adds the mapped column index back to the available columns.
-             */
-            self.updateAvailableColumns = function() {
-                var mappedColumns = self.getMappedColumns();
-                if (self.selectedPropMappingId) {
-                    var propMapping = _.find(self.mapping.jsonld, {'@id': self.selectedPropMappingId});
-                    var index = util.getPropertyValue(propMapping, prefixes.delim + 'columnIndex');
-                    _.pull(mappedColumns, index);
-                }
-                self.availableColumns = _.difference(_.map(_.range(0, dm.dataRows[0].length), idx => `${idx}`), mappedColumns);
+                return _.uniq(_.map(mm.getAllDataMappings(self.mapping.jsonld), dataMapping => util.getPropertyValue(dataMapping, prefixes.delim + 'columnIndex')));
             }
             /**
              * @ngdoc method
@@ -547,7 +514,9 @@
             self.setAvailableProps = function(classMappingId) {
                 var mappedProps = _.map(mm.getPropMappingsByClass(self.mapping.jsonld, classMappingId), propMapping => util.getPropertyId(propMapping, prefixes.delim + 'hasProperty'));
                 var classId = mm.getClassIdByMappingId(self.mapping.jsonld, classMappingId);
-                var props = self.getClassProps(self.sourceOntologies, classId);
+                var props = _.concat(self.getClassProps(self.sourceOntologies, classId), _.map(mm.annotationProperties, id => {
+                    return { ontologyId: '', propObj: {'@id': id} };
+                }));
                 _.set(self.availablePropsByClass, encodeURIComponent(classMappingId), _.filter(props, prop => mappedProps.indexOf(prop.propObj['@id']) < 0));
             }
             /**
@@ -583,7 +552,7 @@
             self.getClassProps = function(ontologies, classId) {
                 var props = [];
                 _.forEach(ontologies, ontology => {
-                    var classProps = _.filter(_.union(om.getClassProperties(ontology.entities, classId), om.getNoDomainProperties(ontology.entities)), prop => !(om.isObjectProperty(prop) && om.isDataTypeProperty(prop)));
+                    var classProps = _.filter(_.union(om.getClassProperties([ontology.entities], classId), om.getNoDomainProperties([ontology.entities])), prop => !(om.isObjectProperty(prop) && om.isDataTypeProperty(prop)));
                     props = _.union(props, _.map(classProps, prop => {
                         return {ontologyId: ontology.id, propObj: prop};
                     }));
@@ -605,7 +574,7 @@
             self.getClasses = function(ontologies) {
                 var classes = [];
                 _.forEach(ontologies, ontology => {
-                    classes = _.concat(classes, _.map(om.getClasses(ontology.entities), classObj => {
+                    classes = _.concat(classes, _.map(om.getClasses([ontology.entities]), classObj => {
                         return {ontologyId: ontology.id, classObj};
                     }));
                 });

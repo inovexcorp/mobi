@@ -1,0 +1,56 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.instance-view {
+    .block-content {
+        padding-bottom: 15px;
+        
+        .lead {
+            display: -webkit-box;
+            max-height: 87px;
+            line-height: 29px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 3;
+        }
+        
+        .property {
+            font-size: 20px;
+            margin: 10px 0 5px 0;
+        }
+        
+        .values {
+            padding-left: 10px;
+            
+            &.show-more li,
+            &.show-link li.link-container,
+            li:first-child {
+                display: list-item;
+            }
+            
+            li {
+                display: none;
+                padding: 5px 8px;
+                
+                &:not(.link-container):hover {
+                    background: $gray-lighter;
+                }
+            }
+            
+            .link {
+                &:after {
+                    content: ' More';
+                }
+                
+                &.more:after {
+                    content: ' Less';
+                }
+            }
+        }
+        
+        .row {
+            margin: 0;
+        }
+    }
+}

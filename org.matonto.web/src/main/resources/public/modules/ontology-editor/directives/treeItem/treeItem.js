@@ -40,9 +40,9 @@
                     onClick: '&'
                 },
                 bindToController: {
-                    currentEntity: '=',
+                    currentEntity: '<',
                     isOpened: '=',
-                    path: '='
+                    path: '<'
                 },
                 templateUrl: 'modules/ontology-editor/directives/treeItem/treeItem.html',
                 controllerAs: 'dvm',
@@ -55,12 +55,12 @@
                         if (treeDisplay === 'pretty') {
                             return os.getEntityNameByIndex(_.get(dvm.currentEntity, '@id'), os.listItem);
                         }
-                        return _.get(dvm.currentEntity, 'matonto.originalIRI', _.get(dvm.currentEntity, 'matonto.anonymous', ''));
+                        return _.get(dvm.currentEntity, 'matonto.anonymous', '');
                     }
 
                     dvm.toggleOpen = function() {
                         dvm.isOpened = !dvm.isOpened;
-                        os.setOpened(dvm.path, dvm.isOpened);
+                        os.setOpened(_.join(dvm.path, '.'), dvm.isOpened);
                     }
 
                     dvm.isSaved = function() {

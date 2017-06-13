@@ -134,7 +134,6 @@ describe('Class Mapping Details directive', function() {
         });
         it('should set the proper state for adding a property mapping', function() {
             controller.addProp();
-            expect(mapperStateSvc.updateAvailableColumns).toHaveBeenCalled();
             expect(mapperStateSvc.displayPropMappingOverlay).toBe(true);
             expect(mapperStateSvc.newProp).toBe(true);
         });
@@ -143,7 +142,6 @@ describe('Class Mapping Details directive', function() {
             var propMapping = {'@id': 'prop'};
             controller.editProp(propMapping);
             expect(mapperStateSvc.selectedPropMappingId).toBe(propMapping['@id']);
-            expect(mapperStateSvc.updateAvailableColumns).toHaveBeenCalled();
             expect(mapperStateSvc.displayPropMappingOverlay).toBe(true);
             expect(mapperStateSvc.newProp).toBe(false);
         });

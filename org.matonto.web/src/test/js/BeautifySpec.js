@@ -48,24 +48,31 @@ describe('Beautify filter', function() {
         });
     });
     it('returns a beautified string when passed a string', function() {
-        var tests = [
-            {
-                value: 'abc',
-                result: 'Abc'
-            },
-            {
-                value: 'abc.&#@_def',
-                result: 'Abc.&#@_def'
-            },
-            {
-                value: 'ABC',
-                result: 'A B C'
-            },
-            {
-                value: 'abc def',
-                result: 'Abc def'
-            }
-        ];
+        var tests = [{
+            value: 'abc',
+            result: 'Abc'
+        }, {
+            value: 'abc.&#@_def',
+            result: 'Abc.&#@_def'
+        }, {
+            value: 'ABC',
+            result: 'ABC'
+        }, {
+            value: 'abc def',
+            result: 'Abc def'
+        }, {
+            value: 'xmlHTTPRequest',
+            result: 'Xml HTTP Request'
+        }, {
+            value: 'ThisIsAValue',
+            result: 'This Is A Value'
+        }, {
+            value: 'Numbers2017Here',
+            result: 'Numbers 2017 Here'
+        }, {
+            value: '123Here',
+            result: '123 Here'
+        }];
         _.forEach(tests, function(test) {
             result = $filter('beautify')(test.value);
             expect(result).toEqual(test.result);

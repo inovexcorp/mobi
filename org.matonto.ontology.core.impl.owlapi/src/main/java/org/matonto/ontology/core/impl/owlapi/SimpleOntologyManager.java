@@ -26,14 +26,10 @@ package org.matonto.ontology.core.impl.owlapi;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
+import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.PaginatedSearchParams;
-import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
-import org.matonto.catalog.api.ontologies.mcat.Commit;
-import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
-import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.exception.MatOntoException;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
@@ -41,10 +37,9 @@ import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.builder.OntologyRecordConfig;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
-import org.matonto.ontology.core.api.pagination.OntologyPaginatedSearchParams;
-import org.matonto.ontology.core.api.pagination.OntologyRecordSearchResults;
 import org.matonto.ontology.core.utils.MatontoOntologyCreationException;
 import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.QueryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.GraphQuery;
@@ -66,16 +61,19 @@ import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioParserImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.cache.Cache;
 
 @Component(
         provide = OntologyManager.class,
@@ -87,12 +85,15 @@ public class SimpleOntologyManager implements OntologyManager {
     private SesameTransformer sesameTransformer;
     private ModelFactory modelFactory;
     private CatalogManager catalogManager;
-    private RepositoryManager repositoryManager;
     private OntologyRecordFactory ontologyRecordFactory;
-    private CommitFactory commitFactory;
+    private RepositoryManager repositoryManager;
     private BranchFactory branchFactory;
+    private CacheManager cacheManager;
+
+    private final Logger log = LoggerFactory.getLogger(SimpleOntologyManager.class);
 
     private static final String GET_SUB_CLASSES_OF;
+    private static final String GET_CLASSES_FOR;
     private static final String GET_SUB_DATATYPE_PROPERTIES_OF;
     private static final String GET_SUB_OBJECT_PROPERTIES_OF;
     private static final String GET_CLASSES_WITH_INDIVIDUALS;
@@ -100,6 +101,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private static final String CONSTRUCT_ENTITY_USAGES;
     private static final String GET_CONCEPT_RELATIONSHIPS;
     private static final String GET_SEARCH_RESULTS;
+    private static final String GET_SUB_ANNOTATION_PROPERTIES_OF;
     private static final String ENTITY_BINDING = "entity";
     private static final String SEARCH_TEXT = "searchText";
 
@@ -107,6 +109,14 @@ public class SimpleOntologyManager implements OntologyManager {
         try {
             GET_SUB_CLASSES_OF = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-sub-classes-of.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_CLASSES_FOR = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-classes-for.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -168,9 +178,18 @@ public class SimpleOntologyManager implements OntologyManager {
         } catch (IOException e) {
             throw new MatOntoException(e);
         }
+        try {
+            GET_SUB_ANNOTATION_PROPERTIES_OF = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-annotation-properties-of.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
     }
 
-    public SimpleOntologyManager() {}
+    public SimpleOntologyManager() {
+    }
 
     @Reference
     public void setValueFactory(ValueFactory valueFactory) {
@@ -188,6 +207,11 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Reference
+    public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
+        this.ontologyRecordFactory = ontologyRecordFactory;
+    }
+
+    @Reference
     public void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
     }
@@ -198,23 +222,13 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Reference
-    public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
-        this.ontologyRecordFactory = ontologyRecordFactory;
-    }
-
-    @Reference
-    public void setCommitFactory(CommitFactory commitFactory) {
-        this.commitFactory = commitFactory;
-    }
-
-    @Reference
     public void setBranchFactory(BranchFactory branchFactory) {
         this.branchFactory = branchFactory;
     }
 
-    @Override
-    public SesameTransformer getTransformer() {
-        return sesameTransformer;
+    @Reference
+    public void setCacheManager(CacheManager cacheManager) {
+        this.cacheManager = cacheManager;
     }
 
     @Override
@@ -226,27 +240,27 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Ontology createOntology(OntologyId ontologyId) {
-        return new SimpleOntology(ontologyId, this);
+        return new SimpleOntology(ontologyId, this, sesameTransformer);
     }
 
     @Override
     public Ontology createOntology(File file) throws FileNotFoundException {
-        return new SimpleOntology(file, this);
+        return new SimpleOntology(file, this, sesameTransformer);
     }
 
     @Override
     public Ontology createOntology(IRI iri) {
-        return new SimpleOntology(iri, this);
+        return new SimpleOntology(iri, this, sesameTransformer);
     }
 
     @Override
     public Ontology createOntology(InputStream inputStream) {
-        return new SimpleOntology(inputStream, this);
+        return new SimpleOntology(inputStream, this, sesameTransformer);
     }
 
     @Override
     public Ontology createOntology(String json) {
-        return new SimpleOntology(json, this);
+        return new SimpleOntology(json, this, sesameTransformer);
     }
 
     @Override
@@ -267,73 +281,76 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId) {
-        Optional<Ontology> result = Optional.empty();
-        Optional<OntologyRecord> record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
-                ontologyRecordFactory);
-        if (record.isPresent()) {
-            Branch masterBranch = record.get().getMasterBranch().orElseThrow(() ->
-                    new IllegalArgumentException("The master Branch was not set on the OntologyRecord."));
-            masterBranch = catalogManager.getBranch(masterBranch.getResource(), branchFactory).orElseThrow(() ->
-                    new IllegalArgumentException("The master Branch could not be retrieved."));
-            Commit commit = masterBranch.getHead().orElseThrow(() ->
-                    new IllegalArgumentException("The head Commit was not set on the master Branch."));
-            return Optional.of(createOntologyFromCommit(commit));
+        long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
+        Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
+        Optional<Ontology> result = getOntology(recordId, masterBranch.getResource(), getHeadOfBranch(masterBranch));
+
+        if (log.isTraceEnabled()) {
+            log.trace(String.format("retrieveOntology(record) complete in %d ms", System.currentTimeMillis() - start));
         }
+
         return result;
     }
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId) {
-        Optional<Ontology> result = Optional.empty();
-        Optional<OntologyRecord> record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
-                ontologyRecordFactory);
-        if (record.isPresent()) {
-            for (Branch branch : record.get().getBranch()) {
-                if (branch.getResource().equals(branchId)) {
-                    branch = catalogManager.getBranch(branchId, branchFactory).orElseThrow(() ->
-                            new IllegalArgumentException("The identified Branch could not be retrieved."));
-                    Commit headCommit = branch.getHead().orElseThrow(() ->
-                            new IllegalArgumentException("The head Commit was not set on the Branch."));
-                    result = Optional.of(createOntologyFromCommit(headCommit));
-                    break;
-                }
-            }
+        long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
+        Optional<Ontology> result = catalogManager.getBranch(catalogManager.getLocalCatalogIRI(), recordId, branchId,
+                branchFactory).flatMap(branch -> getOntology(recordId, branch.getResource(), getHeadOfBranch(branch)));
+
+        if (log.isTraceEnabled()) {
+            log.trace(String.format("retrieveOntology(record, branch) complete in %d ms",
+                    System.currentTimeMillis() - start));
         }
+
         return result;
     }
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                                @Nonnull Resource commitId) {
-        Optional<Ontology> result = Optional.empty();
-        Optional<OntologyRecord> record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
-                ontologyRecordFactory);
-        if (record.isPresent()) {
-            for (Branch branch : record.get().getBranch()) {
-                if (branch.getResource().equals(branchId)) {
-                    branch = catalogManager.getBranch(branch.getResource(), branchFactory).orElseThrow(() ->
-                            new IllegalArgumentException("The identified Branch could not be retrieved."));
-                    Commit headCommit = branch.getHead().orElseThrow(() ->
-                            new IllegalArgumentException("The head Commit was not set on the Branch."));
-                    List<Resource> commitChain = catalogManager.getCommitChain(headCommit.getResource());
-                    if (commitChain.contains(commitId)) {
-                        Commit commit = catalogManager.getCommit(commitId, commitFactory).orElseThrow(() ->
-                                new IllegalArgumentException("The identified Commit could not be retrieved."));
-                        result = Optional.of(createOntologyFromCommit(commit));
-                    }
-                    break;
-                }
-            }
+        Optional<Ontology> result;
+        long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
+
+        Optional<Cache<String, Ontology>> optCache = getOntologyCache();
+        String key = OntologyCache.generateKey(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
+
+        if (optCache.isPresent() && optCache.get().containsKey(key)) {
+            log.trace("cache hit");
+            result = Optional.ofNullable(optCache.get().get(key));
+        } else {
+            result = catalogManager.getCommit(catalogManager.getLocalCatalogIRI(), recordId, branchId, commitId)
+                    .flatMap(commit -> getOntology(recordId, branchId, commitId));
         }
+
+        if (log.isTraceEnabled()) {
+            log.trace(String.format("retrieveOntology(record, branch, commit) complete in %d ms",
+                    System.currentTimeMillis() - start));
+        }
+
         return result;
     }
 
     @Override
     public void deleteOntology(@Nonnull Resource recordId) {
-        OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
-                ontologyRecordFactory).orElseThrow(() ->
-                new IllegalArgumentException("The OntologyRecord could not be retrieved."));
-        catalogManager.removeRecord(catalogManager.getLocalCatalog().getResource(), record.getResource());
+        catalogManager.removeRecord(catalogManager.getLocalCatalog().getResource(), recordId);
+        clearCache(recordId, null);
+    }
+
+    @Override
+    public void deleteOntologyBranch(@Nonnull Resource recordId, @Nonnull Resource branchId) {
+        catalogManager.removeBranch(catalogManager.getLocalCatalogIRI(), recordId, branchId);
+        clearCache(recordId, branchId);
+    }
+
+    private void clearCache(@Nonnull Resource recordId, Resource branchId) {
+        String key = OntologyCache.generateKey(recordId.stringValue(), branchId == null ? null : branchId.stringValue(),
+                null);
+        getOntologyCache().ifPresent(cache -> cache.forEach(entry -> {
+            if (entry.getKey().startsWith(key)) {
+                cache.remove(entry.getKey());
+            }
+        }));
     }
 
     @Override
@@ -362,8 +379,18 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public TupleQueryResult getSubClassesFor(Ontology ontology, IRI iri) {
+        return runQueryOnOntology(ontology, String.format(GET_CLASSES_FOR, iri.stringValue()), null);
+    }
+
+    @Override
     public TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_DATATYPE_PROPERTIES_OF, null);
+    }
+
+    @Override
+    public TupleQueryResult getSubAnnotationPropertiesOf(Ontology ontology) {
+        return runQueryOnOntology(ontology, GET_SUB_ANNOTATION_PROPERTIES_OF, null);
     }
 
     @Override
@@ -411,22 +438,46 @@ public class SimpleOntologyManager implements OntologyManager {
         });
     }
 
+    private Optional<Ontology> getOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
+                                           @Nonnull Resource commitId) {
+        Optional<Ontology> result;
+        Optional<Cache<String, Ontology>> optCache = getOntologyCache();
+        String key = OntologyCache.generateKey(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
+
+        if (optCache.isPresent() && optCache.get().containsKey(key)) {
+            log.trace("cache hit");
+            result = Optional.ofNullable(optCache.get().get(key));
+        } else {
+            log.trace("cache miss");
+            final Ontology ontology = createOntologyFromCommit(commitId);
+            result = Optional.of(ontology);
+            getOntologyCache().ifPresent(cache -> {
+                cache.put(key, ontology);
+            });
+        }
+        return result;
+    }
+
+    private Resource getHeadOfBranch(Branch branch) {
+        return branch.getHead_resource().orElseThrow(() ->
+                new IllegalStateException("Branch " + branch.getResource().stringValue() + "has no head Commit set."));
+    }
+
     /**
      * Creates an Ontology using the provided Commit.
      *
      * @param commit the Commit identifying the version of the Ontology that you want to create.
      * @return an Ontology built at the time identified by the Commit.
      */
-    private Ontology createOntologyFromCommit(Commit commit) {
-        Model ontologyModel = catalogManager.getCompiledResource(commit.getResource()).orElseThrow(() ->
-                new IllegalArgumentException("The compiled resource could not be retrieved."));
+    private Ontology createOntologyFromCommit(Resource commit) {
+        Model ontologyModel = catalogManager.getCompiledResource(commit);
         return createOntology(ontologyModel);
     }
 
     /**
      * Executes the provided query on the provided Ontology.
      *
-     * @param ontology the ontology to query on.
+     * @param ontology    the ontology to query on.
      * @param queryString the query string that you wish to run.
      * @return the results of the query.
      */
@@ -435,7 +486,11 @@ public class SimpleOntologyManager implements OntologyManager {
         Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
+            Set<Ontology> importedOntologies = ontology.getImportsClosure();
+            conn.begin();
             conn.add(ontology.asModel(modelFactory));
+            importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
+            conn.commit();
             TupleQuery query = conn.prepareTupleQuery(queryString);
             if (addBinding != null) {
                 query = addBinding.apply(query);
@@ -444,5 +499,13 @@ public class SimpleOntologyManager implements OntologyManager {
         } finally {
             repo.shutDown();
         }
+    }
+
+    private Optional<javax.cache.Cache<String, Ontology>> getOntologyCache() {
+        Optional<Cache<String, Ontology>> cache = Optional.empty();
+        if (cacheManager != null) {
+            cache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class);
+        }
+        return cache;
     }
 }

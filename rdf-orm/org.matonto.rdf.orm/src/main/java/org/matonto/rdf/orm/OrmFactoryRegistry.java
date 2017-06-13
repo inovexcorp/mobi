@@ -57,7 +57,7 @@ public interface OrmFactoryRegistry {
     Optional<OrmFactory> getFactoryOfType(IRI typeIRI);
 
     /**
-     * A List of OrmFactories of types that extend the passed type include the OrmFactory of the
+     * A List of OrmFactories of types that extend the passed type including the OrmFactory of the
      * type itself.
      *
      * @param type A Class that extends Thing
@@ -84,4 +84,35 @@ public interface OrmFactoryRegistry {
      * @return A List of OrmFactories of types that extend the type identified by the passed IRI
      */
     List<OrmFactory> getFactoriesOfType(IRI typeIRI);
+
+    /**
+     * A sorted List of OrmFactories of types that extend the passed type including the OrmFactory of the
+     * type itself. The list is sorted so that factories of subclass types are first.
+     *
+     * @param type A Class that extends Thing
+     * @param <T> A class that extends Thing
+     * @return A sorted List of OrmFactories of types that extend the passed type
+     */
+    <T extends Thing> List<OrmFactory> getSortedFactoriesOfType(Class<T> type);
+
+    /**
+     * A sorted List of OrmFactories of types that extend the type identified by the passed class IRI
+     * string including the OrmFactory of the type itself. The list is sorted so that factories of subclass
+     * types are first.
+     *
+     * @param typeIRI An IRI string of a class
+     * @return A sorted List of OrmFactories of types that extend the type identified by the passed IRI
+     *      string
+     */
+    List<OrmFactory> getSortedFactoriesOfType(String typeIRI);
+
+    /**
+     * A sorted List of OrmFactories of types that extend the type identified by the passed class IRI
+     * including the OrmFactory of the type itself. The list is sorted so that factories of subclass
+     * types are first.
+     *
+     * @param typeIRI An IRI of a class
+     * @return A sorted List of OrmFactories of types that extend the type identified by the passed IRI
+     */
+    List<OrmFactory> getSortedFactoriesOfType(IRI typeIRI);
 }

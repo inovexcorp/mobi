@@ -38,12 +38,13 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var ontoUtils = ontologyUtilsManagerService;
 
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.os = ontologyStateService;
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefix = dvm.os.getDefaultPrefix();
+                    dvm.values = [];
                     dvm.clazz = {
                         '@id': dvm.prefix,
                         '@type': [prefixes.owl + 'Class'],
@@ -72,21 +73,27 @@
                         if (_.isEqual(dvm.clazz[prefixes.dcterms + 'description'][0]['@value'], '')) {
                             _.unset(dvm.clazz, prefixes.dcterms + 'description');
                         }
-                        ontoUtils.addLanguageToNewEntity(dvm.clazz, dvm.language);
-                        _.set(dvm.clazz, 'matonto.originalIRI', dvm.clazz['@id']);
+                        dvm.ontoUtils.addLanguageToNewEntity(dvm.clazz, dvm.language);
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.clazz);
+                        dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.clazz['@id']);
-                        _.get(dvm.os.listItem, 'subClasses').push({namespace:split.begin + split.then,
-                            localName: split.end});
-                        _.get(dvm.os.listItem, 'classHierarchy').push({'entityIRI': dvm.clazz['@id']});
+                        _.get(dvm.os.listItem, 'subClasses').push({namespace:split.begin + split.then, localName: split.end});
+                        if (dvm.values.length) {
+                            dvm.clazz[prefixes.rdfs + 'subClassOf'] = dvm.values;
+                            dvm.ontoUtils.setSuperClasses(dvm.clazz['@id'], _.map(dvm.values, '@id'));
+                        } else {
+                            var hierarchy = _.get(dvm.os.listItem, 'classHierarchy');
+                            hierarchy.push({'entityIRI': dvm.clazz['@id']});
+                            dvm.os.listItem.flatClassHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
+                        }
                         dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.clazz);
                         // select the new class
                         dvm.os.selectItem(_.get(dvm.clazz, '@id'));
                         // hide the overlay
                         dvm.os.showCreateClassOverlay = false;
-                        ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.saveCurrentChanges();
                     }
                 }
             }

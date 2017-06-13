@@ -23,6 +23,9 @@
 {
   "hierarchy": [
     {
+      "entityIRI": "https://matonto.org/vocabulary#ConceptSubClass"
+    },
+    {
       "entityIRI": "http://matonto.org/ontology#Class1a",
       "subEntities": [
         {

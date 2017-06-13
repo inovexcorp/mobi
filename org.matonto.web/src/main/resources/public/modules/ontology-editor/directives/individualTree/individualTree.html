@@ -20,26 +20,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="tree individual-tree">
-    <ul class="class" ng-repeat="node in dvm.os.listItem.classesWithIndividuals | orderBy:dvm.ontoUtils.getNameByNode track by node.entityIRI" ng-include="'individual_item'"
-        ng-init="node = node; classOpened = dvm.os.getIndividualsOpened(dvm.os.listItem.recordId, node.entityIRI)"
-        ng-if="dvm.om.hasClassIndividuals(dvm.os.listItem.ontology, node.entityIRI)"></ul>
-    <script type="text/ng-template" id="individual_item">
-        <li>
-            <a ng-click="classOpened = !classOpened; dvm.os.setIndividualsOpened(dvm.os.listItem.recordId, node.entityIRI, classOpened); $event.stopPropagation()">
-                <i class="fa fa-fw"
-                   ng-class="{'fa-folder-open-o': classOpened, 'fa-folder-o': !classOpened}"></i>{{dvm.ontoUtils.getLabelForIRI(node.entityIRI)}}
-            </a>
-        </li>
-        <li class="container" ng-if="classOpened">
-            <ul>
-                <tree-item class="individual" ng-repeat="individual in dvm.om.getClassIndividuals(dvm.os.listItem.ontology, node.entityIRI) | orderBy:dvm.om.getEntityName track by individual.matonto.originalIRI"
-                           current-entity="individual"
-                           is-active="dvm.os.getActiveEntityIRI() === individual.matonto.originalIRI"
-                           on-click="dvm.os.selectItem(individual.matonto.originalIRI, false)"></tree-item>
-            </ul>
-            <ul ng-repeat="node in node.subEntities | orderBy:dvm.ontoUtils.getNameByNode track by node.entityIRI" ng-include="'individual_item'"
-                ng-init="node = node; classOpened = dvm.os.getIndividualsOpened(dvm.os.listItem.recordId, node.entityIRI)"></ul>
-        </li>
-    </script>
+<div class="tree individual-tree hierarchy-tree full-height">
+    <div class="full-height repeater-container" vs-repeat="26" vs-offset-before="10" vs-offset-after="10">
+        <div ng-repeat="node in dvm.os.listItem.flatIndividualsHierarchy | filter:dvm.isShown" class="tree-item-wrapper">
+            <div ng-if="node.isClass" class="tree-item" ng-class="{'imported': dvm.isImported(node.entityIRI)}" ng-style="{'padding-left': (dvm.indent * node.indent) + 'em'}">
+                <a ng-click="dvm.os.setIndividualsOpened(dvm.os.joinPath(node.path), !dvm.os.getIndividualsOpened(dvm.os.joinPath(node.path))); $event.stopPropagation()">
+                    <i class="fa fa-fw" ng-class="{'fa-folder-open-o': dvm.os.getIndividualsOpened(dvm.os.joinPath(node.path)), 'fa-folder-o': !dvm.os.getIndividualsOpened(dvm.os.joinPath(node.path))}"></i><span>{{dvm.ontoUtils.getLabelForIRI(node.entityIRI)}}</span>
+                </a>
+            </div>
+            <tree-item ng-if="!node.isClass" ng-style="{'padding-left': (dvm.indent * node.indent) + 'em'}"
+                       is-active="dvm.os.getActiveEntityIRI() === node.entityIRI"
+                       current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.recordId, node.entityIRI)"
+                       on-click="dvm.os.selectItem(node.entityIRI)" has-children="node.hasChildren"
+                       path="node.path" data-path-to="{{dvm.os.joinPath(node.path)}}" is-opened="dvm.os.getIndividualsOpened(dvm.os.joinPath(node.path))"></tree-item>
+        </div>
+    </div>
 </div>

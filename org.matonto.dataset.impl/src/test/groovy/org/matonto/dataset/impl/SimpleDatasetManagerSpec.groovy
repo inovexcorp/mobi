@@ -25,6 +25,7 @@ package org.matonto.dataset.impl
 import org.matonto.catalog.api.CatalogManager
 import org.matonto.catalog.api.PaginatedSearchResults
 import org.matonto.dataset.api.builder.DatasetRecordConfig
+import org.matonto.dataset.api.builder.OntologyIdentifier
 import org.matonto.dataset.ontology.dataset.Dataset
 import org.matonto.dataset.ontology.dataset.DatasetFactory
 import org.matonto.dataset.ontology.dataset.DatasetRecord
@@ -49,6 +50,9 @@ import org.openrdf.rio.Rio
 import org.openrdf.sail.memory.MemoryStore
 import spock.lang.Shared
 import spock.lang.Specification
+
+import java.util.stream.Collectors
+import java.util.stream.Stream
 
 class SimpleDatasetManagerSpec extends Specification {
 
@@ -241,7 +245,7 @@ class SimpleDatasetManagerSpec extends Specification {
         results != Optional.empty()
         results.get().getResource() == recordIri
         results.get().getRepository().get() == "system"
-        results.get().getDataset().get().getResource() == datasetIri
+        results.get().getDataset_resource().get() == datasetIri
     }
 
     def "getDatasetRecord(dataset, repo) returns an emtpy Optional when the dataset does not exist"() {
@@ -283,34 +287,7 @@ class SimpleDatasetManagerSpec extends Specification {
         results != Optional.empty()
         results.get().getResource() == recordIri
         results.get().getRepository().get() == "system"
-        results.get().getDataset().get().getResource() == datasetIri
-    }
-
-    def "getDatasetRecord(dataset, repo) returns an empty Optional when no DatasetRecord points to that Dataset"() {
-        setup:
-        def repo = "system"
-        def datasetIri = vf.createIRI("http://matonto.org/dataset/test")
-        def dataset = dsFactory.createNew(datasetIri)
-        def recordIri = vf.createIRI("http://matonto.org/record/dataset/test")
-        def record = dsRecFactory.createNew(recordIri)
-        record.setDataset(dataset)
-        record.setRepository(repo)
-
-        resultsMock.hasNext() >>> [true, true, false]
-        resultsMock.next() >>> [
-                vf.createStatement(recordIri, datasetPred, datasetIri),
-                vf.createStatement(recordIri, repoPred, vf.createLiteral("someOtherRepo"))
-        ]
-        1 * catalogManagerMock.getRecord(!null, recordIri, !null) >> Optional.of(record)
-
-        when:
-        def results = service.getDatasetRecord(datasetIri, repo)
-
-        then:
-        results != Optional.empty()
-        results.get().getResource() == recordIri
-        results.get().getRepository().get() == "system"
-        results.get().getDataset().get().getResource() == datasetIri
+        results.get().getDataset_resource().get() == datasetIri
     }
 
     def "getDatasetRecord(record) returns the correct DatasetRecord"() {
@@ -331,7 +308,7 @@ class SimpleDatasetManagerSpec extends Specification {
         results != Optional.empty()
         results.get().getResource() == recordIRI
         results.get().getRepository().get() == "system"
-        results.get().getDataset().get().getResource() == datasetIRI
+        results.get().getDataset_resource().get() == datasetIRI
     }
 
     def "getDatasetRecord(record) returns empty optional when the dataset does not exist"() {
@@ -350,7 +327,16 @@ class SimpleDatasetManagerSpec extends Specification {
         setup:
         def mockRecords = []
         def originalResults = Mock(PaginatedSearchResults)
-        7.times { mockRecords << Mock(DatasetRecord) }
+
+        def modelMock = Mock(Model) {
+            isEmpty() >> false
+            filter(*_) >> it
+        }
+
+        def recordMock = Mock(DatasetRecord)
+        recordMock.getModel() >> modelMock
+
+        7.times { mockRecords <<  recordMock }
         originalResults.getPage() >> mockRecords
         originalResults.getPageNumber() >> 1
         originalResults.getTotalSize() >> 7
@@ -402,24 +388,31 @@ class SimpleDatasetManagerSpec extends Specification {
         setup:
         def datasetIRI = vf.createIRI("http://test.com/dataset1")
         def dataset = dsFactory.createNew(datasetIRI)
+        def ontologyRecordStr = "http://text.com/ontology/record"
+        def ontologyBranchStr = "http://text.com/ontology/branch"
+        def ontologyCommitStr = "http://text.com/ontology/commit"
+        def identifier = new OntologyIdentifier(ontologyRecordStr, ontologyBranchStr, ontologyCommitStr, vf, mf)
         def recordIRI = vf.createIRI("http://test.com/record1")
         def record = dsRecFactory.createNew(recordIRI)
         record.setDataset(dataset)
+        record.setOntology(Collections.singleton(identifier.getNode()))
 
         def config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset", [] as Set, "system")
                 .dataset(datasetIRI.stringValue())
+                .ontology(identifier)
                 .build()
 
         1 * catalogManagerMock.createRecord(config, _ as DatasetRecordFactory) >> record
 
         when:
-        def results = service.createDataset(config)
+        def datasetRecord = service.createDataset(config)
 
         then:
-        results.getResource() == recordIRI
-        results.getDataset() != Optional.empty()
-        results.getDataset().get().getResource() == datasetIRI
-        results.getDataset().get().getSystemDefaultNamedGraph() != null
+        datasetRecord.getResource() == recordIRI
+        datasetRecord.getDataset_resource() != Optional.empty()
+        datasetRecord.getDataset_resource().get() == datasetIRI
+        !datasetRecord.getDataset().isPresent()
+        datasetRecord.getOntology().size() == 1
     }
 
     def "createDataset adds the Dataset model to the repo"() {
@@ -440,11 +433,15 @@ class SimpleDatasetManagerSpec extends Specification {
         service.createDataset(config)
 
         then:
-        1 * catalogManagerMock.addRecord(localCatalog, record)
-        1 * connMock.add(_ as Model) >> { args ->
+        1 * catalogManagerMock.addRecord(localCatalog, record) >> { args ->
+            DatasetRecord datasetRecord = args[1]
+            assert datasetRecord.getDataset_resource().isPresent()
+            assert !datasetRecord.getDataset().isPresent()
+        }
+        1 * connMock.add(_ as Model, datasetIRI) >> { args ->
             Model model = args[0]
-            model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
-            model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
+            assert model.contains(datasetIRI, vf.createIRI(Resource.type_IRI), vf.createIRI(Dataset.TYPE))
+            assert model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
         }
     }
 
@@ -476,7 +473,7 @@ class SimpleDatasetManagerSpec extends Specification {
         1 * repoManagerMock.getRepository("test") >> Optional.of(testRepo)
         1 * catalogManagerMock.addRecord(localCatalog, record)
         2 * testRepo.getConnection() >> testConn
-        1 * testConn.add(_ as Model) >> { args ->
+        1 * testConn.add(_ as Model, datasetIRI) >> { args ->
             Model model = args[0]
             model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
             model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
@@ -509,7 +506,7 @@ class SimpleDatasetManagerSpec extends Specification {
 
         then:
         1 * catalogManagerMock.addRecord(localCatalog, record)
-        1 * connMock.add(_ as Model) >> { args ->
+        1 * connMock.add(_ as Model, datasetIRI) >> { args ->
             Model model = args[0]
             model.contains(datasetIRI, vf.createIRI(Resource.TYPE), vf.createIRI(Dataset.TYPE))
             model.contains(datasetIRI, vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null)
@@ -542,7 +539,7 @@ class SimpleDatasetManagerSpec extends Specification {
 
         then:
         0 * catalogManagerMock.addRecord(localCatalog, record)
-        thrown(IllegalStateException)
+        thrown(IllegalArgumentException)
     }
 
     def "createDataset throws an exception if the dataset repository does not exist"() {

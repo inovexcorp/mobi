@@ -96,7 +96,7 @@ describe('Tree Item directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('LI');
+            expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('tree-item')).toBe(true);
         });
         it('depending on whether or not the currentEntity is saved', function() {
@@ -141,14 +141,7 @@ describe('Tree Item directive', function() {
     });
     describe('controller methods', function() {
         describe('getTreeDisplay', function() {
-            it('should return originalIRI when not pretty', function() {
-                scope.currentEntity = {matonto: {originalIRI: 'originalIRI', anonymous: 'anon'}};
-                scope.$digest();
-                var result = controller.getTreeDisplay();
-                expect(result).toBe('originalIRI');
-                expect(ontologyStateSvc.getEntityNameByIndex).not.toHaveBeenCalled();
-            });
-            it('should return anonymous when not pretty and no originalIRI', function() {
+            it('should return anonymous when not pretty', function() {
                 scope.currentEntity = {matonto: {anonymous: 'anon'}};
                 scope.$digest();
                 var result = controller.getTreeDisplay();
@@ -164,7 +157,7 @@ describe('Tree Item directive', function() {
         });
         describe('toggleOpen', function() {
             it('should call correct manager function', function() {
-                scope.currentEntity = {matonto: {originalIRI: 'originalIRI', anonymous: 'anon'}};
+                scope.currentEntity = {matonto: {anonymous: 'anon'}};
                 scope.$digest();
                 controller.toggleOpen();
                 expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(controller.path, controller.isOpened);

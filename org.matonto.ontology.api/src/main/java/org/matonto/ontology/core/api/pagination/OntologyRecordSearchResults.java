@@ -42,7 +42,8 @@ public class OntologyRecordSearchResults implements PaginatedSearchResults<Ontol
         this.totalSize = results.getTotalSize();
         this.pageNumber = results.getPageNumber();
         this.page = results.getPage().stream()
-                .map(record -> factory.getExisting(record.getResource(), record.getModel()))
+                .map(record -> factory.getExisting(record.getResource(), record.getModel()).orElseThrow(() ->
+                        new IllegalArgumentException("Provided results object did not contain an Ontology Record")))
                 .collect(Collectors.toList());
     }
 

@@ -31,8 +31,8 @@ import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.CatalogUtilsService;
 import org.matonto.catalog.api.Conflict;
 import org.matonto.catalog.api.Difference;
 import org.matonto.catalog.api.PaginatedSearchParams;
@@ -54,6 +54,7 @@ import org.matonto.catalog.api.ontologies.mcat.RecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.Revision;
 import org.matonto.catalog.api.ontologies.mcat.RevisionFactory;
 import org.matonto.catalog.api.ontologies.mcat.Tag;
+import org.matonto.catalog.api.ontologies.mcat.TagFactory;
 import org.matonto.catalog.api.ontologies.mcat.UnversionedRecord;
 import org.matonto.catalog.api.ontologies.mcat.UnversionedRecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.Version;
@@ -66,10 +67,10 @@ import org.matonto.catalog.config.CatalogConfig;
 import org.matonto.catalog.util.SearchResults;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
-import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontologies.provo.Entity;
 import org.matonto.persistence.utils.Bindings;
+import org.matonto.persistence.utils.RepositoryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
 import org.matonto.query.api.BindingSet;
@@ -82,22 +83,17 @@ import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
-import org.matonto.rdf.orm.Thing;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
-import org.matonto.repository.exception.RepositoryException;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.security.InvalidParameterException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -111,6 +107,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 @Component(
         configurationPolicy = ConfigurationPolicy.require,
@@ -124,11 +121,11 @@ public class SimpleCatalogManager implements CatalogManager {
     private Repository repository;
     private ValueFactory vf;
     private ModelFactory mf;
+    private CatalogUtilsService utils;
     private CatalogFactory catalogFactory;
     private RecordFactory recordFactory;
     private DistributionFactory distributionFactory;
     private BranchFactory branchFactory;
-    private UserFactory userFactory;
     private InProgressCommitFactory inProgressCommitFactory;
     private CommitFactory commitFactory;
     private RevisionFactory revisionFactory;
@@ -136,11 +133,13 @@ public class SimpleCatalogManager implements CatalogManager {
     private VersionedRecordFactory versionedRecordFactory;
     private UnversionedRecordFactory unversionedRecordFactory;
     private VersionFactory versionFactory;
+    private TagFactory tagFactory;
     private Resource distributedCatalogIRI;
     private Resource localCatalogIRI;
     private Map<Resource, String> sortingOptions = new HashMap<>();
 
-    public SimpleCatalogManager() {}
+    public SimpleCatalogManager() {
+    }
 
     @Reference(name = "repository")
     protected void setRepository(Repository repository) {
@@ -150,6 +149,11 @@ public class SimpleCatalogManager implements CatalogManager {
     @Reference
     protected void setValueFactory(ValueFactory valueFactory) {
         vf = valueFactory;
+    }
+
+    @Reference
+    protected void setUtils(CatalogUtilsService utils) {
+        this.utils = utils;
     }
 
     @Reference
@@ -175,11 +179,6 @@ public class SimpleCatalogManager implements CatalogManager {
     @Reference
     protected void setBranchFactory(BranchFactory branchFactory) {
         this.branchFactory = branchFactory;
-    }
-
-    @Reference
-    protected void setUserFactory(UserFactory userFactory) {
-        this.userFactory = userFactory;
     }
 
     @Reference
@@ -215,6 +214,11 @@ public class SimpleCatalogManager implements CatalogManager {
     @Reference
     protected void setVersionFactory(VersionFactory versionFactory) {
         this.versionFactory = versionFactory;
+    }
+
+    @Reference
+    protected void setTagFactory(TagFactory tagFactory) {
+        this.tagFactory = tagFactory;
     }
 
     private static final String PROV_AT_TIME = "http://www.w3.org/ns/prov#atTime";
@@ -278,14 +282,16 @@ public class SimpleCatalogManager implements CatalogManager {
         localCatalogIRI = vf.createIRI(config.iri() + "-local");
         createSortingOptions();
 
-        if (!resourceExists(distributedCatalogIRI, Catalog.TYPE)) {
-            log.debug("Initializing the distributed MatOnto Catalog.");
-            addCatalogToRepo(distributedCatalogIRI, config.title() + " (Distributed)", config.description());
-        }
+        try (RepositoryConnection conn = repository.getConnection()) {
+            if (!utils.resourceExists(distributedCatalogIRI, Catalog.TYPE, conn)) {
+                log.debug("Initializing the distributed MatOnto Catalog.");
+                addCatalogToRepo(distributedCatalogIRI, config.title() + " (Distributed)", config.description(), conn);
+            }
 
-        if (!resourceExists(localCatalogIRI, Catalog.TYPE)) {
-            log.debug("Initializing the local MatOnto Catalog.");
-            addCatalogToRepo(localCatalogIRI, config.title() + " (Local)", config.description());
+            if (!utils.resourceExists(localCatalogIRI, Catalog.TYPE, conn)) {
+                log.debug("Initializing the local MatOnto Catalog.");
+                addCatalogToRepo(localCatalogIRI, config.title() + " (Local)", config.description(), conn);
+            }
         }
     }
 
@@ -305,13 +311,19 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Catalog getDistributedCatalog() throws MatOntoException {
-        return getCatalog(distributedCatalogIRI);
+    public Catalog getDistributedCatalog() {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            return utils.optObject(distributedCatalogIRI, catalogFactory, conn).orElseThrow(() ->
+                    new IllegalStateException("The Catalog " + distributedCatalogIRI + " could not be retrieved."));
+        }
     }
 
     @Override
-    public Catalog getLocalCatalog() throws MatOntoException {
-        return getCatalog(localCatalogIRI);
+    public Catalog getLocalCatalog() {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            return utils.optObject(localCatalogIRI, catalogFactory, conn).orElseThrow(() ->
+                    new IllegalStateException("The Catalog " + localCatalogIRI + " could not be retrieved."));
+        }
     }
 
     @Override
@@ -375,7 +387,7 @@ public class SimpleCatalogManager implements CatalogManager {
             result.forEach(bindings -> {
                 Resource resource = vf.createIRI(Bindings.requiredResource(bindings, RECORD_BINDING)
                         .stringValue());
-                records.add(getRecord(catalogId, resource, recordFactory).get());
+                records.add(utils.getRecord(catalogId, resource, recordFactory, conn));
             });
 
             result.close();
@@ -390,19 +402,14 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Set<Resource> getRecordIds(Resource catalogId) throws MatOntoException {
-        if (resourceExists(catalogId, Catalog.TYPE)) {
-            try (RepositoryConnection conn = repository.getConnection()) {
-                Set<Resource> results = new HashSet<>();
-                RepositoryResult<Statement> statements = conn.getStatements(null, vf.createIRI(Record.catalog_IRI),
-                        catalogId);
-                statements.forEach(statement -> results.add(statement.getSubject()));
-                return results;
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection.", e);
-            }
+    public Set<Resource> getRecordIds(Resource catalogId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.testObjectId(catalogId, vf.createIRI(Catalog.TYPE), conn);
+            Set<Resource> results = new HashSet<>();
+            conn.getStatements(null, vf.createIRI(Record.catalog_IRI), catalogId)
+                    .forEach(statement -> results.add(statement.getSubject()));
+            return results;
         }
-        return Collections.emptySet();
     }
 
     @Override
@@ -413,63 +420,71 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Record> void addRecord(Resource catalogId, T record) throws MatOntoException {
+    public <T extends Record> void addRecord(Resource catalogId, T record) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            if (resourceExists(catalogId, Catalog.TYPE) && !resourceExists(record.getResource())) {
-                record.setCatalog(getCatalog(catalogId));
-                conn.add(record.getModel(), record.getResource());
-            } else {
-                throw new MatOntoException("The Record could not be added.");
-            }
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
-        }
-    }
-
-    @Override
-    public <T extends Record> void updateRecord(Resource catalogId, T newRecord) throws MatOntoException {
-        if (resourceExists(catalogId, Catalog.TYPE) && resourceExists(newRecord.getResource(), T.TYPE)) {
-            try (RepositoryConnection conn = repository.getConnection()) {
-                if (conn.getStatements(newRecord.getResource(), vf.createIRI(Record.catalog_IRI), catalogId)
-                        .hasNext()) {
-                    update(newRecord.getResource(), newRecord.getModel());
+            if (!utils.resourceExists(record.getResource(), conn)) {
+                record.setCatalog(utils.getObject(catalogId, catalogFactory, conn));
+                conn.begin();
+                if (record.getModel().contains(null, vf.createIRI(RDF.TYPE.stringValue()),
+                        versionedRDFRecordFactory.getTypeIRI())) {
+                    addMasterBranch((VersionedRDFRecord) record, conn);
+                } else {
+                    utils.addObject(record, conn);
                 }
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection", e);
-            }
-        } else {
-            throw new MatOntoException("The Record could not be updated.");
-        }
-    }
-
-    @Override
-    public void removeRecord(Resource catalogId, Resource recordId) throws MatOntoException {
-        Optional<Record> optionalRecord = getRecord(catalogId, recordId, recordFactory);
-        if (optionalRecord.isPresent()) {
-            Record record = optionalRecord.get();
-            if (record.getModel().contains(null, null, vf.createIRI(UnversionedRecord.TYPE))) {
-                removeUnversionedRecord(record);
-            } else if (record.getModel().contains(null, null, vf.createIRI(VersionedRDFRecord.TYPE))) {
-                removeVersionedRDFRecord(record);
-            } else if (record.getModel().contains(null, null, vf.createIRI(VersionedRecord.TYPE))) {
-                removeVersionedRecord(record);
+                conn.commit();
             } else {
-                remove(recordId);
+                throw utils.throwAlreadyExists(record.getResource(), recordFactory);
             }
-        } else {
-            throw new MatOntoException("The Record could not be removed.");
         }
     }
 
     @Override
-    public <T extends Record> Optional<T> getRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory)
-            throws MatOntoException {
+    public <T extends Record> void updateRecord(Resource catalogId, T newRecord) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            boolean condition = resourceExists(recordId, factory.getTypeIRI().stringValue())
-                    && conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), catalogId).hasNext();
-            return getObject(condition, recordId, factory);
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection.", e);
+            utils.testRecordPath(catalogId, newRecord.getResource(), recordFactory.getTypeIRI(), conn);
+            conn.begin();
+            utils.updateObject(newRecord, conn);
+            conn.commit();
+        }
+    }
+
+    @Override
+    public void removeRecord(Resource catalogId, Resource recordId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Record record = utils.getRecord(catalogId, recordId, recordFactory, conn);
+            conn.begin();
+            if (record.getModel().contains(null, null, vf.createIRI(UnversionedRecord.TYPE))) {
+                removeUnversionedRecord(record, conn);
+            } else if (record.getModel().contains(null, null, vf.createIRI(VersionedRDFRecord.TYPE))) {
+                removeVersionedRDFRecord(record, conn);
+            } else if (record.getModel().contains(null, null, vf.createIRI(VersionedRecord.TYPE))) {
+                removeVersionedRecord(record, conn);
+            } else {
+                utils.removeObject(record, conn);
+            }
+            conn.commit();
+        }
+    }
+
+    @Override
+    public <T extends Record> Optional<T> getRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.testObjectId(catalogId, catalogFactory.getTypeIRI(), conn);
+            return utils.optObject(recordId, factory, conn).flatMap(record -> {
+                Resource catalog = record.getCatalog_resource().orElseThrow(() ->
+                        new IllegalStateException("Record " + recordId + " does not have a Catalog set"));
+                return !catalog.equals(catalogId) ? Optional.empty() : Optional.of(record);
+            });
+        }
+    }
+
+    @Override
+    public Set<Distribution> getUnversionedDistributions(Resource catalogId, Resource unversionedRecordId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            UnversionedRecord record = utils.getRecord(catalogId, unversionedRecordId, unversionedRecordFactory, conn);
+            return record.getUnversionedDistribution_resource().stream()
+                    .map(resource -> utils.getObject(resource, distributionFactory, conn))
+                    .collect(Collectors.toSet());
         }
     }
 
@@ -500,50 +515,71 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void addDistributionToUnversionedRecord(Distribution distribution, Resource unversionedRecordId) throws
-            MatOntoException {
-        if (!addDistribution(distribution, unversionedRecordId, UnversionedRecord.unversionedDistribution_IRI)) {
-            throw new MatOntoException("The Distribution could not be added.");
+    public void addUnversionedDistribution(Resource catalogId, Resource unversionedRecordId,
+                                           Distribution distribution) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            UnversionedRecord record = utils.getRecord(catalogId, unversionedRecordId, unversionedRecordFactory, conn);
+            if (!utils.resourceExists(distribution.getResource(), conn)) {
+                Set<Distribution> distributions = record.getUnversionedDistribution_resource().stream()
+                        .map(distributionFactory::createNew)
+                        .collect(Collectors.toSet());
+                distributions.add(distribution);
+                record.setUnversionedDistribution(distributions);
+                conn.begin();
+                utils.updateObject(record, conn);
+                utils.addObject(distribution, conn);
+                conn.commit();
+            } else {
+                throw utils.throwAlreadyExists(distribution.getResource(), distributionFactory);
+            }
         }
     }
 
     @Override
-    public void addDistributionToVersion(Distribution distribution, Resource versionId) throws MatOntoException {
-        if (!addDistribution(distribution, versionId, Version.versionedDistribution_IRI)) {
-            throw new MatOntoException("The Distribution could not be added.");
+    public void updateUnversionedDistribution(Resource catalogId, Resource unversionedRecordId,
+                                              Distribution newDistribution) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.testUnversionedDistributionPath(catalogId, unversionedRecordId, newDistribution.getResource(), conn);
+            conn.begin();
+            utils.updateObject(newDistribution, conn);
+            conn.commit();
         }
     }
 
     @Override
-    public void updateDistribution(Distribution newDistribution) throws MatOntoException {
-        if (resourceExists(newDistribution.getResource(), Distribution.TYPE)) {
-            update(newDistribution.getResource(), newDistribution.getModel());
-        } else {
-            throw new MatOntoException("The Distribution could not be updated.");
+    public void removeUnversionedDistribution(Resource catalogId, Resource unversionedRecordId,
+                                              Resource distributionId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Distribution distribution = utils.getUnversionedDistribution(catalogId, unversionedRecordId, distributionId,
+                    conn);
+            conn.begin();
+            removeObjectWithRelationship(distribution.getResource(), unversionedRecordId,
+                    UnversionedRecord.unversionedDistribution_IRI, conn);
+            conn.commit();
         }
     }
 
     @Override
-    public void removeDistributionFromUnversionedRecord(Resource distributionId, Resource unversionedRecordId) throws
-            MatOntoException {
-        if (!(resourceExists(unversionedRecordId, UnversionedRecord.TYPE) && resourceExists(distributionId,
-                Distribution.TYPE) && removeObjectWithRelationship(distributionId, unversionedRecordId,
-                UnversionedRecord.unversionedDistribution_IRI))) {
-            throw new MatOntoException("The Distribution could not be removed.");
+    public Optional<Distribution> getUnversionedDistribution(Resource catalogId, Resource unversionedRecordId,
+                                                             Resource distributionId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            UnversionedRecord record = utils.getRecord(catalogId, unversionedRecordId, unversionedRecordFactory, conn);
+            if (!record.getUnversionedDistribution_resource().contains(distributionId)) {
+                return Optional.empty();
+            }
+            return Optional.of(utils.optObject(distributionId, distributionFactory, conn).orElseThrow(() ->
+                    utils.throwThingNotFound(distributionId, distributionFactory)));
         }
     }
 
     @Override
-    public void removeDistributionFromVersion(Resource distributionId, Resource versionId) throws MatOntoException {
-        if (!(resourceExists(versionId, Version.TYPE) && resourceExists(distributionId, Distribution.TYPE)
-                && removeObjectWithRelationship(distributionId, versionId, Version.versionedDistribution_IRI))) {
-            throw new MatOntoException("The Distribution could not be removed.");
+    public Set<Version> getVersions(Resource catalogId, Resource versionedRecordId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            VersionedRecord record = utils.getRecord(catalogId, versionedRecordId, versionedRecordFactory, conn);
+            return record.getVersion_resource().stream()
+                    .map(resource -> utils.getObject(resource, versionFactory, conn))
+                    .collect(Collectors.toSet());
         }
-    }
-
-    @Override
-    public Optional<Distribution> getDistribution(Resource distributionId) throws MatOntoException {
-        return getObject(resourceExists(distributionId, Distribution.TYPE), distributionId, distributionFactory);
     }
 
     @Override
@@ -562,68 +598,184 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Version> void addVersion(T version, Resource versionedRecordId) throws MatOntoException {
-        if (!resourceExists(version.getResource()) && resourceExists(versionedRecordId, VersionedRecord.TYPE)) {
-            try (RepositoryConnection conn = repository.getConnection()) {
-                IRI latestVersionResource = vf.createIRI(VersionedRecord.latestVersion_IRI);
-                IRI versionResource = vf.createIRI(VersionedRecord.version_IRI);
+    public <T extends Version> void addVersion(Resource catalogId, Resource versionedRecordId, T version) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            VersionedRecord record = utils.getRecord(catalogId, versionedRecordId, versionedRecordFactory, conn);
+            if (!utils.resourceExists(version.getResource(), conn)) {
+                record.setLatestVersion(version);
+                Set<Version> versions = record.getVersion_resource().stream()
+                        .map(versionFactory::createNew)
+                        .collect(Collectors.toSet());
+                versions.add(version);
+                record.setVersion(versions);
                 conn.begin();
-                conn.remove(versionedRecordId, latestVersionResource, null, versionedRecordId);
-                conn.add(versionedRecordId, latestVersionResource, version.getResource(), versionedRecordId);
-                conn.add(versionedRecordId, versionResource, version.getResource(), versionedRecordId);
-                conn.add(version.getModel(), version.getResource());
+                utils.updateObject(record, conn);
+                utils.addObject(version, conn);
                 conn.commit();
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection", e);
+            } else {
+                throw utils.throwAlreadyExists(version.getResource(), versionFactory);
             }
-        } else {
-            throw new MatOntoException("Version could not be added.");
         }
     }
 
     @Override
-    public <T extends Version> void updateVersion(T newVersion) throws MatOntoException {
-        if (resourceExists(newVersion.getResource(), T.TYPE)) {
-            update(newVersion.getResource(), newVersion.getModel());
-        } else {
-            throw new MatOntoException("The Version could not be updated.");
+    public <T extends Version> void updateVersion(Resource catalogId, Resource versionedRecordId, T newVersion) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.testVersionPath(catalogId, versionedRecordId, newVersion.getResource(), conn);
+            conn.begin();
+            utils.updateObject(newVersion, conn);
+            conn.commit();
         }
     }
 
     @Override
-    public void removeVersion(Resource versionId, Resource versionedRecordId) throws MatOntoException {
-        Optional<Version> optionalVersion = getVersion(versionId, versionFactory);
-        if (optionalVersion.isPresent() && resourceExists(versionedRecordId, VersionedRecord.TYPE)
-                && removeObjectWithRelationship(versionId, versionedRecordId, VersionedRecord.version_IRI)) {
-            try (RepositoryConnection conn = repository.getConnection()) {
-                IRI latestVersionIRI = vf.createIRI(VersionedRecord.latestVersion_IRI);
-                if (conn.getStatements(versionedRecordId, latestVersionIRI, versionId, versionedRecordId).hasNext()) {
-                    conn.begin();
-                    conn.remove(versionedRecordId, latestVersionIRI, versionId, versionedRecordId);
-                    TupleQuery query = conn.prepareTupleQuery(GET_NEW_LATEST_VERSION);
-                    query.setBinding(RECORD_BINDING, versionedRecordId);
-                    TupleQueryResult result = query.evaluate();
+    public void removeVersion(Resource catalogId, Resource versionedRecordId, Resource versionId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Version version = utils.getVersion(catalogId, versionedRecordId, versionId, versionFactory, conn);
+            conn.begin();
+            removeVersion(versionedRecordId, version, conn);
+            conn.commit();
+        }
+    }
 
-                    Optional<Binding> binding;
-                    if (result.hasNext() && (binding = result.next().getBinding("version")).isPresent()) {
-                        conn.add(versionedRecordId, latestVersionIRI, binding.get().getValue(), versionedRecordId);
-                    }
-                    conn.commit();
-                }
-                Version version = optionalVersion.get();
-                version.getVersionedDistribution().forEach(distribution -> remove(distribution.getResource()));
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection", e);
+    private void removeVersion(Resource recordId, Version version, RepositoryConnection conn) {
+        removeObjectWithRelationship(version.getResource(), recordId, VersionedRecord.version_IRI, conn);
+        IRI latestVersionIRI = vf.createIRI(VersionedRecord.latestVersion_IRI);
+        if (conn.getStatements(recordId, latestVersionIRI, version.getResource(), recordId).hasNext()) {
+            conn.remove(recordId, latestVersionIRI, version.getResource(), recordId);
+            TupleQuery query = conn.prepareTupleQuery(GET_NEW_LATEST_VERSION);
+            query.setBinding(RECORD_BINDING, recordId);
+            TupleQueryResult result = query.evaluate();
+
+            Optional<Binding> binding;
+            if (result.hasNext() && (binding = result.next().getBinding("version")).isPresent()) {
+                conn.add(recordId, latestVersionIRI, binding.get().getValue(), recordId);
             }
-        } else {
-            throw new MatOntoException("The Version could not be removed.");
+        }
+        version.getVersionedDistribution_resource().forEach(resource -> utils.remove(resource, conn));
+    }
+
+    private void removeVersion(Resource recordId, Resource versionId, RepositoryConnection conn) {
+        Version version = utils.getObject(versionId, versionFactory, conn);
+        removeVersion(recordId, version, conn);
+    }
+
+    @Override
+    public <T extends Version> Optional<T> getVersion(Resource catalogId, Resource versionedRecordId,
+                                                      Resource versionId, OrmFactory<T> factory) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            VersionedRecord record = utils.getRecord(catalogId, versionedRecordId, versionedRecordFactory, conn);
+            if (!record.getVersion_resource().contains(versionId)) {
+                return Optional.empty();
+            }
+            return Optional.of(utils.optObject(versionId, factory, conn).orElseThrow(() ->
+                    utils.throwThingNotFound(versionId, factory)));
         }
     }
 
     @Override
-    public <T extends Version> Optional<T> getVersion(Resource versionId, OrmFactory<T> factory) throws
-            MatOntoException {
-        return getObject(resourceExists(versionId, factory.getTypeIRI().stringValue()), versionId, factory);
+    public <T extends Version> Optional<T> getLatestVersion(Resource catalogId, Resource versionedRecordId,
+                                                            OrmFactory<T> factory) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            VersionedRecord record = utils.getRecord(catalogId, versionedRecordId, versionedRecordFactory, conn);
+            return record.getLatestVersion_resource().flatMap(resource -> Optional.of(
+                    utils.optObject(resource, factory, conn).orElseThrow(() ->
+                            utils.throwThingNotFound(resource, factory))));
+        }
+    }
+
+    @Override
+    public Commit getTaggedCommit(Resource catalogId, Resource versionedRecordId, Resource versionId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.testVersionPath(catalogId, versionedRecordId, versionId, conn);
+            Tag tag = utils.optObject(versionId, tagFactory, conn).orElseThrow(() ->
+                    utils.throwThingNotFound(versionId, tagFactory));
+            Resource commitId = tag.getCommit_resource().orElseThrow(() ->
+                    new IllegalStateException("Tag " + versionId + " does not have a Commit set"));
+            return utils.optObject(commitId, commitFactory, conn).orElseThrow(() ->
+                    utils.throwThingNotFound(commitId, commitFactory));
+        }
+    }
+
+    @Override
+    public Set<Distribution> getVersionedDistributions(Resource catalogId, Resource versionedRecordId,
+                                                       Resource versionId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Version version = utils.getVersion(catalogId, versionedRecordId, versionId, versionFactory, conn);
+            return version.getVersionedDistribution_resource().stream()
+                    .map(resource -> utils.getObject(resource, distributionFactory, conn))
+                    .collect(Collectors.toSet());
+        }
+    }
+
+
+    @Override
+    public void addVersionedDistribution(Resource catalogId, Resource versionedRecordId, Resource versionId,
+                                         Distribution distribution) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Version version = utils.getVersion(catalogId, versionedRecordId, versionId, versionFactory, conn);
+            if (!utils.resourceExists(distribution.getResource(), conn)) {
+                Set<Distribution> distributions = version.getVersionedDistribution_resource().stream()
+                        .map(distributionFactory::createNew)
+                        .collect(Collectors.toSet());
+                distributions.add(distribution);
+                version.setVersionedDistribution(distributions);
+                conn.begin();
+                utils.updateObject(version, conn);
+                utils.addObject(distribution, conn);
+                conn.commit();
+            } else {
+                throw utils.throwAlreadyExists(distribution.getResource(), distributionFactory);
+            }
+        }
+    }
+
+    @Override
+    public void updateVersionedDistribution(Resource catalogId, Resource versionedRecordId, Resource versionId,
+                                            Distribution newDistribution) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.testVersionedDistributionPath(catalogId, versionedRecordId, versionId, newDistribution.getResource(), conn);
+            conn.begin();
+            utils.updateObject(newDistribution, conn);
+            conn.commit();
+        }
+    }
+
+    @Override
+    public void removeVersionedDistribution(Resource catalogId, Resource versionedRecordId, Resource versionId,
+                                            Resource distributionId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Distribution distribution = utils.getVersionedDistribution(catalogId, versionedRecordId, versionId,
+                    distributionId, conn);
+            conn.begin();
+            removeObjectWithRelationship(distribution.getResource(), versionId, Version.versionedDistribution_IRI,
+                    conn);
+            conn.commit();
+        }
+    }
+
+
+    @Override
+    public Optional<Distribution> getVersionedDistribution(Resource catalogId, Resource recordId, Resource versionId,
+                                                           Resource distributionId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Version version = utils.getVersion(catalogId, recordId, versionId, versionFactory, conn);
+            if (!version.getVersionedDistribution_resource().contains(distributionId)) {
+                return Optional.empty();
+            }
+            return Optional.of(utils.optObject(distributionId, distributionFactory, conn).orElseThrow(() ->
+                    utils.throwThingNotFound(distributionId, distributionFactory)));
+        }
+    }
+
+    @Override
+    public Set<Branch> getBranches(Resource catalogId, Resource versionedRDFRecordId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory, conn);
+            return record.getBranch_resource().stream()
+                    .map(resource -> utils.getObject(resource, branchFactory, conn))
+                    .collect(Collectors.toSet());
+        }
     }
 
     @Override
@@ -642,144 +794,150 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Branch> void addBranch(T branch, Resource versionedRDFRecordId) throws MatOntoException {
-        if (!resourceExists(branch.getResource()) && resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)) {
-            try (RepositoryConnection conn = repository.getConnection()) {
-                conn.begin();
-                conn.add(versionedRDFRecordId, vf.createIRI(VersionedRDFRecord.branch_IRI), branch.getResource(),
-                        versionedRDFRecordId);
-                conn.add(branch.getModel(), branch.getResource());
-                conn.commit();
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection", e);
-            }
-        } else {
-            throw new MatOntoException("The Branch could not be added.");
-        }
-    }
-
-    @Override
-    public void addMasterBranch(Resource versionedRDFRecordId) throws MatOntoException {
+    public <T extends Branch> void addBranch(Resource catalogId, Resource versionedRDFRecordId, T branch) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
-            if (conn.getStatements(versionedRDFRecordId, masterBranchIRI, null, versionedRDFRecordId).hasNext()) {
-                throw new MatOntoException("The Record already has a master Branch.");
-            } else if (resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)) {
-                Branch branch = createBranch("MASTER", "The master branch.", branchFactory);
+            VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory, conn);
+            if (!utils.resourceExists(branch.getResource(), conn)) {
+                Set<Branch> branches = record.getBranch_resource().stream()
+                        .map(branchFactory::createNew)
+                        .collect(Collectors.toSet());
+                branches.add(branch);
+                record.setBranch(branches);
                 conn.begin();
-                conn.add(versionedRDFRecordId, vf.createIRI(VersionedRDFRecord.branch_IRI), branch.getResource(),
-                        versionedRDFRecordId);
-                conn.add(versionedRDFRecordId, masterBranchIRI, branch.getResource(), versionedRDFRecordId);
-                conn.add(branch.getModel(), branch.getResource());
+                utils.updateObject(record, conn);
+                utils.addObject(branch, conn);
                 conn.commit();
             } else {
-                throw new MatOntoException("The master Branch could not be added.");
+                throw utils.throwAlreadyExists(branch.getResource(), branchFactory);
             }
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
         }
     }
 
     @Override
-    public <T extends Branch> void updateBranch(T newBranch) throws MatOntoException {
+    public void addMasterBranch(Resource catalogId, Resource versionedRDFRecordId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory, conn);
+            conn.begin();
+            addMasterBranch(record, conn);
+            conn.commit();
+        }
+    }
+
+    private void addMasterBranch(VersionedRDFRecord record, RepositoryConnection conn) {
+        if (record.getMasterBranch_resource().isPresent()) {
+            throw new IllegalStateException("Record " + record.getResource() + " already has a master Branch.");
+        }
+        Branch branch = createBranch("MASTER", "The master branch.", branchFactory);
+        record.setMasterBranch(branch);
+        Set<Branch> branches = record.getBranch_resource().stream()
+                .map(branchFactory::createNew)
+                .collect(Collectors.toSet());
+        branches.add(branch);
+        record.setBranch(branches);
+        utils.updateObject(record, conn);
+        utils.addObject(branch, conn);
+    }
+
+    @Override
+    public <T extends Branch> void updateBranch(Resource catalogId, Resource versionedRDFRecordId, T newBranch) {
         try (RepositoryConnection conn = repository.getConnection()) {
             IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
-
-            if (!resourceExists(newBranch.getResource(), T.TYPE)) {
-                throw new MatOntoException("The Branch could not be updated. Branch does not exist.");
-            }
+            utils.testBranchPath(catalogId, versionedRDFRecordId, newBranch.getResource(), conn);
             if (conn.getStatements(null, masterBranchIRI, newBranch.getResource()).hasNext()) {
-                throw new MatOntoException("The Branch could not be updated. Master Branch cannot be updated.");
+                throw new IllegalArgumentException("Branch " + newBranch.getResource()
+                        + " is the master Branch and cannot be updated.");
             }
-
-            update(newBranch.getResource(), newBranch.getModel());
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
-        }
-    }
-
-    @Override
-    public void updateHead(Resource branch, Resource commit) throws MatOntoException {
-        try (RepositoryConnection conn = repository.getConnection()) {
             conn.begin();
-            updateHead(branch, commit, conn);
+            utils.updateObject(newBranch, conn);
             conn.commit();
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
         }
-    }
-
-    /**
-     * Updates the head of a branch to point to the specified commit. Connection transaction control and lifecycle
-     * (i.e. calling close()) should be performed outside of this method.
-     *
-     * @param branch The branch whose head to update.
-     * @param commit The new head commit of the specified branch.
-     * @param conn The RepositoryConnection to use.
-     * @throws MatOntoException If the Branch or Commit do not exist.
-     * @throws RepositoryException If there is a problem communicating with the Repository.
-     */
-    private void updateHead(Resource branch, Resource commit, RepositoryConnection conn) throws MatOntoException {
-        if (!resourceExists(branch, Branch.TYPE, conn)) {
-            throw new MatOntoException("The Commit could not be added. The branch does not exist");
-        }
-        if (!resourceExists(commit, Commit.TYPE, conn)) {
-            throw new MatOntoException("The Commit could not be added. The commit does not exist");
-        }
-
-        IRI headIRI = vf.createIRI(Branch.head_IRI);
-        conn.remove(branch, headIRI, null, branch);
-        conn.add(branch, headIRI, commit, branch);
     }
 
     @Override
-    public void removeBranch(Resource branchId, Resource versionedRDFRecordId) throws MatOntoException {
-        Optional<Branch> optionalBranch = getBranch(branchId, branchFactory);
+    public void updateHead(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Resource commitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
+            Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
+            conn.begin();
+            utils.testObjectId(commitId, commitFactory.getTypeIRI(), conn);
+            branch.setHead(commitFactory.createNew(commitId));
+            utils.updateObject(branch, conn);
+            conn.commit();
+        }
+    }
+
+    @Override
+    public void removeBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
             IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
             if (conn.getStatements(versionedRDFRecordId, masterBranchIRI, branchId, versionedRDFRecordId).hasNext()) {
-                throw new MatOntoException("The master Branch cannot be removed.");
-            } else if (optionalBranch.isPresent() && resourceExists(versionedRDFRecordId, VersionedRDFRecord.TYPE)
-                    && removeObjectWithRelationship(branchId, versionedRDFRecordId, VersionedRDFRecord.branch_IRI)) {
-                Branch branch = optionalBranch.get();
-                Optional<Commit> headCommit = branch.getHead();
-                if (headCommit.isPresent()) {
-                    List<Resource> chain = getCommitChain(headCommit.get().getResource());
-                    IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
-                    IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
-                    IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
-                    IRI commitIRI = vf.createIRI(Tag.commit_IRI);
-                    conn.begin();
-                    for (Resource commitId : chain) {
-                        if (!conn.getStatements(null, headCommitIRI, commitId).hasNext()
-                                && !conn.getStatements(null, baseCommitIRI, commitId).hasNext()
-                                && !conn.getStatements(null, auxiliaryCommitIRI, commitId).hasNext()) {
-                            conn.remove((Resource) null, null, null, commitId);
-                            conn.remove((Resource) null, commitIRI, commitId);
-                        } else {
-                            break;
-                        }
-                    }
-                    conn.commit();
-                } else {
-                    log.warn("The HEAD Commit was not set on the Branch.");
-                }
-            } else {
-                throw new MatOntoException("The Branch could not be removed.");
+                throw new IllegalStateException("Branch " + branchId + " is the master Branch and cannot be removed.");
             }
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
+            conn.begin();
+            removeBranch(versionedRDFRecordId, branch, conn);
+            conn.commit();
+        }
+    }
+
+    private void removeBranch(Resource recordId, Branch branch, RepositoryConnection conn) {
+        removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
+        Optional<Resource> headCommit = branch.getHead_resource();
+        if (headCommit.isPresent()) {
+            List<Resource> chain = getCommitChain(headCommit.get(), conn);
+            IRI commitIRI = vf.createIRI(Tag.commit_IRI);
+            Set<Resource> deltaIRIs = new HashSet<>();
+            for (Resource commitId : chain) {
+                if (!commitIsReferenced(commitId, conn)) {
+                    deltaIRIs.add(utils.getAdditionsResource(commitId, conn));
+                    deltaIRIs.add(utils.getDeletionsResource(commitId, conn));
+                    utils.remove(commitId, conn);
+                    RepositoryResults.asModel(conn.getStatements(null, commitIRI, commitId), mf).subjects()
+                            .forEach(tagId -> removeObjectWithRelationship(tagId, recordId, VersionedRecord.version_IRI,
+                                    conn));
+                } else {
+                    break;
+                }
+            }
+            deltaIRIs.forEach(resource -> utils.remove(resource, conn));
+        } else {
+            log.warn("The HEAD Commit was not set on the Branch.");
+        }
+    }
+
+    private void removeBranch(Resource recordId, Resource branchId, RepositoryConnection conn) {
+        Branch branch = utils.getObject(branchId, branchFactory, conn);
+        removeBranch(recordId, branch, conn);
+    }
+
+    @Override
+    public <T extends Branch> Optional<T> getBranch(Resource catalogId, Resource versionedRDFRecordId,
+                                                    Resource branchId, OrmFactory<T> factory) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory, conn);
+            if (!record.getBranch_resource().contains(branchId)) {
+                return Optional.empty();
+            }
+            return Optional.of(utils.optObject(branchId, factory, conn).orElseThrow(() ->
+                    utils.throwThingNotFound(branchId, factory)));
         }
     }
 
     @Override
-    public <T extends Branch> Optional<T> getBranch(Resource branchId, OrmFactory<T> factory) throws MatOntoException {
-        return getObject(resourceExists(branchId, factory.getTypeIRI().stringValue()), branchId, factory);
+    public Branch getMasterBranch(Resource catalogId, Resource versionedRDFRecordId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory,
+                    conn);
+            Resource branchId = record.getMasterBranch_resource().orElseThrow(() ->
+                    new IllegalStateException("Record " + versionedRDFRecordId
+                            + " does not have a master Branch set."));
+            return utils.optObject(branchId, branchFactory, conn).orElseThrow(() ->
+                    utils.throwThingNotFound(branchId, branchFactory));
+        }
     }
 
     @Override
-    public Commit createCommit(@Nonnull InProgressCommit inProgressCommit, @Nonnull String message, Commit baseCommit,
-                               Commit auxCommit) {
+    public Commit createCommit(@Nonnull InProgressCommit inProgressCommit, @Nonnull String message, Commit
+            baseCommit, Commit auxCommit) {
         if (auxCommit != null && baseCommit == null) {
             throw new IllegalArgumentException("Commit must have a base commit in order to have an auxiliary commit");
         }
@@ -806,166 +964,153 @@ public class SimpleCatalogManager implements CatalogManager {
         commit.setProperty(vf.createLiteral(message), vf.createIRI(DCTERMS.TITLE.stringValue()));
         commit.setProperty(user, associatedWith);
 
-        Model revisionModel = mf.createModel(inProgressCommit.getModel());
-        revisionModel.remove(inProgressCommit.getResource(), null, null);
-        Revision revision = revisionFactory.getExisting(revisionIRI, revisionModel);
-
         if (baseCommit != null) {
             commit.setBaseCommit(baseCommit);
         }
         if (auxCommit != null) {
             commit.setAuxiliaryCommit(auxCommit);
         }
-        if (generatedParents.size() != 0) {
-            revision.setProperties(generatedParents, vf.createIRI(Entity.wasDerivedFrom_IRI));
-        }
+
+        Model revisionModel = mf.createModel(inProgressCommit.getModel());
+        revisionModel.remove(inProgressCommit.getResource(), null, null);
+        revisionFactory.getExisting(revisionIRI, revisionModel).ifPresent(revision -> {
+            if (generatedParents.size() > 0) {
+                revision.setProperties(generatedParents, vf.createIRI(Entity.wasDerivedFrom_IRI));
+            }
+        });
 
         commit.getModel().addAll(revisionModel);
         return commit;
     }
 
     @Override
-    public InProgressCommit createInProgressCommit(User user, Resource recordId) throws
-            InvalidParameterException {
-        if (!resourceExists(recordId, VersionedRDFRecord.TYPE)) {
-            throw new InvalidParameterException("The provided Resource does not identify a Record entity.");
-        } else if (getInProgressCommitIRI(user.getResource(), recordId).isPresent()) {
-            throw new MatOntoException("The user already has an InProgressCommit for the identified Record.");
-        } else {
-            UUID uuid = UUID.randomUUID();
+    public InProgressCommit createInProgressCommit(User user) {
+        UUID uuid = UUID.randomUUID();
 
-            Revision revision = revisionFactory.createNew(vf.createIRI(REVISION_NAMESPACE + uuid));
-            revision.setAdditions(vf.createIRI(ADDITIONS_NAMESPACE + uuid));
-            revision.setDeletions(vf.createIRI(DELETIONS_NAMESPACE + uuid));
+        Revision revision = revisionFactory.createNew(vf.createIRI(REVISION_NAMESPACE + uuid));
+        revision.setAdditions(vf.createIRI(ADDITIONS_NAMESPACE + uuid));
+        revision.setDeletions(vf.createIRI(DELETIONS_NAMESPACE + uuid));
 
-            InProgressCommit inProgressCommit = inProgressCommitFactory.createNew(vf.createIRI(
-                    IN_PROGRESS_COMMIT_NAMESPACE + uuid));
-            inProgressCommit.setOnVersionedRDFRecord(versionedRDFRecordFactory.createNew(recordId));
-            inProgressCommit.setProperty(user.getResource(), vf.createIRI(Activity.wasAssociatedWith_IRI));
-            inProgressCommit.setProperty(revision.getResource(), vf.createIRI(Activity.generated_IRI));
-            inProgressCommit.getModel().addAll(revision.getModel());
+        InProgressCommit inProgressCommit = inProgressCommitFactory.createNew(vf.createIRI(
+                IN_PROGRESS_COMMIT_NAMESPACE + uuid));
+        inProgressCommit.setProperty(user.getResource(), vf.createIRI(Activity.wasAssociatedWith_IRI));
+        inProgressCommit.setProperty(revision.getResource(), vf.createIRI(Activity.generated_IRI));
+        inProgressCommit.getModel().addAll(revision.getModel());
 
-            return inProgressCommit;
-        }
+        return inProgressCommit;
     }
 
     @Override
-    public void addAdditions(Model statements, Resource commitId) throws MatOntoException {
-        if (resourceExists(commitId, InProgressCommit.TYPE)) {
-            try (RepositoryConnection conn = repository.getConnection()) {
-                Resource additions = getAdditionsResource(commitId, conn);
-                Resource deletions = getDeletionsResource(commitId, conn);
-                conn.begin();
-                for (Statement statement : statements) {
-                    if (!conn.getStatements(statement.getSubject(), statement.getPredicate(), statement.getObject(),
-                            deletions).hasNext()) {
-                        conn.add(statement, additions);
-                    } else {
-                        conn.remove(statement, deletions);
-                    }
-                }
-                conn.commit();
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection", e);
-            }
-        } else {
-            throw new MatOntoException("The additions could not be added.");
-        }
-    }
-
-    @Override
-    public void addDeletions(Model statements, Resource commitId) throws MatOntoException {
-        if (resourceExists(commitId, InProgressCommit.TYPE)) {
-            try (RepositoryConnection conn = repository.getConnection()) {
-                Resource additions = getAdditionsResource(commitId, conn);
-                Resource deletions = getDeletionsResource(commitId, conn);
-                conn.begin();
-                for (Statement statement : statements) {
-                    if (!conn.getStatements(statement.getSubject(), statement.getPredicate(), statement.getObject(),
-                            additions).hasNext()) {
-                        conn.add(statement, deletions);
-                    } else {
-                        conn.remove(statement, additions);
-                    }
-                }
-                conn.commit();
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection", e);
-            }
-        } else {
-            throw new MatOntoException("The deletions could not be added.");
-        }
-    }
-
-    @Override
-    public void addCommitToBranch(Commit commit, Resource branchId) throws MatOntoException {
+    public void updateInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, Resource commitId,
+                                       @Nullable Model additions, @Nullable Model deletions) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            if (!resourceExists(branchId, Branch.TYPE, conn)) {
-                throw new MatOntoException("The Commit could not be added. Branch does not exist.");
-            }
-            if (resourceExists(commit.getResource(), conn)) {
-                throw new MatOntoException("The Commit could not be added. The commit already exists.");
-            }
-
+            utils.testInProgressCommitPath(catalogId, versionedRDFRecordId, commitId, conn);
             conn.begin();
-            conn.add(commit.getModel(), commit.getResource());
-            updateHead(branchId, commit.getResource(), conn);
+            utils.updateCommit(commitId, additions, deletions, conn);
             conn.commit();
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
         }
     }
 
     @Override
-    public void addInProgressCommit(InProgressCommit inProgressCommit) throws MatOntoException {
-        if (!resourceExists(inProgressCommit.getResource())) {
-            try (RepositoryConnection conn = repository.getConnection()) {
-                conn.add(inProgressCommit.getModel(), inProgressCommit.getResource());
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection", e);
-            }
-        } else {
-            throw new MatOntoException("The InProgressCommit could not be added.");
-        }
-    }
-
-    @Override
-    public <T extends Commit> Optional<T> getCommit(Resource commitId, OrmFactory<T> factory) throws MatOntoException {
-        return getObject(resourceExists(commitId, factory.getTypeIRI().stringValue()), commitId, factory);
-    }
-
-    @Override
-    public Optional<Resource> getInProgressCommitIRI(Resource userId, Resource recordId) throws MatOntoException {
+    public void updateInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, User user,
+                                       @Nullable Model additions, @Nullable Model deletions) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            TupleQuery query = conn.prepareTupleQuery(GET_IN_PROGRESS_COMMIT);
-            query.setBinding(USER_BINDING, userId);
-            query.setBinding(RECORD_BINDING, recordId);
-            TupleQueryResult queryResult = query.evaluate();
-            if (queryResult.hasNext()) {
-                return Optional.of(Bindings.requiredResource(queryResult.next(), COMMIT_BINDING));
+            utils.testRecordPath(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
+            InProgressCommit commit = utils.getInProgressCommit(versionedRDFRecordId, user.getResource(), conn);
+            conn.begin();
+            utils.updateCommit(commit, additions, deletions, conn);
+            conn.commit();
+        }
+    }
+
+    @Override
+    public void addInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
+                                    InProgressCommit inProgressCommit) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Resource userIRI = (Resource) inProgressCommit.getProperty(vf.createIRI(Activity.wasAssociatedWith_IRI))
+                    .orElseThrow(() -> new IllegalArgumentException("User not set on InProgressCommit "
+                            + inProgressCommit.getResource()));
+            if (utils.getInProgressCommitIRI(versionedRDFRecordId, userIRI, conn).isPresent()) {
+                throw new IllegalStateException("User " + userIRI + " already has an InProgressCommit for Record "
+                        + versionedRDFRecordId);
+            }
+            VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory, conn);
+            if (!utils.resourceExists(inProgressCommit.getResource(), conn)) {
+                inProgressCommit.setOnVersionedRDFRecord(record);
+                utils.addObject(inProgressCommit, conn);
+            } else {
+                throw utils.throwAlreadyExists(inProgressCommit.getResource(), inProgressCommitFactory);
+            }
+        }
+    }
+
+    @Override
+    public Optional<Commit> getCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
+                                      Resource commitId) {
+        long start = System.currentTimeMillis();
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.testBranchPath(catalogId, versionedRDFRecordId, branchId, conn);
+            Branch branch = utils.optObject(branchId, branchFactory, conn).orElseThrow(() ->
+                    utils.throwThingNotFound(branchId, branchFactory));
+            Resource head = utils.getHeadCommitIRI(branch);
+            if (head.equals(commitId) || getCommitChain(head, conn).contains(commitId)) {
+                return Optional.of(utils.optObject(commitId, commitFactory, conn).orElseThrow(() ->
+                        utils.throwThingNotFound(commitId, commitFactory)));
             } else {
                 return Optional.empty();
             }
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection.", e);
+        } finally {
+            log.trace("getCommit took {}ms", System.currentTimeMillis() - start);
         }
     }
 
     @Override
-    public Difference getCommitDifference(Resource commitId) throws MatOntoException {
+    public Commit getHeadCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.testBranchPath(catalogId, versionedRDFRecordId, branchId, conn);
+            Branch branch = utils.optObject(branchId, branchFactory, conn).orElseThrow(() ->
+                    utils.throwThingNotFound(branchId, branchFactory));
+            Resource head = utils.getHeadCommitIRI(branch);
+            return utils.optObject(head, commitFactory, conn).orElseThrow(() ->
+                    utils.throwThingNotFound(head, commitFactory));
+        }
+    }
+
+    @Override
+    public Optional<InProgressCommit> getInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
+                                                          User user) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.testRecordPath(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
+            return utils.getInProgressCommitIRI(versionedRDFRecordId, user.getResource(), conn).flatMap(resource ->
+                    Optional.of(utils.optObject(resource, inProgressCommitFactory, conn).orElseThrow(() ->
+                            utils.throwThingNotFound(resource, inProgressCommitFactory))));
+        }
+    }
+
+    @Override
+    public Optional<InProgressCommit> getInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
+                                                          Resource inProgressCommitId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.testRecordPath(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
+            return utils.optObject(inProgressCommitId, inProgressCommitFactory, conn).flatMap(inProgressCommit -> {
+                Resource onRecord = inProgressCommit.getOnVersionedRDFRecord_resource().orElseThrow(() ->
+                        new IllegalStateException("InProgressCommit " + inProgressCommitId + " has no Record set."));
+                return !onRecord.equals(versionedRDFRecordId) ? Optional.empty() : Optional.of(inProgressCommit);
+            });
+        }
+    }
+
+    @Override
+    public Difference getCommitDifference(Resource commitId) {
         return getCommitDifference(commitId, commitFactory);
     }
 
-    private <T extends Commit> Difference getCommitDifference(Resource commitId, OrmFactory<T> commitFactory) {
-        T commit = getCommit(commitId, commitFactory).orElseThrow(() ->
-                new MatOntoException("The Commit could not be retrieved."));
+    private <T extends Commit> Difference getCommitDifference(Resource commitId, OrmFactory<T> factory) {
+        long start = System.currentTimeMillis();
         try (RepositoryConnection conn = repository.getConnection()) {
-            Resource revisionIRI = (Resource) commit.getProperty(vf.createIRI(Activity.generated_IRI)).get();
-            Revision revision = revisionFactory.getExisting(revisionIRI, commit.getModel());
-            Resource additionsIRI = (Resource) revision.getAdditions().orElseThrow(() ->
-                    new MatOntoException("The additions could not be found."));
-            Resource deletionsIRI = (Resource) revision.getDeletions().orElseThrow(() ->
-                    new MatOntoException("The deletions could not be found."));
+            utils.testObjectId(commitId, factory.getTypeIRI(), conn);
+            Resource additionsIRI = utils.getAdditionsResource(commitId, conn);
+            Resource deletionsIRI = utils.getDeletionsResource(commitId, conn);
             Model addModel = mf.createModel();
             Model deleteModel = mf.createModel();
             conn.getStatements(null, null, null, additionsIRI).forEach(statement ->
@@ -976,149 +1121,173 @@ public class SimpleCatalogManager implements CatalogManager {
                     .additions(addModel)
                     .deletions(deleteModel)
                     .build();
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
+        } finally {
+            log.trace("getCommitDifference took {}ms", System.currentTimeMillis() - start);
         }
     }
 
     @Override
-    public void removeInProgressCommit(Resource inProgressCommitId) throws MatOntoException {
-        if (resourceExists(inProgressCommitId, InProgressCommit.TYPE)) {
-            remove(inProgressCommitId);
-        } else {
-            throw new MatOntoException("The InProgressCommit could not be removed.");
+    public void removeInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, Resource
+            inProgressCommitId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            InProgressCommit commit = utils.getInProgressCommit(catalogId, versionedRDFRecordId, inProgressCommitId,
+                    conn);
+            conn.begin();
+            utils.removeInProgressCommit(commit, conn);
+            conn.commit();
         }
     }
 
     @Override
-    public Model applyInProgressCommit(Resource inProgressCommitId, Model entity) throws MatOntoException {
+    public void removeInProgressCommit(Resource catalogId, Resource versionedRDFRecordId, User user) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.testRecordPath(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
+            InProgressCommit commit = utils.getInProgressCommit(versionedRDFRecordId, user.getResource(), conn);
+            conn.begin();
+            utils.removeInProgressCommit(commit, conn);
+            conn.commit();
+        }
+    }
+
+    @Override
+    public Model applyInProgressCommit(Resource inProgressCommitId, Model entity) {
         Difference diff = getCommitDifference(inProgressCommitId, inProgressCommitFactory);
         Model result = mf.createModel(entity);
-        diff.getAdditions().forEach(result::add);
+        result.addAll(diff.getAdditions());
         diff.getDeletions().forEach(statement -> result.remove(statement.getSubject(), statement.getPredicate(),
                 statement.getObject()));
         return result;
     }
 
     @Override
-    public List<Resource> getCommitChain(Resource commitId) throws MatOntoException {
-        List<Resource> results = new ArrayList<>();
-        if (resourceExists(commitId, Commit.TYPE)) {
-            try (RepositoryConnection conn = repository.getConnection()) {
-                Iterator<Value> commits = getCommitChainIterator(commitId, conn, false);
-                commits.forEachRemaining(commit -> results.add((Resource) commit));
-                return results;
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection", e);
-            }
+    public List<Commit> getCommitChain(Resource commitId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.testObjectId(commitId, commitFactory.getTypeIRI(), conn);
+            return getCommitChain(commitId, conn).stream()
+                    .map(resource -> utils.getObject(resource, commitFactory, conn))
+                    .collect(Collectors.toList());
         }
+    }
+
+    private List<Resource> getCommitChain(Resource commitId, RepositoryConnection conn) {
+        List<Resource> results = new ArrayList<>();
+        Iterator<Value> commits = getCommitChainIterator(commitId, conn, false);
+        commits.forEachRemaining(commit -> results.add((Resource) commit));
         return results;
     }
 
     @Override
-    public Optional<Model> getCompiledResource(Resource commitId) throws MatOntoException {
-        if (resourceExists(commitId, Commit.TYPE)) {
-            try (RepositoryConnection conn = repository.getConnection()) {
-                Iterator<Value> iterator = getCommitChainIterator(commitId, conn, true);
-                Model model = createModelFromIterator(iterator, conn);
-                model.remove(null, null, null, vf.createIRI(DELETION_CONTEXT));
-                return Optional.of(model);
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection", e);
-            }
+    public List<Commit> getCommitChain(Resource catalogId, Resource versionedRDFRecordId, Resource branchId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
+            Resource head = utils.getHeadCommitIRI(branch);
+            return getCommitChain(head, conn).stream()
+                    .map(resource -> utils.getObject(resource, commitFactory, conn))
+                    .collect(Collectors.toList());
         }
-        return Optional.empty();
     }
 
     @Override
-    public Set<Conflict> getConflicts(Resource leftId, Resource rightId) throws MatOntoException {
-        if (resourceExists(leftId, Commit.TYPE) && resourceExists(rightId, Commit.TYPE)) {
-            try (RepositoryConnection conn = repository.getConnection()) {
-                LinkedList<Value> leftList = new LinkedList<>();
-                LinkedList<Value> rightList = new LinkedList<>();
-
-                getCommitChainIterator(leftId, conn, true).forEachRemaining(leftList::add);
-                getCommitChainIterator(rightId, conn, true).forEachRemaining(rightList::add);
-
-                ListIterator<Value> leftIterator = leftList.listIterator();
-                ListIterator<Value> rightIterator = rightList.listIterator();
-
-                Value originalEnd = null;
-                while (leftIterator.hasNext() && rightIterator.hasNext()) {
-                    Value currentId = leftIterator.next();
-                    if (!currentId.equals(rightIterator.next())) {
-                        leftIterator.previous();
-                        rightIterator.previous();
-                        break;
-                    } else {
-                        originalEnd = currentId;
-                    }
-                }
-                if (originalEnd == null) {
-                    throw new MatOntoException("There is no common parent between the provided Commits.");
-                }
-
-                Model left = createModelFromIterator(leftIterator, conn);
-                Model right = createModelFromIterator(rightIterator, conn);
-
-                Model duplicates = mf.createModel(left);
-                duplicates.retainAll(right);
-
-                left.removeAll(duplicates);
-                right.removeAll(duplicates);
-
-                Resource deletionContext = vf.createIRI(DELETION_CONTEXT);
-
-                Model leftDeletions = mf.createModel(left.filter(null, null, null, deletionContext));
-                Model rightDeletions = mf.createModel(right.filter(null, null, null, deletionContext));
-
-                left.removeAll(leftDeletions);
-                right.removeAll(rightDeletions);
-
-                Set<Conflict> result = new HashSet<>();
-
-                Model original = getCompiledResource((Resource)originalEnd).get();
-                IRI rdfType = vf.createIRI(RDF.TYPE.stringValue());
-
-                leftDeletions.forEach(statement -> {
-                    Resource subject = statement.getSubject();
-                    IRI predicate = statement.getPredicate();
-                    if (predicate.equals(rdfType) || right.contains(subject, predicate, null)) {
-                        result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
-                                rightDeletions));
-                        Stream.of(left, right, rightDeletions).forEach(item ->
-                                item.remove(subject, predicate, null));
-                    }
-                });
-
-                rightDeletions.forEach(statement -> {
-                    Resource subject = statement.getSubject();
-                    IRI predicate = statement.getPredicate();
-                    if (predicate.equals(rdfType) || left.contains(subject, predicate, null)) {
-                        result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
-                                rightDeletions));
-                        Stream.of(left, leftDeletions, right).forEach(item ->
-                                item.remove(subject, predicate, null));
-                    }
-                });
-
-                left.forEach(statement -> {
-                    Resource subject = statement.getSubject();
-                    IRI predicate = statement.getPredicate();
-                    if (right.contains(subject, predicate, null)) {
-                        result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
-                                rightDeletions));
-                        Stream.of(leftDeletions, right, rightDeletions).forEach(item ->
-                                item.remove(subject, predicate, null));
-                    }
-                });
-
-                return result;
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection.", e);
-            }
+    public Model getCompiledResource(Resource commitId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            return getCompiledResource(commitId, conn);
         }
-        throw new MatOntoException("One or both of the commit IRIs could not be found in the Repository.");
+    }
+
+    private Model getCompiledResource(Resource commitId, RepositoryConnection conn) {
+        utils.testObjectId(commitId, commitFactory.getTypeIRI(), conn);
+        Iterator<Value> iterator = getCommitChainIterator(commitId, conn, true);
+        Model model = createModelFromIterator(iterator, conn);
+        model.remove(null, null, null, vf.createIRI(DELETION_CONTEXT));
+        return model;
+    }
+
+    @Override
+    public Set<Conflict> getConflicts(Resource leftId, Resource rightId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.testObjectId(leftId, commitFactory.getTypeIRI(), conn);
+            utils.testObjectId(rightId, commitFactory.getTypeIRI(), conn);
+            LinkedList<Value> leftList = new LinkedList<>();
+            LinkedList<Value> rightList = new LinkedList<>();
+
+            getCommitChainIterator(leftId, conn, true).forEachRemaining(leftList::add);
+            getCommitChainIterator(rightId, conn, true).forEachRemaining(rightList::add);
+
+            ListIterator<Value> leftIterator = leftList.listIterator();
+            ListIterator<Value> rightIterator = rightList.listIterator();
+
+            Value originalEnd = null;
+            while (leftIterator.hasNext() && rightIterator.hasNext()) {
+                Value currentId = leftIterator.next();
+                if (!currentId.equals(rightIterator.next())) {
+                    leftIterator.previous();
+                    rightIterator.previous();
+                    break;
+                } else {
+                    originalEnd = currentId;
+                }
+            }
+            if (originalEnd == null) {
+                throw new IllegalArgumentException("No common parent between Commit " + leftId + " and " + rightId);
+            }
+
+            Model left = createModelFromIterator(leftIterator, conn);
+            Model right = createModelFromIterator(rightIterator, conn);
+
+            Model duplicates = mf.createModel(left);
+            duplicates.retainAll(right);
+
+            left.removeAll(duplicates);
+            right.removeAll(duplicates);
+
+            Resource deletionContext = vf.createIRI(DELETION_CONTEXT);
+
+            Model leftDeletions = mf.createModel(left.filter(null, null, null, deletionContext));
+            Model rightDeletions = mf.createModel(right.filter(null, null, null, deletionContext));
+
+            left.removeAll(leftDeletions);
+            right.removeAll(rightDeletions);
+
+            Set<Conflict> result = new HashSet<>();
+
+            Model original = getCompiledResource((Resource) originalEnd, conn);
+            IRI rdfType = vf.createIRI(RDF.TYPE.stringValue());
+
+            leftDeletions.forEach(statement -> {
+                Resource subject = statement.getSubject();
+                IRI predicate = statement.getPredicate();
+                if (predicate.equals(rdfType) || right.contains(subject, predicate, null)) {
+                    result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
+                            rightDeletions));
+                    Stream.of(left, right, rightDeletions).forEach(item ->
+                            item.remove(subject, predicate, null));
+                }
+            });
+
+            rightDeletions.forEach(statement -> {
+                Resource subject = statement.getSubject();
+                IRI predicate = statement.getPredicate();
+                if (predicate.equals(rdfType) || left.contains(subject, predicate, null)) {
+                    result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
+                            rightDeletions));
+                    Stream.of(left, leftDeletions, right).forEach(item ->
+                            item.remove(subject, predicate, null));
+                }
+            });
+
+            left.forEach(statement -> {
+                Resource subject = statement.getSubject();
+                IRI predicate = statement.getPredicate();
+                if (right.contains(subject, predicate, null)) {
+                    result.add(createConflict(subject, predicate, original, left, leftDeletions, right,
+                            rightDeletions));
+                    Stream.of(leftDeletions, right, rightDeletions).forEach(item ->
+                            item.remove(subject, predicate, null));
+                }
+            });
+
+            return result;
+        }
     }
 
     @Override
@@ -1144,17 +1313,17 @@ public class SimpleCatalogManager implements CatalogManager {
     /**
      * Creates a conflict using the provided parameters as the data to construct it.
      *
-     * @param subject The Resource identifying the conflicted statement's subject.
-     * @param predicate The IRI identifying the conflicted statement's predicate.
-     * @param original The Model of the original item.
-     * @param left The Model of the left item being compared.
-     * @param leftDeletions The Model of the deleted statements from the left Model.
-     * @param right The Model of the right item being compared.
+     * @param subject        The Resource identifying the conflicted statement's subject.
+     * @param predicate      The IRI identifying the conflicted statement's predicate.
+     * @param original       The Model of the original item.
+     * @param left           The Model of the left item being compared.
+     * @param leftDeletions  The Model of the deleted statements from the left Model.
+     * @param right          The Model of the right item being compared.
      * @param rightDeletions The Model of the deleted statements from the right Model.
      * @return A Conflict created using all of the provided data.
      */
-    private Conflict createConflict(Resource subject, IRI predicate, Model original, Model left, Model leftDeletions,
-                                    Model right, Model rightDeletions) {
+    private Conflict createConflict(Resource subject, IRI predicate, Model original, Model left, Model
+            leftDeletions, Model right, Model rightDeletions) {
         Difference leftDifference = new SimpleDifference.Builder()
                 .additions(mf.createModel(left).filter(subject, predicate, null))
                 .deletions(mf.createModel(leftDeletions).filter(subject, predicate, null))
@@ -1173,129 +1342,23 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     /**
-     * Gets the Object identified by the provided factory if it is available and satisfies the provided condition.
-     *
-     * @param condition The boolean identifying if the resource is correct.
-     * @param id The Resource identifying which Object you are trying to get.
-     * @param factory The OrmFactory which will create the desired Object.
-     * @return An Optional containing the Object identified, if available.
-     */
-    private <T extends Thing> Optional<T> getObject(boolean condition, Resource id, OrmFactory<T> factory) throws
-            MatOntoException {
-        if (condition) {
-            try (RepositoryConnection conn = repository.getConnection()) {
-                Model model = mf.createModel();
-                RepositoryResult<Statement> statements = conn.getStatements(null, null, null, id);
-                statements.forEach(model::add);
-                if (model.size() != 0) {
-                    return Optional.of(factory.getExisting(id, model));
-                }
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection.", e);
-            }
-        }
-        return Optional.empty();
-    }
-
-    /**
      * Adds the model for a Catalog to the repository which contains the provided metadata using the provided Resource
      * as the context.
      *
-     * @param catalogId The Resource identifying the Catalog you wish you create.
-     * @param title The title text.
+     * @param catalogId   The Resource identifying the Catalog you wish you create.
+     * @param title       The title text.
      * @param description The description text.
      */
-    private void addCatalogToRepo(Resource catalogId, String title, String description) {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            OffsetDateTime now = OffsetDateTime.now();
+    private void addCatalogToRepo(Resource catalogId, String title, String description, RepositoryConnection conn) {
+        OffsetDateTime now = OffsetDateTime.now();
 
-            Catalog catalog = catalogFactory.createNew(catalogId);
-            catalog.setProperty(vf.createLiteral(title), vf.createIRI(DCTERMS.TITLE.stringValue()));
-            catalog.setProperty(vf.createLiteral(description), vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
-            catalog.setProperty(vf.createLiteral(now), vf.createIRI(DCTERMS.ISSUED.stringValue()));
-            catalog.setProperty(vf.createLiteral(now), vf.createIRI(DCTERMS.MODIFIED.stringValue()));
+        Catalog catalog = catalogFactory.createNew(catalogId);
+        catalog.setProperty(vf.createLiteral(title), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        catalog.setProperty(vf.createLiteral(description), vf.createIRI(DCTERMS.DESCRIPTION.stringValue()));
+        catalog.setProperty(vf.createLiteral(now), vf.createIRI(DCTERMS.ISSUED.stringValue()));
+        catalog.setProperty(vf.createLiteral(now), vf.createIRI(DCTERMS.MODIFIED.stringValue()));
 
-            conn.add(catalog.getModel(), catalogId);
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection.", e);
-        }
-    }
-
-    /**
-     * Gets the pre-existing catalog using the provided IRI.
-     *
-     * @param catalogId The Resource identifying the Catalog that the user wishes to get back.
-     * @return The Catalog identified by the provided IRI.
-     * @throws MatOntoException if RepositoryConnection has a problem or the catalog could not be found.
-     */
-    private Catalog getCatalog(Resource catalogId) throws MatOntoException {
-        if (resourceExists(catalogId, Catalog.TYPE)) {
-            try (RepositoryConnection conn = repository.getConnection()) {
-                Model catalogModel = mf.createModel();
-                RepositoryResult<Statement> statements = conn.getStatements(catalogId, null, null, catalogId);
-                statements.forEach(catalogModel::add);
-                return catalogFactory.getExisting(catalogId, catalogModel);
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection", e);
-            }
-        }
-        throw new MatOntoException("The catalog could not be retrieved.");
-    }
-
-    /**
-     * Checks to see if the provided Resource exists in the Repository.
-     *
-     * @param resourceIRI The Resource to look for in the Repository
-     * @return True if the Resource is in the Repository; otherwise, false.
-     */
-    private boolean resourceExists(Resource resourceIRI) throws MatOntoException {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            return resourceExists(resourceIRI, conn);
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection.", e);
-        }
-    }
-
-    /**
-     * Checks to see if the provided Resource exists as a context in the Repository.
-     *
-     * @param resourceIRI The Resource context to look for in the Repository.
-     * @param conn The RepositoryConnection to use for lookup.
-     * @return True if the Resource is in the Repository as a context for statements; otherwise, false.
-     * @throws RepositoryException If there is a problem communicating with the Repository.
-     */
-    private boolean resourceExists(Resource resourceIRI, RepositoryConnection conn) throws RepositoryException {
-        return conn.getStatements(null, null, null, resourceIRI).hasNext();
-    }
-
-    /**
-     * Checks to see if the provided Resource exists in the Repository and is of the provided type.
-     *
-     * @param resourceIRI The Resource to look for in the Repository
-     * @param type The String of the IRI identifying the type of entity in the Repository.
-     * @return True if the Resource is in the Repository; otherwise, false.
-     */
-    private boolean resourceExists(Resource resourceIRI, String type) throws MatOntoException {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            return resourceExists(resourceIRI, type, conn);
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection.", e);
-        }
-    }
-
-    /**
-     * Checks to see if the provided Resource exists in the Repository and is of the provided type.
-     *
-     * @param resourceIRI The Resource to look for in the Repository.
-     * @param type The String of the IRI identifying the type of entity in the Repository.
-     * @param conn The RepositoryConnection to use for lookup.
-     * @return True if the Resource is in the Repository; otherwise, false.
-     * @throws RepositoryException If there is a problem communicating with the Repository.
-     */
-    private boolean resourceExists(Resource resourceIRI, String type, RepositoryConnection conn)
-            throws RepositoryException {
-        return conn.getStatements(null, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(type), resourceIRI)
-                .hasNext();
+        conn.add(catalog.getModel(), catalogId);
     }
 
     /**
@@ -1310,11 +1373,11 @@ public class SimpleCatalogManager implements CatalogManager {
     /**
      * Adds the properties provided by the parameters to the provided Record.
      *
-     * @param record The Record to add the properties to.
-     * @param config The RecordConfig which contains the properties to set.
-     * @param issued The OffsetDateTime of when the Record was issued.
+     * @param record   The Record to add the properties to.
+     * @param config   The RecordConfig which contains the properties to set.
+     * @param issued   The OffsetDateTime of when the Record was issued.
      * @param modified The OffsetDateTime of when the Record was modified.
-     * @param <T> An Object which extends the Record class.
+     * @param <T>      An Object which extends the Record class.
      * @return T which contains all of the properties provided by the parameters.
      */
     private <T extends Record> T addPropertiesToRecord(T record, RecordConfig config, OffsetDateTime issued,
@@ -1338,149 +1401,24 @@ public class SimpleCatalogManager implements CatalogManager {
         return record;
     }
 
-    /**
-     * Creates a Record from the data provided in the BindingSet and Resource getting additional information from the
-     * RepositoryConnection if necessary.
-     *
-     * @param bindingSet The BindingSet which contains the information about the Record.
-     * @param resource The Resource which identifies the created Record.
-     * @return A Record created from the provided information.
-     */
-    private Record processRecordBindingSet(BindingSet bindingSet, Resource resource) {
-        String title = Bindings.requiredLiteral(bindingSet, "title").stringValue();
-
-        Set<User> publishers = new HashSet<>();
-        bindingSet.getBinding("publisher").ifPresent(binding -> {
-            String[] values = StringUtils.split(binding.getValue().stringValue(), ",");
-
-            for (String value : values) {
-                publishers.add(userFactory.createNew(vf.createIRI(value)));
-            }
-        });
-
-        RecordConfig.Builder builder = new RecordConfig.Builder(title, publishers);
-
-        bindingSet.getBinding("identifier").ifPresent(binding ->
-                builder.identifier(binding.getValue().stringValue()));
-
-        bindingSet.getBinding("description").ifPresent(binding ->
-                builder.description(binding.getValue().stringValue()));
-
-        bindingSet.getBinding("keywords").ifPresent(binding ->
-                builder.keywords(new HashSet<>(Arrays.asList(StringUtils.split(binding.getValue().stringValue(),
-                        ",")))));
-
-        OffsetDateTime issued = Bindings.requiredLiteral(bindingSet, "issued").dateTimeValue();
-        OffsetDateTime modified = Bindings.requiredLiteral(bindingSet, "modified").dateTimeValue();
-
-        Record record = recordFactory.createNew(resource);
-        bindingSet.getBinding("types").ifPresent(binding -> {
-            String[] values = StringUtils.split(binding.getValue().stringValue(), ",");
-
-            for (String value : values) {
-                record.getModel().add(resource, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(value));
-            }
-        });
-
-        return addPropertiesToRecord(record, builder.build(), issued, modified);
-    }
-
-    /**
-     * Adds the provided Distribution to the identified Resource adding a triple based on the provided predicate.
-     *
-     * @param distribution The Distribution to add to the Repository.
-     * @param resourceId The Resource identified to get the Distribution added to it.
-     * @param predicate The String containing the predicate for the new statement.
-     * @return True if the Distribution was successfully added; otherwise, false.
-     */
-    private boolean addDistribution(Distribution distribution, Resource resourceId, String predicate) throws
-            MatOntoException {
-        if (!resourceExists(distribution.getResource(), Distribution.TYPE) && (resourceExists(resourceId, Version.TYPE)
-                || resourceExists(resourceId, UnversionedRecord.TYPE))) {
-            try (RepositoryConnection conn = repository.getConnection()) {
-                conn.begin();
-                conn.add(resourceId, vf.createIRI(predicate), distribution.getResource(), resourceId);
-                conn.add(distribution.getModel(), distribution.getResource());
-                conn.commit();
-            } catch (RepositoryException e) {
-                throw new MatOntoException("Error in repository connection", e);
-            }
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Removes the Object identified by the Resource from the Resource identified to be removed from and removes
-     * the Object statement using the provided String predicate.
-     *
-     * @param objectId The Resource identifying the Object to remove.
-     * @param removeFromId The Resource identifying which Object to remove the Distribution from.
-     * @param predicate The String identifying the predicate for the statement that needs to be removed.
-     * @return True if the Distribution was successfully removed; otherwise, false.
-     */
-    private boolean removeObjectWithRelationship(Resource objectId, Resource removeFromId, String predicate) throws
-            MatOntoException {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            IRI relationshipIRI = vf.createIRI(predicate);
-            boolean hasRelationship = conn.getStatements(removeFromId, relationshipIRI, objectId, removeFromId)
-                    .hasNext();
-            if (resourceExists(objectId) && resourceExists(removeFromId) && hasRelationship) {
-                conn.begin();
-                conn.clear(objectId);
-                conn.remove(removeFromId, relationshipIRI, objectId, removeFromId);
-                conn.commit();
-                return true;
-            } else {
-                return false;
-            }
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
-        }
-    }
-
-    /**
-     * Updates the Resource which is identified using the provided Model.
-     *
-     * @param resourceId The Resource identifying the Object that you wish to update.
-     * @param model The Model containing the underlying information about the Object you are updating.
-     */
-    private void update(Resource resourceId, Model model) throws MatOntoException {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            conn.begin();
-            conn.clear(resourceId);
-            conn.add(model, resourceId);
-            conn.commit();
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
-        }
-    }
-
-    /**
-     * Removes the Resource which is identified.
-     *
-     * @param resourceId The Resource identifying the element to be removed.
-     * @throws MatOntoException if RepositoryConnection has a problem.
-     */
-    private void remove(Resource resourceId) throws MatOntoException {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            conn.clear(resourceId);
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
-        }
+    private void removeObjectWithRelationship(Resource objectId, Resource removeFromId, String predicate,
+                                              RepositoryConnection conn) {
+        utils.remove(objectId, conn);
+        conn.remove(removeFromId, vf.createIRI(predicate), objectId, removeFromId);
     }
 
     /**
      * Removes the UnversionedRecord created from the provided Record along with all associated Distributions.
      *
      * @param record The Record to remove.
-     * @throws MatOntoException if RepositoryConnection has a problem.
      */
-    private void removeUnversionedRecord(Record record) throws MatOntoException {
-        UnversionedRecord unversionedRecord = unversionedRecordFactory.getExisting(record.getResource(),
-                record.getModel());
-        unversionedRecord.getUnversionedDistribution().forEach(distribution -> remove(distribution.getResource()));
-        remove(unversionedRecord.getResource());
+    private void removeUnversionedRecord(Record record, RepositoryConnection conn) {
+        unversionedRecordFactory.getExisting(record.getResource(), record.getModel())
+                .ifPresent(unversionedRecord -> {
+                    unversionedRecord.getUnversionedDistribution_resource().forEach(resource ->
+                            utils.remove(resource, conn));
+                    utils.removeObject(unversionedRecord, conn);
+                });
     }
 
     /**
@@ -1488,13 +1426,14 @@ public class SimpleCatalogManager implements CatalogManager {
      * Distributions associated with those Versions.
      *
      * @param record The Record to remove.
-     * @throws MatOntoException if RepositoryConnection has a problem.
      */
-    private void removeVersionedRecord(Record record) throws MatOntoException {
-        VersionedRecord versionedRecord = versionedRecordFactory.getExisting(record.getResource(), record.getModel());
-        versionedRecord.getVersion().forEach(version -> removeVersion(version.getResource(),
-                versionedRecord.getResource()));
-        remove(versionedRecord.getResource());
+    private void removeVersionedRecord(Record record, RepositoryConnection conn) {
+        versionedRecordFactory.getExisting(record.getResource(), record.getModel())
+                .ifPresent(versionedRecord -> {
+                    versionedRecord.getVersion_resource()
+                            .forEach(resource -> removeVersion(versionedRecord.getResource(), resource, conn));
+                    utils.removeObject(versionedRecord, conn);
+                });
     }
 
     /**
@@ -1503,60 +1442,32 @@ public class SimpleCatalogManager implements CatalogManager {
      * Branches.
      *
      * @param record The Record to remove.
-     * @throws MatOntoException if RepositoryConnection has a problem.
      */
-    private void removeVersionedRDFRecord(Record record) throws MatOntoException {
-        try (RepositoryConnection conn = repository.getConnection()) {
-            VersionedRDFRecord versionedRDFRecord = versionedRDFRecordFactory.getExisting(record.getResource(),
-                    record.getModel());
-            versionedRDFRecord.getVersion().forEach(version -> removeVersion(version.getResource(),
-                    versionedRDFRecord.getResource()));
-            conn.remove(versionedRDFRecord.getResource(), vf.createIRI(VersionedRDFRecord.masterBranch_IRI), null,
-                    versionedRDFRecord.getResource());
-            versionedRDFRecord.getBranch().forEach(branch -> removeBranch(branch.getResource(),
-                    versionedRDFRecord.getResource()));
-            remove(versionedRDFRecord.getResource());
-        } catch (RepositoryException e) {
-            throw new MatOntoException("Error in repository connection", e);
-        }
-    }
-
-    /**
-     * Gets the Resource identifying the graph that contain the additions statements.
-     *
-     * @param commitId The Resource identifying the Commit that have the additions.
-     * @param conn The RepositoryConnection to be used to get the Resource from.
-     * @return The Resource for the additions graph.
-     */
-    private Resource getAdditionsResource(Resource commitId, RepositoryConnection conn) {
-        return (Resource)conn.getStatements(null, vf.createIRI(Revision.additions_IRI), null, commitId).next()
-                .getObject();
-    }
-
-    /**
-     * Gets the Resource identifying the graph that contain the deletions statements.
-     *
-     * @param commitId The Resource identifying the Commit that have the deletions.
-     * @param conn The RepositoryConnection to be used to get the Resource from.
-     * @return The Resource for the deletions graph.
-     */
-    private Resource getDeletionsResource(Resource commitId, RepositoryConnection conn) {
-        return (Resource)conn.getStatements(null, vf.createIRI(Revision.deletions_IRI), null, commitId).next()
-                .getObject();
+    private void removeVersionedRDFRecord(Record record, RepositoryConnection conn) {
+        versionedRDFRecordFactory.getExisting(record.getResource(), record.getModel())
+                .ifPresent(versionedRDFRecord -> {
+                    versionedRDFRecord.getVersion_resource()
+                            .forEach(resource -> removeVersion(versionedRDFRecord.getResource(), resource, conn));
+                    conn.remove(versionedRDFRecord.getResource(), vf.createIRI(VersionedRDFRecord.masterBranch_IRI),
+                            null, versionedRDFRecord.getResource());
+                    versionedRDFRecord.getBranch_resource()
+                            .forEach(resource -> removeBranch(versionedRDFRecord.getResource(), resource, conn));
+                    utils.removeObject(versionedRDFRecord, conn);
+                });
     }
 
     /**
      * Adds the statements from the Revision associated with the Commit identified by the provided Resource to the
      * provided Model using the RepositoryConnection to get the statements from the repository.
      *
-     * @param model The Model to update.
+     * @param model    The Model to update.
      * @param commitId The Resource identifying the Commit.
-     * @param conn The RepositoryConnection to query the repository.
+     * @param conn     The RepositoryConnection to query the repository.
      * @return A Model with the proper statements added.
      */
     private Model addRevisionStatementsToModel(Model model, Resource commitId, RepositoryConnection conn) {
-        Resource additionsId = getAdditionsResource(commitId, conn);
-        Resource deletionsId = getDeletionsResource(commitId, conn);
+        Resource additionsId = utils.getAdditionsResource(commitId, conn);
+        Resource deletionsId = utils.getDeletionsResource(commitId, conn);
         conn.getStatements(null, null, null, additionsId).forEach(statement -> {
             Resource subject = statement.getSubject();
             IRI predicate = statement.getPredicate();
@@ -1583,8 +1494,8 @@ public class SimpleCatalogManager implements CatalogManager {
      * descending by date. If descending, the provided Resource identifying a commit will be first.
      *
      * @param commitId The Resource identifying the commit that you want to get the chain for.
-     * @param conn The RepositoryConnection which will be queried for the Commits.
-     * @param asc Whether or not the iterator should be ascending by date
+     * @param conn     The RepositoryConnection which will be queried for the Commits.
+     * @param asc      Whether or not the iterator should be ascending by date
      * @return Iterator of Values containing the requested commits.
      */
     private Iterator<Value> getCommitChainIterator(Resource commitId, RepositoryConnection conn, boolean asc) {
@@ -1602,12 +1513,21 @@ public class SimpleCatalogManager implements CatalogManager {
      * Builds the Model based on the provided Iterator and Resource.
      *
      * @param iterator The Iterator of commits which are supposed to be contained in the Model in ascending order.
-     * @param conn The RepositoryConnection which contains the requested Commits.
+     * @param conn     The RepositoryConnection which contains the requested Commits.
      * @return The Model containing the summation of all the Commits statements.
      */
     private Model createModelFromIterator(Iterator<Value> iterator, RepositoryConnection conn) {
         Model model = mf.createModel();
-        iterator.forEachRemaining(value -> addRevisionStatementsToModel(model, (Resource)value, conn));
+        iterator.forEachRemaining(value -> addRevisionStatementsToModel(model, (Resource) value, conn));
         return model;
+    }
+
+    private boolean commitIsReferenced(Resource commitId, RepositoryConnection conn) {
+        IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
+        IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
+        IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
+        return Stream.of(headCommitIRI, baseCommitIRI, auxiliaryCommitIRI)
+                .map(iri -> conn.getStatements(null, iri, commitId).hasNext())
+                .reduce(false, (iri1, iri2) -> iri1 || iri2);
     }
 }

@@ -26,10 +26,13 @@
         <block-content targeted-spinner="dvm.id">
             <div class="property-values" ng-repeat="(key, value) in dvm.results" ng-if="dvm.results">
                 <h5 ng-click="isClosed = !isClosed" class="clearfix">
-                    <p class="text">{{dvm.ontoUtils.getLabelForIRI(key)}} <small>&lt;{{key}}&gt;</small></p><i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+                    <p class="text">{{dvm.ontoUtils.getLabelForIRI(key)}}
+                        <small>&lt;{{key}}&gt;</small>
+                    </p>
+                    <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
                 </h5>
                 <div class="value-container" ng-repeat="statement in value" ng-hide="isClosed">
-                    <span class="value-display">
+                    <span class="value-display-wrapper">
                         <span ng-repeat="(key, value) in statement" class="{{key}}">
                             <span ng-if="value === dvm.os.selected['@id']" class="selected">{{dvm.ontoUtils.getLabelForIRI(value)}}</span>
                             <span ng-if="value !== dvm.os.selected['@id']">

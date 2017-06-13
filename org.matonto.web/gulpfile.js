@@ -68,8 +68,11 @@ var jsFiles = function(prefix) {
             prefix + 'chroma-js/**/chroma.min.js',
             prefix + 'angular-toastr/**/angular-toastr.tpls.js',
             prefix + 'snapsvg/**/snap.svg-min.js',
+            prefix + 'angular-vs-repeat/**/angular-vs-repeat.min.js',
             prefix + 'clipboard/**/clipboard.min.js',
-            prefix + 'ngclipboard/**/ngclipboard.min.js'
+            prefix + 'ngclipboard/**/ngclipboard.min.js',
+            prefix + 'angular-aria/angular-aria.min.js',
+            prefix + 'angular-material/angular-material.min.js'
         ]
     },
     styleFiles = function(prefix, suffix) {
@@ -81,6 +84,7 @@ var jsFiles = function(prefix) {
     },
     nodeStyleFiles = function(prefix) {
         return [
+            prefix + 'angular-material/angular-material.min.css',
             prefix + 'bootstrap/**/bootstrap.min.css',
             prefix + 'font-awesome/**/font-awesome.min.css',
             prefix + 'ui-select/**/select.min.css',

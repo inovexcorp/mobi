@@ -26,8 +26,8 @@ package org.matonto.etl.rest.impl;
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getRDFFormat;
+import static org.matonto.rest.util.RestUtils.groupedModelToString;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
-import static org.matonto.rest.util.RestUtils.modelToString;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
@@ -37,7 +37,6 @@ import com.opencsv.CSVReader;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -47,7 +46,6 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.ontology.dataset.Dataset;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
-import org.matonto.etl.api.config.DelimitedConfig;
 import org.matonto.etl.api.config.ExcelConfig;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
@@ -193,7 +191,7 @@ public class DelimitedRestImpl implements DelimitedRest {
         Model data = transformer.sesameModel(etlFile(fileName, () -> jsonldToModel(jsonld), containsHeaders, separator,
                 true));
 
-        return Response.ok(modelToString(data, format)).build();
+        return Response.ok(groupedModelToString(data, format)).build();
     }
 
     @Override
@@ -204,7 +202,7 @@ public class DelimitedRestImpl implements DelimitedRest {
         // Convert the data
         Model data = transformer.sesameModel(etlFile(fileName, () -> getUploadedMapping(mappingIRI), containsHeaders,
                 separator, false));
-        String result = modelToString(data, format);
+        String result = groupedModelToString(data, format);
 
         // Write data into a stream
         StreamingOutput stream = os -> {
@@ -242,12 +240,12 @@ public class DelimitedRestImpl implements DelimitedRest {
         // Add data to the dataset
         String repositoryId = record.getRepository().orElseThrow(() ->
                 ErrorUtils.sendError("Record has no repository set", Response.Status.INTERNAL_SERVER_ERROR));
-        Dataset dataset = record.getDataset().orElseThrow(() ->
+        Resource datasetIri = record.getDataset_resource().orElseThrow(() ->
                 ErrorUtils.sendError("Record has no Dataset set", Response.Status.INTERNAL_SERVER_ERROR));
         Repository repository = repositoryManager.getRepository(repositoryId)
                 .orElseThrow(() -> ErrorUtils.sendError("Repository is not available.", Response.Status.BAD_REQUEST));
         try (RepositoryConnection conn = repository.getConnection()) {
-            RepositoryResult<Statement> statements = conn.getStatements(dataset.getResource(),
+            RepositoryResult<Statement> statements = conn.getStatements(datasetIri,
                     factory.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
             if (statements.hasNext()) {
                 Resource context = (Resource) statements.next().getObject();
@@ -294,14 +292,18 @@ public class DelimitedRestImpl implements DelimitedRest {
         // Run the mapping against the delimited data
         org.matonto.rdf.api.Model result = null;
         try (InputStream data = getDocumentInputStream(delimitedFile)) {
+            org.matonto.rdf.api.Model matModel = transformer.matontoModel(mappingModel);
             if (extension.equals("xls") || extension.equals("xlsx")) {
-                ExcelConfig.ExcelConfigBuilder config = new ExcelConfig.ExcelConfigBuilder(data, transformer.matontoModel(mappingModel)).containsHeaders(containsHeaders);
+                ExcelConfig.ExcelConfigBuilder config = new ExcelConfig.ExcelConfigBuilder(data, matModel)
+                        .containsHeaders(containsHeaders);
                 if (limit) {
                     config.limit(NUM_LINE_PREVIEW);
                 }
                 result = etlFile(() -> converter.convert(config.build()));
             } else {
-                SVConfig.SVConfigBuilder config = new SVConfig.SVConfigBuilder(data, transformer.matontoModel(mappingModel)).separator(separator.charAt(0)).containsHeaders(containsHeaders);
+                SVConfig.SVConfigBuilder config = new SVConfig.SVConfigBuilder(data, matModel)
+                        .separator(separator.charAt(0))
+                        .containsHeaders(containsHeaders);
                 if (limit) {
                     config.limit(NUM_LINE_PREVIEW);
                 }
@@ -400,7 +402,8 @@ public class DelimitedRestImpl implements DelimitedRest {
      */
     private String convertCSVRows(File input, int numRows, char separator) throws IOException {
         Charset charset = getCharset(Files.readAllBytes(input.toPath()));
-        try (CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(input), charset.name()), separator)) {
+        try (CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(input), charset.name()),
+                separator)) {
             List<String[]> csvRows = reader.readAll();
             JSONArray returnRows = new JSONArray();
             for (int i = 0; i <= numRows && i < csvRows.size(); i++) {

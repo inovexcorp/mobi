@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Branch Select directive', function() {
-    var $compile, scope, element, controller, catalogManagerSvc, ontologyStateSvc, stateManagerSvc, $q, catalogId;
+    var $compile, scope, element, controller, catalogManagerSvc, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, $q, catalogId;
 
     var branchId = 'branchId';
     var branch = {'@id': branchId};
@@ -37,16 +37,18 @@ describe('Branch Select directive', function() {
         module('branchSelect');
         mockCatalogManager();
         mockOntologyState();
+        mockOntologyManager();
         mockUtil();
         mockStateManager();
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _ontologyStateService_, _$q_, _stateManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _ontologyStateService_, _ontologyManagerService_, _$q_, _stateManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             catalogManagerSvc = _catalogManagerService_;
             ontologyStateSvc = _ontologyStateService_;
+            ontologyManagerSvc = _ontologyManagerService_;
             $q = _$q_;
             stateManagerSvc = _stateManagerService_;
         });
@@ -152,7 +154,7 @@ describe('Branch Select directive', function() {
                 controller.showDeleteConfirmation = true;
                 controller.branch = branch;
                 ontologyStateSvc.listItem.branches = [branch];
-                catalogManagerSvc.deleteRecordBranch.and.returnValue(deferred.promise);
+                ontologyManagerSvc.deleteOntology.and.returnValue(deferred.promise);
             });
             it('when resolved', function() {
                 controller.delete();

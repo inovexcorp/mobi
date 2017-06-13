@@ -77,7 +77,11 @@
                     dvm.rangeClass = undefined;
 
                     dvm.getPropRangeName = function() {
-                        return dvm.om.isObjectProperty(dvm.propObj) ? dvm.om.getEntityName(dvm.rangeClass) : $filter('splitIRI')(util.getPropertyId(dvm.propObj, prefixes.rdfs + 'range')).end;
+                        if (dvm.om.isObjectProperty(dvm.propObj)) {
+                            return dvm.om.getEntityName(dvm.rangeClass);
+                        } else {
+                            return $filter('splitIRI')(util.getPropertyId(dvm.propObj, prefixes.rdfs + 'range')).end || 'string';
+                        }
                     }
 
                     $scope.$watch('dvm.propObj', function(newValue, oldValue) {
@@ -85,7 +89,7 @@
                             var rangeClassId = util.getPropertyId(newValue, prefixes.rdfs + 'range');
                             if (rangeClassId !== _.get(dvm.rangeClass, '@id')) {
                                 var availableClass = _.find(dvm.state.availableClasses, {classObj: {'@id': rangeClassId}});
-                                dvm.rangeClass = availableClass ? availableClass.classObj : dvm.om.getEntity(dvm.mm.findSourceOntologyWithClass(rangeClassId, dvm.ontologies).entities, rangeClassId);
+                                dvm.rangeClass = availableClass ? availableClass.classObj : dvm.om.getEntity([dvm.mm.findSourceOntologyWithClass(rangeClassId, dvm.ontologies).entities], rangeClassId);
                             }
                         } else {
                             dvm.rangeClass = undefined;
