@@ -234,9 +234,8 @@ public class OntologyRestIT extends KarafTestSupport {
             RepositoryResult<Statement> stmts = conn.getStatements(null, additionsIRI, null, commitId);
 
             assertTrue(stmts.hasNext());
-            Statement stmt = stmts.next();
-            additionsGraphIRI = (IRI) stmt.getObject();
-            assertTrue(conn.getStatements(null, null, null, additionsGraphIRI).hasNext());
+            additionsGraphIRI = (IRI) stmts.next().getObject();
+            assertTrue(conn.size(additionsGraphIRI) > 0);
 
             assertTrue(conn.getStatements(null, null, null, recordId).hasNext());
             assertTrue(conn.getStatements(recordId, null, null).hasNext());
