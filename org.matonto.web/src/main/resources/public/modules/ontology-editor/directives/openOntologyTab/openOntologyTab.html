@@ -59,22 +59,20 @@
             </block>
         </div>
     </div>
-    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Ontology'" confirm-click="dvm.deleteOntology()"
-                          cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
+    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Ontology'" confirm-click="dvm.deleteOntology()" cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
+        <error-display ng-if="dvm.mappingErrorMessage">{{dvm.mappingErrorMessage}}</error-display>
         <p>Are you sure that you want to delete <strong>{{dvm.recordTitle}}</strong>?</p>
     </confirmation-overlay>
     <confirmation-overlay ng-if="dvm.showOpenOverlay" header-text="'Open'" confirm-click="dvm.open()"
                           cancel-click="dvm.showOpenOverlay = false" confirm-text="'Open'" cancel-text="'Cancel'">
         <div class="type-container">
-            <button ng-click="dvm.type = 'ontology'" ng-class="{'active': dvm.type === 'ontology'}" class="type"
-                    ng-dblclick="dvm.open()">
+            <button ng-click="dvm.type = 'ontology'" ng-class="{'active': dvm.type === 'ontology'}" class="type" ng-dblclick="dvm.open()">
                 <div class="text-wrapper">
                     <i class="fa fa-fw fa-file-code-o fa-2x"></i><span class="text">Ontology Editor</span>
                 </div>
             </button>
-            <button ng-click="dvm.type = 'vocabulary'" ng-class="{'active': dvm.type === 'vocabulary'}" class="type"
-                    ng-dblclick="dvm.open()">
+            <button ng-click="dvm.type = 'vocabulary'" ng-class="{'active': dvm.type === 'vocabulary'}" class="type" ng-dblclick="dvm.open()">
                 <div class="text-wrapper">
                     <i class="fa fa-fw fa-file-text-o fa-2x"></i><span class="text">Vocabulary Editor</span>
                 </div>
