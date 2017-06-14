@@ -167,27 +167,28 @@ describe('Open Ontology Tab directive', function() {
             expect(controller.begin).toBe(begin - controller.limit);
         });
         describe('should show the delete confirmation overlay', function() {
-        it('and ask the user for confirmation', function() {
-            util.getDctermsValue.and.returnValue('title');
-            controller.showDeleteConfirmationOverlay({'@id': 'record'});
-            expect(controller.recordId).toBe('record');
-            expect(controller.recordTitle).toBe('title');
-            expect(controller.errorMessage).toBe('');
-            expect(controller.showDeleteConfirmation).toBe(true);
-        });
-        it('and should warn the user if the ontology is open in the mapping tool', function() {
-            util.getDctermsValue.and.returnValue('title');
-            mapperStateSvc.sourceOntologies = [{'recordId':'record'}];
+            beforeEach(function() {
+                util.getDctermsValue.and.returnValue('title');
+            });
+            it('and ask the user for confirmation', function() {
+                controller.showDeleteConfirmationOverlay({'@id': 'record'});
+                expect(controller.recordId).toBe('record');
+                expect(controller.recordTitle).toBe('title');
+                expect(controller.errorMessage).toBe('');
+                expect(controller.showDeleteConfirmation).toBe(true);
+            });
+            it('and should warn the user if the ontology is open in the mapping tool', function() {
+                mapperStateSvc.sourceOntologies = [{'recordId':'record'}];
 
-            controller.showDeleteConfirmationOverlay({'@id': 'record'});
+                controller.showDeleteConfirmationOverlay({'@id': 'record'});
 
-            expect(controller.recordId).toBe('record');
-            expect(controller.recordTitle).toBe('title');
-            expect(controller.errorMessage).toBe('');
-            expect(controller.mappingErrorMessage).not.toBeUndefined();
-            expect(controller.showDeleteConfirmation).toBe(true);
+                expect(controller.recordId).toBe('record');
+                expect(controller.recordTitle).toBe('title');
+                expect(controller.errorMessage).toBe('');
+                expect(controller.mappingErrorMessage).not.toBeUndefined();
+                expect(controller.showDeleteConfirmation).toBe(true);
+            });
         });
-        })
         describe('should delete an ontology', function() {
             beforeEach(function() {
                 controller.showDeleteConfirmation = true;
