@@ -94,8 +94,8 @@ describe('Create Individual Overlay directive', function() {
         it('with custom buttons to create and cancel', function() {
             var buttons = element.find('button');
             expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Create'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Cancel', 'Create'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(['Cancel', 'Create'].indexOf(angular.element(buttons[0]).text().trim()) >= 0).toBe(true);
+            expect(['Cancel', 'Create'].indexOf(angular.element(buttons[1]).text().trim()) >= 0).toBe(true);
         });
         it('depending on whether there is an error', function() {
             expect(element.find('error-display').length).toBe(0);
@@ -133,7 +133,7 @@ describe('Create Individual Overlay directive', function() {
             
             var disabled = element.querySelectorAll('[disabled]');
             expect(disabled.length).toBe(1);
-            expect(angular.element(disabled[0]).text()).toBe('Create');
+            expect(angular.element(disabled[0]).text().trim()).toBe('Create');
         });
     });
     describe('controller methods', function() {

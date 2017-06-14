@@ -38,11 +38,11 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.ontoUtils = ontologyUtilsManagerService;
+
                     dvm.prefixes = prefixes;
                     dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
-
+                    dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefix = dvm.os.getDefaultPrefix();
 
                     dvm.individual = {
@@ -98,7 +98,7 @@
                         dvm.os.addEntity(dvm.os.listItem, dvm.individual);
                         dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.individual);
                         dvm.os.listItem.flatIndividualsHierarchy = dvm.os.createFlatIndividualTree(dvm.os.listItem);
-                        
+
                         // select the new individual
                         dvm.os.selectItem(dvm.individual['@id'], false);
                         
