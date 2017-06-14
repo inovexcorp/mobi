@@ -579,54 +579,6 @@ public interface CatalogManager {
                                 @Nullable Model deletions);
 
     /**
-     * Stores the provided Commit in the repository and adds it to the Branch identified by the provided Resources,
-     * updating the head of the Branch in the process.
-     *
-     * @param catalogId The Resource identifying the Catalog which contains the Record.
-     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
-     * @param branchId The Resource identifying the Branch which will get the new Commit.
-     * @param commit The Commit to add to the Branch.
-     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *      Record does not belong to the Catalog, the Branch could not be found, or the Commit already exists in the
-     *      repository.
-     */
-//    void addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Commit commit);
-
-    /**
-     * Creates a new Commit in the repository using the InProgressCommit identified by the provided Resources and User
-     * and adds it to the Branch identified by the provided Resources, updating the head of the Branch in the process.
-     * Removes the InProgressCommit after adding the new Commit successfully.
-     *
-     * @param catalogId The Resource identifying the Catalog which contains the Record.
-     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch and
-     *                             InProgressCommit.
-     * @param branchId The Resource identifying the Branch which will get the new Commit.
-     * @param user The User with the InProgressCommit.
-     * @param message The String with the message text associated with the new Commit.
-     * @return The Resource of the new Commit.
-     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *      Record does not belong to the Catalog, the Branch could not be found, or the InProgress could not be found.
-     * @throws IllegalStateException Thrown if the Branch does not have a head Commit.
-     */
-//    Resource addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, User user, String message);
-
-    /**
-     * Creates a new Commit for the provided User in the repository for the Branch identified by the provided Resources
-     * using the provided added and deleted statements, updating the head of the Branch in the process.
-     *
-     * @param catalogId The Resource identifying the Catalog which contains the Record.
-     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
-     * @param branchId The Resource identifying the Branch which will get the new Commit.
-     * @param user The User which will be associated with the new Commit.
-     * @param message The String with the message text associated with the new Commit.
-     * @param additions The statements which were added to the named graph.
-     * @param deletions The statements which were added to the named graph.
-     * @return The Resource of the new Commit.
-     */
-    /*Resource addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, User user, String message,
-                       Model additions, Model deletions);*/
-
-    /**
      * Adds the provided InProgressCommit to the repository for the VersionedRDFRecord identified by the provided
      * Resources.
      *
@@ -793,26 +745,6 @@ public interface CatalogManager {
      * @throws IllegalStateException Thrown if a Commit in either chain does not have the additions/deletions set.
      */
     Set<Conflict> getConflicts(Resource leftId, Resource rightId);
-
-    /**
-     * Merges a Branch identified by the provided Resources into another Branch identified by the provided Resources.
-     * Both Branches must belong to the same VersionedRDFRecord. The provided addition and deletion statements should
-     * resolve any conflicts and will be used to create the merge Commit along with the InProgressCommit identified by
-     * the provided Resources and User. The head of the target Branch will be the new merge Commit, but the head of the
-     * source Branch will not change.
-     *
-     * @param catalogId The Resource identifying the Catalog which contains the Record.
-     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branches and
-     *                             InProgressCommit.
-     * @param sourceBranchId The Resource identifying the source Branch which will merge into the target Branch.
-     * @param targetBranchId The Resource identifying the target Branch which will be merge into by the source Branch.
-     * @param user The User with the InProgressCommit.
-     * @param additions The statements which were added to the named graph.
-     * @param deletions The statements which were deleted from the named graph.
-     * @return The Resource of the new merge Commit.
-     */
-    /*Resource mergeBranches(Resource catalogId, Resource versionedRDFRecordId, Resource sourceBranchId,
-                       Resource targetBranchId, User user, Model additions, Model deletions);*/
 
     /**
      * Gets the Difference, consisting of Models of additions and deletions, made between the original and the changed

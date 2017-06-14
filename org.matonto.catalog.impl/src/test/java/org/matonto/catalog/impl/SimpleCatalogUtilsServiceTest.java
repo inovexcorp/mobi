@@ -223,32 +223,7 @@ public class SimpleCatalogUtilsServiceTest {
         service.setInProgressCommitFactory(inProgressCommitFactory);
     }
 
-    /* resourceExists(Resource, String, RepositoryConnection) */
-
-    @Test
-    public void resourceExistsWithTypeTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            assertFalse(service.resourceExists(MISSING_IRI, Record.TYPE, conn));
-            assertFalse(service.resourceExists(EMPTY_IRI, Record.TYPE, conn));
-            assertFalse(service.resourceExists(RANDOM_IRI, Record.TYPE, conn));
-            assertFalse(service.resourceExists(DIFFERENT_IRI, Record.TYPE, conn));
-            assertTrue(service.resourceExists(RECORD_IRI, Record.TYPE, conn));
-        }
-    }
-
-    /* resourceExists(Resource, RepositoryConnection) */
-
-    @Test
-    public void resourceExistsTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            assertFalse(service.resourceExists(MISSING_IRI, conn));
-            assertFalse(service.resourceExists(EMPTY_IRI, conn));
-            assertTrue(service.resourceExists(RANDOM_IRI, conn));
-            assertTrue(service.resourceExists(RECORD_IRI, conn));
-        }
-    }
-
-    /* testObjectId */
+    /* validateResource */
 
     @Test
     public void testObjectIdOfMissing() {
@@ -318,6 +293,37 @@ public class SimpleCatalogUtilsServiceTest {
     @Test
     public void getObjectTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
+            Record record = service.getExpectedObject(RECORD_IRI, recordFactory, conn);
+            assertFalse(record.getModel().isEmpty());
+            assertEquals(RECORD_IRI, record.getResource());
+        }
+    }
+
+    @Test
+    public void getMissingExpectedObjectTest() {
+        getBadExpectedRecord(MISSING_IRI);
+    }
+
+    @Test
+    public void getEmptyExpectedObjectTest() {
+        getBadExpectedRecord(EMPTY_IRI);
+    }
+
+    @Test
+    public void getRandomExpectedObjectTest() {
+        getBadExpectedRecord(RANDOM_IRI);
+    }
+
+    @Test
+    public void getDifferentExpectedObjectTest() {
+        getBadExpectedRecord(DIFFERENT_IRI);
+    }
+
+    /* getExpectedObject */
+
+    @Test
+    public void getExpectedObjectTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
             Record record = service.getObject(RECORD_IRI, recordFactory, conn);
             assertFalse(record.getModel().isEmpty());
             assertEquals(RECORD_IRI, record.getResource());
@@ -366,7 +372,7 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    /* testRecordPath */
+    /* validateRecord */
 
     @Test
     public void testRecordPathWithMissingCatalog() {
@@ -375,7 +381,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage("Catalog " + MISSING_IRI + " could not be found");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testRecordPath(MISSING_IRI, RECORD_IRI, recordFactory.getTypeIRI(), conn);
+            service.validateRecord(MISSING_IRI, RECORD_IRI, recordFactory.getTypeIRI(), conn);
         }
     }
 
@@ -387,7 +393,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage("Record " + MISSING_IRI + " could not be found");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testRecordPath(CATALOG_IRI, MISSING_IRI, recordFactory.getTypeIRI(), conn);
+            service.validateRecord(CATALOG_IRI, MISSING_IRI, recordFactory.getTypeIRI(), conn);
         }
     }
 
@@ -398,7 +404,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", RECORD_NO_CATALOG_IRI, CATALOG_IRI));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testRecordPath(CATALOG_IRI, RECORD_NO_CATALOG_IRI, recordFactory.getTypeIRI(), conn);
+            service.validateRecord(CATALOG_IRI, RECORD_NO_CATALOG_IRI, recordFactory.getTypeIRI(), conn);
         }
     }
 
@@ -446,7 +452,7 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    /* testUnversionedDistributionPath */
+    /* validateUnversionedDistribution */
 
     @Test
     public void testUnversionedDistributionPathWithMissingCatalog() {
@@ -455,7 +461,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage("Catalog " + MISSING_IRI + " could not be found");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testUnversionedDistributionPath(MISSING_IRI, UNVERSIONED_RECORD_IRI, DISTRIBUTION_IRI, conn);
+            service.validateUnversionedDistribution(MISSING_IRI, UNVERSIONED_RECORD_IRI, DISTRIBUTION_IRI, conn);
         }
     }
 
@@ -466,7 +472,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage("UnversionedRecord " + MISSING_IRI + " could not be found");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testUnversionedDistributionPath(CATALOG_IRI, MISSING_IRI, DISTRIBUTION_IRI, conn);
+            service.validateUnversionedDistribution(CATALOG_IRI, MISSING_IRI, DISTRIBUTION_IRI, conn);
         }
     }
 
@@ -477,7 +483,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", UNVERSIONED_RECORD_NO_CATALOG_IRI, CATALOG_IRI));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testUnversionedDistributionPath(CATALOG_IRI, UNVERSIONED_RECORD_NO_CATALOG_IRI, DISTRIBUTION_IRI, conn);
+            service.validateUnversionedDistribution(CATALOG_IRI, UNVERSIONED_RECORD_NO_CATALOG_IRI, DISTRIBUTION_IRI, conn);
         }
     }
 
@@ -488,7 +494,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage(String.format("Distribution %s does not belong to UnversionedRecord %s", LONE_DISTRIBUTION_IRI, UNVERSIONED_RECORD_IRI));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testUnversionedDistributionPath(CATALOG_IRI, UNVERSIONED_RECORD_IRI, LONE_DISTRIBUTION_IRI, conn);
+            service.validateUnversionedDistribution(CATALOG_IRI, UNVERSIONED_RECORD_IRI, LONE_DISTRIBUTION_IRI, conn);
         }
     }
 
@@ -543,7 +549,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage(String.format("Distribution %s does not belong to UnversionedRecord %s", LONE_DISTRIBUTION_IRI, UNVERSIONED_RECORD_IRI));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testUnversionedDistributionPath(CATALOG_IRI, UNVERSIONED_RECORD_IRI, LONE_DISTRIBUTION_IRI, conn);
+            service.validateUnversionedDistribution(CATALOG_IRI, UNVERSIONED_RECORD_IRI, LONE_DISTRIBUTION_IRI, conn);
         }
     }
 
@@ -558,7 +564,7 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    /* testVersionPath */
+    /* validateVersion */
 
     @Test
     public void testVersionPathWithMissingCatalog() {
@@ -567,7 +573,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage("Catalog " + MISSING_IRI + " could not be found");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testVersionPath(MISSING_IRI, VERSIONED_RECORD_IRI, VERSION_IRI, conn);
+            service.validateVersion(MISSING_IRI, VERSIONED_RECORD_IRI, VERSION_IRI, conn);
         }
     }
 
@@ -578,7 +584,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage("VersionedRecord " + MISSING_IRI + " could not be found");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testVersionPath(CATALOG_IRI, MISSING_IRI, VERSION_IRI, conn);
+            service.validateVersion(CATALOG_IRI, MISSING_IRI, VERSION_IRI, conn);
         }
     }
 
@@ -589,7 +595,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", VERSIONED_RECORD_NO_CATALOG_IRI, CATALOG_IRI));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testVersionPath(CATALOG_IRI, VERSIONED_RECORD_NO_CATALOG_IRI, VERSION_IRI, conn);
+            service.validateVersion(CATALOG_IRI, VERSIONED_RECORD_NO_CATALOG_IRI, VERSION_IRI, conn);
         }
     }
 
@@ -600,7 +606,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage(String.format("Version %s does not belong to VersionedRecord %s", LONE_VERSION_IRI, VERSIONED_RECORD_IRI));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testVersionPath(CATALOG_IRI, VERSIONED_RECORD_IRI, LONE_VERSION_IRI, conn);
+            service.validateVersion(CATALOG_IRI, VERSIONED_RECORD_IRI, LONE_VERSION_IRI, conn);
         }
     }
 
@@ -670,7 +676,7 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    /* testVersionedDistributionPath */
+    /* validateVersionedDistribution */
 
     @Test
     public void testVersionedDistributionPathWithMissingCatalog() {
@@ -679,7 +685,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage("Catalog " + MISSING_IRI + " could not be found");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testVersionedDistributionPath(MISSING_IRI, VERSIONED_RECORD_IRI, VERSION_IRI, DISTRIBUTION_IRI, conn);
+            service.validateVersionedDistribution(MISSING_IRI, VERSIONED_RECORD_IRI, VERSION_IRI, DISTRIBUTION_IRI, conn);
         }
     }
 
@@ -690,7 +696,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage("VersionedRecord " + MISSING_IRI + " could not be found");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testVersionedDistributionPath(CATALOG_IRI, MISSING_IRI, VERSION_IRI, DISTRIBUTION_IRI, conn);
+            service.validateVersionedDistribution(CATALOG_IRI, MISSING_IRI, VERSION_IRI, DISTRIBUTION_IRI, conn);
         }
     }
 
@@ -701,7 +707,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", VERSIONED_RECORD_NO_CATALOG_IRI, CATALOG_IRI));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testVersionedDistributionPath(CATALOG_IRI, VERSIONED_RECORD_NO_CATALOG_IRI, VERSION_IRI, DISTRIBUTION_IRI, conn);
+            service.validateVersionedDistribution(CATALOG_IRI, VERSIONED_RECORD_NO_CATALOG_IRI, VERSION_IRI, DISTRIBUTION_IRI, conn);
         }
     }
 
@@ -712,7 +718,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage(String.format("Version %s does not belong to VersionedRecord %s", LONE_VERSION_IRI, VERSIONED_RECORD_IRI));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testVersionedDistributionPath(CATALOG_IRI, VERSIONED_RECORD_IRI, LONE_VERSION_IRI, DISTRIBUTION_IRI, conn);
+            service.validateVersionedDistribution(CATALOG_IRI, VERSIONED_RECORD_IRI, LONE_VERSION_IRI, DISTRIBUTION_IRI, conn);
         }
     }
 
@@ -723,7 +729,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage("Version " + RANDOM_IRI + " could not be found");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testVersionedDistributionPath(CATALOG_IRI, VERSIONED_RECORD_MISSING_VERSION_IRI, RANDOM_IRI, DISTRIBUTION_IRI, conn);
+            service.validateVersionedDistribution(CATALOG_IRI, VERSIONED_RECORD_MISSING_VERSION_IRI, RANDOM_IRI, DISTRIBUTION_IRI, conn);
         }
     }
 
@@ -734,7 +740,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage(String.format("Distribution %s does not belong to Version %s", LONE_DISTRIBUTION_IRI, VERSION_IRI));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testVersionedDistributionPath(CATALOG_IRI, VERSIONED_RECORD_IRI, VERSION_IRI, LONE_DISTRIBUTION_IRI, conn);
+            service.validateVersionedDistribution(CATALOG_IRI, VERSIONED_RECORD_IRI, VERSION_IRI, LONE_DISTRIBUTION_IRI, conn);
         }
     }
 
@@ -826,7 +832,7 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    /* testBranchPath */
+    /* validateBranch */
 
     @Test
     public void testBranchPathWithMissingCatalog() {
@@ -835,7 +841,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage("Catalog " + MISSING_IRI + " could not be found");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testBranchPath(MISSING_IRI, RECORD_IRI, BRANCH_IRI, conn);
+            service.validateBranch(MISSING_IRI, RECORD_IRI, BRANCH_IRI, conn);
         }
     }
 
@@ -846,7 +852,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage("VersionedRDFRecord " + MISSING_IRI + " could not be found");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testBranchPath(CATALOG_IRI, MISSING_IRI, BRANCH_IRI, conn);
+            service.validateBranch(CATALOG_IRI, MISSING_IRI, BRANCH_IRI, conn);
         }
     }
 
@@ -857,7 +863,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", VERSIONED_RDF_RECORD_NO_CATALOG_IRI, CATALOG_IRI));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testBranchPath(CATALOG_IRI, VERSIONED_RDF_RECORD_NO_CATALOG_IRI, BRANCH_IRI, conn);
+            service.validateBranch(CATALOG_IRI, VERSIONED_RDF_RECORD_NO_CATALOG_IRI, BRANCH_IRI, conn);
         }
     }
 
@@ -868,7 +874,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage(String.format("Branch %s does not belong to VersionedRDFRecord %s", LONE_BRANCH_IRI, VERSIONED_RDF_RECORD_IRI));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testBranchPath(CATALOG_IRI, VERSIONED_RDF_RECORD_IRI, LONE_BRANCH_IRI, conn);
+            service.validateBranch(CATALOG_IRI, VERSIONED_RDF_RECORD_IRI, LONE_BRANCH_IRI, conn);
         }
     }
 
@@ -996,7 +1002,7 @@ public class SimpleCatalogUtilsServiceTest {
         service.getHeadCommitIRI(branch);
     }
 
-    /* testInProgressCommitPath */
+    /* validateInProgressCommit */
 
     @Test
     public void testInProgressCommitPathWithMissingCatalog() {
@@ -1005,7 +1011,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage("Catalog " + MISSING_IRI + " could not be found");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testInProgressCommitPath(MISSING_IRI, VERSIONED_RDF_RECORD_IRI, IN_PROGRESS_COMMIT_IRI, conn);
+            service.validateInProgressCommit(MISSING_IRI, VERSIONED_RDF_RECORD_IRI, IN_PROGRESS_COMMIT_IRI, conn);
         }
     }
 
@@ -1016,7 +1022,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage("VersionedRDFRecord " + MISSING_IRI + " could not be found");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testInProgressCommitPath(CATALOG_IRI, MISSING_IRI, IN_PROGRESS_COMMIT_IRI, conn);
+            service.validateInProgressCommit(CATALOG_IRI, MISSING_IRI, IN_PROGRESS_COMMIT_IRI, conn);
         }
     }
 
@@ -1027,7 +1033,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", VERSIONED_RDF_RECORD_NO_CATALOG_IRI, CATALOG_IRI));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testInProgressCommitPath(CATALOG_IRI, VERSIONED_RDF_RECORD_NO_CATALOG_IRI, IN_PROGRESS_COMMIT_IRI, conn);
+            service.validateInProgressCommit(CATALOG_IRI, VERSIONED_RDF_RECORD_NO_CATALOG_IRI, IN_PROGRESS_COMMIT_IRI, conn);
         }
     }
 
@@ -1038,7 +1044,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage("InProgressCommit " + MISSING_IRI + " could not be found");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testInProgressCommitPath(CATALOG_IRI, VERSIONED_RDF_RECORD_IRI, MISSING_IRI, conn);
+            service.validateInProgressCommit(CATALOG_IRI, VERSIONED_RDF_RECORD_IRI, MISSING_IRI, conn);
         }
     }
 
@@ -1049,7 +1055,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage("Record was not set on InProgressCommit " + IN_PROGRESS_COMMIT_NO_RECORD_IRI);
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testInProgressCommitPath(CATALOG_IRI, VERSIONED_RDF_RECORD_IRI, IN_PROGRESS_COMMIT_NO_RECORD_IRI, conn);
+            service.validateInProgressCommit(CATALOG_IRI, VERSIONED_RDF_RECORD_IRI, IN_PROGRESS_COMMIT_NO_RECORD_IRI, conn);
         }
     }
 
@@ -1060,7 +1066,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage(String.format("InProgressCommit %s does not belong to VersionedRDFRecord %s", IN_PROGRESS_COMMIT_IRI, VERSIONED_RDF_RECORD_MISSING_BRANCH_IRI));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testInProgressCommitPath(CATALOG_IRI, VERSIONED_RDF_RECORD_MISSING_BRANCH_IRI, IN_PROGRESS_COMMIT_IRI, conn);
+            service.validateInProgressCommit(CATALOG_IRI, VERSIONED_RDF_RECORD_MISSING_BRANCH_IRI, IN_PROGRESS_COMMIT_IRI, conn);
         }
     }
 
@@ -1516,7 +1522,7 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage(String.format("%s %s could not be found", classIRI.getLocalName(), resource));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.testObjectId(resource, classIRI, conn);
+            service.validateResource(resource, classIRI, conn);
         }
     }
 
@@ -1527,6 +1533,16 @@ public class SimpleCatalogUtilsServiceTest {
 
         try (RepositoryConnection conn = repo.getConnection()) {
             service.getObject(resource, recordFactory, conn);
+        }
+    }
+
+    private void getBadExpectedRecord(Resource resource) {
+        // Setup:
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage(String.format("%s %s could not be found", recordFactory.getTypeIRI().getLocalName(), resource.stringValue()));
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            service.getExpectedObject(resource, recordFactory, conn);
         }
     }
 

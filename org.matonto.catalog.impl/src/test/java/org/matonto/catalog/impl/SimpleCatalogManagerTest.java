@@ -168,9 +168,6 @@ public class SimpleCatalogManagerTest {
 
     private static final int TOTAL_SIZE = 7;
 
-    private Catalog distributedCatalog;
-    private Catalog localCatalog;
-
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
@@ -317,10 +314,8 @@ public class SimpleCatalogManagerTest {
         distributedCatalogId = vf.createIRI("http://matonto.org/test/catalogs#catalog-distributed");
         localCatalogId = vf.createIRI("http://matonto.org/test/catalogs#catalog-local");
 
-        distributedCatalog = catalogFactory.createNew(distributedCatalogId);
-        localCatalog = catalogFactory.createNew(localCatalogId);
-        when(utilsService.optObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(distributedCatalog));
-        when(utilsService.optObject(eq(localCatalogId), eq(catalogFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(localCatalog));
+        when(utilsService.getExpectedObject(any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
+                i.getArgumentAt(1, OrmFactory.class).createNew(i.getArgumentAt(0, Resource.class)));
         when(utilsService.getRecord(any(Resource.class), any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
                 i.getArgumentAt(2, OrmFactory.class).createNew(i.getArgumentAt(1, Resource.class)));
         when(utilsService.getObject(any(Resource.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenAnswer(i ->
@@ -363,18 +358,8 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testGetDistributedCatalog() throws Exception {
         Catalog result = manager.getDistributedCatalog();
-        verify(utilsService).optObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
-        assertEquals(distributedCatalog, result);
-    }
-
-    @Test
-    public void testGetMissingDistributedCatalog() {
-        // Setup:
-        when(utilsService.optObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class))).thenReturn(Optional.empty());
-        thrown.expect(IllegalStateException.class);
-        thrown.expectMessage("The Catalog " + distributedCatalogId + " could not be retrieved.");
-
-        manager.getDistributedCatalog();
+        verify(utilsService).getExpectedObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
+        assertEquals(distributedCatalogId, result.getResource());
     }
 
     /* getLocalCatalog */
@@ -382,18 +367,8 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testGetLocalCatalog() throws Exception {
         Catalog result = manager.getLocalCatalog();
-        verify(utilsService).optObject(eq(localCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
-        assertEquals(localCatalog, result);
-    }
-
-    @Test
-    public void testGetMissingLocalCatalog() {
-        // Setup:
-        when(utilsService.optObject(eq(localCatalogId), eq(catalogFactory), any(RepositoryConnection.class))).thenReturn(Optional.empty());
-        thrown.expect(IllegalStateException.class);
-        thrown.expectMessage("The Catalog " + localCatalogId + " could not be retrieved.");
-
-        manager.getLocalCatalog();
+        verify(utilsService).getExpectedObject(eq(localCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
+        assertEquals(localCatalogId, result.getResource());
     }
 
     /* findRecords */
@@ -569,7 +544,7 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testGetRecordIds() throws Exception {
         Set<Resource> results = manager.getRecordIds(distributedCatalogId);
-        verify(utilsService).testObjectId(eq(distributedCatalogId), eq(vf.createIRI(Catalog.TYPE)), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(distributedCatalogId), eq(vf.createIRI(Catalog.TYPE)), any(RepositoryConnection.class));
         assertEquals(TOTAL_SIZE, results.size());
         assertTrue(results.contains(RECORD_IRI));
         assertTrue(results.contains(UNVERSIONED_RECORD_IRI));
@@ -582,10 +557,9 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testAddRecord() throws Exception {
         // Setup:
-        Record record = recordFactory.createNew(RECORD_IRI);
+        Record record = recordFactory.createNew(NEW_IRI);
 
         manager.addRecord(distributedCatalogId, record);
-        verify(utilsService).resourceExists(eq(RECORD_IRI), any(RepositoryConnection.class));
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
         verify(utilsService).addObject(eq(record), any(RepositoryConnection.class));
         assertTrue(record.getCatalog_resource().isPresent());
@@ -595,10 +569,9 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testAddUnversionedRecord() throws Exception {
         // Setup:
-        UnversionedRecord record = unversionedRecordFactory.createNew(UNVERSIONED_RECORD_IRI);
+        UnversionedRecord record = unversionedRecordFactory.createNew(NEW_IRI);
 
         manager.addRecord(distributedCatalogId, record);
-        verify(utilsService).resourceExists(eq(UNVERSIONED_RECORD_IRI), any(RepositoryConnection.class));
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
         verify(utilsService).addObject(eq(record), any(RepositoryConnection.class));
         assertTrue(record.getCatalog_resource().isPresent());
@@ -608,10 +581,9 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testAddVersionedRecord() throws Exception {
         // Setup:
-        VersionedRecord record = versionedRecordFactory.createNew(VERSIONED_RECORD_IRI);
+        VersionedRecord record = versionedRecordFactory.createNew(NEW_IRI);
 
         manager.addRecord(distributedCatalogId, record);
-        verify(utilsService).resourceExists(eq(VERSIONED_RECORD_IRI), any(RepositoryConnection.class));
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
         verify(utilsService).addObject(eq(record), any(RepositoryConnection.class));
         assertTrue(record.getCatalog_resource().isPresent());
@@ -621,10 +593,9 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testAddVersionedRDFRecord() throws Exception {
         // Setup:
-        VersionedRDFRecord record = versionedRDFRecordFactory.createNew(VERSIONED_RDF_RECORD_IRI);
+        VersionedRDFRecord record = versionedRDFRecordFactory.createNew(NEW_IRI);
 
         manager.addRecord(distributedCatalogId, record);
-        verify(utilsService).resourceExists(eq(VERSIONED_RDF_RECORD_IRI), any(RepositoryConnection.class));
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
         verify(utilsService, times(0)).addObject(eq(record), any(RepositoryConnection.class));
@@ -639,7 +610,6 @@ public class SimpleCatalogManagerTest {
     public void testAddRecordWithTakenResource() {
         // Setup:
         Record record = recordFactory.createNew(RECORD_IRI);
-        when(utilsService.resourceExists(eq(RECORD_IRI), any(RepositoryConnection.class))).thenReturn(true);
 
         manager.addRecord(distributedCatalogId, record);
         verify(utilsService, times(0)).addObject(eq(record), any(RepositoryConnection.class));
@@ -655,7 +625,7 @@ public class SimpleCatalogManagerTest {
         record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
 
         manager.updateRecord(distributedCatalogId, record);
-        verify(utilsService).testRecordPath(eq(distributedCatalogId), eq(RECORD_IRI), eq(vf.createIRI(Record.TYPE)), any(RepositoryConnection.class));
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(RECORD_IRI), eq(vf.createIRI(Record.TYPE)), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
     }
 
@@ -666,7 +636,7 @@ public class SimpleCatalogManagerTest {
         record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
 
         manager.updateRecord(distributedCatalogId, record);
-        verify(utilsService).testRecordPath(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(vf.createIRI(Record.TYPE)), any(RepositoryConnection.class));
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(vf.createIRI(Record.TYPE)), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
     }
 
@@ -677,7 +647,7 @@ public class SimpleCatalogManagerTest {
         record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
 
         manager.updateRecord(distributedCatalogId, record);
-        verify(utilsService).testRecordPath(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(vf.createIRI(Record.TYPE)), any(RepositoryConnection.class));
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(vf.createIRI(Record.TYPE)), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
     }
 
@@ -688,7 +658,7 @@ public class SimpleCatalogManagerTest {
         record.setKeyword(Stream.of(vf.createLiteral("keyword1")).collect(Collectors.toSet()));
 
         manager.updateRecord(distributedCatalogId, record);
-        verify(utilsService).testRecordPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(vf.createIRI(Record.TYPE)), any(RepositoryConnection.class));
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(vf.createIRI(Record.TYPE)), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
     }
 
@@ -766,7 +736,7 @@ public class SimpleCatalogManagerTest {
         doReturn(Optional.of(record)).when(utilsService).optObject(eq(RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
 
         Optional<Record> result = manager.getRecord(distributedCatalogId, RECORD_IRI, recordFactory);
-        verify(utilsService).testObjectId(eq(distributedCatalogId), eq(catalogFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(distributedCatalogId), eq(catalogFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).optObject(eq(RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(record, result.get());
@@ -780,7 +750,7 @@ public class SimpleCatalogManagerTest {
         doReturn(Optional.of(record)).when(utilsService).optObject(eq(UNVERSIONED_RECORD_IRI), eq(unversionedRecordFactory), any(RepositoryConnection.class));
 
         Optional<UnversionedRecord> result = manager.getRecord(distributedCatalogId, UNVERSIONED_RECORD_IRI, unversionedRecordFactory);
-        verify(utilsService).testObjectId(eq(distributedCatalogId), eq(catalogFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(distributedCatalogId), eq(catalogFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).optObject(eq(UNVERSIONED_RECORD_IRI), eq(unversionedRecordFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(record, result.get());
@@ -794,7 +764,7 @@ public class SimpleCatalogManagerTest {
         doReturn(Optional.of(record)).when(utilsService).optObject(eq(VERSIONED_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
 
         Optional<VersionedRecord> result = manager.getRecord(distributedCatalogId, VERSIONED_RECORD_IRI, versionedRecordFactory);
-        verify(utilsService).testObjectId(eq(distributedCatalogId), eq(catalogFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(distributedCatalogId), eq(catalogFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).optObject(eq(VERSIONED_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(record, result.get());
@@ -808,7 +778,7 @@ public class SimpleCatalogManagerTest {
         doReturn(Optional.of(record)).when(utilsService).optObject(eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
 
         Optional<VersionedRDFRecord> result = manager.getRecord(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, versionedRDFRecordFactory);
-        verify(utilsService).testObjectId(eq(distributedCatalogId), eq(catalogFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(distributedCatalogId), eq(catalogFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).optObject(eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(record, result.get());
@@ -833,7 +803,7 @@ public class SimpleCatalogManagerTest {
         doReturn(Optional.of(record)).when(utilsService).optObject(eq(RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
 
         Optional<Record> result = manager.getRecord(localCatalogId, RECORD_IRI, recordFactory);
-        verify(utilsService).testObjectId(eq(localCatalogId), eq(catalogFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(localCatalogId), eq(catalogFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).optObject(eq(RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
         assertFalse(result.isPresent());
     }
@@ -850,7 +820,7 @@ public class SimpleCatalogManagerTest {
 
         Set<Distribution> distributions = manager.getUnversionedDistributions(distributedCatalogId, record.getResource());
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(unversionedRecordFactory), any(RepositoryConnection.class));
-        record.getUnversionedDistribution_resource().forEach(resource -> verify(utilsService).getObject(eq(resource), eq(distributionFactory), any(RepositoryConnection.class)));
+        record.getUnversionedDistribution_resource().forEach(resource -> verify(utilsService).getExpectedObject(eq(resource), eq(distributionFactory), any(RepositoryConnection.class)));
         assertEquals(1, distributions.size());
     }
 
@@ -859,13 +829,12 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testAddUnversionedDistribution() throws Exception {
         // Setup:
-        UnversionedRecord record = unversionedRecordFactory.createNew(UNVERSIONED_RECORD_IRI);
+        UnversionedRecord record = unversionedRecordFactory.createNew(NEW_IRI);
         doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(unversionedRecordFactory), any(RepositoryConnection.class));
         Distribution dist = distributionFactory.createNew(NEW_IRI);
 
         manager.addUnversionedDistribution(distributedCatalogId, UNVERSIONED_RECORD_IRI, dist);
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(unversionedRecordFactory), any(RepositoryConnection.class));
-        verify(utilsService).resourceExists(eq(NEW_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
         verify(utilsService).addObject(eq(dist), any(RepositoryConnection.class));
         assertEquals(1, record.getUnversionedDistribution_resource().size());
@@ -875,7 +844,6 @@ public class SimpleCatalogManagerTest {
     public void testAddUnversionedDistributionWithTakenResource() {
         // Setup:
         Distribution dist = distributionFactory.createNew(DISTRIBUTION_IRI);
-        when(utilsService.resourceExists(eq(DISTRIBUTION_IRI), any(RepositoryConnection.class))).thenReturn(true);
 
         manager.addUnversionedDistribution(distributedCatalogId, UNVERSIONED_RECORD_IRI, dist);
         verify(utilsService, times(0)).addObject(eq(dist), any(RepositoryConnection.class));
@@ -891,7 +859,7 @@ public class SimpleCatalogManagerTest {
         dist.getModel().add(DISTRIBUTION_IRI, vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("New Title"));
 
         manager.updateUnversionedDistribution(distributedCatalogId, UNVERSIONED_RECORD_IRI, dist);
-        verify(utilsService).testUnversionedDistributionPath(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
+        verify(utilsService).validateUnversionedDistribution(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(dist), any(RepositoryConnection.class));
     }
 
@@ -920,11 +888,11 @@ public class SimpleCatalogManagerTest {
         Distribution dist = distributionFactory.createNew(DISTRIBUTION_IRI);
         record.setUnversionedDistribution(Collections.singleton(dist));
         doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(unversionedRecordFactory), any(RepositoryConnection.class));
-        doReturn(Optional.of(dist)).when(utilsService).optObject(eq(DISTRIBUTION_IRI), eq(distributionFactory), any(RepositoryConnection.class));
+        doReturn(dist).when(utilsService).getExpectedObject(eq(DISTRIBUTION_IRI), eq(distributionFactory), any(RepositoryConnection.class));
 
         Optional<Distribution> result = manager.getUnversionedDistribution(distributedCatalogId, UNVERSIONED_RECORD_IRI, DISTRIBUTION_IRI);
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(unversionedRecordFactory), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(DISTRIBUTION_IRI), eq(distributionFactory), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(DISTRIBUTION_IRI), eq(distributionFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(dist, result.get());
     }
@@ -933,18 +901,6 @@ public class SimpleCatalogManagerTest {
     public void testGetUnversionedDistributionOfWrongRecord() throws Exception {
         Optional<Distribution> result = manager.getUnversionedDistribution(distributedCatalogId, UNVERSIONED_RECORD_IRI, EMPTY_IRI);
         assertFalse(result.isPresent());
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testGetMissingUnversionedDistribution() {
-        // Setup:
-        UnversionedRecord record = unversionedRecordFactory.createNew(UNVERSIONED_RECORD_IRI);
-        record.setUnversionedDistribution(Collections.singleton(distributionFactory.createNew(EMPTY_IRI)));
-        doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(unversionedRecordFactory), any(RepositoryConnection.class));
-        doReturn(Optional.empty()).when(utilsService).optObject(eq(EMPTY_IRI), eq(distributionFactory), any(RepositoryConnection.class));
-
-        manager.getUnversionedDistribution(distributedCatalogId, UNVERSIONED_RECORD_IRI, EMPTY_IRI);
-        verify(utilsService).throwThingNotFound(EMPTY_IRI, distributionFactory);
     }
 
     /* getVersions */
@@ -959,7 +915,7 @@ public class SimpleCatalogManagerTest {
 
         Set<Version> versions = manager.getVersions(distributedCatalogId, VERSIONED_RECORD_IRI);
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
-        record.getVersion_resource().forEach(resource -> verify(utilsService).getObject(eq(resource), eq(versionFactory), any(RepositoryConnection.class)));
+        record.getVersion_resource().forEach(resource -> verify(utilsService).getExpectedObject(eq(resource), eq(versionFactory), any(RepositoryConnection.class)));
         assertEquals(1, versions.size());
     }
 
@@ -974,7 +930,6 @@ public class SimpleCatalogManagerTest {
 
         manager.addVersion(distributedCatalogId, VERSIONED_RECORD_IRI, version);
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
-        verify(utilsService).resourceExists(eq(NEW_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
         verify(utilsService).addObject(eq(version), any(RepositoryConnection.class));
         assertTrue(record.getLatestVersion_resource().isPresent());
@@ -991,7 +946,6 @@ public class SimpleCatalogManagerTest {
 
         manager.addVersion(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, tag);
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
-        verify(utilsService).resourceExists(eq(NEW_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
         verify(utilsService).addObject(eq(tag), any(RepositoryConnection.class));
         assertTrue(record.getLatestVersion_resource().isPresent());
@@ -1003,7 +957,6 @@ public class SimpleCatalogManagerTest {
     public void testAddVersionWithTakenResource() {
         // Setup:
         Version version = versionFactory.createNew(VERSION_IRI);
-        when(utilsService.resourceExists(eq(VERSION_IRI), any(RepositoryConnection.class))).thenReturn(true);
 
         manager.addVersion(distributedCatalogId, VERSIONED_RECORD_IRI, version);
         verify(utilsService, times(0)).addObject(eq(version), any(RepositoryConnection.class));
@@ -1019,7 +972,7 @@ public class SimpleCatalogManagerTest {
         version.getModel().add(VERSION_IRI, vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("New Title"));
 
         manager.updateVersion(distributedCatalogId, VERSIONED_RECORD_IRI, version);
-        verify(utilsService).testVersionPath(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(VERSION_IRI), any(RepositoryConnection.class));
+        verify(utilsService).validateVersion(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(VERSION_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(version), any(RepositoryConnection.class));
     }
 
@@ -1030,7 +983,7 @@ public class SimpleCatalogManagerTest {
         tag.getModel().add(TAG_IRI, vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("New Title"));
 
         manager.updateVersion(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, tag);
-        verify(utilsService).testVersionPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(TAG_IRI), any(RepositoryConnection.class));
+        verify(utilsService).validateVersion(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(TAG_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(tag), any(RepositoryConnection.class));
     }
 
@@ -1066,11 +1019,11 @@ public class SimpleCatalogManagerTest {
         Version version = versionFactory.createNew(VERSION_IRI);
         record.setVersion(Collections.singleton(version));
         doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
-        doReturn(Optional.of(version)).when(utilsService).optObject(eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
+        doReturn(version).when(utilsService).getExpectedObject(eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
 
         Optional<Version> result = manager.getVersion(distributedCatalogId, VERSIONED_RECORD_IRI, VERSION_IRI, versionFactory);
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(version, result.get());
     }
@@ -1082,11 +1035,11 @@ public class SimpleCatalogManagerTest {
         Tag tag = tagFactory.createNew(TAG_IRI);
         record.setVersion(Collections.singleton(tag));
         doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
-        doReturn(Optional.of(tag)).when(utilsService).optObject(eq(TAG_IRI), eq(tagFactory), any(RepositoryConnection.class));
+        doReturn(tag).when(utilsService).getExpectedObject(eq(TAG_IRI), eq(tagFactory), any(RepositoryConnection.class));
 
         Optional<Tag> result = manager.getVersion(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, TAG_IRI, tagFactory);
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(TAG_IRI), eq(tagFactory), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(TAG_IRI), eq(tagFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(tag, result.get());
     }
@@ -1095,18 +1048,6 @@ public class SimpleCatalogManagerTest {
     public void testGetVersionOfWrongRecord() throws Exception {
         Optional<Version> result = manager.getVersion(distributedCatalogId, VERSIONED_RECORD_IRI, EMPTY_IRI, versionFactory);
         assertFalse(result.isPresent());
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testGetMissingVersion() {
-        // Setup:
-        VersionedRecord record = versionedRecordFactory.createNew(VERSIONED_RECORD_IRI);
-        record.setVersion(Collections.singleton(versionFactory.createNew(EMPTY_IRI)));
-        doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
-        doReturn(Optional.empty()).when(utilsService).optObject(eq(EMPTY_IRI), eq(versionFactory), any(RepositoryConnection.class));
-
-        manager.getVersion(distributedCatalogId, VERSIONED_RECORD_IRI, EMPTY_IRI, versionFactory);
-        verify(utilsService).throwThingNotFound(EMPTY_IRI, versionFactory);
     }
 
     /* getLatestVersion */
@@ -1118,11 +1059,11 @@ public class SimpleCatalogManagerTest {
         Version version = versionFactory.createNew(LATEST_VERSION_IRI);
         record.setLatestVersion(version);
         doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
-        doReturn(Optional.of(version)).when(utilsService).optObject(eq(LATEST_VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
+        doReturn(version).when(utilsService).getExpectedObject(eq(LATEST_VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
 
         Optional<Version> result = manager.getLatestVersion(distributedCatalogId, VERSIONED_RECORD_IRI, versionFactory);
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(LATEST_VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(LATEST_VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(version, result.get());
     }
@@ -1134,11 +1075,11 @@ public class SimpleCatalogManagerTest {
         Tag tag = tagFactory.createNew(TAG_IRI);
         record.setLatestVersion(tag);
         doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
-        doReturn(Optional.of(tag)).when(utilsService).optObject(eq(TAG_IRI), eq(tagFactory), any(RepositoryConnection.class));
+        doReturn(tag).when(utilsService).getExpectedObject(eq(TAG_IRI), eq(tagFactory), any(RepositoryConnection.class));
 
         Optional<Tag> result = manager.getLatestVersion(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, tagFactory);
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(TAG_IRI), eq(tagFactory), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(TAG_IRI), eq(tagFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(tag, result.get());
     }
@@ -1149,17 +1090,6 @@ public class SimpleCatalogManagerTest {
         assertFalse(result.isPresent());
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void getMissingLatestVersion() {
-        // Setup:
-        VersionedRecord record = versionedRecordFactory.createNew(VERSIONED_RECORD_IRI);
-        record.setLatestVersion(versionFactory.createNew(EMPTY_IRI));
-        doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
-        doReturn(Optional.empty()).when(utilsService).optObject(eq(EMPTY_IRI), eq(versionFactory), any(RepositoryConnection.class));
-
-        manager.getLatestVersion(distributedCatalogId, VERSIONED_RECORD_IRI, versionFactory);
-    }
-
     /* getTaggedCommit */
 
     @Test
@@ -1168,42 +1098,21 @@ public class SimpleCatalogManagerTest {
         Tag tag = tagFactory.createNew(TAG_IRI);
         Commit commit = commitFactory.createNew(COMMIT_IRI);
         tag.setCommit(commit);
-        doReturn(Optional.of(tag)).when(utilsService).optObject(eq(TAG_IRI), eq(tagFactory), any(RepositoryConnection.class));
-        doReturn(Optional.of(commit)).when(utilsService).optObject(eq(COMMIT_IRI), eq(commitFactory), any(RepositoryConnection.class));
+        doReturn(tag).when(utilsService).getExpectedObject(eq(TAG_IRI), eq(tagFactory), any(RepositoryConnection.class));
+        doReturn(commit).when(utilsService).getExpectedObject(eq(COMMIT_IRI), eq(commitFactory), any(RepositoryConnection.class));
 
         Commit result = manager.getTaggedCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, TAG_IRI);
-        verify(utilsService).testVersionPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(TAG_IRI), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(TAG_IRI), eq(tagFactory), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(COMMIT_IRI), eq(commitFactory), any(RepositoryConnection.class));
+        verify(utilsService).validateVersion(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(TAG_IRI), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(TAG_IRI), eq(tagFactory), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(COMMIT_IRI), eq(commitFactory), any(RepositoryConnection.class));
         assertEquals(commit, result);
     }
 
     @Test
     public void testGetTaggedCommitWithoutCommitSet() {
         // Setup:
-        Tag tag = tagFactory.createNew(TAG_IRI);
-        doReturn(Optional.of(tag)).when(utilsService).optObject(eq(TAG_IRI), eq(tagFactory), any(RepositoryConnection.class));
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("Tag " + TAG_IRI + " does not have a Commit set");
-
-        manager.getTaggedCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, TAG_IRI);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testGetTaggedCommitOfMissingTag() {
-        // Setup:
-        doReturn(Optional.empty()).when(utilsService).optObject(eq(EMPTY_IRI), eq(tagFactory), any(RepositoryConnection.class));
-
-        manager.getTaggedCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, EMPTY_IRI);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testGetTaggedMissingCommit() {
-        // Setup:
-        Tag tag = tagFactory.createNew(TAG_IRI);
-        tag.setCommit(commitFactory.createNew(EMPTY_IRI));
-        doReturn(Optional.of(tag)).when(utilsService).optObject(eq(TAG_IRI), eq(tagFactory), any(RepositoryConnection.class));
-        doReturn(Optional.empty()).when(utilsService).optObject(eq(EMPTY_IRI), eq(commitFactory), any(RepositoryConnection.class));
 
         manager.getTaggedCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, TAG_IRI);
     }
@@ -1220,7 +1129,7 @@ public class SimpleCatalogManagerTest {
 
         Set<Distribution> distributions = manager.getVersionedDistributions(distributedCatalogId, VERSIONED_RECORD_IRI, VERSION_IRI);
         verify(utilsService).getVersion(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
-        version.getVersionedDistribution_resource().forEach(resource -> verify(utilsService).getObject(eq(resource), eq(distributionFactory), any(RepositoryConnection.class)));
+        version.getVersionedDistribution_resource().forEach(resource -> verify(utilsService).getExpectedObject(eq(resource), eq(distributionFactory), any(RepositoryConnection.class)));
         assertEquals(1, distributions.size());
     }
 
@@ -1235,7 +1144,6 @@ public class SimpleCatalogManagerTest {
 
         manager.addVersionedDistribution(distributedCatalogId, VERSIONED_RECORD_IRI, VERSION_IRI, dist);
         verify(utilsService).getVersion(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
-        verify(utilsService).resourceExists(eq(NEW_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(version), any(RepositoryConnection.class));
         verify(utilsService).addObject(eq(dist), any(RepositoryConnection.class));
         assertEquals(1, version.getVersionedDistribution_resource().size());
@@ -1245,11 +1153,10 @@ public class SimpleCatalogManagerTest {
     public void testAddVersionedDistributionWithTakenResource() {
         // Setup:
         Distribution dist = distributionFactory.createNew(DISTRIBUTION_IRI);
-        when(utilsService.resourceExists(eq(DISTRIBUTION_IRI), any(RepositoryConnection.class))).thenReturn(true);
 
         manager.addVersionedDistribution(distributedCatalogId, VERSIONED_RECORD_IRI, VERSION_IRI, dist);
         verify(utilsService, times(0)).addObject(eq(dist), any(RepositoryConnection.class));
-        verify(utilsService).throwAlreadyExists(NEW_IRI, distributionFactory);
+        verify(utilsService).throwAlreadyExists(DISTRIBUTION_IRI, distributionFactory);
     }
 
     /* updateVersionedDistribution */
@@ -1261,7 +1168,7 @@ public class SimpleCatalogManagerTest {
         dist.getModel().add(DISTRIBUTION_IRI, vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("New Title"));
 
         manager.updateVersionedDistribution(distributedCatalogId, VERSIONED_RECORD_IRI, VERSION_IRI, dist);
-        verify(utilsService).testVersionedDistributionPath(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(VERSION_IRI), eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
+        verify(utilsService).validateVersionedDistribution(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(VERSION_IRI), eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(dist), any(RepositoryConnection.class));
     }
 
@@ -1290,11 +1197,11 @@ public class SimpleCatalogManagerTest {
         Distribution dist = distributionFactory.createNew(DISTRIBUTION_IRI);
         version.setVersionedDistribution(Collections.singleton(dist));
         doReturn(version).when(utilsService).getVersion(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
-        doReturn(Optional.of(dist)).when(utilsService).optObject(eq(DISTRIBUTION_IRI), eq(distributionFactory), any(RepositoryConnection.class));
+        doReturn(dist).when(utilsService).getExpectedObject(eq(DISTRIBUTION_IRI), eq(distributionFactory), any(RepositoryConnection.class));
 
         Optional<Distribution> result = manager.getVersionedDistribution(distributedCatalogId, VERSIONED_RECORD_IRI, VERSION_IRI, DISTRIBUTION_IRI);
         verify(utilsService).getVersion(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(DISTRIBUTION_IRI), eq(distributionFactory), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(DISTRIBUTION_IRI), eq(distributionFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(dist, result.get());
     }
@@ -1305,19 +1212,7 @@ public class SimpleCatalogManagerTest {
         assertFalse(result.isPresent());
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testGetMissingVersionedDistribution() {
-        // Setup:
-        Version version = versionFactory.createNew(VERSION_IRI);
-        version.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(EMPTY_IRI)));
-        doReturn(version).when(utilsService).getVersion(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
-        doReturn(Optional.empty()).when(utilsService).optObject(eq(EMPTY_IRI), eq(distributionFactory), any(RepositoryConnection.class));
-
-        manager.getVersionedDistribution(distributedCatalogId, VERSIONED_RECORD_IRI, VERSION_IRI, EMPTY_IRI);
-        verify(utilsService).throwThingNotFound(EMPTY_IRI, distributionFactory);
-    }
-
-    /* getVersions */
+    /* getBranches */
 
     @Test
     public void testGetBranches() throws Exception {
@@ -1328,7 +1223,7 @@ public class SimpleCatalogManagerTest {
 
         Set<Branch> branches = manager.getBranches(distributedCatalogId, VERSIONED_RDF_RECORD_IRI);
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        record.getBranch_resource().forEach(resource -> verify(utilsService).getObject(eq(resource), eq(branchFactory), any(RepositoryConnection.class)));
+        record.getBranch_resource().forEach(resource -> verify(utilsService).getExpectedObject(eq(resource), eq(branchFactory), any(RepositoryConnection.class)));
         assertEquals(1, branches.size());
     }
 
@@ -1343,7 +1238,6 @@ public class SimpleCatalogManagerTest {
 
         manager.addBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, branch);
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        verify(utilsService).resourceExists(eq(NEW_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
         verify(utilsService).addObject(eq(branch), any(RepositoryConnection.class));
         assertEquals(1, record.getBranch_resource().size());
@@ -1353,7 +1247,6 @@ public class SimpleCatalogManagerTest {
     public void testAddBranchWithTakenResource() {
         // Setup:
         Branch branch = branchFactory.createNew(BRANCH_IRI);
-        when(utilsService.resourceExists(eq(BRANCH_IRI), any(RepositoryConnection.class))).thenReturn(true);
 
         manager.addBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, branch);
         verify(utilsService, times(0)).addObject(eq(branch), any(RepositoryConnection.class));
@@ -1398,7 +1291,7 @@ public class SimpleCatalogManagerTest {
         branch.getModel().add(BRANCH_IRI, vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("New Title"));
 
         manager.updateBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, branch);
-        verify(utilsService).testBranchPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), any(RepositoryConnection.class));
+        verify(utilsService).validateBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(branch), any(RepositoryConnection.class));
     }
 
@@ -1409,7 +1302,7 @@ public class SimpleCatalogManagerTest {
         branch.getModel().add(USER_BRANCH_IRI, vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("New Title"));
 
         manager.updateBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, branch);
-        verify(utilsService).testBranchPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(USER_BRANCH_IRI), any(RepositoryConnection.class));
+        verify(utilsService).validateBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(USER_BRANCH_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(branch), any(RepositoryConnection.class));
     }
 
@@ -1434,7 +1327,7 @@ public class SimpleCatalogManagerTest {
 
         manager.updateHead(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, BRANCH_IRI, COMMIT_IRI);
         verify(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        verify(utilsService).testObjectId(eq(COMMIT_IRI), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(COMMIT_IRI), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(branch), any(RepositoryConnection.class));
         assertTrue(branch.getHead_resource().isPresent());
         assertEquals(COMMIT_IRI, branch.getHead_resource().get());
@@ -1516,11 +1409,11 @@ public class SimpleCatalogManagerTest {
         Branch branch = branchFactory.createNew(BRANCH_IRI);
         record.setBranch(Collections.singleton(branch));
         doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        doReturn(Optional.of(branch)).when(utilsService).optObject(eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
+        doReturn(branch).when(utilsService).getExpectedObject(eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
 
         Optional<Branch> result = manager.getBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, BRANCH_IRI, branchFactory);
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(branch, result.get());
     }
@@ -1532,11 +1425,11 @@ public class SimpleCatalogManagerTest {
         UserBranch branch = userBranchFactory.createNew(USER_BRANCH_IRI);
         record.setBranch(Collections.singleton(branch));
         doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        doReturn(Optional.of(branch)).when(utilsService).optObject(eq(USER_BRANCH_IRI), eq(userBranchFactory), any(RepositoryConnection.class));
+        doReturn(branch).when(utilsService).getExpectedObject(eq(USER_BRANCH_IRI), eq(userBranchFactory), any(RepositoryConnection.class));
 
         Optional<UserBranch> result = manager.getBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, USER_BRANCH_IRI, userBranchFactory);
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(USER_BRANCH_IRI), eq(userBranchFactory), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(USER_BRANCH_IRI), eq(userBranchFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(branch, result.get());
     }
@@ -1545,19 +1438,6 @@ public class SimpleCatalogManagerTest {
     public void testGetBranchOfWrongRecord() throws Exception {
         Optional<Branch> result = manager.getBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, EMPTY_IRI, branchFactory);
         assertFalse(result.isPresent());
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testGetMissingBranch() throws Exception {
-        // Setup:
-        VersionedRDFRecord record = versionedRDFRecordFactory.createNew(VERSIONED_RDF_RECORD_IRI);
-        Branch branch = branchFactory.createNew(EMPTY_IRI);
-        record.setBranch(Collections.singleton(branch));
-        doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        doReturn(Optional.empty()).when(utilsService).optObject(eq(EMPTY_IRI), eq(branchFactory), any(RepositoryConnection.class));
-
-        manager.getBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, EMPTY_IRI, branchFactory);
-        verify(utilsService).throwThingNotFound(EMPTY_IRI, branchFactory);
     }
 
     /* getMasterBranch */
@@ -1569,11 +1449,11 @@ public class SimpleCatalogManagerTest {
         Branch branch = branchFactory.createNew(MASTER_BRANCH_IRI);
         record.setMasterBranch(branch);
         doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        doReturn(Optional.of(branch)).when(utilsService).optObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
+        doReturn(branch).when(utilsService).getExpectedObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
 
         Branch result = manager.getMasterBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI);
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
         assertEquals(branch, result);
     }
 
@@ -1584,18 +1464,6 @@ public class SimpleCatalogManagerTest {
         thrown.expectMessage("Record " + VERSIONED_RDF_RECORD_IRI + " does not have a master Branch set.");
 
         manager.getMasterBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testGetMissingMasterBranch() {
-        // Setup:
-        VersionedRDFRecord record = versionedRDFRecordFactory.createNew(VERSIONED_RDF_RECORD_IRI);
-        record.setMasterBranch(branchFactory.createNew(EMPTY_IRI));
-        doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        doReturn(Optional.empty()).when(utilsService).optObject(eq(EMPTY_IRI), eq(branchFactory), any(RepositoryConnection.class));
-
-        manager.getMasterBranch(distributedCatalogId, VERSIONED_RDF_RECORD_IRI);
-        verify(utilsService).throwThingNotFound(eq(EMPTY_IRI), eq(branchFactory));
     }
 
     /* createCommit */
@@ -1687,7 +1555,7 @@ public class SimpleCatalogManagerTest {
         Model deletions = mf.createModel();
 
         manager.updateInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, IN_PROGRESS_COMMIT_IRI, additions, deletions);
-        verify(utilsService).testInProgressCommitPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(IN_PROGRESS_COMMIT_IRI), any(RepositoryConnection.class));
+        verify(utilsService).validateInProgressCommit(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(IN_PROGRESS_COMMIT_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateCommit(eq(IN_PROGRESS_COMMIT_IRI), eq(additions), eq(deletions), any(RepositoryConnection.class));
     }
 
@@ -1703,7 +1571,7 @@ public class SimpleCatalogManagerTest {
         doReturn(commit).when(utilsService).getInProgressCommit(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
 
         manager.updateInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, user, additions, deletions);
-        verify(utilsService).testRecordPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getInProgressCommit(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
         verify(utilsService).updateCommit(eq(commit), eq(additions), eq(deletions), any(RepositoryConnection.class));
     }
@@ -1714,14 +1582,13 @@ public class SimpleCatalogManagerTest {
     public void testAddInProgressCommit() throws Exception {
         // Setup:
         User user = userFactory.createNew(USER_IRI);
-        InProgressCommit commit = inProgressCommitFactory.createNew(IN_PROGRESS_COMMIT_IRI);
+        InProgressCommit commit = inProgressCommitFactory.createNew(NEW_IRI);
         commit.setProperty(user.getResource(), vf.createIRI(Activity.wasAssociatedWith_IRI));
         doReturn(Optional.empty()).when(utilsService).getInProgressCommitIRI(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
 
         manager.addInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, commit);
         verify(utilsService).getInProgressCommitIRI(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
         verify(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-        verify(utilsService).resourceExists(eq(IN_PROGRESS_COMMIT_IRI), any(RepositoryConnection.class));
         verify(utilsService).addObject(eq(commit), any(RepositoryConnection.class));
         assertTrue(commit.getOnVersionedRDFRecord_resource().isPresent());
         assertEquals(VERSIONED_RDF_RECORD_IRI, commit.getOnVersionedRDFRecord_resource().get());
@@ -1730,7 +1597,7 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testAddInProgressCommitWithNoUser() {
         // Setup:
-        InProgressCommit commit = inProgressCommitFactory.createNew(IN_PROGRESS_COMMIT_IRI);
+        InProgressCommit commit = inProgressCommitFactory.createNew(NEW_IRI);
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("User not set on InProgressCommit " + commit.getResource());
 
@@ -1741,9 +1608,9 @@ public class SimpleCatalogManagerTest {
     @Test
     public void testAddInProgressCommitWhenYouAlreadyHaveOne() {
         // Setup:
-        InProgressCommit commit = inProgressCommitFactory.createNew(IN_PROGRESS_COMMIT_IRI);
+        InProgressCommit commit = inProgressCommitFactory.createNew(NEW_IRI);
         commit.setProperty(USER_IRI, vf.createIRI(Activity.wasAssociatedWith_IRI));
-        doReturn(Optional.of(commit.getResource())).when(utilsService).getInProgressCommitIRI(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
+        doReturn(Optional.of(NEW_IRI)).when(utilsService).getInProgressCommitIRI(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("User " + USER_IRI + " already has an InProgressCommit for Record " + VERSIONED_RDF_RECORD_IRI);
 
@@ -1756,11 +1623,10 @@ public class SimpleCatalogManagerTest {
         InProgressCommit commit = inProgressCommitFactory.createNew(IN_PROGRESS_COMMIT_IRI);
         commit.setProperty(USER_IRI, vf.createIRI(Activity.wasAssociatedWith_IRI));
         doReturn(Optional.empty()).when(utilsService).getInProgressCommitIRI(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
-        when(utilsService.resourceExists(eq(commit.getResource()), any(RepositoryConnection.class))).thenReturn(true);
 
         manager.addInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, commit);
         verify(utilsService, times(0)).addObject(eq(commit), any(RepositoryConnection.class));
-        verify(utilsService).throwAlreadyExists(commit.getResource(), inProgressCommitFactory);
+        verify(utilsService).throwAlreadyExists(IN_PROGRESS_COMMIT_IRI, inProgressCommitFactory);
     }
 
     /* getCommit */
@@ -1773,13 +1639,13 @@ public class SimpleCatalogManagerTest {
         Branch branch = branchFactory.createNew(MASTER_BRANCH_IRI);
         Commit commit = commitFactory.createNew(commitId);
         doReturn(headId).when(utilsService).getHeadCommitIRI(branch);
-        doReturn(Optional.of(branch)).when(utilsService).optObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        doReturn(Optional.of(commit)).when(utilsService).optObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
+        doReturn(branch).when(utilsService).getExpectedObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
+        doReturn(commit).when(utilsService).getExpectedObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
 
         Optional<Commit> result = manager.getCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, MASTER_BRANCH_IRI, commitId);
-        verify(utilsService).testBranchPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(MASTER_BRANCH_IRI), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
+        verify(utilsService).validateBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(MASTER_BRANCH_IRI), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(commit, result.get());
     }
@@ -1791,13 +1657,13 @@ public class SimpleCatalogManagerTest {
         Branch branch = branchFactory.createNew(MASTER_BRANCH_IRI);
         Commit commit = commitFactory.createNew(commitId);
         doReturn(commitId).when(utilsService).getHeadCommitIRI(branch);
-        doReturn(Optional.of(branch)).when(utilsService).optObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        doReturn(Optional.of(commit)).when(utilsService).optObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
+        doReturn(branch).when(utilsService).getExpectedObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
+        doReturn(commit).when(utilsService).getExpectedObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
 
         Optional<Commit> result = manager.getCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, MASTER_BRANCH_IRI, commitId);
-        verify(utilsService).testBranchPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(MASTER_BRANCH_IRI), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
+        verify(utilsService).validateBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(MASTER_BRANCH_IRI), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(commit, result.get());
     }
@@ -1808,35 +1674,13 @@ public class SimpleCatalogManagerTest {
         Resource headId = vf.createIRI("http://matonto.org/test/commits#test4a");
         Branch branch = branchFactory.createNew(MASTER_BRANCH_IRI);
         doReturn(headId).when(utilsService).getHeadCommitIRI(branch);
-        doReturn(Optional.of(branch)).when(utilsService).optObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
+        doReturn(branch).when(utilsService).getExpectedObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
 
         Optional<Commit> result = manager.getCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, MASTER_BRANCH_IRI, COMMIT_IRI);
-        verify(utilsService).testBranchPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(MASTER_BRANCH_IRI), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        verify(utilsService, times(0)).optObject(eq(COMMIT_IRI), eq(commitFactory), any(RepositoryConnection.class));
+        verify(utilsService).validateBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(MASTER_BRANCH_IRI), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
+        verify(utilsService, times(0)).getExpectedObject(eq(COMMIT_IRI), eq(commitFactory), any(RepositoryConnection.class));
         assertFalse(result.isPresent());
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testGetCommitOfMissingBranch() {
-        // Setup:
-        Resource commitId = vf.createIRI("http://matonto.org/test/commits#test4a");
-        doReturn(Optional.empty()).when(utilsService).optObject(eq(EMPTY_IRI), eq(branchFactory), any(RepositoryConnection.class));
-
-        manager.getCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, EMPTY_IRI, commitId);
-        verify(utilsService).throwThingNotFound(EMPTY_IRI, commitFactory);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testGetMissingCommit() {
-        // Setup:
-        Branch branch = branchFactory.createNew(BRANCH_IRI);
-        doReturn(EMPTY_IRI).when(utilsService).getHeadCommitIRI(branch);
-        doReturn(Optional.of(branch)).when(utilsService).optObject(eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        doReturn(Optional.empty()).when(utilsService).optObject(eq(EMPTY_IRI), eq(commitFactory), any(RepositoryConnection.class));
-
-        manager.getCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, BRANCH_IRI, EMPTY_IRI);
-        verify(utilsService).throwThingNotFound(EMPTY_IRI, commitFactory);
     }
 
     /* getHeadCommit */
@@ -1848,35 +1692,14 @@ public class SimpleCatalogManagerTest {
         Branch branch = branchFactory.createNew(BRANCH_IRI);
         Commit commit = commitFactory.createNew(commitId);
         doReturn(commitId).when(utilsService).getHeadCommitIRI(branch);
-        doReturn(Optional.of(branch)).when(utilsService).optObject(eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        doReturn(Optional.of(commit)).when(utilsService).optObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
+        doReturn(branch).when(utilsService).getExpectedObject(eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
+        doReturn(commit).when(utilsService).getExpectedObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
 
         Commit result = manager.getHeadCommit(distributedCatalogId, RECORD_IRI, BRANCH_IRI);
-        verify(utilsService).testBranchPath(eq(distributedCatalogId), eq(RECORD_IRI), eq(BRANCH_IRI), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
+        verify(utilsService).validateBranch(eq(distributedCatalogId), eq(RECORD_IRI), eq(BRANCH_IRI), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
         assertEquals(commit, result);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void getHeadCommitOfMissingBranch() {
-        // Setup:
-        doReturn(Optional.empty()).when(utilsService).optObject(eq(EMPTY_IRI), eq(branchFactory), any(RepositoryConnection.class));
-
-        manager.getHeadCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, EMPTY_IRI);
-        verify(utilsService).throwThingNotFound(EMPTY_IRI, commitFactory);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void getMissingHeadCommit() {
-        // Setup:
-        Branch branch = branchFactory.createNew(BRANCH_IRI);
-        doReturn(EMPTY_IRI).when(utilsService).getHeadCommitIRI(branch);
-        doReturn(Optional.of(branch)).when(utilsService).optObject(eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
-        doReturn(Optional.empty()).when(utilsService).optObject(eq(EMPTY_IRI), eq(commitFactory), any(RepositoryConnection.class));
-
-        manager.getHeadCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, BRANCH_IRI);
-        verify(utilsService).throwThingNotFound(EMPTY_IRI, commitFactory);
     }
 
     /* getInProgressCommit(Resource, Resource, User) */
@@ -1887,12 +1710,12 @@ public class SimpleCatalogManagerTest {
         User user = userFactory.createNew(USER_IRI);
         InProgressCommit commit = inProgressCommitFactory.createNew(IN_PROGRESS_COMMIT_IRI);
         doReturn(Optional.of(IN_PROGRESS_COMMIT_IRI)).when(utilsService).getInProgressCommitIRI(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
-        doReturn(Optional.of(commit)).when(utilsService).optObject(eq(IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
+        doReturn(commit).when(utilsService).getExpectedObject(eq(IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
 
         Optional<InProgressCommit> result = manager.getInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, user);
-        verify(utilsService).testRecordPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getInProgressCommitIRI(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
-        verify(utilsService).optObject(eq(IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
+        verify(utilsService).getExpectedObject(eq(IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(commit, result.get());
     }
@@ -1904,20 +1727,10 @@ public class SimpleCatalogManagerTest {
         doReturn(Optional.empty()).when(utilsService).getInProgressCommitIRI(eq(VERSIONED_RDF_RECORD_IRI), eq(user.getResource()), any(RepositoryConnection.class));
 
         Optional<InProgressCommit> result = manager.getInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, user);
-        verify(utilsService).testRecordPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getInProgressCommitIRI(eq(VERSIONED_RDF_RECORD_IRI), eq(user.getResource()), any(RepositoryConnection.class));
+        verify(utilsService, times(0)).getExpectedObject(eq(IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
         assertFalse(result.isPresent());
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testMissingGetInProgressCommit() {
-        // Setup:
-        User user = userFactory.createNew(USER_IRI);
-        doReturn(Optional.of(IN_PROGRESS_COMMIT_IRI)).when(utilsService).getInProgressCommitIRI(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
-        doReturn(Optional.empty()).when(utilsService).optObject(eq(IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
-
-         manager.getInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, user);
-         verify(utilsService).throwThingNotFound(IN_PROGRESS_COMMIT_IRI, inProgressCommitFactory);
     }
 
     /* getInProgressCommit(Resource, Resource, Resource) */
@@ -1930,7 +1743,7 @@ public class SimpleCatalogManagerTest {
         doReturn(Optional.of(commit)).when(utilsService).optObject(eq(IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
 
         Optional<InProgressCommit> result = manager.getInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, IN_PROGRESS_COMMIT_IRI);
-        verify(utilsService).testRecordPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).optObject(eq(IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
         assertTrue(result.isPresent());
         assertEquals(commit, result.get());
@@ -1942,7 +1755,7 @@ public class SimpleCatalogManagerTest {
         doReturn(Optional.empty()).when(utilsService).optObject(eq(EMPTY_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
 
         Optional<InProgressCommit> result = manager.getInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, EMPTY_IRI);
-        verify(utilsService).testRecordPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).optObject(eq(EMPTY_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
         assertFalse(result.isPresent());
     }
@@ -1955,7 +1768,7 @@ public class SimpleCatalogManagerTest {
         doReturn(Optional.of(commit)).when(utilsService).optObject(eq(IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
 
         Optional<InProgressCommit> result = manager.getInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, IN_PROGRESS_COMMIT_IRI);
-        verify(utilsService).testRecordPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).optObject(eq(IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
         assertFalse(result.isPresent());
     }
@@ -1981,7 +1794,7 @@ public class SimpleCatalogManagerTest {
         Resource deleteIRI = vf.createIRI("http://matonto.org/test/delete");
 
         Difference result = manager.getCommitDifference(COMMIT_IRI);
-        verify(utilsService).testObjectId(eq(COMMIT_IRI), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(COMMIT_IRI), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         assertTrue(result.getAdditions().contains(addIRI, dcTitleIRI, vf.createLiteral("Add")));
         assertTrue(result.getDeletions().contains(deleteIRI, dcTitleIRI, vf.createLiteral("Delete")));
     }
@@ -2009,7 +1822,7 @@ public class SimpleCatalogManagerTest {
         doReturn(commit).when(utilsService).getInProgressCommit(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
 
         manager.removeInProgressCommit(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, user);
-        verify(utilsService).testRecordPath(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getInProgressCommit(eq(VERSIONED_RDF_RECORD_IRI), eq(USER_IRI), any(RepositoryConnection.class));
         verify(utilsService).removeInProgressCommit(eq(commit), any(RepositoryConnection.class));
     }
@@ -2028,7 +1841,7 @@ public class SimpleCatalogManagerTest {
         entity.add(deleteIRI, dcTitleIRI, vf.createLiteral("Delete"));
 
         Model result = manager.applyInProgressCommit(IN_PROGRESS_COMMIT_IRI, entity);
-        verify(utilsService).testObjectId(eq(IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory.getTypeIRI()), any(RepositoryConnection.class));
         assertTrue(result.contains(addIRI, dcTitleIRI, vf.createLiteral("Add")));
         assertFalse(result.contains(deleteIRI, dcTitleIRI, vf.createLiteral("Delete")));
         assertTrue(result.contains(entityIRI, dcTitleIRI, vf.createLiteral("Entity")));
@@ -2048,8 +1861,8 @@ public class SimpleCatalogManagerTest {
         Resource commitId = vf.createIRI("http://matonto.org/test/commits#test3");
 
         List<Commit> result = manager.getCommitChain(commitId);
-        verify(utilsService).testObjectId(eq(commitId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        expect.forEach(resource -> verify(utilsService).getObject(eq(resource), eq(commitFactory), any(RepositoryConnection.class)));
+        verify(utilsService).validateResource(eq(commitId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        expect.forEach(resource -> verify(utilsService).getExpectedObject(eq(resource), eq(commitFactory), any(RepositoryConnection.class)));
         assertEquals(expect.size(), result.size());
         assertEquals(expect, result.stream().map(Thing::getResource).collect(Collectors.toList()));
     }
@@ -2071,7 +1884,7 @@ public class SimpleCatalogManagerTest {
         List<Commit> result = manager.getCommitChain(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, MASTER_BRANCH_IRI);
         verify(utilsService).getBranch(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
         verify(utilsService).getHeadCommitIRI(branch);
-        expect.forEach(resource -> verify(utilsService).getObject(eq(resource), eq(commitFactory), any(RepositoryConnection.class)));
+        expect.forEach(resource -> verify(utilsService).getExpectedObject(eq(resource), eq(commitFactory), any(RepositoryConnection.class)));
         assertEquals(expect.size(), result.size());
         assertEquals(expect, result.stream().map(Thing::getResource).collect(Collectors.toList()));
     }
@@ -2089,7 +1902,7 @@ public class SimpleCatalogManagerTest {
         expected.add(vf.createIRI("http://matonto.org/test/class0"), RDF_TYPE, vf.createIRI("http://www.w3.org/2002/07/owl#Class"));
 
         Model result = manager.getCompiledResource(commit0Id);
-        verify(utilsService).testObjectId(eq(commit0Id), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(commit0Id), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         result.forEach(statement -> assertTrue(expected.contains(statement.getSubject(),
                 statement.getPredicate(), statement.getObject())));
     }
@@ -2105,7 +1918,7 @@ public class SimpleCatalogManagerTest {
         expected.add(vf.createIRI("http://matonto.org/test/class0"), RDF_TYPE, vf.createIRI("http://www.w3.org/2002/07/owl#Class"));
 
         Model result = manager.getCompiledResource(commit3Id);
-        verify(utilsService).testObjectId(eq(commit3Id), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(commit3Id), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         result.forEach(statement -> assertTrue(expected.contains(statement.getSubject(),
                 statement.getPredicate(), statement.getObject())));
     }
@@ -2120,8 +1933,8 @@ public class SimpleCatalogManagerTest {
         Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict2");
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
-        verify(utilsService).testObjectId(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).testObjectId(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         assertEquals(1, result.size());
         result.forEach(conflict -> {
             assertEquals(1, conflict.getOriginal().size());
@@ -2146,8 +1959,8 @@ public class SimpleCatalogManagerTest {
         Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict2-2");
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
-        verify(utilsService).testObjectId(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).testObjectId(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         assertEquals(1, result.size());
         String subject = "http://matonto.org/test/ontology";
         result.forEach(conflict -> {
@@ -2174,8 +1987,8 @@ public class SimpleCatalogManagerTest {
         Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict3-3");
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
-        verify(utilsService).testObjectId(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).testObjectId(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         assertEquals(0, result.size());
     }
 
@@ -2187,8 +2000,8 @@ public class SimpleCatalogManagerTest {
         Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict2-4");
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
-        verify(utilsService).testObjectId(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).testObjectId(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         assertEquals(0, result.size());
     }
 
@@ -2200,8 +2013,8 @@ public class SimpleCatalogManagerTest {
         Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict2-5");
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
-        verify(utilsService).testObjectId(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService).testObjectId(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         assertEquals(1, result.size());
         String subject = "http://matonto.org/test/ontology";
         result.forEach(conflict -> {
@@ -2227,8 +2040,8 @@ public class SimpleCatalogManagerTest {
         Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict0-4");
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
-        verify(utilsService, atLeastOnce()).testObjectId(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
-        verify(utilsService, atLeastOnce()).testObjectId(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService, atLeastOnce()).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService, atLeastOnce()).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         assertEquals(0, result.size());
     }
 

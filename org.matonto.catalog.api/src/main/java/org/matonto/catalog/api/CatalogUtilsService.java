@@ -41,34 +41,14 @@ import java.util.Optional;
 
 public interface CatalogUtilsService {
     /**
-     * Checks to see if the provided Resource exists as a context in the Repository.
+     * Validates the type and existence of the provided Resource.
      *
-     * @param resourceIRI The Resource context to look for in the Repository.
-     * @param conn A RepositoryConnection to use for lookup.
-     * @return True if the Resource is in the Repository as a context for statements; otherwise, false.
-     */
-    boolean resourceExists(Resource resourceIRI, RepositoryConnection conn);
-
-    /**
-     * Checks to see if the provided Resource exists in the Repository and is of the provided type.
-     *
-     * @param resourceIRI The Resource to look for in the Repository.
-     * @param type The String of the IRI identifying the type of entity in the Repository.
-     * @param conn A RepositoryConnection to use for lookup.
-     * @return True if the Resource is in the Repository; otherwise, false.
-     */
-    boolean resourceExists(Resource resourceIRI, String type, RepositoryConnection conn);
-
-    /**
-     * Tests if the provided Resource exists as the class identified by the provided IRI in the Repository. If not,
-     * throws an IllegalArgumentException.
-     *
-     * @param objectId The Resource to search for in the Repository.
+     * @param resource The Resource to search for in the Repository.
      * @param classId The IRI identifying the type the entity should be.
      * @param conn A RepositoryConnection to use for lookup.
-     * @throws IllegalArgumentException Thrown if the Resource does not exist as the class.
+     * @throws IllegalArgumentException Thrown if the Resource does not exist as the provided type.
      */
-    void testObjectId(Resource objectId, IRI classId, RepositoryConnection conn);
+    void validateResource(Resource resource, IRI classId, RepositoryConnection conn);
 
     /**
      * Adds the provided object to the Repository in a named graph of its Resource.
@@ -114,6 +94,19 @@ public interface CatalogUtilsService {
     <T extends Thing> T getObject(Resource id, OrmFactory<T> factory, RepositoryConnection conn);
 
     /**
+     * Retrieves an object identified by the provided Resource from the Repository using the provided OrmFactory.
+     * Throws a IllegalStateException if the object cannot be found.
+     *
+     * @param id The Resource identifying the object to retrieve.
+     * @param factory The OrmFactory which specifies the type the object should be.
+     * @param conn A RepositoryConnection to use for lookup.
+     * @param <T> A Class that extends Thing.
+     * @return The identified object.
+     * @throws IllegalStateException Thrown if the object cannot be found.
+     */
+    <T extends Thing> T getExpectedObject(Resource id, OrmFactory<T> factory, RepositoryConnection conn);
+
+    /**
      * Removes the object identified by the provided Resource.
      *
      * @param resourceId The Resource identifying the object to be removed.
@@ -131,8 +124,7 @@ public interface CatalogUtilsService {
     <T extends Thing> void removeObject(T object, RepositoryConnection conn);
 
     /**
-     * Tests the path to a Record using the provided Resources and IRI of a subclass of Record. If a portion of the
-     * path is incorrect, throws a IllegalArgumentException.
+     * Validates the type and existence of a Record in a Catalog.
      *
      * @param catalogId The Resource identifying the Catalog which should have the Record.
      * @param recordId The Resource of the Record.
@@ -141,7 +133,7 @@ public interface CatalogUtilsService {
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or the
      *      Record does not belong to the Catalog.
      */
-    void testRecordPath(Resource catalogId, Resource recordId, IRI recordType, RepositoryConnection conn);
+    void validateRecord(Resource catalogId, Resource recordId, IRI recordType, RepositoryConnection conn);
 
     /**
      * Retrieves a Record identified by the provided Resources. The Record will be of type T which is determined by the
@@ -160,8 +152,7 @@ public interface CatalogUtilsService {
                                    RepositoryConnection conn);
 
     /**
-     * Tests the path to a unversioned Distribution using the provided Resources. If a portion of the path is
-     * incorrect, throws an IllegalArgumentException.
+     * Validates the existence of a Distribution of an UnversionedRecord.
      *
      * @param catalogId The Resource identifying the Catalog which should have the Record.
      * @param recordId The Resource identifying the Record which should have the Distribution.
@@ -170,7 +161,7 @@ public interface CatalogUtilsService {
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
      *      Record does not belong to the Catalog, or the Distribution does not belong to the Record.
      */
-    void testUnversionedDistributionPath(Resource catalogId, Resource recordId, Resource distributionId,
+    void validateUnversionedDistribution(Resource catalogId, Resource recordId, Resource distributionId,
                                          RepositoryConnection conn);
 
     /**
@@ -189,8 +180,7 @@ public interface CatalogUtilsService {
                                             RepositoryConnection conn);
 
     /**
-     * Tests the path to a Version using the provided Resources. If a portion of the path is incorrect, throws an
-     * IllegalArgumentException.
+     * Validates the existence of a Version of a VersionedRecord.
      *
      * @param catalogId The Resource identifying the Catalog which should have the Record.
      * @param recordId The Resource identifying the Record which should have the Version.
@@ -199,7 +189,7 @@ public interface CatalogUtilsService {
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
      *      Record does not belong to the Catalog, or the Version does not belong to the Record.
      */
-    void testVersionPath(Resource catalogId, Resource recordId, Resource versionId, RepositoryConnection conn);
+    void validateVersion(Resource catalogId, Resource recordId, Resource versionId, RepositoryConnection conn);
 
     /**
      * Retrieves a Version identified by the provided Resources. The Version will be of type T which is determined by
@@ -220,8 +210,7 @@ public interface CatalogUtilsService {
                                      RepositoryConnection conn);
 
     /**
-     * Tests the path to a versioned Distribution using the provided Resources. If a portion of the path is incorrect,
-     * throws an IllegalArgumentException.
+     * Validates the existence of a Distribution of a Version.
      *
      * @param catalogId The Resource identifying the Catalog which should have the Record.
      * @param recordId The Resource identifying the Record which should have the Version.
@@ -232,7 +221,7 @@ public interface CatalogUtilsService {
      *      Record does not belong to the Catalog, the Version does not belong to the Record, the Version could not be
      *      found, or the Distribution does not belong to the Version.
      */
-    void testVersionedDistributionPath(Resource catalogId, Resource recordId, Resource versionId,
+    void validateVersionedDistribution(Resource catalogId, Resource recordId, Resource versionId,
                                        Resource distributionId, RepositoryConnection conn);
 
     /**
@@ -252,8 +241,7 @@ public interface CatalogUtilsService {
                                           Resource distributionId, RepositoryConnection conn);
 
     /**
-     * Tests the path to a Branch using the provided Resources. If a portion of the path is incorrect, throws a
-     * IllegalArgumentException.
+     * Validates the existence of a Branch of a VersionedRDFRecord.
      *
      * @param catalogId The Resource identifying the Catalog which should have the Record.
      * @param recordId The Resource identifying the Record which should have the Branch.
@@ -262,7 +250,7 @@ public interface CatalogUtilsService {
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
      *      Record does not belong to the Catalog, or the Branch does not belong to the Record.
      */
-    void testBranchPath(Resource catalogId, Resource recordId, Resource branchId, RepositoryConnection conn);
+    void validateBranch(Resource catalogId, Resource recordId, Resource branchId, RepositoryConnection conn);
 
     /**
      * Retrieves a Branch identified by the provided Resources. The Branch will be of type T which is determined by
@@ -309,8 +297,7 @@ public interface CatalogUtilsService {
     Resource getHeadCommitIRI(Branch branch);
 
     /**
-     * Tests the path to an InProgressCommit using the provided Resources. If a portion of the path is incorrect,
-     * throws a IllegalArgumentException.
+     * Validates the existence of an InProgressCommit of a VersionedRDFRecord.
      *
      * @param catalogId The Resource identifying the Catalog which should have the Record.
      * @param recordId The Resource identifying the Record which should have the InProgressCommit.
@@ -321,7 +308,7 @@ public interface CatalogUtilsService {
      *      does not belong to the Record.
      * @throws IllegalStateException Thrown if the InProgressCommit has no Record set.
      */
-    void testInProgressCommitPath(Resource catalogId, Resource recordId, Resource commitId,
+    void validateInProgressCommit(Resource catalogId, Resource recordId, Resource commitId,
                                   RepositoryConnection conn);
 
     /**

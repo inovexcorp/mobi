@@ -39,26 +39,23 @@
 
     <dependencies>
         <dependency>
+            <groupId>biz.aQute.bnd</groupId>
+            <artifactId>biz.aQute.bndlib</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
             <version>1.8.7-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>persistence.utils</artifactId>
-            <version>1.7.20</version>
+            <artifactId>persistence.api</artifactId>
+            <version>1.8.7-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
+            <groupId>org.matonto</groupId>
+            <artifactId>rdf.orm</artifactId>
+            <version>${orm.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -78,16 +75,10 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>org.openrdf.sesame</groupId>
-            <artifactId>sesame-query</artifactId>
-            <scope>test</scope>
-        </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>repository.impl.sesame</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.7-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
