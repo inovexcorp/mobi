@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  org.matonto.rdf.orm.cli
+  itests-rest
   $Id:$
   $HeadURL:$
   %%
@@ -26,45 +26,42 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>rdf-orm</artifactId>
+        <artifactId>itests</artifactId>
         <groupId>org.matonto</groupId>
         <version>1.8.9-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>org.matonto.rdf.orm.cli</artifactId>
-    <packaging>bundle</packaging>
+
+    <artifactId>itests-rest</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.karaf.shell</groupId>
-            <artifactId>org.apache.karaf.shell.console</artifactId>
+            <groupId>org.matonto</groupId>
+            <artifactId>itests-support</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
         </dependency>
+
+        <!-- Pax Exam Dependencies -->
+        <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-junit4</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Karaf Dependencies -->
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>rdf.orm.generate</artifactId>
+            <artifactId>distribution</artifactId>
             <version>${project.version}</version>
+            <scope>test</scope>
+            <type>tar.gz</type>
+            <exclusions>
+                <exclusion>
+                    <artifactId>org.apache.karaf.client</artifactId>
+                    <groupId>org.apache.karaf</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.felix</groupId>
-                <artifactId>maven-bundle-plugin</artifactId>
-                <extensions>true</extensions>
-                <configuration>
-                    <instructions>
-                        <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-name>MatOnto ORM Service - CLI</Bundle-name>
-                        <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package />
-                        <Service-Component>*</Service-Component>
-                        <Karaf-Commands>*</Karaf-Commands>
-                        <_snapshot>${maven.build.timestamp}</_snapshot>
-                    </instructions>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
-
 </project>
