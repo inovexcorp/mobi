@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Open Ontology Tab directive', function() {
-    var $compile, scope, $q, element, controller, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, prefixes, util;
+    var $compile, scope, $q, element, controller, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, prefixes, util, mapperStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -33,8 +33,9 @@ describe('Open Ontology Tab directive', function() {
         mockPrefixes();
         mockStateManager();
         mockUtil();
+        mockMapperState();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _stateManagerService_, _prefixes_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_, _stateManagerService_, _prefixes_, _utilService_, _mapperStateService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -43,6 +44,7 @@ describe('Open Ontology Tab directive', function() {
             stateManagerSvc = _stateManagerService_;
             prefixes = _prefixes_;
             util = _utilService_;
+            mapperStateSvc = _mapperStateService_;
         });
 
         this.records = [{'@id': 'recordA'}, {'@id': 'recordB'}];
@@ -73,8 +75,8 @@ describe('Open Ontology Tab directive', function() {
         it('with custom buttons to upload an ontology and make a new ontology', function() {
             var buttons = element.querySelectorAll('.actions button');
             expect(buttons.length).toBe(2);
-            expect(['Upload Ontology', 'New Ontology'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
-            expect(['Upload Ontology', 'New Ontology'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
+            expect(['Upload Ontology', 'New Ontology'].indexOf(angular.element(buttons[0]).text().trim()) >= 0).toBe(true);
+            expect(['Upload Ontology', 'New Ontology'].indexOf(angular.element(buttons[1]).text().trim()) >= 0).toBe(true);
         });
         it('depending on whether an ontology is being deleted', function() {
             expect(element.querySelectorAll('confirmation-overlay[header-text="\'Delete Ontology\'"]').length).toBe(0);
@@ -124,6 +126,14 @@ describe('Open Ontology Tab directive', function() {
             expect(element.querySelectorAll('.ontologies .ontology').length).toBe(1);
             expect(element.querySelectorAll('.ontologies .text-info.message').length).toBe(0);
         });
+        it('depending on if the ontology being deleted is currently being used in the mapping tool', function() {
+            controller.showDeleteConfirmation = true;
+            scope.$digest();
+            expect(element.find('error-display').length).toBe(0);
+            controller.mappingErrorMessage = 'Error';
+            scope.$digest();
+            expect(element.find('error-display').length).toBe(1);
+        });
     });
     describe('controller methods', function() {
         describe('should open an ontology', function() {
@@ -156,7 +166,8 @@ describe('Open Ontology Tab directive', function() {
             controller.getPage('prev');
             expect(controller.begin).toBe(begin - controller.limit);
         });
-        it('should show the delete confirmation overlay', function() {
+        describe('should show the delete confirmation overlay', function() {
+        it('and ask the user for confirmation', function() {
             util.getDctermsValue.and.returnValue('title');
             controller.showDeleteConfirmationOverlay({'@id': 'record'});
             expect(controller.recordId).toBe('record');
@@ -164,6 +175,19 @@ describe('Open Ontology Tab directive', function() {
             expect(controller.errorMessage).toBe('');
             expect(controller.showDeleteConfirmation).toBe(true);
         });
+        it('and should warn the user if the ontology is open in the mapping tool', function() {
+            util.getDctermsValue.and.returnValue('title');
+            mapperStateSvc.sourceOntologies = [{'recordId':'record'}];
+
+            controller.showDeleteConfirmationOverlay({'@id': 'record'});
+
+            expect(controller.recordId).toBe('record');
+            expect(controller.recordTitle).toBe('title');
+            expect(controller.errorMessage).toBe('');
+            expect(controller.mappingErrorMessage).not.toBeUndefined();
+            expect(controller.showDeleteConfirmation).toBe(true);
+        });
+        })
         describe('should delete an ontology', function() {
             beforeEach(function() {
                 controller.showDeleteConfirmation = true;
@@ -180,6 +204,7 @@ describe('Open Ontology Tab directive', function() {
                 expect(stateManagerSvc.deleteState).not.toHaveBeenCalled();
                 expect(controller.showDeleteConfirmation).toBe(true);
                 expect(controller.errorMessage).toBe('Error message');
+                expect(controller.mappingErrorMessage).toBeUndefined();
             });
             it('successfully', function() {
                 controller.deleteOntology();
@@ -190,6 +215,7 @@ describe('Open Ontology Tab directive', function() {
                 expect(stateManagerSvc.deleteState).toHaveBeenCalledWith('state');
                 expect(controller.showDeleteConfirmation).toBe(false);
                 expect(controller.errorMessage).toBeUndefined();
+                expect(controller.mappingErrorMessage).toBeUndefined();
             });
         });
         it('should get the list of unopened ontology records', function() {
