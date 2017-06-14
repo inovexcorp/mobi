@@ -28,10 +28,10 @@
         .directive('openOntologyTab', openOntologyTab);
 
         openOntologyTab.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
-            'stateManagerService', 'utilService'];
+            'stateManagerService', 'utilService', 'mapperStateService'];
 
         function openOntologyTab($filter, ontologyManagerService, ontologyStateService, prefixes,
-            stateManagerService, utilService) {
+            stateManagerService, utilService, mapperStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -47,6 +47,7 @@
 
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
+                    dvm.ms = mapperStateService;
                     dvm.util = utilService;
                     dvm.begin = 0;
                     dvm.limit = 10;
@@ -73,6 +74,13 @@
                         dvm.recordId = _.get(record, '@id', '');
                         dvm.recordTitle = dvm.util.getDctermsValue(record, 'title');
                         dvm.errorMessage = '';
+
+                        if (_.find(dvm.ms.sourceOntologies, {recordId: dvm.recordId})) {
+                            dvm.mappingErrorMessage = "Warning: The ontology you're about to delete is currently open in the mapping tool.";
+                        } else {
+                            dvm.mappingErrorMessage = '';
+                        }
+
                         dvm.showDeleteConfirmation = true;
                     }
 
