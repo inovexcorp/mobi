@@ -75,7 +75,7 @@
                         dvm.recordTitle = dvm.util.getDctermsValue(record, 'title');
                         dvm.errorMessage = '';
 
-                        if (_.indexOf(_.map(dvm.ms.sourceOntologies, value => _.get(value, 'recordId')), dvm.recordId) >= 0) {
+                        if (_.find(dvm.ms.sourceOntologies, {recordId: dvm.recordId})) {
                             dvm.mappingErrorMessage = "Warning: The ontology you're about to delete is currently open in the mapping tool.";
                         } else {
                             dvm.mappingErrorMessage = '';

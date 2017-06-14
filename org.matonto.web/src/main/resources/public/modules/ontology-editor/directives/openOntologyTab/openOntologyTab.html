@@ -24,12 +24,10 @@
     <div class="actions">
         <form class="form-inline">
             <div class="form-group">
-                <input type="text" class="form-control" placeholder="Filter by text" ng-model="dvm.filterText" ng-keyup="dvm.begin = 0"/>
+                <input type="text" class="form-control" placeholder="Filter by text" ng-model="dvm.filterText" ng-keyup="dvm.begin = 0" />
             </div>
             <button type="button" class="btn btn-primary" ng-click="dvm.os.showNewTab = true">New Ontology</button>
-            <button type="button" class="btn btn-primary" ng-click="dvm.os.showUploadTab = true">
-                Upload Ontology
-            </button>
+            <button type="button" class="btn btn-primary" ng-click="dvm.os.showUploadTab = true">Upload Ontology</button>
         </form>
     </div>
     <div class="list row">
@@ -39,10 +37,8 @@
                     <div class="ontologies">
                         <div class="ontology" ng-click="dvm.recordId = record['@id']; dvm.showOpenOverlay = true" ng-repeat="record in dvm.filteredList | limitTo:dvm.limit:dvm.begin">
                             <div class="details">
-                                <h2 class="header"
-                                    ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.filterText | trusted"></h2>
-                                <p class="description"
-                                   ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
+                                <h2 class="header" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.filterText | trusted"></h2>
+                                <p class="description" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
                             </div>
                             <div class="action-container">
                                 <a ng-click="dvm.showDeleteConfirmationOverlay(record); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
