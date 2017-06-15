@@ -1,0 +1,7 @@
+PREFIX mcat: <http://matonto.org/ontologies/catalog#>
+
+SELECT ?type
+WHERE {
+    ?record a mcat:Record ;
+            a ?type .
+}

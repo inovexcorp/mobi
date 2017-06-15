@@ -25,26 +25,31 @@ package org.matonto.catalog.impl.versioning;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import org.apache.commons.io.IOUtils;
 import org.matonto.catalog.api.CatalogUtilsService;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import org.matonto.catalog.api.versioning.VersioningManager;
 import org.matonto.catalog.api.versioning.VersioningService;
+import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.persistence.utils.Bindings;
+import org.matonto.query.TupleQueryResult;
+import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.OrmFactoryRegistry;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.openrdf.model.vocabulary.DCTERMS;
-import org.openrdf.model.vocabulary.RDF;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,20 +62,27 @@ import java.util.stream.Collectors;
 public class SimpleVersioningManager implements VersioningManager {
     static final String COMPONENT_NAME = "org.matonto.catalog.api.versioning.VersioningManager";
     private Repository repository;
-    private VersionedRDFRecordFactory factory;
     private OrmFactoryRegistry factoryRegistry;
     private CatalogUtilsService catalogUtils;
     private Map<String, VersioningService> versioningServices = new HashMap<>();
     private ValueFactory vf;
 
+    private static final String RECORD_TYPES_QUERY;
+
+    static {
+        try {
+            RECORD_TYPES_QUERY = IOUtils.toString(
+                    SimpleVersioningManager.class.getResourceAsStream("/record-types.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+    }
+
     @Reference(name = "repository")
     protected void setRepository(Repository repository) {
         this.repository = repository;
-    }
-
-    @Reference
-    protected void setFactory(VersionedRDFRecordFactory factory) {
-        this.factory = factory;
     }
 
     @Reference(type = '*', dynamic = true)
@@ -98,15 +110,16 @@ public class SimpleVersioningManager implements VersioningManager {
     }
 
     @Override
-    public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message) {
+    public <T extends VersionedRDFRecord> Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, factory, conn);
-            VersioningService service = getService(record);
+            OrmFactory<T> correctFactory = getFactory(recordId, conn);
+            T record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
+            VersioningService<T> service = versioningServices.get(correctFactory.getTypeIRI().stringValue());
+            conn.begin();
             Branch branch = service.getTargetBranch(record, branchId, conn);
             Commit head = service.getBranchHeadCommit(branch, conn);
             InProgressCommit inProgressCommit = service.getInProgressCommit(recordId, user, conn);
             Commit newCommit = service.createCommit(inProgressCommit, message, head, null);
-            conn.begin();
             service.addCommit(branch, newCommit, conn);
             service.removeInProgressCommit(inProgressCommit, conn);
             conn.commit();
@@ -115,14 +128,15 @@ public class SimpleVersioningManager implements VersioningManager {
     }
 
     @Override
-    public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message,
-                           Model additions, Model deletions) {
+    public <T extends VersionedRDFRecord> Resource commit(Resource catalogId, Resource recordId, Resource branchId,
+                                                          User user, String message, Model additions, Model deletions) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, factory, conn);
-            VersioningService service = getService(record);
+            OrmFactory<T> correctFactory = getFactory(recordId, conn);
+            T record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
+            VersioningService<T> service = versioningServices.get(correctFactory.getTypeIRI().stringValue());
+            conn.begin();
             Branch branch = service.getTargetBranch(record, branchId, conn);
             Commit head = service.getBranchHeadCommit(branch, conn);
-            conn.begin();
             Resource commitId = service.addCommit(branch, user, message, additions, deletions, head, null, conn);
             conn.commit();
             return commitId;
@@ -130,14 +144,16 @@ public class SimpleVersioningManager implements VersioningManager {
     }
 
     @Override
-    public Resource merge(Resource catalogId, Resource recordId, Resource sourceBranchId, Resource targetBranchId,
-                          User user, Model additions, Model deletions) {
+    public <T extends VersionedRDFRecord>Resource merge(Resource catalogId, Resource recordId, Resource sourceBranchId,
+                                                        Resource targetBranchId, User user, Model additions,
+                                                        Model deletions) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, factory, conn);
-            VersioningService service = getService(record);
+            OrmFactory<T> correctFactory = getFactory(recordId, conn);
+            T record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
+            VersioningService<T> service = versioningServices.get(correctFactory.getTypeIRI().stringValue());
+            conn.begin();
             Branch source = service.getSourceBranch(record, sourceBranchId, conn);
             Branch target = service.getTargetBranch(record, targetBranchId, conn);
-            conn.begin();
             Resource commitId = service.addCommit(target, user, getMergeMessage(source, target), additions, deletions,
                     service.getBranchHeadCommit(target, conn), service.getBranchHeadCommit(source, conn), conn);
             conn.commit();
@@ -160,39 +176,31 @@ public class SimpleVersioningManager implements VersioningManager {
     }
 
     /**
-     * Determines the appropriate {@link VersioningService} for the provided {@link VersionedRDFRecord} based on the
-     * registered {@link org.matonto.rdf.orm.OrmFactory OrmFactories} and the defined types within the record.
+     * Retrieves the appropriate {@link OrmFactory} for the {@link VersionedRDFRecord} with the passed ID based on its
+     * types in the repository, the ordered list of OrmFactories of VersionedRDFRecord subclasses, and the available
+     * {@link VersioningService, VersioningServices}.
      *
-     * @param record A VersionedRDFRecord to determine the appropriate VersioningService
-     * @return A VersioningService that matches the most specific type on the VersionedRDFRecord
+     * @param recordId The Resource identifying the Record to retrieve the OrmFactory for
+     * @param conn A RepositoryConnection for lookup.
+     * @param <T> A class that extends VersionedRDFRecord
+     * @return The appropriate OrmFactory for the VersionedRDFRecord
      */
-    private VersioningService getService(VersionedRDFRecord record) {
-        List<String> types = record.getModel().filter(record.getResource(), vf.createIRI(RDF.TYPE.stringValue()), null)
-                .objects().stream()
-                .map(Value::stringValue)
+    private <T extends VersionedRDFRecord> OrmFactory<T> getFactory(Resource recordId, RepositoryConnection conn) {
+        TupleQuery query = conn.prepareTupleQuery(RECORD_TYPES_QUERY);
+        query.setBinding("record", recordId);
+        TupleQueryResult result = query.evaluateAndReturn();
+        List<Resource> types = new ArrayList<>();
+        result.forEach(bindings -> types.add(Bindings.requiredResource(bindings, "type")));
+        List<OrmFactory> order = factoryRegistry.getSortedFactoriesOfType(VersionedRDFRecord.class).stream()
+                .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
                 .collect(Collectors.toList());
-        List<String> priority = getPriorityOrder();
-        priority.retainAll(types);
-        VersioningService service = null;
-        for (String type : priority) {
-            service = versioningServices.get(type);
-            if (service != null) {
+        OrmFactory<T> factory = null;
+        for (OrmFactory fact : order) {
+            if (versioningServices.keySet().contains(fact.getTypeIRI().stringValue())) {
+                factory = (OrmFactory<T>) fact;
                 break;
             }
         }
-        return service;
-    }
-
-    /**
-     * Returns a list of type IRIs for subclasses of {@link VersionedRDFRecord} collected from the registered
-     * {@link org.matonto.rdf.orm.OrmFactory OrmFactories} sorted by the isAssignableFrom  method on their class types.
-     *
-     * @return A list of type IRIs for subclasses of VersionedRDFRecord
-     */
-    private List<String> getPriorityOrder() {
-        return factoryRegistry.getFactoriesOfType(VersionedRDFRecord.TYPE).stream()
-                .sorted((a, b) -> a.getType().isAssignableFrom(b.getType()) ? 1 : -1)
-                .map(ormFactory -> ormFactory.getTypeIRI().stringValue())
-                .collect(Collectors.toList());
+        return factory;
     }
 }
