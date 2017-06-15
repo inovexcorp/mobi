@@ -322,16 +322,16 @@
                 var re = new RegExp('^' + getMappingEntity(newMapping)['@id'].replace(/\//g, '\\\/').replace(/([:.])/g, '[$1]'));
                 getMappingEntity(newMapping)['@id'] = newId;
                 _.forEach(self.getAllClassMappings(newMapping), classMapping => {
-                    classMapping['@id'] = _.replace(classMapping['@id'], re, newId);
+                    classMapping['@id'] = newId + '/' + $filter('splitIRI')(classMapping['@id']).end;
                     _.forEach(_.concat(getDataProperties(classMapping), getObjectProperties(classMapping)), propIdObj => {
-                        propIdObj['@id'] = _.replace(propIdObj['@id'], re, newId);
+                        propIdObj['@id'] = newId + '/' + $filter('splitIRI')(propIdObj['@id']).end;
                     });
                 });
                 _.forEach(_.concat(self.getAllDataMappings(newMapping), self.getAllObjectMappings(newMapping)), propMapping => {
                     if (self.isObjectMapping(propMapping)) {
-                        propMapping[prefixes.delim + 'classMapping'][0]['@id'] = propMapping[prefixes.delim + 'classMapping'][0]['@id'].replace(re, newId);
+                        propMapping[prefixes.delim + 'classMapping'][0]['@id'] = newId + '/' + $filter('splitIRI')(propMapping[prefixes.delim + 'classMapping'][0]['@id']).end;
                     }
-                    propMapping['@id'] = propMapping['@id'].replace(re, newId);
+                    propMapping['@id'] = newId + '/' + $filter('splitIRI')(propMapping['@id']).end;
                 });
                 return newMapping;
             }
