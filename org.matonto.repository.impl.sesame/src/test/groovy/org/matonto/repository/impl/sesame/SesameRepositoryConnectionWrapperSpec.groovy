@@ -498,61 +498,6 @@ class SesameRepositoryConnectionWrapperSpec extends Specification {
         conn.contains(s2, p2, o2, c2, c3)
     }
 
-    /*def "contains(Resource, IRI, Value) returns correctly"() {
-        setup:
-        def s = vf.createIRI("http://test.com/s")
-        def p = vf.createIRI("http://test.com/p")
-        def o = vf.createIRI("http://test.com/o")
-        def c = vf.createIRI("http://test.com/c")
-        def s2 = vf.createIRI("http://test.com/s2")
-        def p2 = vf.createIRI("http://test.com/p2")
-        def o2 = vf.createIRI("http://test.com/o2")
-        conn.add(s, p, o)
-        conn.add(s2, p2, o2, c)
-
-        expect:
-        conn.contains(s, p, o)
-        conn.contains(s2, p2, o2)
-    }
-
-    def "contains(Resource, IRI, Value) returns correctly when statement doesn't exist"() {
-        setup:
-        def s = vf.createIRI("http://test.com/s")
-        def p = vf.createIRI("http://test.com/p")
-        def o = vf.createIRI("http://test.com/o")
-
-        expect:
-        !conn.contains(s, p, o)
-    }
-
-    def "contains(Resource, IRI, Value, Resource) returns correctly"() {
-        setup:
-        def s = vf.createIRI("http://test.com/s")
-        def p = vf.createIRI("http://test.com/p")
-        def o = vf.createIRI("http://test.com/o")
-        def c = vf.createIRI("http://test.com/c")
-        conn.add(s, p, o, c)
-
-        expect:
-        conn.contains(s, p, o, c)
-    }
-
-    def "contains(Resource, IRI, Value, Resource) returns correctly when full statement doesn't exist"() {
-        setup:
-        def s = vf.createIRI("http://test.com/s")
-        def p = vf.createIRI("http://test.com/p")
-        def o = vf.createIRI("http://test.com/o")
-        def c = vf.createIRI("http://test.com/c")
-        def s2 = vf.createIRI("http://test.com/s2")
-        def p2 = vf.createIRI("http://test.com/p2")
-        def o2 = vf.createIRI("http://test.com/o2")
-        conn.add(s2, p2, o2)
-
-        expect:
-        !conn.contains(s, p, o, c)
-        !conn.contains(s2, p2, o2, c)
-    }*/
-
     def "containsContext(Resource) returns correctly"() {
         setup:
         def s = vf.createIRI("http://test.com/s")

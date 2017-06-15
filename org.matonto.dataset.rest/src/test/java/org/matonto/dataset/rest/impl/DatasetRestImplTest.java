@@ -246,7 +246,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         }
     }
 
-    /*@Test
+    @Test
     public void getDatasetRecordsWithLinksTest() {
         // Setup:
         when(results.getPage()).thenReturn(Collections.singletonList(record2));
@@ -268,7 +268,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
-    }*/
+    }
 
     @Test
     public void getDatasetRecordsWithNegativeLimitTest() {

@@ -193,26 +193,6 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
         }
     }
 
-    /*@Override
-    public boolean contains(Resource subject, IRI predicate, Value object) {
-        try {
-            return sesameConn.getStatements(Values.sesameResource(subject), Values.sesameIRI(predicate),
-                    Values.sesameValue(object)).hasNext();
-        } catch (org.openrdf.repository.RepositoryException e) {
-            throw new RepositoryException(e);
-        }
-    }
-
-    @Override
-    public boolean contains(Resource subject, IRI predicate, Value object, Resource context) {
-        try {
-            return sesameConn.getStatements(Values.sesameResource(subject), Values.sesameIRI(predicate),
-                    Values.sesameValue(object), Values.sesameResources(context)).hasNext();
-        } catch (org.openrdf.repository.RepositoryException e) {
-            throw new RepositoryException(e);
-        }
-    }*/
-
     @Override
     public boolean contains(Resource subject, IRI predicate, Value object, Resource... contexts) {
         try {
@@ -226,7 +206,7 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     @Override
     public boolean containsContext(Resource context) {
         try {
-            return sesameConn.size(Values.sesameResources(context)) > 0;
+            return sesameConn.getStatements(null, null, null, Values.sesameResources(context)).hasNext();
         } catch (org.openrdf.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }
