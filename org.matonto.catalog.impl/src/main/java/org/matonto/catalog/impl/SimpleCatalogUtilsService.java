@@ -25,7 +25,6 @@ package org.matonto.catalog.impl;
 
 
 import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
 import org.matonto.catalog.api.CatalogUtilsService;
@@ -169,20 +168,9 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
-    public boolean resourceExists(Resource resourceIRI, String type, RepositoryConnection conn) {
-        return conn.getStatements(null, vf.createIRI(RDF.TYPE.stringValue()), vf.createIRI(type), resourceIRI)
-                .hasNext();
-    }
-
-    @Override
-    public boolean resourceExists(Resource resourceIRI, RepositoryConnection conn) {
-        return conn.getStatements(null, null, null, resourceIRI).hasNext();
-    }
-
-    @Override
-    public void testObjectId(Resource objectId, IRI classId, RepositoryConnection conn) {
-        if (!resourceExists(objectId, classId.stringValue(), conn)) {
-            throw new IllegalArgumentException(classId.getLocalName() + " " + objectId + " could not be found");
+    public void validateResource(Resource resource, IRI classId, RepositoryConnection conn) {
+        if (!conn.contains(resource, vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI), classId, resource)) {
+            throw new IllegalArgumentException(classId.getLocalName() + " " + resource + " could not be found");
         }
     }
 
@@ -210,6 +198,12 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public <T extends Thing> T getExpectedObject(Resource id, OrmFactory<T> factory, RepositoryConnection conn) {
+        return optObject(id, factory, conn).orElseThrow(() ->
+                new IllegalStateException(factory.getTypeIRI().getLocalName() + " " + id + " could not be found"));
+    }
+
+    @Override
     public void remove(Resource resourceId, RepositoryConnection conn) {
         conn.remove((Resource) null, null, null, resourceId);
     }
@@ -220,9 +214,9 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
-    public void testRecordPath(Resource catalogId, Resource recordId, IRI recordType, RepositoryConnection conn) {
-        testObjectId(catalogId, vf.createIRI(Catalog.TYPE), conn);
-        testObjectId(recordId, recordType, conn);
+    public void validateRecord(Resource catalogId, Resource recordId, IRI recordType, RepositoryConnection conn) {
+        validateResource(catalogId, vf.createIRI(Catalog.TYPE), conn);
+        validateResource(recordId, recordType, conn);
         if (!conn.getStatements(recordId, vf.createIRI(Record.catalog_IRI), catalogId).hasNext()) {
             throw throwDoesNotBelong(recordId, recordFactory, catalogId, catalogFactory);
         }
@@ -231,12 +225,12 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     @Override
     public <T extends Record> T getRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory,
                                           RepositoryConnection conn) {
-        testRecordPath(catalogId, recordId, factory.getTypeIRI(), conn);
+        validateRecord(catalogId, recordId, factory.getTypeIRI(), conn);
         return getObject(recordId, factory, conn);
     }
 
     @Override
-    public void testUnversionedDistributionPath(Resource catalogId, Resource recordId, Resource distributionId,
+    public void validateUnversionedDistribution(Resource catalogId, Resource recordId, Resource distributionId,
                                                 RepositoryConnection conn) {
         UnversionedRecord record = getRecord(catalogId, recordId, unversionedRecordFactory, conn);
         Set<Resource> distributionIRIs = record.getUnversionedDistribution_resource();
@@ -248,12 +242,12 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     @Override
     public Distribution getUnversionedDistribution(Resource catalogId, Resource recordId, Resource distributionId,
                                                    RepositoryConnection conn) {
-        testUnversionedDistributionPath(catalogId, recordId, distributionId, conn);
+        validateUnversionedDistribution(catalogId, recordId, distributionId, conn);
         return getObject(distributionId, distributionFactory, conn);
     }
 
     @Override
-    public void testVersionPath(Resource catalogId, Resource recordId, Resource versionId, RepositoryConnection conn) {
+    public void validateVersion(Resource catalogId, Resource recordId, Resource versionId, RepositoryConnection conn) {
         VersionedRecord record = getRecord(catalogId, recordId, versionedRecordFactory, conn);
         Set<Resource> versionIRIs = record.getVersion_resource();
         if (!versionIRIs.contains(versionId)) {
@@ -264,12 +258,12 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     @Override
     public <T extends Version> T getVersion(Resource catalogId, Resource recordId, Resource versionId,
                                             OrmFactory<T> factory, RepositoryConnection conn) {
-        testVersionPath(catalogId, recordId, versionId, conn);
+        validateVersion(catalogId, recordId, versionId, conn);
         return getObject(versionId, factory, conn);
     }
 
     @Override
-    public void testVersionedDistributionPath(Resource catalogId, Resource recordId, Resource versionId,
+    public void validateVersionedDistribution(Resource catalogId, Resource recordId, Resource versionId,
                                               Resource distributionId, RepositoryConnection conn) {
         Version version = getVersion(catalogId, recordId, versionId, versionFactory, conn);
         if (!version.getVersionedDistribution_resource().contains(distributionId)) {
@@ -280,12 +274,12 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     @Override
     public Distribution getVersionedDistribution(Resource catalogId, Resource recordId, Resource versionId,
                                                  Resource distributionId, RepositoryConnection conn) {
-        testVersionedDistributionPath(catalogId, recordId, versionId, distributionId, conn);
+        validateVersionedDistribution(catalogId, recordId, versionId, distributionId, conn);
         return getObject(distributionId, distributionFactory, conn);
     }
 
     @Override
-    public void testBranchPath(Resource catalogId, Resource recordId, Resource branchId, RepositoryConnection conn) {
+    public void validateBranch(Resource catalogId, Resource recordId, Resource branchId, RepositoryConnection conn) {
         VersionedRDFRecord record = getRecord(catalogId, recordId, versionedRDFRecordFactory, conn);
         testBranchPath(record, branchId);
     }
@@ -300,7 +294,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     @Override
     public <T extends Branch> T getBranch(Resource catalogId, Resource recordId, Resource branchId,
                                           OrmFactory<T> factory, RepositoryConnection conn) {
-        testBranchPath(catalogId, recordId, branchId, conn);
+        validateBranch(catalogId, recordId, branchId, conn);
         return getObject(branchId, factory, conn);
     }
 
@@ -318,9 +312,9 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
-    public void testInProgressCommitPath(Resource catalogId, Resource recordId, Resource commitId,
+    public void validateInProgressCommit(Resource catalogId, Resource recordId, Resource commitId,
                                          RepositoryConnection conn) {
-        testRecordPath(catalogId, recordId, versionedRDFRecordFactory.getTypeIRI(), conn);
+        validateRecord(catalogId, recordId, versionedRDFRecordFactory.getTypeIRI(), conn);
         InProgressCommit commit = getObject(commitId, inProgressCommitFactory, conn);
         Resource onRecord = commit.getOnVersionedRDFRecord_resource().orElseThrow(() ->
                 new IllegalStateException("Record was not set on InProgressCommit " + commitId));
@@ -339,7 +333,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     @Override
     public InProgressCommit getInProgressCommit(Resource catalogId, Resource recordId, Resource commitId,
                                                 RepositoryConnection conn) {
-        testInProgressCommitPath(catalogId, recordId, commitId, conn);
+        validateInProgressCommit(catalogId, recordId, commitId, conn);
         return getObject(commitId, inProgressCommitFactory, conn);
     }
 
@@ -387,13 +381,12 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public void addCommit(Branch branch, Commit commit, RepositoryConnection conn) {
-        if (!resourceExists(commit.getResource(), conn)) {
-            branch.setHead(commit);
-            updateObject(branch, conn);
-            addObject(commit, conn);
-        } else {
+        if (conn.size(commit.getResource()) > 0) {
             throw throwAlreadyExists(commit.getResource(), commitFactory);
         }
+        branch.setHead(commit);
+        updateObject(branch, conn);
+        addObject(commit, conn);
     }
 
     @Override

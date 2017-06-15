@@ -30,7 +30,7 @@ import org.matonto.rdf.api.Resource;
 
 public interface VersioningManager {
     /**
-     * Commits the provided addition and deletions {@link Model Models} for the provided {@link User} to
+     * Commits the provided addition and deletion {@link Model Models} for the provided {@link User} to
      * the {@link org.matonto.catalog.api.ontologies.mcat.Branch} identified by the provided Resource IDs with the
      * provided message.
      *

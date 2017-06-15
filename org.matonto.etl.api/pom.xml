@@ -52,7 +52,8 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.7-SNAPSHOT</version>
+            <!--<version>1.7.20</version>-->
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
