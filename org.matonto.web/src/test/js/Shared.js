@@ -270,6 +270,7 @@ function mockMappingManager() {
             this.createNewMapping = jasmine.createSpy('createNewMapping').and.returnValue([]);
             this.setSourceOntologyInfo = jasmine.createSpy('setSourceOntologyInfo').and.returnValue([]);
             this.copyMapping = jasmine.createSpy('copyMapping').and.returnValue([]);
+            this.renameMapping = jasmine.createSpy('renameMapping').and.returnValue([]);
             this.addClass = jasmine.createSpy('addClass').and.returnValue([]);
             this.editIriTemplate = jasmine.createSpy('editIriTemplate').and.returnValue([]);
             this.addDataProp = jasmine.createSpy('addDataProp').and.returnValue([]);
