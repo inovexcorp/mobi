@@ -319,7 +319,6 @@
              */
             self.renameMapping = function(mapping, newId) {
                 var newMapping = angular.copy(mapping);
-                var re = new RegExp('^' + getMappingEntity(newMapping)['@id'].replace(/\//g, '\\\/').replace(/([:.])/g, '[$1]'));
                 getMappingEntity(newMapping)['@id'] = newId;
                 _.forEach(self.getAllClassMappings(newMapping), classMapping => {
                     classMapping['@id'] = newId + '/' + $filter('splitIRI')(classMapping['@id']).end;
