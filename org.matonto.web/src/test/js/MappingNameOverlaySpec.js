@@ -57,15 +57,21 @@ describe('Mapping Name Overlay directive', function() {
             it('if it is the edit mapping step', function() {
                 mapperStateSvc.step = mapperStateSvc.editMappingStep;
                 controller.set();
-                expect(mapperStateSvc.changedMapping).toBe(true);
                 expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
+                expect(mapperStateSvc.changedMapping).toBe(true);
+                expect(mappingManagerSvc.renameMapping).toHaveBeenCalled();
+                expect(mapperStateSvc.removeAvailableProps).toHaveBeenCalled();
+                expect(mapperStateSvc.setAvailableProps).toHaveBeenCalled();
                 expect(mapperStateSvc.mapping.id).toBe(mappingManagerSvc.getMappingId(controller.newName));
                 expect(mapperStateSvc.editMappingName).toBe(false);
             });
             it('if it is not the edit mapping step', function() {
                 controller.set();
-                expect(mapperStateSvc.changedMapping).toBe(false);
                 expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
+                expect(mapperStateSvc.changedMapping).toBe(false);
+                expect(mappingManagerSvc.renameMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mappingManagerSvc.getMappingId(controller.newName));
+                expect(mapperStateSvc.removeAvailableProps).toHaveBeenCalled();
+                expect(mapperStateSvc.setAvailableProps).toHaveBeenCalled();
                 expect(mapperStateSvc.mapping.id).toBe(mappingManagerSvc.getMappingId(controller.newName));
                 expect(mapperStateSvc.editMappingName).toBe(false);
             });

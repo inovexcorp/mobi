@@ -265,6 +265,32 @@ describe('Mapping Manager service', function() {
             }
         });
     });
+    it('should rewrite the @id URI path without modifying the local names.', function() {
+        var mappingEntity = {'@id': 'originalMapping', '@type': [prefixes.delim + 'Mapping'], id: 'mapping'};
+        var classMapping1 = {'@id': 'class1', 'id': 'class1'};
+        var classMapping2 = {'@id': 'class2', 'id': 'class2'};
+        var objectMapping = {'@id': 'object', 'id': 'object'};
+        objectMapping[prefixes.delim + 'classMapping'] = [angular.copy(classMapping2)];
+        var dataMapping = {'@id': 'data', 'id': 'data'};
+        spyOn(mappingManagerSvc, 'getAllClassMappings').and.returnValue([classMapping1, classMapping2]);
+        spyOn(mappingManagerSvc, 'getAllObjectMappings').and.returnValue([objectMapping]);
+        spyOn(mappingManagerSvc, 'getAllDataMappings').and.returnValue([dataMapping]);
+        spyOn(mappingManagerSvc, 'isObjectMapping').and.callFake(function(entity) {
+            return entity.id === objectMapping.id;
+        });
+        var changedMapping = [classMapping1, classMapping2, objectMapping, dataMapping];
+        var mapping = _.concat(angular.copy(changedMapping), mappingEntity);
+        var result = mappingManagerSvc.copyMapping(mapping, 'newMapping');
+        expect(result.length).toBe(mapping.length);
+        expect(_.find(result, {id: 'mapping'})['@id']).toBe('newMapping');
+        _.forEach(changedMapping, function(entity) {
+            var original = _.find(mapping, {'id': entity.id});
+            expect(original['@id']).toBe(original['@id']);
+            if (_.has(entity, "['" + prefixes.delim + "classMapping']")){
+                expect(entity[prefixes.delim + 'classMapping']).not.toEqual(original[prefixes.delim + 'classMapping']);
+            }
+        });
+    });
     describe('should add a class mapping to a mapping', function() {
         beforeEach(function() {
             this.ontologyId = 'http://example.com';
