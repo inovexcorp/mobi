@@ -68,6 +68,9 @@
                         if (dvm.state.step === dvm.state.editMappingStep) {
                             dvm.state.changedMapping = true;
                         }
+                        var re = new RegExp('^' + dvm.state.mapping.id.replace(/\//g, '\\\/').replace(/([:.])/g, '[$1]'));
+                        dvm.state.mapping.jsonld = dvm.mm.copyMapping(dvm.state.mapping.jsonld, iri);
+                        dvm.state.selectedClassMappingId = dvm.state.selectedClassMappingId.replace(re, iri);
                         dvm.state.mapping.id = iri;
                         dvm.state.editMappingName = false;
                     }
