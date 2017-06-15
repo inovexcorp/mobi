@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  itests-etl
+  itests-rest
   $Id:$
   $HeadURL:$
   %%
@@ -32,7 +32,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>itests-etl</artifactId>
+    <artifactId>itests-rest</artifactId>
 
     <dependencies>
         <dependency>
