@@ -68,7 +68,7 @@ describe('Mapping Name Overlay directive', function() {
                 controller.set();
                 expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
                 expect(mapperStateSvc.changedMapping).toBe(true);
-                expect(mapperStateSvc.selectedClassMappingId).toBe('/' + selectedClassMappingId);
+                expect(mapperStateSvc.selectedClassMappingId).toBe(mappingManagerSvc.getMappingId(controller.newName) + '/' + selectedClassMappingId);
                 expect(mappingManagerSvc.renameMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mappingManagerSvc.getMappingId(controller.newName));
                 expect(mapperStateSvc.removeAvailableProps).toHaveBeenCalledWith(selectedClassMappingId);
                 expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(mapperStateSvc.selectedClassMappingId);
@@ -76,12 +76,14 @@ describe('Mapping Name Overlay directive', function() {
                 expect(mapperStateSvc.editMappingName).toBe(false);
             });
             it('if it is not the edit mapping step', function() {
+                var selectedClassMappingId = mapperStateSvc.selectedClassMappingId;
                 controller.set();
                 expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
                 expect(mapperStateSvc.changedMapping).toBe(false);
+                expect(mapperStateSvc.selectedClassMappingId).toBe(mappingManagerSvc.getMappingId(controller.newName) + '/' + selectedClassMappingId);
                 expect(mappingManagerSvc.renameMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mappingManagerSvc.getMappingId(controller.newName));
-                expect(mapperStateSvc.removeAvailableProps).toHaveBeenCalled();
-                expect(mapperStateSvc.setAvailableProps).toHaveBeenCalled();
+                expect(mapperStateSvc.removeAvailableProps).toHaveBeenCalledWith(selectedClassMappingId);
+                expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(mapperStateSvc.selectedClassMappingId);
                 expect(mapperStateSvc.mapping.id).toBe(mappingManagerSvc.getMappingId(controller.newName));
                 expect(mapperStateSvc.editMappingName).toBe(false);
             });
