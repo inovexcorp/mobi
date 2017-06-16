@@ -335,12 +335,12 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 vf.createLiteral("Title"));
 
         MockitoAnnotations.initMocks(this);
-        when(factoryRegistry.getFactoriesOfType(Record.TYPE)).thenReturn(Stream.of(recordFactory,
+        when(factoryRegistry.getFactoriesOfType(Record.class)).thenReturn(Stream.of(recordFactory,
                 unversionedRecordFactory, versionedRecordFactory, versionedRDFRecordFactory, ontologyRecordFactory,
                 mappingRecordFactory).collect(Collectors.toList()));
-        when(factoryRegistry.getFactoriesOfType(VersionedRDFRecord.TYPE)).thenReturn(Stream.of(versionedRDFRecordFactory, mappingRecordFactory, ontologyRecordFactory).collect(Collectors.toList()));
-        when(factoryRegistry.getFactoriesOfType(Version.TYPE)).thenReturn(Stream.of(versionFactory, tagFactory).collect(Collectors.toList()));
-        when(factoryRegistry.getFactoriesOfType(Branch.TYPE)).thenReturn(Stream.of(branchFactory, userBranchFactory).collect(Collectors.toList()));
+        when(factoryRegistry.getFactoriesOfType(VersionedRDFRecord.class)).thenReturn(Stream.of(versionedRDFRecordFactory, mappingRecordFactory, ontologyRecordFactory).collect(Collectors.toList()));
+        when(factoryRegistry.getFactoriesOfType(Version.class)).thenReturn(Stream.of(versionFactory, tagFactory).collect(Collectors.toList()));
+        when(factoryRegistry.getFactoriesOfType(Branch.class)).thenReturn(Stream.of(branchFactory, userBranchFactory).collect(Collectors.toList()));
         rest = new CatalogRestImpl();
         rest.setVf(vf);
         rest.setEngineManager(engineManager);

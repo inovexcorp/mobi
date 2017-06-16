@@ -175,11 +175,11 @@ public class CatalogRestImpl implements CatalogRest {
 
     @Activate
     protected void start() {
-        factoryRegistry.getFactoriesOfType(Record.TYPE).forEach(factory ->
+        factoryRegistry.getFactoriesOfType(Record.class).forEach(factory ->
                 recordFactories.put(factory.getTypeIRI().stringValue(), factory));
-        factoryRegistry.getFactoriesOfType(Version.TYPE).forEach(factory ->
+        factoryRegistry.getFactoriesOfType(Version.class).forEach(factory ->
                 versionFactories.put(factory.getTypeIRI().stringValue(), factory));
-        factoryRegistry.getFactoriesOfType(Branch.TYPE).forEach(factory ->
+        factoryRegistry.getFactoriesOfType(Branch.class).forEach(factory ->
                 branchFactories.put(factory.getTypeIRI().stringValue(), factory));
     }
 
