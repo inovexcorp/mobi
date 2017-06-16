@@ -24,7 +24,6 @@ package org.matonto.catalog.api.versioning;
  */
 
 
-import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
@@ -46,7 +45,7 @@ public interface VersioningManager {
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
      *      Record does not belong to the Catalog, or the Branch could not be found.
      */
-    <T extends VersionedRDFRecord> Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user,
+    Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user,
                                                    String message, Model additions, Model deletions);
 
     /**
@@ -63,7 +62,7 @@ public interface VersioningManager {
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
      *      Record does not belong to the Catalog, the Branch could not be found, or the InProgress could not be found.
      */
-    <T extends VersionedRDFRecord> Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user,
+    Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user,
                                                    String message);
 
     /**
@@ -85,6 +84,6 @@ public interface VersioningManager {
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
      *      Record does not belong to the Catalog, or either Branch could not be found
      */
-    <T extends VersionedRDFRecord> Resource merge(Resource catalogId, Resource recordId, Resource sourceBranchId,
+    Resource merge(Resource catalogId, Resource recordId, Resource sourceBranchId,
                                                   Resource targetBranchId, User user, Model additions, Model deletions);
 }
