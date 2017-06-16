@@ -68,6 +68,10 @@
                         if (dvm.state.step === dvm.state.editMappingStep) {
                             dvm.state.changedMapping = true;
                         }
+                        dvm.state.mapping.jsonld = dvm.mm.renameMapping(dvm.state.mapping.jsonld, iri);
+                        dvm.state.removeAvailableProps(dvm.state.selectedClassMappingId);
+                        dvm.state.selectedClassMappingId = iri + '/' + $filter('splitIRI')(dvm.state.selectedClassMappingId).end;
+                        dvm.state.setAvailableProps(dvm.state.selectedClassMappingId);
                         dvm.state.mapping.id = iri;
                         dvm.state.editMappingName = false;
                     }
