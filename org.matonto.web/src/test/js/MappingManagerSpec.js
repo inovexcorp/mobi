@@ -30,7 +30,8 @@ describe('Mapping Manager service', function() {
         prefixes,
         splitIRIFilter,
         $q,
-        $timeout;
+        $timeout,
+        $filter;
 
     beforeEach(function() {
         module('mappingManager');
@@ -266,12 +267,12 @@ describe('Mapping Manager service', function() {
         });
     });
     it('should rewrite the @id URI path without modifying the local names.', function() {
-        var mappingEntity = {'@id': 'originalMapping', '@type': [prefixes.delim + 'Mapping'], id: 'mapping'};
-        var classMapping1 = {'@id': 'class1', 'id': 'class1'};
-        var classMapping2 = {'@id': 'class2', 'id': 'class2'};
-        var objectMapping = {'@id': 'object', 'id': 'object'};
+        var mappingEntity = {'@id': 'uri://olduri/originalMapping', '@type': [prefixes.delim + 'Mapping'], id: 'mapping'};
+        var classMapping1 = {'@id': 'uri://olduri/class1', 'id': 'class1'};
+        var classMapping2 = {'@id': 'uri://olduri/class2', 'id': 'class2'};
+        var objectMapping = {'@id': 'uri://olduri/object', 'id': 'object'};
         objectMapping[prefixes.delim + 'classMapping'] = [angular.copy(classMapping2)];
-        var dataMapping = {'@id': 'data', 'id': 'data'};
+        var dataMapping = {'@id': 'uri://olduri/data', 'id': 'data'};
         spyOn(mappingManagerSvc, 'getAllClassMappings').and.returnValue([classMapping1, classMapping2]);
         spyOn(mappingManagerSvc, 'getAllObjectMappings').and.returnValue([objectMapping]);
         spyOn(mappingManagerSvc, 'getAllDataMappings').and.returnValue([dataMapping]);
@@ -280,14 +281,17 @@ describe('Mapping Manager service', function() {
         });
         var changedMapping = [classMapping1, classMapping2, objectMapping, dataMapping];
         var mapping = _.concat(angular.copy(changedMapping), mappingEntity);
-        var result = mappingManagerSvc.copyMapping(mapping, 'newMapping');
+        var result = mappingManagerSvc.renameMapping(mapping, 'uri://newuri');
         expect(result.length).toBe(mapping.length);
-        expect(_.find(result, {id: 'mapping'})['@id']).toBe('newMapping');
+        expect(_.find(result, {id: 'mapping'})['@id']).toBe('uri://newuri/originalMapping');
         _.forEach(changedMapping, function(entity) {
             var original = _.find(mapping, {'id': entity.id});
-            expect(original['@id']).toBe(original['@id']);
+            expect(original['@id']).not.toBe(entity['@id']);
+            expect($filter('splitIRI')(original['@id']).end).toBe($filter('splitIRI')(entity['@id']).end);
             if (_.has(entity, "['" + prefixes.delim + "classMapping']")){
                 expect(entity[prefixes.delim + 'classMapping']).not.toEqual(original[prefixes.delim + 'classMapping']);
+                expect($filter('splitIRI')(entity[prefixes.delim + 'classMapping']['@id']))
+                    .toEqual($filter('splitIRI')(original[prefixes.delim + 'classMapping']['@id']));
             }
         });
     });
