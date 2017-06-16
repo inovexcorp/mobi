@@ -40,7 +40,6 @@ import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
-import org.matonto.catalog.api.ontologies.mcat.MappingRecord;
 import org.matonto.catalog.api.ontologies.mcat.MappingRecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
@@ -56,6 +55,7 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
+import org.matonto.rdf.core.utils.Values;
 import org.matonto.rdf.orm.OrmFactoryRegistry;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
 import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
@@ -75,8 +75,11 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.repository.sail.SailRepository;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.Rio;
 import org.openrdf.sail.memory.MemoryStore;
 
+import java.io.InputStream;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -98,7 +101,6 @@ public class SimpleVersioningManagerTest {
     private User user;
     private VersionedRDFRecord record;
     private OntologyRecord ontologyRecord;
-    private MappingRecord mappingRecord;
     private Branch targetBranch;
     private Branch sourceBranch;
     private Commit commit;
@@ -111,16 +113,13 @@ public class SimpleVersioningManagerTest {
     private VersioningService<OntologyRecord> ontologyService;
 
     @Mock
-    private VersioningService<MappingRecord> mappingService;
-
-    @Mock
     private OrmFactoryRegistry registry;
 
     @Mock
     private CatalogUtilsService catalogUtils;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
         repo.initialize();
 
@@ -169,11 +168,15 @@ public class SimpleVersioningManagerTest {
         vcr.registerValueConverter(new ValueValueConverter());
         vcr.registerValueConverter(new LiteralValueConverter());
 
+        try (RepositoryConnection conn = repo.getConnection()) {
+            InputStream testData = getClass().getResourceAsStream("/testVersioningData.trig");
+            conn.add(Values.matontoModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+        }
+
         user = userFactory.createNew(vf.createIRI("http://test.com#user"));
         IRI titleIRI = vf.createIRI(DCTERMS.TITLE.stringValue());
-        record = versionedRDFRecordFactory.createNew(vf.createIRI("http://test.com#versioned-rdf-record"));
-        ontologyRecord = ontologyRecordFactory.createNew(vf.createIRI("http://test.com#ontology-record"));
-        mappingRecord = mappingRecordFactory.createNew(vf.createIRI("http://test.com#mapping-record"));
+        record = versionedRDFRecordFactory.createNew(vf.createIRI("http://matonto.org/test/records#versioned-rdf-record"));
+        ontologyRecord = ontologyRecordFactory.createNew(vf.createIRI("http://matonto.org/test/records#ontology-record"));
         sourceBranch = branchFactory.createNew(vf.createIRI("http://test.com#source-branch"));
         sourceBranch.addProperty(vf.createLiteral("Source"), titleIRI);
         targetBranch = branchFactory.createNew(vf.createIRI("http://test.com#target-branch"));
@@ -183,11 +186,11 @@ public class SimpleVersioningManagerTest {
 
         MockitoAnnotations.initMocks(this);
 
-        when(registry.getFactoriesOfType(VersionedRDFRecord.TYPE)).thenReturn(Stream.of(mappingRecordFactory, versionedRDFRecordFactory, ontologyRecordFactory).collect(Collectors.toList()));
+        when(registry.getSortedFactoriesOfType(VersionedRDFRecord.class)).thenReturn(Stream.of(mappingRecordFactory, ontologyRecordFactory, versionedRDFRecordFactory).collect(Collectors.toList()));
 
         when(catalogUtils.getRecord(any(Resource.class), eq(record.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
         when(catalogUtils.getRecord(any(Resource.class), eq(ontologyRecord.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class))).thenReturn(ontologyRecord);
-        when(catalogUtils.getRecord(any(Resource.class), eq(mappingRecord.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class))).thenReturn(mappingRecord);
+        when(catalogUtils.getRecord(any(Resource.class), eq(ontologyRecord.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class))).thenReturn(ontologyRecord);
 
         when(baseService.getTypeIRI()).thenReturn(VersionedRDFRecord.TYPE);
         when(baseService.getTargetBranch(any(VersionedRDFRecord.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(targetBranch);
@@ -205,23 +208,13 @@ public class SimpleVersioningManagerTest {
         when(ontologyService.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
         when(ontologyService.addCommit(any(Branch.class), any(User.class), anyString(), any(Model.class), any(Model.class), any(Commit.class), any(Commit.class), any(RepositoryConnection.class))).thenReturn(commit.getResource());
 
-        when(mappingService.getTypeIRI()).thenReturn(MappingRecord.TYPE);
-        when(mappingService.getTargetBranch(any(MappingRecord.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(targetBranch);
-        when(mappingService.getSourceBranch(any(MappingRecord.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(sourceBranch);
-        when(mappingService.getBranchHeadCommit(any(Branch.class), any(RepositoryConnection.class))).thenReturn(commit);
-        when(mappingService.getInProgressCommit(any(Resource.class), any(User.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
-        when(mappingService.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
-        when(mappingService.addCommit(any(Branch.class), any(User.class), anyString(), any(Model.class), any(Model.class), any(Commit.class), any(Commit.class), any(RepositoryConnection.class))).thenReturn(commit.getResource());
-
         manager = new SimpleVersioningManager();
         manager.setRepository(repo);
         manager.setCatalogUtils(catalogUtils);
         manager.setVf(vf);
-        manager.setFactory(versionedRDFRecordFactory);
         manager.setFactoryRegistry(registry);
         manager.addVersioningService(baseService);
         manager.addVersioningService(ontologyService);
-        manager.addVersioningService(mappingService);
     }
 
     /* commit(Resource, Resource, Resource, User, String) */
@@ -243,7 +236,7 @@ public class SimpleVersioningManagerTest {
     public void commitWithInProgressCommitToOntologyRecordTest() throws Exception {
         Resource result = manager.commit(CATALOG_IRI, ontologyRecord.getResource(), targetBranch.getResource(), user, "Message");
         assertEquals(commit.getResource(), result);
-        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
         verify(ontologyService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
         verify(ontologyService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
         verify(ontologyService).getInProgressCommit(eq(ontologyRecord.getResource()), eq(user), any(RepositoryConnection.class));
@@ -292,7 +285,7 @@ public class SimpleVersioningManagerTest {
 
         Resource result = manager.commit(CATALOG_IRI, ontologyRecord.getResource(), targetBranch.getResource(), user, "Message", additions, deletions);
         assertEquals(commit.getResource(), result);
-        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
         verify(ontologyService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
         verify(ontologyService).getBranchHeadCommit(eq(targetBranch), any(RepositoryConnection.class));
         verify(ontologyService).addCommit(eq(targetBranch), eq(user), eq("Message"), eq(additions), eq(deletions), eq(commit), eq(null), any(RepositoryConnection.class));
@@ -339,7 +332,7 @@ public class SimpleVersioningManagerTest {
 
         Resource result = manager.merge(CATALOG_IRI, ontologyRecord.getResource(), sourceBranch.getResource(), targetBranch.getResource(), user, additions, deletions);
         assertEquals(commit.getResource(), result);
-        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+        verify(catalogUtils).getRecord(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
         verify(ontologyService).getSourceBranch(eq(ontologyRecord), eq(sourceBranch.getResource()), any(RepositoryConnection.class));
         verify(ontologyService).getTargetBranch(eq(ontologyRecord), eq(targetBranch.getResource()), any(RepositoryConnection.class));
         verify(ontologyService).getBranchHeadCommit(eq(sourceBranch), any(RepositoryConnection.class));
