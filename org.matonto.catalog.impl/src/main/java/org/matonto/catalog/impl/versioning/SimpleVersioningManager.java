@@ -72,7 +72,8 @@ public class SimpleVersioningManager implements VersioningManager {
     @Reference(type = '*', dynamic = true)
     @SuppressWarnings("unchecked")
     protected void addVersioningService(VersioningService<? extends VersionedRDFRecord> versioningService) {
-        versioningServices.put(versioningService.getTypeIRI(), (VersioningService<VersionedRDFRecord>) versioningService);
+        versioningServices.put(versioningService.getTypeIRI(),
+                (VersioningService<VersionedRDFRecord>) versioningService);
     }
 
     protected void removeVersioningService(VersioningService<? extends VersionedRDFRecord> versioningService) {
@@ -100,7 +101,8 @@ public class SimpleVersioningManager implements VersioningManager {
             OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn).orElseThrow(() ->
                     new MatOntoException("No known factories for this record type."));
             VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
-            VersioningService<VersionedRDFRecord> service = versioningServices.get(correctFactory.getTypeIRI().stringValue());
+            VersioningService<VersionedRDFRecord> service =
+                    versioningServices.get(correctFactory.getTypeIRI().stringValue());
             conn.begin();
             Branch branch = service.getTargetBranch(record, branchId, conn);
             Commit head = service.getBranchHeadCommit(branch, conn);
@@ -120,7 +122,8 @@ public class SimpleVersioningManager implements VersioningManager {
             OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn).orElseThrow(() ->
                     new MatOntoException("No known factories for this record type."));
             VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
-            VersioningService<VersionedRDFRecord> service = versioningServices.get(correctFactory.getTypeIRI().stringValue());
+            VersioningService<VersionedRDFRecord> service =
+                    versioningServices.get(correctFactory.getTypeIRI().stringValue());
             conn.begin();
             Branch branch = service.getTargetBranch(record, branchId, conn);
             Commit head = service.getBranchHeadCommit(branch, conn);
@@ -138,7 +141,8 @@ public class SimpleVersioningManager implements VersioningManager {
             OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn).orElseThrow(() ->
                     new MatOntoException("No known factories for this record type."));
             VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
-            VersioningService<VersionedRDFRecord> service = versioningServices.get(correctFactory.getTypeIRI().stringValue());
+            VersioningService<VersionedRDFRecord> service =
+                    versioningServices.get(correctFactory.getTypeIRI().stringValue());
             conn.begin();
             Branch source = service.getSourceBranch(record, sourceBranchId, conn);
             Branch target = service.getTargetBranch(record, targetBranchId, conn);
@@ -172,15 +176,18 @@ public class SimpleVersioningManager implements VersioningManager {
      * @param conn A RepositoryConnection for lookup.
      * @return The appropriate OrmFactory for the VersionedRDFRecord
      */
-    private Optional<OrmFactory<? extends VersionedRDFRecord>> getFactory(Resource recordId, RepositoryConnection conn) {
-        List<Resource> types = RepositoryResults.asList(conn.getStatements(recordId, vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI), null))
+    private Optional<OrmFactory<? extends VersionedRDFRecord>> getFactory(Resource recordId,
+                                                                          RepositoryConnection conn) {
+        List<Resource> types = RepositoryResults.asList(
+                conn.getStatements(recordId, vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI), null))
                 .stream()
                 .map(Statements::objectResource)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
 
-        List<OrmFactory<? extends VersionedRDFRecord>> orderedFactories = factoryRegistry.getSortedFactoriesOfType(VersionedRDFRecord.class)
+        List<OrmFactory<? extends VersionedRDFRecord>> orderedFactories =
+                factoryRegistry.getSortedFactoriesOfType(VersionedRDFRecord.class)
                 .stream()
                 .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
                 .collect(Collectors.toList());
