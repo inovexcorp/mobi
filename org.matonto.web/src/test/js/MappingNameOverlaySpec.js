@@ -34,11 +34,12 @@ describe('Mapping Name Overlay directive', function() {
         mockMapperState();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _splitIRIFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
+            splitIRIFilter = _splitIRIFilter_;
         });
 
         mapperStateSvc.mapping = {id: '', jsonld: []};
@@ -53,19 +54,36 @@ describe('Mapping Name Overlay directive', function() {
         describe('should set the correct state for setting the name', function() {
             beforeEach(function() {
                 controller.newName = 'test';
+                splitIRIFilter.and.callFake(function(iri) {
+                    return {
+                        begin: iri,
+                        then: iri,
+                        end: iri
+                    }
+                });
             });
             it('if it is the edit mapping step', function() {
+                var selectedClassMappingId = mapperStateSvc.selectedClassMappingId;
                 mapperStateSvc.step = mapperStateSvc.editMappingStep;
                 controller.set();
-                expect(mapperStateSvc.changedMapping).toBe(true);
                 expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
+                expect(mapperStateSvc.changedMapping).toBe(true);
+                expect(mapperStateSvc.selectedClassMappingId).toBe(mappingManagerSvc.getMappingId(controller.newName) + '/' + selectedClassMappingId);
+                expect(mappingManagerSvc.renameMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mappingManagerSvc.getMappingId(controller.newName));
+                expect(mapperStateSvc.removeAvailableProps).toHaveBeenCalledWith(selectedClassMappingId);
+                expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(mapperStateSvc.selectedClassMappingId);
                 expect(mapperStateSvc.mapping.id).toBe(mappingManagerSvc.getMappingId(controller.newName));
                 expect(mapperStateSvc.editMappingName).toBe(false);
             });
             it('if it is not the edit mapping step', function() {
+                var selectedClassMappingId = mapperStateSvc.selectedClassMappingId;
                 controller.set();
-                expect(mapperStateSvc.changedMapping).toBe(false);
                 expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
+                expect(mapperStateSvc.changedMapping).toBe(false);
+                expect(mapperStateSvc.selectedClassMappingId).toBe(mappingManagerSvc.getMappingId(controller.newName) + '/' + selectedClassMappingId);
+                expect(mappingManagerSvc.renameMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mappingManagerSvc.getMappingId(controller.newName));
+                expect(mapperStateSvc.removeAvailableProps).toHaveBeenCalledWith(selectedClassMappingId);
+                expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(mapperStateSvc.selectedClassMappingId);
                 expect(mapperStateSvc.mapping.id).toBe(mappingManagerSvc.getMappingId(controller.newName));
                 expect(mapperStateSvc.editMappingName).toBe(false);
             });
