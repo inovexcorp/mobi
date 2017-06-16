@@ -54,8 +54,6 @@ describe('Mapping Name Overlay directive', function() {
         describe('should set the correct state for setting the name', function() {
             beforeEach(function() {
                 controller.newName = 'test';
-            });
-            it('if it is the edit mapping step', function() {
                 splitIRIFilter.and.callFake(function(iri) {
                     return {
                         begin: iri,
@@ -63,6 +61,8 @@ describe('Mapping Name Overlay directive', function() {
                         end: iri
                     }
                 });
+            });
+            it('if it is the edit mapping step', function() {
                 var selectedClassMappingId = mapperStateSvc.selectedClassMappingId;
                 mapperStateSvc.step = mapperStateSvc.editMappingStep;
                 controller.set();
