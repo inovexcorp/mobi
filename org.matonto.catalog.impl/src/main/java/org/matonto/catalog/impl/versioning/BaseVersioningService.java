@@ -39,6 +39,8 @@ import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.repository.api.RepositoryConnection;
 
+import javax.annotation.Nullable;
+
 @Component(immediate = true)
 public class BaseVersioningService implements VersioningService<VersionedRDFRecord> {
     private BranchFactory branchFactory;
@@ -98,13 +100,14 @@ public class BaseVersioningService implements VersioningService<VersionedRDFReco
     }
 
     @Override
-    public Commit createCommit(InProgressCommit commit, String message, Commit baseCommit, Commit auxCommit) {
+    public Commit createCommit(InProgressCommit commit, String message, @Nullable Commit baseCommit,
+                               @Nullable Commit auxCommit) {
         return catalogManager.createCommit(commit, message, baseCommit, auxCommit);
     }
 
     @Override
     public Resource addCommit(Branch branch, User user, String message, Model additions, Model deletions,
-                            Commit baseCommit, Commit auxCommit, RepositoryConnection conn) {
+                              @Nullable Commit baseCommit, @Nullable Commit auxCommit, RepositoryConnection conn) {
         Commit newCommit = createCommit(catalogManager.createInProgressCommit(user), message, baseCommit, auxCommit);
         catalogUtils.updateCommit(newCommit, additions, deletions, conn);
         catalogUtils.addCommit(branch, newCommit, conn);
