@@ -32,7 +32,6 @@ import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.catalog.api.versioning.VersioningManager;
 import org.matonto.catalog.api.versioning.VersioningService;
-import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.persistence.utils.RepositoryResults;
 import org.matonto.persistence.utils.Statements;
@@ -98,8 +97,7 @@ public class SimpleVersioningManager implements VersioningManager {
     @Override
     public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn).orElseThrow(() ->
-                    new MatOntoException("No known factories for this record type."));
+            OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
             VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
             VersioningService<VersionedRDFRecord> service =
                     versioningServices.get(correctFactory.getTypeIRI().stringValue());
@@ -119,8 +117,7 @@ public class SimpleVersioningManager implements VersioningManager {
     public Resource commit(Resource catalogId, Resource recordId, Resource branchId,
                                                           User user, String message, Model additions, Model deletions) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn).orElseThrow(() ->
-                    new MatOntoException("No known factories for this record type."));
+            OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
             VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
             VersioningService<VersionedRDFRecord> service =
                     versioningServices.get(correctFactory.getTypeIRI().stringValue());
@@ -138,8 +135,7 @@ public class SimpleVersioningManager implements VersioningManager {
                                                         Resource targetBranchId, User user, Model additions,
                                                         Model deletions) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn).orElseThrow(() ->
-                    new MatOntoException("No known factories for this record type."));
+            OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
             VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
             VersioningService<VersionedRDFRecord> service =
                     versioningServices.get(correctFactory.getTypeIRI().stringValue());
@@ -175,8 +171,9 @@ public class SimpleVersioningManager implements VersioningManager {
      * @param recordId The Resource identifying the Record to retrieve the OrmFactory for
      * @param conn A RepositoryConnection for lookup.
      * @return The appropriate OrmFactory for the VersionedRDFRecord
+     * @throws IllegalArgumentException if no appropriate OrmFactory is found.
      */
-    private Optional<OrmFactory<? extends VersionedRDFRecord>> getFactory(Resource recordId,
+    private OrmFactory<? extends VersionedRDFRecord> getFactory(Resource recordId,
                                                                           RepositoryConnection conn) {
         List<Resource> types = RepositoryResults.asList(
                 conn.getStatements(recordId, vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI), null))
@@ -194,10 +191,10 @@ public class SimpleVersioningManager implements VersioningManager {
 
         for (OrmFactory<? extends VersionedRDFRecord> factory : orderedFactories) {
             if (versioningServices.keySet().contains(factory.getTypeIRI().stringValue())) {
-                return Optional.of(factory);
+                return factory;
             }
         }
 
-        return Optional.empty();
+        throw new IllegalArgumentException("No known factories for this record type.");
     }
 }

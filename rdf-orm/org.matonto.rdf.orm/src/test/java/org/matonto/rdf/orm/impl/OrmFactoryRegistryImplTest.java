@@ -69,8 +69,8 @@ public class OrmFactoryRegistryImplTest {
     }
 
     static abstract class AImpl implements A, Thing {}
-    static abstract class BImpl implements B, Thing {}
-    static abstract class CImpl implements C, Thing {}
+    static abstract class BImpl implements B, A, Thing {}
+    static abstract class CImpl implements C, B, A, Thing {}
 
     @Mock
     private OrmFactory<A> aFactory;
@@ -95,8 +95,8 @@ public class OrmFactoryRegistryImplTest {
         registry.setValueFactory(vf);
         registry.addFactory(thingFactory);
         registry.addFactory(aFactory);
-        registry.addFactory(bFactory);
         registry.addFactory(cFactory);
+        registry.addFactory(bFactory);
 
         when(aFactory.getTypeIRI()).thenReturn(vf.createIRI(A.TYPE));
         when(aFactory.getType()).thenReturn(A.class);
@@ -232,24 +232,24 @@ public class OrmFactoryRegistryImplTest {
     @Test
     public void getSortedFactoriesByTypeClassTest() throws Exception {
         List<OrmFactory<? extends A>> result = registry.getSortedFactoriesOfType(A.class);
-        assertEquals(result.get(0), cFactory);
-        assertEquals(result.get(1), bFactory);
-        assertEquals(result.get(2), aFactory);
+        assertEquals(cFactory, result.get(0));
+        assertEquals(bFactory, result.get(1));
+        assertEquals(aFactory, result.get(2));
     }
 
     @Test
     public void getSortedFactoriesByTypeStringTest() throws Exception {
         List<OrmFactory<? extends Thing>> result = registry.getSortedFactoriesOfType(A.TYPE);
-        assertEquals(result.get(0), cFactory);
-        assertEquals(result.get(1), bFactory);
-        assertEquals(result.get(2), aFactory);
+        assertEquals(cFactory, result.get(0));
+        assertEquals(bFactory, result.get(1));
+        assertEquals(aFactory, result.get(2));
     }
 
     @Test
     public void getSortedFactoriesByTypeIRITest() throws Exception {
         List<OrmFactory<? extends Thing>> result = registry.getSortedFactoriesOfType(aIRI);
-        assertEquals(result.get(0), cFactory);
-        assertEquals(result.get(1), bFactory);
-        assertEquals(result.get(2), aFactory);
+        assertEquals(cFactory, result.get(0));
+        assertEquals(bFactory, result.get(1));
+        assertEquals(aFactory, result.get(2));
     }
 }

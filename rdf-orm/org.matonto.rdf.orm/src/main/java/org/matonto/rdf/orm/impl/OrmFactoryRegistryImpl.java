@@ -60,7 +60,7 @@ public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
     @SuppressWarnings("unchecked")
     public <T extends Thing> Optional<OrmFactory<T>> getFactoryOfType(Class<T> type) {
         return factories.stream()
-                .filter(factory -> type.isAssignableFrom(factory.getImpl()))
+                .filter(factory -> type.equals(factory.getType()))
                 .map(factory -> (OrmFactory<T>) factory)
                 .findFirst();
     }
@@ -79,8 +79,7 @@ public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
 
     @Override
     public <T extends Thing> List<OrmFactory<? extends T>> getFactoriesOfType(Class<T> type) {
-        return getFactoryStreamOfType(type)
-                .collect(Collectors.toList());
+        return getFactoryStreamOfType(type).collect(Collectors.toList());
     }
 
     @Override
@@ -109,7 +108,7 @@ public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
     public List<OrmFactory<? extends Thing>> getSortedFactoriesOfType(IRI typeIRI) {
         return getFactoryStreamOfType(typeIRI)
                 .sorted((factory1, factory2) ->
-                        factory1.getType().getClass().isAssignableFrom(factory2.getType()) ? 1 : -1)
+                        factory1.getType().isAssignableFrom(factory2.getType()) ? 1 : -1)
                 .collect(Collectors.toList());
     }
 
