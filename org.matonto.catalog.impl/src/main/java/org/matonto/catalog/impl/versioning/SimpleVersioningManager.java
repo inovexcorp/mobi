@@ -36,6 +36,7 @@ import org.matonto.catalog.api.versioning.VersioningService;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.persistence.utils.Bindings;
+import org.matonto.persistence.utils.RepositoryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.IRI;
@@ -47,6 +48,7 @@ import org.matonto.rdf.orm.OrmFactoryRegistry;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.openrdf.model.vocabulary.DCTERMS;
+import org.openrdf.model.vocabulary.RDF;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -66,19 +68,6 @@ public class SimpleVersioningManager implements VersioningManager {
     private CatalogUtilsService catalogUtils;
     private Map<String, VersioningService> versioningServices = new HashMap<>();
     private ValueFactory vf;
-
-    private static final String RECORD_TYPES_QUERY;
-
-    static {
-        try {
-            RECORD_TYPES_QUERY = IOUtils.toString(
-                    SimpleVersioningManager.class.getResourceAsStream("/record-types.rq"),
-                    "UTF-8"
-            );
-        } catch (IOException e) {
-            throw new MatOntoException(e);
-        }
-    }
 
     @Reference(name = "repository")
     protected void setRepository(Repository repository) {
@@ -186,11 +175,10 @@ public class SimpleVersioningManager implements VersioningManager {
      * @return The appropriate OrmFactory for the VersionedRDFRecord
      */
     private <T extends VersionedRDFRecord> OrmFactory<T> getFactory(Resource recordId, RepositoryConnection conn) {
-        TupleQuery query = conn.prepareTupleQuery(RECORD_TYPES_QUERY);
-        query.setBinding("record", recordId);
-        TupleQueryResult result = query.evaluateAndReturn();
-        List<Resource> types = new ArrayList<>();
-        result.forEach(bindings -> types.add(Bindings.requiredResource(bindings, "type")));
+        List<Resource> types = RepositoryResults.asList(conn.getStatements(recordId,
+                vf.createIRI(RDF.TYPE.stringValue()), null)).stream()
+                .map(statement -> vf.createIRI(statement.getObject().stringValue()))
+                .collect(Collectors.toList());
         List<OrmFactory> order = factoryRegistry.getSortedFactoriesOfType(VersionedRDFRecord.class).stream()
                 .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
                 .collect(Collectors.toList());
