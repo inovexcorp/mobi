@@ -341,6 +341,9 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         when(factoryRegistry.getFactoriesOfType(VersionedRDFRecord.class)).thenReturn(Stream.of(versionedRDFRecordFactory, mappingRecordFactory, ontologyRecordFactory).collect(Collectors.toList()));
         when(factoryRegistry.getFactoriesOfType(Version.class)).thenReturn(Stream.of(versionFactory, tagFactory).collect(Collectors.toList()));
         when(factoryRegistry.getFactoriesOfType(Branch.class)).thenReturn(Stream.of(branchFactory, userBranchFactory).collect(Collectors.toList()));
+        when(factoryRegistry.getFactoryOfType(Record.class)).thenReturn(Optional.of(recordFactory));
+        when(factoryRegistry.getFactoryOfType(Version.class)).thenReturn(Optional.of(versionFactory));
+        when(factoryRegistry.getFactoryOfType(Branch.class)).thenReturn(Optional.of(branchFactory));
         rest = new CatalogRestImpl();
         rest.setVf(vf);
         rest.setEngineManager(engineManager);
@@ -351,7 +354,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         rest.setInProgressCommitFactory(inProgressCommitFactory);
         rest.setFactoryRegistry(factoryRegistry);
         rest.setVersioningManager(versioningManager);
-        rest.start();
 
         return new ResourceConfig()
                 .register(rest)
