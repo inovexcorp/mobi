@@ -28,27 +28,6 @@ import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
-import javax.cache.Cache;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
-import java.io.BufferedWriter;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.google.common.collect.Iterables;
@@ -95,6 +74,27 @@ import org.openrdf.model.vocabulary.OWL;
 import org.openrdf.model.vocabulary.SKOS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.BufferedWriter;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import javax.cache.Cache;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 @Component(immediate = true)
 public class OntologyRestImpl implements OntologyRest {
@@ -610,6 +610,20 @@ public class OntologyRestImpl implements OntologyRest {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             TupleQueryResult results = ontologyManager.getConceptRelationships(ontology);
+            JSONObject response = getHierarchy(results);
+            return Response.ok(response).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public Response getConceptSchemeHierarchy(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                              String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            TupleQueryResult results = ontologyManager.getConceptSchemeRelationships(ontology);
             JSONObject response = getHierarchy(results);
             return Response.ok(response).build();
         } catch (MatOntoException e) {

@@ -188,19 +188,27 @@ describe('Ontology Utils Manager service', function() {
     it('deleteConcept should call the proper methods', function() {
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
-        splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
         ontologyUtilsManagerSvc.deleteConcept();
         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
         expect(ontologyStateSvc.listItem.subClasses.length).toBe(0);
         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, 'begin/end', ontologyStateSvc.listItem.conceptIndex);
         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, ontologyStateSvc.listItem.recordId);
         expect(ontologyStateSvc.listItem.flatConceptHierarchy).toEqual([{entityIRI: 'iri'}]);
+        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, 'begin/end', ontologyStateSvc.listItem.conceptSchemeIndex);
+        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, ontologyStateSvc.listItem.recordId);
+        expect(ontologyStateSvc.listItem.flatConceptSchemeHierarchy).toEqual([{entityIRI: 'iri'}]);
         expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
     });
     it('deleteConceptScheme should call the proper method', function() {
-        spyOn(ontologyUtilsManagerSvc, 'deleteConcept');
+        ontologyStateSvc.listItem.conceptSchemeHierarchy = [{entityIRI: 'begin/end', subEntities: [{}]}, {entityIRI: 'iri'}];
+        spyOn(ontologyUtilsManagerSvc, 'commonDelete');
+        ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
         ontologyUtilsManagerSvc.deleteConceptScheme();
-        expect(ontologyUtilsManagerSvc.deleteConcept).toHaveBeenCalled();
+        expect(ontologyStateSvc.listItem.conceptSchemeHierarchy).toEqual([{entityIRI: 'iri'}]);
+        expect(updateRefs.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeIndex, 'begin/end');
+        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, ontologyStateSvc.listItem.recordId);
+        expect(ontologyStateSvc.listItem.flatConceptSchemeHierarchy).toEqual([{entityIRI: 'iri'}]);
+        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
     });
     describe('getBlankNodeValue returns', function() {
         beforeEach(function() {

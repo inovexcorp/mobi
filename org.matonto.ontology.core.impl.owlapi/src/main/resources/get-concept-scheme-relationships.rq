@@ -1,0 +1,20 @@
+prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+prefix skos: <http://www.w3.org/2004/02/skos/core#>
+prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+select ?parent ?child
+where {
+    ?parent rdf:type/rdfs:subClassOf* skos:ConceptScheme .
+    optional {
+        ?child ^skos:hasTopConcept ?parent ;
+               rdf:type/rdfs:subClassOf* skos:Concept .
+    }
+    optional {
+        ?child skos:topConceptOf ?parent ;
+               rdf:type/rdfs:subClassOf* skos:Concept .
+    }
+    optional {
+        ?child skos:inScheme ?parent ;
+               rdf:type/rdfs:subClassOf* skos:Concept .
+    }
+}
