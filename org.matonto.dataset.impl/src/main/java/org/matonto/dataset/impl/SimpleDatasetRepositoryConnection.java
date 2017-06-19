@@ -276,28 +276,17 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public boolean contains(Resource subject, IRI predicate, Value object, Resource... contexts) {
-        // TODO: Trivial Implementation
-        // Maybe I can wrap a query result like in the getContextIDs impl
-        Set<Resource> graphs = new HashSet<>();
-        graphs.add(getSystemDefaultNG());
-        getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
-        getGraphs(graphs, Dataset.namedGraph_IRI);
-
-        if (varargsPresent(contexts)) {
-            graphs.retainAll(Arrays.asList(contexts));
-        }
-
-        return getDelegate().contains(subject, predicate, object, graphs.toArray(new Resource[graphs.size()]));
+        return getStatements(subject, predicate, object, contexts).hasNext();
     }
 
     @Override
     public boolean containsContext(Resource context) throws RepositoryException {
-        Set<Resource> graphs = new HashSet<>();
-        graphs.add(getSystemDefaultNG());
-        getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
-        getGraphs(graphs, Dataset.namedGraph_IRI);
-
-        return graphs.contains(context);
+        for (Resource existingContext : getContextIDs()) {
+            if (context.equals(existingContext)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

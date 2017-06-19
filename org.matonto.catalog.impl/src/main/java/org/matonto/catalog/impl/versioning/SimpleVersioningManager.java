@@ -52,7 +52,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component(
-        immediate = true,
         name = SimpleVersioningManager.COMPONENT_NAME
 )
 public class SimpleVersioningManager implements VersioningManager {
