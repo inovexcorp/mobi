@@ -75,6 +75,7 @@
                                 } else {
                                     entity[prefixes.skos + 'hasTopConcept'] = [{'@id': dvm.concept['@id']}];
                                 }
+                                dvm.os.addToAdditions(dvm.os.listItem.recordId, {'@id': scheme['@id'], [prefixes.skos + 'hasTopConcept']: [{'@id': dvm.concept['@id']}]});
                                 dvm.os.addEntityToHierarchy(dvm.os.listItem.conceptSchemeHierarchy, dvm.concept['@id'], dvm.os.listItem.conceptSchemeIndex, scheme['@id']);
                             });
                             dvm.os.listItem.flatConceptSchemeHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemeHierarchy, dvm.os.listItem.recordId);

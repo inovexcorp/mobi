@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Concept Schemes Tab directive', function() {
-    var $compile, scope, element, ontologyManagerSvc, ontologyStateSvc;
+    var $compile, scope, element;
 
     beforeEach(function() {
         module('templates');
@@ -29,11 +29,9 @@ describe('Concept Schemes Tab directive', function() {
         mockOntologyManager();
         mockOntologyState();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyManagerSvc = _ontologyManagerService_;
-            ontologyStateSvc = _ontologyStateService_;
         });
 
         element = $compile(angular.element('<concept-schemes-tab></concept-schemes-tab>'))(scope);

@@ -200,10 +200,12 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
     });
     it('deleteConceptScheme should call the proper method', function() {
+        ontologyStateSvc.listItem.conceptSchemeHierarchy = [{entityIRI: 'begin/end', subEntities: [{}]}, {entityIRI: 'iri'}];
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
         ontologyUtilsManagerSvc.deleteConceptScheme();
-        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, 'begin/end', ontologyStateSvc.listItem.conceptSchemeIndex);
+        expect(ontologyStateSvc.listItem.conceptSchemeHierarchy).toEqual([{entityIRI: 'iri'}]);
+        expect(updateRefs.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeIndex, 'begin/end');
         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, ontologyStateSvc.listItem.recordId);
         expect(ontologyStateSvc.listItem.flatConceptSchemeHierarchy).toEqual([{entityIRI: 'iri'}]);
         expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');

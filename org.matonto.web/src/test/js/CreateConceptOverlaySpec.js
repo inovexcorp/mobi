@@ -168,12 +168,16 @@ describe('Create Concept Overlay directive', function() {
                 return _.get(schemes, schemeId);
             });
             controller.concept = {'@id': 'concept'};
+            var json = {};
+            json[prefixes.skos + 'hasTopConcept'] = [{'@id': 'concept'}];
 
             controller.create();
             expect(schemes.scheme1[prefixes.skos + 'hasTopConcept'].length).toBe(2);
             expect(schemes.scheme2[prefixes.skos + 'hasTopConcept'].length).toBe(1);
             _.forEach(controller.schemes, function(scheme) {
                 expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, 'concept', ontologyStateSvc.listItem.conceptSchemeIndex, scheme['@id']);
+                json['@id'] = scheme['@id'];
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, json);
             });
             expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, ontologyStateSvc.listItem.recordId);
             expect(ontologyStateSvc.listItem.flatConceptSchemeHierarchy).toEqual([{prop: 'entity'}]);
