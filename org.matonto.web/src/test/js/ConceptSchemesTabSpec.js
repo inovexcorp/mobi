@@ -21,14 +21,13 @@
  * #L%
  */
 describe('Concept Schemes Tab directive', function() {
-    var $compile, scope, element, controller, ontologyManagerSvc, ontologyStateSvc;
+    var $compile, scope, element, ontologyManagerSvc, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('conceptSchemesTab');
         mockOntologyManager();
         mockOntologyState();
-        mockResponseObj();
 
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
             $compile = _$compile_;

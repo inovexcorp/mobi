@@ -1153,9 +1153,9 @@
             }
             self.goTo = function(iri) {
                 var entity = self.getEntityByRecordId(self.listItem.recordId, iri);
-                if (om.isConcept(entity)) {
+                if (om.isConcept(entity, self.listItem.derivedConcepts)) {
                     commonGoTo('concepts', iri, self.listItem.flatConceptHierarchy);
-                } else if (om.isConceptScheme(entity)) {
+                } else if (om.isConceptScheme(entity, self.listItem.derivedConceptSchemes)) {
                     commonGoTo('schemes', iri, self.listItem.flatConceptSchemeHierarchy);
                 } else if (om.isClass(entity)) {
                     commonGoTo('classes', iri, self.listItem.flatClassHierarchy);

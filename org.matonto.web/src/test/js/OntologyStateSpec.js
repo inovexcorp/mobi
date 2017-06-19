@@ -3000,7 +3000,9 @@ describe('Ontology State Service', function() {
         expect(ontologyStateSvc.joinPath(['a', 'b', 'c'])).toBe('a.b.c');
     });
     describe('goTo calls the proper manager functions with correct parameters when it is', function() {
+        var entity = {'@id': 'entityId'};
         beforeEach(function() {
+            spyOn(ontologyStateSvc, 'getEntityByRecordId').and.returnValue(entity);
             spyOn(ontologyStateSvc, 'getActivePage').and.returnValue({entityIRI: ''});
             spyOn(ontologyStateSvc, 'setActivePage');
             spyOn(ontologyStateSvc, 'selectItem');
@@ -3011,12 +3013,15 @@ describe('Ontology State Service', function() {
                 flatClassHierarchy: [],
                 flatDataPropertyHierarchy: [],
                 flatObjectPropertyHierarchy: [],
-                flatAnnotationPropertyHierarchy: []
+                flatAnnotationPropertyHierarchy: [],
+                derivedConcepts: ['concept'],
+                derivedConceptSchemes: ['scheme']
             }
         });
         it('a concept', function() {
             ontologyManagerSvc.isConcept.and.returnValue(true);
             ontologyStateSvc.goTo('iri');
+            expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(entity, ontologyStateSvc.listItem.derivedConcepts);
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('concepts');
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
             expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatConceptHierarchy, 'iri');
@@ -3025,6 +3030,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.isConcept.and.returnValue(false);
             ontologyManagerSvc.isConceptScheme.and.returnValue(true);
             ontologyStateSvc.goTo('iri');
+            expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(entity, ontologyStateSvc.listItem.derivedConceptSchemes);
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('schemes');
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
             expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatConceptSchemeHierarchy, 'iri');
@@ -3034,6 +3040,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.isConceptScheme.and.returnValue(false);
             ontologyManagerSvc.isClass.and.returnValue(true);
             ontologyStateSvc.goTo('iri');
+            expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(entity);
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('classes');
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
             expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatClassHierarchy, 'iri');
@@ -3045,6 +3052,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
             spyOn(ontologyStateSvc, 'setDataPropertiesOpened');
             ontologyStateSvc.goTo('iri');
+            expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(entity);
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
             expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatDataPropertyHierarchy, 'iri');
@@ -3058,6 +3066,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.isObjectProperty.and.returnValue(true);
             spyOn(ontologyStateSvc, 'setObjectPropertiesOpened');
             ontologyStateSvc.goTo('iri');
+            expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(entity);
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
             expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatObjectPropertyHierarchy, 'iri');
@@ -3072,6 +3081,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.isAnnotation.and.returnValue(true);
             spyOn(ontologyStateSvc, 'setAnnotationPropertiesOpened');
             ontologyStateSvc.goTo('iri');
+            expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(entity);
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
             expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatAnnotationPropertyHierarchy, 'iri');
@@ -3085,6 +3095,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.isObjectProperty.and.returnValue(false);
             ontologyManagerSvc.isIndividual.and.returnValue(true);
             ontologyStateSvc.goTo('iri');
+            expect(ontologyManagerSvc.isIndividual).toHaveBeenCalledWith(entity);
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('individuals');
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
             expect(ontologyStateSvc.openAt).not.toHaveBeenCalled();

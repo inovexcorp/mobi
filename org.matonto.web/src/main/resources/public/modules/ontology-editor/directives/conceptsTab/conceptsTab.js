@@ -36,7 +36,7 @@
                 templateUrl: 'modules/ontology-editor/directives/conceptsTab/conceptsTab.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function($scope) {
+                controller: function() {
                     var dvm = this;
                     dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
