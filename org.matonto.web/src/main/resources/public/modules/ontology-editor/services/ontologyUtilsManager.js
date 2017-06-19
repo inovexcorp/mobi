@@ -122,11 +122,17 @@
                 var entityIRI = os.getActiveEntityIRI();
                 os.deleteEntityFromHierarchy(os.listItem.conceptHierarchy, entityIRI, os.listItem.conceptIndex);
                 os.listItem.flatConceptHierarchy = os.flattenHierarchy(os.listItem.conceptHierarchy, os.listItem.recordId);
+                os.deleteEntityFromHierarchy(os.listItem.conceptSchemeHierarchy, entityIRI, os.listItem.conceptSchemeIndex);
+                os.listItem.flatConceptSchemeHierarchy = os.flattenHierarchy(os.listItem.conceptSchemeHierarchy, os.listItem.recordId);
                 self.commonDelete(entityIRI);
             }
 
             self.deleteConceptScheme = function() {
-                self.deleteConcept();
+                var entityIRI = os.getActiveEntityIRI();
+                _.remove(os.listItem.conceptSchemeHierarchy, {entityIRI});
+                ur.remove(os.listItem.conceptSchemeIndex, entityIRI);
+                os.listItem.flatConceptSchemeHierarchy = os.flattenHierarchy(os.listItem.conceptSchemeHierarchy, os.listItem.recordId);
+                self.commonDelete(entityIRI);
             }
 
             self.getBlankNodeValue = function(id) {

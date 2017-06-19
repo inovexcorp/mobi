@@ -23,6 +23,17 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.cache.Cache;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
@@ -61,17 +72,6 @@ import org.semanticweb.owlapi.rio.RioParserImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.cache.Cache;
-
 @Component(
         provide = OntologyManager.class,
         name = SimpleOntologyManager.COMPONENT_NAME)
@@ -89,12 +89,14 @@ public class SimpleOntologyManager implements OntologyManager {
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyManager.class);
 
     private static final String GET_SUB_CLASSES_OF;
+    private static final String GET_CLASSES_FOR;
     private static final String GET_SUB_DATATYPE_PROPERTIES_OF;
     private static final String GET_SUB_OBJECT_PROPERTIES_OF;
     private static final String GET_CLASSES_WITH_INDIVIDUALS;
     private static final String SELECT_ENTITY_USAGES;
     private static final String CONSTRUCT_ENTITY_USAGES;
     private static final String GET_CONCEPT_RELATIONSHIPS;
+    private static final String GET_CONCEPT_SCHEME_RELATIONSHIPS;
     private static final String GET_SEARCH_RESULTS;
     private static final String GET_SUB_ANNOTATION_PROPERTIES_OF;
     private static final String ENTITY_BINDING = "entity";
@@ -104,6 +106,14 @@ public class SimpleOntologyManager implements OntologyManager {
         try {
             GET_SUB_CLASSES_OF = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-sub-classes-of.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_CLASSES_FOR = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-classes-for.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -158,6 +168,14 @@ public class SimpleOntologyManager implements OntologyManager {
             throw new MatOntoException(e);
         }
         try {
+            GET_CONCEPT_SCHEME_RELATIONSHIPS = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-concept-scheme-relationships.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
             GET_SEARCH_RESULTS = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-search-results.rq"),
                     "UTF-8"
@@ -175,7 +193,8 @@ public class SimpleOntologyManager implements OntologyManager {
         }
     }
 
-    public SimpleOntologyManager() {}
+    public SimpleOntologyManager() {
+    }
 
     @Reference
     public void setValueFactory(ValueFactory valueFactory) {
@@ -343,6 +362,11 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public TupleQueryResult getSubClassesFor(Ontology ontology, IRI iri) {
+        return runQueryOnOntology(ontology, String.format(GET_CLASSES_FOR, iri.stringValue()), null);
+    }
+
+    @Override
     public TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_DATATYPE_PROPERTIES_OF, null);
     }
@@ -390,6 +414,11 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public TupleQueryResult getConceptSchemeRelationships(Ontology ontology) {
+        return runQueryOnOntology(ontology, GET_CONCEPT_SCHEME_RELATIONSHIPS, null);
+    }
+
+    @Override
     public TupleQueryResult getSearchResults(Ontology ontology, String searchText) {
         return runQueryOnOntology(ontology, GET_SEARCH_RESULTS, tupleQuery -> {
             tupleQuery.setBinding(SEARCH_TEXT, valueFactory.createLiteral(searchText.toLowerCase()));
@@ -434,7 +463,7 @@ public class SimpleOntologyManager implements OntologyManager {
     /**
      * Executes the provided query on the provided Ontology.
      *
-     * @param ontology the ontology to query on.
+     * @param ontology    the ontology to query on.
      * @param queryString the query string that you wish to run.
      * @return the results of the query.
      */

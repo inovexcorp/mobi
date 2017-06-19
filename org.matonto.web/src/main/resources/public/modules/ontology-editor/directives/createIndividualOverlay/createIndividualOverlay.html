@@ -34,10 +34,10 @@
                 <custom-label>Type</custom-label>
                 <ui-select multiple ng-model="dvm.individual['@type']">
                     <ui-select-match placeholder="Select a Class">
-                        <span title="{{dvm.getTooltipDisplay($item)}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
+                        <span title="{{dvm.ro.getItemIri($item)}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
                     </ui-select-match>
                     <ui-select-choices group-by="dvm.getItemOntologyIri" repeat="dvm.ro.getItemIri(item) as item in dvm.os.listItem.subClasses | removeIriFromArray:dvm.individual['@type'] | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
-                        <div title="{{dvm.getItemIri(item)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(item) | highlight:$select.search | trusted"></div>
+                        <div title="{{dvm.ro.getItemIri(item)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(item) | highlight:$select.search | trusted"></div>
                     </ui-select-choices>
                 </ui-select>
             </div>

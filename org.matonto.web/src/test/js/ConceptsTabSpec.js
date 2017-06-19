@@ -21,18 +21,14 @@
  * #L%
  */
 describe('Concepts Tab directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyManagerSvc,
-        ontologyStateSvc;
+    var $compile, scope, element, controller, ontologyManagerSvc, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('conceptsTab');
         mockOntologyManager();
         mockOntologyState();
+        mockResponseObj();
 
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
             $compile = _$compile_;
@@ -68,24 +64,6 @@ describe('Concepts Tab directive', function() {
         });
         it('with a usages-block', function() {
             expect(element.find('usages-block').length).toBe(1);
-        });
-    });
-    describe('should update when the selected entity changes', function() {
-        beforeEach(function() {
-            controller = element.controller('conceptsTab');
-        });
-        it('if it is a concept', function() {
-            ontologyStateSvc.selected = {};
-            scope.$digest();
-            expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(ontologyStateSvc.selected);
-            expect(controller.relationshipList).toBe(ontologyManagerSvc.conceptRelationshipList);
-        });
-        it('if it is a concept scheme', function() {
-            ontologyManagerSvc.isConcept.and.returnValue(false);
-            ontologyStateSvc.selected = {};
-            scope.$digest();
-            expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(ontologyStateSvc.selected);
-            expect(controller.relationshipList).toBe(ontologyManagerSvc.schemeRelationshipList);
         });
     });
 });

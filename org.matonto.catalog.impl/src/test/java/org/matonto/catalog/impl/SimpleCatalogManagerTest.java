@@ -3794,11 +3794,36 @@ public class SimpleCatalogManagerTest {
         // Setup:
         Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
         Resource inProgressCommitId = vf.createIRI("http://matonto.org/test/in-progress-commits#test");
+        Resource additionsResource = vf.createIRI("http://matonto.org/test/in-additions#test");
+        Resource deletionsResource = vf.createIRI("http://matonto.org/test/in-deletions#test");
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
+            assertTrue(conn.size(additionsResource) > 0);
+            assertTrue(conn.size(deletionsResource) > 0);
 
             manager.removeInProgressCommit(distributedCatalogId, recordId, inProgressCommitId);
             assertFalse(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
+            assertTrue(conn.size(additionsResource) == 0);
+            assertTrue(conn.size(deletionsResource) == 0);
+        }
+    }
+
+    @Test
+    public void testRemoveInProgressCommitWithReferencedChanges() throws Exception {
+        // Setup:
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
+        Resource inProgressCommitId = vf.createIRI("http://matonto.org/test/in-progress-commits#test3");
+        Resource additionsResource = vf.createIRI("http://matonto.org/test/additions#test");
+        Resource deletionsResource = vf.createIRI("http://matonto.org/test/deletions#test");
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
+            assertTrue(conn.size(additionsResource) > 0);
+            assertTrue(conn.size(deletionsResource) > 0);
+
+            manager.removeInProgressCommit(distributedCatalogId, recordId, inProgressCommitId);
+            assertFalse(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
+            assertTrue(conn.size(additionsResource) > 0);
+            assertTrue(conn.size(deletionsResource) > 0);
         }
     }
 
@@ -3862,11 +3887,36 @@ public class SimpleCatalogManagerTest {
         Resource recordId = vf.createIRI("http://matonto.org/test/records#versionedRDF");
         User user = userFactory.createNew(vf.createIRI("http://matonto.org/test/user/taken"));
         Resource inProgressCommitId = vf.createIRI("http://matonto.org/test/in-progress-commits#test");
+        Resource additionsResource = vf.createIRI("http://matonto.org/test/in-additions#test");
+        Resource deletionsResource = vf.createIRI("http://matonto.org/test/in-deletions#test");
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
+            assertTrue(conn.size(additionsResource) > 0);
+            assertTrue(conn.size(deletionsResource) > 0);
 
             manager.removeInProgressCommit(distributedCatalogId, recordId, user);
             assertFalse(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
+            assertTrue(conn.size(additionsResource) == 0);
+            assertTrue(conn.size(deletionsResource) == 0);
+        }
+    }
+
+    @Test
+    public void testRemoveInProgressCommitWithUserAndReferencedChanges() throws Exception {
+        Resource recordId = vf.createIRI("http://matonto.org/test/records#update");
+        User user = userFactory.createNew(vf.createIRI("http://matonto.org/test/user/taken"));
+        Resource inProgressCommitId = vf.createIRI("http://matonto.org/test/in-progress-commits#test3");
+        Resource additionsResource = vf.createIRI("http://matonto.org/test/additions#test");
+        Resource deletionsResource = vf.createIRI("http://matonto.org/test/deletions#test");
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
+            assertTrue(conn.size(additionsResource) > 0);
+            assertTrue(conn.size(deletionsResource) > 0);
+
+            manager.removeInProgressCommit(distributedCatalogId, recordId, user);
+            assertFalse(conn.getStatements(inProgressCommitId, null, null, inProgressCommitId).hasNext());
+            assertTrue(conn.size(additionsResource) > 0);
+            assertTrue(conn.size(deletionsResource) > 0);
         }
     }
 

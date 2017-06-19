@@ -497,13 +497,13 @@
             }
             /**
              * @ngdoc method
-             * @name getObjectPropertyHierarchies
+             * @name getConceptHierarchies
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
              * Calls the GET /matontorest/ontologies/{recordId}/concept-hierarchies endpoint and retrieves an object
-             * with the hierarchy of concept schemes and concepts in the ontology organized by the inScheme and
-             * hasTopConcept properties and with an index of each IRI and its parent IRIs.
+             * with the hierarchy of concepts in the ontology organized by the broader and narrower properties and with
+             * an index of each IRI and its parent IRIs.
              *
              * @param {string} recordId The id of the Record the Branch should be part of
              * @param {string} branchId The id of the Branch with the specified Commit
@@ -515,6 +515,29 @@
                 var deferred = $q.defer();
                 var config = { params: { branchId, commitId } };
                 $http.get(prefix + '/' + encodeURIComponent(recordId) + '/concept-hierarchies', config)
+                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name getConceptSchemeHierarchies
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{recordId}/concept-scheme-hierarchies endpoint and retrieves an object
+             * with the hierarchy of concept schemes and concepts in the ontology organized by the inScheme, hasTopConcept,
+             * and topConceptOf properties and with an index of each IRI and its parent IRIs.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @return {Promise} A promise with an object containing the concept hierarchy and an index of IRIs to
+             * parent IRIs
+             */
+            self.getConceptSchemeHierarchies = function(recordId, branchId, commitId) {
+                var deferred = $q.defer();
+                var config = { params: { branchId, commitId } };
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/concept-scheme-hierarchies', config)
                     .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
                 return deferred.promise;
             }
@@ -1316,8 +1339,9 @@
              * @param {Object} entity The entity you want to check.
              * @returns {boolean} Returns true if it is an skos:Concept entity, otherwise returns false.
              */
-            self.isConcept = function(entity) {
-                return _.includes(_.get(entity, '@type', []), prefixes.skos + 'Concept');
+            self.isConcept = function(entity, derivedConcepts = []) {
+                    return (_.includes(_.get(entity, '@type', []), prefixes.skos + 'Concept')
+                        || _.intersection(_.get(entity, '@type', []), derivedConcepts).length > 0);
             }
             /**
              * @ngdoc method
@@ -1331,9 +1355,9 @@
              * @returns {boolean} Returns true if there are any skos:Concept entities in the ontologies, otherwise
              * returns false.
              */
-            self.hasConcepts = function(ontologies) {
+            self.hasConcepts = function(ontologies, derivedConcepts) {
                 return _.some(ontologies, ont =>
-                            _.some(ont, entity => self.isConcept(entity) && !self.isBlankNode(entity)));
+                            _.some(ont, entity => self.isConcept(entity, derivedConcepts) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -1347,11 +1371,11 @@
              * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {Object[]} An array of all skos:Concept entities within the ontologies.
              */
-            self.getConcepts = function(ontologies) {
+            self.getConcepts = function(ontologies, derivedConcepts) {
                 var concepts = [];
                 _.forEach(ontologies, ont => {
                     concepts.push.apply(concepts,
-                        _.filter(ont, entity => self.isConcept(entity) && !self.isBlankNode(entity)));
+                        _.filter(ont, entity => self.isConcept(entity, derivedConcepts) && !self.isBlankNode(entity)));
                 });
                 return concepts;
             }
@@ -1367,8 +1391,8 @@
              * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {string[]} An array of all skos:Concept entity IRI strings within the ontologies.
              */
-            self.getConceptIRIs = function(ontologies) {
-                return _.map(self.getConcepts(ontologies), '@id');
+            self.getConceptIRIs = function(ontologies, derivedConcepts) {
+                return _.map(self.getConcepts(ontologies, derivedConcepts), '@id');
             }
             /**
              * @ngdoc method
@@ -1381,8 +1405,9 @@
              * @param {Object} entity The entity you want to check.
              * @returns {boolean} Returns true if it is an skos:ConceptScheme entity, otherwise returns false.
              */
-            self.isConceptScheme = function(entity) {
-                return _.includes(_.get(entity, '@type', []), prefixes.skos + 'ConceptScheme');
+            self.isConceptScheme = function(entity, derivedConceptSchemes = []) {
+                   return (_.includes(_.get(entity, '@type', []), prefixes.skos + 'ConceptScheme')
+                        || _.intersection(_.get(entity, '@type', []), derivedConceptSchemes).length > 0);
             }
             /**
              * @ngdoc method
@@ -1396,9 +1421,9 @@
              * @returns {boolean} Returns true if there are any skos:ConceptScheme entities in the ontologies, otherwise
              * returns false.
              */
-            self.hasConceptSchemes = function(ontologies) {
+            self.hasConceptSchemes = function(ontologies, derivedConceptSchemes) {
                 return _.some(ontologies, ont =>
-                            _.some(ont, entity => self.isConceptScheme(entity) && !self.isBlankNode(entity)));
+                            _.some(ont, entity => self.isConceptScheme(entity, derivedConceptSchemes) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method

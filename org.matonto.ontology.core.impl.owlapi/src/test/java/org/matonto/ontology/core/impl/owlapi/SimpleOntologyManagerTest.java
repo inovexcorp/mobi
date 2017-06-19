@@ -659,13 +659,39 @@ public class SimpleOntologyManagerTest {
     public void testGetConceptRelationships() throws Exception {
         Set<String> parents = Stream.of("https://matonto.org/vocabulary#Concept1",
                 "https://matonto.org/vocabulary#Concept2","https://matonto.org/vocabulary#Concept3",
-                "https://matonto.org/vocabulary#Concept4","https://matonto.org/vocabulary#ConceptScheme1",
-                "https://matonto.org/vocabulary#ConceptScheme2","https://matonto.org/vocabulary#ConceptScheme3")
+                "https://matonto.org/vocabulary#Concept4")
                 .collect(Collectors.toSet());
         Map<String, String> children = new HashMap<>();
         children.put("https://matonto.org/vocabulary#Concept1", "https://matonto.org/vocabulary#Concept2");
 
         TupleQueryResult result = manager.getConceptRelationships(vocabulary);
+
+        assertTrue(result.hasNext());
+        result.forEach(b -> {
+            String parent = Bindings.requiredResource(b, "parent").stringValue();
+            assertTrue(parents.contains(parent));
+            parents.remove(parent);
+            Optional<Binding> child = b.getBinding("child");
+            if (child.isPresent()) {
+                assertEquals(children.get(parent), child.get().getValue().stringValue());
+                children.remove(parent);
+            }
+        });
+        assertEquals(0, parents.size());
+        assertEquals(0, children.size());
+    }
+
+    @Test
+    public void testGetConceptSchemeRelationships() throws Exception {
+        Set<String> parents = Stream.of("https://matonto.org/vocabulary#ConceptScheme1",
+                "https://matonto.org/vocabulary#ConceptScheme2","https://matonto.org/vocabulary#ConceptScheme3")
+                .collect(Collectors.toSet());
+        Map<String, String> children = new HashMap<>();
+        children.put("https://matonto.org/vocabulary#ConceptScheme1", "https://matonto.org/vocabulary#Concept1");
+        children.put("https://matonto.org/vocabulary#ConceptScheme2", "https://matonto.org/vocabulary#Concept2");
+        children.put("https://matonto.org/vocabulary#ConceptScheme3", "https://matonto.org/vocabulary#Concept3");
+
+        TupleQueryResult result = manager.getConceptSchemeRelationships(vocabulary);
 
         assertTrue(result.hasNext());
         result.forEach(b -> {

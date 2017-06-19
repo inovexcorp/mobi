@@ -29,6 +29,8 @@
           "entityIRI": "https://matonto.org/vocabulary#Concept2"
         }
       ]
+    }, {
+      "entityIRI": "https://matonto.org/vocabulary#Concept3"
     }
   ],
   "index": {
