@@ -27,6 +27,10 @@
              on-click="dvm.sm.setSelected(dvm.sm.state.project.entityIRI)">
             <project-tab></project-tab>
         </tab>
+        <tab heading="'Schemes'" active="dvm.sm.state.schemes.active"
+             on-click="dvm.sm.setSelected(dvm.sm.state.schemes.entityIRI)">
+            <concept-schemes-tab></concept-schemes-tab>
+        </tab>
         <tab heading="'Concepts'" active="dvm.sm.state.concepts.active"
              on-click="dvm.sm.setSelected(dvm.sm.state.concepts.entityIRI)">
             <concepts-tab></concepts-tab>

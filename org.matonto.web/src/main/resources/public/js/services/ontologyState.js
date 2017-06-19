@@ -108,6 +108,10 @@
                 derivedConceptSchemes: [],
                 conceptHierarchy: [],
                 conceptIndex: {},
+                flatConceptHierarchy: [],
+                conceptSchemeHierarchy: [],
+                conceptSchemeIndex: {},
+                flatConceptSchemeHierarchy: [],
                 index: {},
                 additions: [],
                 deletions: [],
@@ -118,7 +122,6 @@
                 branches: [],
                 upToDate: true,
                 isSaved: false,
-                flatConceptHierarchy: [],
                 iriList: []
             };
             var emptyInProgressCommit = {
@@ -473,6 +476,7 @@
                     om.getIris(recordId, branchId, commitId),
                     om.getImportedIris(recordId, branchId, commitId),
                     om.getConceptHierarchies(recordId, branchId, commitId),
+                    om.getConceptSchemeHierarchies(recordId, branchId, commitId),
                     cm.getRecordBranches(recordId, catalogId),
                     om.getImportedOntologies(recordId, branchId, commitId)
                 ]).then(response => {
@@ -515,8 +519,11 @@
                     listItem.conceptHierarchy = response[2].hierarchy;
                     listItem.conceptIndex = response[2].index;
                     listItem.flatConceptHierarchy = self.flattenHierarchy(listItem.conceptHierarchy, recordId, listItem);
-                    listItem.branches = response[3].data;
-                    _.forEach(response[4], importedOntObj => {
+                    listItem.conceptSchemeHierarchy = response[3].hierarchy;
+                    listItem.conceptSchemeIndex = response[3].index;
+                    listItem.flatConceptSchemeHierarchy = self.flattenHierarchy(listItem.conceptSchemeHierarchy, recordId, listItem);
+                    listItem.branches = response[4].data;
+                    _.forEach(response[5], importedOntObj => {
                         addImportedOntologyToListItem(listItem, importedOntObj, 'vocabulary');
                     });
                     listItem.upToDate = upToDate;
@@ -961,6 +968,9 @@
                             active: true,
                             entityIRI: entityIRI
                         },
+                        schemes: {
+                            active: false
+                        },
                         concepts: {
                             active: false
                         },
@@ -1143,8 +1153,10 @@
             }
             self.goTo = function(iri) {
                 var entity = self.getEntityByRecordId(self.listItem.recordId, iri);
-                if (self.state.type === 'vocabulary') {
+                if (om.isConcept(entity, self.listItem.derivedConcepts)) {
                     commonGoTo('concepts', iri, self.listItem.flatConceptHierarchy);
+                } else if (om.isConceptScheme(entity, self.listItem.derivedConceptSchemes)) {
+                    commonGoTo('schemes', iri, self.listItem.flatConceptSchemeHierarchy);
                 } else if (om.isClass(entity)) {
                     commonGoTo('classes', iri, self.listItem.flatClassHierarchy);
                 } else if (om.isDataTypeProperty(entity)) {
@@ -1249,7 +1261,7 @@
             }
             function findValuesMissingDatatypes(object) {
                 if (_.has(object, '@value')) {
-                    if (!_.has(object, '@type')) {
+                    if (!_.has(object, '@type') && !_.has(object, '@language')) {
                         object['@type'] = prefixes.xsd + "string";
                     }
                 } else if (_.isObject(object)) {

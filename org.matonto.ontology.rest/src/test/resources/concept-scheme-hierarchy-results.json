@@ -23,23 +23,37 @@
 {
   "hierarchy": [
     {
-      "entityIRI": "https://matonto.org/vocabulary#ConceptSubClass"
-    },
-    {
-      "entityIRI": "http://matonto.org/ontology#Class1a",
+      "entityIRI": "https://matonto.org/vocabulary#ConceptScheme1",
       "subEntities": [
         {
-          "entityIRI": "http://matonto.org/ontology#Class1b"
+          "entityIRI": "https://matonto.org/vocabulary#Concept1"
         }
       ]
-    },
-    {
-      "entityIRI": "https://matonto.org/vocabulary#ConceptSchemeSubClass"
+    }, {
+      "entityIRI": "https://matonto.org/vocabulary#ConceptScheme3",
+      "subEntities": [
+        {
+          "entityIRI": "https://matonto.org/vocabulary#Concept3"
+        }
+      ]
+    }, {
+      "entityIRI": "https://matonto.org/vocabulary#ConceptScheme2",
+      "subEntities": [
+        {
+          "entityIRI": "https://matonto.org/vocabulary#Concept2"
+        }
+      ]
     }
   ],
   "index": {
-    "http://matonto.org/ontology#Class1b": [
-      "http://matonto.org/ontology#Class1a"
+    "https://matonto.org/vocabulary#Concept2": [
+      "https://matonto.org/vocabulary#ConceptScheme2"
+    ],
+    "https://matonto.org/vocabulary#Concept1": [
+      "https://matonto.org/vocabulary#ConceptScheme1"
+    ],
+    "https://matonto.org/vocabulary#Concept3": [
+      "https://matonto.org/vocabulary#ConceptScheme3"
     ]
   }
 }

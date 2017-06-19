@@ -24,23 +24,32 @@
     'use strict';
 
     angular
-        .module('conceptsTab', [])
-        .directive('conceptsTab', conceptsTab);
+        .module('conceptSchemesTab', [])
+        .directive('conceptSchemesTab', conceptSchemesTab);
 
-        conceptsTab.$inject = ['ontologyStateService', 'ontologyManagerService'];
+        conceptSchemesTab.$inject = ['ontologyStateService', 'ontologyManagerService'];
 
-        function conceptsTab(ontologyStateService, ontologyManagerService) {
+        function conceptSchemesTab(ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/conceptsTab/conceptsTab.html',
+                templateUrl: 'modules/ontology-editor/directives/conceptSchemesTab/conceptSchemesTab.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
-                }
+                    dvm.relationshipList = [];
+
+                    $scope.$watch('dvm.sm.selected', function(newValue) {
+                        if (dvm.om.isConcept(dvm.sm.selected, dvm.sm.listItem.derivedConcepts)) {
+                            dvm.relationshipList = dvm.om.conceptRelationshipList;
+                        } else if (dvm.om.isConceptScheme(dvm.sm.selected, dvm.sm.listItem.derivedConceptSchemes)) {
+                            dvm.relationshipList = dvm.om.schemeRelationshipList;
+                        }
+                    });
+                }]
             }
         }
 })();
