@@ -23,11 +23,6 @@ package org.matonto.ontology.rest;
  * #L%
  */
 
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import org.glassfish.jersey.media.multipart.FormDataParam;
-
-import java.io.InputStream;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -42,6 +37,11 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.io.InputStream;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.glassfish.jersey.media.multipart.FormDataParam;
 
 @Path("/ontologies")
 @Api(value = "/ontologies")
@@ -57,7 +57,7 @@ public interface OntologyRest {
      * @param title           the title for the OntologyRecord.
      * @param description     the description for the OntologyRecord.
      * @param keywords        the comma separated list of keywords associated with the OntologyRecord.
-     * @return OK with record ID in the data if persisted, BAD REQUEST if publishers can't be found, or INTERNAL
+     * @return CREATED with record ID in the data if persisted, BAD REQUEST if publishers can't be found, or INTERNAL
      * SERVER ERROR if there is a problem creating the OntologyRecord.
      */
     @POST

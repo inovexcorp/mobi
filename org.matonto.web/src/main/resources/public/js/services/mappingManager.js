@@ -303,6 +303,38 @@
                 });
                 return newMapping;
             }
+
+            /**
+             * @ngdoc method
+             * @name renameMapping
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Creates a copy of a mapping using the passed new id, updating all ids to use the new
+             * mapping id without creating new instances of mapping objects.
+             *
+             * @param {Object[]} mapping A mapping JSON-LD array
+             * @param {string} newId The id of the new mapping
+             * @return {Object[]} A copy of the passed mapping with the new id
+             */
+            self.renameMapping = function(mapping, newId) {
+                var newMapping = angular.copy(mapping);
+                getMappingEntity(newMapping)['@id'] = newId;
+                _.forEach(self.getAllClassMappings(newMapping), classMapping => {
+                    classMapping['@id'] = newId + '/' + $filter('splitIRI')(classMapping['@id']).end;
+                    _.forEach(_.concat(getDataProperties(classMapping), getObjectProperties(classMapping)), propIdObj => {
+                        propIdObj['@id'] = newId + '/' + $filter('splitIRI')(propIdObj['@id']).end;
+                    });
+                });
+                _.forEach(_.concat(self.getAllDataMappings(newMapping), self.getAllObjectMappings(newMapping)), propMapping => {
+                    if (self.isObjectMapping(propMapping)) {
+                        propMapping[prefixes.delim + 'classMapping'][0]['@id'] = newId + '/' + $filter('splitIRI')(propMapping[prefixes.delim + 'classMapping'][0]['@id']).end;
+                    }
+                    propMapping['@id'] = newId + '/' + $filter('splitIRI')(propMapping['@id']).end;
+                });
+                return newMapping;
+            }
+
             /**
              * @ngdoc method
              * @name addClass
