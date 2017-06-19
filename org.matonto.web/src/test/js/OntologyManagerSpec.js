@@ -658,6 +658,33 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
     });
+    describe('getConceptSchemeHierarchies retrieves all IRIs in an ontology', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({ branchId: branchId, commitId: commitId });
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/concept-scheme-hierarchies?' + params).respond(400, null, null, error);
+            ontologyManagerSvc.getConceptSchemeHierarchies(recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual(error);
+                    expect(util.onError).toHaveBeenCalled();
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('successfully', function() {
+            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/concept-scheme-hierarchies?' + params).respond(200, {});
+            ontologyManagerSvc.getConceptSchemeHierarchies(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
     describe('getImportedOntologies should call the proper functions', function() {
         var params;
         beforeEach(function() {
