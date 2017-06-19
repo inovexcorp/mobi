@@ -172,6 +172,11 @@ describe('Create Concept Overlay directive', function() {
             controller.create();
             expect(schemes.scheme1[prefixes.skos + 'hasTopConcept'].length).toBe(2);
             expect(schemes.scheme2[prefixes.skos + 'hasTopConcept'].length).toBe(1);
+            _.forEach(controller.schemes, function(scheme) {
+                expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, 'concept', ontologyStateSvc.listItem.conceptSchemeIndex, scheme['@id']);
+            });
+            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, ontologyStateSvc.listItem.recordId);
+            expect(ontologyStateSvc.listItem.flatConceptSchemeHierarchy).toEqual([{prop: 'entity'}]);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.concept, controller.language);
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.concept);
             expect(ontologyStateSvc.listItem.conceptHierarchy).toContain({entityIRI: controller.concept['@id']});

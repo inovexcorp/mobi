@@ -67,15 +67,19 @@
                     }
 
                     dvm.create = function() {
+                        var hierarchy = _.get(dvm.os.listItem, 'conceptSchemeHierarchy');
+                        hierarchy.push({'entityIRI': dvm.scheme['@id']});
+                        // add concepts to scheme hierarchy
                         if (dvm.concepts.length) {
                             dvm.scheme[prefixes.skos + 'hasTopConcept'] = dvm.concepts;
+                            _.forEach(dvm.concepts, concept => {
+                                dvm.os.addEntityToHierarchy(hierarchy, concept['@id'], dvm.os.listItem.conceptSchemeIndex, dvm.scheme['@id']);
+                            });
                         }
                         dvm.ontoUtils.addLanguageToNewEntity(dvm.scheme, dvm.language);
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.scheme);
                         // update relevant lists
-                        var hierarchy = _.get(dvm.os.listItem, 'conceptSchemeHierarchy');
-                        hierarchy.push({'entityIRI': dvm.scheme['@id']});
                         dvm.os.listItem.flatConceptSchemeHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
                         dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.scheme);
                         // select the new concept

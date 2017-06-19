@@ -161,11 +161,14 @@ describe('Create Concept Scheme Overlay directive', function() {
         });
         it('should create a concept', function() {
             ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
-            controller.concepts = [{}];
+            controller.concepts = [{'@id': 'concept1'},{'@id': 'concept2'}];
             controller.scheme = {'@id': 'scheme'};
 
             controller.create();
             expect(controller.scheme[prefixes.skos + 'hasTopConcept']).toEqual(controller.concepts);
+            _.forEach(controller.concepts, function(concept) {
+                expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, concept['@id'], ontologyStateSvc.listItem.conceptSchemeIndex, 'scheme');
+            });
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.scheme);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.scheme, controller.language);
             expect(ontologyStateSvc.listItem.conceptSchemeHierarchy).toContain({entityIRI: controller.scheme['@id']});
