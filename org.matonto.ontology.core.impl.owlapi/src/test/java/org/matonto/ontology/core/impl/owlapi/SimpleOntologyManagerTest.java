@@ -411,7 +411,7 @@ public class SimpleOntologyManagerTest {
         assertTrue(optionalOntology.isPresent());
         assertEquals(ontology, optionalOntology.get());
         String key = OntologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
-        verify(mockCache, times(2)).containsKey(Mockito.matches(key));
+        verify(mockCache).containsKey(Mockito.matches(key));
         verify(mockCache).put(Mockito.matches(key), Mockito.eq(optionalOntology.get()));
     }
 

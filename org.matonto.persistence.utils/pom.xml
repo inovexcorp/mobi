@@ -51,7 +51,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.8.3-SNAPSHOT</version>
+            <version>1.8.13-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
