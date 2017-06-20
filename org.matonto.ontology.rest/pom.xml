@@ -98,12 +98,6 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>catalog.impl</artifactId>
-            <version>1.8.14-SNAPSHOT</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
             <artifactId>ontology.core.impl.owlapi</artifactId>
             <version>1.8.14-SNAPSHOT</version>
             <scope>test</scope>

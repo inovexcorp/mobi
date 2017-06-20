@@ -38,22 +38,6 @@ import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
-import javax.cache.Cache;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -63,7 +47,7 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.Difference;
+import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
@@ -76,7 +60,6 @@ import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.catalog.api.versioning.VersioningManager;
-import org.matonto.catalog.impl.SimpleDifference;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
@@ -140,6 +123,22 @@ import org.openrdf.rio.helpers.JSONLDMode;
 import org.openrdf.rio.helpers.JSONLDSettings;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.cache.Cache;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 public class OntologyRestImplTest extends MatontoRestTestNg {
     private OntologyRestImpl rest;
@@ -333,7 +332,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         additions.add(catalogId, titleIRI, valueFactory.createLiteral("Addition"));
         deletions = modelFactory.createModel();
         deletions.add(catalogId, titleIRI, valueFactory.createLiteral("Deletion"));
-        difference = new SimpleDifference.Builder()
+        difference = new Difference.Builder()
                 .additions(additions)
                 .deletions(deletions)
                 .build();
@@ -933,7 +932,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void testSaveChangesToOntologyWithNoDifference() {
-        when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(new SimpleDifference.Builder()
+        when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(new Difference.Builder()
                 .build());
 
         JSONObject entity = new JSONObject().element("@id", "http://matonto.org/entity");

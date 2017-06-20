@@ -142,12 +142,6 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>catalog.impl</artifactId>
-            <version>1.8.14-SNAPSHOT</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
             <version>1.7.20</version>
         </dependency>

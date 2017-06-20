@@ -38,7 +38,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.Difference;
+import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;

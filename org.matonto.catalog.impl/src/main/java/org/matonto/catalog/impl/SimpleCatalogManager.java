@@ -33,8 +33,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.CatalogUtilsService;
-import org.matonto.catalog.api.Conflict;
-import org.matonto.catalog.api.Difference;
+import org.matonto.catalog.api.builder.Conflict;
+import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.builder.DistributionConfig;
@@ -1089,7 +1089,7 @@ public class SimpleCatalogManager implements CatalogManager {
                     addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
             conn.getStatements(null, null, null, deletionsIRI).forEach(statement ->
                     deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
-            return new SimpleDifference.Builder()
+            return new Difference.Builder()
                     .additions(addModel)
                     .deletions(deleteModel)
                     .build();
@@ -1276,7 +1276,7 @@ public class SimpleCatalogManager implements CatalogManager {
             }
         });
 
-        return new SimpleDifference.Builder()
+        return new Difference.Builder()
                 .additions(changedCopy)
                 .deletions(originalCopy)
                 .build();
@@ -1296,17 +1296,17 @@ public class SimpleCatalogManager implements CatalogManager {
      */
     private Conflict createConflict(Resource subject, IRI predicate, Model original, Model left, Model
             leftDeletions, Model right, Model rightDeletions) {
-        Difference leftDifference = new SimpleDifference.Builder()
+        Difference leftDifference = new Difference.Builder()
                 .additions(mf.createModel(left).filter(subject, predicate, null))
                 .deletions(mf.createModel(leftDeletions).filter(subject, predicate, null))
                 .build();
 
-        Difference rightDifference = new SimpleDifference.Builder()
+        Difference rightDifference = new Difference.Builder()
                 .additions(mf.createModel(right).filter(subject, predicate, null))
                 .deletions(mf.createModel(rightDeletions).filter(subject, predicate, null))
                 .build();
 
-        return new SimpleConflict.Builder(mf.createModel(original).filter(subject, predicate, null),
+        return new Conflict.Builder(mf.createModel(original).filter(subject, predicate, null),
                 vf.createIRI(subject.stringValue()))
                 .leftDifference(leftDifference)
                 .rightDifference(rightDifference)
