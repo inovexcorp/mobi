@@ -38,11 +38,12 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.Difference;
+import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
 import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
+import org.matonto.catalog.api.versioning.VersioningManager;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
@@ -107,6 +108,7 @@ public class OntologyRestImpl implements OntologyRest {
     private EngineManager engineManager;
     private SesameTransformer sesameTransformer;
     private CacheManager cacheManager;
+    private VersioningManager versioningManager;
 
     private final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
 
@@ -148,6 +150,11 @@ public class OntologyRestImpl implements OntologyRest {
     @Reference
     public void setCacheManager(CacheManager cacheManager) {
         this.cacheManager = cacheManager;
+    }
+
+    @Reference
+    public void setVersioningManager(VersioningManager versioningManager) {
+        this.versioningManager = versioningManager;
     }
 
     @Override
@@ -1274,7 +1281,7 @@ public class OntologyRestImpl implements OntologyRest {
         OntologyRecord record = catalogManager.createRecord(builder.build(), ontologyRecordFactory);
         catalogManager.addRecord(catalogId, record);
         Resource masterBranchId = record.getMasterBranch_resource().get();
-        Resource commitId = catalogManager.addCommit(catalogId, record.getResource(), masterBranchId, user,
+        Resource commitId = versioningManager.commit(catalogId, record.getResource(), masterBranchId, user,
                 "The initial commit.", ontology.asModel(modelFactory), null);
 
         // Cache

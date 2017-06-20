@@ -1,4 +1,6 @@
-package org.matonto.catalog.api;
+@Version("1.0.0.${build}")
+
+package org.matonto.catalog.api.versioning;
 
 /*-
  * #%L
@@ -6,7 +8,7 @@ package org.matonto.catalog.api;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,11 +25,4 @@ package org.matonto.catalog.api;
  * #L%
  */
 
-import org.matonto.rdf.api.Model;
-
-public interface Difference {
-
-    Model getAdditions();
-
-    Model getDeletions();
-}
+import aQute.bnd.annotation.Version;
