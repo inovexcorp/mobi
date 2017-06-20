@@ -1,12 +1,12 @@
-package org.matonto.catalog.impl;
+package org.matonto.catalog.api.builder;
 
 /*-
  * #%L
- * org.matonto.catalog.impl
+ * org.matonto.catalog.api
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,19 +23,22 @@ package org.matonto.catalog.impl;
  * #L%
  */
 
-import org.matonto.catalog.api.Difference;
+
 import org.matonto.rdf.api.Model;
 
-public class SimpleDifference implements Difference {
+public class Difference {
     private Model additions;
     private Model deletions;
 
-    @Override
+    private Difference(Builder builder) {
+        this.additions = builder.additions;
+        this.deletions = builder.deletions;
+    }
+
     public Model getAdditions() {
         return additions;
     }
 
-    @Override
     public Model getDeletions() {
         return deletions;
     }
@@ -54,13 +57,8 @@ public class SimpleDifference implements Difference {
             return this;
         }
 
-        public SimpleDifference build() {
-            return new SimpleDifference(this);
+        public Difference build() {
+            return new Difference(this);
         }
-    }
-
-    private SimpleDifference(Builder builder) {
-        this.additions = builder.additions;
-        this.deletions = builder.deletions;
     }
 }
