@@ -42,7 +42,18 @@
                     var setAsDatatype = false;
                     var ro = responseObj;
 
-                    dvm.checkbox = false;
+                    dvm.characteristics = {
+                        functional: {
+                            checked: false,
+                            typeIRI: prefixes.owl + 'FunctionalProperty',
+                            displayText: 'Functional Property'
+                        },
+                        asymmetric: {
+                            checked: false,
+                            typeIRI: prefixes.owl + 'AsymmetricProperty',
+                            displayText: 'Asymmetric Property'
+                        }
+                    };
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.om = ontologyManagerService;
@@ -76,9 +87,11 @@
                         if (dvm.property[prefixes.dcterms + 'description'][0]['@value'] === '') {
                             _.unset(dvm.property, prefixes.dcterms + 'description');
                         }
-                        if (dvm.checkbox) {
-                            dvm.property['@type'].push(prefixes.owl + 'FunctionalProperty');
-                        }
+                        _.forEach(dvm.characteristics, (obj, key) => {
+                            if (obj.checked) {
+                                dvm.property['@type'].push(obj.typeIRI);
+                            }
+                        });
                         _.forEach(['domain', 'range'], function(axiom) {
                             if (_.isEqual(dvm.property[prefixes.rdfs + axiom], [])) {
                                 _.unset(dvm.property, prefixes.rdfs + axiom);

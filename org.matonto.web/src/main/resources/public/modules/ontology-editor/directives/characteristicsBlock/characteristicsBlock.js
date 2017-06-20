@@ -38,26 +38,36 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    var functionalPropertyIRI = prefixes.owl + 'FunctionalProperty';
                     var ontoUtils = ontologyUtilsManagerService;
                     dvm.os = ontologyStateService;
-                    dvm.functional = false;
+                    dvm.characteristics = {
+                        functional: {
+                            checked: false,
+                            typeIRI: prefixes.owl + 'FunctionalProperty',
+                            displayText: 'Functional Property'
+                        },
+                        asymmetric: {
+                            checked: false,
+                            typeIRI: prefixes.owl + 'AsymmetricProperty',
+                            displayText: 'Asymmetric Property'
+                        }
+                    };
 
-                    dvm.onChange = function() {
-                        if (dvm.functional) {
-                            _.set(dvm.os.selected, '@type', _.concat(_.get(dvm.os.selected, '@type', []), functionalPropertyIRI));
-                            handleCase(dvm.os.listItem.deletions, dvm.os.addToAdditions);
+                    dvm.onChange = function(characteristicObj) {
+                        if (characteristicObj.checked) {
+                            _.set(dvm.os.selected, '@type', _.concat(_.get(dvm.os.selected, '@type', []), characteristicObj.typeIRI));
+                            handleCase(dvm.os.listItem.deletions, dvm.os.addToAdditions, characteristicObj.typeIRI);
                         } else {
-                            removeTypeFrom(dvm.os.selected, functionalPropertyIRI);
-                            handleCase(dvm.os.listItem.additions, dvm.os.addToDeletions);
+                            removeTypeFrom(dvm.os.selected, characteristicObj.typeIRI);
+                            handleCase(dvm.os.listItem.additions, dvm.os.addToDeletions, characteristicObj.typeIRI);
                         }
                         ontoUtils.saveCurrentChanges();
                     }
 
-                    function handleCase(array, method) {
-                        var match = _.find(array, item => _.includes(_.get(item, '@type', []), functionalPropertyIRI));
+                    function handleCase(array, method, typeIRI) {
+                        var match = _.find(array, item => _.includes(_.get(item, '@type', []), typeIRI));
                         if (match) {
-                            removeTypeFrom(match, functionalPropertyIRI);
+                            removeTypeFrom(match, typeIRI);
                             if (!_.get(match, '@type', []).length) {
                                 _.unset(match, '@type');
                             }
@@ -67,7 +77,7 @@
                         } else {
                             method(dvm.os.listItem.recordId, {
                                 '@id': dvm.os.selected['@id'],
-                                '@type': [functionalPropertyIRI]
+                                '@type': [typeIRI]
                             });
                         }
                     }
@@ -77,7 +87,9 @@
                     }
 
                     function setVariables() {
-                        dvm.functional = _.includes(_.get(dvm.os.selected, '@type', []), functionalPropertyIRI);
+                        _.forEach(dvm.characteristics, (obj, key) => {
+                            obj.checked = _.includes(_.get(dvm.os.selected, '@type', []), obj.typeIRI);
+                        });
                     }
 
                     setVariables();
