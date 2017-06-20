@@ -933,10 +933,13 @@
                     .then(bindings => _.set(page, 'usages', bindings),
                         response => _.set(page, 'usages', []));
             }
-            self.addState = function(recordId, entityIRI, type) {
+            self.addState = function(recordId, recordTitle, entityIRI, type) {
                 var tabs = {};
                 var newState = {
-                    recordId,
+                    record: {
+                        recordId: recordId,
+                        recordTitle: recordTitle
+                    },
                     active: false,
                     type
                 }
@@ -987,22 +990,22 @@
                 if (!recordId) {
                     self.state = self.newState;
                 } else {
-                    self.state = _.find(self.states, {recordId});
+                    self.state = _.find(self.states, {record: {recordId: recordId}});
                     self.listItem = self.getListItemByRecordId(recordId);
                     self.setSelected(self.getActiveEntityIRI(), self.getActiveKey() === 'project' ? false : getUsages);
                 }
                 self.state.active = true;
             }
             self.getState = function(recordId) {
-                return recordId ? _.find(self.states, {recordId}) : self.newState;
+                return recordId ? _.find(self.states, {record: {recordId: recordId}}) : self.newState;
             }
             self.deleteState = function(recordId) {
-                if (self.state.recordId === recordId) {
+                if (self.state.record.recordId === recordId) {
                     self.state = self.newState;
                     self.state.active = true;
                     self.selected = undefined;
                 }
-                _.remove(self.states, {recordId});
+                _.remove(self.states, {record: {recordId: recordId}});
             }
             self.resetStateTabs = function() {
                 _.forOwn(self.state, (value, key) => {

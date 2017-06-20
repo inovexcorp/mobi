@@ -462,6 +462,10 @@ function mockOntologyState() {
         $provide.service('ontologyStateService', function($q) {
             this.recordIdToClose = 'recordIdToClose';
             this.state = {
+                record: {
+                    recordId: '',
+                    recordTitle: ''
+                },
                 ontologyId: '',
                 entityIRI: '',
                 deletedEntities: [],
@@ -940,7 +944,10 @@ function mockDiscoverState() {
                     },
                     total: 0
                 },
-                recordId: ''
+                record: {
+                    recordId: '',
+                    recordTitle: ''
+                }
             };
             this.query = {
                 active: false
