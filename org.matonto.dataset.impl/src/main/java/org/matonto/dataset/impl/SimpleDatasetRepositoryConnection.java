@@ -275,6 +275,21 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
+    public boolean contains(Resource subject, IRI predicate, Value object, Resource... contexts) {
+        return getStatements(subject, predicate, object, contexts).hasNext();
+    }
+
+    @Override
+    public boolean containsContext(Resource context) throws RepositoryException {
+        for (Resource existingContext : getContextIDs()) {
+            if (context.equals(existingContext)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
     public RepositoryResult<Resource> getContextIDs() throws RepositoryException {
         TupleQuery query = getDelegate().prepareTupleQuery(GET_GRAPHS_QUERY);
         query.setBinding(DATSET_BINDING, getDataset());

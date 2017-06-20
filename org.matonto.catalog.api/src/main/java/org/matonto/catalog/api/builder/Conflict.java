@@ -1,12 +1,12 @@
-package org.matonto.catalog.impl;
+package org.matonto.catalog.api.builder;
 
 /*-
  * #%L
- * org.matonto.catalog.impl
+ * org.matonto.catalog.api
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,33 +23,34 @@ package org.matonto.catalog.impl;
  * #L%
  */
 
-import org.matonto.catalog.api.Conflict;
-import org.matonto.catalog.api.Difference;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 
-public class SimpleConflict implements Conflict {
+public class Conflict {
     private IRI iri;
     private Model original;
     private Difference left;
     private Difference right;
 
-    @Override
+    private Conflict(Builder builder) {
+        this.iri = builder.iri;
+        this.original = builder.original;
+        this.left = builder.left;
+        this.right = builder.right;
+    }
+
     public IRI getIRI() {
         return iri;
     }
 
-    @Override
     public Model getOriginal() {
         return original;
     }
 
-    @Override
     public Difference getLeftDifference() {
         return left;
     }
 
-    @Override
     public Difference getRightDifference() {
         return right;
     }
@@ -83,15 +84,8 @@ public class SimpleConflict implements Conflict {
             return this;
         }
 
-        public SimpleConflict build() {
-            return new SimpleConflict(this);
+        public Conflict build() {
+            return new Conflict(this);
         }
-    }
-
-    private SimpleConflict(Builder builder) {
-        this.iri = builder.iri;
-        this.original = builder.original;
-        this.left = builder.left;
-        this.right = builder.right;
     }
 }

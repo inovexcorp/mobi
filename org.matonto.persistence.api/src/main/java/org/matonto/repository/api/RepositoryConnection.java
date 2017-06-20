@@ -169,6 +169,30 @@ public interface RepositoryConnection extends AutoCloseable {
             throws RepositoryException;
 
     /**
+     * Indicates whether a statement with a specific subject, predicate, and/or object exists in the repository. The
+     * result is optionally restricted to the specified set of named contexts. If the repository supports inferencing,
+     * inferred statements will be included in the result.
+     *
+     * @param subject - A Resource specifying the subject, or null for a wildcard.
+     * @param predicate - A URI specifying the predicate, or null for a wildcard.
+     * @param object - A Value specifying the object, or null for a wildcard.
+     * @param contexts - The context(s) to limit the query to. Note that this parameter is a vararg and as such is
+     *                 optional. If no contexts are supplied the method operates on the entire repository.
+     * @return True if a statement matching the specified pattern exists in the repository.
+     * @throws RepositoryException when a problem occurs during retrieval.
+     */
+    boolean contains(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException;
+
+    /**
+     * Indicates whether a specific context exists in the repository.
+     *
+     * @param context - A Resource specifying the context.
+     * @return True if the context exists in the repository.
+     * @throws RepositoryException when a problem occurs during retrieval.
+     */
+    boolean containsContext(Resource context) throws RepositoryException;
+
+    /**
      * Gets all resources that are used as context identifiers. Care should be taken that the returned
      * RepositoryResult is closed to free any resources that it keeps hold of.
      *

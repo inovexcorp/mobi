@@ -51,17 +51,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.7.20</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>persistence.utils</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.14-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.14-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -112,7 +107,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>repository.impl.core</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.14-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -144,12 +139,6 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>catalog.impl</artifactId>
-            <version>1.7.20</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
