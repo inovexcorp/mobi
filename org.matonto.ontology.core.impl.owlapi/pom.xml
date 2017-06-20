@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.7-SNAPSHOT</version>
+        <version>1.8.15-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.8.7-SNAPSHOT</version>
+            <version>1.8.15-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -51,12 +51,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.8.7-SNAPSHOT</version>
+            <version>1.8.14</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>1.8.7-SNAPSHOT</version>
+            <version>1.8.14</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -107,7 +107,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>repository.impl.core</artifactId>
-            <version>1.8.7-SNAPSHOT</version>
+            <version>1.8.14</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -139,12 +139,6 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>catalog.impl</artifactId>
-            <version>1.8.7-SNAPSHOT</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>

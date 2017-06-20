@@ -44,8 +44,8 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.Conflict;
-import org.matonto.catalog.api.Difference;
+import org.matonto.catalog.api.builder.Conflict;
+import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.builder.DistributionConfig;
@@ -325,12 +325,13 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 vf.createLiteral("Title"));
 
         MockitoAnnotations.initMocks(this);
-        when(factoryRegistry.getFactoriesOfType(Record.TYPE)).thenReturn(Stream.of(recordFactory, unversionedRecordFactory,
-                versionedRecordFactory, versionedRDFRecordFactory, mappingRecordFactory).collect(Collectors.toList()));
-        when(factoryRegistry.getFactoriesOfType(VersionedRDFRecord.TYPE)).thenReturn(Stream.of(versionedRDFRecordFactory,
-                mappingRecordFactory).collect(Collectors.toList()));
-        when(factoryRegistry.getFactoriesOfType(Version.TYPE)).thenReturn(Stream.of(versionFactory, tagFactory).collect(Collectors.toList()));
-        when(factoryRegistry.getFactoriesOfType(Branch.TYPE)).thenReturn(Stream.of(branchFactory, userBranchFactory).collect(Collectors.toList()));
+        when(factoryRegistry.getFactoriesOfType(Record.class)).thenReturn(Stream.of(recordFactory, unversionedRecordFactory, versionedRecordFactory, versionedRDFRecordFactory, mappingRecordFactory).collect(Collectors.toList()));
+        when(factoryRegistry.getFactoriesOfType(VersionedRDFRecord.class)).thenReturn(Stream.of(versionedRDFRecordFactory, mappingRecordFactory).collect(Collectors.toList()));
+        when(factoryRegistry.getFactoriesOfType(Version.class)).thenReturn(Stream.of(versionFactory, tagFactory).collect(Collectors.toList()));
+        when(factoryRegistry.getFactoriesOfType(Branch.class)).thenReturn(Stream.of(branchFactory, userBranchFactory).collect(Collectors.toList()));
+        when(factoryRegistry.getFactoryOfType(Record.class)).thenReturn(Optional.of(recordFactory));
+        when(factoryRegistry.getFactoryOfType(Version.class)).thenReturn(Optional.of(versionFactory));
+        when(factoryRegistry.getFactoryOfType(Branch.class)).thenReturn(Optional.of(branchFactory));
         rest = new CatalogRestImpl();
         rest.setVf(vf);
         rest.setEngineManager(engineManager);
@@ -341,7 +342,6 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         rest.setInProgressCommitFactory(inProgressCommitFactory);
         rest.setFactoryRegistry(factoryRegistry);
         rest.setVersioningManager(versioningManager);
-        rest.start();
 
         return new ResourceConfig()
                 .register(rest)

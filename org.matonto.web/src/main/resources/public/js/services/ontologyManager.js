@@ -497,13 +497,13 @@
             }
             /**
              * @ngdoc method
-             * @name getObjectPropertyHierarchies
+             * @name getConceptHierarchies
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
              * Calls the GET /matontorest/ontologies/{recordId}/concept-hierarchies endpoint and retrieves an object
-             * with the hierarchy of concept schemes and concepts in the ontology organized by the inScheme and
-             * hasTopConcept properties and with an index of each IRI and its parent IRIs.
+             * with the hierarchy of concepts in the ontology organized by the broader and narrower properties and with
+             * an index of each IRI and its parent IRIs.
              *
              * @param {string} recordId The id of the Record the Branch should be part of
              * @param {string} branchId The id of the Branch with the specified Commit
@@ -515,6 +515,29 @@
                 var deferred = $q.defer();
                 var config = { params: { branchId, commitId } };
                 $http.get(prefix + '/' + encodeURIComponent(recordId) + '/concept-hierarchies', config)
+                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name getConceptSchemeHierarchies
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{recordId}/concept-scheme-hierarchies endpoint and retrieves an object
+             * with the hierarchy of concept schemes and concepts in the ontology organized by the inScheme, hasTopConcept,
+             * and topConceptOf properties and with an index of each IRI and its parent IRIs.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @return {Promise} A promise with an object containing the concept hierarchy and an index of IRIs to
+             * parent IRIs
+             */
+            self.getConceptSchemeHierarchies = function(recordId, branchId, commitId) {
+                var deferred = $q.defer();
+                var config = { params: { branchId, commitId } };
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/concept-scheme-hierarchies', config)
                     .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
                 return deferred.promise;
             }

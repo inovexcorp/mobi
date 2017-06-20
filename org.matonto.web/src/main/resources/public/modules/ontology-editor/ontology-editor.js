@@ -41,6 +41,8 @@
             'commitOverlay',
             'commitsTab',
             'conceptHierarchyBlock',
+            'conceptSchemeHierarchyBlock',
+            'conceptSchemesTab',
             'conceptsTab',
             'createBranchOverlay',
             'createClassOverlay',

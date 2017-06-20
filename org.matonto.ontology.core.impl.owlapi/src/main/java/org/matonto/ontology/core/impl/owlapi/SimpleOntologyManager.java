@@ -100,6 +100,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private static final String SELECT_ENTITY_USAGES;
     private static final String CONSTRUCT_ENTITY_USAGES;
     private static final String GET_CONCEPT_RELATIONSHIPS;
+    private static final String GET_CONCEPT_SCHEME_RELATIONSHIPS;
     private static final String GET_SEARCH_RESULTS;
     private static final String GET_SUB_ANNOTATION_PROPERTIES_OF;
     private static final String ENTITY_BINDING = "entity";
@@ -165,6 +166,14 @@ public class SimpleOntologyManager implements OntologyManager {
         try {
             GET_CONCEPT_RELATIONSHIPS = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-concept-relationships.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_CONCEPT_SCHEME_RELATIONSHIPS = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-concept-scheme-relationships.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -428,6 +437,11 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public TupleQueryResult getConceptRelationships(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_CONCEPT_RELATIONSHIPS, null);
+    }
+
+    @Override
+    public TupleQueryResult getConceptSchemeRelationships(Ontology ontology) {
+        return runQueryOnOntology(ontology, GET_CONCEPT_SCHEME_RELATIONSHIPS, null);
     }
 
     @Override

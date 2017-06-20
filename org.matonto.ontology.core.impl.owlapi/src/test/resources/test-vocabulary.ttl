@@ -53,11 +53,12 @@
 ###  https://matonto.org/vocabulary#Concept1
 :Concept1 rdf:type owl:NamedIndividual , skos:Concept ;
           skos:narrower :Concept2 ;
+          skos:topConceptOf :ConceptScheme1 ;
           skos:prefLabel "Concept 1"^^xsd:string .
-
 
 ###  https://matonto.org/vocabulary#Concept2
 :Concept2 rdf:type owl:NamedIndividual , skos:Concept ;
+          skos:inScheme :ConceptScheme2 ;
           skos:prefLabel "Concept 2"^^xsd:string .
 
 ###  https://matonto.org/vocabulary#Concept3
@@ -82,4 +83,5 @@
 
 ###  https://matonto.org/vocabulary#ConceptScheme3
 :ConceptScheme3 rdf:type owl:NamedIndividual , :SubOfSubOfConceptScheme ;
+        skos:hasTopConcept :Concept3 ;
         skos:prefLabel "Concept Scheme 3"^^xsd:string .

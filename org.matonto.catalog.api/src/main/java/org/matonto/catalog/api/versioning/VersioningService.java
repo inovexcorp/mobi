@@ -33,6 +33,8 @@ import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.repository.api.RepositoryConnection;
 
+import javax.annotation.Nullable;
+
 public interface VersioningService<T extends VersionedRDFRecord> {
     /**
      * Retrieves the IRI of the type of {@link VersionedRDFRecord} this service versions.
@@ -92,7 +94,8 @@ public interface VersioningService<T extends VersionedRDFRecord> {
      * @return Commit created based on the provided InProgressCommit with the message metadata.
      * @throws IllegalArgumentException If a auxiliary commit is passed, but not a base commit
      */
-    Commit createCommit(InProgressCommit commit, String message, Commit baseCommit, Commit auxCommit);
+    Commit createCommit(InProgressCommit commit, String message, @Nullable Commit baseCommit,
+                        @Nullable Commit auxCommit);
 
     /**
      * Adds the provided {@link Commit} to the provided {@link Branch}, updating the head Commit.
@@ -117,8 +120,8 @@ public interface VersioningService<T extends VersionedRDFRecord> {
      * @param conn A RepositoryConnection to use for lookup.
      * @return The Resource identifying the new Commit.
      */
-    Resource addCommit(Branch branch, User user, String message, Model additions, Model deletions, Commit baseCommit,
-                     Commit auxCommit, RepositoryConnection conn);
+    Resource addCommit(Branch branch, User user, String message, Model additions, Model deletions,
+                       @Nullable Commit baseCommit, @Nullable Commit auxCommit, RepositoryConnection conn);
 
     /**
      * Removes the provided {@link InProgressCommit} from the Repository.

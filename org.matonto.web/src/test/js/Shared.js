@@ -189,6 +189,7 @@ function mockOntologyManager() {
             this.getDataPropertyHierarchies = jasmine.createSpy('getDataPropertyHierarchies').and.returnValue($q.when({}));
             this.getObjectPropertyHierarchies = jasmine.createSpy('getObjectPropertyHierarchies').and.returnValue($q.when({}));
             this.getConceptHierarchies = jasmine.createSpy('getConceptHierarchies').and.returnValue($q.when({}));
+            this.getConceptSchemeHierarchies = jasmine.createSpy('getConceptSchemeHierarchies').and.returnValue($q.when({}));
             this.getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.returnValue($q.when([]));
             this.getEntityUsages = jasmine.createSpy('getEntityUsages').and.returnValue($q.when([]));
             this.getSearchResults = jasmine.createSpy('getSearchResults');
@@ -270,6 +271,7 @@ function mockMappingManager() {
             this.createNewMapping = jasmine.createSpy('createNewMapping').and.returnValue([]);
             this.setSourceOntologyInfo = jasmine.createSpy('setSourceOntologyInfo').and.returnValue([]);
             this.copyMapping = jasmine.createSpy('copyMapping').and.returnValue([]);
+            this.renameMapping = jasmine.createSpy('renameMapping').and.returnValue([]);
             this.addClass = jasmine.createSpy('addClass').and.returnValue([]);
             this.editIriTemplate = jasmine.createSpy('editIriTemplate').and.returnValue([]);
             this.addDataProp = jasmine.createSpy('addDataProp').and.returnValue([]);
@@ -519,6 +521,9 @@ function mockOntologyState() {
                 upToDate: true,
                 conceptHierarchy: [],
                 flatConceptHierarchy: [],
+                conceptSchemeHierarchy: [],
+                conceptSchemeIndex: {},
+                flatConceptSchemeHierarchy: [],
                 iriList: []
             };
             this.states = {};

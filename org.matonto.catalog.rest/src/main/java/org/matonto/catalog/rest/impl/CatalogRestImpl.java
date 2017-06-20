@@ -30,15 +30,14 @@ import static org.matonto.rest.util.RestUtils.getTypedObjectFromJsonld;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToString;
 
-import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.Conflict;
-import org.matonto.catalog.api.Difference;
+import org.matonto.catalog.api.builder.Conflict;
+import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.builder.DistributionConfig;
@@ -113,9 +112,6 @@ public class CatalogRestImpl implements CatalogRest {
     private VersioningManager versioningManager;
 
     protected EngineManager engineManager;
-    protected Map<String, OrmFactory<? extends Record>> recordFactories = new HashMap<>();
-    protected Map<String, OrmFactory<? extends Version>> versionFactories = new HashMap<>();
-    protected Map<String, OrmFactory<? extends Branch>> branchFactories = new HashMap<>();
     protected DistributionFactory distributionFactory;
     protected CommitFactory commitFactory;
     protected InProgressCommitFactory inProgressCommitFactory;
@@ -171,16 +167,6 @@ public class CatalogRestImpl implements CatalogRest {
     @Reference
     protected void setVersioningManager(VersioningManager versioningManager) {
         this.versioningManager = versioningManager;
-    }
-
-    @Activate
-    protected void start() {
-        factoryRegistry.getFactoriesOfType(Record.TYPE).forEach(factory ->
-                recordFactories.put(factory.getTypeIRI().stringValue(), factory));
-        factoryRegistry.getFactoriesOfType(Version.TYPE).forEach(factory ->
-                versionFactories.put(factory.getTypeIRI().stringValue(), factory));
-        factoryRegistry.getFactoriesOfType(Branch.TYPE).forEach(factory ->
-                branchFactories.put(factory.getTypeIRI().stringValue(), factory));
     }
 
     @Override
@@ -256,6 +242,7 @@ public class CatalogRestImpl implements CatalogRest {
     public Response createRecord(ContainerRequestContext context, String catalogId, String typeIRI, String title,
                                  String identifierIRI, String description, String keywords) {
         try {
+            Map<String, OrmFactory<? extends Record>> recordFactories = getRecordFactories();
             if (typeIRI == null || !recordFactories.keySet().contains(typeIRI)) {
                 throw ErrorUtils.sendError("Invalid Record type", Response.Status.BAD_REQUEST);
             }
@@ -289,7 +276,7 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getRecord(String catalogId, String recordId) {
         try {
             Record record = catalogManager.getRecord(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    recordFactories.get(Record.TYPE)).orElseThrow(() ->
+                    factoryRegistry.getFactoryOfType(Record.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Record " + recordId + " could not be found", Response.Status.NOT_FOUND));
             return Response.ok(thingToJsonObject(record, Record.TYPE)).build();
         } catch (IllegalArgumentException ex) {
@@ -314,7 +301,8 @@ public class CatalogRestImpl implements CatalogRest {
     @Override
     public Response updateRecord(String catalogId, String recordId, String newRecordJson) {
         try {
-            Record newRecord = getNewThing(newRecordJson, vf.createIRI(recordId), recordFactories.get(Record.TYPE));
+            Record newRecord = getNewThing(newRecordJson, vf.createIRI(recordId),
+                    factoryRegistry.getFactoryOfType(Record.class).get());
             catalogManager.updateRecord(vf.createIRI(catalogId), newRecord);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
@@ -418,6 +406,7 @@ public class CatalogRestImpl implements CatalogRest {
     public Response createVersion(ContainerRequestContext context, String catalogId, String recordId, String typeIRI,
                                   String title, String description) {
         try {
+            Map<String, OrmFactory<? extends Version>> versionFactories = getVersionFactories();
             if (typeIRI == null || !versionFactories.keySet().contains(typeIRI)) {
                 throw ErrorUtils.sendError("Invalid Version type", Response.Status.BAD_REQUEST);
             }
@@ -441,7 +430,7 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getLatestVersion(String catalogId, String recordId) {
         try {
             Version version = catalogManager.getLatestVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    versionFactories.get(Version.TYPE)).orElseThrow(() ->
+                    factoryRegistry.getFactoryOfType(Version.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Latest Version could not be found", Response.Status.NOT_FOUND));
             return Response.ok(thingToJsonObject(version, Version.TYPE)).build();
         } catch (IllegalArgumentException ex) {
@@ -455,7 +444,7 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getVersion(String catalogId, String recordId, String versionId) {
         try {
             Version version = catalogManager.getVersion(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(versionId), versionFactories.get(Version.TYPE)).orElseThrow(() ->
+                    vf.createIRI(versionId), factoryRegistry.getFactoryOfType(Version.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Version " + versionId + " could not be found", Response.Status.NOT_FOUND));
             return Response.ok(thingToJsonObject(version, Version.TYPE)).build();
         } catch (IllegalArgumentException ex) {
@@ -481,7 +470,7 @@ public class CatalogRestImpl implements CatalogRest {
     public Response updateVersion(String catalogId, String recordId, String versionId, String newVersionJson) {
         try {
             Version newVersion = getNewThing(newVersionJson, vf.createIRI(versionId),
-                    versionFactories.get(Version.TYPE));
+                    factoryRegistry.getFactoryOfType(Version.class).get());
             catalogManager.updateVersion(vf.createIRI(catalogId), vf.createIRI(recordId), newVersion);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
@@ -617,6 +606,7 @@ public class CatalogRestImpl implements CatalogRest {
     public Response createBranch(ContainerRequestContext context, String catalogId, String recordId,
                                  String typeIRI, String title, String description) {
         try {
+            Map<String, OrmFactory<? extends Branch>> branchFactories = getBranchFactories();
             if (typeIRI == null || !branchFactories.keySet().contains(typeIRI)) {
                 throw ErrorUtils.sendError("Invalid Branch type", Response.Status.BAD_REQUEST);
             }
@@ -652,7 +642,7 @@ public class CatalogRestImpl implements CatalogRest {
     public Response getBranch(String catalogId, String recordId, String branchId) {
         try {
             Branch branch = catalogManager.getBranch(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(branchId), branchFactories.get(Branch.TYPE)).orElseThrow(() ->
+                    vf.createIRI(branchId), factoryRegistry.getFactoryOfType(Branch.class).get()).orElseThrow(() ->
                     ErrorUtils.sendError("Branch " + branchId + " could not be found", Response.Status.NOT_FOUND));
             return Response.ok(thingToJsonObject(branch, Branch.TYPE)).build();
         } catch (IllegalArgumentException ex) {
@@ -677,7 +667,8 @@ public class CatalogRestImpl implements CatalogRest {
     @Override
     public Response updateBranch(String catalogId, String recordId, String branchId, String newBranchJson) {
         try {
-            Branch newBranch = getNewThing(newBranchJson, vf.createIRI(branchId), branchFactories.get(Branch.TYPE));
+            Branch newBranch = getNewThing(newBranchJson, vf.createIRI(branchId),
+                    factoryRegistry.getFactoryOfType(Branch.class).get());
             catalogManager.updateBranch(vf.createIRI(catalogId), vf.createIRI(recordId), newBranch);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
@@ -888,7 +879,8 @@ public class CatalogRestImpl implements CatalogRest {
             InProgressCommit inProgressCommit = catalogManager.getInProgressCommit(vf.createIRI(catalogId),
                     vf.createIRI(recordId), activeUser).orElseThrow(() ->
                     ErrorUtils.sendError("InProgressCommit could not be found", Response.Status.NOT_FOUND));
-            return Response.ok(getCommitDifferenceObject(inProgressCommit.getResource(), format), MediaType.APPLICATION_JSON).build();
+            return Response.ok(getCommitDifferenceObject(inProgressCommit.getResource(), format),
+                    MediaType.APPLICATION_JSON).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MatOntoException ex) {
@@ -929,7 +921,7 @@ public class CatalogRestImpl implements CatalogRest {
     @Override
     public Response getRecordTypes() {
         try {
-            return Response.ok(JSONArray.fromObject(recordFactories.keySet())).build();
+            return Response.ok(JSONArray.fromObject(getRecordFactories().keySet())).build();
         } catch (MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -995,7 +987,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @param offset    The offset for the current page.
      * @param <T>       A class that extends Thing
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
-     * pages if present.
+     *      pages if present.
      */
     private <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items, int totalSize,
                                                                int limit, int offset, String type) {
@@ -1020,7 +1012,7 @@ public class CatalogRestImpl implements CatalogRest {
     /**
      * Creates a Response for a page of a sorted limited offset Set of Things based on the return type of the passed
      * function using the passed full Set of Resources.
-     * <p>
+     *
      * @param uriInfo        The URI information of the request.
      * @param things         The Set of Things.
      * @param sortBy         The property IRI string to sort the Set of Things by.
@@ -1030,7 +1022,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @param filterFunction A Function to filter the set of Things.
      * @param <T>            A class that extends Thing.
      * @return A Response with a page of Things that has been filtered, sorted, and limited and headers for the total
-     * size and links to the next and prev pages if present.
+     *      size and links to the next and prev pages if present.
      */
     private <T extends Thing> Response createPaginatedThingResponse(UriInfo uriInfo, Set<T> things, String sortBy,
                                                                     int offset, int limit, boolean asc,
@@ -1069,7 +1061,8 @@ public class CatalogRestImpl implements CatalogRest {
         long start = System.currentTimeMillis();
         try {
             String differences = getCommitDifferenceJsonString(commit.getResource(), format);
-            String response = differences.subSequence(0, differences.length() - 1) + ", \"commit\": " + thingToJsonObject(commit, Commit.TYPE).toString() + "}";
+            String response = differences.subSequence(0, differences.length() - 1) + ", \"commit\": "
+                    + thingToJsonObject(commit, Commit.TYPE).toString() + "}";
             return Response.ok(response, MediaType.APPLICATION_JSON).build();
         } finally {
             LOG.trace("createCommitResponse took {}ms", System.currentTimeMillis() - start);
@@ -1084,7 +1077,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @param commitId The id of the Commit to retrieve the Difference of.
      * @param format   A string representing the RDF format to return the statements in.
      * @return A JSONObject with a key for the Commit's addition statements and a key for the Commit's deletion
-     * statements.
+     *      statements.
      */
     private JSONObject getCommitDifferenceObject(Resource commitId, String format) {
         long start = System.currentTimeMillis();
@@ -1111,7 +1104,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @param difference The Difference to convert into a JSONObject.
      * @param format     A String representing the RDF format to return the statements in.
      * @return A JSONObject with a key for the Difference's addition statements and a key for the Difference's deletion
-     * statements.
+     *      statements.
      */
     private JSONObject getDifferenceJson(Difference difference, String format) {
         long start = System.currentTimeMillis();
@@ -1126,7 +1119,8 @@ public class CatalogRestImpl implements CatalogRest {
     private String getDifferenceJsonString(Difference difference, String format) {
         long start = System.currentTimeMillis();
         try {
-            return "{ \"additions\": " + getModelInFormat(difference.getAdditions(), format) + ", \"deletions\": " + getModelInFormat(difference.getDeletions(), format) + "}";
+            return "{ \"additions\": " + getModelInFormat(difference.getAdditions(), format) + ", \"deletions\": "
+                    + getModelInFormat(difference.getDeletions(), format) + "}";
         } finally {
             LOG.trace("getDifferenceJsonString took {}ms", System.currentTimeMillis() - start);
         }
@@ -1195,7 +1189,8 @@ public class CatalogRestImpl implements CatalogRest {
     private <T extends Thing> T getNewThing(String newThingJson, Resource thingId, OrmFactory<T> factory) {
         Model newThingModel = convertJsonld(newThingJson);
         return factory.getExisting(thingId, newThingModel).orElseThrow(() ->
-                ErrorUtils.sendError(factory.getTypeIRI().getLocalName() + " IDs must match", Response.Status.BAD_REQUEST));
+                ErrorUtils.sendError(factory.getTypeIRI().getLocalName() + " IDs must match",
+                        Response.Status.BAD_REQUEST));
     }
 
     /**
@@ -1205,7 +1200,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @param conflict  The Conflict to turn into a JSONObject
      * @param rdfFormat A string representing the RDF format to return the statements in.
      * @return A JSONObject with a key for the Conflict's original Model, a key for the Conflict's left Difference,
-     * and a key for the Conflict's right Difference.
+     *      and a key for the Conflict's right Difference.
      */
     private JSONObject conflictToJson(Conflict conflict, String rdfFormat) {
         JSONObject object = new JSONObject();
@@ -1272,5 +1267,24 @@ public class CatalogRestImpl implements CatalogRest {
         } finally {
             LOG.trace("thingToJsonObject took {}ms", System.currentTimeMillis() - start);
         }
+    }
+
+    private Map<String, OrmFactory<? extends Record>> getRecordFactories() {
+        return getThingFactories(Record.class);
+    }
+
+    private Map<String, OrmFactory<? extends Version>> getVersionFactories() {
+        return getThingFactories(Version.class);
+    }
+
+    private Map<String, OrmFactory<? extends Branch>> getBranchFactories() {
+        return getThingFactories(Branch.class);
+    }
+
+    private <T extends Thing> Map<String, OrmFactory<? extends T>> getThingFactories(Class<T> clazz) {
+        Map<String, OrmFactory<? extends T>> factoryMap = new HashMap<>();
+        factoryRegistry.getFactoriesOfType(clazz).forEach(factory ->
+                factoryMap.put(factory.getTypeIRI().stringValue(), factory));
+        return factoryMap;
     }
 }

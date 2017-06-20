@@ -25,7 +25,6 @@ package org.matonto.rdf.orm.impl;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
@@ -33,7 +32,6 @@ import org.matonto.rdf.orm.OrmFactoryRegistry;
 import org.matonto.rdf.orm.Thing;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -42,7 +40,7 @@ import java.util.stream.Stream;
 @Component(immediate = true)
 public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
     private ValueFactory valueFactory;
-    private List<OrmFactory> factories = new ArrayList<>();
+    private List<OrmFactory<? extends Thing>> factories = new ArrayList<>();
 
     @Reference
     protected void setValueFactory(ValueFactory valueFactory) {
@@ -50,75 +48,80 @@ public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
     }
 
     @Reference(type = '*', dynamic = true)
-    protected void addFactory(OrmFactory factory) {
+    protected void addFactory(OrmFactory<? extends Thing> factory) {
         factories.add(factory);
     }
 
-    protected void removeFactory(OrmFactory factory) {
+    protected void removeFactory(OrmFactory<Thing> factory) {
         factories.remove(factory);
     }
 
     @Override
-    public <T extends Thing> Optional<OrmFactory> getFactoryOfType(Class<T> type) {
+    @SuppressWarnings("unchecked")
+    public <T extends Thing> Optional<OrmFactory<T>> getFactoryOfType(Class<T> type) {
         return factories.stream()
-                .filter(factory -> factory.getType().equals(type))
+                .filter(factory -> type.equals(factory.getType()))
+                .map(factory -> (OrmFactory<T>) factory)
                 .findFirst();
     }
 
     @Override
-    public Optional<OrmFactory> getFactoryOfType(String typeIRI) {
+    public Optional<OrmFactory<? extends Thing>> getFactoryOfType(String typeIRI) {
         return getFactoryOfType(valueFactory.createIRI(typeIRI));
     }
 
     @Override
-    public Optional<OrmFactory> getFactoryOfType(IRI typeIRI) {
+    public Optional<OrmFactory<? extends Thing>> getFactoryOfType(IRI typeIRI) {
         return factories.stream()
                 .filter(factory -> factory.getTypeIRI().equals(typeIRI))
                 .findFirst();
     }
 
     @Override
-    public <T extends Thing> List<OrmFactory> getFactoriesOfType(Class<T> type) {
+    public <T extends Thing> List<OrmFactory<? extends T>> getFactoriesOfType(Class<T> type) {
         return getFactoryStreamOfType(type).collect(Collectors.toList());
     }
 
     @Override
-    public <T extends Thing> List<OrmFactory> getSortedFactoriesOfType(Class<T> type) {
+    public <T extends Thing> List<OrmFactory<? extends T>> getSortedFactoriesOfType(Class<T> type) {
         return getFactoryStreamOfType(type)
                 .sorted((factory1, factory2) -> factory1.getType().isAssignableFrom(factory2.getType()) ? 1 : -1)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<OrmFactory> getFactoriesOfType(String typeIRI) {
+    public List<OrmFactory<? extends Thing>> getFactoriesOfType(String typeIRI) {
         return getFactoriesOfType(valueFactory.createIRI(typeIRI));
     }
 
     @Override
-    public List<OrmFactory> getSortedFactoriesOfType(String typeIRI) {
+    public List<OrmFactory<? extends Thing>> getSortedFactoriesOfType(String typeIRI) {
         return getSortedFactoriesOfType(valueFactory.createIRI(typeIRI));
     }
 
     @Override
-    public List<OrmFactory> getFactoriesOfType(IRI typeIRI) {
+    public List<OrmFactory<? extends Thing>> getFactoriesOfType(IRI typeIRI) {
         return getFactoryStreamOfType(typeIRI).collect(Collectors.toList());
     }
 
     @Override
-    public List<OrmFactory> getSortedFactoriesOfType(IRI typeIRI) {
+    public List<OrmFactory<? extends Thing>> getSortedFactoriesOfType(IRI typeIRI) {
         return getFactoryStreamOfType(typeIRI)
-                .sorted((factory1, factory2) -> factory1.getType().isAssignableFrom(factory2.getType()) ? 1 : -1)
+                .sorted((factory1, factory2) ->
+                        factory1.getType().isAssignableFrom(factory2.getType()) ? 1 : -1)
                 .collect(Collectors.toList());
     }
 
-    private <T extends Thing> Stream<OrmFactory> getFactoryStreamOfType(Class<T> type) {
+    @SuppressWarnings("unchecked")
+    private <T extends Thing> Stream<OrmFactory<? extends T>> getFactoryStreamOfType(Class<T> type) {
         return factories.stream()
                 .filter(factory -> type.equals(Thing.class)
-                        ? factory.getType().equals(Thing.class) : type.isAssignableFrom(factory.getType()));
+                        ? factory.getType().equals(Thing.class) : type.isAssignableFrom(factory.getType()))
+                .map(factory -> (OrmFactory<T>) factory);
     }
 
 
-    private Stream<OrmFactory> getFactoryStreamOfType(IRI typeIRI) {
+    private Stream<OrmFactory<? extends Thing>> getFactoryStreamOfType(IRI typeIRI) {
         return factories.stream()
                 .filter(factory -> factory.getParentTypeIRIs().contains(typeIRI)
                         || factory.getTypeIRI().equals(typeIRI));

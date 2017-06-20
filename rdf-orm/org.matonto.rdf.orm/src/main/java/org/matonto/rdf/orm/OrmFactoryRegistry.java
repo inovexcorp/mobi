@@ -36,7 +36,7 @@ public interface OrmFactoryRegistry {
      * @param <T> A class that extends Thing
      * @return A registered OrmFactory for the passed type if found
      */
-    <T extends Thing> Optional<OrmFactory> getFactoryOfType(Class<T> type);
+    <T extends Thing> Optional<OrmFactory<T>> getFactoryOfType(Class<T> type);
 
     /**
      * Attempts retrieve a registered OrmFactory of the type identified by the passed
@@ -46,7 +46,7 @@ public interface OrmFactoryRegistry {
      * @return A registered OrmFactory for the type identified by the passed IRI string
      *      if found
      */
-    Optional<OrmFactory> getFactoryOfType(String typeIRI);
+    Optional<OrmFactory<? extends Thing>> getFactoryOfType(String typeIRI);
 
     /**
      * Attempts retrieve a registered OrmFactory of the type identified by the passed class IRI.
@@ -54,7 +54,7 @@ public interface OrmFactoryRegistry {
      * @param typeIRI An IRI of a class
      * @return A registered OrmFactory for the type identified by the passed IRI if found
      */
-    Optional<OrmFactory> getFactoryOfType(IRI typeIRI);
+    Optional<OrmFactory<? extends Thing>> getFactoryOfType(IRI typeIRI);
 
     /**
      * A List of OrmFactories of types that extend the passed type including the OrmFactory of the
@@ -64,7 +64,7 @@ public interface OrmFactoryRegistry {
      * @param <T> A class that extends Thing
      * @return A List of OrmFactories of types that extend the passed type
      */
-    <T extends Thing> List<OrmFactory> getFactoriesOfType(Class<T> type);
+    <T extends Thing> List<OrmFactory<? extends T>> getFactoriesOfType(Class<T> type);
 
     /**
      * A List of OrmFactories of types that extend the type identified by the passed class IRI
@@ -74,7 +74,7 @@ public interface OrmFactoryRegistry {
      * @return A List of OrmFactories of types that extend the type identified by the passed IRI
      *      string
      */
-    List<OrmFactory> getFactoriesOfType(String typeIRI);
+    List<OrmFactory<? extends Thing>> getFactoriesOfType(String typeIRI);
 
     /**
      * A List of OrmFactories of types that extend the type identified by the passed class IRI
@@ -83,7 +83,7 @@ public interface OrmFactoryRegistry {
      * @param typeIRI An IRI of a class
      * @return A List of OrmFactories of types that extend the type identified by the passed IRI
      */
-    List<OrmFactory> getFactoriesOfType(IRI typeIRI);
+    List<OrmFactory<? extends Thing>> getFactoriesOfType(IRI typeIRI);
 
     /**
      * A sorted List of OrmFactories of types that extend the passed type including the OrmFactory of the
@@ -93,7 +93,7 @@ public interface OrmFactoryRegistry {
      * @param <T> A class that extends Thing
      * @return A sorted List of OrmFactories of types that extend the passed type
      */
-    <T extends Thing> List<OrmFactory> getSortedFactoriesOfType(Class<T> type);
+    <T extends Thing> List<OrmFactory<? extends T>> getSortedFactoriesOfType(Class<T> type);
 
     /**
      * A sorted List of OrmFactories of types that extend the type identified by the passed class IRI
@@ -104,7 +104,7 @@ public interface OrmFactoryRegistry {
      * @return A sorted List of OrmFactories of types that extend the type identified by the passed IRI
      *      string
      */
-    List<OrmFactory> getSortedFactoriesOfType(String typeIRI);
+    List<OrmFactory<? extends Thing>> getSortedFactoriesOfType(String typeIRI);
 
     /**
      * A sorted List of OrmFactories of types that extend the type identified by the passed class IRI
@@ -114,5 +114,5 @@ public interface OrmFactoryRegistry {
      * @param typeIRI An IRI of a class
      * @return A sorted List of OrmFactories of types that extend the type identified by the passed IRI
      */
-    List<OrmFactory> getSortedFactoriesOfType(IRI typeIRI);
+    List<OrmFactory<? extends Thing>> getSortedFactoriesOfType(IRI typeIRI);
 }
