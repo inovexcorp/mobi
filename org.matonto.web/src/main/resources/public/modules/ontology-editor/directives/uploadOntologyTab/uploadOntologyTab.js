@@ -47,7 +47,7 @@
                             _.join(_.map(dvm.keywords, _.trim), ','), dvm.type).then(recordId => {
                                 var listItem = dvm.os.getListItemByRecordId(recordId);
                                 dvm.os.addState(recordId, dvm.title, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);
-                                dvm.os.setState(recordId);
+                                dvm.os.setState(recordId, dvm.title);
                                 dvm.os.showUploadTab = false;
                             }, errorMessage => dvm.error = errorMessage);
                     }

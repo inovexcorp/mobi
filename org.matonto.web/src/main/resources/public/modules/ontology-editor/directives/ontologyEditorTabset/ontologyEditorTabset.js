@@ -41,12 +41,7 @@
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
 
-                    dvm.getTabTitle = function(recordId) {
-                        return dvm.os.getState(recordId).record.recordTitle;
-                    }
-
                     dvm.onClose = function(recordId) {
-                        var ontology = dvm.os.getOntologyByRecordId(recordId);
                         if (dvm.os.hasChanges(recordId)) {
                             dvm.os.recordIdToClose = recordId;
                             dvm.os.showCloseOverlay = true;

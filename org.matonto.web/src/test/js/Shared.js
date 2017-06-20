@@ -462,10 +462,8 @@ function mockOntologyState() {
         $provide.service('ontologyStateService', function($q) {
             this.recordIdToClose = 'recordIdToClose';
             this.state = {
-                record: {
-                    recordId: '',
-                    recordTitle: ''
-                },
+                recordId: '',
+                recordTitle: '',
                 ontologyId: '',
                 entityIRI: '',
                 deletedEntities: [],
@@ -529,7 +527,7 @@ function mockOntologyState() {
                 flatConceptSchemeHierarchy: [],
                 iriList: []
             };
-            this.states = {};
+            this.states = [];
             this.list = [];
             this.initialize = jasmine.createSpy('initialize');
             this.reset = jasmine.createSpy('reset');
@@ -944,10 +942,8 @@ function mockDiscoverState() {
                     },
                     total: 0
                 },
-                record: {
-                    recordId: '',
-                    recordTitle: ''
-                }
+                recordId: '',
+                recordTitle: ''
             };
             this.query = {
                 active: false

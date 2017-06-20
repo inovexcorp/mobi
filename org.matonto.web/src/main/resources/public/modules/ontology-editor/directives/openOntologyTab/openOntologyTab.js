@@ -64,7 +64,7 @@
                         dvm.os.openOntology(dvm.recordId, dvm.type)
                             .then(ontologyId => {
                                 dvm.os.addState(dvm.recordId, dvm.recordTitle, ontologyId, dvm.type);
-                                dvm.os.setState(dvm.recordId);
+                                dvm.os.setState(dvm.recordId, dvm.recordTitle);
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
 

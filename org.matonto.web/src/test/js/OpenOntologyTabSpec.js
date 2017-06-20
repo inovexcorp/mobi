@@ -153,7 +153,7 @@ describe('Open Ontology Tab directive', function() {
                 scope.$apply();
                 expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith(controller.recordId, controller.type);
                 expect(ontologyStateSvc.addState).toHaveBeenCalledWith(controller.recordId, controller.recordTitle, ontologyId, controller.type);
-                expect(ontologyStateSvc.setState).toHaveBeenCalledWith(controller.recordId);
+                expect(ontologyStateSvc.setState).toHaveBeenCalledWith(controller.recordId, controller.recordTitle);
                 expect(controller.errorMessage).toBeUndefined();
             });
         });
