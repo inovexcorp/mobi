@@ -27,8 +27,10 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -104,4 +106,25 @@ public interface ExplorableDatasetRest {
     Response getInstance(@Context UriInfo uriInfo,
                          @PathParam("recordIRI") String recordIRI,
                          @PathParam("instanceIRI") String instanceIRI);
+
+    /**
+     * Updates an instance owned by a {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
+     * {@link org.matonto.catalog.api.ontologies.mcat.Catalog} using the modifications from the provided JSON-LD.
+     *
+     * @param uriInfo     The URI information of the request.
+     * @param recordIRI   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
+     *                    {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
+     * @param instanceIRI The IRI of the instance to get
+     * @return A {@link Response} indicating whether or not the Instance was updated.
+     */
+    @PUT
+    @Path("{recordIRI}/instances/{instanceIRI}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Updates an instance of a particular class type from a Dataset in the local Catalog")
+    Response updateInstance(@Context UriInfo uriInfo,
+                            @PathParam("recordIRI") String recordIRI,
+                            @PathParam("instanceIRI") String instanceIRI,
+                            String json);
 }

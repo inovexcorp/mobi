@@ -61,6 +61,7 @@
             active: true,
             breadcrumbs: ['Classes'],
             classDetails: [],
+            editing: false,
             instance: {
                 entity: {},
                 metadata: {}

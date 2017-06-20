@@ -24,9 +24,9 @@ package org.matonto.explorable.dataset.rest.impl;
  */
 
 import static org.matonto.rest.util.RestUtils.encode;
-import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -41,13 +41,12 @@ import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.api.builder.OntologyIdentifier;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory;
+import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.ontology.utils.api.SesameTransformer;
-import org.matonto.ontology.utils.impl.SimpleSesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
@@ -66,14 +65,10 @@ import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.base.RepositoryResult;
-import org.matonto.repository.impl.sesame.SesameRepositoryResult;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.openrdf.model.vocabulary.RDF;
-import org.openrdf.model.vocabulary.RDFS;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
@@ -87,6 +82,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
@@ -98,7 +94,6 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     private ModelFactory mf;
     private ValueConverterRegistry vcr;
     private DatasetRecordFactory datasetRecordFactory;
-    private SesameTransformer sesameTransformer;
 
     private Repository repository;
     private RepositoryConnection conn;
@@ -122,14 +117,15 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     @Mock
     private DatasetConnection datasetConnection;
 
+    @Mock
+    private SesameTransformer sesameTransformer;
+
     @Override
     protected Application configureApp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
         vf = SimpleValueFactory.getInstance();
         mf = LinkedHashModelFactory.getInstance();
-
-        sesameTransformer = new SimpleSesameTransformer();
 
         vcr = new DefaultValueConverterRegistry();
         vcr.registerValueConverter(new ResourceValueConverter());
@@ -180,12 +176,14 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(datasetManager, datasetConnection, catalogManager);
+        reset(datasetManager, datasetConnection, catalogManager, sesameTransformer);
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.of(record));
         when(datasetManager.getConnection(recordId)).thenReturn(datasetConnection);
         when(datasetConnection.prepareTupleQuery(any(String.class))).thenAnswer(i -> conn.prepareTupleQuery(i.getArgumentAt(0, String.class)));
         when(datasetConnection.getStatements(any(Resource.class), any(IRI.class), any(Value.class))).thenAnswer(i -> conn.getStatements(i.getArgumentAt(0, Resource.class), i.getArgumentAt(1, IRI.class), i.getArgumentAt(2, Value.class)));
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(compiledModel);
+        when(sesameTransformer.matontoModel(any(org.openrdf.model.Model.class))).thenAnswer(i -> Values.matontoModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
+        when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
     }
 
     @AfterTest
@@ -260,11 +258,11 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getInstanceDetailsDataTest() throws Exception {
-        String otherCLASS_ID_STR = "http://matonto.org/ontologies/uhtc/CrystalStructure";
+        String otherClassId = "http://matonto.org/ontologies/uhtc/CrystalStructure";
         JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
                 .getResourceAsStream("/expected-instance-details.json")));
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
-                + encode(otherCLASS_ID_STR) + "/instance-details").request().get();
+                + encode(otherClassId) + "/instance-details").request().get();
         assertEquals(response.getStatus(), 200);
         JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
         assertEquals(responseArray, expected);
@@ -408,6 +406,49 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().get();
+        assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void updateInstanceTest() {
+        JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR)
+                .element(_Thing.title_IRI, new JSONObject().element("@value", "title"));
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
+                + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance));
+        Resource instanceId = vf.createIRI(INSTANCE_ID_STR);
+        assertEquals(response.getStatus(), 200);
+        verify(datasetConnection).begin();
+        verify(datasetConnection).remove(instanceId, null, null);
+        verify(datasetConnection).add(any(Model.class));
+        verify(datasetConnection).commit();
+    }
+
+    @Test
+    public void updateInstanceTestWhenNotFound() {
+        JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR)
+                .element(_Thing.title_IRI, new JSONObject().element("@value", "title"));
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
+                + encode(MISSING_ID)).request().put(Entity.json(instance));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void updateInstanceTestWithNoDatasetConnectionTestIllegalArgumentThrown() {
+        JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR)
+                .element(_Thing.title_IRI, new JSONObject().element("@value", "title"));
+        when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
+                + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void updateInstanceTestWithNoDatasetConnectionTestIllegalStateThrown() {
+        JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR)
+                .element(_Thing.title_IRI, new JSONObject().element("@value", "title"));
+        when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
+                + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance));
         assertEquals(response.getStatus(), 500);
     }
 }

@@ -26,38 +26,41 @@
     angular
         /**
          * @ngdoc overview
-         * @name instanceBlockHeader
+         * @name breadcrumbs
          *
          * @description
-         * The `instanceBlockHeader` module only provides the `instanceBlockHeader` directive which creates
-         * the instance block header.
+         * The `breadcrumbs` module only provides the `breadcrumbs` directive which creates
+         * the breadcrumb trail for the page you are currently viewing.
          */
-        .module('instanceBlockHeader', [])
+        .module('breadcrumbs', [])
         /**
          * @ngdoc directive
-         * @name sparqlResultTable.directive:instanceBlockHeader
+         * @name breadcrumbs.directive:breadcrumbs
          * @scope
          * @restrict E
          * @requires discoverState.service:discoverStateService
          *
          * @description
-         * HTML contents in the instance block header which shows users a bread crumb trail to get to earlier
-         * pages.
+         * HTML contents which shows the breadcrumb trail for the current page of the explore UI.
          */
-        .directive('instanceBlockHeader', instanceBlockHeader);
+        .directive('breadcrumbs', breadcrumbs);
         
-        instanceBlockHeader.$inject = ['discoverStateService'];
+        breadcrumbs.$inject = ['discoverStateService'];
 
-        function instanceBlockHeader(discoverStateService) {
+        function breadcrumbs(discoverStateService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/instanceBlockHeader/instanceBlockHeader.html',
+                templateUrl: 'modules/discover/sub-modules/explore/directives/breadcrumbs/breadcrumbs.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
                     dvm.ds = discoverStateService;
+                    
+                    dvm.clickCrumb = function(index) {
+                        dvm.ds.explore.breadcrumbs = _.take(dvm.ds.explore.breadcrumbs, index + 1);
+                    }
                 }
             }
         }

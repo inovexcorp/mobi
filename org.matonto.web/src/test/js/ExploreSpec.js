@@ -112,6 +112,30 @@ describe('Explore Service', function() {
         });
     });
     
+    describe('updateInstance calls the correct functions when PUT /matontorest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId}', function() {
+        var newInstance = {'@id': 'instanceId', 'prop': 'property'};
+        it('succeeds', function() {
+            $httpBackend.expectPUT('/matontorest/explorable-datasets/recordId/instances/instanceId', newInstance).respond(200);
+            exploreSvc.updateInstance('recordId', 'instanceId', newInstance)
+                .then(function(response) {
+                    expect(response).toBeUndefined();
+                }, function() {
+                    fail('Should have been resolved.');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('fails', function() {
+            $httpBackend.expectPUT('/matontorest/explorable-datasets/recordId/instances/instanceId', newInstance).respond(400, null, null, 'error');
+            exploreSvc.updateInstance('recordId', 'instanceId', newInstance)
+                .then(function() {
+                    fail('Should have been rejected.');
+                }, function(response) {
+                    expect(response).toBe('error');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
+    
     describe('createPagedResultsObject should return the correct paged object when the headers of the response', function() {
         var response;
         var nextLink = 'http://example.com/next';

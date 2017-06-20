@@ -24,6 +24,7 @@ package org.matonto.explorable.dataset.rest.impl;
  */
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
+import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
@@ -65,7 +66,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.ws.rs.core.Response;
@@ -197,6 +197,28 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             } else {
                 String json = modelToJsonld(sesameTransformer.sesameModel(instanceModel));
                 return Response.ok(JSONArray.fromObject(json).get(0)).build();
+            }
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public Response updateInstance(UriInfo uriInfo, String recordIRI, String instanceIRI, String json) {
+        checkStringParam(recordIRI, "The Dataset Record IRI is required.");
+        checkStringParam(instanceIRI, "The Instance IRI is required.");
+        try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
+            Resource instanceId = factory.createIRI(instanceIRI);
+            if (!conn.getStatements(instanceId, null, null).hasNext()) {
+                throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
+            } else {
+                conn.begin();
+                conn.remove(instanceId, null, null);
+                conn.add(sesameTransformer.matontoModel(jsonldToModel(json)));
+                conn.commit();
+                return Response.ok().build();
             }
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);

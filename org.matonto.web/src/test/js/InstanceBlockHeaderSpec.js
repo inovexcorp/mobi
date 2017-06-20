@@ -21,22 +21,17 @@
  * #L%
  */
 describe('Instance Block Header directive', function() {
-    var $compile, scope, element, exploreSvc, discoverStateSvc, $q, controller, util;
+    var $compile, scope, element, discoverStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('instanceBlockHeader');
         mockDiscoverState();
-        mockExplore();
-        mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _exploreService_, _discoverStateService_, _$q_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _discoverStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            exploreSvc = _exploreService_;
             discoverStateSvc = _discoverStateService_;
-            $q = _$q_;
-            util = _utilService_;
         });
 
         discoverStateSvc.explore.breadcrumbs = ['', ''];
@@ -46,33 +41,14 @@ describe('Instance Block Header directive', function() {
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('OL');
+            expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('instance-block-header')).toBe(true);
         });
-        it('depending on how many entities are in the path', function() {
-            expect(element.find('li').length).toBe(2);
+        it('with a breadcrumbs', function() {
+            expect(element.find('breadcrumbs').length).toBe(1);
         });
-        it('depending on whether an entity is the last in the list', function() {
-            var items = element.find('li');
-            
-            var firstItem = angular.element(items[0]);
-            expect(firstItem.hasClass('active')).toBe(false);
-            expect(firstItem.find('span').length).toBe(0);
-            expect(firstItem.find('a').length).toBe(1);
-            
-            var secondItem = angular.element(items[1]);
-            expect(secondItem.hasClass('active')).toBe(true);
-            expect(secondItem.find('span').length).toBe(1);
-            expect(secondItem.find('a').length).toBe(0);
-        });
-    });
-    describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('instanceBlockHeader');
-        });
-        it('should navigate to the selected crumb', function() {
-            controller.clickCrumb(0);
-            expect(discoverStateSvc.explore.breadcrumbs.length).toBe(1);
+        it('with a .pull-right.edit-button', function() {
+            expect(element.querySelectorAll('.pull-right.edit-button').length).toBe(1);
         });
     });
 });

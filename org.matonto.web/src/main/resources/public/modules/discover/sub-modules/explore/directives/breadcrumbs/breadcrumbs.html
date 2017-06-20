@@ -20,17 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="instance-block">
-    <block>
-        <block-header>
-            <breadcrumbs></breadcrumbs>
-        </block-header>
-        <block-content>
-            <instance-cards></instance-cards>
-        </block-content>
-        <block-footer>
-            <paging-details class="pull-left" total-size="dvm.ds.explore.instanceDetails.total" page-index="dvm.ds.explore.instanceDetails.currentPage" limit="dvm.ds.explore.instanceDetails.limit"></paging-details>
-            <pagination class="pull-right" links="dvm.ds.explore.instanceDetails.links" current-page="dvm.ds.explore.instanceDetails.currentPage" get-page="dvm.getPage(direction)"></pagination>
-        </block-footer>
-    </block>
-</div>
+  <ol class="breadcrumbs breadcrumb">
+      <li ng-repeat="item in dvm.ds.explore.breadcrumbs track by $index" class="breadcrumb-item" ng-class="{'active': $last}"
+          ><a ng-if="!$last" ng-click="dvm.clickCrumb($index)">{{item}}</a
+          ><span ng-if="$last">{{item}}</span
+      ></li>
+  </ol>

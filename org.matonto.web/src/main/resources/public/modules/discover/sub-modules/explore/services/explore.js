@@ -80,6 +80,8 @@
          * Calls the GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/instance-details endpoint and returns the
          * array of instance details.
          *
+         * @param {string} recordId The id of the Record
+         * @param {string} classId The id of the Class
          * @returns {Promise} A promise that resolves to an array of the instance details for the identified class of the
          * identified dataset record.
          */
@@ -103,12 +105,33 @@
          * Calls the GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint
          * and returns the instance.
          *
+         * @param {string} recordId The id of the Record
+         * @param {string} instanceId The id of the instance
          * @returns {Promise} A promise that resolves to an instance object defined as the identified class in the
          * identified dataset record.
          */
         self.getInstance = function(recordId, instanceId) {
             return $http.get(prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId))
                 .then(response => response.data, response => $q.reject(response.statusText));
+        }
+        
+        /**
+         * @ngdoc method
+         * @name updateInstance
+         * @methodOf explore.service:exploreService
+         *
+         * @description
+         * Calls the PUT /matontorest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint
+         * and identifies if the instance was updated.
+         *
+         * @param {string} recordId The id of the Record
+         * @param {string} instanceId The id of the instance
+         * @param {Object} json The JSON-LD object of the new instance
+         * @returns {Promise} A promise that indicates if the instance was updated successfully.
+         */
+        self.updateInstance = function(recordId, instanceId, json) {
+            return $http.put(prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId), angular.toJson(json))
+                .then(response => $q.when(), response => $q.reject(response.statusText));
         }
         
         /**

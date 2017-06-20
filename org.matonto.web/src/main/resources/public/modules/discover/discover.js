@@ -33,6 +33,7 @@
             'discoverTabset',
             
             /* Explore tab */
+            'breadcrumbs',
             'classBlock',
             'classBlockHeader',
             'classCards',
@@ -40,6 +41,7 @@
             'instanceBlock',
             'instanceBlockHeader',
             'instanceCards',
+            'instanceEditor',
             'instanceView',
             
             /* Query tab */

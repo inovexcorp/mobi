@@ -26,38 +26,40 @@
     angular
         /**
          * @ngdoc overview
-         * @name instanceBlockHeader
+         * @name instanceEditor
          *
          * @description
-         * The `instanceBlockHeader` module only provides the `instanceBlockHeader` directive which creates
-         * the instance block header.
+         * The `instanceEditor` module only provides the `instanceEditor` directive which creates
+         * the instance editor page.
          */
-        .module('instanceBlockHeader', [])
+        .module('instanceEditor', [])
         /**
          * @ngdoc directive
-         * @name sparqlResultTable.directive:instanceBlockHeader
+         * @name instanceEditor.directive:instanceEditor
          * @scope
          * @restrict E
          * @requires discoverState.service:discoverStateService
+         * @requires util.service:utilService
          *
          * @description
-         * HTML contents in the instance block header which shows users a bread crumb trail to get to earlier
-         * pages.
+         * HTML contents in the instance view page which shows the complete list of properites
+         * associated with the selected instance in an editable format.
          */
-        .directive('instanceBlockHeader', instanceBlockHeader);
+        .directive('instanceEditor', instanceEditor);
         
-        instanceBlockHeader.$inject = ['discoverStateService'];
+        instanceEditor.$inject = ['discoverStateService'];
 
-        function instanceBlockHeader(discoverStateService) {
+        function instanceEditor(discoverStateService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/instanceBlockHeader/instanceBlockHeader.html',
+                templateUrl: 'modules/discover/sub-modules/explore/directives/instanceEditor/instanceEditor.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
                     dvm.ds = discoverStateService;
+                    dvm.entity = _.omit(dvm.ds.explore.instance.entity, ['@id', '@type']);
                 }
             }
         }
