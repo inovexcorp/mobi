@@ -27,9 +27,9 @@
         .module('characteristicsBlock', [])
         .directive('characteristicsBlock', characteristicsBlock);
 
-        characteristicsBlock.$inject = ['prefixes', 'ontologyStateService', 'ontologyUtilsManagerService'];
+        characteristicsBlock.$inject = ['prefixes', 'ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
 
-        function characteristicsBlock(prefixes, ontologyStateService, ontologyUtilsManagerService) {
+        function characteristicsBlock(prefixes, ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -39,20 +39,26 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     var ontoUtils = ontologyUtilsManagerService;
+                    var om = ontologyManagerService;
                     dvm.os = ontologyStateService;
-                    dvm.characteristics = {
-                        functional: {
+                    dvm.characteristics = [
+                        {
                             checked: false,
                             typeIRI: prefixes.owl + 'FunctionalProperty',
-                            displayText: 'Functional Property'
+                            displayText: 'Functional Property',
+                            objectOnly: false
                         },
-                        asymmetric: {
+                        {
                             checked: false,
                             typeIRI: prefixes.owl + 'AsymmetricProperty',
-                            displayText: 'Asymmetric Property'
+                            displayText: 'Asymmetric Property',
+                            objectOnly: true
                         }
-                    };
+                    ];
 
+                    dvm.filter = function(obj) {
+                        return !obj.objectOnly || om.isObjectProperty(dvm.os.selected);
+                    }
                     dvm.onChange = function(characteristicObj) {
                         if (characteristicObj.checked) {
                             _.set(dvm.os.selected, '@type', _.concat(_.get(dvm.os.selected, '@type', []), characteristicObj.typeIRI));
@@ -87,7 +93,7 @@
                     }
 
                     function setVariables() {
-                        _.forEach(dvm.characteristics, (obj, key) => {
+                        _.forEach(dvm.characteristics, obj => {
                             obj.checked = _.includes(_.get(dvm.os.selected, '@type', []), obj.typeIRI);
                         });
                     }

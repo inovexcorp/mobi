@@ -83,6 +83,26 @@ describe('Create Property Overlay directive', function() {
         it('with radio-buttons', function() {
             expect(element.find('radio-button').length).toBe(3);
         });
+        describe('with checkboxes', function() {
+            it('unless nothing is selected or type if AnnotationProperty', function() {
+                expect(element.find('checkbox').length).toBe(0);
+                ontologyManagerSvc.isAnnotation.and.returnValue(true);
+                scope.$apply();
+                expect(element.find('checkbox').length).toBe(0);
+            });
+            describe('if type is', function() {
+                it('ObjectProperty', function() {
+                    ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+                    scope.$apply();
+                    expect(element.find('checkbox').length).toBe(2);
+                });
+                it('DataProperty', function() {
+                    ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
+                    scope.$apply();
+                    expect(element.find('checkbox').length).toBe(1);
+                });
+            });
+        });
         it('with checkboxes', function() {
             expect(element.find('checkbox').length).toBe(0);
             ontologyManagerSvc.isObjectProperty.and.returnValue(true);
@@ -337,15 +357,14 @@ describe('Create Property Overlay directive', function() {
             });
             describe('if characteristics', function() {
                 it('are set', function() {
-                    controller.characteristics.functional.checked = true;
-                    controller.characteristics.asymmetric.checked = true;
+                    _.forEach(controller.characteristics, function(obj) {
+                        obj.checked = true;
+                    });
                     controller.create();
                     expect(_.includes(controller.property['@type'], functionalProperty)).toBe(true);
                     expect(_.includes(controller.property['@type'], asymmetricProperty)).toBe(true);
                 });
                 it('are not set', function() {
-                    controller.characteristics.functional.checked = false;
-                    controller.characteristics.asymmetric.checked = false;
                     controller.create();
                     expect(_.includes(controller.property['@type'], functionalProperty)).toBe(false);
                     expect(_.includes(controller.property['@type'], asymmetricProperty)).toBe(false);
@@ -362,10 +381,36 @@ describe('Create Property Overlay directive', function() {
                 expect(controller.getKey()).toBe('subObjectProperties');
             });
         });
-        it('typeChange should reset the correct variable', function() {
-            controller.values = [{prop: 'value'}];
-            controller.typeChange();
-            expect(controller.values).toEqual([]);
+        describe('typeChange should reset the correct variables', function() {
+            beforeEach(function() {
+                controller.values = [{prop: 'value'}];
+                _.forEach(controller.characteristics, function(obj) {
+                    obj.checked = true;
+                });
+            });
+            it('if the property is an AnnotationProperty', function() {
+                ontologyManagerSvc.isAnnotation.and.returnValue(true);
+                controller.typeChange();
+                expect(controller.values).toEqual([]);
+                _.forEach(controller.characteristics, function(obj) {
+                    expect(obj.checked).toBe(false);
+                });
+            });
+            it('if the property is a DatatypeProperty', function() {
+                ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
+                controller.typeChange();
+                expect(controller.values).toEqual([]);
+                _.forEach(_.filter(controller.characteristics, 'objectOnly'), function(obj) {
+                    expect(obj.checked).toBe(false);
+                });
+            });
+            it('if the property is an ObjectProperty', function() {
+                controller.typeChange();
+                expect(controller.values).toEqual([]);
+                _.forEach(controller.characteristics, function(obj) {
+                    expect(obj.checked).toBe(true);
+                });
+            });
         });
     });
     it('should call create when the button is clicked', function() {

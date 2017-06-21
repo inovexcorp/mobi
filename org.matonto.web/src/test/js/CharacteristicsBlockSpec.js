@@ -29,13 +29,15 @@ describe('Characteristics Block directive', function() {
         mockPrefixes();
         mockOntologyState();
         mockOntologyUtilsManager();
+        mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
             ontoUtils = _ontologyUtilsManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         functionalProperty = prefixes.owl + 'FunctionalProperty';
@@ -56,11 +58,24 @@ describe('Characteristics Block directive', function() {
                 expect(element.find(tag).length).toBe(1);
             });
         });
-        it('with checkboxes', function() {
-            expect(element.find('checkbox').length).toBe(0);
-            ontologyStateSvc.selected = true;
-            scope.$apply();
-            expect(element.find('checkbox').length).toBe(2);
+        describe('with checkboxes', function() {
+            it('unless nothing is selected', function() {
+                expect(element.find('checkbox').length).toBe(0);
+            });
+            describe('if a', function() {
+                beforeEach(function() {
+                    ontologyStateSvc.selected = {};
+                });
+                it('object property is selected', function() {
+                    ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+                    scope.$apply();
+                    expect(element.find('checkbox').length).toBe(2);
+                });
+                it('data property is selected', function() {
+                    scope.$apply();
+                    expect(element.find('checkbox').length).toBe(1);
+                });
+            });
         });
     });
     describe('controller methods', function() {
@@ -136,13 +151,15 @@ describe('Characteristics Block directive', function() {
         });
     });
     it('correctly updates the checkboxes when the selected entities changes', function() {
-        controller.characteristics.functional.checked = false;
-        controller.characteristics.asymmetric.checked = false;
+        _.forEach(controller.characteristics, function(obj) {
+            obj.checked = false;
+        });
         spyOn(controller, 'onChange');
         ontologyStateSvc.selected = {'@type': [functionalProperty, asymmetricProperty]};
         scope.$digest();
         expect(controller.onChange).not.toHaveBeenCalled();
-        expect(controller.characteristics.functional.checked).toBe(true);
-        expect(controller.characteristics.asymmetric.checked).toBe(true);
+        _.forEach(controller.characteristics, function(obj) {
+            expect(obj.checked).toBe(true);
+        });
     });
 });

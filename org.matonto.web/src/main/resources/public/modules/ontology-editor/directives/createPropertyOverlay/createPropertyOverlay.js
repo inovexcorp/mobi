@@ -42,18 +42,20 @@
                     var setAsDatatype = false;
                     var ro = responseObj;
 
-                    dvm.characteristics = {
-                        functional: {
+                    dvm.characteristics = [
+                        {
                             checked: false,
                             typeIRI: prefixes.owl + 'FunctionalProperty',
-                            displayText: 'Functional Property'
+                            displayText: 'Functional Property',
+                            objectOnly: false
                         },
-                        asymmetric: {
+                        {
                             checked: false,
                             typeIRI: prefixes.owl + 'AsymmetricProperty',
-                            displayText: 'Asymmetric Property'
+                            displayText: 'Asymmetric Property',
+                            objectOnly: true
                         }
-                    };
+                    ];
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.om = ontologyManagerService;
@@ -76,13 +78,11 @@
                             dvm.property['@id'] = dvm.prefix + $filter('camelCase')(dvm.property[prefixes.dcterms + 'title'][0]['@value'], 'property');
                         }
                     }
-
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.property['@id'] = iriBegin + iriThen + iriEnd;
                         dvm.os.setCommonIriParts(iriBegin, iriThen);
                     }
-
                     dvm.create = function() {
                         if (dvm.property[prefixes.dcterms + 'description'][0]['@value'] === '') {
                             _.unset(dvm.property, prefixes.dcterms + 'description');
@@ -119,18 +119,28 @@
                         dvm.os.showCreatePropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                     }
-                    
                     dvm.getKey = function() {
                         if (dvm.om.isDataTypeProperty(dvm.property)) {
                             return 'subDataProperties'
                         }
                         return 'subObjectProperties';
                     }
-                    
                     dvm.typeChange = function() {
                         dvm.values = [];
+                        if (dvm.om.isAnnotation(dvm.property)) {
+                            _.forEach(dvm.characteristics, obj => {
+                                obj.checked = false;
+                            });
+                        } else if (dvm.om.isDataTypeProperty(dvm.property)) {
+                            _.forEach(_.filter(dvm.characteristics, 'objectOnly'), obj => {
+                                obj.checked = false;
+                            });
+                        }
                     }
-                    
+                    dvm.characteristicsFilter = function(obj) {
+                        return !obj.objectOnly || dvm.om.isObjectProperty(dvm.property);
+                    }
+
                     function commonUpdate(listKey, hierarchyKey, flatHierarchyKey, indexKey, setThisOpened) {
                         dvm.os.listItem[listKey].push(ro.createItemFromIri(dvm.property['@id']));
                         if (dvm.values.length) {
