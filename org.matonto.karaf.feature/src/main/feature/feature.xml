@@ -130,4 +130,10 @@
         <bundle start-level="80">mvn:org.matonto/web.security/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/explorable.dataset.rest/${project.version}</bundle>
     </feature>
+    <feature name="matonto-clustering" description="MatOnto Clustering API and implementations" version="${project.version}">
+        <feature prerequisite="true">matonto-core</feature>
+        <bundle start-level="80">mvn:org.matonto/clustering.api/${project.version}</bundle>
+        <bundle start-level="80">mvn:com.hazelcast/hazelcast/3.8.2</bundle>
+        <bundle start-level="80">mvn:org.matonto/clustering.hazelcast/${project.version}</bundle>
+    </feature>
 </features>
