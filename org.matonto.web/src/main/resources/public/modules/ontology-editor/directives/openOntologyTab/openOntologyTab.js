@@ -54,11 +54,17 @@
                     dvm.filteredList = [];
                     dvm.type = 'ontology';
 
+                    dvm.openSelected = function(record) {
+                        dvm.recordId = record['@id'];
+                        dvm.recordTitle = dvm.util.getDctermsValue(record, 'title');
+                        dvm.showOpenOverlay = true
+                    }
+
                     dvm.open = function() {
                         dvm.os.openOntology(dvm.recordId, dvm.type)
                             .then(ontologyId => {
-                                dvm.os.addState(dvm.recordId, ontologyId, dvm.type);
-                                dvm.os.setState(dvm.recordId);
+                                dvm.os.addState(dvm.recordId, dvm.recordTitle, ontologyId, dvm.type);
+                                dvm.os.setState(dvm.recordId, dvm.recordTitle);
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
 

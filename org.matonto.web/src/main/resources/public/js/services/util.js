@@ -142,7 +142,7 @@
             }
             /**
              * @ngdoc method
-             * @name getPropertyValue
+             * @name getDctermsValue
              * @methodOf util.service:utilService
              *
              * @description
