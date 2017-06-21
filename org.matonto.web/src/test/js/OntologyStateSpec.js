@@ -36,6 +36,7 @@ describe('Ontology State Service', function() {
         deletions: []
     };
     var recordId = 'recordId';
+    var recordTitle = 'recordTitle';
     var branchId = 'branchId';
     var commitId = 'commitId';
     var ontologyId = 'ontologyId';
@@ -194,7 +195,8 @@ describe('Ontology State Service', function() {
                 usages: []
             },
             other: {active: false},
-            recordId: recordId
+            recordId: recordId,
+            recordTitle: recordTitle
         };
 
         /*
@@ -2186,10 +2188,11 @@ describe('Ontology State Service', function() {
             ontologyStateSvc.states = [];
         });
         it('when the type is ontology', function() {
-            ontologyStateSvc.addState(recordId, entityIRI, 'ontology');
+            ontologyStateSvc.addState(recordId, recordTitle, entityIRI, 'ontology');
             expect(ontologyStateSvc.states.length).toBe(1);
             expect(ontologyStateSvc.states[0]).toEqual({
                 recordId: recordId,
+                recordTitle: recordTitle,
                 active: false,
                 type: 'ontology',
                 project: {
@@ -2214,10 +2217,11 @@ describe('Ontology State Service', function() {
             });
         });
         it('when the type is vocabulary', function() {
-            ontologyStateSvc.addState(recordId, entityIRI, 'vocabulary');
+            ontologyStateSvc.addState(recordId, recordTitle, entityIRI, 'vocabulary');
             expect(ontologyStateSvc.states.length).toBe(1);
             expect(ontologyStateSvc.states[0]).toEqual({
                 recordId: recordId,
+                recordTitle: recordTitle,
                 active: false,
                 type: 'vocabulary',
                 project: {
@@ -2245,13 +2249,13 @@ describe('Ontology State Service', function() {
         });
         it('when recordId is defined', function() {
             var listItem = {id: 'listId'};
-            var state = {recordId: 'id'};
+            var state = {recordId: 'id', recordTitle: 'title'};
             ontologyStateSvc.states = [state];
             spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
             spyOn(ontologyStateSvc, 'setSelected');
             spyOn(ontologyStateSvc, 'getActiveEntityIRI').and.returnValue('id');
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('');
-            ontologyStateSvc.setState('id', true);
+            ontologyStateSvc.setState('id', 'title', true);
             expect(ontologyStateSvc.state).toEqual(state);
             expect(ontologyStateSvc.listItem).toEqual(listItem);
             expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith('id', true);
@@ -2263,7 +2267,7 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getState(undefined)).toEqual(ontologyStateSvc.newState);
         });
         it('when recordId is defined', function() {
-            var state = {recordId: 'id'};
+            var state = {recordId: 'id', recordTitle: 'title'};
             ontologyStateSvc.states = [state];
             expect(ontologyStateSvc.getState('id')).toEqual(state);
         });
@@ -2277,7 +2281,7 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.selected).toBeUndefined();
         });
         it('if the recordId does not match the current state', function() {
-            var state = {recordId: 'id'};
+            var state = {recordId: 'id', recordTitle: 'title'};
             ontologyStateSvc.states = [state];
             ontologyStateSvc.deleteState('id');
             expect(ontologyStateSvc.states.length).toBe(0);
