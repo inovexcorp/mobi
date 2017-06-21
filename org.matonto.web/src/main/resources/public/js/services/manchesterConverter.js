@@ -57,7 +57,8 @@
             var expressionKeywords = {
                 [prefixes.owl + 'unionOf']: ' or ',
                 [prefixes.owl + 'intersectionOf']: ' and ',
-                [prefixes.owl + 'complementOf']: 'not '
+                [prefixes.owl + 'complementOf']: 'not ',
+//                [prefixes.owl + 'oneOf']: 'one of: '
             };
             var restrictionKeywords = {
                 [prefixes.owl + 'someValuesFrom']: ' some ',
@@ -65,7 +66,10 @@
                 [prefixes.owl + 'hasValue']: ' value ',
                 [prefixes.owl + 'minCardinality']: ' min ',
                 [prefixes.owl + 'maxCardinality']: ' max ',
-                [prefixes.owl + 'cardinality']: ' exactly '
+                [prefixes.owl + 'cardinality']: ' exactly ',
+//                [prefixes.owl + 'minQualifiedCardinality']: ' min ',
+//                [prefixes.owl + 'maxQualifiedCardinality']: ' max ',
+//                [prefixes.owl + 'qualifiedCardinality']: ' exactly '
             };
 
             /**
