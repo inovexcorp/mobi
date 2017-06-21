@@ -58,7 +58,7 @@
                 [prefixes.owl + 'unionOf']: ' or ',
                 [prefixes.owl + 'intersectionOf']: ' and ',
                 [prefixes.owl + 'complementOf']: 'not ',
-//                [prefixes.owl + 'oneOf']: 'one of: '
+//                [prefixes.owl + 'oneOf']: '' // {a b c} where a, b, c are values that can be taken.
             };
             var restrictionKeywords = {
                 [prefixes.owl + 'someValuesFrom']: ' some ',
@@ -67,9 +67,12 @@
                 [prefixes.owl + 'minCardinality']: ' min ',
                 [prefixes.owl + 'maxCardinality']: ' max ',
                 [prefixes.owl + 'cardinality']: ' exactly ',
-//                [prefixes.owl + 'minQualifiedCardinality']: ' min ',
-//                [prefixes.owl + 'maxQualifiedCardinality']: ' max ',
-//                [prefixes.owl + 'qualifiedCardinality']: ' exactly '
+                // a - the object property on which the restriction applies.
+                // b - the class to be restricted on the property values.
+                // n - the cardinality of the restricted property.
+//                [prefixes.owl + 'minQualifiedCardinality']: ' min ', // a min n b
+//                [prefixes.owl + 'maxQualifiedCardinality']: ' max ', // a max n b
+//                [prefixes.owl + 'qualifiedCardinality']: ' exactly ' // a exactly n b
             };
 
             /**
