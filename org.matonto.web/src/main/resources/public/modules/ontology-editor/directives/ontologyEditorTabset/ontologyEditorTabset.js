@@ -42,7 +42,6 @@
                     dvm.os = ontologyStateService;
 
                     dvm.onClose = function(recordId) {
-                        var ontology = dvm.os.getOntologyByRecordId(recordId);
                         if (dvm.os.hasChanges(recordId)) {
                             dvm.os.recordIdToClose = recordId;
                             dvm.os.showCloseOverlay = true;
