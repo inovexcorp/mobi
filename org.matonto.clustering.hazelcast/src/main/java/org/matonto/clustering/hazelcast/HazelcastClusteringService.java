@@ -144,6 +144,7 @@ public class HazelcastClusteringService implements ClusteringService {
         this.hazelcastInstance.shutdown();
     }
 
+    @Override
     public int getMemberCount() {
         return this.hazelcastInstance.getCluster().getMembers().size();
     }

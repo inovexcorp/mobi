@@ -28,6 +28,6 @@ package org.matonto.clustering.api;
  */
 public interface ClusteringService {
 
-
+    int getMemberCount();
 
 }
