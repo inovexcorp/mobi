@@ -51,8 +51,7 @@ describe('Update Refs service', function() {
     });
 
     it('should replace all instances of a key in an object with the new key', function() {
-        var result,
-            obj = {
+            var obj = {
                 'test/0': 0,
                 'id': 'test/0',
                 props: [
@@ -90,8 +89,7 @@ describe('Update Refs service', function() {
         expect(obj).toEqual(result);
     });
     it('should replace all nested instances of a key in an object with the new key.', function() {
-        var result,
-            obj = {
+            var obj = {
                 'test/0': {
                     'test/0': {
                         'label': 'label',
