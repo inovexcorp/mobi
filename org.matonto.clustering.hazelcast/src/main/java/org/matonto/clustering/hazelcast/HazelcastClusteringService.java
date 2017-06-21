@@ -31,8 +31,6 @@ import aQute.bnd.annotation.metatype.Configurable;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.LifecycleEvent;
-import com.hazelcast.core.LifecycleListener;
 import org.apache.commons.lang.StringUtils;
 import org.matonto.clustering.api.ClusteringService;
 import org.osgi.framework.BundleContext;
@@ -83,7 +81,6 @@ public class HazelcastClusteringService implements ClusteringService {
         final HazelcastClusteringServiceConfig serviceConfig = Configurable.createConfigurable(HazelcastClusteringServiceConfig.class, configuration);
         this.bundleContext = context;
         final Config config = new Config();
-        config.getNetworkConfig().getJoin().getMulticastConfig().setMulticastGroup("matonto");
         LOGGER.debug("Spinning up underlying hazelcast instance");
         LOGGER.info("Initializing Hazelcast based Clustering Service");
         if (StringUtils.isNotBlank(serviceConfig.instanceName())) {
@@ -96,7 +93,11 @@ public class HazelcastClusteringService implements ClusteringService {
         }
         if (serviceConfig.multicastPort() > 0) {
             config.getNetworkConfig().getJoin().getMulticastConfig().setMulticastPort(serviceConfig.multicastPort());
+            config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(true);
             LOGGER.debug("Configured our multicast port to: {}", serviceConfig.multicastPort());
+        }
+        if(StringUtils.isNotBlank(serviceConfig.multicastGroup())){
+            config.getNetworkConfig().getJoin().getMulticastConfig().setMulticastGroup(serviceConfig.multicastGroup());
         }
         if (serviceConfig.outboundPorts() != null && !serviceConfig.outboundPorts().isEmpty()) {
             config.getNetworkConfig().setOutboundPorts(serviceConfig.outboundPorts());
@@ -112,11 +113,8 @@ public class HazelcastClusteringService implements ClusteringService {
         }
         this.hazelcastInstance = Hazelcast.newHazelcastInstance(config);
         LOGGER.info("Successfully initialized Hazelcast instance");
-        this.hazelcastInstance.getLifecycleService().addLifecycleListener(new LifecycleListener() {
-            @Override
-            public void stateChanged(LifecycleEvent event) {
-                LOGGER.warn("State Change: {}: {}", event.getState().name(), event.toString());
-            }
+        this.hazelcastInstance.getLifecycleService().addLifecycleListener((event) -> {
+            LOGGER.warn("{}: State Change: {}: {}", this.toString(), event.getState().name(), event.toString());
         });
     }
 
@@ -127,6 +125,10 @@ public class HazelcastClusteringService implements ClusteringService {
     public void deactivate() {
         LOGGER.info("Shutting down underlying hazelcast instance");
         this.hazelcastInstance.shutdown();
+    }
+
+    public int getMemberCount(){
+        return this.hazelcastInstance.getCluster().getMembers().size();
     }
 
 }

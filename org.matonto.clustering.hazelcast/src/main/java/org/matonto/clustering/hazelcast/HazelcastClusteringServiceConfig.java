@@ -41,6 +41,9 @@ public interface HazelcastClusteringServiceConfig extends ClusteringServiceConfi
     int multicastPort();
 
     @Meta.AD(required = false)
+    String multicastGroup();
+
+    @Meta.AD(required = false)
     Set<Integer> outboundPorts();
 
     @Meta.AD(required = false)
