@@ -24,6 +24,7 @@ package org.matonto.clustering.hazelcast;
  */
 
 import junit.framework.TestCase;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
@@ -36,6 +37,15 @@ import java.util.concurrent.ForkJoinTask;
 @RunWith(BlockJUnit4ClassRunner.class)
 public class HazelcastClusteringServiceTest extends TestCase {
 
+    private static String MULTICAST_GROUP = null;
+
+    @BeforeClass
+    public static void init() {
+        String osName = System.getProperty("os.name");
+        if (osName.contains("Mac") || osName.contains("Linux")) {
+            MULTICAST_GROUP = "224.0.0.1";
+        }
+    }
 
     @Test
     public void testClustering() throws Exception {
@@ -50,7 +60,9 @@ public class HazelcastClusteringServiceTest extends TestCase {
             map.put("instanceName", "instance01");
             map.put("basicPort", 5701);
             map.put("multicastPort", 54327);
-            map.put("multicastGroup", "224.0.0.1");
+            if (MULTICAST_GROUP != null) {
+                map.put("multicastGroup", MULTICAST_GROUP);
+            }
             s1.activate(null, map);
         });
 
@@ -59,7 +71,9 @@ public class HazelcastClusteringServiceTest extends TestCase {
             map.put("instanceName", "instance02");
             map.put("multicastPort", 54327);
             map.put("basicPort", 5702);
-            map.put("multicastGroup", "224.0.0.1");
+            if (MULTICAST_GROUP != null) {
+                map.put("multicastGroup", MULTICAST_GROUP);
+            }
             s2.activate(null, map);
         });
 
@@ -68,7 +82,9 @@ public class HazelcastClusteringServiceTest extends TestCase {
             map.put("instanceName", "instance03");
             map.put("multicastPort", 54327);
             map.put("basicPort", 5703);
-            map.put("multicastGroup", "224.0.0.1");
+            if (MULTICAST_GROUP != null) {
+                map.put("multicastGroup", MULTICAST_GROUP);
+            }
             s3.activate(null, map);
         });
 

@@ -31,7 +31,7 @@ public interface ClusteringServiceConfig {
 
     String id();
 
-    @Meta.AD(deflt = "true")
+    @Meta.AD(deflt = "true", required = false)
     boolean enabled();
 
     @Meta.AD(required = false)
