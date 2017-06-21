@@ -147,7 +147,11 @@ public class HazelcastClusteringService implements ClusteringService {
     @Deactivate
     public void deactivate() {
         LOGGER.info("Shutting down underlying hazelcast instance");
-        this.hazelcastInstance.shutdown();
+        if (this.hazelcastInstance != null) {
+            this.hazelcastInstance.shutdown();
+        }else{
+            LOGGER.debug("Already disabled, so deactivation is a noop");
+        }
     }
 
     /**
