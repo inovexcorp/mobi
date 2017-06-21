@@ -115,6 +115,12 @@ public class HazelcastClusteringService implements ClusteringService {
                 config.getGroupConfig().setPassword(serviceConfig.groupConfigPassword());
                 LOGGER.debug("Configured group password...");
             }
+            if (serviceConfig.multicastTimeoutSeconds() > 0) {
+                config.getNetworkConfig().getJoin().getMulticastConfig().setMulticastTimeoutSeconds(serviceConfig.multicastTimeoutSeconds());
+                LOGGER.debug("Configured multicast timeout seconds to: {}", serviceConfig.multicastTimeoutSeconds());
+            }
+
+
             this.hazelcastInstance = Hazelcast.newHazelcastInstance(config);
             LOGGER.info("Successfully initialized Hazelcast instance");
 
@@ -149,7 +155,7 @@ public class HazelcastClusteringService implements ClusteringService {
         LOGGER.info("Shutting down underlying hazelcast instance");
         if (this.hazelcastInstance != null) {
             this.hazelcastInstance.shutdown();
-        }else{
+        } else {
             LOGGER.debug("Already disabled, so deactivation is a noop");
         }
     }
