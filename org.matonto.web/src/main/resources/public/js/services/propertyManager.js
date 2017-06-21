@@ -98,11 +98,6 @@
                     namespace: prefixes.owl,
                     localName: 'disjointWith',
                     valuesKey: 'subDataProperties'
-                },
-                {
-                    namespace: prefixes.owl,
-                    localName: 'inverseOf',
-                    valuesKey: 'subDataProperties'
                 }
             ];
 
