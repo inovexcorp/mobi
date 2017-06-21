@@ -51,8 +51,7 @@ describe('Update Refs service', function() {
     });
 
     it('should replace all instances of a key in an object with the new key', function() {
-        var result,
-            obj = {
+            var obj = {
                 'test/0': 0,
                 'id': 'test/0',
                 props: [
@@ -71,6 +70,54 @@ describe('Update Refs service', function() {
             },
             result = {
                 'aaa/1': 0,
+                'id': 'aaa/1',
+                props: [
+                    {
+                        'aaa/1': 1
+                    }
+                ],
+                refs: ['aaa/1'],
+                items: [
+                    {
+                        iri: 'test/0',
+                        namespace: 'aaa/',
+                        localName: '1'
+                    }
+                ]
+            };
+        updateRefsSvc.update(obj, 'test/0', 'aaa/1');
+        expect(obj).toEqual(result);
+    });
+    it('should replace all nested instances of a key in an object with the new key.', function() {
+            var obj = {
+                'test/0': {
+                    'test/0': {
+                        'label': 'label',
+                        'ontologyIri': 'test/0'
+                    }
+                },
+                'id': 'test/0',
+                props: [
+                    {
+                        'test/0': 1
+                    }
+                ],
+                refs: ['test/0'],
+                items: [
+                    {
+                        iri: 'test/0',
+                        namespace: 'test/',
+                        localName: '0'
+                    }
+                ]
+            },
+            result = {
+                'aaa/1': {
+                    'aaa/1': {
+                        'label': 'label',
+                        'ontologyIri': 'aaa/1'
+                    }
+                },
                 'id': 'aaa/1',
                 props: [
                     {

@@ -119,8 +119,8 @@ describe('Upload Ontology Tab directive', function() {
                 expect(ontologyStateSvc.uploadThenGet).toHaveBeenCalledWith(controller.file, controller.title, controller.description, 'one,two', controller.type);
                 expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(jasmine.any(String));
                 expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(this.listItem.ontology);
-                expect(ontologyStateSvc.addState).toHaveBeenCalledWith(jasmine.any(String), jasmine.any(String), controller.type);
-                expect(ontologyStateSvc.setState).toHaveBeenCalledWith(jasmine.any(String));
+                expect(ontologyStateSvc.addState).toHaveBeenCalledWith(jasmine.any(String), jasmine.any(String), jasmine.any(String), controller.type);
+                expect(ontologyStateSvc.setState).toHaveBeenCalledWith(jasmine.any(String), jasmine.any(String));
                 expect(ontologyStateSvc.showUploadTab).toBe(false);
                 expect(controller.error).toBeUndefined();
             });
