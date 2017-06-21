@@ -24,10 +24,14 @@ package org.matonto.clustering.api;
  */
 
 /**
- *
+ * This service represents a way to navigate the local topology of nodes on the local network.
  */
 public interface ClusteringService {
 
+    /**
+     *
+     * @return The number of discovered local nodes in this cluster.
+     */
     int getMemberCount();
 
 }

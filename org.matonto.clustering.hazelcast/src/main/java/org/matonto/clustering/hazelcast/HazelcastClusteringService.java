@@ -128,6 +128,12 @@ public class HazelcastClusteringService implements ClusteringService {
         }
     }
 
+    /**
+     * Method triggered when the configuration changes for this service.
+     *
+     * @param context       The {@link BundleContext} for this service
+     * @param configuration The configuration map for this service
+     */
     @Modified
     public void modified(BundleContext context, Map<String, Object> configuration) {
         LOGGER.warn("Modified configuration of service! Going to deactivate, and re-activate with new configuration...");
@@ -144,6 +150,9 @@ public class HazelcastClusteringService implements ClusteringService {
         this.hazelcastInstance.shutdown();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public int getMemberCount() {
         return this.hazelcastInstance.getCluster().getMembers().size();

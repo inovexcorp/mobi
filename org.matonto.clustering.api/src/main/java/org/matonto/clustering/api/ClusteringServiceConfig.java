@@ -25,7 +25,9 @@ package org.matonto.clustering.api;
 
 import aQute.bnd.annotation.metatype.Meta;
 
-
+/**
+ * This interface describes the base service configuration for a {@link ClusteringService} implementation.
+ */
 @Meta.OCD
 public interface ClusteringServiceConfig {
 
