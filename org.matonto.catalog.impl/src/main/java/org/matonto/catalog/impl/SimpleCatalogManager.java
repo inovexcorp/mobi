@@ -1249,20 +1249,29 @@ public class SimpleCatalogManager implements CatalogManager {
      */
     private Conflict createConflict(Resource subject, IRI predicate, Model original, Model left, Model
             leftDeletions, Model right, Model rightDeletions) {
-        Difference leftDifference = new Difference.Builder()
-                .additions(mf.createModel(left).filter(subject, predicate, null))
-                .deletions(mf.createModel(leftDeletions).filter(subject, predicate, null))
-                .build();
-
-        Difference rightDifference = new Difference.Builder()
-                .additions(mf.createModel(right).filter(subject, predicate, null))
-                .deletions(mf.createModel(rightDeletions).filter(subject, predicate, null))
-                .build();
+        IRI rdfType = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI);
+        Difference.Builder leftDifference = new Difference.Builder();
+        Difference.Builder rightDifference = new Difference.Builder();
+        if (predicate.equals(rdfType)) {
+            leftDifference
+                    .additions(mf.createModel(left).filter(subject, null, null))
+                    .deletions(mf.createModel(leftDeletions).filter(subject, null, null));
+            rightDifference
+                    .additions(mf.createModel(right).filter(subject, null, null))
+                    .deletions(mf.createModel(rightDeletions).filter(subject, null, null));
+        } else {
+            leftDifference
+                    .additions(mf.createModel(left).filter(subject, predicate, null))
+                    .deletions(mf.createModel(leftDeletions).filter(subject, predicate, null));
+            rightDifference
+                    .additions(mf.createModel(right).filter(subject, predicate, null))
+                    .deletions(mf.createModel(rightDeletions).filter(subject, predicate, null));
+        }
 
         return new Conflict.Builder(mf.createModel(original).filter(subject, predicate, null),
                 vf.createIRI(subject.stringValue()))
-                .leftDifference(leftDifference)
-                .rightDifference(rightDifference)
+                .leftDifference(leftDifference.build())
+                .rightDifference(rightDifference.build())
                 .build();
     }
 

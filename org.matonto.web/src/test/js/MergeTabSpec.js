@@ -113,6 +113,16 @@ describe('Merge Tab directive', function() {
                 expect(controller.error).toEqual(error);
             });
         });
+        it('mergeWithResolutions calls the correct functions', function() {
+            spyOn(controller, 'merge');
+            var selectedLeft = {resolved: 'left', right: {additions: ['add-right'], deletions: ['del-right']}};
+            var selectedRight = {resolved: 'right', left: {additions: ['add-left'], deletions: ['del-left']}};
+            controller.conflicts = [selectedLeft, selectedRight];
+            controller.mergeWithResolutions();
+            expect(controller.resolutions.additions).toEqual(['del-right', 'del-left']);
+            expect(controller.resolutions.deletions).toEqual(['add-right', 'add-left']);
+            expect(controller.merge).toHaveBeenCalled();
+        });
         describe('merge calls the correct functions', function() {
             var mergeDefer;
             beforeEach(function() {
