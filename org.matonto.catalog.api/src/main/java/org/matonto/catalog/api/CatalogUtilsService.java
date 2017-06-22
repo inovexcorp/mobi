@@ -23,6 +23,7 @@ package org.matonto.catalog.api;
  * #L%
  */
 
+import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.Distribution;
@@ -37,6 +38,8 @@ import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.repository.api.RepositoryConnection;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 
 public interface CatalogUtilsService {
@@ -441,6 +444,71 @@ public interface CatalogUtilsService {
      * @param conn A RepositoryConnection to use for lookup.
      */
     void addChanges(Resource targetNamedGraph, Resource oppositeNamedGraph, Model changes, RepositoryConnection conn);
+
+    /**
+     * Gets a List which contains all of the Commit ids in the specified direction, either ascending or
+     * descending by date. If descending, the provided Resource identifying a Commit will be first.
+     *
+     * @param commitId The Resource identifying the Commit that you want to get the chain for.
+     * @param conn     The RepositoryConnection which will be queried for the Commits.
+     * @param asc      Whether or not the List should be ascending by date
+     * @return List of Resource ids for the requested Commits.
+     */
+    List<Resource> getCommitChain(Resource commitId, boolean asc, RepositoryConnection conn);
+
+    /**
+     * Builds the Model based on the provided Iterator of Commit ids.
+     *
+     * @param commits The Iterator of Commit ids which are supposed to be contained in the Model in ascending order.
+     * @param conn     The RepositoryConnection which contains the requested Commits.
+     * @return The Model containing the summation of all the Commits statements.
+     */
+    Model getModelFromCommits(Iterator<Resource> commits, RepositoryConnection conn);
+
+    /**
+     * Builds the Model based on the provided List of Commit ids.
+     *
+     * @param commits The List of Commit ids which are supposed to be contained in the Model in ascending order.
+     * @param conn     The RepositoryConnection which contains the requested Commits.
+     * @return The Model containing the summation of all the Commits statements.
+     */
+    Model getModelFromCommits(List<Resource> commits, RepositoryConnection conn);
+
+    /**
+     * Gets the Model which represents the entity at the instance of theCommit identified by the first Resource in
+     * the provided List using previous Commit data to construct it.
+     *
+     * @param commits The ordered List of Resource identifying the Commits to create a compiled resource from
+     * @return Model which represents the resource at the Commit's point in history.
+     */
+    Model getCompiledResource(List<Resource> commits, RepositoryConnection conn);
+
+    /**
+     * Gets the Model which represents the entity at the instance of the Commit identified by the provided Resource
+     * using previous Commit data to construct it.
+     *
+     * @param commitId The Resource identifying the Commit identifying the spot in the entity's history that you wish
+     *                 to retrieve.
+     * @return Model which represents the resource at the Commit's point in history.
+     */
+    Model getCompiledResource(Resource commitId, RepositoryConnection conn);
+
+    /**
+     * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference.
+     *
+     * @param commitId The Resource identifying the Commit to retrieve the Difference from.
+     * @return A Difference object containing the addition and deletion statements of a Commit.
+     */
+    Difference getCommitDifference(Resource commitId, RepositoryConnection conn);
+
+    /**
+     * Applies the additions and deletions in the provided Difference to the provided Model and returns the result.
+     *
+     * @param base A Model.
+     * @param diff A Difference containing statements to add and to delete.
+     * @return The base Model with statements added and deleted.
+     */
+    Model applyDifference(Model base, Difference diff);
 
     /**
      * Returns an IllegalArgumentException stating that an object of the type determined by the provided OrmFactory with

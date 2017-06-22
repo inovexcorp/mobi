@@ -102,6 +102,8 @@ public interface OntologyManager {
      */
     Ontology createOntology(Model model);
 
+    boolean ontologyIriExists(IRI ontologyIRI);
+
     /**
      * Retrieves an Ontology using a record id and the head commit of its MASTER branch. Returns an Optional of the
      * Ontology if found, otherwise Optional.empty().

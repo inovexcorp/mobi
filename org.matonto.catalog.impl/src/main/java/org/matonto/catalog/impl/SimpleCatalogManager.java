@@ -33,10 +33,10 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.CatalogUtilsService;
-import org.matonto.catalog.api.builder.Conflict;
-import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
+import org.matonto.catalog.api.builder.Conflict;
+import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.builder.DistributionConfig;
 import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
@@ -93,8 +93,6 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
@@ -862,7 +860,7 @@ public class SimpleCatalogManager implements CatalogManager {
         removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
         Optional<Resource> headCommit = branch.getHead_resource();
         if (headCommit.isPresent()) {
-            List<Resource> chain = getCommitChain(headCommit.get(), conn);
+            List<Resource> chain = utils.getCommitChain(headCommit.get(), false, conn);
             IRI commitIRI = vf.createIRI(Tag.commit_IRI);
             Set<Resource> deltaIRIs = new HashSet<>();
             for (Resource commitId : chain) {
@@ -1029,7 +1027,7 @@ public class SimpleCatalogManager implements CatalogManager {
             utils.validateBranch(catalogId, versionedRDFRecordId, branchId, conn);
             Branch branch = utils.getExpectedObject(branchId, branchFactory, conn);
             Resource head = utils.getHeadCommitIRI(branch);
-            if (head.equals(commitId) || getCommitChain(head, conn).contains(commitId)) {
+            if (head.equals(commitId) || utils.getCommitChain(head, false, conn).contains(commitId)) {
                 return Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
             } else {
                 return Optional.empty();
@@ -1074,25 +1072,10 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Difference getCommitDifference(Resource commitId) {
-        return getCommitDifference(commitId, commitFactory);
-    }
-
-    private <T extends Commit> Difference getCommitDifference(Resource commitId, OrmFactory<T> factory) {
         long start = System.currentTimeMillis();
         try (RepositoryConnection conn = repository.getConnection()) {
-            utils.validateResource(commitId, factory.getTypeIRI(), conn);
-            Resource additionsIRI = utils.getAdditionsResource(commitId, conn);
-            Resource deletionsIRI = utils.getDeletionsResource(commitId, conn);
-            Model addModel = mf.createModel();
-            Model deleteModel = mf.createModel();
-            conn.getStatements(null, null, null, additionsIRI).forEach(statement ->
-                    addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
-            conn.getStatements(null, null, null, deletionsIRI).forEach(statement ->
-                    deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
-            return new Difference.Builder()
-                    .additions(addModel)
-                    .deletions(deleteModel)
-                    .build();
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            return utils.getCommitDifference(commitId, conn);
         } finally {
             log.trace("getCommitDifference took {}ms", System.currentTimeMillis() - start);
         }
@@ -1123,29 +1106,23 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public Model applyInProgressCommit(Resource inProgressCommitId, Model entity) {
-        Difference diff = getCommitDifference(inProgressCommitId, inProgressCommitFactory);
-        Model result = mf.createModel(entity);
-        result.addAll(diff.getAdditions());
-        diff.getDeletions().forEach(statement -> result.remove(statement.getSubject(), statement.getPredicate(),
-                statement.getObject()));
-        return result;
+        long start = System.currentTimeMillis();
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.validateResource(inProgressCommitId, inProgressCommitFactory.getTypeIRI(), conn);
+            return utils.applyDifference(entity, utils.getCommitDifference(inProgressCommitId, conn));
+        } finally {
+            log.trace("applyInProgressCommit took {}ms", System.currentTimeMillis() - start);
+        }
     }
 
     @Override
     public List<Commit> getCommitChain(Resource commitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
-            return getCommitChain(commitId, conn).stream()
+            return utils.getCommitChain(commitId, false, conn).stream()
                     .map(resource -> utils.getExpectedObject(resource, commitFactory, conn))
                     .collect(Collectors.toList());
         }
-    }
-
-    private List<Resource> getCommitChain(Resource commitId, RepositoryConnection conn) {
-        List<Resource> results = new ArrayList<>();
-        Iterator<Value> commits = getCommitChainIterator(commitId, conn, false);
-        commits.forEachRemaining(commit -> results.add((Resource) commit));
-        return results;
     }
 
     @Override
@@ -1153,7 +1130,7 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
             Resource head = utils.getHeadCommitIRI(branch);
-            return getCommitChain(head, conn).stream()
+            return utils.getCommitChain(head, false, conn).stream()
                     .map(resource -> utils.getExpectedObject(resource, commitFactory, conn))
                     .collect(Collectors.toList());
         }
@@ -1162,16 +1139,9 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public Model getCompiledResource(Resource commitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            return getCompiledResource(commitId, conn);
+            utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
+            return utils.getCompiledResource(commitId, conn);
         }
-    }
-
-    private Model getCompiledResource(Resource commitId, RepositoryConnection conn) {
-        utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
-        Iterator<Value> iterator = getCommitChainIterator(commitId, conn, true);
-        Model model = createModelFromIterator(iterator, conn);
-        model.remove(null, null, null, vf.createIRI(DELETION_CONTEXT));
-        return model;
     }
 
     @Override
@@ -1179,50 +1149,36 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(leftId, commitFactory.getTypeIRI(), conn);
             utils.validateResource(rightId, commitFactory.getTypeIRI(), conn);
-            LinkedList<Value> leftList = new LinkedList<>();
-            LinkedList<Value> rightList = new LinkedList<>();
 
-            getCommitChainIterator(leftId, conn, true).forEachRemaining(leftList::add);
-            getCommitChainIterator(rightId, conn, true).forEachRemaining(rightList::add);
+            /*ListIterator<Resource> leftIterator = utils.getCommitChain(leftId, true, conn).listIterator();
+            ListIterator<Resource> rightIterator = utils.getCommitChain(rightId, true, conn).listIterator();*/
 
-            ListIterator<Value> leftIterator = leftList.listIterator();
-            ListIterator<Value> rightIterator = rightList.listIterator();
-
-            Value originalEnd = null;
-            while (leftIterator.hasNext() && rightIterator.hasNext()) {
-                Value currentId = leftIterator.next();
-                if (!currentId.equals(rightIterator.next())) {
-                    leftIterator.previous();
-                    rightIterator.previous();
-                    break;
-                } else {
-                    originalEnd = currentId;
-                }
-            }
-            if (originalEnd == null) {
+            List<Resource> leftCommits = utils.getCommitChain(leftId, true, conn);
+            List<Resource> rightCommits = utils.getCommitChain(rightId, true, conn);
+            List<Resource> commonCommits = new ArrayList<>(leftCommits);
+            commonCommits.retainAll(rightCommits);
+            if (commonCommits.size() == 0) {
                 throw new IllegalArgumentException("No common parent between Commit " + leftId + " and " + rightId);
             }
-
-            Model left = createModelFromIterator(leftIterator, conn);
-            Model right = createModelFromIterator(rightIterator, conn);
+            Resource originalEnd = commonCommits.get(0);
+            leftCommits.removeAll(commonCommits);
+            rightCommits.removeAll(commonCommits);
+            Model left = utils.getModelFromCommits(leftCommits, conn);
+            Model right = utils.getModelFromCommits(rightCommits, conn);
 
             Model duplicates = mf.createModel(left);
             duplicates.retainAll(right);
-
             left.removeAll(duplicates);
             right.removeAll(duplicates);
 
-            Resource deletionContext = vf.createIRI(DELETION_CONTEXT);
-
+            Resource deletionContext = vf.createIRI(SimpleCatalogUtilsService.DELETION_CONTEXT);
             Model leftDeletions = mf.createModel(left.filter(null, null, null, deletionContext));
             Model rightDeletions = mf.createModel(right.filter(null, null, null, deletionContext));
-
             left.removeAll(leftDeletions);
             right.removeAll(rightDeletions);
 
             Set<Conflict> result = new HashSet<>();
-
-            Model original = getCompiledResource((Resource) originalEnd, conn);
+            Model original = utils.getCompiledResource(originalEnd, conn);
             IRI rdfType = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI);
 
             leftDeletions.forEach(statement -> {
@@ -1426,72 +1382,6 @@ public class SimpleCatalogManager implements CatalogManager {
                             .forEach(resource -> removeBranch(versionedRDFRecord.getResource(), resource, conn));
                     utils.removeObject(versionedRDFRecord, conn);
                 });
-    }
-
-    /**
-     * Adds the statements from the Revision associated with the Commit identified by the provided Resource to the
-     * provided Model using the RepositoryConnection to get the statements from the repository.
-     *
-     * @param model    The Model to update.
-     * @param commitId The Resource identifying the Commit.
-     * @param conn     The RepositoryConnection to query the repository.
-     * @return A Model with the proper statements added.
-     */
-    private Model addRevisionStatementsToModel(Model model, Resource commitId, RepositoryConnection conn) {
-        Resource additionsId = utils.getAdditionsResource(commitId, conn);
-        Resource deletionsId = utils.getDeletionsResource(commitId, conn);
-        conn.getStatements(null, null, null, additionsId).forEach(statement -> {
-            Resource subject = statement.getSubject();
-            IRI predicate = statement.getPredicate();
-            Value object = statement.getObject();
-            if (!model.contains(subject, predicate, object)) {
-                model.add(subject, predicate, object);
-            }
-        });
-        conn.getStatements(null, null, null, deletionsId).forEach(statement -> {
-            Resource subject = statement.getSubject();
-            IRI predicate = statement.getPredicate();
-            Value object = statement.getObject();
-            if (model.contains(subject, predicate, object)) {
-                model.remove(subject, predicate, object);
-            } else {
-                model.add(subject, predicate, object, vf.createIRI(DELETION_CONTEXT));
-            }
-        });
-        return model;
-    }
-
-    /**
-     * Gets an iterator which contains all of the Resources (commits) is the specified direction, either ascending or
-     * descending by date. If descending, the provided Resource identifying a commit will be first.
-     *
-     * @param commitId The Resource identifying the commit that you want to get the chain for.
-     * @param conn     The RepositoryConnection which will be queried for the Commits.
-     * @param asc      Whether or not the iterator should be ascending by date
-     * @return Iterator of Values containing the requested commits.
-     */
-    private Iterator<Value> getCommitChainIterator(Resource commitId, RepositoryConnection conn, boolean asc) {
-        TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_CHAIN);
-        query.setBinding(COMMIT_BINDING, commitId);
-        TupleQueryResult result = query.evaluate();
-        LinkedList<Value> commits = new LinkedList<>();
-        result.forEach(bindingSet -> bindingSet.getBinding(PARENT_BINDING).ifPresent(binding ->
-                commits.add(binding.getValue())));
-        commits.addFirst(commitId);
-        return asc ? commits.descendingIterator() : commits.iterator();
-    }
-
-    /**
-     * Builds the Model based on the provided Iterator and Resource.
-     *
-     * @param iterator The Iterator of commits which are supposed to be contained in the Model in ascending order.
-     * @param conn     The RepositoryConnection which contains the requested Commits.
-     * @return The Model containing the summation of all the Commits statements.
-     */
-    private Model createModelFromIterator(Iterator<Value> iterator, RepositoryConnection conn) {
-        Model model = mf.createModel();
-        iterator.forEachRemaining(value -> addRevisionStatementsToModel(model, (Resource) value, conn));
-        return model;
     }
 
     private boolean commitIsReferenced(Resource commitId, RepositoryConnection conn) {

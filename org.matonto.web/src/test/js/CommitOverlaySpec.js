@@ -70,10 +70,10 @@ describe('Commit Overlay directive', function() {
             expect(element.find('form').length).toBe(1);
         });
         it('depending on whether there is a error message', function() {
-            expect(element.find('error-message').length).toBe(0);
-            controller.errorMessage = 'error';
+            expect(element.find('error-display').length).toBe(0);
+            controller.error = 'error';
             scope.$digest();
-            expect(element.find('error-message').length).toBe(1);
+            expect(element.find('error-display').length).toBe(1);
         });
         it('depending on whether the selected item is up to date', function() {
             expect(element.find('info-message').length).toBe(0);

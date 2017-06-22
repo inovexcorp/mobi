@@ -28,8 +28,10 @@ import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
 import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
+import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.exception.MatOntoException;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
@@ -37,6 +39,8 @@ import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.builder.OntologyRecordConfig;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
+import org.matonto.ontology.core.api.pagination.OntologyPaginatedSearchParams;
+import org.matonto.ontology.core.api.pagination.OntologyRecordSearchResults;
 import org.matonto.ontology.core.utils.MatontoOntologyCreationException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.ontology.utils.cache.OntologyCache;
@@ -289,6 +293,17 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public boolean ontologyIriExists(IRI ontologyIRI) {
+        OntologyPaginatedSearchParams params = new OntologyPaginatedSearchParams(valueFactory);
+        PaginatedSearchResults<Record> temp = catalogManager.findRecord(catalogManager.getLocalCatalogIRI(),
+                params.build());
+        return new OntologyRecordSearchResults(temp, ontologyRecordFactory)
+                .getPage().stream()
+                .anyMatch(ontologyRecord -> ontologyRecord.getOntologyIRI().isPresent()
+                        && ontologyRecord.getOntologyIRI().get().equals(ontologyIRI));
+    }
+
+    @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId) {
         long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
         Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
@@ -474,7 +489,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     private Resource getHeadOfBranch(Branch branch) {
         return branch.getHead_resource().orElseThrow(() ->
-                new IllegalStateException("Branch " + branch.getResource().stringValue() + "has no head Commit set."));
+                new IllegalStateException("Branch " + branch.getResource() + "has no head Commit set."));
     }
 
     /**

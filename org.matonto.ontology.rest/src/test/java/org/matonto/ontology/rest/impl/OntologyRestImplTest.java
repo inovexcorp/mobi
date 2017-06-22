@@ -306,7 +306,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         rest.setValueFactory(valueFactory);
         rest.setOntologyManager(ontologyManager);
         rest.setCatalogManager(catalogManager);
-        rest.setOntologyRecordFactory(ontologyRecordFactory);
         rest.setEngineManager(engineManager);
         rest.setSesameTransformer(sesameTransformer);
         rest.setCacheManager(cacheManager);
@@ -721,6 +720,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void testUploadExistingOntologyFile() {
+        // Setup:
+        when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(true);
         record.setOntologyIRI(ontologyIRI);
         when(results.getPage()).thenReturn(Collections.singletonList(record));
         FormDataMultiPart fd = new FormDataMultiPart();
@@ -784,6 +785,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void testUploadExistingOntologyJson() {
+        // Setup:
+        when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(true);
         record.setOntologyIRI(ontologyIRI);
         when(results.getPage()).thenReturn(Collections.singletonList(record));
         JSONObject ontologyJson = new JSONObject().element("@id", "http://matonto.org/ontology");

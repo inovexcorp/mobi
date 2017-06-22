@@ -38,10 +38,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
-import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.catalog.api.versioning.VersioningManager;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
@@ -54,9 +52,6 @@ import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.builder.OntologyRecordConfig;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
-import org.matonto.ontology.core.api.pagination.OntologyPaginatedSearchParams;
-import org.matonto.ontology.core.api.pagination.OntologyRecordSearchResults;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
@@ -108,7 +103,6 @@ public class OntologyRestImpl implements OntologyRest {
     private ValueFactory valueFactory;
     private OntologyManager ontologyManager;
     private CatalogManager catalogManager;
-    private OntologyRecordFactory ontologyRecordFactory;
     private EngineManager engineManager;
     private SesameTransformer sesameTransformer;
     private CacheManager cacheManager;
@@ -134,11 +128,6 @@ public class OntologyRestImpl implements OntologyRest {
     @Reference
     public void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
-        this.ontologyRecordFactory = ontologyRecordFactory;
     }
 
     @Reference
@@ -1308,16 +1297,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     private void testOntologyIRIUniqueness(IRI ontologyIRI) {
-        OntologyPaginatedSearchParams params = new OntologyPaginatedSearchParams(valueFactory);
-        PaginatedSearchResults<Record> temp = catalogManager.findRecord(catalogManager.getLocalCatalogIRI(),
-                params.build());
-        Optional<OntologyRecord> matchingRecord = new OntologyRecordSearchResults(temp, ontologyRecordFactory)
-                .getPage().stream()
-                .filter(ontologyRecord -> ontologyRecord.getOntologyIRI().isPresent()
-                        && ontologyRecord.getOntologyIRI().get().equals(ontologyIRI))
-                .findFirst();
-        if (matchingRecord.isPresent()) {
-            throw ErrorUtils.sendError("Ontology already exists with that IRI", Response.Status.BAD_REQUEST);
+        if (ontologyManager.ontologyIriExists(ontologyIRI)) {
+            throw ErrorUtils.sendError("Ontology already exists with IRI " + ontologyIRI, Response.Status.BAD_REQUEST);
         }
     }
 
