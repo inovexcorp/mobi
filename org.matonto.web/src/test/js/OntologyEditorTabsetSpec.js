@@ -36,7 +36,7 @@ describe('Ontology Editor Tabset directive', function() {
             ontologyStateSvc = _ontologyStateService_;
         });
 
-        ontologyStateSvc.list = [{recordId: 'A', upToDate: false}, {recordId: 'B', upToDate: true}];
+        ontologyStateSvc.states = [{recordId: 'A', recordTitle: 'A', upToDate: false}, {recordId: 'B', recordTitle: 'B', upToDate: true}];
         var types = {'A': 'ontology', 'B': 'vocabulary'};
         ontologyStateSvc.getState.and.callFake(function(id) {
             return {type: _.get(types, id)};
@@ -56,7 +56,7 @@ describe('Ontology Editor Tabset directive', function() {
             expect(element.querySelectorAll('tab ontology-default-tab').length).toBe(1);
         });
         it('depending on how many ontologies are open', function() {
-            expect(element.find('tab').length).toBe(ontologyStateSvc.list.length + 1);
+            expect(element.find('tab').length).toBe(ontologyStateSvc.states.length + 1);
         });
         it('depending on whether a ontology is up to date', function() {
             var tabs = element.find('tab');
