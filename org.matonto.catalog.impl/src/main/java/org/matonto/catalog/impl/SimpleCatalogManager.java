@@ -1150,9 +1150,6 @@ public class SimpleCatalogManager implements CatalogManager {
             utils.validateResource(leftId, commitFactory.getTypeIRI(), conn);
             utils.validateResource(rightId, commitFactory.getTypeIRI(), conn);
 
-            /*ListIterator<Resource> leftIterator = utils.getCommitChain(leftId, true, conn).listIterator();
-            ListIterator<Resource> rightIterator = utils.getCommitChain(rightId, true, conn).listIterator();*/
-
             List<Resource> leftCommits = utils.getCommitChain(leftId, true, conn);
             List<Resource> rightCommits = utils.getCommitChain(rightId, true, conn);
             List<Resource> commonCommits = new ArrayList<>(leftCommits);
@@ -1160,7 +1157,7 @@ public class SimpleCatalogManager implements CatalogManager {
             if (commonCommits.size() == 0) {
                 throw new IllegalArgumentException("No common parent between Commit " + leftId + " and " + rightId);
             }
-            Resource originalEnd = commonCommits.get(0);
+            Resource originalEnd = commonCommits.get(commonCommits.size() - 1);
             leftCommits.removeAll(commonCommits);
             rightCommits.removeAll(commonCommits);
             Model left = utils.getModelFromCommits(leftCommits, conn);

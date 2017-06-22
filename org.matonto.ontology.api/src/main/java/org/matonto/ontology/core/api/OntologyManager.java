@@ -102,6 +102,12 @@ public interface OntologyManager {
      */
     Ontology createOntology(Model model);
 
+    /**
+     * Tests whether an OntologyRecord with the provided ontology IRI exists in the Catalog.
+     *
+     * @param ontologyIRI An ontology IRI
+     * @return True if the ontology exists; false otherwise
+     */
     boolean ontologyIriExists(IRI ontologyIRI);
 
     /**
