@@ -705,39 +705,97 @@ describe('Mapping Manager service', function() {
     it('should collect incompatible entities within a mapping based on its source ontologies', function() {
         var mapping = {jsonld: []};
         var sourceOntologies = [{}];
-        var classMapping = {id: 'class'};
-        var propMapping = {id: 'prop'};
+        var classMapping = {id: 'classMapping'};
+        var classObj = {'id': 'class'};
+        var dataPropMapping = {id: 'dataMapping'};
+        var dataPropObj = {'id': 'dataProp'};
+        var objectPropMapping = {id: 'objectMapping'};
+        var objectPropObj = {'id': 'objectProp'};
+        var deprecatedIds = [];
+        var existsIds = [];
+        ontologyManagerSvc.getEntity.and.callFake(function(arr, id) {
+            if (id === classObj.id) {
+                return classObj;
+            } else if (id === dataPropObj.id) {
+                return dataPropObj;
+            } else if (id === objectPropObj.id) {
+                return objectPropObj;
+            } else {
+                return undefined;
+            }
+        });
+        spyOn(mappingManagerSvc, 'getPropIdByMapping').and.callFake(function(propObj) {
+            if (propObj === objectPropMapping) {
+                return objectPropObj.id;
+            } else if (propObj === dataPropMapping) {
+                return dataPropObj.id;
+            } else {
+                return '';
+            }
+        });
+        spyOn(mappingManagerSvc, 'findSourceOntologyWithProp').and.callFake(function(propId) {
+            return _.includes(existsIds, propId) ? {} : undefined;
+        });
+        ontologyManagerSvc.isDeprecated.and.callFake(function(obj) {
+            return _.includes(deprecatedIds, obj.id);
+        });
+        // Class does not exist
         spyOn(mappingManagerSvc, 'getAllClassMappings').and.returnValue([classMapping]);
-        spyOn(mappingManagerSvc, 'getClassIdByMapping').and.returnValue(classMapping.id);
+        spyOn(mappingManagerSvc, 'getClassIdByMapping').and.returnValue(classObj.id);
         spyOn(mappingManagerSvc, 'findSourceOntologyWithClass').and.returnValue(undefined);
         expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping]);
 
+        // Class is deprecated
         mappingManagerSvc.findSourceOntologyWithClass.and.returnValue({});
-        spyOn(mappingManagerSvc, 'getPropMappingsByClass').and.returnValue([propMapping]);
-        spyOn(mappingManagerSvc, 'getPropIdByMapping').and.returnValue(propMapping.id);
-        spyOn(mappingManagerSvc, 'findSourceOntologyWithProp').and.returnValue(undefined);
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([propMapping]);
+        deprecatedIds.push(classObj.id);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping]);
 
-        mappingManagerSvc.annotationProperties = [propMapping.id];
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([]);
+        // Data property does not exist and is not an annotation property
+        spyOn(mappingManagerSvc, 'getAllDataMappings').and.returnValue([dataPropMapping]);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping, dataPropMapping]);
 
+        // Data property is an annotation property
+        mappingManagerSvc.annotationProperties = [dataPropObj.id];
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping]);
+
+        // Data property is deprecated
         mappingManagerSvc.annotationProperties = [];
-        mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
-        ontologyManagerSvc.isObjectProperty.and.returnValue(true);
-        spyOn(mappingManagerSvc, 'isDataMapping').and.returnValue(true);
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([propMapping]);
+        existsIds.push(dataPropObj.id);
+        deprecatedIds.push(dataPropObj.id);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping, dataPropMapping]);
 
-        mappingManagerSvc.isDataMapping.and.returnValue(false);
-        spyOn(mappingManagerSvc, 'getClassIdByMappingId').and.returnValue('test');
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([propMapping]);
-
-        mappingManagerSvc.getClassIdByMappingId.and.returnValue('');
-        ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-        ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
-        spyOn(mappingManagerSvc, 'isObjectMapping').and.returnValue(true);
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([propMapping]);
-
+        // Data property is not a data property
+        _.pull(deprecatedIds, dataPropObj.id);
         ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping, dataPropMapping]);
+
+        // Object property does not exist
+        ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
+        spyOn(mappingManagerSvc, 'getAllObjectMappings').and.returnValue([objectPropMapping]);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping, objectPropMapping]);
+
+        // Object property is deprecated
+        existsIds.push(objectPropObj.id);
+        deprecatedIds.push(objectPropObj.id);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping, objectPropMapping]);
+
+        // Object property is not a object property
+        _.pull(deprecatedIds, objectPropObj.id);
+        ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping, objectPropMapping]);
+
+        // Object property range class is not the same
+        ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+        spyOn(mappingManagerSvc, 'getClassIdByMappingId').and.returnValue(classObj.id);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping, objectPropMapping]);
+
+        // Object property range is incompatible
+        utilSvc.getPropertyId.and.returnValue(classObj.id);
+        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping, objectPropMapping]);
+
+        // S'all good
+        mappingManagerSvc.getClassIdByMapping.and.returnValue(classObj.id);
+        _.pull(deprecatedIds, classObj.id);
         expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([]);
     });
     describe('should get a data mapping from a class mapping', function() {

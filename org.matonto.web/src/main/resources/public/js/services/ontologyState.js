@@ -63,7 +63,7 @@
                 ontologyId: '',
                 importedOntologies: [],
                 importedOntologyIds: [],
-                annotations: angular.copy(propertyManagerService.defaultAnnotations),
+                annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.owlAnnotations)),
                 dataPropertyRange: om.defaultDatatypes,
                 subClasses: [],
                 subDataProperties: [],
@@ -385,6 +385,7 @@
                     listItem.annotations = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
                         propertyManagerService.defaultAnnotations,
+                        propertyManagerService.owlAnnotations,
                         _.isMatch
                     );
                     listItem.subClasses = _.get(response[0], 'classes');
