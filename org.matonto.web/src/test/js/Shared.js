@@ -957,7 +957,9 @@ function mockExplore() {
         $provide.service('exploreService', function($q) {
             this.getClassDetails = jasmine.createSpy('getClassDetails').and.returnValue($q.when([]));
             this.getClassInstanceDetails = jasmine.createSpy('getClassInstanceDetails').and.returnValue($q.when([]));
+            this.getClassPropertyDetails = jasmine.createSpy('getClassPropertyDetails').and.returnValue($q.when([]));
             this.getInstance = jasmine.createSpy('getInstance').and.returnValue($q.when({}));
+            this.updateInstance = jasmine.createSpy('updateInstance').and.returnValue($q.when({}));
             this.createPagedResultsObject = jasmine.createSpy('createPagedResultsObject').and.returnValue({});
         });
     });

@@ -93,6 +93,11 @@
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-multipart</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>ontology.api</artifactId>
+            <version>1.8.15-SNAPSHOT</version>
+        </dependency>
 
         <dependency>
             <groupId>org.glassfish.jersey.test-framework.providers</groupId>
@@ -110,6 +115,12 @@
             <groupId>org.matonto</groupId>
             <artifactId>repository.impl.sesame</artifactId>
             <version>1.8.14</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>ontology.core.impl.owlapi</artifactId>
+            <version>1.8.15-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

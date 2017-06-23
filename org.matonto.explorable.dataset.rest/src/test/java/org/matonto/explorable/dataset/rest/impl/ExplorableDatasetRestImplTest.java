@@ -42,6 +42,12 @@ import org.matonto.dataset.api.builder.OntologyIdentifier;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory;
 import org.matonto.ontologies.dcterms._Thing;
+import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyManager;
+import org.matonto.ontology.core.api.propertyexpression.DataProperty;
+import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
+import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
+import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -78,6 +84,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -101,12 +108,22 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     private DatasetRecord record;
     private String commitId;
     private Model compiledModel;
+    private IRI classId;
+    private DataProperty dataProperty;
+    private ObjectProperty objectProperty;
+
+    private static Set<DataProperty> dataProperties = new HashSet<>();
+    private static Set<ObjectProperty> objectProperties = new HashSet<>();
+    private static Set<Resource> range = new HashSet<>();
 
     private static final String RECORD_ID_STR = "https://matonto.org/records#90075db8-e0b1-45b8-9f9e-1eda496ebcc5";
     private static final String CLASS_ID_STR = "http://matonto.org/ontologies/uhtc/Material";
+    private static final String CLASS_ID_STR_2 = "http://matonto.org/ontologies/uhtc/CrystalStructure";
     private static final String INSTANCE_ID_STR = "http://matonto.org/data/uhtc/material/c1855eb9-89dc-445e-8f02-22c1162c0844";
     private static final String MISSING_ID = "http://matonto.org/data/missing";
     private static final String LARGE_ID = "http://matonto.org/data/large";
+    private static final String DATA_PROPERTY_ID = "http://matonto.org/data-property";
+    private static final String OBJECT_PROPERTY_ID = "http://matonto.org/object-property";
 
     @Mock
     private DatasetManager datasetManager;
@@ -119,6 +136,12 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @Mock
     private SesameTransformer sesameTransformer;
+
+    @Mock
+    private Ontology ontology;
+
+    @Mock
+    private OntologyManager ontologyManager;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -164,19 +187,30 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         InputStream compiledData = getClass().getResourceAsStream("/compiled-resource.trig");
         compiledModel = Values.matontoModel(Rio.parse(compiledData, "", RDFFormat.TRIG));
 
+        classId = vf.createIRI(CLASS_ID_STR);
+
+        dataProperty = new SimpleDataProperty(vf.createIRI(DATA_PROPERTY_ID));
+        dataProperties.add(dataProperty);
+
+        objectProperty = new SimpleObjectProperty(vf.createIRI(OBJECT_PROPERTY_ID));
+        objectProperties.add(objectProperty);
+
+        range.add(vf.createIRI(MISSING_ID));
+
         rest = new ExplorableDatasetRestImpl();
         rest.setCatalogManager(catalogManager);
         rest.setDatasetManager(datasetManager);
         rest.setFactory(vf);
         rest.setSesameTransformer(sesameTransformer);
         rest.setModelFactory(mf);
+        rest.setOntologyManager(ontologyManager);
 
         return new ResourceConfig().register(rest);
     }
 
     @BeforeMethod
     public void setupMocks() {
-        reset(datasetManager, datasetConnection, catalogManager, sesameTransformer);
+        reset(datasetManager, datasetConnection, catalogManager, sesameTransformer, ontology, ontologyManager);
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.of(record));
         when(datasetManager.getConnection(recordId)).thenReturn(datasetConnection);
         when(datasetConnection.prepareTupleQuery(any(String.class))).thenAnswer(i -> conn.prepareTupleQuery(i.getArgumentAt(0, String.class)));
@@ -184,6 +218,12 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(compiledModel);
         when(sesameTransformer.matontoModel(any(org.openrdf.model.Model.class))).thenAnswer(i -> Values.matontoModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
         when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
+        when(ontology.getAllClassDataProperties(classId)).thenReturn(dataProperties);
+        when(ontology.getAllClassObjectProperties(classId)).thenReturn(objectProperties);
+        when(ontology.getDataPropertyRange(dataProperty)).thenReturn(range);
+        when(ontology.getObjectPropertyRange(objectProperty)).thenReturn(range);
+        when(ontology.containsClass(classId)).thenReturn(true);
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
     }
 
     @AfterTest
@@ -368,6 +408,34 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
+    public void getClassPropertyDetailsTest() throws Exception {
+        JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
+                .getResourceAsStream("/expected-class-property-details.json")));
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/property-details").request().get();
+        assertEquals(response.getStatus(), 200);
+        JSONArray details = JSONArray.fromObject(response.readEntity(String.class));
+        assertEquals(details, expected);
+    }
+
+    @Test
+    public void getClassPropertyDetailsWhenNoPropertiesTest() throws Exception {
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR_2) + "/property-details").request().get();
+        assertEquals(response.getStatus(), 200);
+        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+        assertEquals(responseArray.size(), 0);
+    }
+
+    @Test
+    public void getClassPropertyDetailsWithEmptyDatasetRecordTest() {
+        when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.empty());
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(CLASS_ID_STR) + "/property-details").request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
     public void getInstanceTest() {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().get();
@@ -418,7 +486,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         Resource instanceId = vf.createIRI(INSTANCE_ID_STR);
         assertEquals(response.getStatus(), 200);
         verify(datasetConnection).begin();
-        verify(datasetConnection).remove(instanceId, null, null);
+        verify(datasetConnection).remove(any(Iterable.class));
         verify(datasetConnection).add(any(Model.class));
         verify(datasetConnection).commit();
     }

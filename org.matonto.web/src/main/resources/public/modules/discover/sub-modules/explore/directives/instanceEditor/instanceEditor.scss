@@ -7,4 +7,13 @@
         line-height: 33px;
         margin-right: 15px;
     }
+    
+    .block-content .row {
+        margin: 0;
+        
+        .ui-select-multiple.ui-select-bootstrap .ui-select-match-item.btn {
+            text-align: left;
+            white-space: normal;
+        }
+    }
 }

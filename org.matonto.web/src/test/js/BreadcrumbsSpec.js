@@ -65,8 +65,10 @@ describe('Breadcrumbs directive', function() {
     });
     describe('controller methods', function() {
         it('should navigate to the selected crumb', function() {
+            discoverStateSvc.explore.editing = true;
             controller.clickCrumb(0);
             expect(discoverStateSvc.explore.breadcrumbs.length).toBe(1);
+            expect(discoverStateSvc.explore.editing).toBe(false);
         });
     });
 });

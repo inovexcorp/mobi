@@ -60,6 +60,7 @@
                     
                     dvm.clickCrumb = function(index) {
                         dvm.ds.explore.breadcrumbs = _.take(dvm.ds.explore.breadcrumbs, index + 1);
+                        dvm.ds.explore.editing = false;
                     }
                 }
             }

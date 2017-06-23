@@ -86,6 +86,7 @@
             'spinner',
             'statementContainer',
             'statementDisplay',
+            'staticIri',
             'stepProgressBar',
             'tab',
             'tabset',

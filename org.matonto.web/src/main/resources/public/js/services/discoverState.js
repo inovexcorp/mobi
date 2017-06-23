@@ -63,6 +63,7 @@
             classDetails: [],
             editing: false,
             instance: {
+                changed: [],
                 entity: {},
                 metadata: {}
             },
@@ -156,6 +157,7 @@
             self.explore.breadcrumbs = ['Classes'];
             self.explore.classDetails = [];
             self.explore.instance = {
+                changed: [],
                 entity: {},
                 metadata: {}
             };

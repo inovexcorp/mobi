@@ -25,23 +25,32 @@
         <block-header>
             <breadcrumbs class="pull-left"></breadcrumbs>
             <a class="pull-right link" ng-click="dvm.ds.explore.editing = false">Cancel</a>
-            <a class="pull-right link"><i class="fa fa-floppy-o"></i>Save</a>
+            <a class="pull-right link" ng-click="dvm.save()"><i class="fa fa-floppy-o"></i>Save</a>
         </block-header>
         <block-content>
             <div class="row">
-                <div class="col-xs-8 col-xs-offset-2">
-                    <div ng-repeat="(key, value) in dvm.entity track by $index" ng-init="more = false">
-                        <h3 class="property">{{key | prefixation}}</h3>
-                        <ul class="values" ng-class="{'show-more': more, 'show-link': value.length > 1}">
-                            <li ng-repeat="item in value">
-                                <value-display value="item"></value-display>
-                            </li>
-                            <li class="link-container">
-                                <a class="link" ng-class="{'more': more}" ng-click="more = !more">Show</a>
-                            </li>
-                        </ul>
+                <form class="col-xs-8 col-xs-offset-2">
+                    <div ng-repeat="(key, value) in dvm.ds.explore.instance.entity track by $index">
+                        <div ng-if="key === '@id'">
+                            <static-iri iri="dvm.ds.explore.instance.entity[key]" on-edit="dvm.setIRI(iriBegin, iriThen, iriEnd)"></static-iri>
+                            <info-message>Changing this IRI might mess up other relationships within the dataset.</info-message>
+                        </div>
+                        <div ng-if="key !== '@id' && key !== '@type'" class="form-group">
+                            <custom-label ng-class="{'changed': dvm.isChanged(key)}">{{dvm.util.getBeautifulIRI(key)}}</custom-label>
+                            <md-chips ng-model="dvm.ds.explore.instance.entity[key]" md-transform-chip="dvm.getValue($chip)">
+                                <input type="text">
+                            </md-chips>
+                            <!-- <ui-select ng-if="dvm.isPropertyOfType(key, 'Object')" ng-model="dvm.ds.explore.instance.entity[key]" tagging="dvm.createIdObj" multiple on-remove="dvm.addToChanged(key)" on-select="dvm.addToChanged(key)">
+                                <ui-select-match>{{$item['@id']}}</ui-select-match>
+                                <ui-select-choices repeat="dvm.removeIsTag(item) as item in dvm.getOptions(key)">{{item['@id']}}</ui-select-choices>
+                            </ui-select>
+                            <ui-select ng-if="dvm.isPropertyOfType(key, 'Data')" ng-model="dvm.ds.explore.instance.entity[key]" tagging="dvm.createValueObj" multiple on-remove="dvm.addToChanged(key)" on-select="dvm.addToChanged(key)">
+                                <ui-select-match>{{$item['@value']}}</ui-select-match>
+                                <ui-select-choices repeat="dvm.addType(item, key) as item in dvm.getOptions(key)">{{item['@value']}}</ui-select-choices>
+                            </ui-select> -->
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
         </block-content>
     </block>

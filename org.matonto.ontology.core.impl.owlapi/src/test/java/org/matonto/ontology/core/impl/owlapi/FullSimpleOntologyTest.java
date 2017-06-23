@@ -210,4 +210,38 @@ public class FullSimpleOntologyTest {
         Set<Individual> individuals = ontology.getIndividualsOfType(clazz);
         assertEquals(1, individuals.size());
     }
+
+    @Test
+    public void containsClassTest() {
+        assertTrue(ontology.containsClass(classIRI));
+    }
+
+    @Test
+    public void containsClassWhenMissingTest() {
+        assertFalse(ontology.containsClass(errorIRI));
+    }
+
+    @Test
+    public void getAllClassObjectProperties() throws Exception {
+        // TODO: this works with imports, but we need to add a test which does not have an external dependency
+        assertEquals(2, ontology.getAllClassObjectProperties(classIRI).size());
+        assertEquals(1, ontology.getAllClassObjectProperties(classIRIC).size());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void getAllClassObjectPropertiesWhenMissingTest() throws Exception {
+        ontology.getAllClassObjectProperties(errorIRI);
+    }
+
+    @Test
+    public void getAllClassDataProperties() throws Exception {
+        // TODO: this works with imports, but we need to add a test which does not have an external dependency
+        assertEquals(2, ontology.getAllClassDataProperties(classIRI).size());
+        assertEquals(1, ontology.getAllClassDataProperties(classIRIC).size());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void getAllClassDataPropertiesWhenMissingTest() throws Exception {
+        ontology.getAllClassDataProperties(errorIRI);
+    }
 }

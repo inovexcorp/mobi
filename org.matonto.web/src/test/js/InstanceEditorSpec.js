@@ -28,7 +28,8 @@ describe('Instance Editor directive', function() {
         module('instanceEditor');
         mockDiscoverState();
         mockUtil();
-        injectPrefixationFilter();
+        mockExplore();
+        mockPrefixes();
 
         inject(function(_$compile_, _$rootScope_, _discoverStateService_) {
             $compile = _$compile_;

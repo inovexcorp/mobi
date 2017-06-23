@@ -23,22 +23,6 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
-import javax.annotation.Nonnull;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.apache.commons.io.IOUtils;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Individual;
@@ -81,6 +65,7 @@ import org.semanticweb.owlapi.io.OWLParserFactory;
 import org.semanticweb.owlapi.model.AddImport;
 import org.semanticweb.owlapi.model.AsOWLClass;
 import org.semanticweb.owlapi.model.AsOWLDatatype;
+import org.semanticweb.owlapi.model.HasDomain;
 import org.semanticweb.owlapi.model.HasRange;
 import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
 import org.semanticweb.owlapi.model.MissingImportListener;
@@ -94,6 +79,8 @@ import org.semanticweb.owlapi.model.OWLOntologyID;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.OWLPropertyDomainAxiom;
+import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
@@ -105,6 +92,23 @@ import org.semanticweb.owlapi.util.OWLOntologyWalker;
 import org.semanticweb.owlapi.util.OWLOntologyWalkerVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 
 
 public class SimpleOntology implements Ontology {
@@ -326,6 +330,42 @@ public class SimpleOntology implements Ontology {
         return owlOntology.classesInSignature()
                 .map(SimpleOntologyValues::matontoClass)
                 .collect(Collectors.toSet());
+    }
+
+    @Override
+    public boolean containsClass(IRI iri) {
+        org.semanticweb.owlapi.model.IRI classIRI = SimpleOntologyValues.owlapiIRI(iri);
+        return containsClass(classIRI);
+    }
+
+    private boolean containsClass(org.semanticweb.owlapi.model.IRI iri) {
+        return owlOntology.containsClassInSignature(iri);
+    }
+
+    @Override
+    public Set<ObjectProperty> getAllClassObjectProperties(IRI iri) {
+        org.semanticweb.owlapi.model.IRI classIRI = SimpleOntologyValues.owlapiIRI(iri);
+        if (containsClass(classIRI)) {
+            return owlOntology.objectPropertiesInSignature(Imports.INCLUDED)
+                    .filter(property -> hasClassAsDomain(owlOntology.objectPropertyDomainAxioms(property), classIRI)
+                                || hasNoDomain(owlOntology.objectPropertyDomainAxioms(property)))
+                    .map(SimpleOntologyValues::matontoObjectProperty)
+                    .collect(Collectors.toSet());
+        }
+        throw new IllegalArgumentException("Class not found in ontology");
+    }
+
+    @Override
+    public Set<DataProperty> getAllClassDataProperties(IRI iri) {
+        org.semanticweb.owlapi.model.IRI classIRI = SimpleOntologyValues.owlapiIRI(iri);
+        if (containsClass(classIRI)) {
+            return owlOntology.dataPropertiesInSignature(Imports.INCLUDED)
+                    .filter(property -> hasClassAsDomain(owlOntology.dataPropertyDomainAxioms(property), classIRI)
+                                || hasNoDomain(owlOntology.dataPropertyDomainAxioms(property)))
+                    .map(SimpleOntologyValues::matontoDataProperty)
+                    .collect(Collectors.toSet());
+        }
+        throw new IllegalArgumentException("Class not found in ontology");
     }
 
     @Override
@@ -565,5 +605,18 @@ public class SimpleOntology implements Ontology {
         return owlOntology.dataPropertiesInSignature()
                 .filter(dataProperty -> dataProperty.getIRI().equals(SimpleOntologyValues.owlapiIRI(iri)))
                 .findFirst();
+    }
+
+    private <T extends OWLPropertyDomainAxiom<?>> boolean hasClassAsDomain(Stream<T> stream,
+                                                                           org.semanticweb.owlapi.model.IRI iri) {
+        return stream.map(HasDomain::getDomain)
+                .filter(AsOWLClass::isOWLClass)
+                .map(AsOWLClass::asOWLClass)
+                .filter(owlClass -> owlClass.getIRI().equals(iri))
+                .count() > 0;
+    }
+
+    private <T extends OWLPropertyDomainAxiom<?>> boolean hasNoDomain(Stream<T> stream) {
+        return stream.map(HasDomain::getDomain).count() == 0;
     }
 }

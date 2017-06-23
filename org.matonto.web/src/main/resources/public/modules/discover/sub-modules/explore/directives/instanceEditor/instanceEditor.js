@@ -38,8 +38,11 @@
          * @name instanceEditor.directive:instanceEditor
          * @scope
          * @restrict E
+         * @requires $q
          * @requires discoverState.service:discoverStateService
          * @requires util.service:utilService
+         * @requires explore.service:exploreService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * HTML contents in the instance view page which shows the complete list of properites
@@ -47,9 +50,9 @@
          */
         .directive('instanceEditor', instanceEditor);
         
-        instanceEditor.$inject = ['discoverStateService'];
+        instanceEditor.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'prefixes'];
 
-        function instanceEditor(discoverStateService) {
+        function instanceEditor($q, discoverStateService, utilService, exploreService, prefixes) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceEditor/instanceEditor.html',
@@ -58,8 +61,82 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var es = exploreService;
                     dvm.ds = discoverStateService;
-                    dvm.entity = _.omit(dvm.ds.explore.instance.entity, ['@id', '@type']);
+                    dvm.util = utilService;
+                    dvm.properties = [{
+                        propertyIRI: prefixes.dcterms + 'description',
+                        type: 'Data'
+                    }, {
+                        propertyIRI: prefixes.dcterms + 'title',
+                        type: 'Data'
+                    }, {
+                        propertyIRI: prefixes.rdfs + 'comment',
+                        type: 'Data'
+                    }, {
+                        propertyIRI: prefixes.rdfs + 'label',
+                        type: 'Data'
+                    }];
+                    dvm.changed = [];
+                    
+                    dvm.getValue = function(chip) {
+                        return _.get(chip, '@id', _.get(chip, '@value', ''));
+                    }
+                    
+                    dvm.getOptions = function(property) {
+                        return [];
+                    }
+                    
+                    dvm.isPropertyOfType = function(propertyIRI, type) {
+                        return _.some(dvm.properties, {propertyIRI, type});
+                    }
+                    
+                    dvm.createIdObj = function(string) {
+                        return {'@id': string};
+                    }
+                    
+                    dvm.createValueObj = function(string) {
+                        return {'@value': string};
+                    }
+                    
+                    dvm.removeIsTag = function(item) {
+                        return _.omit(item, ['isTag']);
+                    }
+                    
+                    dvm.addType = function(item, propertyIRI) {
+                        var range = _.get(_.find(dvm.properties, {propertyIRI}), 'range', []);
+                        if (range.length) {
+                            return _.set(dvm.removeIsTag(item), '@type', range[0]);
+                        }
+                        return dvm.removeIsTag(item);
+                    }
+                    
+                    dvm.addToChanged = function(propertyIRI) {
+                        dvm.changed.push(propertyIRI);
+                    }
+                    
+                    dvm.save = function() {
+                        es.updateInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.metadata.instanceIRI, dvm.ds.explore.instance.entity)
+                            .then(() => {
+                                dvm.ds.explore.instance.changed = changed;
+                                dvm.ds.explore.editing = false;
+                            }, dvm.util.createErrorToast);
+                    }
+                    
+                    dvm.setIRI = function(begin, then, end) {
+                        dvm.ds.explore.instance.entity['@id'] = begin + then + end;
+                    }
+                    
+                    dvm.isChanged = function(propertyIRI) {
+                        return _.includes(dvm.ds.explore.instance.changed, propertyIRI);
+                    }
+                    
+                    function getProperties() {
+                        $q.all(_.map(dvm.ds.explore.instance.entity['@type'], type => es.getClassPropertyDetails(dvm.ds.explore.recordId, type)))
+                            .then(responses => dvm.properties = _.concat(dvm.properties, _.uniq(_.flatten(responses))), () => dvm.properties = []);
+                    }
+                    
+                    getProperties();
                 }
             }
         }

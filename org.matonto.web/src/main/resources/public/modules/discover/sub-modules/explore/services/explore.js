@@ -85,15 +85,34 @@
          * @returns {Promise} A promise that resolves to an array of the instance details for the identified class of the
          * identified dataset record.
          */
-        self.getClassInstanceDetails = function(recordId, classId) {
+        self.getClassInstanceDetails = function(recordId, classId, offset = 0) {
             var config = {
                 params: {
-                    offset: 0,
+                    offset,
                     limit: ds.explore.instanceDetails.limit
                 }
             };
             return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/instance-details', config)
                 .then(response => response, response => $q.reject(response.statusText));
+        }
+        
+        /**
+         * @ngdoc method
+         * @name getClassPropertyDetails
+         * @methodOf explore.service:exploreService
+         *
+         * @description
+         * Calls the GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/property-details endpoint and returns the
+         * array of class property details.
+         *
+         * @param {string} recordId The id of the Record
+         * @param {string} classId The id of the Class
+         * @returns {Promise} A promise that resolves to an array of the class property details for the identified class of the
+         * identified dataset record.
+         */
+        self.getClassPropertyDetails = function(recordId, classId) {
+            return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/property-details')
+                .then(response => response.data, response => $q.reject(response.statusText));
         }
         
         /**

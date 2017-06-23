@@ -88,6 +88,31 @@ describe('Explore Service', function() {
         });
     });
     
+    describe('getClassPropertyDetails calls the correct functions when GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/property-details', function() {
+        it('succeeds', function() {
+            var data = [{}];
+            var headers = {};
+            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/property-details').respond(200, data, headers);
+            exploreSvc.getClassPropertyDetails('recordId', 'classId')
+                .then(function(response) {
+                    expect(response).toEqual(data);
+                }, function() {
+                    fail('Should have been resolved.');
+                });
+             flushAndVerify($httpBackend);
+        });
+        it('fails', function() {
+            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/property-details').respond(400, null, null, 'error');
+            exploreSvc.getClassPropertyDetails('recordId', 'classId')
+                .then(function() {
+                    fail('Should have been rejected.');
+                }, function(response) {
+                    expect(response).toBe('error');
+                });
+             flushAndVerify($httpBackend);
+        });
+    });
+    
     describe('getInstance calls the correct functions when GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId}', function() {
         it('succeeds', function() {
             var data = {'@id': 'instanceId'};
