@@ -1,4 +1,4 @@
-package org.matonto.clustering.hazelcast;
+package org.matonto.clustering.hazelcast.config;
 
 /*-
  * #%L
@@ -25,6 +25,7 @@ package org.matonto.clustering.hazelcast;
 
 import aQute.bnd.annotation.metatype.Meta;
 import org.matonto.clustering.api.ClusteringServiceConfig;
+import org.matonto.clustering.hazelcast.HazelcastClusteringService;
 
 import java.util.Set;
 

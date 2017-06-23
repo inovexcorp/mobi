@@ -3,7 +3,6 @@ package org.matonto.clustering.hazelcast.config;
 
 import com.hazelcast.config.Config;
 import org.apache.commons.lang.StringUtils;
-import org.matonto.clustering.hazelcast.HazelcastClusteringServiceConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

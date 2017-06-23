@@ -33,6 +33,7 @@ import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import org.matonto.clustering.api.ClusteringService;
+import org.matonto.clustering.hazelcast.config.HazelcastClusteringServiceConfig;
 import org.matonto.clustering.hazelcast.config.HazelcastConfigurationFactory;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
