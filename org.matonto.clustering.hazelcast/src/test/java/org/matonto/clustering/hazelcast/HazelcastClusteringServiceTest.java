@@ -54,39 +54,12 @@ public class HazelcastClusteringServiceTest extends TestCase {
         final HazelcastClusteringService s2 = new HazelcastClusteringService();
         final HazelcastClusteringService s3 = new HazelcastClusteringService();
 
-        ForkJoinPool pool = new ForkJoinPool(5);
-        ForkJoinTask<?> task1 = pool.submit(() -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("instanceName", "instance01");
-            map.put("basicPort", 5701);
-            map.put("multicastPort", 54327);
-            if (MULTICAST_GROUP != null) {
-                map.put("multicastGroup", MULTICAST_GROUP);
-            }
-            s1.activate(null, map);
-        });
+        ForkJoinPool pool = new ForkJoinPool(3);
 
-        ForkJoinTask<?> task2 = pool.submit(() -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("instanceName", "instance02");
-            map.put("multicastPort", 54327);
-            map.put("basicPort", 5702);
-            if (MULTICAST_GROUP != null) {
-                map.put("multicastGroup", MULTICAST_GROUP);
-            }
-            s2.activate(null, map);
-        });
+        ForkJoinTask<?> task1 = createNode(pool, s1, 5701);
+        ForkJoinTask<?> task2 = createNode(pool, s2, 5702);
+        ForkJoinTask<?> task3 = createNode(pool, s3, 5703);
 
-        ForkJoinTask<?> task3 = pool.submit(() -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("instanceName", "instance03");
-            map.put("multicastPort", 54327);
-            map.put("basicPort", 5703);
-            if (MULTICAST_GROUP != null) {
-                map.put("multicastGroup", MULTICAST_GROUP);
-            }
-            s3.activate(null, map);
-        });
 
         task1.get();
         task2.get();
@@ -94,6 +67,25 @@ public class HazelcastClusteringServiceTest extends TestCase {
         assertEquals(3, s1.getMemberCount());
         assertEquals(3, s2.getMemberCount());
         assertEquals(3, s3.getMemberCount());
+        s1.deactivate();
+        assertEquals(2, s2.getMemberCount());
+        assertEquals(2, s3.getMemberCount());
+        s2.deactivate();
+        assertEquals(1, s3.getMemberCount());
+        s3.deactivate();
+    }
+
+    private ForkJoinTask<?> createNode(ForkJoinPool pool, HazelcastClusteringService service, int port) {
+        return pool.submit(() -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("instanceName", service.hashCode());
+            map.put("basicPort", port);
+            map.put("multicastPort", 54326);
+            if (MULTICAST_GROUP != null) {
+                map.put("multicastGroup", MULTICAST_GROUP);
+            }
+            service.activate(null, map);
+        });
     }
 
 }
