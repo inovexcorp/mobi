@@ -6,6 +6,11 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This utility class will convert a given {@link HazelcastClusteringServiceConfig} configuration object into a
+ * {@link Config} object capable of configuring a {@link com.hazelcast.core.HazelcastInstance} to discover and
+ * communicate with other MatOnto nodes.
+ */
 public class HazelcastConfigurationFactory {
 
     /**
@@ -13,6 +18,12 @@ public class HazelcastConfigurationFactory {
      */
     private static final Logger LOGGER = LoggerFactory.getLogger(HazelcastConfigurationFactory.class);
 
+    /**
+     * Build a {@link Config} object from a given service configuration.
+     *
+     * @param serviceConfig The {@link HazelcastClusteringServiceConfig} service configuration
+     * @return The {@link Config} we'll use to initialize our {@link com.hazelcast.core.HazelcastInstance}
+     */
     public static Config build(final HazelcastClusteringServiceConfig serviceConfig) {
         final Config config = new Config();
         if (StringUtils.isNotBlank(serviceConfig.instanceName())) {
