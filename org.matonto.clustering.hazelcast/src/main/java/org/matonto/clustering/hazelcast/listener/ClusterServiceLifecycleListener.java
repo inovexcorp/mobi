@@ -1,4 +1,4 @@
-package org.matonto.clustering.hazelcast;
+package org.matonto.clustering.hazelcast.listener;
 
 /*-
  * #%L
@@ -25,6 +25,7 @@ package org.matonto.clustering.hazelcast;
 
 import com.hazelcast.core.LifecycleEvent;
 import com.hazelcast.core.LifecycleListener;
+import org.matonto.clustering.hazelcast.HazelcastClusteringService;
 
 /**
  * This {@link LifecycleListener} implementation provides hooks for the {@link HazelcastClusteringService} implementation
