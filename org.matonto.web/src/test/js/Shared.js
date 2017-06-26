@@ -193,6 +193,7 @@ function mockOntologyManager() {
             this.getImportedOntologies = jasmine.createSpy('getImportedOntologies').and.returnValue($q.when([]));
             this.getEntityUsages = jasmine.createSpy('getEntityUsages').and.returnValue($q.when([]));
             this.getSearchResults = jasmine.createSpy('getSearchResults');
+            this.isDeprecated = jasmine.createSpy('isDeprecated');
             this.isOntology = jasmine.createSpy('isOntology');
             this.hasOntologyEntity = jasmine.createSpy('hasOntologyEntity');
             this.getOntologyEntity = jasmine.createSpy('getOntologyEntity').and.returnValue({});
@@ -466,7 +467,7 @@ function mockOntologyState() {
             };
             this.annotationSelect = 'select';
             this.annotationValue = 'value';
-            this.annotationType = {'@id': 'annotationId'};
+            this.annotationType = {namespace: '', localName: ''};
             this.key = 'key';
             this.index = 0;
             this.annotationIndex = 0;
@@ -661,6 +662,7 @@ function mockPropertyManager() {
     module(function($provide) {
         $provide.service('propertyManagerService', function($q) {
             this.defaultAnnotations = [];
+            this.owlAnnotations = [];
             this.skosAnnotations = [];
             this.getDefaultAnnotations = jasmine.createSpy('getDefaultAnnotations').and.returnValue([]);
             this.remove = jasmine.createSpy('remove');

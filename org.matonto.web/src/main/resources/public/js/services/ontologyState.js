@@ -95,7 +95,7 @@
                 ontology: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
-                annotations: angular.copy(propertyManagerService.defaultAnnotations),
+                annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.owlAnnotations)),
                 dataPropertyRange: om.defaultDatatypes,
                 subClasses: [],
                 subDataProperties: [],
@@ -158,8 +158,7 @@
                 ontology: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
-                annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations,
-                    propertyManagerService.skosAnnotations)),
+                annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.skosAnnotations, propertyManagerService.owlAnnotations)),
                 derivedConcepts: [],
                 derivedConceptSchemes: [],
                 conceptHierarchy: [],
@@ -441,6 +440,7 @@
                     listItem.annotations = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
                         propertyManagerService.defaultAnnotations,
+                        propertyManagerService.owlAnnotations,
                         _.isMatch
                     );
                     listItem.subClasses = _.get(response[0], 'classes');
@@ -545,6 +545,7 @@
                         _.get(response[0], 'annotationProperties'),
                         propertyManagerService.defaultAnnotations,
                         propertyManagerService.skosAnnotations,
+                        propertyManagerService.owlAnnotations,
                         _.isMatch
                     );
                     listItem.dataPropertyRange = _.unionWith(
