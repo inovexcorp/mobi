@@ -56,6 +56,9 @@
                         return dvm.util.createJson(dvm.os.selected['@id'], dvm.ro.getItemIri(dvm.os.annotationSelect), valueObj);
                     }
 
+                    dvm.disableProp = function(annotation) {
+                        return dvm.ro.getItemIri(annotation) === prefixes.owl + 'deprecated' && _.has(dvm.os.selected, "['" + prefixes.owl + 'deprecated' + "']");
+                    }
                     dvm.selectProp = function() {
                         dvm.os.annotationValue = '';
                         if (dvm.ro.getItemIri(dvm.os.annotationSelect) === prefixes.owl + 'deprecated') {

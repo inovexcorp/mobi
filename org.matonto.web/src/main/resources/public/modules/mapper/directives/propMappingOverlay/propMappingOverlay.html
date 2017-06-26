@@ -34,7 +34,7 @@
         <div class="range-class-select-container form-group" ng-if="dvm.selectedProp && dvm.om.isObjectProperty(dvm.selectedProp.propObj)">
             <custom-label>Link To</custom-label>
             <p class="form-control-static">
-                {{dvm.util.getBeautifulIRI(dvm.rangeClass.classObj['@id']) || "[New]"}}
+                {{dvm.getClassMappingName()}}
                 <span class="deprecated text-muted" ng-if="dvm.om.isDeprecated(dvm.rangeClass.classObj)">(Deprecated)</span>
             </p>
         </div>

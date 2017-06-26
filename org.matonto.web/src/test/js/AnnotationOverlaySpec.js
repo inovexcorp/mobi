@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Annotation Overlay directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, ontoUtils;
+fdescribe('Annotation Overlay directive', function() {
+    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, ontoUtils, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -36,17 +36,19 @@ describe('Annotation Overlay directive', function() {
         mockPrefixes();
         mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_, _ontologyUtilsManagerService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             propertyManagerSvc = _propertyManagerService_;
             resObj = _responseObj_;
             ontoUtils = _ontologyUtilsManagerService_;
+            prefixes = _prefixes_;
         });
 
         element = $compile(angular.element('<annotation-overlay></annotation-overlay>'))(scope);
         scope.$digest();
+        controller = element.controller('annotationOverlay');
     });
 
     describe('replaces the element with the correct html', function() {
@@ -99,8 +101,15 @@ describe('Annotation Overlay directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('annotationOverlay');
+        it('disableProp should test whether an annotation is owl:deprecated and whether it has been set already', function() {
+            resObj.getItemIri.and.returnValue('test');
+            expect(controller.disableProp({})).toBe(false);
+
+            resObj.getItemIri.and.returnValue(prefixes.owl + 'deprecated');
+            expect(controller.disableProp({})).toBe(false);
+
+            ontologyStateSvc.selected[prefixes.owl + 'deprecated'] = [];
+            expect(controller.disableProp({})).toBe(true);
         });
         it('addAnnotation should call the appropriate manager functions', function() {
             controller.addAnnotation();

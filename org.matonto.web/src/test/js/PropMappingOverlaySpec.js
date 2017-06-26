@@ -115,6 +115,34 @@ describe('Prop Mapping Overlay directive', function() {
         });
     });
     describe('controller methods', function() {
+        it('should get the name of the range class mapping', function() {
+            controller.rangeClass = {classObj: {'@id': 'class'}};
+            utilSvc.getBeautifulIRI.and.returnValue('Class');
+            expect(controller.getClassMappingName()).toBe('[New Class]');
+
+            controller.rangeClassMapping = {};
+            expect(controller.getClassMappingName()).toBe('Class');
+        });
+        it('should test whether or not the Set button should be disabled', function() {
+            mapperStateSvc.newProp = true;
+            expect(controller.disableSet()).toBe(true);
+
+            controller.selectedProp = {propObj: {}};
+            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+            spyOn(controller, 'isNumber').and.returnValue(false);
+            expect(controller.disableSet()).toBe(true);
+
+            ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+            mapperStateSvc.newProp = false;
+            expect(controller.disableSet()).toBe(true);
+
+            mapperStateSvc.newProp = true;
+            ontologyManagerSvc.isDeprecated.and.returnValue(true);
+            expect(controller.disableSet()).toBe(true);
+
+            ontologyManagerSvc.isDeprecated.and.returnValue(false);
+            expect(controller.disableSet()).toBe(false);
+        });
         it('should set the range class mapping of the selected property', function() {
             var classId = 'class';
             var classMapping = {'@id': classId};
