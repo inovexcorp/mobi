@@ -52,7 +52,7 @@
                     dvm.addRelationship = function() {
                         var axiom = dvm.ro.getItemIri(dvm.relationship);
                         dvm.os.selected[axiom] = _.union(_.get(dvm.os.selected, axiom, []), dvm.values);
-                        dvm.os.addToAdditions(dvm.os.listItem.recordId, {'@id': dvm.os.selected['@id'],
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.selected['@id'],
                             [axiom]: dvm.values});
                         dvm.os.showRelationshipOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();

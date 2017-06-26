@@ -97,7 +97,7 @@ describe('Characteristics Block directive', function() {
             it('is checked and no match in deletions', function() {
                 controller.onChange(characteristicObj);
                 expect(_.includes(_.get(ontologyStateSvc.selected, '@type', []), functionalProperty)).toBe(true);
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, statement);
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, statement);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('is checked and the statement is in deletions', function() {
@@ -123,7 +123,7 @@ describe('Characteristics Block directive', function() {
                 characteristicObj.checked = false;
                 controller.onChange(characteristicObj);
                 expect(_.includes(_.get(ontologyStateSvc.selected, '@type', []), functionalProperty)).toBe(false);
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, statement);
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, statement);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
             it('is not checked and the statement is in additions', function() {

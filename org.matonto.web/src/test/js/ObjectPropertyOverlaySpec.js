@@ -115,7 +115,7 @@ describe('Object Property Overlay directive', function() {
                     expect(ontologyStateSvc.selected.prop.length).toBe(2);
                     expect(ontologyStateSvc.selected.prop).toContain(this.value);
                     expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
-                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                         jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 });
@@ -123,7 +123,7 @@ describe('Object Property Overlay directive', function() {
                     controller.addProperty({}, this.value);
                     expect(ontologyStateSvc.selected.prop).toEqual([this.value]);
                     expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
-                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                         jasmine.any(Object));
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 });
@@ -133,7 +133,7 @@ describe('Object Property Overlay directive', function() {
                 controller.addProperty({}, this.value);
                 expect(ontologyStateSvc.selected).toEqual({});
                 expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                     jasmine.any(Object));
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
@@ -148,10 +148,10 @@ describe('Object Property Overlay directive', function() {
             it('if the property is valid', function() {
                 responseObj.getItemIri.and.returnValue('prop');
                 controller.editProperty({}, this.value);
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.selected.prop[ontologyStateSvc.propertyIndex]).toEqual(this.value);
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                     jasmine.any(Object));
                 expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

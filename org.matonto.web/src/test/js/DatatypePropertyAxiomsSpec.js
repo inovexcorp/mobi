@@ -127,7 +127,7 @@ describe('Datatype Property Axioms directive', function() {
                 ontologyStateSvc.flattenHierarchy.and.returnValue([{entityIRI: 'new'}]);
                 controller.removeFromHierarchy(this.axiomObject);
                 expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.selected['@id'], this.axiomObject['@id'], ontologyStateSvc.listItem.dataPropertyIndex);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.flatDataPropertyHierarchy).toEqual([{entityIRI: 'new'}]);
             });
         });

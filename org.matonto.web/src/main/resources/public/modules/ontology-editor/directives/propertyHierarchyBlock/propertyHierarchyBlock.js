@@ -55,7 +55,7 @@
                     }
                     
                     dvm.isShown = function(node) {
-                        return !_.has(node, 'entityIRI') || (dvm.os.areParentsOpen(node) && node.get(dvm.os.listItem.recordId));
+                        return !_.has(node, 'entityIRI') || (dvm.os.areParentsOpen(node) && node.get(dvm.os.listItem.ontologyRecord.recordId));
                     }
                     
                     dvm.flatPropertyTree = constructFlatPropertyTree();

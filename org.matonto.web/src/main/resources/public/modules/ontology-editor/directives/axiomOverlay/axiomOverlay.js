@@ -58,7 +58,7 @@
                         if (axiom === prefixes.rdfs + 'range') {
                             dvm.os.updatePropertyIcon(dvm.os.selected);
                         }
-                        dvm.os.addToAdditions(dvm.os.listItem.recordId, {'@id': dvm.os.selected['@id'], [axiom]: values});
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.selected['@id'], [axiom]: values});
                         dvm.os.showAxiomOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                     }

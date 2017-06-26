@@ -81,7 +81,7 @@
                                 _.remove(array, match);
                             }
                         } else {
-                            method(dvm.os.listItem.recordId, {
+                            method(dvm.os.listItem.ontologyRecord.recordId, {
                                 '@id': dvm.os.selected['@id'],
                                 '@type': [typeIRI]
                             });

@@ -105,16 +105,16 @@ describe('Annotation Overlay directive', function() {
             controller.addAnnotation();
             expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationSelect);
             expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.selected, resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue, ontologyStateSvc.annotationType['@id'], ontologyStateSvc.annotationLanguage);
-            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });
         it('editAnnotation should call the appropriate manager functions', function() {
             controller.editAnnotation();
             expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationSelect);
-            expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+            expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
             expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.selected, resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue, ontologyStateSvc.annotationIndex, ontologyStateSvc.annotationType['@id'], ontologyStateSvc.annotationLanguage);
-            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });

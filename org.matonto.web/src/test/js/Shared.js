@@ -461,14 +461,6 @@ function mockOntologyState() {
     module(function($provide) {
         $provide.service('ontologyStateService', function($q) {
             this.recordIdToClose = 'recordIdToClose';
-            this.state = {
-                recordId: '',
-                recordTitle: '',
-                ontologyId: '',
-                entityIRI: '',
-                deletedEntities: [],
-                type: ''
-            };
             this.selected = {
                 '@id': 'id'
             };
@@ -479,6 +471,38 @@ function mockOntologyState() {
             this.index = 0;
             this.annotationIndex = 0;
             this.listItem = {
+                ontologyState: {
+                    active: true,
+                    upToDate: true
+                },
+                editorTabStates: {
+                   project: {
+                       active: true,
+                       entityIRI: ''
+                   },
+                   overview: {
+                       active: false
+                   },
+                   classes: {
+                       active: false
+                   },
+                   properties: {
+                       active: false
+                   },
+                   individuals: {
+                       active: false
+                   },
+                   search: {
+                       active: false
+                   }
+                },
+                ontologyRecord: {
+                    title: '',
+                    recordId: '',
+                    branchId: '',
+                    commitId: '',
+                    type: ''
+                },
                 annotations: [],
                 dataPropertyRange: [],
                 classHierarchy: [],
@@ -490,9 +514,6 @@ function mockOntologyState() {
                 blankNodes: {},
                 individuals: [],
                 index: {},
-                recordId: 'recordId',
-                branchId: 'branchId',
-                commitId: 'commitId',
                 ontologyId: 'ontologyId',
                 additions: [],
                 deletions: [],
@@ -508,7 +529,6 @@ function mockOntologyState() {
                         jsAnnotations: [{}]
                     }
                 }],
-                upToDate: true,
                 individualsParentPath: [],
                 classesAndIndividuals: [],
                 flatClassHierarchy: [],
@@ -519,7 +539,6 @@ function mockOntologyState() {
                 flatAnnotationPropertyHierarchy: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
-                upToDate: true,
                 conceptHierarchy: [],
                 flatConceptHierarchy: [],
                 conceptSchemeHierarchy: [],
@@ -570,10 +589,6 @@ function mockOntologyState() {
             this.setCommonIriParts = jasmine.createSpy('setCommonIriParts');
             this.setSelected = jasmine.createSpy('setSelected');
             this.setEntityUsages = jasmine.createSpy('setEntityUsages');
-            this.addState = jasmine.createSpy('addState');
-            this.setState = jasmine.createSpy('setState');
-            this.getState = jasmine.createSpy('getState').and.returnValue({ontologyId: '', entityIRI: ''});
-            this.deleteState = jasmine.createSpy('deleteState');
             this.resetStateTabs = jasmine.createSpy('resetStateTabs');
             this.getActiveKey = jasmine.createSpy('getActiveKey').and.returnValue('');
             this.getActivePage = jasmine.createSpy('getActivePage').and.returnValue({});
