@@ -708,7 +708,7 @@
                 _.forEach(self.getAllDataMappings(mapping), propMapping => {
                     var propId = self.getPropIdByMapping(propMapping);
                     var propOntology = self.findSourceOntologyWithProp(propId, ontologies);
-                    // Incompatible if data property no longer exists or is not a supported annotation
+                    // Incompatible if data property no longer exists and is not a supported annotation
                     if (!propOntology && !_.includes(self.annotationProperties, propId)) {
                         incompatibleMappings.push(propMapping);
                     } else if (propOntology) {
@@ -741,7 +741,6 @@
                         // Incompatible if range of object property is incompatible
                         if (_.find(incompatibleMappings, entityMap => self.getClassIdByMapping(entityMap) === rangeClassId)) {
                             incompatibleMappings.push(propMapping);
-                            return;
                         }
                     }
                 });

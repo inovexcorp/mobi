@@ -102,8 +102,7 @@
                 ontologyId: '',
                 importedOntologies: [],
                 importedOntologyIds: [],
-                annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations,
-                    propertyManagerService.skosAnnotations)),
+                annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.skosAnnotations, propertyManagerService.owlAnnotations)),
                 derivedConcepts: [],
                 derivedConceptSchemes: [],
                 conceptHierarchy: [],
@@ -491,6 +490,7 @@
                         _.get(response[0], 'annotationProperties'),
                         propertyManagerService.defaultAnnotations,
                         propertyManagerService.skosAnnotations,
+                        propertyManagerService.owlAnnotations,
                         _.isMatch
                     );
                     listItem.dataPropertyRange = _.unionWith(
