@@ -94,7 +94,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -227,14 +226,10 @@ public class SimpleCatalogManager implements CatalogManager {
     private static final String REVISION_NAMESPACE = "https://matonto.org/revisions#";
     private static final String ADDITIONS_NAMESPACE = "https://matonto.org/additions#";
     private static final String DELETIONS_NAMESPACE = "https://matonto.org/deletions#";
-    private static final String DELETION_CONTEXT = "https://matonto.org/is-a-deletion#";
 
     private static final String FIND_RECORDS_QUERY;
     private static final String COUNT_RECORDS_QUERY;
     private static final String GET_NEW_LATEST_VERSION;
-    private static final String GET_COMMIT_CHAIN;
-    private static final String COMMIT_BINDING = "commit";
-    private static final String PARENT_BINDING = "parent";
     private static final String RECORD_BINDING = "record";
     private static final String CATALOG_BINDING = "catalog";
     private static final String RECORD_COUNT_BINDING = "record_count";
@@ -253,10 +248,6 @@ public class SimpleCatalogManager implements CatalogManager {
             );
             GET_NEW_LATEST_VERSION = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/get-new-latest-version.rq"),
-                    "UTF-8"
-            );
-            GET_COMMIT_CHAIN = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/get-commit-chain.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -1160,19 +1151,17 @@ public class SimpleCatalogManager implements CatalogManager {
             Resource originalEnd = commonCommits.get(commonCommits.size() - 1);
             leftCommits.removeAll(commonCommits);
             rightCommits.removeAll(commonCommits);
-            Model left = utils.getModelFromCommits(leftCommits, conn);
-            Model right = utils.getModelFromCommits(rightCommits, conn);
 
-            Model duplicates = mf.createModel(left);
-            duplicates.retainAll(right);
-            left.removeAll(duplicates);
-            right.removeAll(duplicates);
+            Difference leftDiff = utils.getRevisionChanges(leftCommits, conn);
+            Difference rightDiff = utils.getRevisionChanges(rightCommits, conn);
 
-            Resource deletionContext = vf.createIRI(SimpleCatalogUtilsService.DELETION_CONTEXT);
-            Model leftDeletions = mf.createModel(left.filter(null, null, null, deletionContext));
-            Model rightDeletions = mf.createModel(right.filter(null, null, null, deletionContext));
-            left.removeAll(leftDeletions);
-            right.removeAll(rightDeletions);
+            Model left = leftDiff.getAdditions();
+            Model right = rightDiff.getAdditions();
+            Model leftDeletions = leftDiff.getDeletions();
+            Model rightDeletions = rightDiff.getDeletions();
+
+            removeDuplicates(left, right);
+            removeDuplicates(leftDeletions, rightDeletions);
 
             Set<Conflict> result = new HashSet<>();
             Model original = utils.getCompiledResource(originalEnd, conn);
@@ -1397,5 +1386,18 @@ public class SimpleCatalogManager implements CatalogManager {
         return Stream.of(headCommitIRI, baseCommitIRI, auxiliaryCommitIRI)
                 .map(iri -> conn.contains(null, iri, commitId))
                 .reduce(false, (iri1, iri2) -> iri1 || iri2);
+    }
+
+    /**
+     * Removes the duplicate Statements in the supplied Models.
+     *
+     * @param left  First Model
+     * @param right Second Model
+     */
+    private void removeDuplicates(Model left, Model right) {
+        Model duplicates = mf.createModel(left);
+        duplicates.retainAll(right);
+        left.removeAll(duplicates);
+        right.removeAll(duplicates);
     }
 }

@@ -26,11 +26,7 @@ package org.matonto.catalog.impl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.verify;
 
-import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -81,8 +77,6 @@ import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
-import org.openrdf.model.vocabulary.DCTERMS;
-import org.openrdf.model.vocabulary.RDFS;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
@@ -1535,62 +1529,38 @@ public class SimpleCatalogUtilsServiceTest {
     /* getModelFromCommits(List<Resource>, RepositoryConnection) */
 
     @Test
-    public void getModelFromCommitsWithListTest() {
+    public void getRevisionChangesWithListTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Resource subject = vf.createIRI("http://matonto.org/test/ontology");
             List<Resource> commits = Stream.of(vf.createIRI("http://matonto.org/test/commits#test1"),
                     vf.createIRI("http://matonto.org/test/commits#test2")).collect(Collectors.toList());
-            Model expect = mf.createModel(Stream.of(
-                    vf.createStatement(subject, titleIRI, vf.createLiteral("Test 2 Title")),
-                    vf.createStatement(subject, titleIRI, vf.createLiteral("Test 0 Title"), vf.createIRI(SimpleCatalogUtilsService.DELETION_CONTEXT)))
-                    .collect(Collectors.toList()));
 
-            Model result = service.getModelFromCommits(commits, conn);
-            result.forEach(statement -> assertTrue(expect.contains(statement)));
+            Model expectAdd = mf.createModel();
+            expectAdd.add(vf.createStatement(subject, titleIRI, vf.createLiteral("Test 2 Title")));
+            Model expectDel = mf.createModel();
+            expectDel.add(vf.createStatement(subject, titleIRI, vf.createLiteral("Test 0 Title")));
+
+            Difference expect = new Difference.Builder()
+                    .additions(expectAdd)
+                    .deletions(expectDel)
+                    .build();
+
+            Difference result = service.getRevisionChanges(commits, conn);
+            result.getAdditions().forEach(statement -> assertTrue(expect.getAdditions().contains(statement)));
+            result.getDeletions().forEach(statement -> assertTrue(expect.getDeletions().contains(statement)));
         }
     }
 
     @Test
-    public void getModelFromCommitsWithListAndMissingCommitTest() {
+    public void getRevisionChangesWithListAndMissingCommitTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Resource commitId = vf.createIRI("http://matonto.org/test/commits#error");
             thrown.expect(IllegalStateException.class);
             thrown.expectMessage("Additions not set on Commit " + commitId);
 
-            service.getModelFromCommits(Collections.singletonList(commitId), conn);
-        }
-    }
-
-    /* getModelFromCommits(List<Resource>, RepositoryConnection) */
-
-    @Test
-    public void getModelFromCommitsWithIteratorTest() {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Resource subject = vf.createIRI("http://matonto.org/test/ontology");
-            List<Resource> commits = Stream.of(vf.createIRI("http://matonto.org/test/commits#test1"),
-                    vf.createIRI("http://matonto.org/test/commits#test2")).collect(Collectors.toList());
-            Model expect = mf.createModel(Stream.of(
-                    vf.createStatement(subject, titleIRI, vf.createLiteral("Test 2 Title")),
-                    vf.createStatement(subject, titleIRI, vf.createLiteral("Test 0 Title"), vf.createIRI(SimpleCatalogUtilsService.DELETION_CONTEXT)))
-                    .collect(Collectors.toList()));
-
-            Model result = service.getModelFromCommits(commits.iterator(), conn);
-            result.forEach(statement -> assertTrue(expect.contains(statement)));
-        }
-    }
-
-    @Test
-    public void getModelFromCommitsWithIteratorAndMissingCommitTest() {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Resource commitId = vf.createIRI("http://matonto.org/test/commits#error");
-            thrown.expect(IllegalStateException.class);
-            thrown.expectMessage("Additions not set on Commit " + commitId);
-
-            service.getModelFromCommits(Collections.singletonList(commitId).iterator(), conn);
+            service.getRevisionChanges(Collections.singletonList(commitId), conn);
         }
     }
 
