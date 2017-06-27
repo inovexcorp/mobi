@@ -82,6 +82,15 @@
                    },
                    search: {
                        active: false
+                   },
+                   savedChanges: {
+                       active: false
+                   },
+                   merge: {
+                       active: false
+                   },
+                   commits: {
+                       active: false
                    }
                 },
                 ontologyRecord: {
@@ -145,8 +154,17 @@
                    },
                    search: {
                        active: false
+                   },
+                   savedChanges: {
+                       active: false
+                   },
+                   merge: {
+                       active: false
+                   },
+                   commits: {
+                       active: false
                    }
-               },
+                },
                 ontologyRecord: {
                     title: '',
                     recordId: '',
@@ -399,11 +417,11 @@
                 var listItem;
                 return om.getOntology(recordId, branchId, commitId)
                     .then(ontology => {
-                        var ontologyId = self.getListItemByRecordId(recordId).ontologyId;
+                        var ontologyId = om.getOntologyIRI(ontology);
                         if (type === 'ontology') {
-                            return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate);
+                            return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, self.listItem.ontologyRecord.title);
                         } else if (type === 'vocabulary') {
-                            return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate);
+                            return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, self.listItem.ontologyRecord.title);
                         }
                     }, $q.reject)
                     .then(response => {

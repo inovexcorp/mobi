@@ -495,6 +495,15 @@ function mockOntologyState() {
                    },
                    search: {
                        active: false
+                   },
+                   savedChanges: {
+                       active: false
+                   },
+                   merge: {
+                       active: false
+                   },
+                   commits: {
+                       active: false
                    }
                 },
                 ontologyRecord: {
