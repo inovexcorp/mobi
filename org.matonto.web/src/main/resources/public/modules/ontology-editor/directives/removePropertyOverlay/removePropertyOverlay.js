@@ -56,7 +56,7 @@
                             '@id': dvm.os.selected['@id'],
                             [dvm.key]: [angular.copy(dvm.os.selected[dvm.key][dvm.index])]
                         }
-                        dvm.os.addToDeletions(dvm.os.listItem.recordId, json);
+                        dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, json);
                         dvm.pm.remove(dvm.os.selected, dvm.key, dvm.index);
                         if (prefixes.rdfs + 'domain' === dvm.key) {
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);

@@ -73,7 +73,7 @@
                         var property = dvm.ro.getItemIri(dvm.os.annotationSelect);
                         var annotationType = dvm.ro.getItemIri(dvm.os.annotationType);
                         dvm.pm.add(dvm.os.selected, property, dvm.os.annotationValue, annotationType, dvm.os.annotationLanguage);
-                        dvm.os.addToAdditions(dvm.os.listItem.recordId, createJson(dvm.os.annotationValue, annotationType, dvm.os.annotationLanguage));
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(dvm.os.annotationValue, annotationType, dvm.os.annotationLanguage));
                         dvm.os.showAnnotationOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                         dvm.ontoUtils.updateLabel();
@@ -82,9 +82,9 @@
                         var property = dvm.ro.getItemIri(dvm.os.annotationSelect);
                         var annotationType = dvm.ro.getItemIri(dvm.os.annotationType);
                         var oldObj = _.get(dvm.os.selected, "['" + property + "']['" + dvm.os.annotationIndex + "']");
-                        dvm.os.addToDeletions(dvm.os.listItem.recordId, createJson(_.get(oldObj, '@value'), _.get(oldObj, '@type'), _.get(oldObj, '@language')));
+                        dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, createJson(_.get(oldObj, '@value'), _.get(oldObj, '@type'), _.get(oldObj, '@language')));
                         dvm.pm.edit(dvm.os.selected, property, dvm.os.annotationValue, dvm.os.annotationIndex, annotationType, dvm.os.annotationLanguage);
-                        dvm.os.addToAdditions(dvm.os.listItem.recordId, createJson(dvm.os.annotationValue, annotationType, dvm.os.annotationLanguage));
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, createJson(dvm.os.annotationValue, annotationType, dvm.os.annotationLanguage));
                         dvm.os.showAnnotationOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                         dvm.ontoUtils.updateLabel();

@@ -166,7 +166,7 @@ describe('Property Hierarchy Block directive', function() {
                 it('node does have an entityIRI property and areParentsOpen is true and node.get is true', function() {
                     node.entityIRI = 'iri';
                     expect(controller.isShown(node)).toBe(true);
-                    expect(get).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
+                    expect(get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                 });
             });
             describe('false when node does have an entityIRI and', function() {
@@ -181,7 +181,7 @@ describe('Property Hierarchy Block directive', function() {
                     ontologyStateSvc.areParentsOpen.and.returnValue(true);
                     get.and.returnValue(false);
                     expect(controller.isShown(node)).toBe(false);
-                    expect(get).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
+                    expect(get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                 });
             });
             it('make sure flatPropertyTree is populated correctly and $watch is working correctly', function() {

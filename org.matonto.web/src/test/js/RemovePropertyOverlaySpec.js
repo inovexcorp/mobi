@@ -100,7 +100,7 @@ describe('Remove Property Overlay directive', function() {
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
                 ontologyStateSvc.getOntologiesArray.and.returnValue([]);
                 controller.removeProperty();
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                 expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, controller.key, controller.index);
                 expect(controller.overlayFlag).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
@@ -116,7 +116,7 @@ describe('Remove Property Overlay directive', function() {
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
                 ontologyStateSvc.getOntologiesArray.and.returnValue([]);
                 controller.removeProperty();
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                 expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, controller.key, controller.index);
                 expect(controller.overlayFlag).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
@@ -130,7 +130,7 @@ describe('Remove Property Overlay directive', function() {
                 _.set(ontologyStateSvc.selected, 'key[0]', 'value');
                 controller.removeProperty();
                 expect(scope.onSubmit).toHaveBeenCalled();
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                 expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, controller.key, controller.index);
                 expect(controller.overlayFlag).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

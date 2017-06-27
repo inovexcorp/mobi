@@ -175,6 +175,7 @@ describe('Create Individual Overlay directive', function() {
         it('should create an individual', function() {
             var split = {begin: 'begin', then: 'then', end: 'end'};
             ontologyStateSvc.listItem = {
+                ontologyRecord: {},
                 ontology: [{}],
                 individuals: [],
                 classesWithIndividuals: [],
@@ -195,7 +196,7 @@ describe('Create Individual Overlay directive', function() {
             expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith([],{},'ClassA');
             expect(controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.individual);
-            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.individual);
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, controller.individual);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.individual['@id'], false);
             expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

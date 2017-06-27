@@ -61,7 +61,7 @@
                     dvm.removeFromHierarchy = function(axiomObject) {
                         if (prefixes.rdfs + 'subPropertyOf' === dvm.key) {
                             dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.objectPropertyHierarchy, dvm.os.selected['@id'], axiomObject['@id'], dvm.os.listItem.objectPropertyIndex);
-                            dvm.os.listItem.flatObjectPropertyHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.objectPropertyHierarchy, dvm.os.listItem.recordId);
+                            dvm.os.listItem.flatObjectPropertyHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.objectPropertyHierarchy, dvm.os.listItem.ontologyRecord.recordId);
                         }
                     }
                 }

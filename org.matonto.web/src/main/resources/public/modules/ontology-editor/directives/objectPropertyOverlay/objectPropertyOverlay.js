@@ -54,7 +54,7 @@
                                 dvm.os.selected[property] = [value];
                             }
                         }
-                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'], property, value));
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.selected['@id'], property, value));
                         dvm.os.showObjectPropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                     }
@@ -62,9 +62,9 @@
                     dvm.editProperty = function(select, value) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
-                            dvm.os.addToDeletions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'], property, dvm.os.selected[property][dvm.os.propertyIndex]));
+                            dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.selected['@id'], property, dvm.os.selected[property][dvm.os.propertyIndex]));
                             dvm.os.selected[property][dvm.os.propertyIndex] = value;
-                            dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'], property, value));
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.selected['@id'], property, value));
                         }
                         dvm.os.showObjectPropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
