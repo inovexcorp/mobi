@@ -445,8 +445,8 @@ public interface CatalogUtilsService {
     void addChanges(Resource targetNamedGraph, Resource oppositeNamedGraph, Model changes, RepositoryConnection conn);
 
     /**
-     * Gets a List which contains all of the Commit ids in the specified direction, either ascending or
-     * descending by date. If descending, the provided Resource identifying a Commit will be first.
+     * Gets a List which represents the commit chain from the initial commit to the specified commit in either
+     * ascending or descending date order.
      *
      * @param commitId The Resource identifying the Commit that you want to get the chain for.
      * @param conn     The RepositoryConnection which will be queried for the Commits.

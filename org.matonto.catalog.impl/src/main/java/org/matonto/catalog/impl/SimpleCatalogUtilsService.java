@@ -502,8 +502,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     public Model applyDifference(Model base, Difference diff) {
         Model result = mf.createModel(base);
         result.addAll(diff.getAdditions());
-        diff.getDeletions().forEach(statement -> result.remove(statement.getSubject(), statement.getPredicate(),
-                statement.getObject()));
+        result.removeAll(diff.getDeletions());
         return result;
     }
 

@@ -34,6 +34,7 @@ import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
+import org.matonto.catalog.api.versioning.BaseVersioningService;
 import org.matonto.catalog.api.versioning.VersioningService;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
@@ -57,14 +58,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-@Component(immediate = true)
-public class OntologyRecordVersioningService implements VersioningService<OntologyRecord> {
+@Component(
+        immediate = true,
+        provide = { VersioningService.class, OntologyRecordVersioningService.class }
+)
+public class OntologyRecordVersioningService extends BaseVersioningService<OntologyRecord> {
     private OntologyRecordFactory ontologyRecordFactory;
-    private BranchFactory branchFactory;
-    private CommitFactory commitFactory;
-    private CatalogManager catalogManager;
     private OntologyManager ontologyManager;
-    private CatalogUtilsService catalogUtils;
     private ValueFactory vf;
     private ModelFactory mf;
 
@@ -126,32 +126,6 @@ public class OntologyRecordVersioningService implements VersioningService<Ontolo
     @Override
     public String getTypeIRI() {
         return OntologyRecord.TYPE;
-    }
-
-    @Override
-    public Branch getTargetBranch(OntologyRecord record, Resource branchId, RepositoryConnection conn) {
-        return catalogUtils.getBranch(record, branchId, branchFactory, conn);
-    }
-
-    @Override
-    public Branch getSourceBranch(OntologyRecord record, Resource branchId, RepositoryConnection conn) {
-        return catalogUtils.getBranch(record, branchId, branchFactory, conn);
-    }
-
-    @Override
-    public Commit getBranchHeadCommit(Branch branch, RepositoryConnection conn) {
-        return branch.getHead_resource().map(resource -> catalogUtils.getObject(resource, commitFactory, conn))
-                .orElse(null);
-    }
-
-    @Override
-    public InProgressCommit getInProgressCommit(Resource recordId, User user, RepositoryConnection conn) {
-        return catalogUtils.getInProgressCommit(recordId, user.getResource(), conn);
-    }
-
-    @Override
-    public Commit createCommit(InProgressCommit commit, String message, Commit baseCommit, Commit auxCommit) {
-        return catalogManager.createCommit(commit, message, baseCommit, auxCommit);
     }
 
     @Override

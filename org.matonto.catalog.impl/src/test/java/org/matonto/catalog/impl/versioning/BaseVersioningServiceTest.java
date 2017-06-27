@@ -67,7 +67,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 public class BaseVersioningServiceTest {
-    private BaseVersioningService service;
+    private SimpleVersioningService service;
     private ValueFactory vf = SimpleValueFactory.getInstance();
     private ModelFactory mf = LinkedHashModelFactory.getInstance();
     private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
@@ -144,7 +144,7 @@ public class BaseVersioningServiceTest {
         when(catalogManager.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
 
-        service = new BaseVersioningService();
+        service = new SimpleVersioningService();
         service.setBranchFactory(branchFactory);
         service.setCommitFactory(commitFactory);
         service.setCatalogManager(catalogManager);
