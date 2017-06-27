@@ -38,7 +38,6 @@ import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.repository.api.RepositoryConnection;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -457,22 +456,13 @@ public interface CatalogUtilsService {
     List<Resource> getCommitChain(Resource commitId, boolean asc, RepositoryConnection conn);
 
     /**
-     * Builds the Model based on the provided Iterator of Commit ids.
-     *
-     * @param commits The Iterator of Commit ids which are supposed to be contained in the Model in ascending order.
-     * @param conn     The RepositoryConnection which contains the requested Commits.
-     * @return The Model containing the summation of all the Commits statements.
-     */
-    Model getModelFromCommits(Iterator<Resource> commits, RepositoryConnection conn);
-
-    /**
-     * Builds the Model based on the provided List of Commit ids.
+     * Builds the Difference based on the provided List of Commit ids.
      *
      * @param commits The List of Commit ids which are supposed to be contained in the Model in ascending order.
      * @param conn     The RepositoryConnection which contains the requested Commits.
-     * @return The Model containing the summation of all the Commits statements.
+     * @return The Difference containing the aggregation of all the Commit additions and deletions.
      */
-    Model getModelFromCommits(List<Resource> commits, RepositoryConnection conn);
+    Difference getRevisionChanges(List<Resource> commits, RepositoryConnection conn);
 
     /**
      * Gets the Model which represents the entity at the instance of theCommit identified by the first Resource in
