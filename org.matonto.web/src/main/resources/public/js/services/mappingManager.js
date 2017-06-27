@@ -687,8 +687,9 @@
              * @description
              * Finds the list of any Class, Data, or Object Mappings within the passed mapping that are no longer
              * compatible with the passed list of source ontologies. A Class, Data, or Object is incompatible if
-             * its IRI doesn't exist in the ontologies. A ObjectMapping is also incompatible if its range has
-             * changed. If a DataMapping uses a supported annotation property, it will not be incompatible.
+             * its IRI doesn't exist in the ontologies or if it has been deprecated. A ObjectMapping is also
+             * incompatible if its range has changed or its range class is incompatiable. If a DataMapping uses a
+             * supported annotation property, it will not be incompatible.
              *
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {Object[]} ontologies The list of source ontologies to reference
@@ -697,27 +698,51 @@
             self.findIncompatibleMappings = function(mapping, ontologies) {
                 var incompatibleMappings = [];
                 _.forEach(self.getAllClassMappings(mapping), classMapping => {
-                    if (!self.findSourceOntologyWithClass(self.getClassIdByMapping(classMapping), ontologies)) {
+                    var classId = self.getClassIdByMapping(classMapping);
+                    var classOntology = self.findSourceOntologyWithClass(classId, ontologies);
+                    // Incompatible if class no longer exists or is deprecated
+                    if (!classOntology || om.isDeprecated(om.getEntity([classOntology.entities], classId))) {
                         incompatibleMappings.push(classMapping);
                     }
-                    _.forEach(self.getPropMappingsByClass(mapping, classMapping['@id']), propMapping => {
-                        var propId = self.getPropIdByMapping(propMapping);
-                        var ontology = self.findSourceOntologyWithProp(propId, ontologies);
-                        if (!ontology && !_.includes(self.annotationProperties, propId)) {
+                });
+                _.forEach(self.getAllDataMappings(mapping), propMapping => {
+                    var propId = self.getPropIdByMapping(propMapping);
+                    var propOntology = self.findSourceOntologyWithProp(propId, ontologies);
+                    // Incompatible if data property no longer exists and is not a supported annotation
+                    if (!propOntology && !_.includes(self.annotationProperties, propId)) {
+                        incompatibleMappings.push(propMapping);
+                    } else if (propOntology) {
+                        var propObj = om.getEntity([propOntology.entities], propId);
+                        // Incompatible if data property is deprecated or is no longer a data property
+                        if (om.isDeprecated(propObj) || !om.isDataTypeProperty(propObj)) {
                             incompatibleMappings.push(propMapping);
-                        } else if (ontology) {
-                            var propObj = om.getEntity([ontology.entities], propId);
-                            if (om.isObjectProperty(propObj)) {
-                                var rangeClassId = self.getClassIdByMappingId(mapping, util.getPropertyId(propMapping, prefixes.delim + 'classMapping'));
-                                if (self.isDataMapping(propMapping) || util.getPropertyId(propObj, prefixes.rdfs + 'range') !== rangeClassId) {
-                                    incompatibleMappings.push(propMapping);
-                                }
-                            }
-                            if (om.isDataTypeProperty(propObj) && self.isObjectMapping(propMapping)) {
-                                incompatibleMappings.push(propMapping);
-                            }
                         }
-                    });
+                    }
+                });
+                _.forEach(self.getAllObjectMappings(mapping), propMapping => {
+                    var propId = self.getPropIdByMapping(propMapping);
+                    var propOntology = self.findSourceOntologyWithProp(propId, ontologies);
+                    // Incompatible if object property no longer exists
+                    if (!propOntology) {
+                        incompatibleMappings.push(propMapping);
+                    } else {
+                        var propObj = om.getEntity([propOntology.entities], propId);
+                        // Incompatible if object property is deprecated or is no longer a object property
+                        if (om.isDeprecated(propObj) || !om.isObjectProperty(propObj)) {
+                            incompatibleMappings.push(propMapping);
+                            return;
+                        }
+                        var rangeClassId = self.getClassIdByMappingId(mapping, util.getPropertyId(propMapping, prefixes.delim + 'classMapping'));
+                        // Incompatible if range of object property is different
+                        if (util.getPropertyId(propObj, prefixes.rdfs + 'range') !== rangeClassId) {
+                            incompatibleMappings.push(propMapping);
+                            return;
+                        }
+                        // Incompatible if range of object property is incompatible
+                        if (_.find(incompatibleMappings, entityMap => self.getClassIdByMapping(entityMap) === rangeClassId)) {
+                            incompatibleMappings.push(propMapping);
+                        }
+                    }
                 });
                 return incompatibleMappings;
             }
