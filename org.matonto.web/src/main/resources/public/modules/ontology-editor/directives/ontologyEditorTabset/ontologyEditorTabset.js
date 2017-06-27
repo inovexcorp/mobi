@@ -52,9 +52,9 @@
                     }
                     
                     dvm.onClick = function(recordId) {
-                        _.filter(dvm.os.list, o => o.ontologyState.active).every(o =>  o.ontologyState.active = false);
+                        _.filter(dvm.os.list, o => o.ontologyState.active).forEach(o =>  o.ontologyState.active = false);
                         if (recordId) {
-                            _.filter(dvm.os.list, { ontologyRecord: { recordId }}).every(o =>  {
+                            _.filter(dvm.os.list, { ontologyRecord: { recordId }}).forEach(o =>  {
                                 dvm.os.listItem = o;
                                 o.ontologyState.active = true
                             });
@@ -63,7 +63,7 @@
                     
                     $scope.$watch('dvm.os.listItem', () => {
                         if (dvm.os.listItem) {
-                            dvm.newTabActive = !(_.reduce(dvm.os.listItem.editorTabStates, (a, s) => a || (s ? (s.active ? s.active : false) : false), false));
+                            dvm.newTabActive = !(_.some(dvm.os.listItem.editorTabStates, 'active'));
                         } else {
                             dvm.newTabActive = true;
                         }
