@@ -36,7 +36,7 @@
                 templateUrl: 'modules/ontology-editor/directives/ontologyPropertiesBlock/ontologyPropertiesBlock.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
@@ -71,7 +71,11 @@
                         dvm.os.ontologyPropertyLanguage = _.get(propertyObj, '@language');
                         dvm.os.showOntologyPropertyOverlay = true;
                     }
-                }
+                    
+                    $scope.$watch('dvm.os.selected', () => {
+                        dvm.properties = _.union(dvm.om.ontologyProperties, dvm.os.listItem.annotations);
+                    });
+                }]
             }
         }
 })();
