@@ -29,7 +29,7 @@
             <ontology-tab ng-if="item.ontologyRecord.type === 'ontology'"></ontology-tab>
             <vocabulary-tab ng-if="item.ontologyRecord.type === 'vocabulary'"></vocabulary-tab>
         </tab>
-        <tab active="dvm.activateNewTab" on-click="dvm.onClick()" is-last="true">
+        <tab active="dvm.newTabActive" on-click="dvm.onClick()" is-last="true">
             <ontology-default-tab></ontology-default-tab>
         </tab>
     </tabset>

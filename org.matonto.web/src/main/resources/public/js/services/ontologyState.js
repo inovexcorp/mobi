@@ -426,17 +426,23 @@
                     }, $q.reject)
                     .then(response => {
                         listItem = response;
-                        return sm.updateOntologyState(recordId, branchId, commitId)
+                        return sm.updateOntologyState(recordId, branchId, commitId);
                     }, $q.reject)
                     .then(() => updateListItem(recordId, listItem), $q.reject);
             }
             self.addOntologyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, title, upToDate = true) {
                 return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title)
-                    .then(listItem => { self.list.push(listItem); return listItem; }, $q.reject);
+                    .then(listItem => { 
+                        self.list.push(listItem); 
+                        return listItem; 
+                    }, $q.reject);
             }
             self.addVocabularyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, title, upToDate = true) {
                 return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title)
-                    .then(listItem => { self.list.push(listItem); return listItem; }, $q.reject);
+                    .then(listItem => { 
+                        self.list.push(listItem); 
+                        return listItem; 
+                    }, $q.reject);
             }
             self.createOntologyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                 upToDate = true, title) {
@@ -910,7 +916,7 @@
                 if (self.listItem.ontologyRecord.recordId == recordId) {
                    self.listItem = undefined;
                 }
-                _.remove(self.list, { ontologyRecord: { recordId: recordId }});
+                _.remove(self.list, { ontologyRecord: { recordId }});
             }
             self.removeBranch = function(recordId, branchId) {
                 _.remove(self.getListItemByRecordId(recordId).branches, {'@id': branchId});

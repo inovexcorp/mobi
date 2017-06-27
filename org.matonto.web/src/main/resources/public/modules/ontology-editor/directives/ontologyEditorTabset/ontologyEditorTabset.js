@@ -34,15 +34,13 @@
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/ontologyEditorTabset/ontologyEditorTabset.html',
-                scope: {
-                    listItem: '='
-                },
+                scope: {},
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
-                    dvm.activateNewTab = true;
+                    dvm.newTabActive = true;
                             
                     dvm.onClose = function(recordId) {
                         if (dvm.os.hasChanges(recordId)) {
@@ -56,7 +54,7 @@
                     dvm.onClick = function(recordId) {
                         _.filter(dvm.os.list, o => o.ontologyState.active).every(o =>  o.ontologyState.active = false);
                         if (recordId) {
-                            _.filter(dvm.os.list, o => o.ontologyRecord.recordId === recordId).every(o =>  {
+                            _.filter(dvm.os.list, { ontologyRecord: { recordId }}).every(o =>  {
                                 dvm.os.listItem = o;
                                 o.ontologyState.active = true
                             });
@@ -65,9 +63,9 @@
                     
                     $scope.$watch('dvm.os.listItem', () => {
                         if (dvm.os.listItem) {
-                            dvm.activateNewTab = !(_.reduce(dvm.os.listItem.editorTabStates, (a, s) => a || (s ? (s.active ? s.active : false) : false), false));
+                            dvm.newTabActive = !(_.reduce(dvm.os.listItem.editorTabStates, (a, s) => a || (s ? (s.active ? s.active : false) : false), false));
                         } else {
-                            dvm.activateNewTab = true;
+                            dvm.newTabActive = true;
                         }
                     });
                 }]

@@ -75,8 +75,6 @@
                             _.join(_.map(dvm.keywords, _.trim), ','), dvm.type).then(response =>
                                 sm.createOntologyState(response.recordId, response.branchId, response.commitId)
                                     .then(() => {
-//                                        dvm.os.addState(response.recordId, dvm.title, response.entityIRI, dvm.type);
-//                                        dvm.os.setState(response.recordId, dvm.title);
                                         dvm.os.showNewTab = false;
                                     }, onError), onError);
                     }
