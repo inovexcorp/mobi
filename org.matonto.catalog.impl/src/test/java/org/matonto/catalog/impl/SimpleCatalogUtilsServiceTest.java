@@ -1541,14 +1541,9 @@ public class SimpleCatalogUtilsServiceTest {
             Model expectDel = mf.createModel();
             expectDel.add(vf.createStatement(subject, titleIRI, vf.createLiteral("Test 0 Title")));
 
-            Difference expect = new Difference.Builder()
-                    .additions(expectAdd)
-                    .deletions(expectDel)
-                    .build();
-
             Difference result = service.getRevisionChanges(commits, conn);
-            result.getAdditions().forEach(statement -> assertTrue(expect.getAdditions().contains(statement)));
-            result.getDeletions().forEach(statement -> assertTrue(expect.getDeletions().contains(statement)));
+            result.getAdditions().forEach(statement -> assertTrue(expectAdd.contains(statement)));
+            result.getDeletions().forEach(statement -> assertTrue(expectDel.contains(statement)));
         }
     }
 

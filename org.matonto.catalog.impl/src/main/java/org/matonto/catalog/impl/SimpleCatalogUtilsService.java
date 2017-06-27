@@ -467,7 +467,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .additions(mf.createModel())
                 .deletions(mf.createModel())
                 .build();
-        commits.forEach(value -> aggregateDifferences(difference, value, conn));
+        commits.forEach(commitId -> aggregateDifferences(difference, commitId, conn));
         return difference;
     }
 

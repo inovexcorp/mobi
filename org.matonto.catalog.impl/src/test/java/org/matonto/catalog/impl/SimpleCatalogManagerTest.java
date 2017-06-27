@@ -2056,7 +2056,7 @@ public class SimpleCatalogManagerTest {
         leftAdds.add(sub, descriptionIRI, vf.createLiteral("Description"));
         Difference leftDiff = new Difference.Builder()
                 .additions(leftAdds)
-                .deletions( mf.createModel())
+                .deletions(mf.createModel())
                 .build();
 
         Model rightAdds = mf.createModel();
