@@ -1207,6 +1207,7 @@
             self.getOntologiesArray = function() {
                 return getOntologiesArrayByListItem(self.listItem);
             }
+            
             self.updatePropertyIcon = function(entity) {
                 if (om.isProperty(entity)) {
                     setPropertyIcon(entity);
@@ -1290,8 +1291,10 @@
                 }
             }
             function updateListItem(recordId, newListItem) {
+                var activeKey = self.getActiveKey();
                 var oldListItem = self.getListItemByRecordId(recordId);
                 _.assign(oldListItem, newListItem);
+                self.setActivePage(activeKey);
             }
             function addOntologyIdToArray(arr, ontologyId) {
                 return _.forEach(arr, item => _.set(item, 'ontologyId', ontologyId));

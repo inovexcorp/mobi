@@ -52,12 +52,8 @@
                     }
                     
                     dvm.onClick = function(recordId) {
-                        _.filter(dvm.os.list, o => o.ontologyState.active).forEach(o =>  o.ontologyState.active = false);
                         if (recordId) {
-                            _.filter(dvm.os.list, { ontologyRecord: { recordId }}).forEach(o =>  {
-                                dvm.os.listItem = o;
-                                o.ontologyState.active = true
-                            });
+                            dvm.os.listItem = dvm.os.getListItemByRecordId(recordId);
                         }
                     }
                     
