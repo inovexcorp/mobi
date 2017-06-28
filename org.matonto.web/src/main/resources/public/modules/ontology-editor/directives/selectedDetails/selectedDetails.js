@@ -43,7 +43,7 @@
                     dvm.om = ontologyManagerService;
 
                     dvm.getTypes = function() {
-                        return _.join(_.orderBy(_.map(_.get(dvm.os.selected, '@type', []), $filter('prefixation'))), ', ');
+                        return _.join(_.orderBy(_.map(_.get(dvm.os.listItem.selected, '@type', []), $filter('prefixation'))), ', ');
                     }
 
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {

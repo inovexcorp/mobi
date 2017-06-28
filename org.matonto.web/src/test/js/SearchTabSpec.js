@@ -47,7 +47,7 @@ describe('Search Tab directive', function() {
             httpSvc = _httpService_;
         });
 
-        ontologyStateSvc.selected = {
+        ontologyStateSvc.listItem.selected = {
             key: [{
                 '@id': 'id'
             },
@@ -67,7 +67,7 @@ describe('Search Tab directive', function() {
                 }]
             },
             searchText: 'searchText',
-            selected: ontologyStateSvc.selected
+            selected: ontologyStateSvc.listItem.selected
         }
         ontologyUtilsManagerSvc.isLinkable.and.callFake(function(id) {
             return !!id;
@@ -189,7 +189,7 @@ describe('Search Tab directive', function() {
             expect(ontologyStateSvc.listItem.editorTabStates.search.highlightText).toEqual('');
         });
         it('check $watch', function() {
-            ontologyStateSvc.selected = {
+            ontologyStateSvc.listItem.selected = {
                 '@id': 'new',
                 key: 'new',
                 'matonto': 'new'

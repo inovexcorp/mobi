@@ -164,7 +164,7 @@ describe('Ontology Property Overlay directive', function() {
                 spyOn(controller, 'isOntologyProperty').and.returnValue(true);
                 controller.addProperty();
                 expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.ontologyProperty);
-                expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.selected,
+                expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected,
                     resObj.getItemIri(ontologyStateSvc.ontologyProperty), ontologyStateSvc.ontologyPropertyIRI,
                     null, ontologyStateSvc.ontologyPropertyLanguage);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
@@ -176,7 +176,7 @@ describe('Ontology Property Overlay directive', function() {
                 spyOn(controller, 'isAnnotationProperty').and.returnValue(true);
                 controller.addProperty();
                 expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.ontologyProperty);
-                expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.selected,
+                expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected,
                     resObj.getItemIri(ontologyStateSvc.ontologyProperty), ontologyStateSvc.ontologyPropertyValue,
                     null, ontologyStateSvc.ontologyPropertyLanguage);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
@@ -187,7 +187,7 @@ describe('Ontology Property Overlay directive', function() {
             it('when neither are true', function() {
                 controller.addProperty();
                 expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.ontologyProperty);
-                expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.selected,
+                expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected,
                     resObj.getItemIri(ontologyStateSvc.ontologyProperty), '',
                     null, ontologyStateSvc.ontologyPropertyLanguage);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
@@ -203,7 +203,7 @@ describe('Ontology Property Overlay directive', function() {
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                     jasmine.any(Object));
                 expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.ontologyProperty);
-                expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.selected,
+                expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected,
                     resObj.getItemIri(ontologyStateSvc.ontologyProperty), ontologyStateSvc.ontologyPropertyIRI,
                     ontologyStateSvc.ontologyPropertyIndex, null, ontologyStateSvc.ontologyPropertyLanguage);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
@@ -217,7 +217,7 @@ describe('Ontology Property Overlay directive', function() {
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                     jasmine.any(Object));
                 expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.ontologyProperty);
-                expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.selected,
+                expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected,
                     resObj.getItemIri(ontologyStateSvc.ontologyProperty), ontologyStateSvc.ontologyPropertyValue,
                     ontologyStateSvc.ontologyPropertyIndex, null, ontologyStateSvc.ontologyPropertyLanguage);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
@@ -230,7 +230,7 @@ describe('Ontology Property Overlay directive', function() {
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                     jasmine.any(Object));
                 expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.ontologyProperty);
-                expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.selected,
+                expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected,
                     resObj.getItemIri(ontologyStateSvc.ontologyProperty), '',
                     ontologyStateSvc.ontologyPropertyIndex, null, ontologyStateSvc.ontologyPropertyLanguage);
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,

@@ -462,9 +462,6 @@ function mockOntologyState() {
     module(function($provide) {
         $provide.service('ontologyStateService', function($q) {
             this.recordIdToClose = 'recordIdToClose';
-            this.selected = {
-                '@id': 'id'
-            };
             this.annotationSelect = 'select';
             this.annotationValue = 'value';
             this.annotationType = {namespace: '', localName: ''};
@@ -472,6 +469,9 @@ function mockOntologyState() {
             this.index = 0;
             this.annotationIndex = 0;
             this.listItem = {
+                selected: {
+                    '@id': 'id'
+                },
                 ontologyState: {
                     active: true,
                     upToDate: true

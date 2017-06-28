@@ -52,8 +52,8 @@
 
                     dvm.remove = function() {
                         var importsIRI = dvm.prefixes.owl + 'imports';
-                        dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, util.createJson(dvm.os.selected['@id'], importsIRI, {'@id': dvm.url}));
-                        pm.remove(dvm.os.selected, importsIRI, _.findIndex(dvm.os.selected[importsIRI], {'@id': dvm.url}));
+                        dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, util.createJson(dvm.os.listItem.selected['@id'], importsIRI, {'@id': dvm.url}));
+                        pm.remove(dvm.os.listItem.selected, importsIRI, _.findIndex(dvm.os.listItem.selected[importsIRI], {'@id': dvm.url}));
                         dvm.os.saveChanges(dvm.os.listItem.ontologyRecord.recordId, {additions: dvm.os.listItem.additions, deletions: dvm.os.listItem.deletions})
                             .then(() => dvm.os.afterSave(), $q.reject)
                             .then(() => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyRecord.type, dvm.os.listItem.ontologyState.upToDate, dvm.os.listItem.inProgressCommit), $q.reject)

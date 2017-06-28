@@ -71,7 +71,7 @@
                         dvm.os.listItem.editorTabStates.search.selected = {};
                     }
 
-                    $scope.$watch('dvm.os.selected', (newValue, oldValue) => {
+                    $scope.$watch('dvm.os.listItem.selected', (newValue, oldValue) => {
                         if (!_.isEqual(oldValue, newValue)) {
                             dvm.os.listItem.editorTabStates.search.selected = _.omit(angular.copy(newValue), '@id', '@type', 'matonto');
                         }

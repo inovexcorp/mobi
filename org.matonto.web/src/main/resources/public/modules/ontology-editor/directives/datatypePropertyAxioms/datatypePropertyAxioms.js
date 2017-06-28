@@ -52,7 +52,7 @@
                     dvm.updateHierarchy = function(axiom, values) {
                         var localName = _.get(axiom, 'localName');
                         if (localName === 'subPropertyOf') {
-                            dvm.ontoUtils.setSuperProperties(dvm.os.selected['@id'], _.map(values, value => dvm.ro.getItemIri(value)), 'dataPropertyHierarchy', 'dataPropertyIndex', 'flatDataPropertyHierarchy');
+                            dvm.ontoUtils.setSuperProperties(dvm.os.listItem.selected['@id'], _.map(values, value => dvm.ro.getItemIri(value)), 'dataPropertyHierarchy', 'dataPropertyIndex', 'flatDataPropertyHierarchy');
                         } else if (localName === 'domain') {
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         }
@@ -60,7 +60,7 @@
 
                     dvm.removeFromHierarchy = function(axiomObject) {
                         if (prefixes.rdfs + 'subPropertyOf' === dvm.key) {
-                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.dataPropertyHierarchy, dvm.os.selected['@id'], axiomObject['@id'], dvm.os.listItem.dataPropertyIndex);
+                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.dataPropertyHierarchy, dvm.os.listItem.selected['@id'], axiomObject['@id'], dvm.os.listItem.dataPropertyIndex);
                             dvm.os.listItem.flatDataPropertyHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.dataPropertyHierarchy, dvm.os.listItem.ontologyRecord.recordId);
                         }
                     }

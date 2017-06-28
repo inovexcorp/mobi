@@ -164,8 +164,8 @@ describe('Imports Overlay directive', function() {
                         ontologyStateSvc.isCommittable.and.returnValue(true);
                         updateDeferred.resolve();
                         scope.$apply();
-                        expect(util.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.selected, prefixes.owl + 'imports', controller.url);
-                        expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
+                        expect(util.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', controller.url);
+                        expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
                         expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
@@ -177,8 +177,8 @@ describe('Imports Overlay directive', function() {
                     it('when update ontology rejects', function() {
                         updateDeferred.reject('error');
                         scope.$apply();
-                        expect(util.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.selected, prefixes.owl + 'imports', controller.url);
-                        expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
+                        expect(util.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', controller.url);
+                        expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
                         expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
@@ -189,8 +189,8 @@ describe('Imports Overlay directive', function() {
                 it('when after save rejects', function() {
                     afterDeferred.reject('error');
                     scope.$apply();
-                    expect(util.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.selected, prefixes.owl + 'imports', controller.url);
-                    expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
+                    expect(util.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', controller.url);
+                    expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                     expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
@@ -200,8 +200,8 @@ describe('Imports Overlay directive', function() {
             it('when save changes rejects', function() {
                 saveDeferred.reject('error');
                 scope.$apply();
-                expect(util.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.selected, prefixes.owl + 'imports', controller.url);
-                expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
+                expect(util.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', controller.url);
+                expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                 expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                 expect(controller.error).toBe('error');

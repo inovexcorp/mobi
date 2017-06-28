@@ -50,18 +50,18 @@
 
                     dvm.removeProperty = function() {
                         if (dvm.onSubmit) {
-                            dvm.onSubmit({axiomObject: dvm.os.selected[dvm.key][dvm.index]});
+                            dvm.onSubmit({axiomObject: dvm.os.listItem.selected[dvm.key][dvm.index]});
                         }
                         var json = {
-                            '@id': dvm.os.selected['@id'],
-                            [dvm.key]: [angular.copy(dvm.os.selected[dvm.key][dvm.index])]
+                            '@id': dvm.os.listItem.selected['@id'],
+                            [dvm.key]: [angular.copy(dvm.os.listItem.selected[dvm.key][dvm.index])]
                         }
                         dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, json);
-                        dvm.pm.remove(dvm.os.selected, dvm.key, dvm.index);
+                        dvm.pm.remove(dvm.os.listItem.selected, dvm.key, dvm.index);
                         if (prefixes.rdfs + 'domain' === dvm.key) {
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         } else if (prefixes.rdfs + 'range' === dvm.key) {
-                            dvm.os.updatePropertyIcon(dvm.os.selected);
+                            dvm.os.updatePropertyIcon(dvm.os.listItem.selected);
                         }
                         dvm.overlayFlag = false;
                         ontoUtils.saveCurrentChanges();
