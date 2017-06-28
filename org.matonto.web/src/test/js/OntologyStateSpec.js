@@ -189,7 +189,7 @@ describe('Ontology State Service', function() {
                 commitId: 'commitId'
             }
         }
-        ontologyStateSvc.selected = {'@id': 'id'};
+        ontologyStateSvc.listItem.selected = {'@id': 'id'};
         ontologyStateSvc.listItem.editorTabStates = {
             tab: {
                 active: true,
@@ -1812,8 +1812,8 @@ describe('Ontology State Service', function() {
     it('reset should clear the correct variables', function() {
         ontologyStateSvc.reset();
         expect(ontologyStateSvc.list).toEqual([]);
-        expect(ontologyStateSvc.selected).toEqual({});
-        expect(ontologyStateSvc.listItem).toEqual({});
+        expect(ontologyStateSvc.listItem).toEqual({selected: {}});
+        expect(ontologyStateSvc.listItem.selected).toEqual({});
     });
     describe('afterSave calls the correct functions', function() {
         var getDeferred;
@@ -2069,21 +2069,21 @@ describe('Ontology State Service', function() {
         });
         it('regardless of getEntityUsages outcome when no match in additions', function() {
             ontologyStateSvc.onEdit(iriBegin, iriThen, iriEnd);
-            expect(updateRefsSvc.update).toHaveBeenCalledWith(ontologyStateSvc.listItem, ontologyStateSvc.selected['@id'], newIRI);
+            expect(updateRefsSvc.update).toHaveBeenCalledWith(ontologyStateSvc.listItem, ontologyStateSvc.listItem.selected['@id'], newIRI);
             expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
-            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, angular.copy(ontologyStateSvc.selected));
-            expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, angular.copy(ontologyStateSvc.selected));
-            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.selected['@id'], 'construct');
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, angular.copy(ontologyStateSvc.listItem.selected));
+            expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, angular.copy(ontologyStateSvc.listItem.selected));
+            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.selected['@id'], 'construct');
         });
         it('regardless of getEntityUsages outcome when match in additions', function() {
-            ontologyStateSvc.listItem.additions = [angular.copy(ontologyStateSvc.selected)];
+            ontologyStateSvc.listItem.additions = [angular.copy(ontologyStateSvc.listItem.selected)];
             ontologyStateSvc.onEdit(iriBegin, iriThen, iriEnd);
-            expect(updateRefsSvc.update).toHaveBeenCalledWith(ontologyStateSvc.listItem, ontologyStateSvc.selected['@id'], newIRI);
+            expect(updateRefsSvc.update).toHaveBeenCalledWith(ontologyStateSvc.listItem, ontologyStateSvc.listItem.selected['@id'], newIRI);
             expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
-            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, angular.copy(ontologyStateSvc.selected));
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, angular.copy(ontologyStateSvc.listItem.selected));
             expect(ontologyStateSvc.addToDeletions).not.toHaveBeenCalled();
             expect(ontologyStateSvc.listItem.additions.length).toBe(0);
-            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.selected['@id'], 'construct');
+            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.selected['@id'], 'construct');
         });
         describe('when getActiveKey is', function() {
             it('project', function() {
@@ -2106,7 +2106,7 @@ describe('Ontology State Service', function() {
             ontologyStateSvc.onEdit(iriBegin, iriThen, iriEnd);
             scope.$apply();
             expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, statement);
-            expect(updateRefsSvc.update).toHaveBeenCalledWith(response, ontologyStateSvc.selected['@id'], newIRI);
+            expect(updateRefsSvc.update).toHaveBeenCalledWith(response, ontologyStateSvc.listItem.selected['@id'], newIRI);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, statement);
         });
         it('when getEntityUsages rejects', function() {
@@ -2127,7 +2127,7 @@ describe('Ontology State Service', function() {
         var object = {'@id': 'new'};
         var id = 'id';
         beforeEach(function() {
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             spyOn(ontologyStateSvc, 'getEntityByRecordId').and.returnValue(object);
             spyOn(ontologyStateSvc, 'setEntityUsages');
             spyOn(ontologyStateSvc, 'getActivePage').and.returnValue({});
@@ -2135,28 +2135,28 @@ describe('Ontology State Service', function() {
         it('when getUsages is true and getActivePage object does not have a usages property', function() {
             ontologyStateSvc.setSelected(id, true);
             expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, id);
-            expect(ontologyStateSvc.selected).toEqual(object);
+            expect(ontologyStateSvc.listItem.selected).toEqual(object);
             expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
             expect(ontologyStateSvc.setEntityUsages).toHaveBeenCalledWith(id);
         });
         it('when getUsages is false', function() {
             ontologyStateSvc.setSelected(id, false);
             expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, id);
-            expect(ontologyStateSvc.selected).toEqual(object);
+            expect(ontologyStateSvc.listItem.selected).toEqual(object);
             expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
         });
         it('when getEntityByRecordId returns undefined', function() {
             ontologyStateSvc.getEntityByRecordId.and.returnValue(undefined);
             ontologyStateSvc.setSelected(id, true);
             expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, id);
-            expect(ontologyStateSvc.selected).toEqual(undefined);
+            expect(ontologyStateSvc.listItem.selected).toEqual(undefined);
             expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
         });
         it('when getActivePage object does have a usages property', function() {
             ontologyStateSvc.getActivePage.and.returnValue({usages: []});
             ontologyStateSvc.setSelected(id, true);
             expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, id);
-            expect(ontologyStateSvc.selected).toEqual(object);
+            expect(ontologyStateSvc.listItem.selected).toEqual(object);
             expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
             expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
         });
@@ -2200,21 +2200,21 @@ describe('Ontology State Service', function() {
             }
             ontologyManagerSvc.getOntologyIRI.and.returnValue(newOntologyIRI);
             spyOn(ontologyStateSvc, 'getEntityByRecordId').and.returnValue({'@id': newOntologyIRI});
-            ontologyStateSvc.selected = {};
+            ontologyStateSvc.listItem.selected = {};
         });
         it('when getActiveKey is not project', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('other');
             ontologyStateSvc.resetStateTabs();
             expect(ontologyStateSvc.listItem.editorTabStates.classes).toEqual({});
             expect(ontologyStateSvc.listItem.editorTabStates.project).toEqual({entityIRI: newOntologyIRI, preview: ''});
-            expect(ontologyStateSvc.selected).toBeUndefined();
+            expect(ontologyStateSvc.listItem.selected).toBeUndefined();
         });
         it('when getActiveKey is project', function() {
             spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('project');
             ontologyStateSvc.resetStateTabs();
             expect(ontologyStateSvc.listItem.editorTabStates.classes).toEqual({});
             expect(ontologyStateSvc.listItem.editorTabStates.project).toEqual({entityIRI: newOntologyIRI, preview: ''});
-            expect(ontologyStateSvc.selected).toEqual({'@id': newOntologyIRI});
+            expect(ontologyStateSvc.listItem.selected).toEqual({'@id': newOntologyIRI});
         });
     });
     describe('getActiveKey', function() {
@@ -2286,7 +2286,7 @@ describe('Ontology State Service', function() {
     it('unSelectItem sets all the variables appropriately', function() {
         spyOn(ontologyStateSvc, 'getActivePage').and.returnValue(ontologyStateSvc.listItem.editorTabStates.tab);
         ontologyStateSvc.unSelectItem();
-        expect(ontologyStateSvc.selected).toBeUndefined();
+        expect(ontologyStateSvc.listItem.selected).toBeUndefined();
         expect(!_.has(ontologyStateSvc.listItem.editorTabStates.tab, 'entityIRI')).toBe(true);
         expect(!_.has(ontologyStateSvc.listItem.editorTabStates.tab, 'usages')).toBe(true);
     });

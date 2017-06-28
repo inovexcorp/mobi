@@ -120,7 +120,7 @@ describe('Relationship Overlay directive', function() {
             resObj.getItemIri.and.returnValue('axiom');
             controller.addRelationship();
             expect(resObj.getItemIri).toHaveBeenCalledWith(controller.relationship);
-            expect(ontologyStateSvc.selected.axiom).toEqual(controller.values);
+            expect(ontologyStateSvc.listItem.selected.axiom).toEqual(controller.values);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
             expect(ontologyStateSvc.showRelationshipOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

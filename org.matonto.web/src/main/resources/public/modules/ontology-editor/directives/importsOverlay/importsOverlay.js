@@ -61,8 +61,8 @@
 
                     dvm.confirmed = function() {
                         var importsIRI = prefixes.owl + 'imports';
-                        util.setPropertyId(os.selected, importsIRI, dvm.url);
-                        os.addToAdditions(os.listItem.ontologyRecord.recordId, util.createJson(os.selected['@id'], importsIRI, {'@id': dvm.url}));
+                        util.setPropertyId(os.listItem.selected, importsIRI, dvm.url);
+                        os.addToAdditions(os.listItem.ontologyRecord.recordId, util.createJson(os.listItem.selected['@id'], importsIRI, {'@id': dvm.url}));
                         os.saveChanges(os.listItem.ontologyRecord.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions})
                             .then(() => os.afterSave(), $q.reject)
                             .then(() => os.updateOntology(os.listItem.ontologyRecord.recordId, os.listItem.ontologyRecord.branchId, os.listItem.ontologyRecord.commitId, os.listItem.ontologyRecord.type, os.listItem.ontologyState.upToDate, os.listItem.inProgressCommit), $q.reject)

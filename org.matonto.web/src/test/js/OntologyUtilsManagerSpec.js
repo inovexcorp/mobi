@@ -66,7 +66,7 @@ describe('Ontology Utils Manager service', function() {
                 ontologyUtilsManagerSvc.commonDelete('iri');
                 scope.$apply();
                 expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'iri', 'construct');
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.selected);
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected);
                 expect(ontologyStateSvc.removeEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, 'iri');
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': 'id'});
                 expect(updateRefs.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, 'iri');
@@ -80,7 +80,7 @@ describe('Ontology Utils Manager service', function() {
                 ontologyUtilsManagerSvc.commonDelete('iri', true);
                 scope.$apply();
                 expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'iri', 'construct');
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.selected);
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected);
                 expect(ontologyStateSvc.removeEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, 'iri');
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': 'id'});
                 expect(updateRefs.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, 'iri');
@@ -170,7 +170,7 @@ describe('Ontology Utils Manager service', function() {
             'ClassA': ['IndivA1', 'IndivA2'],
             'ClassB': ['IndivB1']
         };
-        ontologyStateSvc.selected['@type'] = ['ClassB'];
+        ontologyStateSvc.listItem.selected['@type'] = ['ClassB'];
         ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('IndivB1');
@@ -410,7 +410,7 @@ describe('Ontology Utils Manager service', function() {
         });
         describe('when the listItem.index contains the selected @id', function() {
             beforeEach(function() {
-                ontologyStateSvc.selected = {
+                ontologyStateSvc.listItem.selected = {
                     '@id': 'iri',
                     matonto: {
                         originalIRI: ''
@@ -454,7 +454,7 @@ describe('Ontology Utils Manager service', function() {
             });
         });
         it('when the listItem.index does not contain the selected @id', function() {
-            ontologyStateSvc.selected = {'@id': 'other-iri'};
+            ontologyStateSvc.listItem.selected = {'@id': 'other-iri'};
             ontologyUtilsManagerSvc.updateLabel();
             expect(ontologyStateSvc.listItem.index.iri.label).toBe('old-value');
         });
@@ -526,15 +526,15 @@ describe('Ontology Utils Manager service', function() {
             expect(ontologyUtilsManagerSvc.checkIri('newIri')).toBe(false);
         });
         it('the IRI is a duplicate and not selected.', function() {
-            ontologyStateSvc.selected = {'@id': 'newIri'};
+            ontologyStateSvc.listItem.selected = {'@id': 'newIri'};
             expect(ontologyUtilsManagerSvc.checkIri('id')).toBe(true);
         });
         it('the IRI is not a duplicate and there is an IRI selected.', function() {
-            ontologyStateSvc.selected = {'@id': 'id'};
+            ontologyStateSvc.listItem.selected = {'@id': 'id'};
             expect(ontologyUtilsManagerSvc.checkIri('newIri')).toBe(false);
         });
         it('the IRI is a duplicate and is selected.', function() {
-            ontologyStateSvc.selected = {'@id': 'id'};
+            ontologyStateSvc.listItem.selected = {'@id': 'id'};
             expect(ontologyUtilsManagerSvc.checkIri('id')).toBe(false);
         });
     });

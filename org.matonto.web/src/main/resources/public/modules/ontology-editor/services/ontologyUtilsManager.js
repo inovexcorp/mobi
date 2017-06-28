@@ -40,7 +40,7 @@
             self.commonDelete = function(entityIRI, updateEverythingTree = false) {
                 om.getEntityUsages(os.listItem.ontologyRecord.recordId, os.listItem.ontologyRecord.branchId, os.listItem.ontologyRecord.commitId, entityIRI, 'construct')
                     .then(statements => {
-                        os.addToDeletions(os.listItem.ontologyRecord.recordId, os.selected);
+                        os.addToDeletions(os.listItem.ontologyRecord.recordId, os.listItem.selected);
                         os.removeEntity(os.listItem, entityIRI);
                         _.forEach(statements, statement => os.addToDeletions(os.listItem.ontologyRecord.recordId, statement));
                         ur.remove(os.listItem.ontology, entityIRI);
@@ -97,7 +97,7 @@
                 var entityIRI = os.getActiveEntityIRI();
                 var split = $filter('splitIRI')(entityIRI);
                 _.remove(_.get(os.listItem, 'individuals'), {namespace:split.begin + split.then, localName: split.end});
-                var indivTypes = os.selected['@type'];
+                var indivTypes = os.listItem.selected['@type'];
                 var indivAndClasses = _.get(os.listItem, 'classesAndIndividuals');
 
                 _.forEach(indivTypes, type => {
@@ -178,21 +178,21 @@
             }
 
             self.updateLabel = function() {
-                var newLabel = om.getEntityName(os.selected, os.listItem.ontologyRecord.type);
-                if (_.has(os.listItem.index, "['" + os.selected['@id'] + "'].label") && os.listItem.index[os.selected['@id']].label !== newLabel) {
-                    os.listItem.index[os.selected['@id']].label = newLabel;
+                var newLabel = om.getEntityName(os.listItem.selected, os.listItem.ontologyRecord.type);
+                if (_.has(os.listItem.index, "['" + os.listItem.selected['@id'] + "'].label") && os.listItem.index[os.listItem.selected['@id']].label !== newLabel) {
+                    os.listItem.index[os.listItem.selected['@id']].label = newLabel;
                     if (os.listItem.ontologyRecord.type === 'vocabulary') {
                         os.listItem.flatConceptHierarchy = os.flattenHierarchy(os.listItem.conceptHierarchy, os.listItem.ontologyRecord.recordId);
-                    } else if (om.isClass(os.selected)) {
+                    } else if (om.isClass(os.listItem.selected)) {
                         os.listItem.flatClassHierarchy = os.flattenHierarchy(os.listItem.classHierarchy, os.listItem.ontologyRecord.recordId);
                         os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
-                    } else if (om.isDataTypeProperty(os.selected)) {
+                    } else if (om.isDataTypeProperty(os.listItem.selected)) {
                         os.listItem.flatDataPropertyHierarchy = os.flattenHierarchy(os.listItem.dataPropertyHierarchy, os.listItem.ontologyRecord.recordId);
                         os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
-                    } else if (om.isObjectProperty(os.selected)) {
+                    } else if (om.isObjectProperty(os.listItem.selected)) {
                         os.listItem.flatObjectPropertyHierarchy = os.flattenHierarchy(os.listItem.objectPropertyHierarchy, os.listItem.ontologyRecord.recordId);
                         os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
-                    } else if (om.isAnnotation(os.selected)) {
+                    } else if (om.isAnnotation(os.listItem.selected)) {
                         os.listItem.flatAnnotationPropertyHierarchy = os.flattenHierarchy(os.listItem.annotationPropertyHierarchy, os.listItem.ontologyRecord.recordId);
                     }
                 }
@@ -207,7 +207,7 @@
             }
             
             self.checkIri = function(iri) {
-                return _.includes(os.listItem.iriList, iri) && iri !== _.get(os.selected, '@id');
+                return _.includes(os.listItem.iriList, iri) && iri !== _.get(os.listItem.selected, '@id');
             }
 
             self.setSuperClasses = function(iri, classIRIs) {

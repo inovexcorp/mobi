@@ -43,7 +43,7 @@ describe('Object Property Axioms directive', function() {
             ontoUtils = _ontologyUtilsManagerService_;
         });
 
-        ontologyStateSvc.selected = {
+        ontologyStateSvc.listItem.selected = {
             'axiom1': [{'@value': 'value1'}],
             'axiom2': [{'@value': 'value2'}]
         };
@@ -59,7 +59,7 @@ describe('Object Property Axioms directive', function() {
         });
         it('depending on how many axioms there are', function() {
             expect(element.find('property-values').length).toBe(2);
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(element.find('property-values').length).toBe(0);
         });
@@ -80,7 +80,7 @@ describe('Object Property Axioms directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            ontologyStateSvc.selected.matonto = {originalIRI: ''};
+            ontologyStateSvc.listItem.selected.matonto = {originalIRI: ''};
         });
         it('should open the remove overlay', function() {
             controller.openRemoveOverlay('key', 0);
@@ -102,7 +102,7 @@ describe('Object Property Axioms directive', function() {
                 this.axiom.localName = 'subPropertyOf';
                 resObj.getItemIri.and.returnValue('iri');
                 controller.updateHierarchy(this.axiom, this.values);
-                expect(ontoUtils.setSuperProperties).toHaveBeenCalledWith(ontologyStateSvc.selected['@id'], ['iri'], 'objectPropertyHierarchy', 'objectPropertyIndex', 'flatObjectPropertyHierarchy');
+                expect(ontoUtils.setSuperProperties).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], ['iri'], 'objectPropertyHierarchy', 'objectPropertyIndex', 'flatObjectPropertyHierarchy');
             });
             it('if the axiom is domain', function() {
                 this.axiom.localName = 'domain';
@@ -126,7 +126,7 @@ describe('Object Property Axioms directive', function() {
                 controller.key = prefixes.rdfs + 'subPropertyOf';
                 ontologyStateSvc.flattenHierarchy.and.returnValue([{entityIRI: 'new'}]);
                 controller.removeFromHierarchy(this.axiomObject);
-                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectPropertyHierarchy, ontologyStateSvc.selected['@id'], this.axiomObject['@id'], ontologyStateSvc.listItem.objectPropertyIndex);
+                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectPropertyHierarchy, ontologyStateSvc.listItem.selected['@id'], this.axiomObject['@id'], ontologyStateSvc.listItem.objectPropertyIndex);
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectPropertyHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.flatObjectPropertyHierarchy).toEqual([{entityIRI: 'new'}]);
             });

@@ -52,18 +52,15 @@
                     }
                     
                     dvm.onClick = function(recordId) {
-                        _.filter(dvm.os.list, o => o.ontologyState.active).every(o =>  o.ontologyState.active = false);
                         if (recordId) {
-                            _.filter(dvm.os.list, { ontologyRecord: { recordId }}).every(o =>  {
-                                dvm.os.listItem = o;
-                                o.ontologyState.active = true
-                            });
+                            dvm.os.listItem = dvm.os.getListItemByRecordId(recordId);
+                            dvm.os.listItem.selected = dvm.om.getOntologyEntity(dvm.os.listItem.ontology);
                         }
                     }
                     
                     $scope.$watch('dvm.os.listItem', () => {
                         if (dvm.os.listItem) {
-                            dvm.newTabActive = !(_.reduce(dvm.os.listItem.editorTabStates, (a, s) => a || (s ? (s.active ? s.active : false) : false), false));
+                            dvm.newTabActive = !(_.some(dvm.os.listItem.editorTabStates, 'active'));
                         } else {
                             dvm.newTabActive = true;
                         }

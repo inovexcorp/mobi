@@ -96,28 +96,28 @@ describe('Remove Property Overlay directive', function() {
             });
             it('if the selected key is rdfs:range', function() {
                 controller.key = prefixes.rdfs + 'range';
-                _.set(ontologyStateSvc.selected, controller.key + '[0]', 'value');
+                _.set(ontologyStateSvc.listItem.selected, controller.key + '[0]', 'value');
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
                 ontologyStateSvc.getOntologiesArray.and.returnValue([]);
                 controller.removeProperty();
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, controller.key, controller.index);
+                expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, controller.key, controller.index);
                 expect(controller.overlayFlag).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontoUtils.updateLabel).toHaveBeenCalled();
-                expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.selected);
+                expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontologyStateSvc.getOntologiesArray).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([]);
             });
             it('if the selected key is rdfs:domain', function() {
                 controller.key = prefixes.rdfs + 'domain';
-                _.set(ontologyStateSvc.selected, controller.key + '[0]', 'value');
+                _.set(ontologyStateSvc.listItem.selected, controller.key + '[0]', 'value');
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
                 ontologyStateSvc.getOntologiesArray.and.returnValue([]);
                 controller.removeProperty();
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, controller.key, controller.index);
+                expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, controller.key, controller.index);
                 expect(controller.overlayFlag).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontoUtils.updateLabel).toHaveBeenCalled();
@@ -127,11 +127,11 @@ describe('Remove Property Overlay directive', function() {
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
             });
             it('if the selected key is neither rdfs:domain or rdfs:range', function() {
-                _.set(ontologyStateSvc.selected, 'key[0]', 'value');
+                _.set(ontologyStateSvc.listItem.selected, 'key[0]', 'value');
                 controller.removeProperty();
                 expect(scope.onSubmit).toHaveBeenCalled();
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.selected, controller.key, controller.index);
+                expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, controller.key, controller.index);
                 expect(controller.overlayFlag).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontoUtils.updateLabel).toHaveBeenCalled();

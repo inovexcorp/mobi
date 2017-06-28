@@ -61,12 +61,13 @@
             var ontologyListItemTemplate = {
                 ontologyState: {
                     active: true,
-                    upToDate: true
+                    upToDate: true,
+                    selected: {}
                 },
                 editorTabStates: {
                    project: {
-                       active: true,
-                       entityIRI: ''
+                       entityIRI: '',
+                       active: true
                    },
                    overview: {
                        active: false
@@ -139,7 +140,8 @@
             var vocabularyListItemTemplate = {
                 ontologyState: {
                     active: true,
-                    upToDate: true
+                    upToDate: true,
+                    selected: {}
                 },
                 editorTabStates: {
                    project: {
@@ -231,7 +233,6 @@
              */
             self.list = [];
 
-            self.selected = {};
             self.listItem = {};
 
             /**
@@ -247,8 +248,7 @@
             }
             self.reset = function() {
                 self.list = [];
-                self.selected = {};
-                self.listItem = {};
+                self.listItem = {selected: {}};
             }
             /**
              * @ngdoc method
@@ -389,7 +389,7 @@
                             return self.addVocabularyToList(ontologyId, recordId, response.branchId, response.commitId, response.ontology, response.inProgressCommit, title);
                         }
                     }, $q.reject)
-                    .then((response) => { 
+                    .then(response => { 
                         self.listItem = response;
                         self.setSelected(self.getActiveEntityIRI(), false);
                         return recordId; 
@@ -895,7 +895,7 @@
                             return self.addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, recordTitle, upToDate);
                         }
                     }, $q.reject)
-                    .then((response) => { 
+                    .then(response => { 
                         self.listItem = response;
                         self.setSelected(self.getActiveEntityIRI(), false);
                         return ontologyId; 
@@ -982,19 +982,19 @@
             }
             self.onEdit = function(iriBegin, iriThen, iriEnd) {
                 var newIRI = iriBegin + iriThen + iriEnd;
-                var oldEntity = $filter('removeMatonto')(self.selected);
+                var oldEntity = $filter('removeMatonto')(self.listItem.selected);
                 self.getActivePage().entityIRI = newIRI;
                 if (_.some(self.listItem.additions, oldEntity)) {
                     _.remove(self.listItem.additions, oldEntity);
-                    updateRefsService.update(self.listItem, self.selected['@id'], newIRI);
+                    updateRefsService.update(self.listItem, self.listItem.selected['@id'], newIRI);
                 } else {
-                    updateRefsService.update(self.listItem, self.selected['@id'], newIRI);
+                    updateRefsService.update(self.listItem, self.listItem.selected['@id'], newIRI);
                     self.addToDeletions(self.listItem.ontologyRecord.recordId, oldEntity);
                 }
                 if (self.getActiveKey() !== 'project') {
                     self.setCommonIriParts(iriBegin, iriThen);
                 }
-                self.addToAdditions(self.listItem.ontologyRecord.recordId, $filter('removeMatonto')(self.selected));
+                self.addToAdditions(self.listItem.ontologyRecord.recordId, $filter('removeMatonto')(self.listItem.selected));
                 return om.getEntityUsages(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.branchId, self.listItem.ontologyRecord.commitId, oldEntity['@id'], 'construct')
                     .then(statements => {
                         _.forEach(statements, statement => self.addToDeletions(self.listItem.ontologyRecord.recordId, statement));
@@ -1007,8 +1007,8 @@
                 _.set(self.listItem, 'iriThen', iriThen);
             }
             self.setSelected = function(entityIRI, getUsages = true) {
-                self.selected = self.getEntityByRecordId(self.listItem.ontologyRecord.recordId, entityIRI);
-                if (getUsages && !_.has(self.getActivePage(), 'usages') && self.selected) {
+                self.listItem.selected = self.getEntityByRecordId(self.listItem.ontologyRecord.recordId, entityIRI);
+                if (getUsages && !_.has(self.getActivePage(), 'usages') && self.listItem.selected) {
                     self.setEntityUsages(entityIRI);
                 }
             }
@@ -1032,9 +1032,9 @@
                     _.unset(value, 'usages');
                 });
                 if (self.getActiveKey() !== 'project') {
-                    self.selected = undefined;
+                    self.listItem.selected = undefined;
                 } else {
-                    self.selected = self.getEntityByRecordId(self.listItem.ontologyRecord.recordId, self.listItem.editorTabStates.project.entityIRI);
+                    self.listItem.selected = self.getEntityByRecordId(self.listItem.ontologyRecord.recordId, self.listItem.editorTabStates.project.entityIRI);
                 }
             }
             self.getActiveKey = function() {
@@ -1065,7 +1065,7 @@
                 var activePage = self.getActivePage();
                 _.unset(activePage, 'entityIRI');
                 _.unset(activePage, 'usages');
-                self.selected = undefined;
+                self.listItem.selected = undefined;
             }
             self.hasChanges = function(recordId) {
                 var listItem = self.getListItemByRecordId(recordId);
@@ -1207,6 +1207,7 @@
             self.getOntologiesArray = function() {
                 return getOntologiesArrayByListItem(self.listItem);
             }
+            
             self.updatePropertyIcon = function(entity) {
                 if (om.isProperty(entity)) {
                     setPropertyIcon(entity);
@@ -1290,8 +1291,10 @@
                 }
             }
             function updateListItem(recordId, newListItem) {
+                var activeKey = self.getActiveKey();
                 var oldListItem = self.getListItemByRecordId(recordId);
                 _.assign(oldListItem, newListItem);
+                self.setActivePage(activeKey);
             }
             function addOntologyIdToArray(arr, ontologyId) {
                 return _.forEach(arr, item => _.set(item, 'ontologyId', ontologyId));
