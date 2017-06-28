@@ -28,10 +28,8 @@ import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
 import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
-import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
-import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.exception.MatOntoException;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
@@ -39,8 +37,6 @@ import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.builder.OntologyRecordConfig;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
-import org.matonto.ontology.core.api.pagination.OntologyPaginatedSearchParams;
-import org.matonto.ontology.core.api.pagination.OntologyRecordSearchResults;
 import org.matonto.ontology.core.utils.MatontoOntologyCreationException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.ontology.utils.cache.OntologyCache;
@@ -262,7 +258,7 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public boolean ontologyIriExists(IRI ontologyIRI) {
+    public boolean ontologyIriExists(Resource ontologyIRI) {
         Repository system = repositoryManager.getRepository("system").orElseThrow(() ->
                 new IllegalStateException("System Repository unavailable"));
         try (RepositoryConnection conn = system.getConnection()) {

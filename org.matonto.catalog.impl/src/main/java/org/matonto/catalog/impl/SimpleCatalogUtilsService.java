@@ -74,6 +74,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @Component(
         immediate = true,
@@ -390,7 +392,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public void addCommit(Branch branch, Commit commit, RepositoryConnection conn) {
-        if (conn.size(commit.getResource()) > 0) {
+        if (conn.containsContext(commit.getResource())) {
             throw throwAlreadyExists(commit.getResource(), commitFactory);
         }
         branch.setHead(commit);
@@ -419,6 +421,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public Stream<Statement> getAdditions(Resource commitId, RepositoryConnection conn) {
+        Resource additionsId = getAdditionsResource(commitId, conn);
+        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, additionsId);
+        return StreamSupport.stream(statements.spliterator(), false);
+    }
+
+    @Override
     public Resource getDeletionsResource(Resource commitId, RepositoryConnection conn) {
         RepositoryResult<Statement> results = conn.getStatements(null, vf.createIRI(Revision.deletions_IRI), null,
                 commitId);
@@ -436,6 +445,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             throw new IllegalStateException("Deletions not set on Commit " + commit.getResource());
         }
         return (Resource) new ArrayList<>(values).get(0);
+    }
+
+    @Override
+    public Stream<Statement> getDeletions(Resource commitId, RepositoryConnection conn) {
+        Resource deletionsId = getDeletionsResource(commitId, conn);
+        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, deletionsId);
+        return StreamSupport.stream(statements.spliterator(), false);
     }
 
     @Override
@@ -557,16 +573,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
      * @param conn          The RepositoryConnection to query the repository.
      */
     private void aggregateDifferences(Difference difference, Resource commitId, RepositoryConnection conn) {
-        Resource additionsId = getAdditionsResource(commitId, conn);
-        Resource deletionsId = getDeletionsResource(commitId, conn);
-
         Model additions = difference.getAdditions();
         Model deletions = difference.getDeletions();
-
-        conn.getStatements(null, null, null, additionsId)
-                .forEach(statement -> updateModels(statement, additions, deletions));
-        conn.getStatements(null, null, null, deletionsId)
-                .forEach(statement -> updateModels(statement, deletions, additions));
+        getAdditions(commitId, conn).forEach(statement -> updateModels(statement, additions, deletions));
+        getDeletions(commitId, conn).forEach(statement -> updateModels(statement, deletions, additions));
     }
 
     /**
