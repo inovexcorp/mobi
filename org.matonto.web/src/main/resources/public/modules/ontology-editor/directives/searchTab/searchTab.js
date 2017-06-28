@@ -41,14 +41,14 @@
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.om = ontologyManagerService;
-                    dvm.id = 'search-' + dvm.os.listItem.recordId;
+                    dvm.id = 'search-' + dvm.os.listItem.ontologyRecord.recordId;
 
                     dvm.onKeyup = function($event) {
                         if ($event.keyCode === 13) {
                             httpService.cancel(dvm.id);
                             dvm.os.unSelectItem();
-                            var state = dvm.os.getState(dvm.os.listItem.recordId);
-                            dvm.om.getSearchResults(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.os.state.search.searchText, dvm.id)
+                            var state = dvm.os.listItem.editorTabStates;
+                            dvm.om.getSearchResults(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.editorTabStates.search.searchText, dvm.id)
                                 .then(results => {
                                     state.search.errorMessage = '';
                                     state.search.results = results;
@@ -63,21 +63,21 @@
 
                     dvm.onClear = function() {
                         httpService.cancel(dvm.id);
-                        dvm.os.state.search.errorMessage = '';
-                        dvm.os.state.search.highlightText = '';
-                        dvm.os.state.search.infoMessage = '';
-                        dvm.os.state.search.results = {};
-                        dvm.os.state.search.searchText = '';
-                        dvm.os.state.search.selected = {};
+                        dvm.os.listItem.editorTabStates.search.errorMessage = '';
+                        dvm.os.listItem.editorTabStates.search.highlightText = '';
+                        dvm.os.listItem.editorTabStates.search.infoMessage = '';
+                        dvm.os.listItem.editorTabStates.search.results = {};
+                        dvm.os.listItem.editorTabStates.search.searchText = '';
+                        dvm.os.listItem.editorTabStates.search.selected = {};
                     }
 
-                    $scope.$watch('dvm.os.selected', (newValue, oldValue) => {
+                    $scope.$watch('dvm.os.listItem.selected', (newValue, oldValue) => {
                         if (!_.isEqual(oldValue, newValue)) {
-                            dvm.os.state.search.selected = _.omit(angular.copy(newValue), '@id', '@type', 'matonto');
+                            dvm.os.listItem.editorTabStates.search.selected = _.omit(angular.copy(newValue), '@id', '@type', 'matonto');
                         }
                     });
 
-                    $scope.$watch('dvm.os.listItem.recordId', (newValue, oldValue) => {
+                    $scope.$watch('dvm.os.listItem.ontologyRecord.recordId', (newValue, oldValue) => {
                         if (!_.isEqual(oldValue, newValue)) {
                             dvm.id = 'search-' + newValue;
                         }

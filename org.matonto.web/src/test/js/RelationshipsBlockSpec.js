@@ -42,7 +42,7 @@ describe('Relationships Block directive', function() {
         });
 
         scope.relationshipList = [];
-        ontologyStateSvc.selected = {
+        ontologyStateSvc.listItem.selected = {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
@@ -71,7 +71,7 @@ describe('Relationships Block directive', function() {
         });
         it('depending on how many annotations there are', function() {
             expect(element.find('property-values').length).toBe(2);
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(element.find('property-values').length).toBe(0);
         });
@@ -92,7 +92,7 @@ describe('Relationships Block directive', function() {
         it('based on whether something is selected', function() {
             expect(element.querySelectorAll('block-header a').length).toBe(1);
 
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(element.querySelectorAll('block-header a').length).toBe(0);
         });
