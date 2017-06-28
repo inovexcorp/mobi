@@ -34,8 +34,10 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
 
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.UUID;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MatOntoImplTest {
@@ -47,7 +49,7 @@ public class MatOntoImplTest {
     private Configuration configuration;
 
     @Captor
-    private ArgumentCaptor<Dictionary<String,Object>> captor;
+    private ArgumentCaptor<Dictionary<String, Object>> captor;
 
     @Test
     public void testGeneratedServerIdIsSaved() throws Exception {
@@ -57,6 +59,14 @@ public class MatOntoImplTest {
         impl.activate(new HashMap<>());
         Mockito.verify(configuration).update(captor.capture());
         TestCase.assertEquals(impl.getServerIdentifier().toString(), captor.getValue().get("serverId"));
+    }
+
+    @Test
+    public void testAlreadyHasServerId() throws Exception {
+        MatOntoImpl impl = new MatOntoImpl();
+        String val = UUID.randomUUID().toString();
+        impl.activate(Collections.singletonMap("serverId", val));
+        TestCase.assertEquals(val, impl.getServerIdentifier().toString());
     }
 
 }
