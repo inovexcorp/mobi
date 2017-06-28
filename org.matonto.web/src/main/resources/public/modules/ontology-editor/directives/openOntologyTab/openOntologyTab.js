@@ -54,11 +54,16 @@
                     dvm.filteredList = [];
                     dvm.type = 'ontology';
 
+                    dvm.openSelected = function(record) {
+                        dvm.recordId = record['@id'];
+                        dvm.recordTitle = dvm.util.getDctermsValue(record, 'title');
+                        dvm.showOpenOverlay = true
+                    }
+
                     dvm.open = function() {
-                        dvm.os.openOntology(dvm.recordId, dvm.type)
+                        dvm.os.openOntology(dvm.recordId, dvm.recordTitle, dvm.type)
                             .then(ontologyId => {
-                                dvm.os.addState(dvm.recordId, ontologyId, dvm.type);
-                                dvm.os.setState(dvm.recordId);
+                                dvm.showOpenOverlay = false;
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
 
@@ -119,7 +124,7 @@
                     dvm.getAllOntologyRecords();
 
                     function getFilteredRecords(records) {
-                        return _.reject(records, record => _.find(dvm.os.list, {recordId: record['@id']}));
+                        return _.reject(records, record => _.find(dvm.os.list, {ontologyRecord: {recordId: record['@id']}}));
                     }
                 }]
             }

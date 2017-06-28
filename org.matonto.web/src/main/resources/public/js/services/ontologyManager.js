@@ -633,6 +633,21 @@
             }
             /**
              * @ngdoc method
+             * @name isDeprecated
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Checks if the provided entity is deprecated by looking for the owl:deprecated annotation.
+             *
+             * @param {Object} entity The entity you want to check.
+             * @return {boolean} Returns true if the owl:deprecated value is "true" or "1", otherwise returns false.
+             */
+            self.isDeprecated = function(entity) {
+                var deprecated = util.getPropertyValue(entity, prefixes.owl + 'deprecated');
+                return deprecated === 'true' || deprecated === '1';
+            }
+            /**
+             * @ngdoc method
              * @name isOntology
              * @methodOf ontologyManager.service:ontologyManagerService
              *

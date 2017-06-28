@@ -45,9 +45,6 @@
                     dvm.upload = function() {
                         dvm.os.uploadThenGet(dvm.file, dvm.title, dvm.description,
                             _.join(_.map(dvm.keywords, _.trim), ','), dvm.type).then(recordId => {
-                                var listItem = dvm.os.getListItemByRecordId(recordId);
-                                dvm.os.addState(recordId, dvm.om.getOntologyIRI(listItem.ontology), dvm.type);
-                                dvm.os.setState(recordId);
                                 dvm.os.showUploadTab = false;
                             }, errorMessage => dvm.error = errorMessage);
                     }

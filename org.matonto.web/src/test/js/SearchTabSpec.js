@@ -47,7 +47,7 @@ describe('Search Tab directive', function() {
             httpSvc = _httpService_;
         });
 
-        ontologyStateSvc.selected = {
+        ontologyStateSvc.listItem.selected = {
             key: [{
                 '@id': 'id'
             },
@@ -55,7 +55,7 @@ describe('Search Tab directive', function() {
                 '@value': 'value'
             }]
         }
-        ontologyStateSvc.state.search = {
+        ontologyStateSvc.listItem.editorTabStates.search = {
             errorMessage: 'error',
             highlightText: 'highlight',
             infoMessage: 'info',
@@ -67,12 +67,11 @@ describe('Search Tab directive', function() {
                 }]
             },
             searchText: 'searchText',
-            selected: ontologyStateSvc.selected
+            selected: ontologyStateSvc.listItem.selected
         }
         ontologyUtilsManagerSvc.isLinkable.and.callFake(function(id) {
             return !!id;
         });
-        ontologyStateSvc.getState.and.returnValue(ontologyStateSvc.state);
         element = $compile(angular.element('<search-tab></search-tab>'))(scope);
         scope.$digest();
     });
@@ -134,17 +133,17 @@ describe('Search Tab directive', function() {
                     controller.onKeyup({keyCode: 13});
                 });
                 it('calls the correct manager function', function() {
-                    expect(httpSvc.cancel).toHaveBeenCalledWith('search-' + ontologyStateSvc.listItem.recordId);
+                    expect(httpSvc.cancel).toHaveBeenCalledWith('search-' + ontologyStateSvc.listItem.ontologyRecord.recordId);
                     expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
-                    expect(ontologyManagerSvc.getSearchResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.state.search.searchText, controller.id);
-                    expect(httpSvc.cancel).toHaveBeenCalledWith('search-' + ontologyStateSvc.listItem.recordId);
+                    expect(ontologyManagerSvc.getSearchResults).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.editorTabStates.search.searchText, controller.id);
+                    expect(httpSvc.cancel).toHaveBeenCalledWith('search-' + ontologyStateSvc.listItem.ontologyRecord.recordId);
                 });
                 describe('when resolved', function() {
                     it('it sets the correct variables', function() {
                         deferred.resolve([]);
                         scope.$apply();
-                        expect(ontologyStateSvc.state.search.errorMessage).toEqual('');
-                        expect(ontologyStateSvc.state.search.highlightText).toEqual(ontologyStateSvc.state.search.searchText);
+                        expect(ontologyStateSvc.listItem.editorTabStates.search.errorMessage).toEqual('');
+                        expect(ontologyStateSvc.listItem.editorTabStates.search.highlightText).toEqual(ontologyStateSvc.listItem.editorTabStates.search.searchText);
                     });
                     it('where the response has results, sets the correct variables', function() {
                         var results = {
@@ -155,48 +154,48 @@ describe('Search Tab directive', function() {
                         };
                         deferred.resolve(results);
                         scope.$apply();
-                        expect(ontologyStateSvc.state.search.results).toEqual(results);
-                        expect(ontologyStateSvc.state.search.infoMessage).toEqual('');
+                        expect(ontologyStateSvc.listItem.editorTabStates.search.results).toEqual(results);
+                        expect(ontologyStateSvc.listItem.editorTabStates.search.infoMessage).toEqual('');
                     });
                     it('where the response does not have results, sets the correct variables', function() {
                         deferred.resolve({});
                         scope.$apply();
-                        expect(ontologyStateSvc.state.search.results).toEqual({});
-                        expect(ontologyStateSvc.state.search.infoMessage).toEqual('There were no results for your search text.')
+                        expect(ontologyStateSvc.listItem.editorTabStates.search.results).toEqual({});
+                        expect(ontologyStateSvc.listItem.editorTabStates.search.infoMessage).toEqual('There were no results for your search text.')
                     });
                 });
                 it('when rejected, it sets the correct variables', function() {
                     deferred.reject('error message');
                     scope.$apply();
-                    expect(ontologyStateSvc.state.search.errorMessage).toEqual('error message');
-                    expect(ontologyStateSvc.state.search.infoMessage).toEqual('');
+                    expect(ontologyStateSvc.listItem.editorTabStates.search.errorMessage).toEqual('error message');
+                    expect(ontologyStateSvc.listItem.editorTabStates.search.infoMessage).toEqual('');
                 });
             });
         });
         it('onClear should reset state variables', function() {
-            expect(ontologyStateSvc.state.search.errorMessage).not.toEqual('');
-            expect(ontologyStateSvc.state.search.infoMessage).not.toEqual('');
-            expect(ontologyStateSvc.state.search.results).not.toEqual({});
-            expect(ontologyStateSvc.state.search.searchText).not.toEqual('');
-            expect(ontologyStateSvc.state.search.selected).not.toEqual({});
-            expect(ontologyStateSvc.state.search.highlightText).not.toEqual('');
+            expect(ontologyStateSvc.listItem.editorTabStates.search.errorMessage).not.toEqual('');
+            expect(ontologyStateSvc.listItem.editorTabStates.search.infoMessage).not.toEqual('');
+            expect(ontologyStateSvc.listItem.editorTabStates.search.results).not.toEqual({});
+            expect(ontologyStateSvc.listItem.editorTabStates.search.searchText).not.toEqual('');
+            expect(ontologyStateSvc.listItem.editorTabStates.search.selected).not.toEqual({});
+            expect(ontologyStateSvc.listItem.editorTabStates.search.highlightText).not.toEqual('');
             controller.onClear();
-            expect(httpSvc.cancel).toHaveBeenCalledWith('search-' + ontologyStateSvc.listItem.recordId);
-            expect(ontologyStateSvc.state.search.errorMessage).toEqual('');
-            expect(ontologyStateSvc.state.search.infoMessage).toEqual('');
-            expect(ontologyStateSvc.state.search.results).toEqual({});
-            expect(ontologyStateSvc.state.search.searchText).toEqual('');
-            expect(ontologyStateSvc.state.search.selected).toEqual({});
-            expect(ontologyStateSvc.state.search.highlightText).toEqual('');
+            expect(httpSvc.cancel).toHaveBeenCalledWith('search-' + ontologyStateSvc.listItem.ontologyRecord.recordId);
+            expect(ontologyStateSvc.listItem.editorTabStates.search.errorMessage).toEqual('');
+            expect(ontologyStateSvc.listItem.editorTabStates.search.infoMessage).toEqual('');
+            expect(ontologyStateSvc.listItem.editorTabStates.search.results).toEqual({});
+            expect(ontologyStateSvc.listItem.editorTabStates.search.searchText).toEqual('');
+            expect(ontologyStateSvc.listItem.editorTabStates.search.selected).toEqual({});
+            expect(ontologyStateSvc.listItem.editorTabStates.search.highlightText).toEqual('');
         });
         it('check $watch', function() {
-            ontologyStateSvc.selected = {
+            ontologyStateSvc.listItem.selected = {
                 '@id': 'new',
                 key: 'new',
                 'matonto': 'new'
             }
             scope.$digest();
-            expect(ontologyStateSvc.state.search.selected).toEqual({key: 'new'});
+            expect(ontologyStateSvc.listItem.editorTabStates.search.selected).toEqual({key: 'new'});
         });
     });
 });
