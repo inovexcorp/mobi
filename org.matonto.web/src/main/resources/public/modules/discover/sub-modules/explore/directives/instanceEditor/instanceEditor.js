@@ -81,8 +81,8 @@
                     dvm.prefixes = prefixes;
                     dvm.searchText = {};
                     dvm.showOverlay = false;
-                    dvm.newPropertyText = '';
                     dvm.changed = [];
+                    dvm.original = angular.copy(dvm.ds.explore.instance.entity);
                     
                     dvm.getOptions = function(propertyIRI) {
                         var range = getRange(propertyIRI);
@@ -187,19 +187,23 @@
                         }
                     }
                     
-                    dvm.getNewProperties = function() {
+                    dvm.getNewProperties = function(text) {
                         var properties = _.difference(_.map(dvm.properties, 'propertyIRI'), _.keys(dvm.ds.explore.instance.entity));
-                        if (dvm.newPropertyText) {
-                            return _.filter(properties, iri => contains(iri, dvm.newPropertyText));
+                        if (text) {
+                            return _.filter(properties, iri => contains(iri, text));
                         }
                         return properties;
                     }
                     
-                    dvm.addNewProperty = function() {
-                        dvm.ds.explore.instance.entity[dvm.newPropertyText] = [];
-                        dvm.addToChanged(dvm.newPropertyText);
-                        dvm.newPropertyText = '';
+                    dvm.addNewProperty = function(property) {
+                        dvm.ds.explore.instance.entity[property] = [];
+                        dvm.addToChanged(property);
                         dvm.showOverlay = false;
+                    }
+                    
+                    dvm.cancel = function() {
+                        dvm.ds.explore.instance.entity = dvm.original;
+                        dvm.ds.explore.editing = false;
                     }
                     
                     function contains(string, part) {

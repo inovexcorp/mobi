@@ -24,7 +24,7 @@
     <block>
         <block-header>
             <breadcrumbs class="pull-left"></breadcrumbs>
-            <a class="pull-right link" ng-click="dvm.ds.explore.editing = false">Cancel</a>
+            <a class="pull-right link" ng-click="dvm.cancel()">Cancel</a>
             <a class="pull-right link" ng-click="dvm.save()"><i class="fa fa-floppy-o"></i>Save</a>
         </block-header>
         <block-content>
@@ -54,15 +54,12 @@
                             </md-chips>
                         </div>
                     </div>
-                    <button ng-disabled="!dvm.getNewProperties().length" ng-click="dvm.showOverlay = true" class="btn btn-link"><i class="fa fa-plus fa-fw"></i>Add New Property</button>
+                    <div class="btn-container clearfix">
+                        <button ng-disabled="!dvm.getNewProperties().length" ng-click="dvm.showOverlay = true" class="btn btn-link pull-left"><i class="fa fa-plus fa-fw"></i>Add New Property</button>
+                    </div>
                 </form>
             </div>
         </block-content>
     </block>
-    <confirmation-overlay ng-if="dvm.showOverlay" header-text="'Add New Property'" cancel-text="'Cancel'" confirm-text="'Submit'" cancel-click="dvm.showOverlay = false" confirm-click="dvm.addNewProperty()">
-        <p>Please select a property to add to the instance.</p>
-        <md-autocomplete md-items="iri in dvm.getNewProperties()" placeholder="Enter property IRI..." md-search-text="dvm.newPropertyText" md-no-cache="true" md-require-match>
-            <span md-highlight-text="dvm.newPropertyText">{{dvm.util.getBeautifulIRI(iri)}} :: {{iri}}</span>
-        </md-autocomplete>
-    </confirmation-overlay>
+    <new-instance-property-overlay ng-if="dvm.showOverlay" on-cancel="dvm.showOverlay = false" on-submit="dvm.addNewProperty(propertyIRI)" get-properties="dvm.getNewProperties(text)"></new-instance-property-overlay>
 </div>

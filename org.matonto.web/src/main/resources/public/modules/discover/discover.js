@@ -43,6 +43,7 @@
             'instanceCards',
             'instanceEditor',
             'instanceView',
+            'newInstancePropertyOverlay',
             
             /* Query tab */
             'downloadQueryOverlay',

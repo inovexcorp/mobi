@@ -101,7 +101,7 @@ describe('Instance Editor directive', function() {
         }, {
             propertyIRI: 'id10',
             range: [prefixes.xsd + 'other']
-        }]
+        }];
     });
 
     describe('replaces the element with the correct html', function() {
@@ -169,16 +169,19 @@ describe('Instance Editor directive', function() {
             
             expect(element.querySelectorAll('.object-property').length).toBe(2);
         });
+        it('for a .btn-container.clearfix', function() {
+            expect(element.querySelectorAll('.btn-container.clearfix').length).toBe(1);
+        });
         it('for a .btn.btn-link', function() {
             expect(element.querySelectorAll('.btn.btn-link').length).toBe(1);
         });
-        it('for a confirmation-overlay', function() {
-            expect(element.find('confirmation-overlay').length).toBe(0);
+        it('for a new-instance-property-overlay', function() {
+            expect(element.find('new-instance-property-overlay').length).toBe(0);
             
             controller.showOverlay = true;
             scope.$digest();
             
-            expect(element.find('confirmation-overlay').length).toBe(1);
+            expect(element.find('new-instance-property-overlay').length).toBe(1);
         });
     });
     describe('controller methods', function() {
@@ -340,22 +343,26 @@ describe('Instance Editor directive', function() {
         });
         describe('getNewProperties should return a list of properties that are not set on the entity', function() {
             it('without filtering', function() {
-                expect(controller.getNewProperties()).toEqual(['propertyId', 'propertyId2', 'propertyId3']);
+                expect(controller.getNewProperties('')).toEqual(['propertyId', 'propertyId2', 'propertyId3']);
             });
             it('with filtering', function() {
-                controller.newPropertyText = '3';
-                expect(controller.getNewProperties()).toEqual(['propertyId3']);
+                expect(controller.getNewProperties('3')).toEqual(['propertyId3']);
             });
         });
         it('addNewProperty should set variables correctly', function() {
             spyOn(controller, 'addToChanged');
-            controller.newPropertyText = 'newProperty';
             controller.showOverlay = true;
-            controller.addNewProperty();
+            controller.addNewProperty('newProperty');
             expect(_.has(discoverStateSvc.explore.instance.entity, 'newProperty')).toBe(true);
             expect(controller.addToChanged).toHaveBeenCalledWith('newProperty');
-            expect(controller.newPropertyText).toBe('');
             expect(controller.showOverlay).toBe(false);
+        });
+        it('cancel sets the correct variables', function() {
+            controller.original = {'@id': 'original'};
+            discoverStateSvc.explore.instance.entity = {'@id': 'entity'};
+            controller.cancel();
+            expect(discoverStateSvc.explore.instance.entity).toEqual(controller.original);
+            expect(discoverStateSvc.explore.editing).toBe(false);
         });
     });
 });
