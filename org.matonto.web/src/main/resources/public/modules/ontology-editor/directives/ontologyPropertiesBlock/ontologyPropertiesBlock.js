@@ -66,7 +66,7 @@
                         dvm.os.ontologyProperty = property;
                         dvm.os.ontologyPropertyIRI = _.get(propertyObj, '@id');
                         dvm.os.ontologyPropertyValue = _.get(propertyObj, '@value');
-                        dvm.os.ontologyPropertyType = _.get(dvm.os.listItem.selected[dvm.ro.getItemIri(property)][index], '@type');
+                        // dvm.os.ontologyPropertyType = _.get(dvm.os.listItem.selected[dvm.ro.getItemIri(property)][index], '@type');
                         dvm.os.ontologyPropertyIndex = index;
                         dvm.os.ontologyPropertyLanguage = _.get(propertyObj, '@language');
                         dvm.os.showOntologyPropertyOverlay = true;
