@@ -43,7 +43,7 @@ describe('Class Axioms directive', function() {
             ontoUtils = _ontologyUtilsManagerService_;
         });
 
-        ontologyStateSvc.selected = {
+        ontologyStateSvc.listItem.selected = {
             'axiom1': [{'@value': 'value1'}],
             'axiom2': [{'@value': 'value2'}]
         };
@@ -59,7 +59,7 @@ describe('Class Axioms directive', function() {
         });
         it('depending on how many axioms there are', function() {
             expect(element.find('property-values').length).toBe(2);
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(element.find('property-values').length).toBe(0);
         });
@@ -80,7 +80,7 @@ describe('Class Axioms directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            ontologyStateSvc.selected = {
+            ontologyStateSvc.listItem.selected = {
                 '@id': 'classId',
                 matonto: {
                     originalIRI: ''
@@ -127,8 +127,8 @@ describe('Class Axioms directive', function() {
                 controller.key = prefixes.rdfs + 'subClassOf';
                 ontologyStateSvc.flattenHierarchy.and.returnValue([{entityIRI: 'new'}]);
                 controller.removeFromHierarchy(this.axiomObject);
-                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.selected['@id'], this.axiomObject['@id'], ontologyStateSvc.listItem.classIndex);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.selected['@id'], this.axiomObject['@id'], ontologyStateSvc.listItem.classIndex);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.flatClassHierarchy).toEqual([{entityIRI: 'new'}]);
             });
         });

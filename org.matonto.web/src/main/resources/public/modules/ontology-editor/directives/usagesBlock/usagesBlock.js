@@ -43,7 +43,7 @@
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
-                    dvm.id = 'usages-' + dvm.os.getActiveKey() + '-' + dvm.os.listItem.recordId;
+                    dvm.id = 'usages-' + dvm.os.getActiveKey() + '-' + dvm.os.listItem.ontologyRecord.recordId;
                     dvm.results = getResults();
                     dvm.total = 0;
                     dvm.shown = 0;
