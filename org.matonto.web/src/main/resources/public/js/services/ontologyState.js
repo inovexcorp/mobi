@@ -61,8 +61,7 @@
             var ontologyListItemTemplate = {
                 ontologyState: {
                     active: true,
-                    upToDate: true,
-                    selected: {}
+                    upToDate: true
                 },
                 editorTabStates: {
                    project: {
@@ -135,13 +134,13 @@
                 classesAndIndividuals: {},
                 classesWithIndividuals: [],
                 individualsParentPath: [],
-                iriList: []
+                iriList: [],
+                selected: {}
             };
             var vocabularyListItemTemplate = {
                 ontologyState: {
                     active: true,
-                    upToDate: true,
-                    selected: {}
+                    upToDate: true
                 },
                 editorTabStates: {
                    project: {
@@ -195,7 +194,8 @@
                     deletions: []
                 },
                 branches: [],
-                iriList: []
+                iriList: [],
+                selected: {}
             };
             
             var emptyInProgressCommit = {
@@ -415,13 +415,15 @@
              */
             self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, inProgressCommit = emptyInProgressCommit) {
                 var listItem;
+                var oldListItem = self.getListItemByRecordId(recordId);
+                
                 return om.getOntology(recordId, branchId, commitId)
                     .then(ontology => {
                         var ontologyId = om.getOntologyIRI(ontology);
                         if (type === 'ontology') {
-                            return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, self.listItem.ontologyRecord.title);
+                            return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, oldListItem.ontologyRecord.title);
                         } else if (type === 'vocabulary') {
-                            return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, self.listItem.ontologyRecord.title);
+                            return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, oldListItem.ontologyRecord.title);
                         }
                     }, $q.reject)
                     .then(response => {
@@ -1037,16 +1039,16 @@
                     self.listItem.selected = self.getEntityByRecordId(self.listItem.ontologyRecord.recordId, self.listItem.editorTabStates.project.entityIRI);
                 }
             }
-            self.getActiveKey = function() {
-                return _.findKey(self.listItem.editorTabStates, {'active': true}) || 'project';
+            self.getActiveKey = function(listItem = self.listItem) {
+                return _.findKey(listItem.editorTabStates, 'active') || 'project';
             }
-            self.getActivePage = function() {
-                return self.listItem.editorTabStates[self.getActiveKey()];
+            self.getActivePage = function(listItem = self.listItem) {
+                return listItem.editorTabStates[self.getActiveKey(listItem)];
             }
-            self.setActivePage = function(key) {
-                if (_.has(self.listItem.editorTabStates, key)) {
-                    self.getActivePage().active = false;
-                    self.listItem.editorTabStates[key].active = true;
+            self.setActivePage = function(key, listItem = self.listItem) {
+                if (_.has(listItem.editorTabStates, key)) {
+                    self.getActivePage(listItem).active = false;
+                    listItem.editorTabStates[key].active = true;
                 }
             }
             self.getActiveEntityIRI = function() {
@@ -1290,11 +1292,11 @@
                     });
                 }
             }
-            function updateListItem(recordId, newListItem) {
-                var activeKey = self.getActiveKey();
+            function updateListItem(recordId, listItem) {
                 var oldListItem = self.getListItemByRecordId(recordId);
-                _.assign(oldListItem, newListItem);
-                self.setActivePage(activeKey);
+                var activeKey = self.getActiveKey(oldListItem);
+                _.assign(oldListItem, listItem);
+                self.setActivePage(activeKey, oldListItem);
             }
             function addOntologyIdToArray(arr, ontologyId) {
                 return _.forEach(arr, item => _.set(item, 'ontologyId', ontologyId));

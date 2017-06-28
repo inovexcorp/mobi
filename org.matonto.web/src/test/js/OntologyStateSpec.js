@@ -185,8 +185,8 @@ describe('Ontology State Service', function() {
             ontologyRecord: {
                 title: recordTitle,
                 recordId: recordId,
-                branchId: 'branchId',
-                commitId: 'commitId'
+                branchId: branchId,
+                commitId: commitId
             }
         }
         ontologyStateSvc.listItem.selected = {'@id': 'id'};
@@ -824,6 +824,7 @@ describe('Ontology State Service', function() {
         beforeEach(function() {
             getDeferred = $q.defer();
             ontologyManagerSvc.getOntology.and.returnValue(getDeferred.promise);
+            ontologyStateSvc.list = [ontologyStateSvc.listItem];
         });
         describe('and getOntology resolves', function() {
             beforeEach(function() {
