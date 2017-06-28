@@ -49,6 +49,7 @@
                         dvm.os.ontologyProperty = undefined;
                         dvm.os.ontologyPropertyIRI = '';
                         dvm.os.ontologyPropertyValue = '';
+                        // dvm.os.ontologyPropertyType = undefined;
                         dvm.os.ontologyPropertyLanguage = 'en';
                         dvm.os.showOntologyPropertyOverlay = true;
                     }
