@@ -46,7 +46,7 @@ describe('Annotation Block directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
-        ontologyStateSvc.selected = {
+        ontologyStateSvc.listItem.selected = {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
@@ -66,7 +66,7 @@ describe('Annotation Block directive', function() {
         });
         it('depending on how many annotations there are', function() {
             expect(element.find('property-values').length).toBe(2);
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(element.find('property-values').length).toBe(0);
         });
@@ -97,7 +97,7 @@ describe('Annotation Block directive', function() {
         });
         it('should set the correct manager values when editing an annotation', function() {
             var annotationIRI = 'prop1';
-            ontologyStateSvc.selected = {
+            ontologyStateSvc.listItem.selected = {
                 'prop1': [{'@value': 'value', '@type': 'type', '@language': 'language'}]
             };
             ontologyStateSvc.listItem.dataPropertyRange = ['type'];

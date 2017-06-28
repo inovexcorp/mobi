@@ -54,7 +54,7 @@ describe('Selected Details directive', function() {
             expect(element.find('div').length).toBe(1);
             expect(element.find('static-iri').length).toBe(1);
 
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(element.find('div').length).toBe(0);
             expect(element.find('static-iri').length).toBe(0);
@@ -64,12 +64,12 @@ describe('Selected Details directive', function() {
     describe('controller methods', function() {
         describe('getTypes functions properly', function() {
             it('when @type is empty', function() {
-                ontologyStateSvc.selected = {};
+                ontologyStateSvc.listItem.selected = {};
                 expect(controller.getTypes()).toEqual('');
             });
             it('when @type has items', function() {
                 var expected = 'test, test2';
-                ontologyStateSvc.selected = {'@type': ['test', 'test2']};
+                ontologyStateSvc.listItem.selected = {'@type': ['test', 'test2']};
                 expect(controller.getTypes()).toEqual(expected);
             });
         });

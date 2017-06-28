@@ -108,15 +108,15 @@ describe('Annotation Overlay directive', function() {
             resObj.getItemIri.and.returnValue(prefixes.owl + 'deprecated');
             expect(controller.disableProp({})).toBe(false);
 
-            ontologyStateSvc.selected[prefixes.owl + 'deprecated'] = [];
+            ontologyStateSvc.listItem.selected[prefixes.owl + 'deprecated'] = [];
             expect(controller.disableProp({})).toBe(true);
         });
         it('addAnnotation should call the appropriate manager functions', function() {
             controller.addAnnotation();
             expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationSelect);
             expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationType);
-            expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.selected, resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue, resObj.getItemIri(ontologyStateSvc.annotationType), ontologyStateSvc.annotationLanguage);
-            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+            expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue, resObj.getItemIri(ontologyStateSvc.annotationType), ontologyStateSvc.annotationLanguage);
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });
@@ -124,9 +124,9 @@ describe('Annotation Overlay directive', function() {
             controller.editAnnotation();
             expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationSelect);
             expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationType);
-            expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
-            expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.selected, resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue, ontologyStateSvc.annotationIndex, resObj.getItemIri(ontologyStateSvc.annotationType), ontologyStateSvc.annotationLanguage);
-            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+            expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
+            expect(propertyManagerSvc.edit).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue, ontologyStateSvc.annotationIndex, resObj.getItemIri(ontologyStateSvc.annotationType), ontologyStateSvc.annotationLanguage);
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });

@@ -59,7 +59,7 @@
                     }
 
                     dvm.editClicked = function(annotation, index) {
-                        var annotationObj = dvm.os.selected[dvm.ro.getItemIri(annotation)][index];
+                        var annotationObj = dvm.os.listItem.selected[dvm.ro.getItemIri(annotation)][index];
                         dvm.os.editingAnnotation = true;
                         dvm.os.annotationSelect = annotation;
                         dvm.os.annotationValue = annotationObj['@value'];

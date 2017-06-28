@@ -42,13 +42,12 @@
                     dvm.error = '';
 
                     dvm.saveThenClose = function() {
-                        dvm.os.saveChanges(dvm.os.listItem.recordId, {additions: dvm.os.listItem.additions, deletions: dvm.os.listItem.deletions})
+                        dvm.os.saveChanges(dvm.os.listItem.ontologyRecord.recordId, {additions: dvm.os.listItem.additions, deletions: dvm.os.listItem.deletions})
                             .then(() => dvm.os.afterSave(), $q.reject)
                             .then(() => dvm.close(), errorMessage => dvm.error = errorMessage);
                     }
 
                     dvm.close = function() {
-                        dvm.os.deleteState(dvm.os.recordIdToClose);
                         dvm.os.closeOntology(dvm.os.recordIdToClose);
                         dvm.os.showCloseOverlay = false;
                     }

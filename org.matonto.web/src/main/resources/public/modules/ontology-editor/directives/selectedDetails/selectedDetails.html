@@ -21,9 +21,9 @@
   #L%
   -->
 <div class="selected-details">
-    <div ng-if="dvm.os.selected">
-        <span class="entity-name">{{dvm.om.getEntityName(dvm.os.selected, dvm.os.state.type)}}</span>
-        <static-iri iri="dvm.os.selected['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
+    <div ng-if="dvm.os.listItem.selected">
+        <span class="entity-name">{{dvm.om.getEntityName(dvm.os.listItem.selected, dvm.os.listItem.ontologyRecord.type)}}</span>
+        <static-iri iri="dvm.os.listItem.selected['@id']" on-edit="dvm.onEdit(iriBegin, iriThen, iriEnd)"></static-iri>
     </div>
-    <p ng-if="dvm.os.selected['@type'].length" class="type-wrapper"><span class="type-label">Type(s):</span><span class="types text-muted">{{dvm.getTypes()}}</span></p>
+    <p ng-if="dvm.os.listItem.selected['@type'].length" class="type-wrapper"><span class="type-label">Type(s):</span><span class="types text-muted">{{dvm.getTypes()}}</span></p>
 </div>

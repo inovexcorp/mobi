@@ -86,9 +86,9 @@
                         } else {
                             var hierarchy = _.get(dvm.os.listItem, 'classHierarchy');
                             hierarchy.push({'entityIRI': dvm.clazz['@id']});
-                            dvm.os.listItem.flatClassHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
+                            dvm.os.listItem.flatClassHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                         }
-                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.clazz);
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.clazz);
                         // select the new class
                         dvm.os.selectItem(_.get(dvm.clazz, '@id'));
                         // hide the overlay

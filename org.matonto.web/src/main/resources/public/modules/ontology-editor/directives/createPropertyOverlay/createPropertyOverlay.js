@@ -112,7 +112,7 @@
                             dvm.values = [];
                             commonUpdate('annotations', 'annotationPropertyHierarchy', 'flatAnnotationPropertyHierarchy', 'annotationPropertyIndex', dvm.os.setAnnotationPropertiesOpened);
                         }
-                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.property);
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.property);
                         // select the new property
                         dvm.os.selectItem(_.get(dvm.property, '@id'));
                         // hide the overlay
@@ -148,9 +148,9 @@
                             dvm.ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), hierarchyKey, indexKey, flatHierarchyKey);
                         } else {
                             dvm.os.listItem[hierarchyKey].push({'entityIRI': dvm.property['@id']});
-                            dvm.os.listItem[flatHierarchyKey] = dvm.os.flattenHierarchy(dvm.os.listItem[hierarchyKey], dvm.os.listItem.recordId);
+                            dvm.os.listItem[flatHierarchyKey] = dvm.os.flattenHierarchy(dvm.os.listItem[hierarchyKey], dvm.os.listItem.ontologyRecord.recordId);
                         }
-                        setThisOpened(dvm.os.listItem.recordId, true);
+                        setThisOpened(dvm.os.listItem.ontologyRecord.recordId, true);
                     }
                 }
             }

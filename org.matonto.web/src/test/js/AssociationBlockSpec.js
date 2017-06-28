@@ -85,7 +85,7 @@ describe('Association Block directive', function() {
             var button = angular.element(element.querySelectorAll('block-footer button')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
@@ -101,7 +101,7 @@ describe('Association Block directive', function() {
             it('if it is a class', function() {
                 ontologyManagerSvc.isClass.and.returnValue(true);
                 controller.deleteEntity();
-                expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(ontologyStateSvc.selected);
+                expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontologyUtilsManagerSvc.deleteClass).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).not.toHaveBeenCalled();
@@ -110,7 +110,7 @@ describe('Association Block directive', function() {
             it('if it is a object property', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 controller.deleteEntity();
-                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.selected);
+                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontologyUtilsManagerSvc.deleteClass).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).not.toHaveBeenCalled();
@@ -119,7 +119,7 @@ describe('Association Block directive', function() {
             it('if it is a datatype property', function() {
                 ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
                 controller.deleteEntity();
-                expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateSvc.selected);
+                expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontologyUtilsManagerSvc.deleteClass).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).toHaveBeenCalled();
