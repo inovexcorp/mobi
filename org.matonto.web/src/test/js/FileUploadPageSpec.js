@@ -66,15 +66,18 @@ describe('File Upload Page directive', function() {
         });
         describe('should set the correct state for continuing to edit a mapping', function() {
             beforeEach(function() {
-                this.baseClass = {'@id': 'base'};
+                this.classMapping = {'@id': 'class'};
+                this.classMappings = [this.classMapping];
+                /*this.baseClass = {'@id': 'base'};
                 this.classMappings = [{}];
-                mappingManagerSvc.getBaseClass.and.returnValue(this.baseClass);
+                mappingManagerSvc.getBaseClass.and.returnValue(this.baseClass);*/
                 mappingManagerSvc.getAllClassMappings.and.returnValue(this.classMappings);
             });
             it('if a new mapping is being created', function() {
                 mapperStateSvc.newMapping = true;
                 controller.edit();
-                expect(mapperStateSvc.selectedClassMappingId).toBe(this.baseClass['@id']);
+                expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
+                // expect(mapperStateSvc.selectedClassMappingId).toBe(this.baseClass['@id']);
                 expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
                 expect(mapperStateSvc.displayMappingConfigOverlay).toBe(true);
@@ -83,7 +86,8 @@ describe('File Upload Page directive', function() {
             it('if a saved mapping is being edited', function() {
                 mapperStateSvc.newMapping = false;
                 controller.edit();
-                expect(mapperStateSvc.selectedClassMappingId).toBe(this.baseClass['@id']);
+                expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
+                // expect(mapperStateSvc.selectedClassMappingId).toBe(this.baseClass['@id']);
                 expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
                 expect(mapperStateSvc.displayMappingConfigOverlay).not.toBe(true);

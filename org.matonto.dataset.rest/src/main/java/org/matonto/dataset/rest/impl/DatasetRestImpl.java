@@ -26,6 +26,7 @@ package org.matonto.dataset.rest.impl;
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
+import static org.matonto.rest.util.RestUtils.getObjectFromJsonld;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
@@ -52,6 +53,7 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
+import org.matonto.rest.util.RestUtils;
 import org.matonto.rest.util.jaxb.Links;
 
 import java.util.Arrays;
@@ -119,8 +121,9 @@ public class DatasetRestImpl implements DatasetRest {
             }
             PaginatedSearchResults<DatasetRecord> results = manager.getDatasetRecords(params);
             JSONArray array = JSONArray.fromObject(results.getPage().stream()
-                    .map(datasetRecord -> removeContext(datasetRecord.getModel()))
+                    .map(record -> removeContext(record.getModel()))
                     .map(model -> modelToJsonld(transformer.sesameModel(model)))
+                    .map(RestUtils::getObjectFromJsonld)
                     .collect(Collectors.toList()));
 
             Links links = LinksUtils.buildLinks(uriInfo, array.size(), results.getTotalSize(), limit, offset);

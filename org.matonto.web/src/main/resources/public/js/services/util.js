@@ -103,6 +103,20 @@
                     _.set(entity, "['" + propertyIRI + "'][0]", valueObj);
                 }
             }
+
+            self.hasPropertyValue = function(entity, propertyIRI, value) {
+                var valueObj = {'@value': value};
+                return !!_.find(_.get(entity, "['" + propertyIRI + "']", []), valueObj);
+            }
+            self.removePropertyValue = function(entity, propertyIRI, value) {
+                var valueObj = {'@value': value};
+                if (_.has(entity, "['" + propertyIRI + "']")) {
+                    _.remove(entity[propertyIRI], valueObj);
+                    if (entity[propertyIRI].length === 0) {
+                        delete entity[propertyIRI];
+                    }
+                }
+            }
             /**
              * @ngdoc method
              * @name getPropertyId
@@ -138,6 +152,20 @@
                     entity[propertyIRI].push(idObj);
                 } else {
                     _.set(entity, "['" + propertyIRI + "'][0]", idObj);
+                }
+            }
+
+            self.hasPropertyId = function(entity, propertyIRI, id) {
+                var idObj = {'@id': id};
+                return !!_.find(_.get(entity, "['" + propertyIRI + "']", []), idObj);
+            }
+            self.removePropertyId = function(entity, propertyIRI, id) {
+                var idObj = {'@id': id};
+                if (_.has(entity, "['" + propertyIRI + "']")) {
+                    _.remove(entity[propertyIRI], idObj);
+                    if (entity[propertyIRI].length === 0) {
+                        delete entity[propertyIRI];
+                    }
                 }
             }
             /**

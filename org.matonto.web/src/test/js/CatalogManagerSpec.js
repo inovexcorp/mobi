@@ -246,7 +246,6 @@ describe('Catalog Manager service', function() {
             this.recordConfig = {
                 type: prefixes.catalog + 'Record',
                 title: 'Title',
-                identifier: 'id',
                 description: 'Description',
                 keywords: ['keyword0', 'keyword1']
             };

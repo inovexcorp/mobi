@@ -50,11 +50,11 @@ describe('Prop Mapping Overlay directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
-        mapperStateSvc.mapping = {jsonld: []};
+        mapperStateSvc.mapping = {jsonld: [], difference: {additions: [], deletions: []}};
         mapperStateSvc.newProp = true;
         element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
         scope.$digest();
-            controller = element.controller('propMappingOverlay');
+        controller = element.controller('propMappingOverlay');
     });
 
     describe('should initialize with the correct values', function() {

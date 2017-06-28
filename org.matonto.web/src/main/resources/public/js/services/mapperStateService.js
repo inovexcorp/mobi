@@ -75,11 +75,17 @@
              * {
              *    id: '',
              *    jsonld: [],
-             *    record: {}
+             *    record: {},
+             *    ontology: {},
+             *    difference: {
+             *      additions: [],
+             *      deletions: []
+             *    }
              * }
              * ```
              */
             self.mapping = undefined;
+
             /**
              * @ngdoc property
              * @name sourceOntologies
@@ -188,17 +194,6 @@
             self.invalidOntology = false;
             /**
              * @ngdoc property
-             * @name editMappingName
-             * @propertyOf mapperState.service:mapperStateService
-             * @type {boolean}
-             *
-             * @description
-             * `editMappingName` holds a boolean indicating whether or not the mapping page is
-             * editing the mapping name
-             */
-            self.editMappingName = false;
-            /**
-             * @ngdoc property
              * @name displayCreateMappingOverlay
              * @propertyOf mapperState.service:mapperStateService
              * @type {boolean}
@@ -256,6 +251,17 @@
              * should be shown.
              */
             self.displayPropMappingOverlay = false;
+            /**
+             * @ngdoc property
+             * @name displayClassMappingOverlay
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {boolean}
+             *
+             * @description
+             * `displayClassMappingOverlay` holds a boolean indicating whether or not the
+             * {@link classMappingOverlay.directive:classMappingOverlay class mapping overlay}
+             * should be shown.
+             */
             self.displayClassMappingOverlay = false;
             /**
              * @ngdoc property
@@ -428,9 +434,13 @@
                 self.editMapping = true;
                 self.newMapping = true;
                 self.mapping = {
-                    id: '',
                     jsonld: [],
-                    record: undefined
+                    record: {},
+                    ontology: undefined,
+                    difference: {
+                        additions: [],
+                        deletions: []
+                    }
                 };
                 self.sourceOntologies = [];
                 self.resetEdit();
@@ -579,6 +589,104 @@
                     }));
                 });
                 return classes;
+            }
+
+            self.changeProp = function(entityId, propId, newValue, originalValue) {
+                if (newValue !== originalValue) {
+                    var additionsObj = _.find(self.mapping.difference.additions, {'@id': entityId});
+                    var deletionsObj = _.find(self.mapping.difference.deletions, {'@id': entityId});
+                    if (originalValue && !util.getPropertyValue(deletionsObj, propId)) {
+                        additionsObj[propId] = [{'@value': newValue}];
+                    } else {
+                        if (additionsObj) {
+                            additionsObj[propId] = [{'@value': newValue}];
+                        } else {
+                            additionsObj = {'@id': entityId, [propId]: [{'@value': newValue}]};
+                            self.mapping.difference.additions.push(additionsObj);
+                        }
+                        if (originalValue !== undefined) {
+                            if (deletionsObj) {
+                                deletionsObj[propId] = [{'@value': originalValue}];
+                            } else {
+                                deletionsObj = {'@id': entityId, [propId]: [{'@value': originalValue}]};
+                                self.mapping.difference.deletions.push(deletionsObj);
+                            }
+                        }
+                    }
+                }
+            }
+
+            self.deleteEntity = function(entity) {
+                var additionsObj = _.find(self.mapping.difference.additions, {'@id': entity['@id']});
+                if (_.isEqual(angular.copy(additionsObj), angular.copy(entity))) {
+                    _.remove(self.mapping.difference.additions, additionsObj);
+                } else {
+                    var deletionObj = _.find(self.mapping.difference.deletions, {'@id': entity['@id']});
+                    if (deletionObj) {
+                        _.merge(deletionObj, entity);
+                    } else {
+                        self.mapping.difference.deletions.push(angular.copy(entity));
+                    }
+                }
+            }
+
+            self.deleteClass = function(classMappingId) {
+                var propsLinkingToClass = _.map(mm.getPropsLinkingToClass(self.mapping.jsonld, classMappingId), propMapping => {
+                    return {
+                        propMapping,
+                        classMappingId: mm.findClassWithObjectMapping(self.mapping.jsonld, propMapping['@id'])['@id']
+                    };
+                });
+                var classMappingProps = mm.getPropMappingsByClass(self.mapping.jsonld, classMappingId);
+                var deletedClass = mm.removeClass(self.mapping.jsonld, classMappingId);
+                self.deleteEntity(deletedClass);
+                _.forEach(classMappingProps, propMapping => {
+                    _.remove(self.invalidProps, {'@id': propMapping['@id']})
+                    self.deleteEntity(propMapping);
+                });
+                _.forEach(propsLinkingToClass, obj => cleanUpDeletedProp(obj.propMapping, obj.classMappingId));
+                self.removeAvailableProps(classMappingId);
+                var classId = mm.getClassIdByMapping(deletedClass);
+                var ontology = mm.findSourceOntologyWithClass(classId, self.sourceOntologies);
+                if (ontology) {
+                    var classObj = om.getEntity([ontology.entities], classId);
+                    self.availableClasses.push({ontologyId: ontology.id, classObj});
+                }
+            }
+
+            self.deleteProp = function(propMappingId, parentClassMappingId) {
+                var deletedProp = mm.removeProp(self.mapping.jsonld, parentClassMappingId, propMappingId);
+                cleanUpDeletedProp(deletedProp, parentClassMappingId);
+            }
+
+            function cleanUpDeletedProp(propMapping, parentClassMappingId) {
+                self.deleteEntity(propMapping);
+                var propId = mm.getPropIdByMapping(propMapping);
+                if (_.includes(mm.annotationProperties, propId)) {
+                    self.getAvailableProps(parentClassMappingId).push({ontologyId: '', propObj: {'@id': propId}});
+                } else {
+                    var ontology = mm.findSourceOntologyWithProp(propId, self.sourceOntologies);
+                    if (ontology) {
+                        var propObj = om.getEntity([ontology.entities], propId);
+                        self.getAvailableProps(parentClassMappingId).push({ontologyId: ontology.id, propObj});
+                    }
+                }
+                var additionsObj = _.find(self.mapping.difference.additions, {'@id': parentClassMappingId});
+                var prop = prefixes.delim + (mm.isDataMapping(propMapping) ? 'dataProperty' : 'objectProperty');
+                if (util.hasPropertyId(additionsObj, prop, propMapping['@id'])) {
+                    util.removePropertyId(additionsObj, prop, propMapping['@id'])
+                } else {
+                    var deletionsObj = _.find(self.mapping.difference.deletions, {'@id': parentClassMappingId});
+                    if (deletionsObj) {
+                        if (!_.has(deletionsObj, "['" + prop + "']")) {
+                            deletionsObj[prop] = [];
+                        }
+                        deletionsObj[prop].push({'@id': propMapping['@id']});
+                    } else {
+                        self.mapping.difference.deletions.push({'@id': parentClassMappingId, [prop]: [{'@id': propMapping['@id']}]});
+                    }
+                }
+                _.remove(self.invalidProps, {'@id': propMapping['@id']});
             }
         }
 })();

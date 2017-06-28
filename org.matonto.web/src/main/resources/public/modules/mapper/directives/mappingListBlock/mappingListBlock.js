@@ -26,34 +26,34 @@
     angular
         /**
          * @ngdoc overview
-         * @name mappingList
+         * @name mappingListBlock
          *
          * @description
-         * The `mappingList` module only provides the `mappingList` directive which creates
+         * The `mappingListBlock` module only provides the `mappingListBlock` directive which creates
          * a "boxed" area with a list of saved mappings in the repository.
          */
-        .module('mappingList', [])
+        .module('mappingListBlock', [])
         /**
          * @ngdoc directive
-         * @name mappingList.directive:mappingList
+         * @name mappingListBlock.directive:mappingListBlock
          * @scope
          * @restrict E
          * @requires  mappingManager.service:mappingManagerService
          * @requires  mapperState.service:mapperStateService
          *
          * @description
-         * `mappingList` is a directive that creates a div with an unordered list of the
+         * `mappingListBlock` is a directive that creates a div with an unordered list of the
          * all the saved mappings in the repository. Each mapping name is clickable and sets the
          * selected {@link mapperState.service:mapperStateService#mapping mapping} for the mapping
          * tool. The list will also be filtered by the
          * {@link mapperState.service:mapperStateService#mappingSearchString mappingSearchString}.
          * The directive is replaced by the contents of its template.
          */
-        .directive('mappingList', mappingList);
+        .directive('mappingListBlock', mappingListBlock);
 
-        mappingList.$inject = ['utilService', 'mappingManagerService', 'mapperStateService', 'catalogManagerService', 'prefixes', '$q'];
+        mappingListBlock.$inject = ['utilService', 'mappingManagerService', 'mapperStateService', 'catalogManagerService', 'prefixes', '$q'];
 
-        function mappingList(utilService, mappingManagerService, mapperStateService, catalogManagerService, prefixes, $q) {
+        function mappingListBlock(utilService, mappingManagerService, mapperStateService, catalogManagerService, prefixes, $q) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -68,32 +68,62 @@
                     dvm.util = utilService;
                     dvm.list = [];
 
+                    dvm.createMapping = function() {
+                        dvm.state.createMapping();
+                        dvm.state.displayCreateMappingOverlay = true;
+                    }
+                    dvm.deleteMapping = function() {
+                        dvm.mm.deleteMapping(dvm.state.mapping.record.id)
+                            .then(() => {
+                                _.remove(openedMappings, {record: {id: dvm.state.mapping.record.id}});
+                                dvm.state.mapping = undefined;
+                                dvm.state.sourceOntologies = [];
+                                setRecords();
+                            }, dvm.util.createErrorToast);
+                    }
                     dvm.onClick = function(record) {
-                        var openedMapping = _.find(openedMappings, {record: {'@id': record['@id']}});
+                        var openedMapping = _.find(openedMappings, {record: {id: record.id}});
                         if (openedMapping) {
                             dvm.state.mapping = openedMapping;
                         } else {
-                            dvm.mm.getMapping(record['@id'])
+                            dvm.mm.getMapping(record.id)
                                 .then(jsonld => {
                                     var mapping = {
                                         jsonld,
-                                        // id,
-                                        record
+                                        record,
+                                        difference: {
+                                            additions: [],
+                                            deletions: []
+                                        }
                                     };
                                     dvm.state.mapping = mapping;
                                     openedMappings.push(mapping);
                                     return dvm.cm.getRecord(_.get(dvm.mm.getSourceOntologyInfo(jsonld), 'recordId'), dvm.cm.localCatalog['@id']);
-                                }, error => $q.reject('Mapping ' + dvm.util.getDctermsValue(record, 'title') + ' could not be found'))
+                                }, error => $q.reject('Mapping ' + record.title + ' could not be found'))
                                 .then(ontologyRecord => {
                                     dvm.state.mapping.ontology = ontologyRecord;
                                 }, errorMessage => dvm.util.createErrorToast(_.startsWith(errorMessage, 'Mapping') ? errorMessage : 'Ontology could not be found'));
                         }
-                        // _.remove(openedMappings, mapping => dvm.mm.mappingIds.indexOf(mapping.id) < 0);
                     }
 
-                    dvm.mm.getMappingRecords().then(records => dvm.list = records, dvm.util.createErrorToast);
+                    setRecords();
+
+                    function setRecords() {
+                        dvm.mm.getMappingRecords()
+                            .then(records => {
+                                dvm.list = _.map(records, record => {
+                                    return {
+                                        id: record['@id'],
+                                        title: dvm.util.getDctermsValue(record, 'title'),
+                                        description: dvm.util.getDctermsValue(record, 'description'),
+                                        keywords: _.map(_.get(record, "['" + prefixes.catalog + "keyword']", []), '@value'),
+                                        branch: dvm.util.getPropertyId(record, prefixes.catalog + 'masterBranch')
+                                    };
+                                });
+                            }, dvm.util.createErrorToast);
+                    }
                 },
-                templateUrl: 'modules/mapper/directives/mappingList/mappingList.html'
+                templateUrl: 'modules/mapper/directives/mappingListBlock/mappingListBlock.html'
             }
         }
 })();

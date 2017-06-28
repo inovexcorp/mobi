@@ -55,6 +55,7 @@
             'uniqueKey',
 
             /* Custom Directives */
+            'aDisabled',
             'block',
             'blockContent',
             'blockFooter',

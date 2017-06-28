@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Create Mapping Overlay directive', function() {
+/*describe('Create Mapping Overlay directive', function() {
     var $compile,
         scope,
         element,
@@ -251,4 +251,4 @@ describe('Create Mapping Overlay directive', function() {
         continueButton.triggerHandler('click');
         expect(controller.cancel).toHaveBeenCalled();
     });
-});
+});*/

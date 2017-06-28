@@ -44,6 +44,7 @@
             'mapperTabset',
             'mappingConfigOverlay',
             'mappingList',
+            'mappingListBlock',
             'mappingNameInput',
             'mappingNameOverlay',
             'mappingOverlays',

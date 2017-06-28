@@ -79,15 +79,16 @@
                         dvm.state.editMapping = true;
                         dvm.loadOntologyAndContinue();
                     }
-                    dvm.createMapping = function() {
-                        dvm.state.createMapping();
-                        dvm.state.displayCreateMappingOverlay = true;
-                    }
-                    dvm.deleteMapping = function() {
-                        dvm.state.displayDeleteMappingConfirm = true;
-                    }
-                    dvm.downloadMapping = function() {
+                    dvm.download = function() {
                         dvm.state.displayDownloadMappingOverlay = true;
+                    }
+                    dvm.duplicate = function() {
+                        var selectedMapping = angular.copy(dvm.state.mapping);
+                        dvm.state.createMapping();
+                        dvm.state.mapping.record = selectedMapping.record;
+                        dvm.state.mapping.jsonld = selectedMapping.jsonld;
+                        dvm.state.mapping.ontology = selectedMapping.ontology;
+                        dvm.state.displayCreateMappingOverlay = true;
                     }
                     dvm.loadOntologyAndContinue = function() {
                         dvm.mm.getSourceOntologies(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld)).then(ontologies => {

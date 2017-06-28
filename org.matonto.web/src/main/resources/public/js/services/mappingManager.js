@@ -104,11 +104,24 @@
              * {@link mappingManager.service:mappingManagerService#mappingIds mapping ids}.
              */
             self.initialize = function() {
-                $http.get(prefix)
-                    .then(response => self.mappingIds = response.data, response => console.log(_.get(response, 'statusText', 'Something went wrong. Could not load mapping ids')));
+                /*$http.get(prefix)
+                    .then(response => self.mappingIds = response.data, response => console.log(_.get(response, 'statusText', 'Something went wrong. Could not load mapping ids')));*/
             }
 
             // REST endpoint calls
+
+            self.getMappingRecords = function() {
+                var config = {
+                    params: {
+                        sort: prefixes.dcterms + 'title'
+                    }
+                };
+                return $http.get(prefix, config)
+                    .then(response => {
+                        return response.data;
+                    }, error => $q.reject(error.statusText));
+            }
+
             /**
              * @ngdoc method
              * @name upload
@@ -122,9 +135,8 @@
              * @param {Object[]} mapping The JSON-LD object of a mapping
              * @returns {Promise} A promise with the IRI of the uploaded mapping
              */
-            self.upload = function(mapping) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+            self.upload = function(mapping, title, description, keywords) {
+                var fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         headers: {
@@ -132,13 +144,16 @@
                             'Accept': 'text/plain'
                         }
                     };
+                fd.append('title', title);
+                if (description) {
+                    fd.append('description', description);
+                }
+                _.forEach(keywords, keyword => fd.append('keywords', keyword));
                 fd.append('jsonld', angular.toJson(mapping));
-                $http.post(prefix, fd, config)
+                return $http.post(prefix, fd, config)
                     .then(response => {
                         self.mappingIds = _.union(self.mappingIds, [response.data]);
-                        deferred.resolve(response.data);
-                    }, error => util.onError(error, deferred));
-                return deferred.promise;
+                    }, error => $q.reject(error.statusText));
             }
             /**
              * @ngdoc method
@@ -153,10 +168,8 @@
              * @returns {Promise} A promise with the JSON-LD of the uploaded mapping
              */
             self.getMapping = function(mappingId) {
-                var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(mappingId))
-                    .then(response => deferred.resolve(_.get(response.data, '@graph', [])), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(mappingId))
+                    .then(response => response.data, error => $q.reject(error.statusText));
             }
             /**
              * @ngdoc method
@@ -225,8 +238,8 @@
              * @param {string} mappingName The display (local) name of a mapping
              * @return {string} A mapping id made from the display (local) name of a mapping
              */
-            self.getMappingId = function(mappingName) {
-                return prefixes.mappings + mappingName;
+            self.getMappingId = function(mappingTitle) {
+                return prefixes.mappings + $filter('camelCase')(mappingTitle, 'class');
             }
 
             // Edit mapping methods
@@ -264,7 +277,7 @@
              * @param {string} commitId The id of the commit of the OntologyRecord to set
              */
             self.setSourceOntologyInfo = function(mapping, recordId, branchId, commitId) {
-                var mappingEntity = getMappingEntity(mapping);
+                var mappingEntity = self.getMappingEntity(mapping);
                 mappingEntity[prefixes.delim + 'sourceRecord'] = [{'@id': recordId}];
                 mappingEntity[prefixes.delim + 'sourceBranch'] = [{'@id': branchId}];
                 mappingEntity[prefixes.delim + 'sourceCommit'] = [{'@id': commitId}];
@@ -285,7 +298,7 @@
              */
             self.copyMapping = function(mapping, newId) {
                 var newMapping = angular.copy(mapping);
-                getMappingEntity(newMapping)['@id'] = newId;
+                self.getMappingEntity(newMapping)['@id'] = newId;
                 var idTransforms = {};
                 _.forEach(self.getAllClassMappings(newMapping), classMapping => {
                     _.set(idTransforms, encodeURIComponent(classMapping['@id']), newId + '/' + uuid.v4());
@@ -319,7 +332,7 @@
              */
             self.renameMapping = function(mapping, newId) {
                 var newMapping = angular.copy(mapping);
-                getMappingEntity(newMapping)['@id'] = newId;
+                self.getMappingEntity(newMapping)['@id'] = newId;
                 _.forEach(self.getAllClassMappings(newMapping), classMapping => {
                     classMapping['@id'] = newId + '/' + $filter('splitIRI')(classMapping['@id']).end;
                     _.forEach(_.concat(getDataProperties(classMapping), getObjectProperties(classMapping)), propIdObj => {
@@ -357,7 +370,7 @@
                     var splitIri = $filter('splitIRI')(classId);
                     var ontologyDataName = ($filter('splitIRI')(om.getOntologyIRI(ontology))).end;
                     classEntity = {
-                        '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4(),
+                        '@id': self.getMappingEntity(mapping)['@id'] + '/' + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']
                     };
                     classEntity[prefixes.delim + 'mapsTo'] = [{'@id': classId}];
@@ -417,7 +430,7 @@
                 if (entityExists(mapping, classMappingId) && ((propObj && om.isDataTypeProperty(propObj)) || _.includes(self.annotationProperties, propId))) {
                     // Add new data mapping id to data properties of class mapping
                     dataEntity = {
-                        '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4()
+                        '@id': self.getMappingEntity(mapping)['@id'] + '/' + uuid.v4()
                     };
                     var classMapping = getEntityById(mapping, classMappingId);
                     // Sets the dataProperty key if not already present
@@ -459,7 +472,7 @@
                         && util.getPropertyId(propObj, prefixes.rdfs + 'range') === getEntityById(mapping, rangeClassMappingId)[prefixes.delim + 'mapsTo'][0]['@id']) {
                     // Add new object mapping id to object properties of class mapping
                     objectEntity = {
-                        '@id': getMappingEntity(mapping)['@id'] + '/' + uuid.v4()
+                        '@id': self.getMappingEntity(mapping)['@id'] + '/' + uuid.v4()
                     };
                     var classMapping = getEntityById(mapping, classMappingId);
                     classMapping[prefixes.delim + 'objectProperty'] = getObjectProperties(classMapping);
@@ -497,6 +510,7 @@
                     // Remove the property mapping id from the class mapping's properties
                     _.remove(classMapping[prefixes.delim + propType], {'@id': propMappingId});
                     cleanPropertyArray(classMapping, propType);
+                    return propMapping;
                 }
             }
             /**
@@ -535,6 +549,7 @@
                         self.removeProp(mapping, classMapping['@id'], prop['@id']);
                     });
                     _.remove(mapping, {'@id': classMapping['@id']});
+                    return classMapping;
                 }
             }
 
@@ -620,7 +635,7 @@
              */
             self.getSourceOntologyInfo = function(mapping) {
                 return _.mapValues(
-                    _.mapKeys(_.pick(getMappingEntity(mapping), [prefixes.delim + 'sourceRecord', prefixes.delim + 'sourceBranch', prefixes.delim + 'sourceCommit']),
+                    _.mapKeys(_.pick(self.getMappingEntity(mapping), [prefixes.delim + 'sourceRecord', prefixes.delim + 'sourceBranch', prefixes.delim + 'sourceCommit']),
                         (val, key) => _.lowerFirst(_.replace(key, prefixes.delim + 'source', '')) + 'Id'
                     ),
                     (val, key) => _.get(val, "[0]['@id']")
@@ -723,6 +738,9 @@
             }
 
             // Public helper methods
+            self.getMappingEntity = function(mapping) {
+                return _.head(getEntitiesByType(mapping, 'Mapping'));
+            }
             /**
              * @ngdoc method
              * @name getClassIdByMappingId
@@ -1062,9 +1080,6 @@
             }
             function isType(entity, type) {
                 return _.includes(_.get(entity, "['@type']"), prefixes.delim + type);
-            }
-            function getMappingEntity(mapping) {
-                return _.get(getEntitiesByType(mapping, 'Mapping'), 0);
             }
             function validateOntologyInfo(obj) {
                 return _.intersection(_.keys(obj), ['recordId', 'branchId', 'commitId']).length === 3;

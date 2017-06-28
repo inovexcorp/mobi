@@ -22,8 +22,8 @@
   -->
 <div class="mapping-list tree scroll-without-buttons">
     <ul>
-        <li ng-repeat="id in dvm.mm.mappingIds | filter:dvm.state.mappingSearchString">
-          <a ng-click="dvm.onClick(id)" ng-class="{'active': id === dvm.state.mapping.id}" ng-bind-html="(id | splitIRI).end | highlight:dvm.state.mappingSearchString | trusted"></a>
+        <li ng-repeat="record in dvm.list | filter:dvm.state.mappingSearchString">
+          <a ng-click="dvm.onClick(record)" ng-class="{'active': record['@id'] === dvm.state.mapping.record['@id']}" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.state.mappingSearchString | trusted"></a>
         </li>
     </ul>
 </div>

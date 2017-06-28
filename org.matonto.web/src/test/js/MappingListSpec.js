@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Mapping List directive', function() {
+/*describe('Mapping List directive', function() {
     var $compile,
         scope,
         $q,
@@ -134,4 +134,4 @@ describe('Mapping List directive', function() {
         angular.element(element.querySelectorAll('li a')[0]).triggerHandler('click');
         expect(controller.onClick).toHaveBeenCalled();
     });
-});
+});*/

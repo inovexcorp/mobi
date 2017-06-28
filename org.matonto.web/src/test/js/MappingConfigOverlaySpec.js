@@ -46,7 +46,6 @@ describe('Mapping Config Overlay directive', function() {
         mockMapperState();
         mockCatalogManager();
         mockPrefixes();
-        injectSplitIRIFilter();
         injectHighlightFilter();
         injectTrustedFilter();
 
@@ -72,7 +71,7 @@ describe('Mapping Config Overlay directive', function() {
         };
         catalogManagerSvc.localCatalog = {'@id': ''};
         catalogManagerSvc.getRecords.and.returnValue($q.when(this.response));
-        mapperStateSvc.mapping = {jsonld: []};
+        mapperStateSvc.mapping = {jsonld: [], difference: {additions: [], deletions: []}};
     });
 
     describe('should initialize with the correct values', function() {
@@ -106,7 +105,7 @@ describe('Mapping Config Overlay directive', function() {
             expect(controller.totalSize).toEqual(headers['x-total-count']);
             expect(controller.links).toEqual(headers.links);
         });
-        it('if the mapping does not have a record set', function() {
+        it('if the mapping does not have an ontology set', function() {
             element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
             scope.$digest();
             controller = element.controller('mappingConfigOverlay');
@@ -120,12 +119,12 @@ describe('Mapping Config Overlay directive', function() {
         });
         describe('if the mapping has a record set', function() {
             beforeEach(function() {
-                this.record = {'@id': ''};
+                this.ontology = {'@id': ''};
                 this.classObj = {'@id': 'class'};
-                mapperStateSvc.mapping.record = this.record;
+                mapperStateSvc.mapping.ontology = this.ontology;
                 mapperStateSvc.sourceOntologies = [{id: ''}];
                 this.expectedState = {
-                    recordId: this.record['@id'],
+                    recordId: this.ontology['@id'],
                     branchId: ''
                 };
                 this.expectedVersion = {
@@ -139,28 +138,28 @@ describe('Mapping Config Overlay directive', function() {
                 mappingManagerSvc.getClassIdByMapping.and.returnValue(this.classObj['@id']);
                 catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.when({'@id': this.expectedState.branchId}));
             });
-            it('and no changes have been commited to the record since it was set', function() {
+            it('and no changes have been commited to the ontology since it was set', function() {
                 mappingManagerSvc.getSourceOntologyInfo.and.returnValue({commitId: this.expectedVersion.commitId});
                 this.expectedState.latest = this.expectedVersion;
                 element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
                 scope.$digest();
                 controller = element.controller('mappingConfigOverlay');
-                expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.record['@id'], catalogManagerSvc.localCatalog['@id']);
+                expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith(this.ontology['@id'], catalogManagerSvc.localCatalog['@id']);
                 expect(utilSvc.getPropertyId).toHaveBeenCalledWith(jasmine.any(Object), prefixes.catalog + 'head');
                 expect(mappingManagerSvc.getSourceOntologyInfo).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
-                expect(controller.selectedRecord).toEqual(this.record);
+                expect(controller.selectedRecord).toEqual(this.ontology);
                 expect(controller.ontologyStates).toContain(this.expectedState);
                 expect(controller.selectedOntologyState).toEqual(this.expectedState);
                 expect(controller.selectedVersion).toBe('latest');
                 expect(controller.classes).toEqual(this.expectedVersion.classes);
             });
-            it('and changes have been commited to the record since it was set', function() {
+            it('and changes have been commited to the ontology since it was set', function() {
                 mappingManagerSvc.getSourceOntologyInfo.and.returnValue({commitId: 'different'});
                 this.expectedState.saved = _.set(angular.copy(this.expectedVersion), 'commitId', 'different');
                 element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
                 scope.$digest();
                 controller = element.controller('mappingConfigOverlay');
-                expect(controller.selectedRecord).toEqual(this.record);
+                expect(controller.selectedRecord).toEqual(this.ontology);
                 expect(controller.ontologyStates).toContain(this.expectedState);
                 expect(controller.selectedOntologyState).toEqual(this.expectedState);
                 expect(controller.selectedVersion).toBe('saved');
@@ -441,7 +440,7 @@ describe('Mapping Config Overlay directive', function() {
                     controller.set();
                     expect(mapperStateSvc.sourceOntologies).toEqual(controller.selectedOntologyState.latest.ontologies);
                     expect(mappingManagerSvc.setSourceOntologyInfo).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.ontologyInfo.recordId, this.ontologyInfo.branchId, this.ontologyInfo.commitId);
-                    expect(mapperStateSvc.mapping.record).toBe(controller.selectedRecord);
+                    expect(mapperStateSvc.mapping.ontology).toBe(controller.selectedRecord);
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
                     expect(mapperStateSvc.availableClasses).toEqual([{classObj: {'@id': 'class2'}}]);
@@ -457,7 +456,7 @@ describe('Mapping Config Overlay directive', function() {
                     describe('if they are property mappings', function() {
                         beforeEach(function() {
                             mappingManagerSvc.isPropertyMapping.and.returnValue(true);
-                            mapperStateSvc.invalidProps = [this.badMapping];
+                            // mapperStateSvc.invalidProps = [this.badMapping];
                             mappingManagerSvc.findClassWithDataMapping.and.returnValue(this.classMapping);
                             mappingManagerSvc.findClassWithObjectMapping.and.returnValue(this.classMapping);
                         });
@@ -466,23 +465,26 @@ describe('Mapping Config Overlay directive', function() {
                             controller.set();
                             expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.badMapping['@id']);
                             expect(mappingManagerSvc.findClassWithObjectMapping).not.toHaveBeenCalled();
-                            expect(mappingManagerSvc.removeProp).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.classMapping['@id'], this.badMapping['@id']);
-                            expect(mapperStateSvc.invalidProps).toEqual([]);
+                            expect(mapperStateSvc.deleteProp).toHaveBeenCalledWith(this.badMapping['@id'], this.classMapping['@id']);
+                            /*expect(mappingManagerSvc.removeProp).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.classMapping['@id'], this.badMapping['@id']);
+                            expect(mapperStateSvc.invalidProps).toEqual([]);*/
                         });
                         it('for object properties', function() {
                             mappingManagerSvc.isDataMapping.and.returnValue(false);
                             controller.set();
                             expect(mappingManagerSvc.findClassWithDataMapping).not.toHaveBeenCalled();
                             expect(mappingManagerSvc.findClassWithObjectMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.badMapping['@id']);
-                            expect(mappingManagerSvc.removeProp).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.classMapping['@id'], this.badMapping['@id']);
-                            expect(mapperStateSvc.invalidProps).toEqual([]);
+                            expect(mapperStateSvc.deleteProp).toHaveBeenCalledWith(this.badMapping['@id'], this.classMapping['@id']);
+                            /*expect(mappingManagerSvc.removeProp).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.classMapping['@id'], this.badMapping['@id']);
+                            expect(mapperStateSvc.invalidProps).toEqual([]);*/
                         });
                     });
                     it('if they are class mappings', function() {
                         mappingManagerSvc.isPropertyMapping.and.returnValue(false);
                         mappingManagerSvc.isClassMapping.and.returnValue(true);
                         controller.set();
-                        expect(mappingManagerSvc.removeClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.badMapping['@id']);
+                        expect(mapperStateSvc.deleteClass).toHaveBeenCalledWith(this.badMapping['@id']);
+                        // expect(mappingManagerSvc.removeClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.badMapping['@id']);
                     });
                 });
             });

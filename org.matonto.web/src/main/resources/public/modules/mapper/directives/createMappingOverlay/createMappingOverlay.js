@@ -66,10 +66,7 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.cm = catalogManagerService;
-                    dvm.mappingType = 'new';
                     dvm.errorMessage = '';
-                    dvm.newName = $filter('splitIRI')(_.get(dvm.state.mapping, 'id', '')).end;
-                    dvm.savedMappingId = _.get(dvm.mm.mappingIds, '0', '');
 
                     dvm.cancel = function() {
                         dvm.state.editMapping = false;
@@ -79,24 +76,16 @@
                         dvm.state.displayCreateMappingOverlay = false;
                     }
                     dvm.continue = function() {
-                        dvm.state.mapping.id = dvm.mm.getMappingId(dvm.newName);
-                        if (dvm.mappingType === 'new') {
-                            dvm.state.mapping.jsonld = dvm.mm.createNewMapping(dvm.state.mapping.id);
+                        var newId = dvm.mm.getMappingId(dvm.state.mapping.record.title);
+                        if (dvm.state.mapping.jsonld.length === 0) {
+                            dvm.state.mapping.jsonld = dvm.mm.createNewMapping(newId);
                             dvm.sourceOntologies = [];
                             dvm.availableClasses = [];
                             nextStep();
                         } else {
-                            var sourceOntologyInfo;
-                            dvm.mm.getMapping(dvm.savedMappingId)
-                                .then(mapping => {
-                                    dvm.state.mapping.jsonld = dvm.mm.copyMapping(mapping, dvm.state.mapping.id);
-                                    sourceOntologyInfo = dvm.mm.getSourceOntologyInfo(mapping);
-                                    return dvm.cm.getRecord(sourceOntologyInfo.recordId, dvm.cm.localCatalog['@id']);
-                                }, $q.reject)
-                                .then(record => {
-                                    dvm.state.mapping.record = record;
-                                    return dvm.mm.getSourceOntologies(sourceOntologyInfo);
-                                }, $q.reject)
+                            dvm.state.mapping.jsonld = dvm.mm.copyMapping(dvm.state.mapping.jsonld, newId);
+                            var sourceOntologyInfo = dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld);
+                            dvm.mm.getSourceOntologies(sourceOntologyInfo)
                                 .then(ontologies => {
                                     if (dvm.mm.areCompatible(dvm.state.mapping.jsonld, ontologies)) {
                                         dvm.state.sourceOntologies = ontologies;
@@ -111,14 +100,13 @@
                     }
 
                     function nextStep() {
+                        dvm.state.mapping.difference.additions = angular.copy(dvm.state.mapping.jsonld);
                         dvm.state.mappingSearchString = '';
                         dvm.state.step = dvm.state.fileUploadStep;
                         dvm.state.displayCreateMappingOverlay = false;
                     }
                     function onError(message) {
                         dvm.errorMessage = message;
-                        dvm.state.mapping.jsonld = [];
-                        dvm.state.mapping.record = undefined;
                     }
                 },
                 templateUrl: 'modules/mapper/directives/createMappingOverlay/createMappingOverlay.html'

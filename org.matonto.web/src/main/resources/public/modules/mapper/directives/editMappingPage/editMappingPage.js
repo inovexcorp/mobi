@@ -56,9 +56,9 @@
          */
         .directive('editMappingPage', editMappingPage);
 
-        editMappingPage.$inject = ['mapperStateService', 'mappingManagerService', 'delimitedManagerService'];
+        editMappingPage.$inject = ['mapperStateService', 'mappingManagerService', 'delimitedManagerService', 'catalogManagerService', '$q'];
 
-        function editMappingPage(mapperStateService, mappingManagerService, delimitedManagerService) {
+        function editMappingPage(mapperStateService, mappingManagerService, delimitedManagerService, catalogManagerService, $q) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -66,6 +66,8 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var cm = catalogManagerService;
+                    var catalogId = _.get(cm.localCatalog, '@id', '');
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.dm = delimitedManagerService;
@@ -79,11 +81,20 @@
                         return _.isEmpty(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld));
                     }
                     dvm.save = function() {
-                        if (_.includes(dvm.mm.mappingIds, dvm.state.mapping.id)) {
+                        if (dvm.state.newMapping) {
+                            dvm.mm.upload(dvm.state.mapping.jsonld, dvm.state.mapping.record.title, dvm.state.mapping.record.description, dvm.state.mapping.record.keywords)
+                                .then(success, onError);
+                        } else {
+                            cm.createInProgressCommit(dvm.state.mapping.record.id, catalogId)
+                                .then(() => cm.updateInProgressCommit(dvm.state.mapping.record.id, catalogId, dvm.state.mapping.difference), $q.reject)
+                                .then(() => cm.createBranchCommit(dvm.state.mapping.record.branch, dvm.state.mapping.record.id, catalogId, 'This is a Commit'), $q.reject)
+                                .then(success, onError);
+                        }
+                        /*if (_.includes(dvm.mm.mappingIds, dvm.state.mapping.id)) {
                             dvm.mm.updateMapping(dvm.state.mapping.id, dvm.state.mapping.jsonld).then(success, onError);
                         } else {
                             dvm.mm.upload(dvm.state.mapping.jsonld).then(success, onError);
-                        }
+                        }*/
                     }
                     dvm.cancel = function() {
                         dvm.state.displayCancelConfirm = true;

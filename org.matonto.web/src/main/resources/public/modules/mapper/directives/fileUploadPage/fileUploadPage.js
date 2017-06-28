@@ -80,8 +80,11 @@
                     	dvm.state.displayCancelConfirm = true;
                     }
                     dvm.edit = function() {
-                        dvm.state.selectedClassMappingId = _.get(dvm.mm.getBaseClass(dvm.state.mapping.jsonld), '@id', '');
-                        _.forEach(dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld), classMapping => dvm.state.setAvailableProps(classMapping['@id']));
+                        var classMappings = dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld);
+                        dvm.state.selectedClassMappingId = _.get(_.head(classMappings), '@id', '');
+                        _.forEach(classMappings, classMapping => dvm.state.setAvailableProps(classMapping['@id']));
+                        /*dvm.state.selectedClassMappingId = _.get(dvm.mm.getBaseClass(dvm.state.mapping.jsonld), '@id', '');
+                        _.forEach(dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld), classMapping => dvm.state.setAvailableProps(classMapping['@id']));*/
                         dvm.state.step = dvm.state.editMappingStep;
                         if (dvm.state.newMapping) {
                             dvm.state.displayMappingConfigOverlay = true;

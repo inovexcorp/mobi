@@ -35,6 +35,7 @@ describe('Mapping Manager service', function() {
     beforeEach(function() {
         module('mappingManager');
         mockPrefixes();
+        injectCamelCaseFilter();
         injectSplitIRIFilter();
         mockOntologyManager();
         mockUtil();
@@ -67,7 +68,7 @@ describe('Mapping Manager service', function() {
         mappingManagerSvc.reset();
         expect(mappingManagerSvc.mappingIds).toEqual([]);
     });
-    describe('should initialize the list of saved mapping ids', function() {
+    /*describe('should initialize the list of saved mapping ids', function() {
         beforeEach(function() {
             this.mappings = ['mapping1', 'mapping2'];
         });
@@ -83,8 +84,8 @@ describe('Mapping Manager service', function() {
             $httpBackend.flush();
             expect(mappingManagerSvc.mappingIds).toEqual(this.mappings);
         });
-    });
-    describe('should upload a mapping', function() {
+    });*/
+    /*describe('should upload a mapping', function() {
         it('unless an error occurs', function(done) {
             $httpBackend.expectPOST('/matontorest/mappings',
                 function(data) {
@@ -137,14 +138,12 @@ describe('Mapping Manager service', function() {
             });
             $httpBackend.flush();
         });
-    });
+    });*/
     describe('should retrieve a mapping by id', function() {
-        beforeEach(function() {
-            this.id = 'mappingname';
-        });
+        var id = 'mapping-record';
         it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/matontorest/mappings/' + this.id).respond(400, null, null, 'Error Message');
-            mappingManagerSvc.getMapping(this.id).then(function(response) {
+            $httpBackend.expectGET('/matontorest/mappings/' + id).respond(400, null, null, 'Error Message');
+            mappingManagerSvc.getMapping(id).then(function(response) {
                 fail('Promise should have rejected');
                 done();
             }, function(response) {
@@ -154,8 +153,8 @@ describe('Mapping Manager service', function() {
             $httpBackend.flush();
         });
         it('successfully', function(done) {
-            $httpBackend.expectGET('/matontorest/mappings/' + this.id).respond(200, {'@graph': []});
-            mappingManagerSvc.getMapping(this.id).then(function(response) {
+            $httpBackend.expectGET('/matontorest/mappings/' + id).respond(200, []);
+            mappingManagerSvc.getMapping(id).then(function(response) {
                 expect(response).toEqual([]);
                 done();
             }, function(response) {

@@ -23,14 +23,12 @@
 describe('Mapping Title directive', function() {
     var $compile,
         scope,
-        mapperStateSvc,
-        controller;
+        mapperStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('mappingTitle');
         mockMapperState();
-        injectSplitIRIFilter();
 
         inject(function(_$compile_, _$rootScope_, _mapperStateService_) {
             $compile = _$compile_;
@@ -38,8 +36,7 @@ describe('Mapping Title directive', function() {
             mapperStateSvc = _mapperStateService_;
         });
 
-        mapperStateSvc.newMapping = true;
-        mapperStateSvc.mapping = {id: '', jsonld: []};
+        mapperStateSvc.mapping = {record: {title: ''}};
         this.element = $compile(angular.element('<mapping-title></mapping-title>'))(scope);
         scope.$digest();
     });
@@ -48,17 +45,5 @@ describe('Mapping Title directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('mapping-title')).toBe(true);
         });
-        it('depending on whether a new mapping is being created', function() {
-            expect(this.element.find('a').length).toBe(1);
-
-            mapperStateSvc.newMapping = false;
-            scope.$digest();
-            expect(this.element.find('a').length).toBe(0);
-        });
-    });
-    it('should set the correct state when the edit button is clicked', function() {
-        var link = angular.element(this.element.find('a')[0]);
-        angular.element(link).triggerHandler('click');
-        expect(mapperStateSvc.editMappingName).toBe(true);
     });
 });

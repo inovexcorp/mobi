@@ -282,6 +282,7 @@ function mockMappingManager() {
             this.isObjectMapping = jasmine.createSpy('isObjectMapping').and.returnValue(true);
             this.isDataMapping = jasmine.createSpy('isDataMapping').and.returnValue(true);
             this.isClassMapping = jasmine.createSpy('isClassMapping').and.returnValue(true);
+            this.getMappingEntity = jasmine.createSpy('getMappingEntity').and.returnValue({});
             this.getPropMappingsByClass = jasmine.createSpy('getPropMappingsByClass').and.returnValue([]);
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
             this.getSourceOntologies = jasmine.createSpy('getSourceOntologies').and.returnValue($q.when([]));
@@ -380,6 +381,10 @@ function mockMapperState() {
             this.getClassProps = jasmine.createSpy('getClassProps').and.returnValue([]);
             this.getClasses = jasmine.createSpy('getClasses').and.returnValue([]);
             this.getMappedColumns = jasmine.createSpy('getMappedColumns').and.returnValue([]);
+            this.changeProp = jasmine.createSpy('changeProp');
+            this.deleteEntity = jasmine.createSpy('deleteEntity');
+            this.deleteClass = jasmine.createSpy('deleteClass');
+            this.deleteProp = jasmine.createSpy('deleteProp');
         });
     });
 }
@@ -841,8 +846,12 @@ function mockUtil() {
             this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(_.identity);
             this.getPropertyValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
             this.setPropertyValue = jasmine.createSpy('setPropertyValue').and.returnValue({});
+            this.hasPropertyValue = jasmine.createSpy('hasPropertyValue').and.returnValue(false);
+            this.removePropertyValue = jasmine.createSpy('removePropertyValue');
             this.setPropertyId = jasmine.createSpy('setPropertyId').and.returnValue({});
             this.getPropertyId = jasmine.createSpy('getPropertyId').and.returnValue('');
+            this.hasPropertyId = jasmine.createSpy('hasPropertyId').and.returnValue(false);
+            this.removePropertyId = jasmine.createSpy('removePropertyId');
             this.getDctermsValue = jasmine.createSpy('getDctermsValue').and.returnValue('');
             this.setDctermsValue = jasmine.createSpy('setDctermsValue').and.returnValue({});
             this.mergingArrays = jasmine.createSpy('mergingArrays');

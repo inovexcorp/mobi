@@ -90,7 +90,7 @@ describe('Mapping Preview directive', function() {
             expect(sourceOntologyName.hasClass('text-danger')).toBe(true);
             expect(sourceOntologyName.find('span').length).toBe(1);
 
-            mapperStateSvc.mapping.record = {};
+            mapperStateSvc.mapping.ontology = {};
             scope.$digest();
             expect(sourceOntologyName.hasClass('text-danger')).toBe(false);
             expect(sourceOntologyName.find('span').length).toBe(0);
