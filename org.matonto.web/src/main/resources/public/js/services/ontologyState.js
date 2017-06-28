@@ -432,7 +432,11 @@
                         listItem.editorTabStates = oldListItem.editorTabStates;
                         return sm.updateOntologyState(recordId, branchId, commitId);
                     }, $q.reject)
-                    .then(() => updateListItem(recordId, listItem), $q.reject);
+                    .then(() => {
+                        var activeKey = self.getActiveKey(oldListItem);
+                        _.assign(oldListItem, listItem);
+                        self.setActivePage(activeKey, oldListItem);
+                    }, $q.reject);
             }
             self.addOntologyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, title, upToDate = true) {
                 return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title)
@@ -1293,12 +1297,6 @@
                         findValuesMissingDatatypes(object[key]);
                     });
                 }
-            }
-            function updateListItem(recordId, listItem) {
-                var oldListItem = self.getListItemByRecordId(recordId);
-                var activeKey = self.getActiveKey(oldListItem);
-                _.assign(oldListItem, listItem);
-                self.setActivePage(activeKey, oldListItem);
             }
             function addOntologyIdToArray(arr, ontologyId) {
                 return _.forEach(arr, item => _.set(item, 'ontologyId', ontologyId));
