@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Selected Details directive', function() {
-    var $compile, scope, element, ontologyStateSvc, $filter, controller, $q, ontoUtils;
+    var $compile, scope, element, ontologyStateSvc, $filter, controller, $q, ontoUtils, manchesterConverterService;
 
     beforeEach(function() {
         module('templates');
@@ -30,8 +30,9 @@ describe('Selected Details directive', function() {
         mockOntologyState();
         injectPrefixationFilter();
         mockOntologyUtilsManager();
+        mockManchesterConverter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _$filter_, _ontologyUtilsManagerService_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _$filter_, _ontologyUtilsManagerService_, _manchesterConverterService_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;

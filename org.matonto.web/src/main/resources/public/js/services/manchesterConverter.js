@@ -58,7 +58,7 @@
                 [prefixes.owl + 'unionOf']: ' or ', // A or B
                 [prefixes.owl + 'intersectionOf']: ' and ', // A and B
                 [prefixes.owl + 'complementOf']: 'not ', // not A
-//                [prefixes.owl + 'oneOf']: '' // {a1 a2 ... an}.
+                [prefixes.owl + 'oneOf']: ' ' // {a1 a2 ... an}.
             };
                 // a - the object property on which the restriction applies.
                 // b - the restriction on the property values.
@@ -106,16 +106,22 @@
                         } else {
                             result += keyword + getManchesterValue(item, jsonld, html);
                         }
+                        if (prop[0] === prefixes.owl + 'oneOf') {
+                            result = '{' + result + '}';
+                        }
                     }
                 } else if (om.isRestriction(entity)) {
                     var onProperty = _.get(entity, '["' + prefixes.owl + 'onProperty"][0]["@id"]', '');
+                    var onClass = _.get(entity, '["' + prefixes.owl + 'onClass"][0]["@id"]', undefined);
+
                     if (onProperty) {
-                        var restriction = $filter('splitIRI')(onProperty).end;
+                        var propertyRestriction = $filter('splitIRI')(onProperty).end;
+                        var classRestriction = onClass ? $filter('splitIRI')(onClass).end : undefined;
                         var prop = _.intersection(_.keys(entity), _.keys(restrictionKeywords));
                         if (prop.length === 1) {
                             var item = _.get(entity[prop[0]], '0');
                             var keyword = html ? surround(restrictionKeywords[prop[0]], restrictionClassName) : restrictionKeywords[prop[0]];
-                            result += restriction + keyword + getManchesterValue(item, jsonld, html);
+                            result += propertyRestriction + keyword + getManchesterValue(item, jsonld, html) + (classRestriction ? ' ' + classRestriction : '');
                         }
                     }
                 }
