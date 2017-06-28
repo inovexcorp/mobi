@@ -58,7 +58,7 @@
                     dvm.selected = undefined;
 
                     dvm.attemptMerge = function() {
-                        cm.getBranchConflicts(dvm.branch['@id'], dvm.targetId, dvm.os.listItem.recordId, catalogId)
+                        cm.getBranchConflicts(dvm.branch['@id'], dvm.targetId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                             .then(conflicts => {
                                 if (_.isEmpty(conflicts)) {
                                     dvm.merge();
@@ -87,13 +87,18 @@
                     }
                     dvm.merge = function() {
                         var sourceId = angular.copy(dvm.branch['@id']);
+<<<<<<< HEAD
                         cm.mergeBranches(sourceId, dvm.targetId, dvm.os.listItem.recordId, catalogId, dvm.resolutions)
                             .then(commitId => dvm.os.updateOntology(dvm.os.listItem.recordId, dvm.targetId, commitId, dvm.os.state.type), $q.reject)
+=======
+                        cm.mergeBranches(sourceId, dvm.targetId, dvm.os.listItem.ontologyRecord.recordId, catalogId, resolutions)
+                            .then(commitId => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.targetId, commitId, dvm.os.listItem.ontologyRecord.type), $q.reject)
+>>>>>>> develop
                             .then(() => {
                                 if (dvm.checkbox) {
-                                    cm.deleteRecordBranch(sourceId, dvm.os.listItem.recordId, catalogId)
+                                    cm.deleteRecordBranch(sourceId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                                         .then(() => {
-                                            dvm.os.removeBranch(dvm.os.listItem.recordId, sourceId);
+                                            dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, sourceId);
                                             onSuccess();
                                         }, onError);
                                 } else {
@@ -102,7 +107,7 @@
                             }, onError);
                     }
                     dvm.matchesCurrent = function(branch) {
-                        return branch['@id'] !== dvm.os.listItem.branchId;
+                        return branch['@id'] !== dvm.os.listItem.ontologyRecord.branchId;
                     }
                     dvm.allResolved = function() {
                         return _.findIndex(dvm.conflicts, {resolved: false}) === -1;
@@ -146,7 +151,7 @@
                         dvm.error = errorMessage;
                     }
                     function setupVariables() {
-                        dvm.branch = _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.branchId});
+                        dvm.branch = _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId});
                         dvm.branchTitle = dvm.util.getDctermsValue(dvm.branch, 'title');
                         if (_.includes(dvm.branch['@type'], prefixes.catalog + 'UserBranch')) {
                             dvm.targetId = _.get(dvm.branch, "['" + prefixes.catalog + "createdFrom'][0]['@id']", '');
@@ -163,7 +168,7 @@
                         dvm.resolutions.deletions = _.concat(dvm.resolutions.deletions, notSelected.additions);
                     }
 
-                    $scope.$watch('dvm.os.listItem.branchId', setupVariables);
+                    $scope.$watch('dvm.os.listItem.ontologyRecord.branchId', setupVariables);
                 }]
             }
         }

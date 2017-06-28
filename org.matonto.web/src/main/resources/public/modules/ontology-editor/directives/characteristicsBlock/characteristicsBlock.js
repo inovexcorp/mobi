@@ -57,14 +57,14 @@
                     ];
 
                     dvm.filter = function(obj) {
-                        return !obj.objectOnly || om.isObjectProperty(dvm.os.selected);
+                        return !obj.objectOnly || om.isObjectProperty(dvm.os.listItem.selected);
                     }
                     dvm.onChange = function(characteristicObj) {
                         if (characteristicObj.checked) {
-                            _.set(dvm.os.selected, '@type', _.concat(_.get(dvm.os.selected, '@type', []), characteristicObj.typeIRI));
+                            _.set(dvm.os.listItem.selected, '@type', _.concat(_.get(dvm.os.listItem.selected, '@type', []), characteristicObj.typeIRI));
                             handleCase(dvm.os.listItem.deletions, dvm.os.addToAdditions, characteristicObj.typeIRI);
                         } else {
-                            removeTypeFrom(dvm.os.selected, characteristicObj.typeIRI);
+                            removeTypeFrom(dvm.os.listItem.selected, characteristicObj.typeIRI);
                             handleCase(dvm.os.listItem.additions, dvm.os.addToDeletions, characteristicObj.typeIRI);
                         }
                         ontoUtils.saveCurrentChanges();
@@ -81,8 +81,8 @@
                                 _.remove(array, match);
                             }
                         } else {
-                            method(dvm.os.listItem.recordId, {
-                                '@id': dvm.os.selected['@id'],
+                            method(dvm.os.listItem.ontologyRecord.recordId, {
+                                '@id': dvm.os.listItem.selected['@id'],
                                 '@type': [typeIRI]
                             });
                         }
@@ -94,13 +94,13 @@
 
                     function setVariables() {
                         _.forEach(dvm.characteristics, obj => {
-                            obj.checked = _.includes(_.get(dvm.os.selected, '@type', []), obj.typeIRI);
+                            obj.checked = _.includes(_.get(dvm.os.listItem.selected, '@type', []), obj.typeIRI);
                         });
                     }
 
                     setVariables();
 
-                    $scope.$watch('dvm.os.selected', setVariables);
+                    $scope.$watch('dvm.os.listItem.selected', setVariables);
                 }]
             }
         }

@@ -33,14 +33,17 @@
         <prop-preview ng-if="dvm.selectedProp" prop-obj="dvm.selectedProp.propObj" ontologies="dvm.state.sourceOntologies"></prop-preview>
         <div class="range-class-select-container form-group" ng-if="dvm.selectedProp && dvm.om.isObjectProperty(dvm.selectedProp.propObj)">
             <custom-label>Link To</custom-label>
-            <p class="form-control-static">{{dvm.util.getBeautifulIRI(dvm.util.getPropertyId(dvm.rangeClassMapping, dvm.prefixes.delim + 'mapsTo')) || "[New]"}}</p>
+            <p class="form-control-static">
+                {{dvm.getClassMappingName()}}
+                <span class="deprecated text-muted" ng-if="dvm.om.isDeprecated(dvm.rangeClass.classObj)">(Deprecated)</span>
+            </p>
         </div>
         <div class="column-select-container form-group" ng-if="dvm.selectedProp && !dvm.om.isObjectProperty(dvm.selectedProp.propObj)">
             <custom-label>Column</custom-label>
             <column-select selected-column="dvm.selectedColumn"></column-select>
         </div>
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-click="dvm.set()" ng-disabled="(dvm.state.newProp && !dvm.selectedProp) || (!dvm.om.isObjectProperty(dvm.selectedProp.propObj) && !dvm.isNumber(dvm.selectedColumn)) || (!dvm.state.newProp && dvm.om.isObjectProperty(dvm.selectedProp.propObj))">Set</button>
+            <button class="btn btn-primary pull-right" ng-click="dvm.set()" ng-disabled="dvm.disableSet()">Set</button>
             <button class="btn btn-default pull-right" ng-click="dvm.cancel()">Cancel</button>
         </div>
     </form>

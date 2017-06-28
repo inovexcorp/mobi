@@ -43,7 +43,7 @@ describe('Object Property Block directive', function() {
             ontologyStateSvc = _ontologyStateService_;
         });
 
-        ontologyStateSvc.selected = {
+        ontologyStateSvc.listItem.selected = {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
@@ -68,13 +68,13 @@ describe('Object Property Block directive', function() {
         });
         it('depending on whether something is selected', function() {
             expect(element.querySelectorAll('block-header a').length).toBe(1);
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(element.querySelectorAll('block-header a').length).toBe(0);
         });
         it('depending on how many datatype properties there are', function() {
             expect(element.find('property-values').length).toBe(2);
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(element.find('property-values').length).toBe(0);
         });
@@ -104,13 +104,13 @@ describe('Object Property Block directive', function() {
         });
         it('should set the correct manager values when editing an object property', function() {
             var propertyIRI = 'prop1';
-            ontologyStateSvc.selected = {
+            ontologyStateSvc.listItem.selected = {
                 'prop1': [{'@id': 'value'}]
             };
             controller.editObjectProp(propertyIRI, 0);
             expect(ontologyStateSvc.editingProperty).toBe(true);
             expect(ontologyStateSvc.propertySelect).toEqual(propertyIRI);
-            expect(ontologyStateSvc.propertyValue).toBe(ontologyStateSvc.selected[propertyIRI][0]['@id']);
+            expect(ontologyStateSvc.propertyValue).toBe(ontologyStateSvc.listItem.selected[propertyIRI][0]['@id']);
             expect(ontologyStateSvc.propertyIndex).toBe(0);
             expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(true);
         });
