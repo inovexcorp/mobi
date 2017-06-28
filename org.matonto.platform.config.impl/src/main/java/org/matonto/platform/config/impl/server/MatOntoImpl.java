@@ -27,7 +27,7 @@ package org.matonto.platform.config.impl.server;
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import aQute.configurable.Configurable;
+import aQute.bnd.annotation.metatype.Configurable;
 import org.matonto.exception.MatOntoException;
 import org.matonto.platform.config.api.server.MatOnto;
 import org.matonto.platform.config.api.server.MatOntoConfig;
@@ -41,6 +41,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.UUID;
@@ -60,12 +61,15 @@ public class MatOntoImpl implements MatOnto {
     public void activate(final Map<String, Object> configuration) {
         final MatOntoConfig serviceConfig = Configurable.createConfigurable(MatOntoConfig.class, configuration);
         if (serviceConfig.serverId() == null) {
+            LOGGER.warn("No server id configured in startup, going to rebuild our Server UUID from the MAC ID of this machine.");
             final byte[] macId = getMacId();
             this.serverId = UUID.nameUUIDFromBytes(macId);
-            configuration.put("serverId", this.serverId.toString());
-            updateServiceConfig(configuration);
+            final Map<String, Object> data = new HashMap<>(configuration);
+            data.put("serverId", this.serverId.toString());
+            updateServiceConfig(data);
         } else {
             final String id = serviceConfig.serverId();
+            LOGGER.info("Server ID already present in service configuration! {}", id);
             try {
                 this.serverId = UUID.fromString(id);
             } catch (IllegalArgumentException e) {
