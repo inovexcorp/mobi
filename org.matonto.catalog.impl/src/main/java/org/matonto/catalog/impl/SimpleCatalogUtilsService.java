@@ -427,7 +427,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         return StreamSupport.stream(statements.spliterator(), false);
     }
 
-
     @Override
     public Resource getDeletionsResource(Resource commitId, RepositoryConnection conn) {
         RepositoryResult<Statement> results = conn.getStatements(null, vf.createIRI(Revision.deletions_IRI), null,
