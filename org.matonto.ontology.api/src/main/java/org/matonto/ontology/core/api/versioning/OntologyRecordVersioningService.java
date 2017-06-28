@@ -162,11 +162,6 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
         return newCommit.getResource();
     }
 
-    @Override
-    public void removeInProgressCommit(InProgressCommit commit, RepositoryConnection conn) {
-        catalogUtils.removeInProgressCommit(commit, conn);
-    }
-
     private Optional<IRI> getNewOntologyIRI(Model additions) {
         return mf.createModel(additions).filter(null, vf.createIRI(RDF.TYPE.stringValue()),
                 vf.createIRI(OWL.ONTOLOGY.stringValue())).subjects().stream()
