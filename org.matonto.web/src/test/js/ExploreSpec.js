@@ -65,7 +65,7 @@ describe('Explore Service', function() {
             var data = [{}];
             var headers = {};
             $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/instance-details?limit=99&offset=0').respond(200, data, headers);
-            exploreSvc.getClassInstanceDetails('recordId', 'classId')
+            exploreSvc.getClassInstanceDetails('recordId', 'classId', {limit: 99, offset: 0})
                 .then(function(response) {
                     expect(response).toEqual(jasmine.objectContaining({
                         data: data,
@@ -78,7 +78,7 @@ describe('Explore Service', function() {
         });
         it('fails', function() {
             $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/instance-details?limit=99&offset=0').respond(400, null, null, 'error');
-            exploreSvc.getClassInstanceDetails('recordId', 'classId')
+            exploreSvc.getClassInstanceDetails('recordId', 'classId', {limit: 99, offset: 0})
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {

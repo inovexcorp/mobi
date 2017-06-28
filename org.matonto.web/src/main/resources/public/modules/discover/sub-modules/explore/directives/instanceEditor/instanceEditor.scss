@@ -11,9 +11,28 @@
     .block-content .row {
         margin: 0;
         
-        .ui-select-multiple.ui-select-bootstrap .ui-select-match-item.btn {
-            text-align: left;
-            white-space: normal;
+        .changed {
+            color: $brand-primary;
+            
+            &:after {
+                content: '*';
+            }
         }
+        
+        md-checkbox {
+            margin: 0;
+        }
+        
+        .has-autocomplete .md-chips .md-chip-input-container {
+            width: 100%;
+            
+            md-autocomplete md-autocomplete-wrap {
+                width: 100%;
+            }
+        }
+    }
+    
+    .overlay {
+        z-index: 10;
     }
 }

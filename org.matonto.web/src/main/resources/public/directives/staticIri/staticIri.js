@@ -32,6 +32,7 @@
         function staticIri($filter, REGEX, ontologyStateService, ontologyUtilsManagerService, toastr) {
             return {
                 restrict: 'E',
+                transclude: true,
                 templateUrl: 'directives/staticIri/staticIri.html',
                 scope: {
                     onEdit: '&'

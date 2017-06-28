@@ -56,7 +56,11 @@ function injectRegexConstant() {
             'IRI': /[a-zA-Z]/,
             'LOCALNAME': /[a-zA-Z]/,
             'FILENAME': /[a-zA-Z]/,
-            'UUID': /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
+            'UUID': /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+            'DATETIME': /[a-zA-Z]/,
+            'INTEGER': /[a-zA-Z]/,
+            'DECIMAL': /[a-zA-Z]/,
+            'ANYTHING': /[a-zA-Z]/
         });
     });
 }

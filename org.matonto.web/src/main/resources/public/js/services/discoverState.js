@@ -61,6 +61,7 @@
             active: true,
             breadcrumbs: ['Classes'],
             classDetails: [],
+            classId: '',
             editing: false,
             instance: {
                 changed: [],
@@ -156,6 +157,7 @@
             self.resetPagedInstanceDetails();
             self.explore.breadcrumbs = ['Classes'];
             self.explore.classDetails = [];
+            self.explore.classId = '';
             self.explore.instance = {
                 changed: [],
                 entity: {},

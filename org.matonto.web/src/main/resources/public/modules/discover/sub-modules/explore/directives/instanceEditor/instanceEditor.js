@@ -50,9 +50,9 @@
          */
         .directive('instanceEditor', instanceEditor);
         
-        instanceEditor.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'prefixes'];
+        instanceEditor.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'prefixes', 'REGEX'];
 
-        function instanceEditor($q, discoverStateService, utilService, exploreService, prefixes) {
+        function instanceEditor($q, discoverStateService, utilService, exploreService, prefixes, REGEX) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceEditor/instanceEditor.html',
@@ -77,14 +77,29 @@
                         propertyIRI: prefixes.rdfs + 'label',
                         type: 'Data'
                     }];
+                    dvm.regex = REGEX;
+                    dvm.prefixes = prefixes;
+                    dvm.searchText = {};
+                    dvm.showOverlay = false;
+                    dvm.newPropertyText = '';
                     dvm.changed = [];
                     
-                    dvm.getValue = function(chip) {
-                        return _.get(chip, '@id', _.get(chip, '@value', ''));
-                    }
-                    
-                    dvm.getOptions = function(property) {
-                        return [];
+                    dvm.getOptions = function(propertyIRI) {
+                        var range = getRange(propertyIRI);
+                        if (range) {
+                            return es.getClassInstanceDetails(dvm.ds.explore.recordId, range, {offset: 0}, true)
+                                .then(response => {
+                                    var options = _.map(response.data, 'instanceIRI');
+                                    if (dvm.searchText[propertyIRI]) {
+                                        return _.filter(options, iri => contains(iri, dvm.searchText[propertyIRI]) && !_.some(dvm.ds.explore.instance.entity[propertyIRI], {'@id': iri}))
+                                    }
+                                    return options;
+                                }, errorMessage => {
+                                    dvm.util.createErrorToast(errorMessage);
+                                    return [];
+                                });
+                        }
+                        return $q.when([]);
                     }
                     
                     dvm.isPropertyOfType = function(propertyIRI, type) {
@@ -95,30 +110,34 @@
                         return {'@id': string};
                     }
                     
-                    dvm.createValueObj = function(string) {
-                        return {'@value': string};
-                    }
-                    
-                    dvm.removeIsTag = function(item) {
-                        return _.omit(item, ['isTag']);
-                    }
-                    
-                    dvm.addType = function(item, propertyIRI) {
-                        var range = _.get(_.find(dvm.properties, {propertyIRI}), 'range', []);
-                        if (range.length) {
-                            return _.set(dvm.removeIsTag(item), '@type', range[0]);
+                    dvm.createValueObj = function(string, propertyIRI) {
+                        var obj = {'@value': string};
+                        var range = getRange(propertyIRI);
+                        if (range) {
+                            return _.set(obj, '@type', range);
                         }
-                        return dvm.removeIsTag(item);
+                        return obj;
                     }
                     
                     dvm.addToChanged = function(propertyIRI) {
-                        dvm.changed.push(propertyIRI);
+                        dvm.changed = _.uniq(_.concat(dvm.changed, [propertyIRI]));
+                    }
+                    
+                    dvm.isChanged = function(propertyIRI) {
+                        return _.includes(dvm.changed, propertyIRI);
                     }
                     
                     dvm.save = function() {
+                        _.forOwn(dvm.ds.explore.instance.entity, (value, key) => {
+                            if (_.isArray(value) && value.length === 0) {
+                                delete dvm.ds.explore.instance.entity[key];
+                            }
+                        });
                         es.updateInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.metadata.instanceIRI, dvm.ds.explore.instance.entity)
-                            .then(() => {
-                                dvm.ds.explore.instance.changed = changed;
+                            .then(() => es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {offset: dvm.ds.explore.instanceDetails.currentPage * dvm.ds.explore.instanceDetails.limit, limit: dvm.ds.explore.instanceDetails.limit}), $q.reject)
+                            .then(response => {
+                                dvm.ds.explore.instanceDetails.data = response.data;
+                                dvm.ds.explore.instance.metadata = _.find(response.data, {instanceIRI: dvm.ds.explore.instance.entity['@id']});
                                 dvm.ds.explore.editing = false;
                             }, dvm.util.createErrorToast);
                     }
@@ -127,13 +146,77 @@
                         dvm.ds.explore.instance.entity['@id'] = begin + then + end;
                     }
                     
-                    dvm.isChanged = function(propertyIRI) {
-                        return _.includes(dvm.ds.explore.instance.changed, propertyIRI);
+                    dvm.isBoolean = function(propertyIRI) {
+                        return getRange(propertyIRI) === prefixes.xsd + 'boolean';
+                    }
+                    
+                    dvm.getInputType = function(propertyIRI) {
+                        switch (_.replace(getRange(propertyIRI), prefixes.xsd, '')) {
+                            case 'dateTime':
+                            case 'dateTimeStamp':
+                                return 'date';
+                            case 'decimal':
+                            case 'double':
+                            case 'float':
+                            case 'int':
+                            case 'integer':
+                            case 'long':
+                            case 'short':
+                                return 'number';
+                            default:
+                                return 'text';
+                        }
+                    }
+                    
+                    dvm.getPattern = function(propertyIRI) {
+                        switch (_.replace(getRange(propertyIRI), prefixes.xsd, '')) {
+                            case 'dateTime':
+                            case 'dateTimeStamp':
+                                return dvm.regex.DATETIME;
+                            case 'decimal':
+                            case 'double':
+                            case 'float':
+                                return dvm.regex.DECIMAL;
+                            case 'int':
+                            case 'long':
+                            case 'short':
+                            case 'integer':
+                                return dvm.regex.INTEGER;
+                            default:
+                                return dvm.regex.ANYTHING;
+                        }
+                    }
+                    
+                    dvm.getNewProperties = function() {
+                        var properties = _.difference(_.map(dvm.properties, 'propertyIRI'), _.keys(dvm.ds.explore.instance.entity));
+                        if (dvm.newPropertyText) {
+                            return _.filter(properties, iri => contains(iri, dvm.newPropertyText));
+                        }
+                        return properties;
+                    }
+                    
+                    dvm.addNewProperty = function() {
+                        dvm.ds.explore.instance.entity[dvm.newPropertyText] = [];
+                        dvm.addToChanged(dvm.newPropertyText);
+                        dvm.newPropertyText = '';
+                        dvm.showOverlay = false;
+                    }
+                    
+                    function contains(string, part) {
+                        return _.includes(_.toLower(string), _.toLower(part));
                     }
                     
                     function getProperties() {
                         $q.all(_.map(dvm.ds.explore.instance.entity['@type'], type => es.getClassPropertyDetails(dvm.ds.explore.recordId, type)))
                             .then(responses => dvm.properties = _.concat(dvm.properties, _.uniq(_.flatten(responses))), () => dvm.properties = []);
+                    }
+                    
+                    function getRange(propertyIRI) {
+                        var range = _.get(_.find(dvm.properties, {propertyIRI}), 'range', []);
+                        if (range.length) {
+                            return range[0];
+                        }
+                        return '';
                     }
                     
                     getProperties();

@@ -82,16 +82,18 @@
          *
          * @param {string} recordId The id of the Record
          * @param {string} classId The id of the Class
+         * @param {Object} params The params for the REST call
+         * @param {number} params.offset The offset for the query
+         * @param {number} params.limit The limit for the query
+         * @param {boolean} noSpinner Whether or not the spinner should be shown
          * @returns {Promise} A promise that resolves to an array of the instance details for the identified class of the
          * identified dataset record.
          */
-        self.getClassInstanceDetails = function(recordId, classId, offset = 0) {
-            var config = {
-                params: {
-                    offset,
-                    limit: ds.explore.instanceDetails.limit
-                }
-            };
+        self.getClassInstanceDetails = function(recordId, classId, params, noSpinner = false) {
+            var config = {params};
+            if (noSpinner) {
+                config.timeout = undefined;
+            }
             return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/instance-details', config)
                 .then(response => response, response => $q.reject(response.statusText));
         }
