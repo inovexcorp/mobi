@@ -302,6 +302,7 @@ describe('Ontology State Service', function() {
             importedOntologies: importedOntologies,
             importedOntologyIds: importedOntologyIds,
             ontologyRecord: {
+                title: recordTitle,
                 recordId: recordId,
                 commitId: commitId,
                 branchId: branchId
@@ -840,7 +841,7 @@ describe('Ontology State Service', function() {
                 describe('and createOntologyListItem resolves', function() {
                     var updateDeferred;
                     beforeEach(function() {
-                        createDeferred.resolve();
+                        createDeferred.resolve(listItem);
                         updateDeferred = $q.defer();
                         stateManagerSvc.updateOntologyState.and.returnValue(updateDeferred.promise);
                     });
@@ -849,7 +850,7 @@ describe('Ontology State Service', function() {
                         ontologyStateSvc.updateOntology(recordId, branchId, commitId, ontologyType, listItem.ontologyState.upToDate)
                             .then(function(response) {
                                 expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(ontologyId,
-                                    recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, ontologyStateSvc.listItem.ontologyRecord.title);
+                                    recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, listItem.ontologyRecord.title);
                                 expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(recordId, branchId,
                                     commitId);
                             }, function() {
@@ -864,7 +865,7 @@ describe('Ontology State Service', function() {
                                 fail('Promise should have rejected');
                             }, function(response) {
                                 expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(ontologyId,
-                                    recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, ontologyStateSvc.listItem.ontologyRecord.title);
+                                    recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, listItem.ontologyRecord.title);
                                 expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(recordId, branchId,
                                     commitId);
                                 expect(response).toEqual(error);
@@ -879,7 +880,7 @@ describe('Ontology State Service', function() {
                             fail('Promise should have rejected');
                         }, function(response) {
                             expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(ontologyId, recordId,
-                                branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, ontologyStateSvc.listItem.ontologyRecord.title);
+                                branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, listItem.ontologyRecord.title);
                             expect(response).toEqual(error);
                         });
                     scope.$apply();
@@ -894,7 +895,7 @@ describe('Ontology State Service', function() {
                 describe('and createVocabularyListItem resolves', function() {
                     var updateDeferred;
                     beforeEach(function() {
-                        createDeferred.resolve();
+                        createDeferred.resolve(listItem);
                         updateDeferred = $q.defer();
                         stateManagerSvc.updateOntologyState.and.returnValue(updateDeferred.promise);
                     });
@@ -903,7 +904,7 @@ describe('Ontology State Service', function() {
                         ontologyStateSvc.updateOntology(recordId, branchId, commitId, vocabularyType, listItem.ontologyState.upToDate)
                             .then(function(response) {
                                 expect(ontologyStateSvc.createVocabularyListItem).toHaveBeenCalledWith(ontologyId,
-                                    recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, ontologyStateSvc.listItem.ontologyRecord.title);
+                                    recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, listItem.ontologyRecord.title);
                                 expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(recordId, branchId,
                                     commitId);
                             }, function() {
@@ -918,7 +919,7 @@ describe('Ontology State Service', function() {
                                 fail('Promise should have rejected');
                             }, function(response) {
                                 expect(ontologyStateSvc.createVocabularyListItem).toHaveBeenCalledWith(ontologyId,
-                                    recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, ontologyStateSvc.listItem.ontologyRecord.title);
+                                    recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, listItem.ontologyRecord.title);
                                 expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(recordId, branchId,
                                     commitId);
                                 expect(response).toEqual(error);
@@ -933,7 +934,7 @@ describe('Ontology State Service', function() {
                             fail('Promise should have rejected');
                         }, function(response) {
                             expect(ontologyStateSvc.createVocabularyListItem).toHaveBeenCalledWith(ontologyId,
-                                recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, ontologyStateSvc.listItem.ontologyRecord.title);
+                                recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, listItem.ontologyRecord.title);
                             expect(response).toEqual(error);
                         });
                     scope.$apply();

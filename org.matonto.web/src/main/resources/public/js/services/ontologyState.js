@@ -428,6 +428,8 @@
                     }, $q.reject)
                     .then(response => {
                         listItem = response;
+                        listItem.selected = oldListItem.selected;
+                        listItem.editorTabStates = oldListItem.editorTabStates;
                         return sm.updateOntologyState(recordId, branchId, commitId);
                     }, $q.reject)
                     .then(() => updateListItem(recordId, listItem), $q.reject);
@@ -915,7 +917,7 @@
              * @param {string} recordId The record ID of the requested ontology.
              */
             self.closeOntology = function(recordId) {
-                if (self.listItem.ontologyRecord.recordId == recordId) {
+                if (self.listItem && self.listItem.ontologyRecord.recordId == recordId) {
                    self.listItem = undefined;
                 }
                 _.remove(self.list, { ontologyRecord: { recordId }});
