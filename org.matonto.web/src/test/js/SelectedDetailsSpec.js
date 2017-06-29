@@ -78,6 +78,7 @@ describe('Selected Details directive', function() {
             it('when @type has blank node items', function() {
                 ontologyManagerService.isBlankNodeId.and.returnValue(true);
                 ontologyStateSvc.listItem.selected = {'@type': ['test', 'test2']};
+                controller.getTypes();
                 expect(manchesterConverterService.jsonldToManchester).toHaveBeenCalledWith(jasmine.any(String), ontologyStateSvc.listItem.ontology);
             });
         });
