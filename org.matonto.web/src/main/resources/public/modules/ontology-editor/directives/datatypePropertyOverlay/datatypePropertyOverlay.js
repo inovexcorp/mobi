@@ -52,13 +52,13 @@
                             } else if (type) {
                                 valueObj['@type'] = type['@id'];
                             }
-                            if (_.has(dvm.os.selected, property)) {
-                                dvm.os.selected[property].push(valueObj);
+                            if (_.has(dvm.os.listItem.selected, property)) {
+                                dvm.os.listItem.selected[property].push(valueObj);
                             } else {
-                                dvm.os.selected[property] = [valueObj];
+                                dvm.os.listItem.selected[property] = [valueObj];
                             }
                         }
-                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'],
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'],
                             property, valueObj));
                         dvm.os.showDataPropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
@@ -67,8 +67,8 @@
                     dvm.editProperty = function(select, value, type, language) {
                         var property = dvm.ro.getItemIri(select);
                         if (property) {
-                            var propertyObj = dvm.os.selected[property][dvm.os.propertyIndex];
-                            dvm.os.addToDeletions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'],
+                            var propertyObj = dvm.os.listItem.selected[property][dvm.os.propertyIndex];
+                            dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'],
                                 property, propertyObj));
                             propertyObj['@value'] = value;
                             if (type && !(language && dvm.isStringType())) {
@@ -81,7 +81,7 @@
                             } else {
                                 _.unset(propertyObj, '@language');
                             }
-                            dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.util.createJson(dvm.os.selected['@id'],
+                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'],
                                 property, propertyObj));
                         }
                         dvm.os.showDataPropertyOverlay = false;

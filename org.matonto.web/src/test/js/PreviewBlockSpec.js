@@ -102,7 +102,7 @@ describe('Preview Block directive', function() {
                 controller.getPreview();
                 scope.$apply();
                 expect(controller.activePage.mode).toBe('application/ld+json');
-                expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, 'jsonld');
+                expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'jsonld');
                 expect(controller.activePage.preview).toEqual(jsonFilter);
             });
             it('if the format is not JSON-LD', function() {
@@ -121,7 +121,7 @@ describe('Preview Block directive', function() {
                     controller.getPreview();
                     scope.$apply();
                     expect(controller.activePage.mode).toBe(test.mode);
-                    expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, test.serialization);
+                    expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, test.serialization);
                     expect(controller.activePage.preview).toEqual({});
                 });
             });
