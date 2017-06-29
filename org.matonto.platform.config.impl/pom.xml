@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>platform.config.api</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.19-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -66,6 +66,10 @@
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
             <artifactId>sesame-runtime-osgi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.cmpn</artifactId>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
