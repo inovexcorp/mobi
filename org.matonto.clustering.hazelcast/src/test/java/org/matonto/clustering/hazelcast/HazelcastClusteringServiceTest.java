@@ -28,13 +28,14 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
+import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 
-@RunWith(BlockJUnit4ClassRunner.class)
+@RunWith(MockitoJUnitRunner.class)
 public class HazelcastClusteringServiceTest extends TestCase {
 
     private static String MULTICAST_GROUP = null;

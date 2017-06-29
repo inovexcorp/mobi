@@ -25,16 +25,38 @@ package org.matonto.clustering.hazelcast.listener;
 
 import com.hazelcast.core.LifecycleEvent;
 import com.hazelcast.core.LifecycleListener;
+import com.hazelcast.core.MemberAttributeEvent;
+import com.hazelcast.core.MembershipEvent;
+import com.hazelcast.core.MembershipListener;
 import org.matonto.clustering.hazelcast.HazelcastClusteringService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This {@link LifecycleListener} implementation provides hooks for the {@link HazelcastClusteringService} implementation
  * of the {@link org.matonto.clustering.api.ClusteringService} to listen to changes in the cluster.
  */
-public class ClusterServiceLifecycleListener implements LifecycleListener {
+public class ClusterServiceLifecycleListener implements LifecycleListener, MembershipListener {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterServiceLifecycleListener.class);
 
     @Override
     public void stateChanged(LifecycleEvent event) {
+        LOGGER.debug("{}: State Change: {}: {}", this.toString(), event.getState().name(), event.toString());
+    }
+
+    @Override
+    public void memberAdded(MembershipEvent membershipEvent) {
+
+    }
+
+    @Override
+    public void memberRemoved(MembershipEvent membershipEvent) {
+
+    }
+
+    @Override
+    public void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
 
     }
 }

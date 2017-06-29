@@ -28,18 +28,24 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Modified;
+import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.ReplicatedMap;
 import org.matonto.clustering.api.ClusteringService;
 import org.matonto.clustering.hazelcast.config.HazelcastClusteringServiceConfig;
 import org.matonto.clustering.hazelcast.config.HazelcastConfigurationFactory;
+import org.matonto.clustering.hazelcast.listener.ClusterServiceLifecycleListener;
+import org.matonto.platform.config.api.server.MatOnto;
+import org.matonto.rdf.api.Model;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * This is the {@link ClusteringService} implementation built on top of Hazelcast.
@@ -53,7 +59,7 @@ import java.util.Map;
                 "clusteringType=hazelcast"
         }
 )
-public class HazelcastClusteringService implements ClusteringService {
+public class HazelcastClusteringService extends Constants implements ClusteringService {
 
     /**
      * The name of this service type.
@@ -66,6 +72,11 @@ public class HazelcastClusteringService implements ClusteringService {
     private static final Logger LOGGER = LoggerFactory.getLogger(HazelcastClusteringService.class);
 
     /**
+     * Core platform service for access central server functionality.
+     */
+    private MatOnto matOntoServer;
+
+    /**
      * Hazelcast instance that will drive the features of this {@link ClusteringService} implementation.
      */
     private HazelcastInstance hazelcastInstance;
@@ -74,6 +85,13 @@ public class HazelcastClusteringService implements ClusteringService {
      * {@link BundleContext} for this service.
      */
     private BundleContext bundleContext;
+
+    /**
+     * Map of MatOnto nodes currently on the cluster to some metadata about the node.
+     */
+    private ReplicatedMap<UUID, Model> activeClusterNodes;
+
+    private ClusterServiceLifecycleListener listener;
 
     /**
      * Method that joins the hazelcast cluster when the service is activated.
@@ -86,15 +104,15 @@ public class HazelcastClusteringService implements ClusteringService {
             final Config config = HazelcastConfigurationFactory.build(serviceConfig);
             LOGGER.debug("Spinning up underlying hazelcast instance");
             this.hazelcastInstance = Hazelcast.newHazelcastInstance(config);
-            LOGGER.info("Successfully initialized Hazelcast instance");
+            LOGGER.info("Clustering Service {}: Successfully initialized Hazelcast instance", this.matOntoServer.getServerIdentifier());
 
             // Listen to lifecycle changes...
-            this.hazelcastInstance.getLifecycleService().addLifecycleListener((event) -> {
-                LOGGER.warn("{}: State Change: {}: {}", this.toString(), event.getState().name(), event.toString());
-            });
+            listener = new ClusterServiceLifecycleListener();
+            this.hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
+            this.hazelcastInstance.getCluster().addMembershipListener(listener);
         } else {
-            LOGGER.warn("Service initialized in disabled state... Not going to start a hazelcast node " +
-                    "instance and join cluster");
+            LOGGER.warn("Clustering Service {}: Service initialized in disabled state... Not going to start a hazelcast node " +
+                    "instance and join cluster", this.matOntoServer.getServerIdentifier());
         }
     }
 
@@ -132,4 +150,12 @@ public class HazelcastClusteringService implements ClusteringService {
         return this.hazelcastInstance.getCluster().getMembers().size();
     }
 
+    @Reference
+    public void setMatOntoServer(MatOnto matOntoServer) {
+        this.matOntoServer = matOntoServer;
+    }
+
+    private void registerWithClusterRegistry() {
+        this.activeClusterNodes = this.hazelcastInstance.getReplicatedMap(ACTIVE_CLUSTER_MEMBERS_KEY);
+    }
 }

@@ -43,8 +43,13 @@
     <dependencies>
         <dependency>
             <groupId>org.matonto</groupId>
+            <artifactId>platform.config.api</artifactId>
+            <version>1.8.19-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
             <artifactId>clustering.api</artifactId>
-            <version>${project.version}</version>
+            <version>1.8.19-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.hazelcast</groupId>
