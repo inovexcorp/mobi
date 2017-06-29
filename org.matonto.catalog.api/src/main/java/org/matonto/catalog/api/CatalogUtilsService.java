@@ -34,12 +34,14 @@ import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.repository.api.RepositoryConnection;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public interface CatalogUtilsService {
     /**
@@ -412,6 +414,15 @@ public interface CatalogUtilsService {
     Resource getAdditionsResource(Commit commit);
 
     /**
+     * Gets the Stream of addition statements from the provided commit.
+     *
+     * @param commitId The Resource identifying the commit
+     * @param conn The connection to the repository
+     * @return The Stream of addition statements
+     */
+    Stream<Statement> getAdditions(Resource commitId, RepositoryConnection conn);
+
+    /**
      * Gets the Resource identifying the graph that contains the deletions statements of the Commit identified by the
      * provided Resource.
      *
@@ -430,6 +441,15 @@ public interface CatalogUtilsService {
      * @throws IllegalStateException Thrown if the Commit has no deletions graph.
      */
     Resource getDeletionsResource(Commit commit);
+
+    /**
+     * Gets the Stream of deletion statements from the provided commit.
+     *
+     * @param commitId The Resource identifying the commit
+     * @param conn The connection to the repository
+     * @return The Stream of deletion statements
+     */
+    Stream<Statement> getDeletions(Resource commitId, RepositoryConnection conn);
 
     /**
      * Adds the provided statements as changes in the target named graph. If a statement in the changes exists in the

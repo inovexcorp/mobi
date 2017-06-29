@@ -76,13 +76,37 @@
                     dvm.selectedProp = undefined;
                     dvm.selectedColumn = '';
                     dvm.rangeClassMapping = undefined;
+                    dvm.rangeClass = undefined;
 
+<<<<<<< HEAD
                     dvm.getRangeClassMapping = function(prop) {
                         return _.get(dvm.mm.getClassMappingsByClassId(dvm.state.mapping.jsonld, dvm.util.getPropertyId(prop.propObj, prefixes.rdfs + 'range')), '0');
+=======
+                    dvm.getClassMappingName = function() {
+                        var className = dvm.util.getBeautifulIRI(_.get(dvm.rangeClass, "classObj['@id']"));
+                        return dvm.rangeClassMapping ? className : '[New ' + className + ']';
+                    }
+                    dvm.disableSet = function() {
+                        var propObj = _.get(dvm.selectedProp, 'propObj');
+                        return (dvm.state.newProp && !dvm.selectedProp)
+                            || (!dvm.om.isObjectProperty(propObj) && !dvm.isNumber(dvm.selectedColumn))
+                            || (!dvm.state.newProp && dvm.om.isObjectProperty(propObj))
+                            || (dvm.om.isObjectProperty(propObj) && dvm.om.isDeprecated(_.get(dvm.rangeClass, 'classObj')));
+                    }
+                    dvm.setRangeClass = function() {
+                        var rangeClassId = dvm.util.getPropertyId(dvm.selectedProp.propObj, dvm.prefixes.rdfs + 'range');
+                        dvm.rangeClassMapping = _.head(dvm.mm.getClassMappingsByClassId(dvm.state.mapping.jsonld, rangeClassId));
+                        dvm.rangeClass = _.find(dvm.state.availableClasses, {classObj: {'@id': rangeClassId}});
+>>>>>>> feature/ontology_iri_on_record
                     }
                     dvm.updateRange = function() {
                         dvm.selectedColumn = '';
-                        dvm.rangeClassMapping = dvm.om.isObjectProperty(_.get(dvm.selectedProp, 'propObj')) ? dvm.getRangeClassMapping(dvm.selectedProp) : undefined;
+                        if (dvm.om.isObjectProperty(_.get(dvm.selectedProp, 'propObj'))) {
+                            dvm.setRangeClass();
+                        } else {
+                            dvm.rangeClassMapping = undefined;
+                            dvm.rangeClass = undefined;
+                        }
                     }
                     dvm.set = function() {
                         if (dvm.state.newProp) {
@@ -97,12 +121,18 @@
                                 if (dvm.rangeClassMapping) {
                                     classMapping = dvm.rangeClassMapping;
                                 } else {
+<<<<<<< HEAD
                                     var rangeClassId = dvm.util.getPropertyId(dvm.selectedProp.propObj, prefixes.rdfs + 'range');
                                     var availableClass = _.find(dvm.state.availableClasses, {classObj: {'@id': rangeClassId}});
                                     var rangeOntology = _.find(dvm.state.sourceOntologies, {id: availableClass.ontologyId});
                                     classMapping = dvm.mm.addClass(dvm.state.mapping.jsonld, rangeOntology.entities, rangeClassId);
                                     dvm.state.mapping.difference.additions.push(angular.copy(classMapping));
                                     _.remove(dvm.state.availableClasses, availableClass);
+=======
+                                    var rangeOntology = _.find(dvm.state.sourceOntologies, {id: dvm.rangeClass.ontologyId});
+                                    classMapping = dvm.mm.addClass(dvm.state.mapping.jsonld, rangeOntology.entities, dvm.rangeClass.classObj['@id']);
+                                    _.remove(dvm.state.availableClasses, dvm.rangeClass);
+>>>>>>> feature/ontology_iri_on_record
                                 }
 
                                 // Add object property mapping pointing to new range class mapping
@@ -155,8 +185,16 @@
                         } else {
                             dvm.selectedProp = {propObj: dvm.om.getEntity([ontology.entities], propId), ontologyId: ontology.id};
                         }
+<<<<<<< HEAD
                         dvm.selectedColumn = dvm.util.getPropertyValue(propMapping, prefixes.delim + 'columnIndex');
                         dvm.rangeClassMapping = dvm.getRangeClassMapping(dvm.selectedProp);
+=======
+                        if (dvm.om.isObjectProperty(dvm.selectedProp.propObj)) {
+                            dvm.setRangeClass();
+                        } else {
+                            dvm.selectedColumn = dvm.util.getPropertyValue(propMapping, dvm.prefixes.delim + 'columnIndex');
+                        }
+>>>>>>> feature/ontology_iri_on_record
                     }
                 },
                 templateUrl: 'modules/mapper/directives/propMappingOverlay/propMappingOverlay.html'

@@ -28,4 +28,4 @@
     rdfs:label "ontology IRI"@en;
     rdfs:comment "The latest ontology IRI on the master branch."@en;
     rdfs:domain :OntologyRecord;
-    rdfs:range xsd:anyURI.
+    rdfs:range <http://matonto.org/ontologies/matonto#Identifier> .

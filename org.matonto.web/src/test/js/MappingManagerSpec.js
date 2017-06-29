@@ -701,43 +701,104 @@ describe('Mapping Manager service', function() {
         mappingManagerSvc.findIncompatibleMappings.and.returnValue([{}]);
         expect(mappingManagerSvc.areCompatible({}, [])).toBe(false);
     });
-    it('should collect incompatible entities within a mapping based on its source ontologies', function() {
+    describe('should collect incompatible entities within a mapping based on its source ontologies when', function() {
         var mapping = {jsonld: []};
         var sourceOntologies = [{}];
-        var classMapping = {id: 'class'};
-        var propMapping = {id: 'prop'};
-        spyOn(mappingManagerSvc, 'getAllClassMappings').and.returnValue([classMapping]);
-        spyOn(mappingManagerSvc, 'getClassIdByMapping').and.returnValue(classMapping.id);
-        spyOn(mappingManagerSvc, 'findSourceOntologyWithClass').and.returnValue(undefined);
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping]);
-
-        mappingManagerSvc.findSourceOntologyWithClass.and.returnValue({});
-        spyOn(mappingManagerSvc, 'getPropMappingsByClass').and.returnValue([propMapping]);
-        spyOn(mappingManagerSvc, 'getPropIdByMapping').and.returnValue(propMapping.id);
-        spyOn(mappingManagerSvc, 'findSourceOntologyWithProp').and.returnValue(undefined);
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([propMapping]);
-
-        mappingManagerSvc.annotationProperties = [propMapping.id];
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([]);
-
-        mappingManagerSvc.annotationProperties = [];
-        mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
-        ontologyManagerSvc.isObjectProperty.and.returnValue(true);
-        spyOn(mappingManagerSvc, 'isDataMapping').and.returnValue(true);
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([propMapping]);
-
-        mappingManagerSvc.isDataMapping.and.returnValue(false);
-        spyOn(mappingManagerSvc, 'getClassIdByMappingId').and.returnValue('test');
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([propMapping]);
-
-        mappingManagerSvc.getClassIdByMappingId.and.returnValue('');
-        ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-        ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
-        spyOn(mappingManagerSvc, 'isObjectMapping').and.returnValue(true);
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([propMapping]);
-
-        ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-        expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([]);
+        var classMapping = {id: 'classMapping'};
+        var classObj = {'id': 'class'};
+        var dataPropMapping = {id: 'dataMapping'};
+        var dataPropObj = {'id': 'dataProp'};
+        var objectPropMapping = {id: 'objectMapping'};
+        var objectPropObj = {'id': 'objectProp'};
+        beforeEach(function() {
+            ontologyManagerSvc.getEntity.and.callFake(function(arr, id) {
+                if (id === classObj.id) {
+                    return classObj;
+                } else if (id === dataPropObj.id) {
+                    return dataPropObj;
+                } else if (id === objectPropObj.id) {
+                    return objectPropObj;
+                } else {
+                    return undefined;
+                }
+            });
+            spyOn(mappingManagerSvc, 'getPropIdByMapping').and.callFake(function(propObj) {
+                if (propObj === objectPropMapping) {
+                    return objectPropObj.id;
+                } else if (propObj === dataPropMapping) {
+                    return dataPropObj.id;
+                } else {
+                    return '';
+                }
+            });
+            spyOn(mappingManagerSvc, 'getClassIdByMapping').and.returnValue(classObj.id);
+            spyOn(mappingManagerSvc, 'getAllClassMappings');
+            spyOn(mappingManagerSvc, 'getAllDataMappings');
+            spyOn(mappingManagerSvc, 'getAllObjectMappings');
+            spyOn(mappingManagerSvc, 'findSourceOntologyWithClass');
+            spyOn(mappingManagerSvc, 'findSourceOntologyWithProp');
+        });
+        it('class does not exist', function() {
+            mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
+            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping]);
+        });
+        it('class is deprecated', function() {
+            mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
+            mappingManagerSvc.findSourceOntologyWithClass.and.returnValue({});
+            ontologyManagerSvc.isDeprecated.and.returnValue(true);
+            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping]);
+        });
+        it('data property does not exist and is not an annotation property', function() {
+            mappingManagerSvc.getAllDataMappings.and.returnValue([dataPropMapping]);
+            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([dataPropMapping]);
+        });
+        it('data property is an annotation property', function() {
+            mappingManagerSvc.getAllDataMappings.and.returnValue([dataPropMapping]);
+            mappingManagerSvc.annotationProperties = [dataPropObj.id];
+            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([]);
+        });
+        it('data property is deprecated', function() {
+            mappingManagerSvc.getAllDataMappings.and.returnValue([dataPropMapping]);
+            mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
+            ontologyManagerSvc.isDeprecated.and.returnValue(true);
+            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([dataPropMapping]);
+        });
+        it('data property is not a data property', function() {
+            mappingManagerSvc.getAllDataMappings.and.returnValue([dataPropMapping]);
+            mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
+            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([dataPropMapping]);
+        });
+        it('object property does not exist', function() {
+            mappingManagerSvc.getAllObjectMappings.and.returnValue([objectPropMapping]);
+            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([objectPropMapping]);
+        });
+        it('object property is deprecated', function() {
+            mappingManagerSvc.getAllObjectMappings.and.returnValue([objectPropMapping]);
+            mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
+            ontologyManagerSvc.isDeprecated.and.returnValue(true);
+            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([objectPropMapping]);
+        });
+        it('object property is not a object property', function() {
+            mappingManagerSvc.getAllObjectMappings.and.returnValue([objectPropMapping]);
+            mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
+            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([objectPropMapping]);
+        });
+        it('object property range class is not the same', function() {
+            mappingManagerSvc.getAllObjectMappings.and.returnValue([objectPropMapping]);
+            mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
+            ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([objectPropMapping]);
+        });
+        it('Object property range is incompatible', function() {
+            mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
+            mappingManagerSvc.getAllObjectMappings.and.returnValue([objectPropMapping]);
+            mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
+            ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+            utilSvc.getPropertyId.and.returnValue(classObj.id);
+            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping, objectPropMapping]);
+        });
     });
     describe('should get a data mapping from a class mapping', function() {
         it('unless it does not exist', function() {

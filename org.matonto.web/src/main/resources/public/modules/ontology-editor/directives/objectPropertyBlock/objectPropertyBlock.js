@@ -53,7 +53,7 @@
                     dvm.editObjectProp = function(property, index) {
                         dvm.os.editingProperty = true;
                         dvm.os.propertySelect = property;
-                        dvm.os.propertyValue = dvm.os.selected[dvm.ro.getItemIri(property)][index]['@id'];
+                        dvm.os.propertyValue = dvm.os.listItem.selected[dvm.ro.getItemIri(property)][index]['@id'];
                         dvm.os.propertyIndex = index;
                         dvm.os.showObjectPropertyOverlay = true;
                     }

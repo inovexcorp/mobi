@@ -58,7 +58,7 @@
                         } else {
                             util.setDctermsValue(dvm.branch, 'description', dvm.branchDescription);
                         }
-                        cm.updateRecordBranch(dvm.branch['@id'], os.listItem.recordId, catalogId, dvm.branch)
+                        cm.updateRecordBranch(dvm.branch['@id'], os.listItem.ontologyRecord.recordId, catalogId, dvm.branch)
                             .then(() => dvm.overlayFlag = false, errorMessage => dvm.error = errorMessage);
                     }
                 }

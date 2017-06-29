@@ -143,7 +143,7 @@ describe('Edit Branch Overlay directive', function() {
                 controller.edit();
                 scope.$digest();
                 expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(controller.branch['@id'],
-                    ontologyStateSvc.listItem.recordId, '', controller.branch);
+                    ontologyStateSvc.listItem.ontologyRecord.recordId, '', controller.branch);
                 expect(controller.overlayFlag).toBe(false);
             });
             it('when rejected', function() {
@@ -152,7 +152,7 @@ describe('Edit Branch Overlay directive', function() {
                 controller.edit();
                 scope.$digest();
                 expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(controller.branch['@id'],
-                    ontologyStateSvc.listItem.recordId, '', controller.branch);
+                    ontologyStateSvc.listItem.ontologyRecord.recordId, '', controller.branch);
                 expect(controller.error).toBe(errorMessage);
             });
         });

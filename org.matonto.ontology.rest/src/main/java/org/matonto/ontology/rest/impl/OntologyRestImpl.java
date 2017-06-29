@@ -1296,7 +1296,7 @@ public class OntologyRestImpl implements OntologyRest {
         return Response.status(201).entity(response).build();
     }
 
-    private void testOntologyIRIUniqueness(IRI ontologyIRI) {
+    private void testOntologyIRIUniqueness(Resource ontologyIRI) {
         if (ontologyManager.ontologyIriExists(ontologyIRI)) {
             throw ErrorUtils.sendError("Ontology already exists with IRI " + ontologyIRI, Response.Status.BAD_REQUEST);
         }
