@@ -48,16 +48,22 @@ public class ClusterServiceLifecycleListener extends Constants implements Lifecy
 
     @Override
     public void memberAdded(MembershipEvent membershipEvent) {
-
+        membershipEvent.getMembers().forEach(member -> {
+            LOGGER.debug("{}: Member was added to our cluster: {}", this.toString(), member.getAddress());
+        });
     }
 
     @Override
     public void memberRemoved(MembershipEvent membershipEvent) {
-
+        membershipEvent.getMembers().forEach(member -> {
+            LOGGER.debug("{}: Member was removed from our cluster: {}", this.toString(), member.getAddress());
+        });
     }
 
     @Override
     public void memberAttributeChanged(MemberAttributeEvent memberAttributeEvent) {
-
+        memberAttributeEvent.getMembers().forEach(member -> {
+            LOGGER.debug("{}: Member was modified on our cluster: {}", this.toString(), member.getAddress());
+        });
     }
 }
