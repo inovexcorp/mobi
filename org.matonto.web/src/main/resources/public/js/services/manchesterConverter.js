@@ -112,7 +112,7 @@
                     }
                 } else if (om.isRestriction(entity)) {
                     var onProperty = _.get(entity, '["' + prefixes.owl + 'onProperty"][0]["@id"]', '');
-                    var onClass = _.get(entity, '["' + prefixes.owl + 'onClass"][0]["@id"]', undefined);
+                    var onClass = _.get(entity, '["' + prefixes.owl + 'onClass"][0]["@id"]');
 
                     if (onProperty) {
                         var propertyRestriction = $filter('splitIRI')(onProperty).end;
@@ -145,7 +145,10 @@
             }
 
             function surround(str, className) {
-                return '<span class="' + className + '">' + str + '</span>';
+                if (str.trim() !== '') {
+                    return '<span class="' + className + '">' + str + '</span>';
+                }
+                return str;
             }
         }
 })();

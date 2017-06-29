@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Selected Details directive', function() {
-    var $compile, scope, element, ontologyStateSvc, $filter, controller, $q, ontoUtils, manchesterConverterService;
+    var $compile, scope, element, ontologyStateSvc, ontologyManagerService, $filter, controller, $q, ontoUtils, manchesterConverterService;
 
     beforeEach(function() {
         module('templates');
@@ -32,10 +32,12 @@ describe('Selected Details directive', function() {
         mockOntologyUtilsManager();
         mockManchesterConverter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _$filter_, _ontologyUtilsManagerService_, _manchesterConverterService_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _$filter_, _ontologyUtilsManagerService_, _manchesterConverterService_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
+            ontologyManagerService = _ontologyManagerService_;
+            manchesterConverterService = _manchesterConverterService_;
             $filter = _$filter_;
             ontoUtils = _ontologyUtilsManagerService_;
             $q = _$q_;
@@ -72,6 +74,11 @@ describe('Selected Details directive', function() {
                 var expected = 'test, test2';
                 ontologyStateSvc.listItem.selected = {'@type': ['test', 'test2']};
                 expect(controller.getTypes()).toEqual(expected);
+            });
+            it('when @type has blank node items', function() {
+                ontologyManagerService.isBlankNodeId.and.returnValue(true);
+                ontologyStateSvc.listItem.selected = {'@type': ['test', 'test2']};
+                expect(manchesterConverterService.jsonldToManchester).toHaveBeenCalledWith(jasmine.any(String), ontologyStateSvc.listItem.ontology);
             });
         });
         describe('onEdit calls the proper functions', function() {

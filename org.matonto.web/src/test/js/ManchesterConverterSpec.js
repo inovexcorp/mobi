@@ -113,7 +113,7 @@ describe('Manchester Converter service', function() {
                 })
                 it('and HTML', function() {
                     var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, true);
-                    expect(result).toBe('{ClassA<span class="manchester-expr"> </span>ClassB}');
+                    expect(result).toBe('{ClassA ClassB}');
                 });
                 it('without HTML', function() {
                     var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
