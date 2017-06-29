@@ -41,6 +41,7 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
@@ -115,14 +116,30 @@ public class MatOntoImpl implements MatOnto {
      * @return The MAC id of the current server
      * @throws MatOntoException If there is an issue fetching the MAC id
      */
-    private static byte[] getMacId() throws MatOntoException {
+    private static byte[] getMacId() {
         try {
-            final InetAddress address = InetAddress.getLocalHost();
-            final NetworkInterface nwi = NetworkInterface.getByInetAddress(address);
-            return nwi.getHardwareAddress();
-        } catch (UnknownHostException | SocketException e) {
-            // Failure to retrieve the mac id will cause generation issues for the server id.
+            InetAddress ip = InetAddress.getLocalHost();
+            Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
+            while (e.hasMoreElements()) {
+                NetworkInterface n = (NetworkInterface) e.nextElement();
+                Enumeration ee = n.getInetAddresses();
+                while (ee.hasMoreElements()) {
+                    InetAddress i = (InetAddress) ee.nextElement();
+                    if (!i.isLoopbackAddress() && !i.isLinkLocalAddress() && i.isSiteLocalAddress()) {
+                        ip = i;
+                    }
+                }
+            }
+            NetworkInterface network = NetworkInterface.getByInetAddress(ip);
+            byte[] mac_byte = network.getHardwareAddress();
+            if (mac_byte == null) {
+                //TODO - use something else generated...?
+                throw new MatOntoException("No MAC ID could be found for this server");
+            }
+            return mac_byte;
+        } catch (SocketException | UnknownHostException e) {
             throw new MatOntoException("Issue determining MAC ID of server to generate our unique server ID", e);
         }
+
     }
 }
