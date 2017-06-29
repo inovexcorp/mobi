@@ -119,12 +119,12 @@ public class MatOntoImpl implements MatOnto {
     private static byte[] getMacId() {
         try {
             InetAddress ip = InetAddress.getLocalHost();
-            Enumeration<NetworkInterface> e = NetworkInterface.getNetworkInterfaces();
-            while (e.hasMoreElements()) {
-                NetworkInterface n = (NetworkInterface) e.nextElement();
-                Enumeration ee = n.getInetAddresses();
-                while (ee.hasMoreElements()) {
-                    InetAddress i = (InetAddress) ee.nextElement();
+            final Enumeration<NetworkInterface> networkInterfaceEnumeration = NetworkInterface.getNetworkInterfaces();
+            while (networkInterfaceEnumeration.hasMoreElements()) {
+                final NetworkInterface n = networkInterfaceEnumeration.nextElement();
+                final Enumeration<InetAddress> inetAddresses = n.getInetAddresses();
+                while (inetAddresses.hasMoreElements()) {
+                    final InetAddress i = inetAddresses.nextElement();
                     if (!i.isLoopbackAddress() && !i.isLinkLocalAddress() && i.isSiteLocalAddress()) {
                         ip = i;
                     }
