@@ -107,7 +107,7 @@ public class HazelcastClusteringService extends Constants implements ClusteringS
         this.bundleContext = context;
         if (serviceConfig.enabled()) {
             LOGGER.debug("Spinning up underlying hazelcast instance");
-            this.hazelcastInstance = Hazelcast.newHazelcastInstance(HazelcastConfigurationFactory.build(serviceConfig));
+            this.hazelcastInstance = Hazelcast.newHazelcastInstance(HazelcastConfigurationFactory.build(serviceConfig, this.matOntoServer.getServerIdentifier().toString()));
             LOGGER.info("Clustering Service {}: Successfully initialized Hazelcast instance", this.matOntoServer.getServerIdentifier());
             // Listen to lifecycle changes...
             this.listener = new ClusterServiceLifecycleListener();

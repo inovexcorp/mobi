@@ -35,8 +35,11 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
@@ -87,9 +90,10 @@ public class HazelcastClusteringServiceTest extends TestCase {
         s3.setModelFactory(MODEL_FACTORY);
         ForkJoinPool pool = new ForkJoinPool(3);
 
-        ForkJoinTask<?> task1 = createNode(pool, s1, 5701);
-        ForkJoinTask<?> task2 = createNode(pool, s2, 5702);
-        ForkJoinTask<?> task3 = createNode(pool, s3, 5703);
+
+        ForkJoinTask<?> task1 = createNode(pool, s1, 5123, new HashSet<>(Arrays.asList("localhost:5234", "localhost:5345")));
+        ForkJoinTask<?> task2 = createNode(pool, s2, 5234, new HashSet<>(Arrays.asList("localhost:5123", "localhost:5345")));
+        ForkJoinTask<?> task3 = createNode(pool, s3, 5345, new HashSet<>(Arrays.asList("localhost:5123", "localhost:5234")));
 
 
         task1.get();
@@ -113,12 +117,14 @@ public class HazelcastClusteringServiceTest extends TestCase {
         s3.deactivate();
     }
 
-    private ForkJoinTask<?> createNode(ForkJoinPool pool, HazelcastClusteringService service, int port) {
+    private ForkJoinTask<?> createNode(ForkJoinPool pool, HazelcastClusteringService service, int port, Set<String> members) {
         return pool.submit(() -> {
             Map<String, Object> map = new HashMap<>();
             map.put("instanceName", service.hashCode());
-            map.put("basicPort", port);
-            map.put("multicastPort", 54326);
+            map.put("listeningPort", port);
+            map.put("multicastEnabled", false);
+            map.put("tcpIpEnabled", true);
+            map.put("tcpIpMembers", members);
             if (MULTICAST_GROUP != null) {
                 map.put("multicastGroup", MULTICAST_GROUP);
             }

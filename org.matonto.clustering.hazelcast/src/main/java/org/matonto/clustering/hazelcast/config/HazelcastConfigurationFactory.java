@@ -25,6 +25,8 @@ package org.matonto.clustering.hazelcast.config;
 
 
 import com.hazelcast.config.Config;
+import com.hazelcast.config.MulticastConfig;
+import com.hazelcast.config.TcpIpConfig;
 import org.apache.commons.lang.StringUtils;
 import org.matonto.clustering.hazelcast.Constants;
 import org.slf4j.Logger;
@@ -48,30 +50,46 @@ public class HazelcastConfigurationFactory extends Constants {
      * @param serviceConfig The {@link HazelcastClusteringServiceConfig} service configuration
      * @return The {@link Config} we'll use to initialize our {@link com.hazelcast.core.HazelcastInstance}
      */
-    public static Config build(final HazelcastClusteringServiceConfig serviceConfig) {
+    public static Config build(final HazelcastClusteringServiceConfig serviceConfig, final String instanceName) {
         final Config config = new Config();
-        if (StringUtils.isNotBlank(serviceConfig.instanceName())) {
-            config.setInstanceName(serviceConfig.instanceName());
-            LOGGER.debug("Configured instance name to: {}", serviceConfig.instanceName());
+        // Basic configuration.
+        configureBasicConfiguration(serviceConfig, config, instanceName);
+
+        // Protected Hazelcast group.
+        configureHazelcastGroup(serviceConfig, config);
+
+        // Multicast
+        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(serviceConfig.multicastEnabled());
+        if (serviceConfig.multicastEnabled()) {
+            configureMulticast(serviceConfig, config);
         }
-        if (serviceConfig.basicPort() > 0) {
-            config.getNetworkConfig().setPort(serviceConfig.basicPort());
-            LOGGER.debug("Configured our base port to: {}", serviceConfig.basicPort());
+
+        // TCP/IP Clustering
+        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(serviceConfig.tcpIpEnabled());
+        if (serviceConfig.tcpIpEnabled()) {
+            configureTcpIpJoining(serviceConfig, config);
         }
-        if (serviceConfig.multicastPort() > 0) {
-            config.getNetworkConfig().getJoin().getMulticastConfig().setMulticastPort(serviceConfig.multicastPort());
-            config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(true);
-            LOGGER.debug("Configured our multicast port to: {}", serviceConfig.multicastPort());
+
+        return config;
+    }
+
+
+    private static void configureBasicConfiguration(HazelcastClusteringServiceConfig serviceConfig, Config config, String instanceName) {
+        if (StringUtils.isNotBlank(instanceName)) {
+            config.setInstanceName(instanceName);
         }
-        if (StringUtils.isNotBlank(serviceConfig.multicastGroup())) {
-            LOGGER.debug("Configured multicast group to: {}", serviceConfig.multicastGroup());
-            config.getNetworkConfig().getJoin().getMulticastConfig().setMulticastGroup(serviceConfig.multicastGroup());
+        if (serviceConfig.listeningPort() > 0) {
+            config.getNetworkConfig().setPort(serviceConfig.listeningPort());
+            LOGGER.debug("Configured our base port to: {}", serviceConfig.listeningPort());
         }
         if (serviceConfig.outboundPorts() != null && !serviceConfig.outboundPorts().isEmpty()) {
             config.getNetworkConfig().setOutboundPorts(serviceConfig.outboundPorts());
             LOGGER.debug("Configured our outbound ports to: {}",
                     StringUtils.join(serviceConfig.outboundPorts(), ", "));
         }
+    }
+
+    private static void configureHazelcastGroup(HazelcastClusteringServiceConfig serviceConfig, Config config) {
         if (StringUtils.isNotBlank(serviceConfig.groupConfigName())) {
             config.getGroupConfig().setName(serviceConfig.groupConfigName());
             LOGGER.debug("Configured group name to: {}", serviceConfig.groupConfigName());
@@ -80,11 +98,35 @@ public class HazelcastConfigurationFactory extends Constants {
             config.getGroupConfig().setPassword(serviceConfig.groupConfigPassword());
             LOGGER.debug("Configured group password...");
         }
+    }
+
+    private static void configureMulticast(HazelcastClusteringServiceConfig serviceConfig, Config config) {
+        final MulticastConfig multicastConfig = config.getNetworkConfig().getJoin().getMulticastConfig();
+        if (serviceConfig.multicastPort() > 0) {
+            multicastConfig.setMulticastPort(serviceConfig.multicastPort());
+            LOGGER.debug("Configured our multicast port to: {}", serviceConfig.multicastPort());
+        }
+        if (StringUtils.isNotBlank(serviceConfig.multicastGroup())) {
+            LOGGER.debug("Configured multicast group to: {}", serviceConfig.multicastGroup());
+            multicastConfig.setMulticastGroup(serviceConfig.multicastGroup());
+        }
         if (serviceConfig.multicastTimeoutSeconds() > 0) {
-            config.getNetworkConfig().getJoin().getMulticastConfig().setMulticastTimeoutSeconds(serviceConfig.multicastTimeoutSeconds());
+            multicastConfig.setMulticastTimeoutSeconds(serviceConfig.multicastTimeoutSeconds());
             LOGGER.debug("Configured multicast timeout seconds to: {}", serviceConfig.multicastTimeoutSeconds());
         }
-        return config;
+    }
+
+    private static void configureTcpIpJoining(HazelcastClusteringServiceConfig serviceConfig, Config config) {
+        final TcpIpConfig tcpIpConfig = config.getNetworkConfig().getJoin().getTcpIpConfig();
+        if (serviceConfig.tcpIpMembers() != null && !serviceConfig.tcpIpMembers().isEmpty()) {
+            serviceConfig.tcpIpMembers().forEach(tcpIpConfig::addMember);
+            LOGGER.debug("Configured TCP/IP members to: {}",
+                    StringUtils.join(serviceConfig.tcpIpMembers(), ", "));
+        }
+        if (serviceConfig.tcpIpTimeoutSeconds() > 0) {
+            tcpIpConfig.setConnectionTimeoutSeconds(serviceConfig.tcpIpTimeoutSeconds());
+            LOGGER.debug("Configured TCP/IP timeout (seconds) to: {}", serviceConfig.tcpIpTimeoutSeconds());
+        }
     }
 
 }

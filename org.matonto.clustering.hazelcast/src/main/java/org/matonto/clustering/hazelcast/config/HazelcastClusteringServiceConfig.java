@@ -36,31 +36,10 @@ import java.util.Set;
 public interface HazelcastClusteringServiceConfig extends ClusteringServiceConfig {
 
     /**
-     * @return The name of this {@link com.hazelcast.core.HazelcastInstance}
-     */
-    @Meta.AD(required = false)
-    String instanceName();
-
-    /**
      * @return The listening port for this {@link com.hazelcast.core.HazelcastInstance}
      */
     @Meta.AD(required = false)
-    int basicPort();
-
-    /**
-     * @return The port to use for multicast in this {@link com.hazelcast.core.HazelcastInstance}
-     */
-    @Meta.AD(required = false)
-    int multicastPort();
-
-    /**
-     * @return The group address to use for multicast in this {@link com.hazelcast.core.HazelcastInstance}
-     */
-    @Meta.AD(required = false)
-    String multicastGroup();
-
-    @Meta.AD(required = false)
-    int multicastTimeoutSeconds();
+    int listeningPort();
 
     /**
      * @return A set of ports to use for outbound communication if you need to override them
@@ -80,5 +59,51 @@ public interface HazelcastClusteringServiceConfig extends ClusteringServiceConfi
      */
     @Meta.AD(required = false)
     String groupConfigPassword();
+
+    /**
+     *
+     * @return Whether or not tcp/ip configured clustering is enabled.
+     */
+    @Meta.AD(required = false, deflt = "false")
+    boolean tcpIpEnabled();
+
+    /**
+     *
+     * @return Configured tcp/ip members the cluster will attempt to communicate with.
+     */
+    @Meta.AD(required = false)
+    Set<String> tcpIpMembers();
+
+    /**
+     *
+     * @return The number of seconds before a timeout occurs when connecting over TCP/IP for clustering.
+     */
+    @Meta.AD(required = false)
+    int tcpIpTimeoutSeconds();
+
+    /**
+     *
+     * @return Whether or not multicast should be enabled
+     */
+    @Meta.AD(required = false, deflt = "true")
+    boolean multicastEnabled();
+
+    /**
+     * @return The port to use for multicast in this {@link com.hazelcast.core.HazelcastInstance}
+     */
+    @Meta.AD(required = false)
+    int multicastPort();
+
+    /**
+     * @return The group address to use for multicast in this {@link com.hazelcast.core.HazelcastInstance}
+     */
+    @Meta.AD(required = false)
+    String multicastGroup();
+
+    /**
+     * @return The timeout in seconds for multicast communication
+     */
+    @Meta.AD(required = false)
+    int multicastTimeoutSeconds();
 
 }
