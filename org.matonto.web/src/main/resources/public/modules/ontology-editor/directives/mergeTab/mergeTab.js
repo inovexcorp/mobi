@@ -87,13 +87,9 @@
                     }
                     dvm.merge = function() {
                         var sourceId = angular.copy(dvm.branch['@id']);
-<<<<<<< HEAD
-                        cm.mergeBranches(sourceId, dvm.targetId, dvm.os.listItem.recordId, catalogId, dvm.resolutions)
-                            .then(commitId => dvm.os.updateOntology(dvm.os.listItem.recordId, dvm.targetId, commitId, dvm.os.state.type), $q.reject)
-=======
-                        cm.mergeBranches(sourceId, dvm.targetId, dvm.os.listItem.ontologyRecord.recordId, catalogId, resolutions)
+
+                        cm.mergeBranches(sourceId, dvm.targetId, dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.resolutions)
                             .then(commitId => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.targetId, commitId, dvm.os.listItem.ontologyRecord.type), $q.reject)
->>>>>>> develop
                             .then(() => {
                                 if (dvm.checkbox) {
                                     cm.deleteRecordBranch(sourceId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
