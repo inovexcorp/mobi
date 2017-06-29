@@ -1,6 +1,6 @@
 # Hazelcast Clustering Implementation
 This bundle provides a clustering service implementation built upon the open source
-Hazelcast framework.  Essentially, we will use the Hazelcast library to discovery and
+Hazelcast framework.  Essentially, we will use the Hazelcast library to discover and
 communicate with other nodes.
 
 ## Configuration
