@@ -24,6 +24,7 @@ package org.matonto.platform.config.impl.server;
  */
 
 import junit.framework.TestCase;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -58,7 +59,7 @@ public class MatOntoImplTest {
         impl.setConfigurationAdmin(configurationAdmin);
         impl.activate(new HashMap<>());
         Mockito.verify(configuration).update(captor.capture());
-        TestCase.assertEquals(impl.getServerIdentifier().toString(), captor.getValue().get("serverId"));
+        Assert.assertEquals(impl.getServerIdentifier().toString(), captor.getValue().get("serverId"));
     }
 
     @Test
@@ -66,7 +67,7 @@ public class MatOntoImplTest {
         MatOntoImpl impl = new MatOntoImpl();
         String val = UUID.randomUUID().toString();
         impl.activate(Collections.singletonMap("serverId", val));
-        TestCase.assertEquals(val, impl.getServerIdentifier().toString());
+        Assert.assertEquals(val, impl.getServerIdentifier().toString());
     }
 
 }
