@@ -30,7 +30,6 @@ import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
-import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ReplicatedMap;
@@ -40,11 +39,13 @@ import org.matonto.clustering.hazelcast.config.HazelcastConfigurationFactory;
 import org.matonto.clustering.hazelcast.listener.ClusterServiceLifecycleListener;
 import org.matonto.platform.config.api.server.MatOnto;
 import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -54,7 +55,6 @@ import java.util.UUID;
         configurationPolicy = ConfigurationPolicy.require,
         designateFactory = HazelcastClusteringServiceConfig.class,
         name = HazelcastClusteringService.NAME,
-        provide = ClusteringService.class,
         properties = {
                 "clusteringType=hazelcast"
         }
@@ -75,6 +75,11 @@ public class HazelcastClusteringService extends Constants implements ClusteringS
      * Core platform service for access central server functionality.
      */
     private MatOnto matOntoServer;
+
+    /**
+     * Model factory to work with.
+     */
+    private ModelFactory modelFactory;
 
     /**
      * Hazelcast instance that will drive the features of this {@link ClusteringService} implementation.
@@ -101,15 +106,15 @@ public class HazelcastClusteringService extends Constants implements ClusteringS
         final HazelcastClusteringServiceConfig serviceConfig = Configurable.createConfigurable(HazelcastClusteringServiceConfig.class, configuration);
         this.bundleContext = context;
         if (serviceConfig.enabled()) {
-            final Config config = HazelcastConfigurationFactory.build(serviceConfig);
             LOGGER.debug("Spinning up underlying hazelcast instance");
-            this.hazelcastInstance = Hazelcast.newHazelcastInstance(config);
+            this.hazelcastInstance = Hazelcast.newHazelcastInstance(HazelcastConfigurationFactory.build(serviceConfig));
             LOGGER.info("Clustering Service {}: Successfully initialized Hazelcast instance", this.matOntoServer.getServerIdentifier());
-
             // Listen to lifecycle changes...
-            listener = new ClusterServiceLifecycleListener();
+            this.listener = new ClusterServiceLifecycleListener();
             this.hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
             this.hazelcastInstance.getCluster().addMembershipListener(listener);
+
+            registerWithActiveNodes();
         } else {
             LOGGER.warn("Clustering Service {}: Service initialized in disabled state... Not going to start a hazelcast node " +
                     "instance and join cluster", this.matOntoServer.getServerIdentifier());
@@ -150,12 +155,27 @@ public class HazelcastClusteringService extends Constants implements ClusteringS
         return this.hazelcastInstance.getCluster().getMembers().size();
     }
 
+    @Override
+    public Set<UUID> getClusteredNodeIds() {
+        return this.activeClusterNodes.keySet();
+    }
+
     @Reference
     public void setMatOntoServer(MatOnto matOntoServer) {
         this.matOntoServer = matOntoServer;
     }
 
-    private void registerWithClusterRegistry() {
+    @Reference
+    public void setModelFactory(ModelFactory modelFactory) {
+        this.modelFactory = modelFactory;
+    }
+
+    /**
+     * Simple method that will register this node as it comes alive with the active cluster registry.
+     */
+    private void registerWithActiveNodes() {
         this.activeClusterNodes = this.hazelcastInstance.getReplicatedMap(ACTIVE_CLUSTER_MEMBERS_KEY);
+        //TODO - add metadata about this node to the model in the map.
+        this.activeClusterNodes.put(matOntoServer.getServerIdentifier(), this.modelFactory.createModel());
     }
 }

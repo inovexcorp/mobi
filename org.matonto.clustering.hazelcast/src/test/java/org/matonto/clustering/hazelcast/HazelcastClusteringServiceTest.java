@@ -24,14 +24,20 @@ package org.matonto.clustering.hazelcast;
  */
 
 import junit.framework.TestCase;
+import org.apache.commons.collections.CollectionUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.BlockJUnit4ClassRunner;
+import org.matonto.platform.config.api.server.MatOnto;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactoryService;
+import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 
@@ -40,21 +46,45 @@ public class HazelcastClusteringServiceTest extends TestCase {
 
     private static String MULTICAST_GROUP = null;
 
+    @Mock
+    private MatOnto matOnto1;
+
+    @Mock
+    private MatOnto matOnto2;
+
+    @Mock
+    private MatOnto matOnto3;
+
+    private static ModelFactory MODEL_FACTORY;
+
     @BeforeClass
     public static void init() {
         String osName = System.getProperty("os.name");
         if (osName.contains("Mac") || osName.contains("Linux")) {
             MULTICAST_GROUP = "224.0.0.1";
         }
+        MODEL_FACTORY = new LinkedHashModelFactoryService();
     }
 
     @Test
     public void testClustering() throws Exception {
+        UUID u1 = UUID.randomUUID();
+        UUID u2 = UUID.randomUUID();
+        UUID u3 = UUID.randomUUID();
+        Mockito.when(matOnto1.getServerIdentifier()).thenReturn(u1);
+        Mockito.when(matOnto2.getServerIdentifier()).thenReturn(u2);
+        Mockito.when(matOnto3.getServerIdentifier()).thenReturn(u3);
+
         System.setProperty("java.net.preferIPv4Stack", "true");
         final HazelcastClusteringService s1 = new HazelcastClusteringService();
+        s1.setMatOntoServer(matOnto1);
+        s1.setModelFactory(MODEL_FACTORY);
         final HazelcastClusteringService s2 = new HazelcastClusteringService();
+        s2.setMatOntoServer(matOnto2);
+        s2.setModelFactory(MODEL_FACTORY);
         final HazelcastClusteringService s3 = new HazelcastClusteringService();
-
+        s3.setMatOntoServer(matOnto3);
+        s3.setModelFactory(MODEL_FACTORY);
         ForkJoinPool pool = new ForkJoinPool(3);
 
         ForkJoinTask<?> task1 = createNode(pool, s1, 5701);
@@ -68,6 +98,13 @@ public class HazelcastClusteringServiceTest extends TestCase {
         assertEquals(3, s1.getMemberCount());
         assertEquals(3, s2.getMemberCount());
         assertEquals(3, s3.getMemberCount());
+        assertTrue(CollectionUtils.isEqualCollection(s1.getClusteredNodeIds(), s2.getClusteredNodeIds()));
+        assertTrue(CollectionUtils.isEqualCollection(s1.getClusteredNodeIds(), s3.getClusteredNodeIds()));
+        assertTrue(s1.getClusteredNodeIds().contains(u1));
+        assertTrue(s1.getClusteredNodeIds().contains(u2));
+        assertTrue(s1.getClusteredNodeIds().contains(u3));
+        s1.getClusteredNodeIds().forEach(System.out::println);
+
         s1.deactivate();
         assertEquals(2, s2.getMemberCount());
         assertEquals(2, s3.getMemberCount());

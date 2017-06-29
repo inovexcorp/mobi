@@ -26,6 +26,7 @@ package org.matonto.clustering.hazelcast.config;
 
 import com.hazelcast.config.Config;
 import org.apache.commons.lang.StringUtils;
+import org.matonto.clustering.hazelcast.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +35,7 @@ import org.slf4j.LoggerFactory;
  * {@link Config} object capable of configuring a {@link com.hazelcast.core.HazelcastInstance} to discover and
  * communicate with other MatOnto nodes.
  */
-public class HazelcastConfigurationFactory {
+public class HazelcastConfigurationFactory extends Constants {
 
     /**
      * {@link Logger} for this service.
