@@ -57,6 +57,7 @@
             'editorRadioButtons',
             'everythingTree',
             'hierarchyTree',
+            'importChangesOverlay',
             'importsBlock',
             'importsOverlay',
             'individualsTab',
