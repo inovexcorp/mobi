@@ -31,14 +31,30 @@ import aQute.bnd.annotation.metatype.Meta;
 @Meta.OCD
 public interface ClusteringServiceConfig {
 
+    /**
+     *
+     * @return An ID for the clustering service instance.
+     */
     String id();
 
+    /**
+     *
+     * @return Whether or not the {@link ClusteringService} should be enabled.
+     */
     @Meta.AD(deflt = "true", required = false)
     boolean enabled();
 
+    /**
+     *
+     * @return The name of the clustering service instance.
+     */
     @Meta.AD(required = false)
     String title();
 
+    /**
+     *
+     * @return A brief description of the clustering service.
+     */
     @Meta.AD(required = false)
     String description();
 
