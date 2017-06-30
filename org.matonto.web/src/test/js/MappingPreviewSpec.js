@@ -21,15 +21,7 @@
  * #L%
  */
 describe('Mapping Preview directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        utilSvc,
-        ontologyManagerSvc,
-        mapperStateSvc,
-        delimitedManagerSvc,
-        prefixes;
+    var $compile, scope, element, controller, utilSvc, ontologyManagerSvc, mapperStateSvc, delimitedManagerSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -50,7 +42,7 @@ describe('Mapping Preview directive', function() {
             prefixes = _prefixes_;
         });
 
-        mapperStateSvc.mapping = {jsonld: []};
+        mapperStateSvc.mapping = {jsonld: [], record: {description: ''}};
         element = $compile(angular.element('<mapping-preview></mapping-preview>'))(scope);
         scope.$digest();
         controller = element.controller('mappingPreview');

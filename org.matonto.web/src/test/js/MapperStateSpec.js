@@ -20,14 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Mapper State service', function() {
-    var $httpBackend,
+describe('Mapper State service', function() {
+    var $q,
+        scope,
         mapperStateSvc,
         prefixes,
         ontologyManagerSvc,
         mappingManagerSvc,
         delimitedManagerSvc,
-        utilSvc;
+        utilSvc,
+        catalogManagerSvc;
 
     beforeEach(function() {
         module('mapperState');
@@ -36,16 +38,22 @@ fdescribe('Mapper State service', function() {
         mockOntologyManager();
         mockDelimitedManager();
         mockUtil();
+        mockCatalogManager();
 
-        inject(function(mapperStateService, _prefixes_, _ontologyManagerService_, _mappingManagerService_, _delimitedManagerService_, _utilService_) {
-            prefixes = _prefixes_;
+        inject(function(mapperStateService, _$q_, _$rootScope_, _prefixes_, _ontologyManagerService_, _mappingManagerService_, _delimitedManagerService_, _utilService_, _catalogManagerService_) {
             mapperStateSvc = mapperStateService;
+            $q = _$q_;
+            scope = _$rootScope_;
+            prefixes = _prefixes_;
             ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             delimitedManagerSvc = _delimitedManagerService_;
             utilSvc = _utilService_;
+            catalogManagerSvc = _catalogManagerService_;
         });
 
+        catalogId = 'catalog';
+        catalogManagerSvc.localCatalog = {'@id': catalogId};
         mapperStateSvc.mapping = {
             jsonld: [],
             record: {id: 'mapping'},
@@ -81,6 +89,126 @@ fdescribe('Mapper State service', function() {
         expect(mapperStateSvc.mapping).toEqual({jsonld: [], record: {}, ontology: undefined, difference: {additions: [], deletions: []}});
         expect(mapperStateSvc.sourceOntologies).toEqual([]);
         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+    });
+    describe('should save the current mapping', function() {
+        describe('if it is a new mapping', function() {
+            var uploadDeferred;
+            beforeEach(function() {
+                mapperStateSvc.newMapping = true;
+                uploadDeferred = $q.defer();
+                mappingManagerSvc.upload.and.returnValue(uploadDeferred.promise);
+            });
+            it('unless an error occurs', function(done) {
+                uploadDeferred.reject('Error message');
+                mapperStateSvc.saveMapping().then(function(response) {
+                    fail('Promise should have rejected');
+                    done();
+                }, function(response) {
+                    expect(response).toEqual('Error message');
+                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.record.title, mapperStateSvc.mapping.record.description, mapperStateSvc.mapping.record.keywords);
+                    expect(catalogManagerSvc.createInProgressCommit).not.toHaveBeenCalled();
+                    done();
+                });
+                scope.$apply();
+            });
+            it('successfully', function(done) {
+                uploadDeferred.resolve('');
+                mapperStateSvc.saveMapping().then(function(response) {
+                    expect(response).toEqual('');
+                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.record.title, mapperStateSvc.mapping.record.description, mapperStateSvc.mapping.record.keywords);
+                    expect(catalogManagerSvc.createInProgressCommit).not.toHaveBeenCalled();
+                    done();
+                }, function(response) {
+                    fail('Promise should have resolved');
+                    done();
+                });
+                scope.$apply();
+            });
+        });
+        describe('if it is an existing mapping', function() {
+            var createDeferred;
+            beforeEach(function() {
+                mapperStateSvc.newMapping = false;
+                createDeferred = $q.defer();
+                catalogManagerSvc.createInProgressCommit.and.returnValue(createDeferred.promise);
+            });
+            describe("and createInProgressCommit resolves", function() {
+                var updateDeferred;
+                beforeEach(function() {
+                    createDeferred.resolve();
+                    updateDeferred = $q.defer();
+                    catalogManagerSvc.updateInProgressCommit.and.returnValue(updateDeferred.promise);
+                });
+                describe('and updateInProgressCommit resolves', function() {
+                    var createCommitDeferred;
+                    beforeEach(function() {
+                        updateDeferred.resolve();
+                        createCommitDeferred = $q.defer();
+                        catalogManagerSvc.createBranchCommit.and.returnValue(createCommitDeferred.promise);
+                    });
+                    it('and createBranchCommit resolves', function(done) {
+                        createCommitDeferred.resolve('');
+                        mapperStateSvc.saveMapping().then(function(response) {
+                            expect(response).toEqual('');
+                            expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId);
+                            expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
+                            expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId, mapperStateSvc.mapping.difference);
+                            expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.branch, mapperStateSvc.mapping.record.id, catalogId, jasmine.any(String));
+                            done();
+                        }, function(response) {
+                            fail('Promise should have resolved');
+                            done();
+                        });
+                        scope.$apply();
+                    });
+                    it('and createBranchCommit rejects', function(done) {
+                        createCommitDeferred.reject('Error message');
+                        mapperStateSvc.saveMapping().then(function(response) {
+                            fail('Promise should have rejected');
+                            done();
+                        }, function(response) {
+                            expect(response).toEqual('Error message');
+                            expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId);
+                            expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
+                            expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId, mapperStateSvc.mapping.difference);
+                            expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.branch, mapperStateSvc.mapping.record.id, catalogId, jasmine.any(String));
+                            done();
+                        });
+                        scope.$apply();
+                    });
+                });
+                it('and updateInProgressCommit rejects', function(done) {
+                    updateDeferred.reject('Error message');
+                    mapperStateSvc.saveMapping().then(function(response) {
+                        fail('Promise should have rejected');
+                        done();
+                    }, function(response) {
+                        expect(response).toEqual('Error message');
+                        expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId);
+                        expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
+                        expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId, mapperStateSvc.mapping.difference);
+                        expect(catalogManagerSvc.createBranchCommit).not.toHaveBeenCalled();
+                        done();
+                    });
+                    scope.$apply();
+                });
+            });
+            it('and createInProgressCommit rejects', function(done) {
+                createDeferred.reject('Error message');
+                mapperStateSvc.saveMapping().then(function(response) {
+                    fail('Promise should have rejected');
+                    done();
+                }, function(response) {
+                    expect(response).toEqual('Error message');
+                    expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId);
+                    expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
+                    expect(catalogManagerSvc.updateInProgressCommit).not.toHaveBeenCalled();
+                    expect(catalogManagerSvc.createBranchCommit).not.toHaveBeenCalled();
+                    done();
+                });
+                scope.$apply();
+            });
+        });
     });
     it('should set the list of invalid property mappings', function() {
         delimitedManagerSvc.dataRows = [['']];

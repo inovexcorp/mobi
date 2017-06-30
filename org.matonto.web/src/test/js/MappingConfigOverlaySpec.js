@@ -21,21 +21,7 @@
  * #L%
  */
 describe('Mapping Config Overlay directive', function() {
-    var $compile,
-        scope,
-        $q,
-        element,
-        controller,
-        utilSvc,
-        ontologyManagerSvc,
-        mappingManagerSvc,
-        mapperStateSvc,
-        catalogManagerSvc,
-        prefixes,
-        originalOntology,
-        importedOntology,
-        originalClassObj,
-        importedClassObj;
+    var $compile, scope, $q, element, controller, utilSvc, ontologyManagerSvc, mappingManagerSvc, mapperStateSvc, catalogManagerSvc, prefixes, originalOntology, importedOntology, originalClassObj, importedClassObj;
 
     beforeEach(function() {
         module('templates');
@@ -430,7 +416,6 @@ describe('Mapping Config Overlay directive', function() {
             });
             describe('if it changed', function() {
                 beforeEach(function() {
-                    mapperStateSvc.invalidProps = [''];
                     this.classMapping = {'@id': 'classMapping'};
                     mappingManagerSvc.getAllClassMappings.and.returnValue([this.classMapping]);
                     controller.classes = [{classObj: {'@id': 'class1'}}, {classObj: {'@id': 'class2'}}];
@@ -456,7 +441,6 @@ describe('Mapping Config Overlay directive', function() {
                     describe('if they are property mappings', function() {
                         beforeEach(function() {
                             mappingManagerSvc.isPropertyMapping.and.returnValue(true);
-                            // mapperStateSvc.invalidProps = [this.badMapping];
                             mappingManagerSvc.findClassWithDataMapping.and.returnValue(this.classMapping);
                             mappingManagerSvc.findClassWithObjectMapping.and.returnValue(this.classMapping);
                         });
@@ -466,8 +450,6 @@ describe('Mapping Config Overlay directive', function() {
                             expect(mappingManagerSvc.findClassWithDataMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.badMapping['@id']);
                             expect(mappingManagerSvc.findClassWithObjectMapping).not.toHaveBeenCalled();
                             expect(mapperStateSvc.deleteProp).toHaveBeenCalledWith(this.badMapping['@id'], this.classMapping['@id']);
-                            /*expect(mappingManagerSvc.removeProp).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.classMapping['@id'], this.badMapping['@id']);
-                            expect(mapperStateSvc.invalidProps).toEqual([]);*/
                         });
                         it('for object properties', function() {
                             mappingManagerSvc.isDataMapping.and.returnValue(false);
@@ -475,8 +457,6 @@ describe('Mapping Config Overlay directive', function() {
                             expect(mappingManagerSvc.findClassWithDataMapping).not.toHaveBeenCalled();
                             expect(mappingManagerSvc.findClassWithObjectMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.badMapping['@id']);
                             expect(mapperStateSvc.deleteProp).toHaveBeenCalledWith(this.badMapping['@id'], this.classMapping['@id']);
-                            /*expect(mappingManagerSvc.removeProp).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.classMapping['@id'], this.badMapping['@id']);
-                            expect(mapperStateSvc.invalidProps).toEqual([]);*/
                         });
                     });
                     it('if they are class mappings', function() {
@@ -484,7 +464,6 @@ describe('Mapping Config Overlay directive', function() {
                         mappingManagerSvc.isClassMapping.and.returnValue(true);
                         controller.set();
                         expect(mapperStateSvc.deleteClass).toHaveBeenCalledWith(this.badMapping['@id']);
-                        // expect(mappingManagerSvc.removeClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.badMapping['@id']);
                     });
                 });
             });

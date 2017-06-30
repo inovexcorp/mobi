@@ -30,7 +30,7 @@
          *
          * @description
          * The `createMappingOverlay` module only provides the `createMappingOverlay` directive which creates
-         * an overlay with functionality to create a new mapping two different ways.
+         * an overlay with functionality to add a title, description, and keywords to a new MappingRecord.
          */
         .module('createMappingOverlay', [])
         /**
@@ -38,24 +38,21 @@
          * @name createMappingOverlay.directive:createMappingOverlay
          * @scope
          * @restrict E
-         * @requires $q
-         * @requires $filter
          * @requires mappingManager.service:mappingManagerService
          * @requires mapperState.service:mapperStateService
-         * @requires catalogManager.service:catalogManagerService
          * @requires prefixes.service:prefixes
          *
          * @description
-         * `createMappingOverlay` is a directive that creates an overlay with functionality to create a
-         * new mapping either from scratch, or using a saved mapping as a template. The new mapping name
-         * set in the {@link mappingNameInput.directive:mappingNameInput mappingNameInput} must be unique.
-         * The directive is replaced by the contents of its template.
+         * `createMappingOverlay` is a directive that creates an overlay with three inputs for metadata about a
+         * new MappingRecord: a text input for the title, a {@link textArea.directive:textArea} for the description,
+         * and a {@link keywordSelect.directive:keywordSelect}. The directive is replaced by the contents of its
+         * template.
          */
         .directive('createMappingOverlay', createMappingOverlay);
 
-        createMappingOverlay.$inject = ['$q', '$filter', 'mappingManagerService', 'mapperStateService', 'catalogManagerService', 'prefixes']
+        createMappingOverlay.$inject = ['mappingManagerService', 'mapperStateService', 'prefixes']
 
-        function createMappingOverlay($q, $filter, mappingManagerService, mapperStateService, catalogManagerService, prefixes) {
+        function createMappingOverlay(mappingManagerService, mapperStateService, prefixes) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -65,7 +62,6 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.cm = catalogManagerService;
                     dvm.errorMessage = '';
 
                     dvm.cancel = function() {
@@ -93,13 +89,14 @@
                                         dvm.state.availableClasses = _.filter(dvm.state.getClasses(ontologies), clazz => !_.includes(usedClassIds, clazz.classObj['@id']));
                                         nextStep();
                                     } else {
-                                        onError('The selected mapping is incompatible with its source ontologies.');
+                                        onError('The selected mapping is incompatible with its source ontologies');
                                     }
                                 }, () => onError('Error retrieving mapping'));
                         }
                     }
 
                     function nextStep() {
+                        dvm.errorMessage = '';
                         dvm.state.mapping.difference.additions = angular.copy(dvm.state.mapping.jsonld);
                         dvm.state.mappingSearchString = '';
                         dvm.state.step = dvm.state.fileUploadStep;

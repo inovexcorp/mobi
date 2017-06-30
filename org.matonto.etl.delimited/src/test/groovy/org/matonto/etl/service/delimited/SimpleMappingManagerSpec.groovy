@@ -37,10 +37,6 @@ import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.rdf.core.utils.Values
 import org.matonto.rdf.orm.conversion.impl.*
-import org.matonto.rdf.orm.impl.ThingFactory
-import org.matonto.repository.api.Repository
-import org.matonto.repository.api.RepositoryConnection
-import org.matonto.repository.config.RepositoryConfig
 import org.openrdf.rio.RDFFormat
 import org.openrdf.rio.Rio
 import spock.lang.Specification
@@ -60,8 +56,6 @@ class SimpleMappingManagerSpec extends Specification {
     def dataMappingFactory = new DataMappingFactory()
     def branchFactory = new BranchFactory()
     def propertyFactory = new PropertyFactory()
-    /*def objectFactory = new ObjectMappingFactory()
-    def thingFactory = new ThingFactory()*/
     def builder = new SimpleMappingId.Builder(vf)
 
     def catalogManager = Mock(CatalogManager)
@@ -103,15 +97,7 @@ class SimpleMappingManagerSpec extends Specification {
         branchFactory.setModelFactory(mf)
         branchFactory.setValueConverterRegistry(vcr)
         vcr.registerValueConverter(branchFactory)
-        /*objectFactory.setValueFactory(vf)
-        objectFactory.setModelFactory(mf)
-        objectFactory.setValueConverterRegistry(vcr)
-        thingFactory.setValueFactory(vf)
-        thingFactory.setModelFactory(mf)
-        thingFactory.setValueConverterRegistry(vcr)*/
 
-        /*vcr.registerValueConverter(objectFactory)
-        vcr.registerValueConverter(thingFactory)*/
         vcr.registerValueConverter(new ResourceValueConverter())
         vcr.registerValueConverter(new IRIValueConverter())
         vcr.registerValueConverter(new DoubleValueConverter())

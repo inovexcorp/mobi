@@ -41,22 +41,21 @@
          * @restrict E
          * @requires mapperState.service:mapperStateService
          * @requires mappingManager.service:mappingManagerService
-         * @requires util.service:utilService
          *
          * @description
-         * `mappingSelectPage` is a directive that creates a Bootstrap `row` div with two columns containing
-         * {@link block.directive:block blocks} for selecting and previewing a mapping. The left column contains
-         * a {@link mappingList.directive:mappingList mappingList} block for selecting the current
-         * {@link mapperState.service:mapperStateService#mapping mapping} and buttons for creating a mapping,
-         * deleting a mapping, and searching for a mapping. The right column contains a
-         * {@link mappingPreview.directive:mappingPreview mappingPreview} of the selected mapping and buttons for editing
-         * running, and downloading the mapping. The directive is replaced by the contents of its template.
+         * `mappingSelectPage` is a directive that creates a Bootstrap `row` div with two columns for selecting
+         * and previewing a mapping. The left column contains
+         * a {@link mappingListBlock.directive:mappingListBlock mappingListBlock} for selecting the current
+         * {@link mapperState.service:mapperStateService#mapping mapping}. The right column contains a
+         * {@link mappingPreview.directive:mappingPreview mappingPreview} of the selected mapping and buttons
+         * for editing running, duplicating, and downloading the mapping. The directive is replaced by the
+         * contents of its template.
          */
         .directive('mappingSelectPage', mappingSelectPage);
 
-        mappingSelectPage.$inject = ['mapperStateService', 'mappingManagerService', 'utilService'];
+        mappingSelectPage.$inject = ['mapperStateService', 'mappingManagerService'];
 
-        function mappingSelectPage(mapperStateService, mappingManagerService, utilService) {
+        function mappingSelectPage(mapperStateService, mappingManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -67,7 +66,6 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.util = utilService;
 
                     dvm.run = function() {
                         dvm.state.mappingSearchString = '';

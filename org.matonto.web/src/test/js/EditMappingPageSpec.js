@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Edit Mapping Page directive', function() {
-    var $compile, scope, $q, element, controller, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, catalogManagerSvc, catalogId;
+    var $compile, scope, $q, element, controller, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -29,20 +29,16 @@ describe('Edit Mapping Page directive', function() {
         mockMappingManager();
         mockMapperState();
         mockDelimitedManager();
-        mockCatalogManager();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _catalogManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             mapperStateSvc = _mapperStateService_;
             mappingManagerSvc = _mappingManagerService_;
             delimitedManagerSvc = _delimitedManagerService_;
-            catalogManagerSvc = _catalogManagerService_;
         });
 
-        catalogId = 'catalog';
-        catalogManagerSvc.localCatalog = {'@id': catalogId};
         mapperStateSvc.mapping = {record: {id: 'Id', title: 'Title', description: 'Description', keywords: ['Keyword']}, jsonld: []};
         element = $compile(angular.element('<edit-mapping-page></edit-mapping-page>'))(scope);
         scope.$digest();
@@ -58,99 +54,30 @@ describe('Edit Mapping Page directive', function() {
             expect(controller.configNotSet()).toBe(false);
         });
         describe('should set the correct state for saving a mapping', function() {
-            describe('if it already exists', function() {
-                var createDeferred, step;
-                beforeEach(function() {
-                    step = mapperStateSvc.step;
-                    createDeferred = $q.defer();
-                    mapperStateSvc.newMapping = false;
-                    catalogManagerSvc.createInProgressCommit.and.returnValue(createDeferred.promise);
-                });
-                describe("and createInProgressCommit resolves", function() {
-                    var updateDeferred;
-                    beforeEach(function() {
-                        createDeferred.resolve();
-                        updateDeferred = $q.defer();
-                        catalogManagerSvc.updateInProgressCommit.and.returnValue(updateDeferred.promise);
-                    });
-                    describe("and updateInProgressCommit resolves", function() {
-                        var createCommitDeferred;
-                        beforeEach(function() {
-                            updateDeferred.resolve();
-                            createCommitDeferred = $q.defer();
-                            catalogManagerSvc.createBranchCommit.and.returnValue(createCommitDeferred.promise);
-                        });
-                        it("and createBranchCommit resolves", function() {
-                            createCommitDeferred.resolve();
-                            controller.save();
-                            scope.$apply();
-                            expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId);
-                            expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
-                            expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalled();
-                            expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalled();
-                            expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
-                            expect(mapperStateSvc.initialize).toHaveBeenCalled();
-                            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                            expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                            expect(controller.errorMessage).toBe('');
-                        });
-                        it("and createBranchCommit rejects", function() {
-                            createCommitDeferred.reject('Error message');
-                            
-                        });
-                    });
-                    it("and updateInProgressCommit rejects", function() {
-                        updateDeferred.reject('Error message');
-                        
-                    });
-                });
-                it("and createInProgressCommit rejects", function() {
-                    createDeferred.reject('Error message');
-                    controller.save();
-                    scope.$apply();
-                    expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId);
-                    expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
-                    expect(catalogManagerSvc.updateInProgressCommit).not.toHaveBeenCalled();
-                    expect(catalogManagerSvc.createBranchCommit).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.step).toBe(step);
-                    expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
-                    expect(delimitedManagerSvc.reset).not.toHaveBeenCalled();
-                    expect(controller.errorMessage).toBe('Error message');
-                });
+            var step;
+            beforeEach(function() {
+                step = mapperStateSvc.step;
             });
-            describe('if does not exist yet', function() {
-                var uploadDeferred, step;
-                beforeEach(function() {
-                    uploadDeferred = $q.defer();
-                    step = mapperStateSvc.step;
-                    mapperStateSvc.newMapping = true;
-                    mappingManagerSvc.upload.and.returnValue(uploadDeferred.promise);
-                });
-                it('unless an error occurs', function() {
-                    uploadDeferred.reject('Error message');
-                    controller.save();
-                    scope.$apply();
-                    expect(catalogManagerSvc.createInProgressCommit).not.toHaveBeenCalled();
-                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.record.title, mapperStateSvc.mapping.record.description, mapperStateSvc.mapping.record.keywords);
-                    expect(mapperStateSvc.step).toBe(step);
-                    expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
-                    expect(delimitedManagerSvc.reset).not.toHaveBeenCalled();
-                    expect(controller.errorMessage).toBe('Error message');
-                });
-                it('successfully', function() {
-                    uploadDeferred.resolve();
-                    controller.save();
-                    scope.$apply();
-                    expect(catalogManagerSvc.createInProgressCommit).not.toHaveBeenCalled();
-                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.record.title, mapperStateSvc.mapping.record.description, mapperStateSvc.mapping.record.keywords);
-                    expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
-                    expect(mapperStateSvc.initialize).toHaveBeenCalled();
-                    expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                    expect(controller.errorMessage).toBe('');
-                });
+            it('unless an error occurs', function() {
+                mapperStateSvc.saveMapping.and.returnValue($q.reject('Error message'));
+                controller.save();
+                scope.$apply();
+                expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
+                expect(mapperStateSvc.step).toBe(step);
+                expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
+                expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
+                expect(delimitedManagerSvc.reset).not.toHaveBeenCalled();
+                expect(controller.errorMessage).toBe('Error message');
+            });
+            it('successfully', function() {
+                controller.save();
+                scope.$apply();
+                expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
+                expect(mapperStateSvc.initialize).toHaveBeenCalled();
+                expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                expect(delimitedManagerSvc.reset).toHaveBeenCalled();
+                expect(controller.errorMessage).toBe('');
             });
         });
         it('should set the correct state for canceling', function() {

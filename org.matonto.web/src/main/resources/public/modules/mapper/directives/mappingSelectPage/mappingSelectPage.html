@@ -23,7 +23,7 @@
 <div class="mapping-select-page row">
     <mapping-list-block></mapping-list-block>
     <div class="col-xs-8">
-        <block has-header="true">
+        <block>
             <block-header>
                 <div class="mapping-preview-header" ng-class="{'invisible': !dvm.state.mapping}">
                     <span>{{dvm.state.mapping.record.title}}</span>
@@ -38,7 +38,7 @@
                             <li><a class="edit-btn" ng-click="dvm.edit()" a-disabled="!dvm.state.mapping.ontology">
                                 <i class="fa fa-pencil"></i>Edit
                             </a></li>
-                            <li><a class="edit-btn" ng-click="dvm.duplicate()" a-disabled="!dvm.state.mapping.ontology">
+                            <li><a class="duplicate-btn" ng-click="dvm.duplicate()" a-disabled="!dvm.state.mapping.ontology">
                                 <i class="fa fa-files-o"></i>Duplicate
                             </a></li>
                             <li><a class="download-btn" ng-click="dvm.download()">

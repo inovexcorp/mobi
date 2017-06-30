@@ -21,31 +21,19 @@
  * #L%
  */
 describe('Mapping Overlays directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyManagerSvc,
-        mappingManagerSvc,
-        mapperStateSvc,
-        delimitedManagerSvc,
-        utilSvc;
+    var $compile, scope, element, controller, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
         module('mappingOverlays');
-        injectSplitIRIFilter();
-        mockPrefixes();
-        mockOntologyManager();
         mockMappingManager();
         mockMapperState();
         mockDelimitedManager();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyManagerSvc = _ontologyManagerService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
@@ -80,83 +68,29 @@ describe('Mapping Overlays directive', function() {
         it('should delete a class mapping from the mapping', function() {
             mapperStateSvc.selectedClassMappingId = 'class';
             var classMappingId = mapperStateSvc.selectedClassMappingId;
-            /*var classMapping = {
-                '@id': mapperStateSvc.selectedClassMappingId
-            };
-            var classOntology = {id: '', entities: []};
-            var classObj = {'@id': 'class'};
-            var props = [{'@id': 'prop'}];
-            var dataProps = [{'@id': 'dataProp'}];
-            mapperStateSvc.invalidProps = angular.copy(dataProps);
-            mappingManagerSvc.getPropsLinkingToClass.and.returnValue(props);
-            mappingManagerSvc.getPropMappingsByClass.and.returnValue(dataProps);
-            mappingManagerSvc.isDataMapping.and.returnValue(true);
-            mappingManagerSvc.getClassIdByMapping.and.returnValue(classObj['@id']);
-            mappingManagerSvc.findSourceOntologyWithClass.and.returnValue(classOntology);
-            ontologyManagerSvc.getEntity.and.callFake(function(entities, id) {
-                return id === classObj['@id'] ? classObj : props[0];
-            });
-            mapperStateSvc.mapping.jsonld.push(classMapping);*/
             controller.deleteClass();
             expect(mapperStateSvc.deleteClass).toHaveBeenCalledWith(classMappingId);
-            /*expect(mappingManagerSvc.getPropsLinkingToClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, classMapping['@id']);
-            expect(mappingManagerSvc.getPropMappingsByClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, classMapping['@id']);
-            expect(mappingManagerSvc.findClassWithObjectMapping.calls.count()).toBe(props.length);
-            expect(mappingManagerSvc.removeClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, classMapping['@id']);
-            expect(mapperStateSvc.getAvailableProps.calls.count()).toBe(props.length);
-            expect(mapperStateSvc.removeAvailableProps).toHaveBeenCalledWith(classMapping['@id']);
-            expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalledWith(classMapping);
-            expect(mappingManagerSvc.findSourceOntologyWithClass).toHaveBeenCalledWith(classObj['@id'], mapperStateSvc.sourceOntologies);
-            expect(ontologyManagerSvc.getEntity).toHaveBeenCalledWith([classOntology.entities], classObj['@id']);
-            expect(mapperStateSvc.availableClasses).toContain({ontologyId: classOntology.id, classObj: classObj});
-            expect(mapperStateSvc.invalidProps).not.toContain(dataProps[0]);*/
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.selectedClassMappingId).toBe('');
             expect(mapperStateSvc.changedMapping).toBe(true);
         });
         describe('should delete a property mapping from the mapping', function() {
             var classMapping = {'@id': 'class'};
-            // var availableProps, propMapping, propId = 'prop', classMapping = {'@id': 'class'};
             beforeEach(function() {
                 mapperStateSvc.selectedPropMappingId = 'prop';
                 mapperStateSvc.selectedClassMappingId = classMapping['@id'];
-                /*propMapping = {
-                    '@id': mapperStateSvc.selectedPropMappingId
-                };
-                availableProps = [];
-                mapperStateSvc.invalidProps = [{'@id': propId}];
-                mapperStateSvc.mapping.jsonld.push(classMapping);
-                mapperStateSvc.selectedClassMappingId = classMapping['@id'];
-                mapperStateSvc.availablePropsByClass = {};
-                mapperStateSvc.getAvailableProps.and.returnValue(availableProps);
-                mappingManagerSvc.getPropIdByMapping.and.returnValue(propId);*/
                 mapperStateSvc.mapping.jsonld.push(classMapping);
             });
             it('if it is for an annotation', function() {
-                /*mappingManagerSvc.annotationProperties = [propId];
-                var originalMapping = angular.copy(mapperStateSvc.mapping.jsonld);*/
                 controller.deleteProp();
                 expect(mapperStateSvc.deleteProp).toHaveBeenCalledWith(mapperStateSvc.selectedPropMappingId, classMapping['@id']);
-                /*expect(mappingManagerSvc.getPropIdByMapping).toHaveBeenCalledWith(propMapping);
-                expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalled();
-                expect(availableProps).toContain({propObj: {'@id': propId}, ontologyId: ''});
-                expect(mappingManagerSvc.removeProp).toHaveBeenCalledWith(originalMapping, classMapping['@id'], propMapping['@id']);
-                expect(mapperStateSvc.invalidProp).not.toContain({'@id': propId});*/
                 expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                 expect(mapperStateSvc.selectedClassMappingId).toBe(classMapping['@id']);
                 expect(mapperStateSvc.changedMapping).toBe(true);
             });
             it('if it is not for an annotation', function() {
-                /*var originalMapping = angular.copy(mapperStateSvc.mapping.jsonld);
-                var ontology = {id: 'ontology'};
-                mappingManagerSvc.findSourceOntologyWithProp.and.returnValue(ontology);*/
                 controller.deleteProp();
                 expect(mapperStateSvc.deleteProp).toHaveBeenCalledWith(mapperStateSvc.selectedPropMappingId, classMapping['@id']);
-                /*expect(mappingManagerSvc.getPropIdByMapping).toHaveBeenCalledWith(propMapping);
-                expect(mappingManagerSvc.findSourceOntologyWithProp).toHaveBeenCalled();
-                expect(availableProps).toContain({propObj: {}, ontologyId: ontology.id});
-                expect(mappingManagerSvc.removeProp).toHaveBeenCalledWith(originalMapping, classMapping['@id'], propMapping['@id']);
-                expect(mapperStateSvc.invalidProp).not.toContain({'@id': propId});*/
                 expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                 expect(mapperStateSvc.selectedClassMappingId).toBe(classMapping['@id']);
                 expect(mapperStateSvc.changedMapping).toBe(true);
@@ -208,15 +142,6 @@ describe('Mapping Overlays directive', function() {
             mapperStateSvc.displayClassMappingOverlay = false;
             scope.$digest();
             expect(element.find('class-mapping-overlay').length).toBe(0);
-        });
-        it('depending on whether the mapping name is being edited', function() {
-            mapperStateSvc.editMappingName = true;
-            scope.$digest();
-            expect(element.find('mapping-name-overlay').length).toBe(1);
-
-            mapperStateSvc.editMappingName = false;
-            scope.$digest();
-            expect(element.find('mapping-name-overlay').length).toBe(0);
         });
         it('depending on whether an IRI template is being edited', function() {
             mapperStateSvc.editIriTemplate = true;

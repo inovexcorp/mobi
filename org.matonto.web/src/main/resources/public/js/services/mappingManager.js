@@ -71,57 +71,26 @@
              * the Mapping Tool.
              */
             self.annotationProperties = [prefixes.rdfs + 'label', prefixes.rdfs + 'comment', prefixes.dcterms + 'title', prefixes.dcterms + 'description'];
-            /**
-             * @ngdoc property
-             * @name mappingIds
-             * @propertyOf mappingManager.service:mappingManagerService
-             * @type {string[]}
-             *
-             * @description
-             * `mappingIds` holds an array of the local names of all saved mappings in the
-             * MatOnto repository
-             */
-            self.mappingIds = [];
-
-            /**
-             * @ngdoc method
-             * @name reset
-             * @propertyOf mappingManager.service:mappingManagerService
-             *
-             * @description
-             * Resets all state variables.
-             */
-            self.reset = function() {
-                self.mappingIds = [];
-            }
-            /**
-             * @ngdoc method
-             * @name initialize
-             * @propertyOf mappingManager.service:mappingManagerService
-             *
-             * @description
-             * Initializes the `mappingManagerService` by setting the list of
-             * {@link mappingManager.service:mappingManagerService#mappingIds mapping ids}.
-             */
-            self.initialize = function() {
-                /*$http.get(prefix)
-                    .then(response => self.mappingIds = response.data, response => console.log(_.get(response, 'statusText', 'Something went wrong. Could not load mapping ids')));*/
-            }
 
             // REST endpoint calls
-
+            /**
+             * @ngdoc method
+             * @name getMappingRecords
+             * @methodOf mappingManager.service:mappingManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/mappings endpoint which retrieves a paginated list of MappingRecords
+             * sorted by dcterms:title.
+             *
+             */
             self.getMappingRecords = function() {
                 var config = {
                     params: {
                         sort: prefixes.dcterms + 'title'
                     }
                 };
-                return $http.get(prefix, config)
-                    .then(response => {
-                        return response.data;
-                    }, error => $q.reject(error.statusText));
+                return $http.get(prefix, config).then(response => response.data, util.rejectError);
             }
-
             /**
              * @ngdoc method
              * @name upload
@@ -150,10 +119,7 @@
                 }
                 _.forEach(keywords, keyword => fd.append('keywords', keyword));
                 fd.append('jsonld', angular.toJson(mapping));
-                return $http.post(prefix, fd, config)
-                    .then(response => {
-                        self.mappingIds = _.union(self.mappingIds, [response.data]);
-                    }, error => $q.reject(error.statusText));
+                return $http.post(prefix, fd, config).then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -169,7 +135,7 @@
              */
             self.getMapping = function(mappingId) {
                 return $http.get(prefix + '/' + encodeURIComponent(mappingId))
-                    .then(response => response.data, error => $q.reject(error.statusText));
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -188,25 +154,6 @@
             }
             /**
              * @ngdoc method
-             * @name updateMapping
-             * @methodOf mappingManager.service:mappingManagerService
-             *
-             * @description
-             * Calls the PUT /matontorest/mappings/{mappingIRI} endpoint which replaces the saved mapping with
-             * the passed IRI with the passed JSON-LD.
-             *
-             * @param {string} mappingId The IRI of the mapping to replace
-             * @param {Object[]} newMapping The JSON-LD to replace the saved mapping with
-             * @return {Promise} A promise that resolves if the update was successful; rejects otherwise
-             */
-            self.updateMapping = function(mappingId, newMapping) {
-                var deferred = $q.defer();
-                $http.put(prefix + '/' + encodeURIComponent(mappingId), angular.toJson(newMapping))
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
-            }
-            /**
-             * @ngdoc method
              * @name deleteMapping
              * @methodOf mappingManager.service:mappingManagerService
              *
@@ -218,15 +165,11 @@
              * @returns {Promise} A promise resolves if the deletion succeeded; rejects otherwise
              */
             self.deleteMapping = function(mappingId) {
-                var deferred = $q.defer();
-                $http.delete(prefix + '/' + encodeURIComponent(mappingId))
-                    .then(response => {
-                        _.pull(self.mappingIds, mappingId);
-                        deferred.resolve();
-                    }, error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.delete(prefix + '/' + encodeURIComponent(mappingId))
+                    .then(response => response.data, util.rejectError);
             }
 
+            // Edit mapping methods
             /**
              * @ngdoc method
              * @name getMappingId
@@ -241,8 +184,6 @@
             self.getMappingId = function(mappingTitle) {
                 return prefixes.mappings + $filter('camelCase')(mappingTitle, 'class');
             }
-
-            // Edit mapping methods
             /**
              * @ngdoc method
              * @name createNewMapping
@@ -282,7 +223,6 @@
                 mappingEntity[prefixes.delim + 'sourceBranch'] = [{'@id': branchId}];
                 mappingEntity[prefixes.delim + 'sourceCommit'] = [{'@id': commitId}];
             }
-
             /**
              * @ngdoc method
              * @name copyMapping

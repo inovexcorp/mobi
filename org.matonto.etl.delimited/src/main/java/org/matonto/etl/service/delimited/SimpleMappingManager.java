@@ -169,8 +169,7 @@ public class SimpleMappingManager implements MappingManager {
     @Override
     public Optional<MappingWrapper> retrieveMapping(@Nonnull Resource recordId) {
         Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
-        Model mappingModel = catalogManager.getCompiledResource(getHeadOfBranch(masterBranch));
-        return Optional.of(getWrapperFromModel(mappingModel));
+        return Optional.of(getWrapperFromModel(catalogManager.getCompiledResource(getHeadOfBranch(masterBranch))));
     }
 
     @Override

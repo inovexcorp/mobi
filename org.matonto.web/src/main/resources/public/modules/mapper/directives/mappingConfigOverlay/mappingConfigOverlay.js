@@ -236,31 +236,8 @@
                                     if (dvm.mm.isPropertyMapping(entity)) {
                                         var parentClassMapping = dvm.mm.isDataMapping(entity) ? dvm.mm.findClassWithDataMapping(dvm.state.mapping.jsonld, entity['@id']) : dvm.mm.findClassWithObjectMapping(dvm.state.mapping.jsonld, entity['@id']);
                                         dvm.state.deleteProp(entity['@id'], parentClassMapping['@id']);
-                                        /*var deletedProp = dvm.mm.removeProp(dvm.state.mapping.jsonld, parentClassMapping['@id'], entity['@id']);
-                                        dvm.state.deleteEntity(deletedProp);
-                                        var additionsObj = _.find(dvm.state.mapping.difference.deletions, {'@id': dvm.state.selectedClassMappingId});
-                                        var prop = prefixes.delim + (dvm.mm.isDataMapping(deletedProp) ? 'dataProperty' : 'objectProperty');
-                                        if (dvm.util.hasPropertyId(additionsObj, prop, propMapping['@id'])) {
-                                            dvm.util.removePropertyId(additionsObj, prop, propMapping['@id'])
-                                        } else {
-                                            var deletionsObj = _.find(dvm.state.mapping.difference.deletions, {'@id': parentClassMapping['@id']});
-                                            if (deletionsObj) {
-                                                if (!_.has(deletionsObj, "['" + prop + "']")) {
-                                                    deletionsObj[prop] = [];
-                                                }
-                                                deletionsObj[prop].push({'@id': deletedProp['@id']});
-                                            } else {
-                                                dvm.state.mapping.difference.deletions.push({'@id': parentClassMapping['@id'], [prop]: [{'@id': deletedProp['@id']}]});
-                                            }
-                                        }
-                                        _.remove(dvm.state.invalidProps, {'@id': entity['@id']});*/
                                     } else if (dvm.mm.isClassMapping(entity)) {
                                         dvm.state.deleteClass(entity['@id']);
-                                        /*var propsToDelete = dvm.mm.getPropsLinkingToClass(dvm.state.mapping.jsonld, entity['@id']);
-                                        var deletedClass = dvm.mm.removeClass(dvm.state.mapping.jsonld, entity['@id']);
-                                        dvm.state.deleteEntity(deletedClass);
-                                        _.forEach(propsToDelete, dvm.state.deleteEntity);
-                                        dvm.state.removeAvailableProps(entity['@id']);*/
                                     }
                                 }
                             });

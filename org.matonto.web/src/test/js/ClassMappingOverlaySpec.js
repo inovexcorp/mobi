@@ -21,12 +21,7 @@
  * #L%
  */
 describe('Class Mapping Overlay directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        mappingManagerSvc,
-        mapperStateSvc;
+    var $compile, scope, element, controller, mappingManagerSvc, mapperStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -58,6 +53,7 @@ describe('Class Mapping Overlay directive', function() {
             expect(mappingManagerSvc.addClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, jasmine.any(Array), controller.selectedClass.classObj['@id']);
             expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(classMapping['@id']);
             expect(mapperStateSvc.availableClasses).not.toContain(controller.selectedClass);
+            expect(mapperStateSvc.mapping.difference.additions).toContain(classMapping);
             expect(mapperStateSvc.changedMapping).toBe(true);
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.selectedClassMappingId).toBe(classMapping['@id']);

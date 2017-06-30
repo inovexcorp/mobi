@@ -43,7 +43,6 @@
             'mapperSerializationSelect',
             'mapperTabset',
             'mappingConfigOverlay',
-            'mappingList',
             'mappingListBlock',
             'mappingNameInput',
             'mappingNameOverlay',

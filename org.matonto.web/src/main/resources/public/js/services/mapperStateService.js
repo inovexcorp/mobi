@@ -48,11 +48,12 @@
          */
         .service('mapperStateService', mapperStateService);
 
-        mapperStateService.$inject = ['prefixes', 'mappingManagerService', 'ontologyManagerService', 'delimitedManagerService', 'utilService'];
+        mapperStateService.$inject = ['$q', 'prefixes', 'mappingManagerService', 'ontologyManagerService', 'catalogManagerService', 'delimitedManagerService', 'utilService'];
 
-        function mapperStateService(prefixes, mappingManagerService, ontologyManagerService, delimitedManagerService, utilService) {
+        function mapperStateService($q, prefixes, mappingManagerService, ontologyManagerService, catalogManagerService, delimitedManagerService, utilService) {
             var self = this;
             var mm = mappingManagerService,
+                cm = catalogManagerService,
                 om = ontologyManagerService,
                 dm = delimitedManagerService,
                 util = utilService;
@@ -445,6 +446,19 @@
                 self.sourceOntologies = [];
                 self.resetEdit();
                 self.availablePropsByClass = {};
+            }
+            self.saveMapping = function() {
+                var catalogId = _.get(cm.localCatalog, '@id', '');
+                if (self.newMapping) {
+                    return mm.upload(self.mapping.jsonld, self.mapping.record.title, self.mapping.record.description, self.mapping.record.keywords);
+                } else {
+                    return cm.createInProgressCommit(self.mapping.record.id, catalogId)
+                        .then(() => cm.updateInProgressCommit(self.mapping.record.id, catalogId, self.mapping.difference), $q.reject)
+                        .then(() => {
+                            var commitMessage = 'Changed ' + _.join(_.concat(_.map(self.mapping.difference.additions, '@id'), _.map(self.mapping.difference.deletions, '@id')), ', ');
+                            return cm.createBranchCommit(self.mapping.record.branch, self.mapping.record.id, catalogId, commitMessage);
+                        }, $q.reject);
+                }
             }
             /**
              * @ngdoc method

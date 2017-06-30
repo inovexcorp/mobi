@@ -75,6 +75,7 @@
                     dvm.deleteMapping = function() {
                         dvm.mm.deleteMapping(dvm.state.mapping.record.id)
                             .then(() => {
+                                dvm.state.displayDeleteMappingConfirm = false;
                                 _.remove(openedMappings, {record: {id: dvm.state.mapping.record.id}});
                                 dvm.state.mapping = undefined;
                                 dvm.state.sourceOntologies = [];

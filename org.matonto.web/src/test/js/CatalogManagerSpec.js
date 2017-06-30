@@ -21,12 +21,7 @@
  * #L%
  */
 describe('Catalog Manager service', function() {
-    var $httpBackend,
-        catalogManagerSvc,
-        prefixes,
-        utilSvc,
-        $q,
-        windowSvc,
+    var $httpBackend, catalogManagerSvc, prefixes, utilSvc, $q, windowSvc,
         catalogId = 'http://matonto.org/catalogs/local',
         recordId = 'http://matonto.org/records/test',
         distributionId = 'http://matonto.org/distributions/test',
@@ -70,7 +65,7 @@ describe('Catalog Manager service', function() {
                 expect(true).toBe(true);
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         describe('successfully', function() {
             beforeEach(function() {
@@ -88,7 +83,7 @@ describe('Catalog Manager service', function() {
                     expect(error).toContain('Could not find');
                     done();
                 });
-                $httpBackend.flush();
+                flushAndVerify($httpBackend);
             });
             it('with all important data', function(done) {
                 var types = this.types;
@@ -112,7 +107,7 @@ describe('Catalog Manager service', function() {
                     fail('Promise should have resolved');
                     done();
                 });
-                $httpBackend.flush();
+                flushAndVerify($httpBackend);
             });
         });
     });
@@ -125,7 +120,7 @@ describe('Catalog Manager service', function() {
             fail('Promise should have resolved');
             done();
         });
-        $httpBackend.flush();
+        flushAndVerify($httpBackend);
     });
     it('should get the IRIs for all sort options', function(done) {
         $httpBackend.whenGET('/matontorest/catalogs/sort-options').respond(200, []);
@@ -136,7 +131,7 @@ describe('Catalog Manager service', function() {
             fail('Promise should have resolved');
             done();
         });
-        $httpBackend.flush();
+        flushAndVerify($httpBackend);
     });
     describe('should get a page of results based on the passed URL', function() {
         beforeEach(function() {
@@ -151,7 +146,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.expectGET(this.url).respond(200, []);
@@ -162,7 +157,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a list of Records', function() {
@@ -187,7 +182,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with all config passed', function(done) {
             var params = $httpParamSerializer(this.config);
@@ -199,7 +194,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without any config', function(done) {
             var params = $httpParamSerializer({
@@ -214,7 +209,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Record', function() {
@@ -227,7 +222,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId)).respond(200, {});
@@ -238,7 +233,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Record', function() {
@@ -262,7 +257,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with a description and keywords', function(done) {
             $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records',
@@ -276,7 +271,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without a description or keywords', function(done) {
             delete this.recordConfig.description;
@@ -292,7 +287,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should update a Record', function() {
@@ -308,7 +303,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId), this.newRecord).respond(200);
@@ -319,7 +314,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should delete a Record', function() {
@@ -332,7 +327,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId)).respond(200);
@@ -343,7 +338,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a list of Record Distributions', function() {
@@ -366,7 +361,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with all config passed', function(done) {
             var params = $httpParamSerializer(this.config);
@@ -378,7 +373,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without any config passed', function(done) {
             var params = $httpParamSerializer({
@@ -393,7 +388,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Record Distribution', function() {
@@ -406,7 +401,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId)).respond(200, {});
@@ -417,7 +412,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Record Distribution', function() {
@@ -442,7 +437,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with a description, format, access URL, and download URL', function(done) {
             $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions',
@@ -456,7 +451,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without a description, format, access URL, or download URL', function(done) {
             delete this.distributionConfig.description;
@@ -474,7 +469,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should update a Record Distribution', function() {
@@ -490,7 +485,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId), this.newDistribution).respond(200);
@@ -501,7 +496,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should delete a Record Distribution', function() {
@@ -514,7 +509,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId)).respond(200);
@@ -525,7 +520,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a list of Record Versions', function() {
@@ -548,7 +543,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with all config passed', function(done) {
             var params = $httpParamSerializer(this.config);
@@ -560,7 +555,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without any config', function(done) {
             var params = $httpParamSerializer({
@@ -575,7 +570,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve the latest Record Version', function() {
@@ -588,7 +583,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/latest').respond(200, {});
@@ -599,7 +594,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Record Version', function() {
@@ -612,7 +607,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId)).respond(200, {});
@@ -623,7 +618,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Version', function() {
@@ -645,7 +640,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with a description', function(done) {
             $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
@@ -659,7 +654,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without a description', function(done) {
             delete this.versionConfig.description;
@@ -674,7 +669,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Tag', function() {
@@ -699,7 +694,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with a description', function(done) {
             var expectedVersion = angular.copy(this.version);
@@ -717,7 +712,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without a description', function(done) {
             delete this.versionConfig.description;
@@ -736,7 +731,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should update a Record Version', function() {
@@ -752,7 +747,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId), this.newVersion).respond(200);
@@ -763,7 +758,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should delete a Record Version', function() {
@@ -776,7 +771,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId)).respond(200);
@@ -787,7 +782,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve the Commit of a Version', function() {
@@ -801,7 +796,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with a format', function(done) {
             var params = $httpParamSerializer({format: 'turtle'});
@@ -813,7 +808,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without a format', function(done) {
             var params = $httpParamSerializer({format: 'jsonld'});
@@ -825,7 +820,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a list of Version Distributions', function() {
@@ -848,7 +843,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with all config passed', function(done) {
             var params = $httpParamSerializer(this.config);
@@ -860,7 +855,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without any config', function(done) {
             var params = $httpParamSerializer({
@@ -875,7 +870,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Version Distribution', function() {
@@ -888,7 +883,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId)).respond(200, {});
@@ -899,7 +894,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Version Distribution', function() {
@@ -924,7 +919,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with a description, format, access URL, and download URL', function(done) {
             $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions',
@@ -938,7 +933,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without a description, format, access URL, or download URL', function(done) {
             delete this.distributionConfig.description;
@@ -956,7 +951,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should update a Version Distribution', function() {
@@ -972,7 +967,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId), this.newDistribution).respond(200);
@@ -983,7 +978,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should delete a Version Distribution', function() {
@@ -996,7 +991,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId)).respond(200);
@@ -1007,7 +1002,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a list of Record Branches', function() {
@@ -1031,7 +1026,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with all config passed', function(done) {
             this.config.applyUserFilter = true;
@@ -1044,7 +1039,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without any config', function(done) {
             var params = $httpParamSerializer({
@@ -1060,7 +1055,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve the master Branch of a Record', function() {
@@ -1073,7 +1068,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/master').respond(200, {});
@@ -1084,7 +1079,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Record Branch', function() {
@@ -1097,7 +1092,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId)).respond(200, {});
@@ -1108,7 +1103,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Branch', function() {
@@ -1133,7 +1128,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with a description', function(done) {
             var expectedBranch = angular.copy(this.branch);
@@ -1151,7 +1146,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without a description', function(done) {
             delete this.branchConfig.description;
@@ -1170,7 +1165,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should create a new UserBranch', function() {
@@ -1195,7 +1190,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with a description', function(done) {
             var expectedBranch = angular.copy(this.branch);
@@ -1214,7 +1209,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without a description', function(done) {
             delete this.branchConfig.description;
@@ -1234,7 +1229,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should update a Record Branch', function() {
@@ -1250,7 +1245,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId), this.newBranch).respond(200);
@@ -1261,7 +1256,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should delete a Record Branch', function() {
@@ -1274,7 +1269,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId)).respond(200);
@@ -1285,7 +1280,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve Branch Commits', function() {
@@ -1298,7 +1293,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits').respond(200, []);
@@ -1309,7 +1304,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should create a new commit on a Branch', function() {
@@ -1326,7 +1321,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             var params = $httpParamSerializer({message: this.message});
@@ -1338,7 +1333,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve the head Commit of a Branch', function() {
@@ -1352,7 +1347,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with a format', function(done) {
             var params = $httpParamSerializer({format: 'turtle'});
@@ -1364,7 +1359,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without a format', function(done) {
             var params = $httpParamSerializer({format: 'jsonld'});
@@ -1376,7 +1371,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Branch Commit', function() {
@@ -1390,7 +1385,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with a format', function(done) {
             var params = $httpParamSerializer({format: 'turtle'});
@@ -1402,7 +1397,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without a format', function(done) {
             var params = $httpParamSerializer({format: 'jsonld'});
@@ -1414,7 +1409,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should get the conflicts between two Branches', function() {
@@ -1431,7 +1426,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with a format', function(done) {
             var params = $httpParamSerializer({
@@ -1446,7 +1441,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with a format', function(done) {
             var params = $httpParamSerializer({
@@ -1461,7 +1456,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should merge two Branches', function() {
@@ -1479,7 +1474,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with additions and deletions', function(done) {
             var differenceObj = {additions: [], deletions: []};
@@ -1495,7 +1490,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without additions and deletions', function(done) {
             var differenceObj = {};
@@ -1511,7 +1506,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve the compiled resource from a Branch Commit', function() {
@@ -1528,7 +1523,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with a format', function(done) {
             var params = $httpParamSerializer({
@@ -1543,7 +1538,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without a format', function(done) {
             var params = $httpParamSerializer({
@@ -1558,7 +1553,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should download the compiled resource from a Branch Commit', function() {
@@ -1581,7 +1576,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.whenPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit').respond(200);
@@ -1592,7 +1587,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve an InProgressCommit for the logged-in User', function() {
@@ -1605,7 +1600,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit').respond(200, {});
@@ -1616,7 +1611,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should update an InProgressCommit for the logged-in User', function() {
@@ -1633,7 +1628,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('with additions and deletions', function(done) {
             var differenceObj = {additions: [], deletions: []};
@@ -1648,7 +1643,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('without additions and deletions', function(done) {
             var differenceObj = {};
@@ -1663,7 +1658,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should remove an InProgressCommit for the logged-in User', function() {
@@ -1676,7 +1671,7 @@ describe('Catalog Manager service', function() {
                 expect(response).toBe('Error Message');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
             $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit').respond(200);
@@ -1687,7 +1682,7 @@ describe('Catalog Manager service', function() {
                 fail('Promise should have resolved');
                 done();
             });
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
         });
     });
     describe('should get an entity name', function() {

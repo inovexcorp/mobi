@@ -187,7 +187,9 @@ public class MappingRestImpl implements MappingRest {
             IRI catalogId = catalogManager.getLocalCatalogIRI();
             MappingRecord record = manager.createMappingRecord(builder.build());
             catalogManager.addRecord(catalogId, record);
-            Resource branchId = record.getMasterBranch_resource().get();
+            Resource branchId = record.getMasterBranch_resource().orElseThrow(() ->
+                    ErrorUtils.sendError("Master Branch was not set on MappingRecord",
+                            Response.Status.INTERNAL_SERVER_ERROR));
             versioningManager.commit(catalogId, record.getResource(), branchId, user, "The initial commit.",
                     mapping.getModel(), null);
 

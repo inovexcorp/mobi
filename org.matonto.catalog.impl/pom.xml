@@ -96,7 +96,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
-            <version>1.8.17-SNAPSHOT</version>
+            <version>1.8.19-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

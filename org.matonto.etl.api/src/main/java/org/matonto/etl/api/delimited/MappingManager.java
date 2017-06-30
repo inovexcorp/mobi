@@ -108,6 +108,14 @@ public interface MappingManager {
      */
     MappingWrapper createMapping(InputStream in, RDFFormat format) throws IOException, MatOntoException;
 
+    /**
+     * Retrieves a paginated list of MappingRecords in the local catalog based on the passed search and
+     * pagination parameters. Acceptable sort properties are http://purl.org/dc/terms/title,
+     * http://purl.org/dc/terms/modified, and http://purl.org/dc/terms/issued.
+     *
+     * @param searchParams Pagination configuration for MappingRecords
+     * @return The PaginatedSearchResults of MappingRecords in the local catalog
+     */
     PaginatedSearchResults<MappingRecord> getMappingRecords(MappingPaginatedSearchParams searchParams);
 
     /**

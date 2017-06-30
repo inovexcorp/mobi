@@ -38,7 +38,7 @@ describe('Download Mapping Overlay directive', function() {
             mappingManagerSvc = _mappingManagerService_;
         });
 
-        mapperStateSvc.mapping = {record: {id: ''}};
+        mapperStateSvc.mapping = {record: {id: '', title: ''}};
         element = $compile(angular.element('<download-mapping-overlay></download-mapping-overlay>'))(scope);
         scope.$digest();
         controller = element.controller('downloadMappingOverlay');

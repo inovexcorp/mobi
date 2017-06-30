@@ -258,15 +258,12 @@ function mockOntologyManager() {
 function mockMappingManager() {
     module(function($provide) {
         $provide.service('mappingManagerService', function($q) {
-            this.mappingIds = [];
             this.annotationProperties = [];
 
-            this.reset = jasmine.createSpy('reset');
-            this.initialize = jasmine.createSpy('initialize');
             this.upload = jasmine.createSpy('upload').and.returnValue($q.when());
+            this.getMappingRecords = jasmine.createSpy("getMappingRecords").and.returnValue($q.when([]));
             this.getMapping = jasmine.createSpy('getMapping').and.returnValue($q.when([]));
             this.downloadMapping = jasmine.createSpy('downloadMapping');
-            this.updateMapping = jasmine.createSpy('updateMapping').and.returnValue($q.when());
             this.deleteMapping = jasmine.createSpy('deleteMapping').and.returnValue($q.when());
             this.getMappingId = jasmine.createSpy('getMappingId').and.returnValue('');
             this.createNewMapping = jasmine.createSpy('createNewMapping').and.returnValue([]);
@@ -341,7 +338,7 @@ function mockDelimitedManager() {
 
 function mockMapperState() {
     module(function($provide) {
-        $provide.service('mapperStateService', function() {
+        $provide.service('mapperStateService', function($q) {
             this.selectMappingStep = 0;
             this.fileUploadStep = 1;
             this.editMappingStep = 2;
@@ -374,6 +371,7 @@ function mockMapperState() {
             this.initialize = jasmine.createSpy('initialize');
             this.resetEdit = jasmine.createSpy('resetEdit');
             this.createMapping = jasmine.createSpy('createMapping');
+            this.saveMapping = jasmine.createSpy("saveMapping").and.returnValue($q.when());
             this.setInvalidProps = jasmine.createSpy('setInvalidProps');
             this.getAvailableProps = jasmine.createSpy('getAvailableProps').and.returnValue([]);
             this.setAvailableProps = jasmine.createSpy('setAvailableProps');
@@ -894,6 +892,7 @@ function mockUtil() {
             this.onError = jasmine.createSpy('onError').and.callFake(function(error, deferred) {
                 deferred.reject(_.get(error, 'statusText', ''));
             });
+            this.rejectError = jasmine.createSpy("rejectError").and.returnValue($q.reject(''));
             this.getErrorMessage = jasmine.createSpy('getErrorMessage').and.returnValue('');
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getChangesById = jasmine.createSpy('getChangesById');
