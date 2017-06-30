@@ -1,10 +1,8 @@
-@Version("1.1.0.${build}")
-
-package org.matonto.catalog.api.versioning;
+package org.matonto.platform.config.api.server;
 
 /*-
  * #%L
- * org.matonto.catalog.api
+ * org.matonto.platform.config.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -25,4 +23,17 @@ package org.matonto.catalog.api.versioning;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import java.util.UUID;
+
+/**
+ * Service interface that describes a core platform service for working with the server.
+ */
+public interface MatOnto {
+
+    /**
+     *
+     * @return A unique, deterministic ID for this MatOnto server
+     */
+    UUID getServerIdentifier();
+
+}

@@ -1,10 +1,8 @@
-@Version("1.1.0.${build}")
-
-package org.matonto.catalog.api.versioning;
+package org.matonto.platform.config.api.server;
 
 /*-
  * #%L
- * org.matonto.catalog.api
+ * org.matonto.platform.config.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -25,4 +23,18 @@ package org.matonto.catalog.api.versioning;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import aQute.bnd.annotation.metatype.Meta;
+
+/**
+ * Service configuration for a {@link MatOnto} implementation.  Should only be one in the system.
+ */
+@Meta.OCD
+public interface MatOntoConfig {
+
+    /**
+     * @return The configured server identifier for the system
+     */
+    @Meta.AD(required = false)
+    String serverId();
+
+}
