@@ -1366,7 +1366,7 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    /* getAdditionsResource(Resource, conn) */
+    /* getAdditionsResource(Resource, RepositoryConnection) */
 
     @Test
     public void getAdditionsResourceWithResourceTest() {
@@ -1387,7 +1387,31 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    /* getDeletionsResource(Resource, conn) */
+    /* getAdditions(Resource, RepositoryConnection) */
+
+    @Test
+    public void getAdditionsWithResourceTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Model expected = mf.createModel(Stream.of(vf.createStatement(vf.createIRI("http://matonto.org/test/add"), titleIRI, vf.createLiteral("Add"))).collect(Collectors.toList()));
+
+            Stream<Statement> result = service.getAdditions(COMMIT_IRI, conn);
+            result.forEach(statement -> assertTrue(expected.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+    }
+
+    @Test
+    public void getAdditionsWithResourceAndAdditionsNotSetTest() {
+        // Setup:
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage("Additions not set on Commit " + COMMIT_NO_ADDITIONS_IRI);
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            service.getAdditions(COMMIT_NO_ADDITIONS_IRI, conn);
+        }
+    }
+
+    /* getDeletionsResource(Resource, RepositoryConnection) */
 
     @Test
     public void getDeletionsResourceWithResourceTest() {
@@ -1408,7 +1432,31 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    /* getAdditionsResource(Resource, conn) */
+    /* getAdditions(Resource, RepositoryConnection) */
+
+    @Test
+    public void getDeletionsWithResourceTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Model expected = mf.createModel(Stream.of(vf.createStatement(vf.createIRI("http://matonto.org/test/delete"), titleIRI, vf.createLiteral("Delete"))).collect(Collectors.toList()));
+
+            Stream<Statement> result = service.getDeletions(COMMIT_IRI, conn);
+            result.forEach(statement -> assertTrue(expected.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+    }
+
+    @Test
+    public void getDeletionsWithResourceAndDeletionsNotSetTest() {
+        // Setup:
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage("Deletions not set on Commit " + COMMIT_NO_DELETIONS_IRI);
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            service.getDeletions(COMMIT_NO_DELETIONS_IRI, conn);
+        }
+    }
+
+    /* getAdditionsResource(Commit, RepositoryConnection) */
 
     @Test
     public void getAdditionsResourceWithCommitTest() {
@@ -1433,7 +1481,33 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    /* getDeletionsResource(Resource, conn) */
+    /* getAdditions(Commit, RepositoryConnection) */
+
+    @Test
+    public void getAdditionsWithCommitTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Commit commit = getThing(COMMIT_IRI, commitFactory, conn);
+            Model expected = mf.createModel(Stream.of(vf.createStatement(vf.createIRI("http://matonto.org/test/add"), titleIRI, vf.createLiteral("Add"))).collect(Collectors.toList()));
+
+            Stream<Statement> result = service.getAdditions(commit, conn);
+            result.forEach(statement -> assertTrue(expected.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+    }
+
+    @Test
+    public void getAdditionsWithCommitAndAdditionsNotSetTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Commit commit = getThing(COMMIT_NO_ADDITIONS_IRI, commitFactory, conn);
+            thrown.expect(IllegalStateException.class);
+            thrown.expectMessage("Additions not set on Commit " + COMMIT_NO_ADDITIONS_IRI);
+
+            service.getAdditions(commit, conn);
+        }
+    }
+
+    /* getDeletionsResource(Commit, RepositoryConnection) */
 
     @Test
     public void getDeletionsResourceWithCommitTest() {
@@ -1455,6 +1529,32 @@ public class SimpleCatalogUtilsServiceTest {
             thrown.expectMessage("Deletions not set on Commit " + COMMIT_NO_DELETIONS_IRI);
 
             service.getDeletionsResource(commit);
+        }
+    }
+
+    /* getAdditions(Commit, RepositoryConnection) */
+
+    @Test
+    public void getDeletionsWithCommitTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Commit commit = getThing(COMMIT_IRI, commitFactory, conn);
+            Model expected = mf.createModel(Stream.of(vf.createStatement(vf.createIRI("http://matonto.org/test/delete"), titleIRI, vf.createLiteral("Delete"))).collect(Collectors.toList()));
+
+            Stream<Statement> result = service.getDeletions(commit, conn);
+            result.forEach(statement -> assertTrue(expected.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+    }
+
+    @Test
+    public void getDeletionsWithCommitAndDeletionsNotSetTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Commit commit = getThing(COMMIT_NO_DELETIONS_IRI, commitFactory, conn);
+            thrown.expect(IllegalStateException.class);
+            thrown.expectMessage("Deletions not set on Commit " + COMMIT_NO_DELETIONS_IRI);
+
+            service.getDeletions(commit, conn);
         }
     }
 

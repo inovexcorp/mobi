@@ -428,6 +428,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public Stream<Statement> getAdditions(Commit commit, RepositoryConnection conn) {
+        Resource additionsId = getAdditionsResource(commit);
+        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, additionsId);
+        return StreamSupport.stream(statements.spliterator(), false);
+    }
+
+    @Override
     public Resource getDeletionsResource(Resource commitId, RepositoryConnection conn) {
         RepositoryResult<Statement> results = conn.getStatements(null, vf.createIRI(Revision.deletions_IRI), null,
                 commitId);
@@ -450,6 +457,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     @Override
     public Stream<Statement> getDeletions(Resource commitId, RepositoryConnection conn) {
         Resource deletionsId = getDeletionsResource(commitId, conn);
+        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, deletionsId);
+        return StreamSupport.stream(statements.spliterator(), false);
+    }
+
+    @Override
+    public Stream<Statement> getDeletions(Commit commit, RepositoryConnection conn) {
+        Resource deletionsId = getDeletionsResource(commit);
         RepositoryResult<Statement> statements = conn.getStatements(null, null, null, deletionsId);
         return StreamSupport.stream(statements.spliterator(), false);
     }
