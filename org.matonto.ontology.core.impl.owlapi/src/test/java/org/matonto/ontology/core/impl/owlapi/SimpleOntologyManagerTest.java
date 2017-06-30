@@ -28,6 +28,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,14 +38,17 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
 import org.matonto.catalog.api.ontologies.mcat.Catalog;
 import org.matonto.catalog.api.ontologies.mcat.CatalogFactory;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.builder.OntologyRecordConfig;
+import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.Bindings;
@@ -82,6 +86,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -127,6 +132,7 @@ public class SimpleOntologyManagerTest {
     private IRI catalogIRI;
     private IRI ontologyIRI;
     private IRI versionIRI;
+    private OntologyRecord record;
     private org.semanticweb.owlapi.model.IRI owlOntologyIRI;
     private org.semanticweb.owlapi.model.IRI owlVersionIRI;
     private RepositoryManager repoManager = new SimpleRepositoryManager();
@@ -173,11 +179,13 @@ public class SimpleOntologyManagerTest {
         vcr.registerValueConverter(new ValueValueConverter());
         vcr.registerValueConverter(new LiteralValueConverter());
 
+        record = ontologyRecordFactory.createNew(recordIRI);
         MockitoAnnotations.initMocks(this);
 
         Catalog catalog = catalogFactory.createNew(catalogIRI);
         when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogIRI);
         when(catalogManager.getLocalCatalog()).thenReturn(catalog);
+        when(catalogManager.createRecord(any(RecordConfig.class), eq(ontologyRecordFactory))).thenReturn(record);
         doThrow(new IllegalArgumentException()).when(catalogManager).getMasterBranch(catalogIRI, missingIRI);
         doThrow(new IllegalArgumentException()).when(catalogManager).getBranch(catalogIRI, recordIRI, missingIRI, branchFactory);
         doThrow(new IllegalArgumentException()).when(catalogManager).getCommit(catalogIRI, recordIRI, branchIRI, missingIRI);
@@ -208,9 +216,30 @@ public class SimpleOntologyManagerTest {
         manager.setModelFactory(modelFactory);
         manager.setSesameTransformer(sesameTransformer);
         manager.setCatalogManager(catalogManager);
+        manager.setOntologyRecordFactory(ontologyRecordFactory);
         manager.setBranchFactory(branchFactory);
         manager.setRepositoryManager(repoManager);
         manager.setCacheManager(cacheManager);
+    }
+
+    @Test
+    public void testCreateOntologyRecordWithOntologyIRI() throws Exception {
+        IRI ontologyIRI = valueFactory.createIRI("http://test.com/ontology");
+        OntologyRecordConfig config = new OntologyRecordConfig.OntologyRecordBuilder("title", Collections.emptySet())
+                .ontologyIRI(ontologyIRI).build();
+
+        OntologyRecord result = manager.createOntologyRecord(config);
+        assertTrue(result.getOntologyIRI().isPresent());
+        assertEquals(ontologyIRI, result.getOntologyIRI().get());
+    }
+
+    @Test
+    public void testCreateOntologyRecordWithoutOntologyIRI() throws Exception {
+        OntologyRecordConfig config = new OntologyRecordConfig.OntologyRecordBuilder("title", Collections.emptySet())
+                .build();
+
+        OntologyRecord record = manager.createOntologyRecord(config);
+        assertFalse(record.getOntologyIRI().isPresent());
     }
 
     @Test
