@@ -24,30 +24,37 @@
     'use strict';
 
     angular
-        .module('importChangesOverlay', [])
-        .directive('importChangesOverlay', importChangesOverlay);
+        .module('uploadChangesOverlay', [])
+        .directive('uploadChangesOverlay', uploadChangesOverlay);
 
-        importChangesOverlay.$inject = ['catalogManagerService', 'ontologyStateService', 'stateManagerService',
+        uploadChangesOverlay.$inject = ['catalogManagerService', 'ontologyStateService', 'stateManagerService',
             'prefixes'];
 
-        function importChangesOverlay(catalogManagerService, ontologyStateService, stateManagerService, prefixes) {
+        function uploadChangesOverlay(catalogManagerService, ontologyStateService, stateManagerService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
-                templateUrl: 'modules/ontology-editor/directives/importChangesOverlay/importChangesOverlay.html',
+                templateUrl: 'modules/ontology-editor/directives/uploadChangesOverlay/uploadChangesOverlay.html',
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    dvm.error;
                     dvm.cm = catalogManagerService;
                     dvm.sm = stateManagerService;
                     dvm.os = ontologyStateService;
 
                     dvm.upload = function() {
-                        dvm.os.uploadThenGet(dvm.file, dvm.title, dvm.description,
-                            _.join(_.map(dvm.keywords, _.trim), ','), dvm.type).then(recordId => {
-                                dvm.os.showUploadTab = false;
+                        if (dvm.os.hasInProgressCommit()) {
+                            dvm.error = 'Unable to upload changes. Please either commit your current changes or discard them and try again.';
+                        } else {
+                            var ontRecord = dvm.os.listItem.ontologyRecord;
+                            dvm.os.uploadChanges(dvm.file, ontRecord.recordId, ontRecord.branchId, ontRecord.commitId).then(() => {
+                                dvm.os.getActivePage().active = false;
+                                dvm.os.listItem.editorTabStates.savedChanges.active = true;
+                                dvm.os.showUploadChangesOverlay = false;
                             }, errorMessage => dvm.error = errorMessage);
+                        }
                     }
                 }
             }

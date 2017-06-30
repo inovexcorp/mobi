@@ -397,6 +397,27 @@
             }
             /**
              * @ngdoc method
+             * @name uploadChanges
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Uploads the provided file as an ontology and uses it as a basis for updating the existing ontology .
+             *
+             * @param {File} file The updated ontology file.
+             * @param {string} the ontology record ID.
+             * @param {string} the ontology branch ID.
+             * @param {string} the ontology commit ID.
+             */
+            self.uploadChanges = function(file, recordId, branchId, commitId) {
+                return om.uploadChangesFile(file, recordId, branchId, commitId).then(() => {
+                    cm.getInProgressCommit(recordId, catalogId).then((commit) => {
+                        var listItem = self.getListItemByRecordId(recordId);
+                        listItem.inProgressCommit = commit;
+                    }, $q.reject());
+                }, $q.reject());
+            }
+            /**
+             * @ngdoc method
              * @name updateOntology
              * @methodOf ontologyState.service:ontologyStateService
              *
@@ -1220,6 +1241,12 @@
                 if (om.isProperty(entity)) {
                     setPropertyIcon(entity);
                 }
+            }
+
+            self.hasInProgressCommit = function(listItem = self.listItem) {
+                return listItem.inProgressCommit !== undefined 
+                        && ((listItem.inProgressCommit.additions !== undefined && listItem.inProgressCommit.additions.length > 0) 
+                        || (listItem.inProgressCommit.deletions !== undefined && listItem.inProgressCommit.deletions.length > 0));
             }
 
             /* Private helper functions */

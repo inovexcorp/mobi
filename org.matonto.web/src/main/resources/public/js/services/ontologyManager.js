@@ -223,6 +223,42 @@
             }
             /**
              * @ngdoc method
+             * @name uploadFile
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the PUT /matontorest/ontologies/{recordId} endpoint which will return a new in-progress commit 
+             * object to be applied to the ontology.
+             *
+             * @param {File} file The updated ontology file.
+             * @param {string} the ontology record ID.
+             * @param {string} the ontology branch ID.
+             * @param {string} the ontology commit ID.
+             * @returns {Promise} A promise with the new in-progress commit to be applied or error message.
+             */
+            self.uploadChangesFile = function(file, recordId, branchId, commitId) {
+                var deferred = $q.defer(),
+                    fd = new FormData(),
+                    config = {
+                        transformRequest: angular.identity,
+                        headers: {
+                            'Content-Type': undefined,
+                            'Accept': 'application/json'
+                        },
+                        params: {
+                            branchId,
+                            commitId
+                        }
+                    };
+                fd.append('file', file);
+                
+                $http.put(prefix + '/' + encodeURIComponent(recordId), fd, config)
+                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
+
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
              * @name uploadJson
              * @methodOf ontologyManager.service:ontologyManagerService
              *
