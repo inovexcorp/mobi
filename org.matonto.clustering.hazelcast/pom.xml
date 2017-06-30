@@ -36,10 +36,6 @@
     <artifactId>clustering.hazelcast</artifactId>
     <packaging>bundle</packaging>
 
-    <properties>
-        <hazelcast.version>3.8.2</hazelcast.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -54,7 +50,6 @@
         <dependency>
             <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast</artifactId>
-            <version>${hazelcast.version}</version>
         </dependency>
 
         <dependency>
