@@ -38,6 +38,7 @@
                         <div class="ontology" ng-click="dvm.openSelected(record)" ng-repeat="record in dvm.filteredList | limitTo:dvm.limit:dvm.begin">
                             <div class="details">
                                 <h2 class="header" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.filterText | trusted"></h2>
+                                <small class="ontology-iri text-muted">{{dvm.util.getPropertyId(record, dvm.prefixes.ontologyEditor + 'ontologyIRI')}}</small>
                                 <p class="description" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
                             </div>
                             <div class="action-container">

@@ -98,7 +98,9 @@ public interface VersioningService<T extends VersionedRDFRecord> {
                         @Nullable Commit auxCommit);
 
     /**
-     * Adds the provided {@link Commit} to the provided {@link Branch}, updating the head Commit.
+     * Adds the provided {@link Commit} to the provided {@link Branch}, updating the head Commit. NOTE: This method
+     * is intended to be used for existing InProgressCommits and assumes the additions and deletions statements already
+     * exist in the Repository.
      *
      * @param branch The Branch which will get the new Commit.
      * @param commit The Commit to add to the Branch.
@@ -108,7 +110,8 @@ public interface VersioningService<T extends VersionedRDFRecord> {
 
     /**
      * Adds a new {@link Commit} to the provided {@link Branch} created for the provided {@link User} using the provided
-     * message, addition and deletion {@link Model Models}, and base and auxiliary Commits.
+     * message, addition and deletion {@link Model Models}, and base and auxiliary Commits. NOTE: This method is
+     * intended to be used with merges and assumes no commit or revision data exists in the Repository.
      *
      * @param branch The Branch which will get the new Commit.
      * @param user The User who will be associated with the new Commit.
