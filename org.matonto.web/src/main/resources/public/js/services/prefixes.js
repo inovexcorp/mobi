@@ -59,5 +59,6 @@
         self.skos = 'http://www.w3.org/2004/02/skos/core#';
         self.ontologyState = 'http://matonto.org/ontologies/state#';
         self.dataset = 'http://matonto.org/ontologies/dataset#';
+        self.ontologyEditor = 'http://matonto.org/ontologies/ontology-editor#';
     }
 })();

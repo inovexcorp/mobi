@@ -28,6 +28,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
 import org.matonto.catalog.api.CatalogUtilsService;
+import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
 import org.matonto.catalog.api.ontologies.mcat.Catalog;
@@ -65,12 +66,16 @@ import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
-import org.openrdf.model.vocabulary.RDF;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @Component(
         immediate = true,
@@ -92,14 +97,20 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private InProgressCommitFactory inProgressCommitFactory;
 
     private static final String GET_IN_PROGRESS_COMMIT;
+    private static final String GET_COMMIT_CHAIN;
     private static final String USER_BINDING = "user";
     private static final String RECORD_BINDING = "record";
     private static final String COMMIT_BINDING = "commit";
+    private static final String PARENT_BINDING = "parent";
 
     static {
         try {
             GET_IN_PROGRESS_COMMIT = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/get-in-progress-commit.rq"),
+                    "UTF-8"
+            );
+            GET_COMMIT_CHAIN = IOUtils.toString(
+                    SimpleCatalogManager.class.getResourceAsStream("/get-commit-chain.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -381,7 +392,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public void addCommit(Branch branch, Commit commit, RepositoryConnection conn) {
-        if (conn.size(commit.getResource()) > 0) {
+        if (conn.containsContext(commit.getResource())) {
             throw throwAlreadyExists(commit.getResource(), commitFactory);
         }
         branch.setHead(commit);
@@ -410,6 +421,20 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public Stream<Statement> getAdditions(Resource commitId, RepositoryConnection conn) {
+        Resource additionsId = getAdditionsResource(commitId, conn);
+        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, additionsId);
+        return StreamSupport.stream(statements.spliterator(), false);
+    }
+
+    @Override
+    public Stream<Statement> getAdditions(Commit commit, RepositoryConnection conn) {
+        Resource additionsId = getAdditionsResource(commit);
+        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, additionsId);
+        return StreamSupport.stream(statements.spliterator(), false);
+    }
+
+    @Override
     public Resource getDeletionsResource(Resource commitId, RepositoryConnection conn) {
         RepositoryResult<Statement> results = conn.getStatements(null, vf.createIRI(Revision.deletions_IRI), null,
                 commitId);
@@ -430,6 +455,20 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public Stream<Statement> getDeletions(Resource commitId, RepositoryConnection conn) {
+        Resource deletionsId = getDeletionsResource(commitId, conn);
+        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, deletionsId);
+        return StreamSupport.stream(statements.spliterator(), false);
+    }
+
+    @Override
+    public Stream<Statement> getDeletions(Commit commit, RepositoryConnection conn) {
+        Resource deletionsId = getDeletionsResource(commit);
+        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, deletionsId);
+        return StreamSupport.stream(statements.spliterator(), false);
+    }
+
+    @Override
     public void addChanges(Resource targetNamedGraph, Resource oppositeNamedGraph, Model changes,
                            RepositoryConnection conn) {
         if (changes != null) {
@@ -442,6 +481,59 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 }
             });
         }
+    }
+
+    @Override
+    public List<Resource> getCommitChain(Resource commitId, boolean asc, RepositoryConnection conn) {
+        List<Resource> results = new ArrayList<>();
+        Iterator<Resource> commits = getCommitChainIterator(commitId, asc, conn);
+        commits.forEachRemaining(results::add);
+        return results;
+    }
+
+    @Override
+    public Difference getRevisionChanges(List<Resource> commits, RepositoryConnection conn) {
+        Difference difference = new Difference.Builder()
+                .additions(mf.createModel())
+                .deletions(mf.createModel())
+                .build();
+        commits.forEach(commitId -> aggregateDifferences(difference, commitId, conn));
+        return difference;
+    }
+
+    @Override
+    public Model getCompiledResource(Resource commitId, RepositoryConnection conn) {
+        return getCompiledResource(getCommitChain(commitId, false, conn), conn);
+    }
+
+    @Override
+    public Model getCompiledResource(List<Resource> commits, RepositoryConnection conn) {
+        Difference revisionChanges = getRevisionChanges(commits, conn);
+        return revisionChanges.getAdditions();
+    }
+
+    @Override
+    public Difference getCommitDifference(Resource commitId, RepositoryConnection conn) {
+        Resource additionsIRI = getAdditionsResource(commitId, conn);
+        Resource deletionsIRI = getDeletionsResource(commitId, conn);
+        Model addModel = mf.createModel();
+        Model deleteModel = mf.createModel();
+        conn.getStatements(null, null, null, additionsIRI).forEach(statement ->
+                addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+        conn.getStatements(null, null, null, deletionsIRI).forEach(statement ->
+                deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+        return new Difference.Builder()
+                .additions(addModel)
+                .deletions(deleteModel)
+                .build();
+    }
+
+    @Override
+    public Model applyDifference(Model base, Difference diff) {
+        Model result = mf.createModel(base);
+        result.addAll(diff.getAdditions());
+        result.removeAll(diff.getDeletions());
+        return result;
     }
 
     @Override
@@ -463,5 +555,59 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     public <T extends Thing> IllegalStateException throwThingNotFound(Resource id, OrmFactory<T> factory) {
         return new IllegalStateException(String.format("%s %s could not be found", factory.getTypeIRI().getLocalName(),
                 id));
+    }
+
+    /**
+     * Gets an iterator which contains all of the Commit ids in the specified direction, either ascending or
+     * descending by date. If descending, the provided Resource identifying a Commit will be first.
+     *
+     * @param commitId The Resource identifying the Commit that you want to get the chain for.
+     * @param conn     The RepositoryConnection which will be queried for the Commits.
+     * @param asc      Whether or not the iterator should be ascending by date
+     * @return Iterator of Resource ids for the requested Commits.
+     */
+    private Iterator<Resource> getCommitChainIterator(Resource commitId, boolean asc, RepositoryConnection conn) {
+        TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_CHAIN);
+        query.setBinding(COMMIT_BINDING, commitId);
+        TupleQueryResult result = query.evaluate();
+        LinkedList<Resource> commits = new LinkedList<>();
+        result.forEach(bindings -> commits.add(Bindings.requiredResource(bindings, PARENT_BINDING)));
+        commits.addFirst(commitId);
+        return asc ? commits.descendingIterator() : commits.iterator();
+    }
+
+    /**
+     * Updates the supplied Difference with statements from the Revision associated with the supplied Commit resource.
+     * Revision addition statements are added to the Difference additions model. Revision deletion statements are
+     * removed from the Difference additions model if they exist, otherwise they are added to the Difference deletions
+     * model.
+     *
+     * @param difference    The Difference object to update.
+     * @param commitId      The Resource identifying the Commit.
+     * @param conn          The RepositoryConnection to query the repository.
+     */
+    private void aggregateDifferences(Difference difference, Resource commitId, RepositoryConnection conn) {
+        Model additions = difference.getAdditions();
+        Model deletions = difference.getDeletions();
+        getAdditions(commitId, conn).forEach(statement -> updateModels(statement, additions, deletions));
+        getDeletions(commitId, conn).forEach(statement -> updateModels(statement, deletions, additions));
+    }
+
+    /**
+     * Remove the supplied triple from the modelToRemove if it exists, otherwise add the triple to modelToAdd.
+     *
+     * @param statement     The statement to process
+     * @param modelToAdd    The Model to add the statement to if it does not exist in modelToRemove
+     * @param modelToRemove The Model to remove the statement from if it exists
+     */
+    private void updateModels(Statement statement, Model modelToAdd, Model modelToRemove) {
+        Resource subject = statement.getSubject();
+        IRI predicate = statement.getPredicate();
+        Value object = statement.getObject();
+        if (modelToRemove.contains(subject, predicate, object)) {
+            modelToRemove.remove(subject, predicate, object);
+        } else {
+            modelToAdd.add(subject, predicate, object);
+        }
     }
 }

@@ -40,11 +40,11 @@
                     var dvm = this;
                     var cm = catalogManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
-                    var resolutions = {
+
+                    dvm.resolutions = {
                         additions: [],
                         deletions: []
                     };
-
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.branch = {};
@@ -75,21 +75,20 @@
                                 }
                             }, onError);
                     }
-
                     dvm.mergeWithResolutions = function() {
                         _.forEach(dvm.conflicts, conflict => {
                             if (conflict.resolved === 'left') {
-                                addToResolutions(conflict.left, conflict.right);
+                                addToResolutions(conflict.right);
                             } else if (conflict.resolved === 'right') {
-                                addToResolutions(conflict.right, conflict.left);
+                                addToResolutions(conflict.left);
                             }
                         });
                         dvm.merge();
                     }
-
                     dvm.merge = function() {
                         var sourceId = angular.copy(dvm.branch['@id']);
-                        cm.mergeBranches(sourceId, dvm.targetId, dvm.os.listItem.ontologyRecord.recordId, catalogId, resolutions)
+
+                        cm.mergeBranches(sourceId, dvm.targetId, dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.resolutions)
                             .then(commitId => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.targetId, commitId, dvm.os.listItem.ontologyRecord.type), $q.reject)
                             .then(() => {
                                 if (dvm.checkbox) {
@@ -103,34 +102,27 @@
                                 }
                             }, onError);
                     }
-
                     dvm.matchesCurrent = function(branch) {
                         return branch['@id'] !== dvm.os.listItem.ontologyRecord.branchId;
                     }
-
                     dvm.allResolved = function() {
                         return _.findIndex(dvm.conflicts, {resolved: false}) === -1;
                     }
-
                     dvm.go = function($event, id) {
                         $event.stopPropagation();
                         dvm.os.goTo(id);
                     }
-
                     dvm.select = function(index) {
                         dvm.index = index;
                         dvm.selected = dvm.conflicts[dvm.index];
                     }
-
                     dvm.hasNext = function() {
                         return (dvm.index + 1) < dvm.conflicts.length;
                     }
-
                     dvm.getTargetTitle = function() {
                         var targetBranch = _.find(dvm.os.listItem.branches, branch => branch['@id'] === dvm.targetId);
                         return dvm.util.getDctermsValue(targetBranch, 'title');
                     }
-
                     dvm.backToList = function() {
                         dvm.index = undefined;
                         dvm.selected = undefined;
@@ -141,7 +133,7 @@
                         dvm.targetId = undefined;
                         dvm.selected = undefined;
                         dvm.index = undefined;
-                        resolutions = {
+                        dvm.resolutions = {
                             additions: [],
                             deletions: []
                         }
@@ -151,11 +143,9 @@
                         dvm.isUserBranch = false;
                         dvm.checkbox = false;
                     }
-
                     function onError(errorMessage) {
                         dvm.error = errorMessage;
                     }
-
                     function setupVariables() {
                         dvm.branch = _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId});
                         dvm.branchTitle = dvm.util.getDctermsValue(dvm.branch, 'title');
@@ -169,12 +159,9 @@
                             dvm.checkbox = false;
                         }
                     }
-
-                    function addToResolutions(selected, notSelected) {
-                        resolutions.additions = _.concat(resolutions.additions, selected.additions,
-                            notSelected.deletions);
-                        resolutions.deletions = _.concat(resolutions.deletions, selected.deletions,
-                            notSelected.additions);
+                    function addToResolutions(notSelected) {
+                        dvm.resolutions.additions = _.concat(dvm.resolutions.additions, notSelected.deletions);
+                        dvm.resolutions.deletions = _.concat(dvm.resolutions.deletions, notSelected.additions);
                     }
 
                     $scope.$watch('dvm.os.listItem.ontologyRecord.branchId', setupVariables);
