@@ -45,6 +45,7 @@
                     var sm = stateManagerService;
                     var ontologyRecords = [];
 
+                    dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ms = mapperStateService;
@@ -61,10 +62,9 @@
                     }
 
                     dvm.open = function() {
-                        dvm.os.openOntology(dvm.recordId, dvm.type)
+                        dvm.os.openOntology(dvm.recordId, dvm.recordTitle, dvm.type)
                             .then(ontologyId => {
-                                dvm.os.addState(dvm.recordId, dvm.recordTitle, ontologyId, dvm.type);
-                                dvm.os.setState(dvm.recordId, dvm.recordTitle);
+                                dvm.showOpenOverlay = false;
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
 
@@ -125,7 +125,7 @@
                     dvm.getAllOntologyRecords();
 
                     function getFilteredRecords(records) {
-                        return _.reject(records, record => _.find(dvm.os.list, {recordId: record['@id']}));
+                        return _.reject(records, record => _.find(dvm.os.list, {ontologyRecord: {recordId: record['@id']}}));
                     }
                 }]
             }

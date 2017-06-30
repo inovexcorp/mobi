@@ -50,7 +50,7 @@
                         '@type': []
                     };
 
-                    dvm.subClasses = _.map(dvm.os.state.subClasses, obj => dvm.ro.getItemIri(obj));
+                    dvm.subClasses = _.map(dvm.os.listItem.ontologyState.subClasses, obj => dvm.ro.getItemIri(obj));
 
                     dvm.nameChanged = function() {
                         if (!dvm.iriHasChanged) {
@@ -96,7 +96,7 @@
                         // add the entity to the ontology
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
                         dvm.os.addEntity(dvm.os.listItem, dvm.individual);
-                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.individual);
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.individual);
                         dvm.os.listItem.flatIndividualsHierarchy = dvm.os.createFlatIndividualTree(dvm.os.listItem);
 
                         // select the new individual

@@ -41,10 +41,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.matonto.catalog.api.CatalogUtilsService;
-import org.matonto.catalog.api.builder.Conflict;
-import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
+import org.matonto.catalog.api.builder.Conflict;
+import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
 import org.matonto.catalog.api.ontologies.mcat.Catalog;
@@ -82,7 +82,6 @@ import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
@@ -112,7 +111,6 @@ import org.openrdf.rio.Rio;
 import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -147,7 +145,6 @@ public class SimpleCatalogManagerTest {
 
     private IRI distributedCatalogId;
     private IRI localCatalogId;
-    private final Resource deletionContext = vf.createIRI(SimpleCatalogUtilsService.DELETION_CONTEXT);
     private final IRI typeIRI = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI);
     private final IRI titleIRI = vf.createIRI(_Thing.title_IRI);
     private final IRI descriptionIRI = vf.createIRI(_Thing.description_IRI);
@@ -1918,20 +1915,31 @@ public class SimpleCatalogManagerTest {
         IRI sub = vf.createIRI("http://test.com#sub");
         Resource leftId = vf.createIRI("http://matonto.org/test/commits#conflict1");
         Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict2");
+
         Model leftModel = mf.createModel();
-        leftModel.add(sub, typeIRI, vf.createIRI("http://test.com#Type"), deletionContext);
+        leftModel.add(sub, typeIRI, vf.createIRI("http://test.com#Type"));
+        Difference leftDiff = new Difference.Builder()
+                .additions(mf.createModel())
+                .deletions(leftModel)
+                .build();
+
         Model rightModel = mf.createModel();
         rightModel.add(sub, typeIRI, vf.createIRI("http://test.com#Type"));
+        Difference rightDiff = new Difference.Builder()
+                .additions(rightModel)
+                .deletions(mf.createModel())
+                .build();
+
         Model originalModel = mf.createModel();
         originalModel.add(sub, descriptionIRI, vf.createLiteral("Description"));
-        setUpConflictTest(leftId, rightId, leftModel, rightModel, originalModel);
+        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
         verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getModelFromCommits(anyListOf(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getRevisionChanges(anyListOf(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
         assertEquals(1, result.size());
         result.forEach(conflict -> {
@@ -1956,22 +1964,35 @@ public class SimpleCatalogManagerTest {
         IRI sub = vf.createIRI("http://test.com#sub");
         Resource leftId = vf.createIRI("http://matonto.org/test/commits#conflict1-2");
         Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict2-2");
-        Model leftModel = mf.createModel();
-        leftModel.add(sub, titleIRI, vf.createLiteral("Title"), deletionContext);
-        leftModel.add(sub, titleIRI, vf.createLiteral("Title Left"));
-        Model rightModel = mf.createModel();
-        rightModel.add(sub, titleIRI, vf.createLiteral("Title"), deletionContext);
-        rightModel.add(sub, titleIRI, vf.createLiteral("Title Right"));
+
+        Model leftAdds = mf.createModel();
+        Model leftDels = mf.createModel();
+        leftAdds.add(sub, titleIRI, vf.createLiteral("Title Left"));
+        leftDels.add(sub, titleIRI, vf.createLiteral("Title"));
+        Difference leftDiff = new Difference.Builder()
+                .additions(leftAdds)
+                .deletions(leftDels)
+                .build();
+
+        Model rightAdds = mf.createModel();
+        Model rightDels = mf.createModel();
+        rightAdds.add(sub, titleIRI, vf.createLiteral("Title Right"));
+        rightDels.add(sub, titleIRI, vf.createLiteral("Title"));
+        Difference rightDiff = new Difference.Builder()
+                .additions(rightAdds)
+                .deletions(rightDels)
+                .build();
+
         Model originalModel = mf.createModel();
         originalModel.add(sub, titleIRI, vf.createLiteral("Title"));
-        setUpConflictTest(leftId, rightId, leftModel, rightModel, originalModel);
+        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
         verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getModelFromCommits(anyListOf(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getRevisionChanges(anyListOf(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
         assertEquals(1, result.size());
         result.forEach(conflict -> {
@@ -1996,19 +2017,29 @@ public class SimpleCatalogManagerTest {
         IRI sub = vf.createIRI("http://test.com#sub");
         Resource leftId = vf.createIRI("http://matonto.org/test/commits#conflict1-3");
         Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict3-3");
-        Model leftModel = mf.createModel();
-        Model rightModel = mf.createModel();
-        rightModel.add(sub, titleIRI, vf.createLiteral("Title Right"));
+
+        Difference leftDiff = new Difference.Builder()
+                .additions(mf.createModel())
+                .deletions(mf.createModel())
+                .build();
+
+        Model rightAdds = mf.createModel();
+        rightAdds.add(sub, titleIRI, vf.createLiteral("Title Right"));
+        Difference rightDiff = new Difference.Builder()
+                .additions(rightAdds)
+                .deletions(mf.createModel())
+                .build();
+
         Model originalModel = mf.createModel();
         originalModel.add(sub, titleIRI, vf.createLiteral("Title"));
-        setUpConflictTest(leftId, rightId, leftModel, rightModel, originalModel);
+        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
         verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getModelFromCommits(anyListOf(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getRevisionChanges(anyListOf(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
         assertEquals(0, result.size());
     }
@@ -2020,21 +2051,33 @@ public class SimpleCatalogManagerTest {
         IRI sub = vf.createIRI("http://test.com#sub");
         Resource leftId = vf.createIRI("http://matonto.org/test/commits#conflict1-4");
         Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict2-4");
-        Model leftModel = mf.createModel();
-        leftModel.add(sub, descriptionIRI, vf.createLiteral("Description"));
-        Model rightModel = mf.createModel();
-        rightModel.add(sub, titleIRI, vf.createLiteral("Title"), deletionContext);
-        rightModel.add(sub, titleIRI, vf.createLiteral("Title Right"));
+
+        Model leftAdds = mf.createModel();
+        leftAdds.add(sub, descriptionIRI, vf.createLiteral("Description"));
+        Difference leftDiff = new Difference.Builder()
+                .additions(leftAdds)
+                .deletions(mf.createModel())
+                .build();
+
+        Model rightAdds = mf.createModel();
+        Model rightDels = mf.createModel();
+        rightAdds.add(sub, titleIRI, vf.createLiteral("Title Right"));
+        rightDels.add(sub, titleIRI, vf.createLiteral("Title"));
+        Difference rightDiff = new Difference.Builder()
+                .additions(rightAdds)
+                .deletions(rightDels)
+                .build();
+
         Model originalModel = mf.createModel();
         originalModel.add(sub, titleIRI, vf.createLiteral("Title"));
-        setUpConflictTest(leftId, rightId, leftModel, rightModel, originalModel);
+        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
         verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getModelFromCommits(anyListOf(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getRevisionChanges(anyListOf(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
         assertEquals(0, result.size());
     }
@@ -2046,21 +2089,33 @@ public class SimpleCatalogManagerTest {
         IRI sub = vf.createIRI("http://test.com#sub");
         Resource leftId = vf.createIRI("http://matonto.org/test/commits#conflict1-5");
         Resource rightId = vf.createIRI("http://matonto.org/test/commits#conflict2-5");
-        Model leftModel = mf.createModel();
-        leftModel.add(sub, titleIRI, vf.createLiteral("Title Left"));
-        Model rightModel = mf.createModel();
-        rightModel.add(sub, titleIRI, vf.createLiteral("Title"), deletionContext);
-        rightModel.add(sub, titleIRI, vf.createLiteral("Title Right"));
+
+        Model leftAdds = mf.createModel();
+        leftAdds.add(sub, titleIRI, vf.createLiteral("Title Left"));
+        Difference leftDiff = new Difference.Builder()
+                .additions(leftAdds)
+                .deletions( mf.createModel())
+                .build();
+
+        Model rightAdds = mf.createModel();
+        Model rightDels = mf.createModel();
+        rightAdds.add(sub, titleIRI, vf.createLiteral("Title Right"));
+        rightDels.add(sub, titleIRI, vf.createLiteral("Title"));
+        Difference rightDiff = new Difference.Builder()
+                .additions(rightAdds)
+                .deletions(rightDels)
+                .build();
+
         Model originalModel = mf.createModel();
         originalModel.add(sub, titleIRI, vf.createLiteral("Title"));
-        setUpConflictTest(leftId, rightId, leftModel, rightModel, originalModel);
+        setUpConflictTest(leftId, rightId, leftDiff, rightDiff, originalModel);
 
         Set<Conflict> result = manager.getConflicts(leftId, rightId);
         verify(utilsService).validateResource(eq(leftId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getModelFromCommits(anyListOf(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getRevisionChanges(anyListOf(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
         assertEquals(1, result.size());
         result.forEach(conflict -> {
@@ -2084,11 +2139,22 @@ public class SimpleCatalogManagerTest {
         // Setup:
         IRI sub = vf.createIRI("http://test.com#sub");
         Resource leftId = vf.createIRI("http://matonto.org/test/commits#conflict1-4");
-        Model leftModel = mf.createModel();
-        leftModel.add(sub, titleIRI, vf.createLiteral("Title Left"));
-        Model rightModel = mf.createModel();
-        rightModel.add(sub, descriptionIRI, vf.createLiteral("Description"));
-        setUpConflictTest(leftId, COMMIT_IRI, leftModel, rightModel, leftModel);
+
+        Model leftAdds = mf.createModel();
+        leftAdds.add(sub, descriptionIRI, vf.createLiteral("Title Left"));
+        Difference leftDiff = new Difference.Builder()
+                .additions(leftAdds)
+                .deletions( mf.createModel())
+                .build();
+
+        Model rightAdds = mf.createModel();
+        rightAdds.add(sub, titleIRI, vf.createLiteral("Description"));
+        Difference rightDiff = new Difference.Builder()
+                .additions(rightAdds)
+                .deletions(mf.createModel())
+                .build();
+
+        setUpConflictTest(leftId, COMMIT_IRI, leftDiff, rightDiff, leftAdds);
         doReturn(Stream.of(COMMIT_IRI).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(COMMIT_IRI), eq(true), any(RepositoryConnection.class));
 
         Set<Conflict> result = manager.getConflicts(leftId, COMMIT_IRI);
@@ -2096,7 +2162,7 @@ public class SimpleCatalogManagerTest {
         verify(utilsService, atLeastOnce()).validateResource(eq(COMMIT_IRI), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(COMMIT_IRI), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getModelFromCommits(anyListOf(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getRevisionChanges(anyListOf(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
         assertEquals(0, result.size());
     }
@@ -2173,19 +2239,19 @@ public class SimpleCatalogManagerTest {
         }
     }
 
-    private void setUpConflictTest(Resource leftId, Resource rightId, Model leftModel, Model rightModel, Model originalModel) {
+    private void setUpConflictTest(Resource leftId, Resource rightId, Difference leftDiff, Difference rightDiff, Model originalModel) {
         doReturn(Stream.of(leftId, COMMIT_IRI).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         doReturn(Stream.of(rightId, COMMIT_IRI).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
         doAnswer(i -> {
             List<Resource> commits = i.getArgumentAt(0, List.class);
             if (commits.isEmpty() || commits.get(0).equals(rightId)) {
-                return rightModel;
+                return rightDiff;
             } else if (commits.get(0).equals(leftId)) {
-                return leftModel;
+                return leftDiff;
             } else {
                 return mf.createModel();
             }
-        }).when(utilsService).getModelFromCommits(anyListOf(Resource.class), any(RepositoryConnection.class));
+        }).when(utilsService).getRevisionChanges(anyListOf(Resource.class), any(RepositoryConnection.class));
         doReturn(originalModel).when(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
     }
 }

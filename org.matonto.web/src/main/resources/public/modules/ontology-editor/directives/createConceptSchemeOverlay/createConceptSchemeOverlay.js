@@ -80,8 +80,8 @@
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.scheme);
                         // update relevant lists
-                        dvm.os.listItem.flatConceptSchemeHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
-                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.scheme);
+                        dvm.os.listItem.flatConceptSchemeHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.scheme);
                         // select the new concept
                         dvm.os.selectItem(_.get(dvm.scheme, '@id'));
                         // hide the overlay

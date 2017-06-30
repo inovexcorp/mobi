@@ -74,6 +74,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 @Component(
         immediate = true,
@@ -94,7 +96,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private CommitFactory commitFactory;
     private InProgressCommitFactory inProgressCommitFactory;
 
-    public static final String DELETION_CONTEXT = "https://matonto.org/is-a-deletion#";
     private static final String GET_IN_PROGRESS_COMMIT;
     private static final String GET_COMMIT_CHAIN;
     private static final String USER_BINDING = "user";
@@ -391,7 +392,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public void addCommit(Branch branch, Commit commit, RepositoryConnection conn) {
-        if (conn.size(commit.getResource()) > 0) {
+        if (conn.containsContext(commit.getResource())) {
             throw throwAlreadyExists(commit.getResource(), commitFactory);
         }
         branch.setHead(commit);
@@ -420,6 +421,20 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public Stream<Statement> getAdditions(Resource commitId, RepositoryConnection conn) {
+        Resource additionsId = getAdditionsResource(commitId, conn);
+        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, additionsId);
+        return StreamSupport.stream(statements.spliterator(), false);
+    }
+
+    @Override
+    public Stream<Statement> getAdditions(Commit commit, RepositoryConnection conn) {
+        Resource additionsId = getAdditionsResource(commit);
+        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, additionsId);
+        return StreamSupport.stream(statements.spliterator(), false);
+    }
+
+    @Override
     public Resource getDeletionsResource(Resource commitId, RepositoryConnection conn) {
         RepositoryResult<Statement> results = conn.getStatements(null, vf.createIRI(Revision.deletions_IRI), null,
                 commitId);
@@ -437,6 +452,20 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             throw new IllegalStateException("Deletions not set on Commit " + commit.getResource());
         }
         return (Resource) new ArrayList<>(values).get(0);
+    }
+
+    @Override
+    public Stream<Statement> getDeletions(Resource commitId, RepositoryConnection conn) {
+        Resource deletionsId = getDeletionsResource(commitId, conn);
+        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, deletionsId);
+        return StreamSupport.stream(statements.spliterator(), false);
+    }
+
+    @Override
+    public Stream<Statement> getDeletions(Commit commit, RepositoryConnection conn) {
+        Resource deletionsId = getDeletionsResource(commit);
+        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, deletionsId);
+        return StreamSupport.stream(statements.spliterator(), false);
     }
 
     @Override
@@ -463,17 +492,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
-    public Model getModelFromCommits(List<Resource> commits, RepositoryConnection conn) {
-        Model model = mf.createModel();
-        commits.forEach(value -> addRevisionStatementsToModel(model, value, conn));
-        return model;
-    }
-
-    @Override
-    public Model getModelFromCommits(Iterator<Resource> commits, RepositoryConnection conn) {
-        Model model = mf.createModel();
-        commits.forEachRemaining(value -> addRevisionStatementsToModel(model, value, conn));
-        return model;
+    public Difference getRevisionChanges(List<Resource> commits, RepositoryConnection conn) {
+        Difference difference = new Difference.Builder()
+                .additions(mf.createModel())
+                .deletions(mf.createModel())
+                .build();
+        commits.forEach(commitId -> aggregateDifferences(difference, commitId, conn));
+        return difference;
     }
 
     @Override
@@ -483,9 +508,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Model getCompiledResource(List<Resource> commits, RepositoryConnection conn) {
-        Model model = getModelFromCommits(commits, conn);
-        model.remove(null, null, null, vf.createIRI(DELETION_CONTEXT));
-        return model;
+        Difference revisionChanges = getRevisionChanges(commits, conn);
+        return revisionChanges.getAdditions();
     }
 
     @Override
@@ -508,8 +532,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     public Model applyDifference(Model base, Difference diff) {
         Model result = mf.createModel(base);
         result.addAll(diff.getAdditions());
-        diff.getDeletions().forEach(statement -> result.remove(statement.getSubject(), statement.getPredicate(),
-                statement.getObject()));
+        result.removeAll(diff.getDeletions());
         return result;
     }
 
@@ -554,35 +577,37 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     /**
-     * Adds the statements from the Revision associated with the Commit identified by the provided Resource to the
-     * provided Model using the RepositoryConnection to get the statements from the repository.
+     * Updates the supplied Difference with statements from the Revision associated with the supplied Commit resource.
+     * Revision addition statements are added to the Difference additions model. Revision deletion statements are
+     * removed from the Difference additions model if they exist, otherwise they are added to the Difference deletions
+     * model.
      *
-     * @param model    The Model to update.
-     * @param commitId The Resource identifying the Commit.
-     * @param conn     The RepositoryConnection to query the repository.
-     * @return A Model with the proper statements added.
+     * @param difference    The Difference object to update.
+     * @param commitId      The Resource identifying the Commit.
+     * @param conn          The RepositoryConnection to query the repository.
      */
-    private Model addRevisionStatementsToModel(Model model, Resource commitId, RepositoryConnection conn) {
-        Resource additionsId = getAdditionsResource(commitId, conn);
-        Resource deletionsId = getDeletionsResource(commitId, conn);
-        conn.getStatements(null, null, null, additionsId).forEach(statement -> {
-            Resource subject = statement.getSubject();
-            IRI predicate = statement.getPredicate();
-            Value object = statement.getObject();
-            if (!model.contains(subject, predicate, object)) {
-                model.add(subject, predicate, object);
-            }
-        });
-        conn.getStatements(null, null, null, deletionsId).forEach(statement -> {
-            Resource subject = statement.getSubject();
-            IRI predicate = statement.getPredicate();
-            Value object = statement.getObject();
-            if (model.contains(subject, predicate, object)) {
-                model.remove(subject, predicate, object);
-            } else {
-                model.add(subject, predicate, object, vf.createIRI(DELETION_CONTEXT));
-            }
-        });
-        return model;
+    private void aggregateDifferences(Difference difference, Resource commitId, RepositoryConnection conn) {
+        Model additions = difference.getAdditions();
+        Model deletions = difference.getDeletions();
+        getAdditions(commitId, conn).forEach(statement -> updateModels(statement, additions, deletions));
+        getDeletions(commitId, conn).forEach(statement -> updateModels(statement, deletions, additions));
+    }
+
+    /**
+     * Remove the supplied triple from the modelToRemove if it exists, otherwise add the triple to modelToAdd.
+     *
+     * @param statement     The statement to process
+     * @param modelToAdd    The Model to add the statement to if it does not exist in modelToRemove
+     * @param modelToRemove The Model to remove the statement from if it exists
+     */
+    private void updateModels(Statement statement, Model modelToAdd, Model modelToRemove) {
+        Resource subject = statement.getSubject();
+        IRI predicate = statement.getPredicate();
+        Value object = statement.getObject();
+        if (modelToRemove.contains(subject, predicate, object)) {
+            modelToRemove.remove(subject, predicate, object);
+        } else {
+            modelToAdd.add(subject, predicate, object);
+        }
     }
 }

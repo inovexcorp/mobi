@@ -25,12 +25,11 @@ package org.matonto.ontology.core.api.versioning;
 
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyListOf;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.anyListOf;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,6 +40,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.CatalogUtilsService;
+import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
@@ -49,6 +49,7 @@ import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
+import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
@@ -84,7 +85,8 @@ import org.openrdf.rio.Rio;
 import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.InputStream;
-import java.util.Collections;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class OntologyRecordVersioningServiceTest {
     private Repository repo;
@@ -98,18 +100,20 @@ public class OntologyRecordVersioningServiceTest {
     private CommitFactory commitFactory = new CommitFactory();
     private InProgressCommitFactory inProgressCommitFactory = new InProgressCommitFactory();
 
-    private final Resource additions = vf.createIRI("http://matonto.org/test/additions#commit");
-    private final Resource additionsUsed = vf.createIRI("http://matonto.org/test/additions#used");
-    private final IRI additionsNoIRI = vf.createIRI("http://matonto.org/test/additions#no-iri");
     private final IRI originalIRI = vf.createIRI("http://test.com/ontology");
     private final IRI newIRI = vf.createIRI("http://test.com/ontology/new");
     private final IRI usedIRI = vf.createIRI("http://test.com/ontology/used");
+    private final IRI typeIRI = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI);
+    private final IRI ontologyIRI = vf.createIRI(OWL.ONTOLOGY.stringValue());
 
     private User user;
     private OntologyRecord record;
     private Branch branch;
     private Commit commit;
     private InProgressCommit inProgressCommit;
+    private Stream<Statement> additions;
+    private Stream<Statement> additionsUsed;
+    private Stream<Statement> additionsNoIRI;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -175,14 +179,19 @@ public class OntologyRecordVersioningServiceTest {
         branch.setHead(commit);
         record = ontologyRecordFactory.createNew(vf.createIRI("http://matonto.org/test/records#ontology-record"));
         record.setOntologyIRI(originalIRI);
+        additions = Stream.of(vf.createStatement(newIRI, typeIRI, ontologyIRI));
+        additionsUsed = Stream.of(vf.createStatement(usedIRI, typeIRI, ontologyIRI));
+        additionsNoIRI = Stream.of(vf.createStatement(originalIRI, vf.createIRI(_Thing.title_IRI), vf.createLiteral("Title")));
 
         MockitoAnnotations.initMocks(this);
 
         when(catalogUtils.getBranch(any(OntologyRecord.class), any(Resource.class), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(branch);
         when(catalogUtils.getInProgressCommit(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
         when(catalogUtils.getObject(any(Resource.class), eq(commitFactory), any(RepositoryConnection.class))).thenReturn(commit);
-        when(catalogUtils.getAdditionsResource(commit)).thenReturn(additions);
+        when(catalogUtils.getAdditions(eq(commit), any(RepositoryConnection.class))).thenReturn(additions);
         when(catalogUtils.getObject(any(Resource.class), eq(ontologyRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
+        when(catalogUtils.applyDifference(any(Model.class), any(Difference.class))).thenAnswer(i -> i.getArgumentAt(1, Difference.class).getAdditions());
+        when(catalogUtils.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(mf.createModel());
 
         when(ontologyManager.ontologyIriExists(usedIRI)).thenReturn(true);
 
@@ -269,7 +278,7 @@ public class OntologyRecordVersioningServiceTest {
 
             service.addCommit(newBranch, commit, conn);
             verify(catalogUtils).addCommit(newBranch, commit, conn);
-            verify(catalogUtils, times(0)).getAdditionsResource(commit);
+            verify(catalogUtils, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(catalogUtils, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
             assertTrue(record.getOntologyIRI().isPresent());
@@ -283,7 +292,7 @@ public class OntologyRecordVersioningServiceTest {
         try (RepositoryConnection conn = repo.getConnection()) {
             service.addCommit(branch, commit, conn);
             verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils, times(0)).getAdditionsResource(commit);
+            verify(catalogUtils, times(0)).getAdditions(commit, conn);
             verify(catalogUtils, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
             assertTrue(record.getOntologyIRI().isPresent());
@@ -296,11 +305,11 @@ public class OntologyRecordVersioningServiceTest {
     public void addCommitToMasterWithCommitWithBaseAndNewOntologyIRITest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            commit.setBaseCommit(commitFactory.createNew(vf.createIRI("http://matonto.org/test/commits/#new")));
+            commit.setBaseCommit(commitFactory.createNew(vf.createIRI("http://matonto.org/test/commits#new")));
 
             service.addCommit(branch, commit, conn);
             verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils).getAdditionsResource(commit);
+            verify(catalogUtils).getAdditions(commit, conn);
             verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager).ontologyIriExists(newIRI);
             assertTrue(record.getOntologyIRI().isPresent());
@@ -313,13 +322,13 @@ public class OntologyRecordVersioningServiceTest {
     public void addCommitToMasterOfRecordWithoutIRIWithCommitWithBaseTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            commit.setBaseCommit(commitFactory.createNew(vf.createIRI("http://matonto.org/test/commits/#new")));
+            commit.setBaseCommit(commitFactory.createNew(vf.createIRI("http://matonto.org/test/commits#new")));
             OntologyRecord newRecord = ontologyRecordFactory.createNew(vf.createIRI("http://matonto.org/test/records#new"));
             when(catalogUtils.getObject(any(Resource.class), eq(ontologyRecordFactory), eq(conn))).thenReturn(newRecord);
 
             service.addCommit(branch, commit, conn);
             verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils).getAdditionsResource(commit);
+            verify(catalogUtils).getAdditions(commit, conn);
             verify(catalogUtils).getObject(any(Resource.class), eq(ontologyRecordFactory), eq(conn));
             verify(ontologyManager).ontologyIriExists(newIRI);
             assertTrue(newRecord.getOntologyIRI().isPresent());
@@ -330,21 +339,22 @@ public class OntologyRecordVersioningServiceTest {
 
     @Test
     public void addCommitToMasterWithCommitWithBaseAndUsedOntologyIRITest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            commit.setBaseCommit(commitFactory.createNew(vf.createIRI("http://matonto.org/test/commits/#new")));
-            when(catalogUtils.getAdditionsResource(commit)).thenReturn(additionsUsed);
-            thrown.expect(IllegalArgumentException.class);
-            thrown.expectMessage("Ontology already exists with IRI " + usedIRI);
+        // Setup:
+        commit.setBaseCommit(commitFactory.createNew(vf.createIRI("http://matonto.org/test/commits#new")));
+        when(catalogUtils.getAdditions(eq(commit), any(RepositoryConnection.class))).thenReturn(additionsUsed);
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Ontology already exists with IRI " + usedIRI);
 
+        try (RepositoryConnection conn = repo.getConnection()) {
             service.addCommit(branch, commit, conn);
-            verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils).getAdditionsResource(commit);
-            verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
-            verify(ontologyManager).ontologyIriExists(newIRI);
+        } finally {
+            verify(catalogUtils).getAdditions(eq(commit), any(RepositoryConnection.class));
+            verify(catalogUtils).getObject(eq(record.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
+            verify(catalogUtils, times(0)).addCommit(eq(branch), eq(commit), any(RepositoryConnection.class));
+            verify(ontologyManager).ontologyIriExists(usedIRI);
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
-            verify(catalogUtils, times(0)).updateObject(record, conn);
+            verify(catalogUtils, times(0)).updateObject(eq(record), any(RepositoryConnection.class));
         }
     }
 
@@ -352,14 +362,14 @@ public class OntologyRecordVersioningServiceTest {
     public void addCommitToMasterWithCommitWithBaseAndNoIRITest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            commit.setBaseCommit(commitFactory.createNew(vf.createIRI("http://matonto.org/test/commits/#new")));
-            when(catalogUtils.getAdditionsResource(commit)).thenReturn(additionsNoIRI);
+            commit.setBaseCommit(commitFactory.createNew(vf.createIRI("http://matonto.org/test/commits#new")));
+            when(catalogUtils.getAdditions(commit, conn)).thenReturn(additionsNoIRI);
 
             service.addCommit(branch, commit, conn);
             verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils).getAdditionsResource(commit);
-            verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
-            verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
+            verify(catalogUtils).getAdditions(commit, conn);
+            verify(catalogUtils, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
+            verify(ontologyManager, times(0)).ontologyIriExists(any(IRI.class));
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
@@ -368,7 +378,7 @@ public class OntologyRecordVersioningServiceTest {
 
     /* addCommit(Branch, User, String, Model, Model, Commit, Commit, RepositoryConnection)*/
 
-    /*@Test
+    @Test
     public void addCommitToOtherBranchWithChangesTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
@@ -379,12 +389,13 @@ public class OntologyRecordVersioningServiceTest {
             service.addCommit(newBranch, user, "Message", additions, deletions, commit, null, conn);
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(catalogUtils).updateCommit(commit, additions, deletions, conn);
-            verify(catalogUtils).addCommit(newBranch, commit, conn);
-            verify(catalogUtils, times(0)).getCommitChain(any(Resource.class), conn);
-            verify(catalogUtils, times(0)).getModelFromCommits(anyListOf(Resource.class), conn);
+            verify(catalogUtils, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
+            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(Resource.class), eq(conn));
+            verify(catalogUtils, times(0)).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
+            verify(catalogUtils).updateCommit(commit, additions, deletions, conn);
+            verify(catalogUtils).addCommit(newBranch, commit, conn);
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
@@ -400,13 +411,14 @@ public class OntologyRecordVersioningServiceTest {
 
             service.addCommit(branch, user, "Message", additions, deletions, null, null, conn);
             verify(catalogManager).createInProgressCommit(user);
-            verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(catalogUtils).updateCommit(commit, additions, deletions, conn);
-            verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils, times(0)).getCommitChain(any(Resource.class), conn);
-            verify(catalogUtils, times(0)).getModelFromCommits(anyListOf(Resource.class), conn);
+            verify(catalogManager).createCommit(inProgressCommit, "Message", null, null);
+            verify(catalogUtils, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
+            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(Resource.class), eq(conn));
+            verify(catalogUtils, times(0)).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
+            verify(catalogUtils).updateCommit(commit, additions, deletions, conn);
+            verify(catalogUtils).addCommit(branch, commit, conn);
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
@@ -417,59 +429,67 @@ public class OntologyRecordVersioningServiceTest {
     public void addCommitToMasterWithChangesAndBaseAndNoAuxTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Statement iriStatement = vf.createStatement(newIRI, vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI), vf.createIRI(OWL.ONTOLOGY.stringValue()));
-            Model additions = mf.createModel(Collections.singleton(iriStatement));
+            Model additionsModel = mf.createModel(additions.collect(Collectors.toSet()));
             Model deletions = mf.createModel();
 
-            service.addCommit(branch, user, "Message", additions, deletions, commit, null, conn);
+            service.addCommit(branch, user, "Message", additionsModel, deletions, commit, null, conn);
             verify(catalogManager).createInProgressCommit(user);
             verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(catalogUtils).updateCommit(commit, additions, deletions, conn);
-            verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils, times(0)).getCommitChain(any(Resource.class), conn);
-            verify(catalogUtils, times(0)).getModelFromCommits(anyListOf(Resource.class), conn);
+            verify(catalogUtils, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
+            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(Resource.class), eq(conn));
+            verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager).ontologyIriExists(newIRI);
+            verify(catalogUtils).updateCommit(commit, additionsModel, deletions, conn);
+            verify(catalogUtils).addCommit(branch, commit, conn);
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(newIRI, record.getOntologyIRI().get());
             verify(catalogUtils).updateObject(record, conn);
         }
-    }*/
+    }
 
-
-
-    /*@Test
-    public void addCommitToMasterWithCommitWithBaseAndAuxTest() throws Exception {
+    @Test
+    public void addCommitToMasterWithChangesAndBaseAndAuxTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Model additions = mf.createModel();
+            Model additionsModel = mf.createModel(additions.collect(Collectors.toSet()));
             Model deletions = mf.createModel();
 
-            service.addCommit(branch, user, "Message", additions, deletions, commit, null, conn);
-            verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils).getAdditionsResource(commit);
+            service.addCommit(branch, user, "Message", additionsModel, deletions, commit, commit, conn);
+            verify(catalogManager).createInProgressCommit(user);
+            verify(catalogManager).createCommit(inProgressCommit, "Message", commit, commit);
+            verify(catalogUtils, times(2)).getCommitChain(commit.getResource(), false, conn);
+            verify(catalogUtils).getCompiledResource(anyListOf(Resource.class), eq(conn));
+            verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
             verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
             verify(ontologyManager).ontologyIriExists(newIRI);
+            verify(catalogUtils).updateCommit(commit, additionsModel, deletions, conn);
+            verify(catalogUtils).addCommit(branch, commit, conn);
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(newIRI, record.getOntologyIRI().get());
             verify(catalogUtils).updateObject(record, conn);
         }
-    }*/
+    }
 
-    /*@Test
-    public void addCommitToMasterOfRecordWithoutIRIWithCommitWithBaseTest() throws Exception {
+    @Test
+    public void addCommitToMasterOfRecordWithoutIRIWithChangesAndBaseTest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            commit.setBaseCommit(commitFactory.createNew(vf.createIRI("http://matonto.org/test/commits/#new")));
-            when(catalogUtils.getAdditionsResource(commit)).thenReturn(additionsNoIRI);
             OntologyRecord newRecord = ontologyRecordFactory.createNew(vf.createIRI("http://matonto.org/test/records#new"));
-            when(catalogUtils.getObject(newRecord.getResource(), ontologyRecordFactory, conn)).thenReturn(newRecord);
+            when(catalogUtils.getObject(any(Resource.class), eq(ontologyRecordFactory), eq(conn))).thenReturn(newRecord);
+            Model additionsModel = mf.createModel(additions.collect(Collectors.toSet()));
+            Model deletions = mf.createModel();
 
-            service.addCommit(branch, commit, conn);
-            verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils).getAdditionsResource(commit);
-            verify(catalogUtils).getObject(newRecord.getResource(), ontologyRecordFactory, conn);
+            service.addCommit(branch, user, "Message", additionsModel, deletions, commit, null, conn);
+            verify(catalogManager).createInProgressCommit(user);
+            verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
+            verify(catalogUtils, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
+            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(Resource.class), eq(conn));
+            verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
+            verify(catalogUtils).getObject(any(Resource.class), eq(ontologyRecordFactory), eq(conn));
             verify(ontologyManager).ontologyIriExists(newIRI);
+            verify(catalogUtils).updateCommit(commit, additionsModel, deletions, conn);
+            verify(catalogUtils).addCommit(branch, commit, conn);
             assertTrue(newRecord.getOntologyIRI().isPresent());
             assertEquals(newIRI, newRecord.getOntologyIRI().get());
             verify(catalogUtils).updateObject(newRecord, conn);
@@ -477,40 +497,52 @@ public class OntologyRecordVersioningServiceTest {
     }
 
     @Test
-    public void addCommitToMasterWithCommitWithBaseAndUsedOntologyIRITest() throws Exception {
+    public void addCommitToMasterWithChangesWithBaseAndUsedOntologyIRITest() throws Exception {
+        // Setup:
+        Model additionsModel = mf.createModel(additionsUsed.collect(Collectors.toSet()));
+        Model deletions = mf.createModel();
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Ontology already exists with IRI " + usedIRI);
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            service.addCommit(branch, user, "Message", additionsModel, deletions, commit, null, conn);
+        } finally {
+            verify(catalogManager).createInProgressCommit(user);
+            verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
+            verify(catalogUtils, times(0)).getCommitChain(any(Resource.class), eq(false), any(RepositoryConnection.class));
+            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(Resource.class), any(RepositoryConnection.class));
+            verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
+            verify(catalogUtils).getObject(eq(record.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
+            verify(ontologyManager).ontologyIriExists(usedIRI);
+            verify(catalogUtils, times(0)).updateCommit(eq(commit), eq(additionsModel), eq(deletions), any(RepositoryConnection.class));
+            verify(catalogUtils, times(0)).addCommit(eq(branch), eq(commit), any(RepositoryConnection.class));
+            assertTrue(record.getOntologyIRI().isPresent());
+            assertEquals(originalIRI, record.getOntologyIRI().get());
+            verify(catalogUtils, times(0)).updateObject(eq(record), any(RepositoryConnection.class));
+        }
+    }
+
+    @Test
+    public void addCommitToMasterWithChangesWithBaseAndNoIRITest() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            commit.setBaseCommit(commitFactory.createNew(vf.createIRI("http://matonto.org/test/commits/#new")));
-            when(catalogUtils.getAdditionsResource(commit)).thenReturn(additionsUsed);
-            thrown.expect(IllegalArgumentException.class);
-            thrown.expectMessage("Ontology already exists with IRI " + usedIRI);
+            Model additionsModel = mf.createModel(additionsNoIRI.collect(Collectors.toSet()));
+            Model deletions = mf.createModel();
 
-            service.addCommit(branch, commit, conn);
+            service.addCommit(branch, user, "Message", additionsModel, deletions, commit, null, conn);
+            verify(catalogManager).createInProgressCommit(user);
+            verify(catalogManager).createCommit(inProgressCommit, "Message", commit, null);
+            verify(catalogUtils, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
+            verify(catalogUtils, times(0)).getCompiledResource(anyListOf(Resource.class), eq(conn));
+            verify(catalogUtils).applyDifference(any(Model.class), any(Difference.class));
+            verify(catalogUtils, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
+            verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
+            verify(catalogUtils).updateCommit(commit, additionsModel, deletions, conn);
             verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils).getAdditionsResource(commit);
-            verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
-            verify(ontologyManager).ontologyIriExists(newIRI);
+            verify(ontologyManager, times(0)).ontologyIriExists(any(IRI.class));
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
         }
     }
-
-    @Test
-    public void addCommitToMasterWithCommitWithBaseAndNoIRITest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            commit.setBaseCommit(commitFactory.createNew(vf.createIRI("http://matonto.org/test/commits/#new")));
-            when(catalogUtils.getAdditionsResource(commit)).thenReturn(additionsNoIRI);
-
-            service.addCommit(branch, commit, conn);
-            verify(catalogUtils).addCommit(branch, commit, conn);
-            verify(catalogUtils).getAdditionsResource(commit);
-            verify(catalogUtils).getObject(record.getResource(), ontologyRecordFactory, conn);
-            verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
-            assertTrue(record.getOntologyIRI().isPresent());
-            assertEquals(originalIRI, record.getOntologyIRI().get());
-            verify(catalogUtils, times(0)).updateObject(record, conn);
-        }
-    }*/
 }

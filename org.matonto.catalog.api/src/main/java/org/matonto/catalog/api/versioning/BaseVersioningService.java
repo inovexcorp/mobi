@@ -1,8 +1,8 @@
-package org.matonto.catalog.impl.versioning;
+package org.matonto.catalog.api.versioning;
 
 /*-
  * #%L
- * org.matonto.catalog.impl
+ * org.matonto.catalog.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,8 +23,7 @@ package org.matonto.catalog.impl.versioning;
  * #L%
  */
 
-import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.Reference;
+
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.CatalogUtilsService;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
@@ -33,7 +32,6 @@ import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
-import org.matonto.catalog.api.versioning.VersioningService;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
@@ -41,45 +39,19 @@ import org.matonto.repository.api.RepositoryConnection;
 
 import javax.annotation.Nullable;
 
-@Component(immediate = true)
-public class BaseVersioningService implements VersioningService<VersionedRDFRecord> {
-    private BranchFactory branchFactory;
-    private CommitFactory commitFactory;
-    private CatalogManager catalogManager;
-    private CatalogUtilsService catalogUtils;
-
-    @Reference
-    protected void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
-    }
-
-    @Reference
-    protected void setCommitFactory(CommitFactory commitFactory) {
-        this.commitFactory = commitFactory;
-    }
-
-    @Reference
-    protected void setCatalogManager(CatalogManager catalogManager) {
-        this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    protected void setCatalogUtils(CatalogUtilsService catalogUtils) {
-        this.catalogUtils = catalogUtils;
-    }
+public abstract class BaseVersioningService<T extends VersionedRDFRecord> implements VersioningService<T> {
+    protected BranchFactory branchFactory;
+    protected CommitFactory commitFactory;
+    protected CatalogManager catalogManager;
+    protected CatalogUtilsService catalogUtils;
 
     @Override
-    public String getTypeIRI() {
-        return VersionedRDFRecord.TYPE;
-    }
-
-    @Override
-    public Branch getSourceBranch(VersionedRDFRecord record, Resource branchId, RepositoryConnection conn) {
+    public Branch getSourceBranch(T record, Resource branchId, RepositoryConnection conn) {
         return catalogUtils.getBranch(record, branchId, branchFactory, conn);
     }
 
     @Override
-    public Branch getTargetBranch(VersionedRDFRecord record, Resource branchId, RepositoryConnection conn) {
+    public Branch getTargetBranch(T record, Resource branchId, RepositoryConnection conn) {
         return catalogUtils.getBranch(record, branchId, branchFactory, conn);
     }
 

@@ -33,7 +33,7 @@ import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
-import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
+import org.matonto.catalog.api.versioning.BaseVersioningService;
 import org.matonto.catalog.api.versioning.VersioningService;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
@@ -41,30 +41,28 @@ import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import org.matonto.persistence.utils.Bindings;
-import org.matonto.persistence.utils.RepositoryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.TupleQuery;
-import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.RepositoryConnection;
 import org.openrdf.model.vocabulary.OWL;
-import org.openrdf.model.vocabulary.RDF;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
-@Component(immediate = true)
-public class OntologyRecordVersioningService implements VersioningService<OntologyRecord> {
+@Component(
+        immediate = true,
+        provide = { VersioningService.class, OntologyRecordVersioningService.class }
+)
+public class OntologyRecordVersioningService extends BaseVersioningService<OntologyRecord> {
     private OntologyRecordFactory ontologyRecordFactory;
-    private BranchFactory branchFactory;
-    private CommitFactory commitFactory;
-    private CatalogManager catalogManager;
     private OntologyManager ontologyManager;
-    private CatalogUtilsService catalogUtils;
     private ValueFactory vf;
     private ModelFactory mf;
 
@@ -129,35 +127,9 @@ public class OntologyRecordVersioningService implements VersioningService<Ontolo
     }
 
     @Override
-    public Branch getTargetBranch(OntologyRecord record, Resource branchId, RepositoryConnection conn) {
-        return catalogUtils.getBranch(record, branchId, branchFactory, conn);
-    }
-
-    @Override
-    public Branch getSourceBranch(OntologyRecord record, Resource branchId, RepositoryConnection conn) {
-        return catalogUtils.getBranch(record, branchId, branchFactory, conn);
-    }
-
-    @Override
-    public Commit getBranchHeadCommit(Branch branch, RepositoryConnection conn) {
-        return branch.getHead_resource().map(resource -> catalogUtils.getObject(resource, commitFactory, conn))
-                .orElse(null);
-    }
-
-    @Override
-    public InProgressCommit getInProgressCommit(Resource recordId, User user, RepositoryConnection conn) {
-        return catalogUtils.getInProgressCommit(recordId, user.getResource(), conn);
-    }
-
-    @Override
-    public Commit createCommit(InProgressCommit commit, String message, Commit baseCommit, Commit auxCommit) {
-        return catalogManager.createCommit(commit, message, baseCommit, auxCommit);
-    }
-
-    @Override
     public void addCommit(Branch branch, Commit commit, RepositoryConnection conn) {
         Optional<Resource> recordOpt = getRecordIriIfMaster(branch, conn);
-        recordOpt.ifPresent(recordId -> commit.getBaseCommit_resource().ifPresent(baseCommitId ->
+        recordOpt.ifPresent(recordId -> commit.getBaseCommit_resource().ifPresent(baseCommit ->
                 updateOntologyIRI(recordId, commit, conn)));
         catalogUtils.addCommit(branch, commit, conn);
     }
@@ -166,64 +138,57 @@ public class OntologyRecordVersioningService implements VersioningService<Ontolo
     public Resource addCommit(Branch branch, User user, String message, Model additions, Model deletions,
                               Commit baseCommit, Commit auxCommit, RepositoryConnection conn) {
         Commit newCommit = createCommit(catalogManager.createInProgressCommit(user), message, baseCommit, auxCommit);
-        catalogUtils.updateCommit(newCommit, additions, deletions, conn);
         // Determine if branch is the master branch of a record
         Optional<Resource> recordOpt = getRecordIriIfMaster(branch, conn);
         recordOpt.ifPresent(recordId -> {
-            // Collect all changes from source branch
             if (baseCommit != null) {
+                // If this is not the initial commit
                 Model model;
                 Difference diff = new Difference.Builder().additions(additions).deletions(deletions).build();
                 if (auxCommit != null) {
+                    // If this is a merge, collect all the additions from the aux branch and provided models
                     List<Resource> sourceChain = catalogUtils.getCommitChain(auxCommit.getResource(), false, conn);
                     sourceChain.removeAll(catalogUtils.getCommitChain(baseCommit.getResource(), false, conn));
                     model = catalogUtils.applyDifference(catalogUtils.getCompiledResource(sourceChain, conn), diff);
                 } else {
+                    // Else, this is a regular commit. Make sure we remove duplicated add/del statements
                     model = catalogUtils.applyDifference(mf.createModel(), diff);
                 }
-                updateOntologyIRI(recordId, model, conn);
+                updateOntologyIRI(recordId, model.stream(), conn);
             }
         });
         catalogUtils.addCommit(branch, newCommit, conn);
+        catalogUtils.updateCommit(newCommit, additions, deletions, conn);
         return newCommit.getResource();
     }
 
-    @Override
-    public void removeInProgressCommit(InProgressCommit commit, RepositoryConnection conn) {
-        catalogUtils.removeInProgressCommit(commit, conn);
-    }
-
-    private Optional<IRI> getNewOntologyIRI(Model additions) {
-        return mf.createModel(additions).filter(null, vf.createIRI(RDF.TYPE.stringValue()),
-                vf.createIRI(OWL.ONTOLOGY.stringValue())).subjects().stream()
-                .findFirst().map(resource -> vf.createIRI(resource.stringValue()));
-    }
-
-    private void testOntologyIRIUniqueness(IRI ontologyIRI) {
-        if (ontologyManager.ontologyIriExists(ontologyIRI)) {
-            throw new IllegalArgumentException("Ontology already exists with IRI " + ontologyIRI);
-        }
-    }
-
     private void updateOntologyIRI(Resource recordId, Commit commit, RepositoryConnection conn) {
-        Resource additionsResource = catalogUtils.getAdditionsResource(commit);
-        Model model = RepositoryResults.asModel(conn.getStatements(null, null, null, additionsResource), mf);
-        updateOntologyIRI(recordId, model, conn);
+        updateOntologyIRI(recordId, catalogUtils.getAdditions(commit, conn), conn);
     }
 
-    private void updateOntologyIRI(Resource recordId, Model additions, RepositoryConnection conn) {
-        OntologyRecord record = catalogUtils.getObject(recordId, ontologyRecordFactory, conn);
+    private void updateOntologyIRI(Resource recordId, Stream<Statement> additions, RepositoryConnection conn) {
         getNewOntologyIRI(additions).ifPresent(newIRI -> {
+            OntologyRecord record = catalogUtils.getObject(recordId, ontologyRecordFactory, conn);
             if (!record.getOntologyIRI().isPresent() || !newIRI.equals(record.getOntologyIRI().get())) {
-                updateOntologyIRI(record, newIRI, conn);
+                testOntologyIRIUniqueness(newIRI);
+                record.setOntologyIRI(newIRI);
+                catalogUtils.updateObject(record, conn);
             }
         });
     }
 
-    private void updateOntologyIRI(OntologyRecord record, IRI newOntologyIRI, RepositoryConnection conn) {
-        testOntologyIRIUniqueness(newOntologyIRI);
-        record.setOntologyIRI(newOntologyIRI);
-        catalogUtils.updateObject(record, conn);
+    private Optional<Resource> getNewOntologyIRI(Stream<Statement> additions) {
+        return additions.filter(statement ->
+                statement.getPredicate().equals(vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI)) &&
+                        statement.getObject().equals(vf.createIRI(OWL.ONTOLOGY.stringValue())))
+                .findFirst()
+                .flatMap(statement -> Optional.of(statement.getSubject()));
+    }
+
+    private void testOntologyIRIUniqueness(Resource ontologyIRI) {
+        if (ontologyManager.ontologyIriExists(ontologyIRI)) {
+            throw new IllegalArgumentException("Ontology already exists with IRI " + ontologyIRI);
+        }
     }
 
     private Optional<Resource> getRecordIriIfMaster(Branch branch, RepositoryConnection conn) {

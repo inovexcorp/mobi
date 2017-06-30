@@ -69,16 +69,16 @@
                     dvm.create = function() {
                         if (dvm.schemes.length) {
                             _.forEach(dvm.schemes, scheme => {
-                                var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.recordId, scheme['@id']);
+                                var entity = dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, scheme['@id']);
                                 if (_.has(entity, prefixes.skos + 'hasTopConcept')) {
                                     entity[prefixes.skos + 'hasTopConcept'].push({'@id': dvm.concept['@id']});
                                 } else {
                                     entity[prefixes.skos + 'hasTopConcept'] = [{'@id': dvm.concept['@id']}];
                                 }
-                                dvm.os.addToAdditions(dvm.os.listItem.recordId, {'@id': scheme['@id'], [prefixes.skos + 'hasTopConcept']: [{'@id': dvm.concept['@id']}]});
+                                dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': scheme['@id'], [prefixes.skos + 'hasTopConcept']: [{'@id': dvm.concept['@id']}]});
                                 dvm.os.addEntityToHierarchy(dvm.os.listItem.conceptSchemeHierarchy, dvm.concept['@id'], dvm.os.listItem.conceptSchemeIndex, scheme['@id']);
                             });
-                            dvm.os.listItem.flatConceptSchemeHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemeHierarchy, dvm.os.listItem.recordId);
+                            dvm.os.listItem.flatConceptSchemeHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.conceptSchemeHierarchy, dvm.os.listItem.ontologyRecord.recordId);
                         }
                         dvm.ontoUtils.addLanguageToNewEntity(dvm.concept, dvm.language);
                         // add the entity to the ontology
@@ -86,8 +86,8 @@
                         // update relevant lists
                         var hierarchy = _.get(dvm.os.listItem, 'conceptHierarchy');
                         hierarchy.push({'entityIRI': dvm.concept['@id']});
-                        dvm.os.listItem.flatConceptHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.recordId);
-                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.concept);
+                        dvm.os.listItem.flatConceptHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.concept);
                         // select the new class
                         dvm.os.selectItem(_.get(dvm.concept, '@id'));
                         // hide the overlay

@@ -45,7 +45,7 @@
                     dvm.fileName = $filter('splitIRI')(dvm.os.listItem.ontologyId).end;
 
                     dvm.download = function() {
-                        om.downloadOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.serialization, dvm.fileName);
+                        om.downloadOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.serialization, dvm.fileName);
                         dvm.os.showDownloadOverlay = false;
                     }
                 }

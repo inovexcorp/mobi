@@ -41,7 +41,7 @@
                     dvm.os = ontologyStateService;
 
                     dvm.getBranch = function() {
-                        return _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.branchId});
+                        return _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId});
                     }
                 }
             }

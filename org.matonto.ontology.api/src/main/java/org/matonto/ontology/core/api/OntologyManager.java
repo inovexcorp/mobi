@@ -25,17 +25,17 @@ package org.matonto.ontology.core.api;
 
 import org.matonto.ontology.core.api.builder.OntologyRecordConfig;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
-import javax.annotation.Nonnull;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.util.Optional;
-
 import org.matonto.ontology.core.utils.MatontoOntologyCreationException;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.util.Optional;
+import javax.annotation.Nonnull;
 
 public interface OntologyManager {
 
@@ -103,12 +103,12 @@ public interface OntologyManager {
     Ontology createOntology(Model model);
 
     /**
-     * Tests whether an OntologyRecord with the provided ontology IRI exists in the Catalog.
+     * Tests whether an OntologyRecord with the provided OntologyIRI Resource exists in the Catalog.
      *
      * @param ontologyIRI An ontology IRI
      * @return True if the ontology exists; false otherwise
      */
-    boolean ontologyIriExists(IRI ontologyIRI);
+    boolean ontologyIriExists(Resource ontologyIRI);
 
     /**
      * Retrieves an Ontology using an ontology IRI.
