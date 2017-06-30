@@ -104,6 +104,22 @@ describe('Manchester Converter service', function() {
                     expect(result).toBe('not ClassA');
                 });
             });
+            describe('with oneOf', function() {
+                beforeEach(function() {
+                    this.blankNode[prefixes.owl + 'oneOf'] = [{'@list': [
+                        {'@id': 'ClassA'},
+                        {'@id': 'ClassB'}
+                    ]}];
+                })
+                it('and HTML', function() {
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, true);
+                    expect(result).toBe('{ClassA ClassB}');
+                });
+                it('without HTML', function() {
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
+                    expect(result).toBe('{ClassA ClassB}');
+                });
+            });
             it('unless it is invalid', function() {
                 var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
                 expect(result).toBe(this.blankNode['@id']);
@@ -205,6 +221,48 @@ describe('Manchester Converter service', function() {
                 it('without HTML', function() {
                     var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
                     expect(result).toBe('PropA exactly 1');
+                });
+            });
+            describe('with minQualifiedCardinality', function() {
+                beforeEach(function() {
+                    this.blankNode[prefixes.owl + 'minCardinality'] = [{'@value': '1'}];
+                    this.blankNode[prefixes.owl + 'onClass'] = [{'@id': 'ClassA'}];
+                });
+                it('with HTML', function() {
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, true);
+                    expect(result).toBe('PropA<span class="manchester-rest"> min </span><span class="manchester-lit">1</span> ClassA');
+                });
+                it('without HTML', function() {
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
+                    expect(result).toBe('PropA min 1 ClassA');
+                });
+            });
+            describe('with maxQualifiedCardinality', function() {
+                beforeEach(function() {
+                    this.blankNode[prefixes.owl + 'maxCardinality'] = [{'@value': '1'}];
+                    this.blankNode[prefixes.owl + 'onClass'] = [{'@id': 'ClassA'}];
+                });
+                it('with HTML', function() {
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, true);
+                    expect(result).toBe('PropA<span class="manchester-rest"> max </span><span class="manchester-lit">1</span> ClassA');
+                });
+                it('without HTML', function() {
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
+                    expect(result).toBe('PropA max 1 ClassA');
+                });
+            });
+            describe('with qualifiedCardinality', function() {
+                beforeEach(function() {
+                    this.blankNode[prefixes.owl + 'cardinality'] = [{'@value': '1'}];
+                    this.blankNode[prefixes.owl + 'onClass'] = [{'@id': 'ClassA'}];
+                });
+                it('with HTML', function() {
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, true);
+                    expect(result).toBe('PropA<span class="manchester-rest"> exactly </span><span class="manchester-lit">1</span> ClassA');
+                });
+                it('without HTML', function() {
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
+                    expect(result).toBe('PropA exactly 1 ClassA');
                 });
             });
             it('unless it is invalid', function() {

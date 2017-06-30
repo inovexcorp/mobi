@@ -47,18 +47,17 @@ import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.PaginatedSearchParams;
+import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.builder.Difference;
-import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
-import org.matonto.catalog.api.ontologies.mcat.Catalog;
 import org.matonto.catalog.api.ontologies.mcat.CatalogFactory;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
+import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.catalog.api.versioning.VersioningManager;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
@@ -70,8 +69,11 @@ import org.matonto.ontology.core.api.NamedIndividual;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
+import org.matonto.ontology.core.api.builder.OntologyRecordConfig;
 import org.matonto.ontology.core.api.classexpression.OClass;
 import org.matonto.ontology.core.api.datarange.Datatype;
+import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
@@ -168,6 +170,9 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     private SesameTransformer sesameTransformer;
 
     @Mock
+    private PaginatedSearchResults<Record> results;
+
+    @Mock
     private CacheManager cacheManager;
 
     @Mock
@@ -185,19 +190,18 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     private OntologyRecordFactory ontologyRecordFactory;
     private InProgressCommitFactory inProgressCommitFactory;
     private UserFactory userFactory;
-    private Resource catalogId;
-    private Catalog catalog;
-    private Resource recordId;
+    private IRI catalogId;
+    private IRI recordId;
     private OntologyRecord record;
-    private Resource inProgressCommitId;
+    private IRI inProgressCommitId;
     private InProgressCommit inProgressCommit;
-    private Resource commitId;
+    private IRI commitId;
     private Commit commit;
-    private Resource branchId;
+    private IRI branchId;
     private Branch branch;
-    private Resource userId;
+    private IRI userId;
     private User user;
-    private Resource classId;
+    private IRI classId;
     private Difference difference;
     private Model additions;
     private Model deletions;
@@ -302,7 +306,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         rest.setValueFactory(valueFactory);
         rest.setOntologyManager(ontologyManager);
         rest.setCatalogManager(catalogManager);
-        rest.setOntologyRecordFactory(ontologyRecordFactory);
         rest.setEngineManager(engineManager);
         rest.setSesameTransformer(sesameTransformer);
         rest.setCacheManager(cacheManager);
@@ -314,7 +317,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         simpleOntologyManager.setRepositoryManager(repoManager);
 
         catalogId = valueFactory.createIRI("http://matonto.org/catalog");
-        catalog = catalogFactory.createNew(catalogId);
         recordId = valueFactory.createIRI("http://matonto.org/record");
         record = ontologyRecordFactory.createNew(recordId);
         inProgressCommitId = valueFactory.createIRI("http://matonto.org/in-progress-commit");
@@ -402,16 +404,23 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(engineManager, versioningManager, ontologyId, ontology, importedOntologyId, importedOntology,
-                catalogManager, ontologyManager, sesameTransformer, cacheManager, mockCache);
+        reset(engineManager, versioningManager, ontologyId, ontology, importedOntologyId, importedOntology, catalogManager,
+                ontologyManager, sesameTransformer, results, cacheManager, mockCache);
+
         final IRI skosConcept = valueFactory.createIRI(SKOS.CONCEPT.stringValue());
         final IRI skosConceptScheme = valueFactory.createIRI(SKOS.CONCEPT_SCHEME.stringValue());
+
+        when(results.getPage()).thenReturn(Collections.emptyList());
+        when(results.getPageNumber()).thenReturn(0);
+        when(results.getPageSize()).thenReturn(0);
+        when(results.getTotalSize()).thenReturn(0);
 
         when(versioningManager.commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitId);
 
         when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(user));
 
         when(ontologyId.getOntologyIdentifier()).thenReturn(ontologyIRI);
+        when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
 
         when(ontology.getOntologyId()).thenReturn(ontologyId);
         when(ontology.asModel(modelFactory)).thenReturn(ontologyModel);
@@ -438,9 +447,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(importedOntology.getAllIndividuals()).thenReturn(individuals);
         when(importedOntology.asJsonLD()).thenReturn(importedOntologyJsonLd);
 
-        when(catalogManager.getLocalCatalog()).thenReturn(catalog);
-        when(catalogManager.getLocalCatalogIRI()).thenReturn((IRI) catalogId);
-        when(catalogManager.createRecord(any(RecordConfig.class), eq(ontologyRecordFactory))).thenReturn(record);
+        when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogId);
+        when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(results);
         when(catalogManager.getRecord(catalogId, recordId, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
         when(catalogManager.getInProgressCommit(catalogId, recordId, user)).thenReturn(Optional.of(inProgressCommit));
@@ -450,6 +458,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .createModel());
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
 
+        when(ontologyManager.createOntologyRecord(any(OntologyRecordConfig.class))).thenReturn(record);
         when(ontologyManager.createOntology(any(FileInputStream.class))).thenReturn(ontology);
         when(ontologyManager.createOntology(anyString())).thenReturn(ontology);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
@@ -655,10 +664,11 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 201);
         assertGetUserFromContext();
         verify(ontologyManager).createOntology(any(FileInputStream.class));
-        verify(ontology).getOntologyId();
+        verify(ontology, atLeastOnce()).getOntologyId();
         verify(ontologyId).getOntologyIdentifier();
-        verify(catalogManager).getLocalCatalogIRI();
-        verify(catalogManager).createRecord(any(RecordConfig.class), eq(ontologyRecordFactory));
+        verify(ontologyId).getOntologyIRI();
+        verify(catalogManager, atLeastOnce()).getLocalCatalogIRI();
+        verify(ontologyManager).createOntologyRecord(any(OntologyRecordConfig.class));
         verify(catalogManager).addRecord(catalogId, record);
         verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
         verify(mockCache).put(Mockito.anyString(), Mockito.any(Ontology.class));
@@ -708,6 +718,23 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 500);
     }
 
+    @Test
+    public void testUploadExistingOntologyFile() {
+        // Setup:
+        when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(true);
+        record.setOntologyIRI(ontologyIRI);
+        when(results.getPage()).thenReturn(Collections.singletonList(record));
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+        fd.field("title", "title");
+        fd.field("description", "description");
+        fd.field("keywords", "keyword1,keyword2");
+
+        Response response = target().path("ontologies").request().post(Entity.entity(fd,
+                MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+    }
+
     // Test upload ontology json
 
     @Test
@@ -720,10 +747,11 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 201);
         assertGetUserFromContext();
         verify(ontologyManager).createOntology(ontologyJson.toString());
-        verify(ontology).getOntologyId();
+        verify(ontology, atLeastOnce()).getOntologyId();
         verify(ontologyId).getOntologyIdentifier();
-        verify(catalogManager).getLocalCatalogIRI();
-        verify(catalogManager).createRecord(any(RecordConfig.class), eq(ontologyRecordFactory));
+        verify(ontologyId).getOntologyIRI();
+        verify(catalogManager, atLeastOnce()).getLocalCatalogIRI();
+        verify(ontologyManager).createOntologyRecord(any(OntologyRecordConfig.class));
         verify(catalogManager).addRecord(catalogId, record);
         verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
         verify(mockCache).put(Mockito.anyString(), Mockito.any(Ontology.class));
@@ -753,6 +781,19 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
                 "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
         assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void testUploadExistingOntologyJson() {
+        // Setup:
+        when(ontologyManager.ontologyIriExists(any(IRI.class))).thenReturn(true);
+        record.setOntologyIRI(ontologyIRI);
+        when(results.getPage()).thenReturn(Collections.singletonList(record));
+        JSONObject ontologyJson = new JSONObject().element("@id", "http://matonto.org/ontology");
+
+        Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
+                "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(ontologyJson));
+        assertEquals(response.getStatus(), 400);
     }
 
     // Test get ontology
