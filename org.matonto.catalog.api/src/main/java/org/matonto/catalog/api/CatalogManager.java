@@ -738,6 +738,19 @@ public interface CatalogManager {
     Model getCompiledResource(Resource commitId);
 
     /**
+     * Gets the Model which represents the entity at the instance of the Commit identified by the provided Resource
+     * using previous Commit data to construct it.
+     *
+     * @param commitId The Resource identifying the Commit identifying the spot in the entity's history that you wish
+     *                 to retrieve.
+     * @param branchId The Resource identifying the Branch from where the Commit should originate.
+     * @param versionedRDFRecordId The Resource identifying the Record from where the Branch should originate.
+     * @return Model which represents the resource at the Commit's point in history.
+     * @throws IllegalArgumentException Thrown if the Commit could not be found.
+     */
+    Model getCompiledResource(Resource commitId, Resource branchId, Resource versionedRDFRecordId);
+
+    /**
      * Gets all of the conflicts between the Commits identified by the two provided Resources.
      *
      * @param leftId The left (first) Commit.

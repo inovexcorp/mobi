@@ -754,6 +754,28 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
         assertEquals(response.getStatus(), 500);
     }
+    
+    // Test upload changes to ontology 
+    /*
+    @Test
+    public void testUploadChangesToOntology() {}
+    
+    @Test
+    public void testUploadChangesToOntologyWithoutFile() {}
+    
+    @Test
+    public void testUploadChangesToOntologyInvalidRecordId() {}
+    
+//    @Test - BranchId is not currently used but is included 
+//    public void testUploadChangesToOntologyInvalidBranchId() {}
+    
+    @Test
+    public void testUploadChangesToOntologyInvalidCommitId() {}
+    
+    @Test
+    public void testUploadChangesToOntologyInvalidOntology() {}
+    */
+    
 
     // Test get ontology
 

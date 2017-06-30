@@ -69,6 +69,9 @@ import org.openrdf.model.vocabulary.RDF;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -92,14 +95,20 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private InProgressCommitFactory inProgressCommitFactory;
 
     private static final String GET_IN_PROGRESS_COMMIT;
+    private static final String GET_COMMIT_CHAIN;
     private static final String USER_BINDING = "user";
+    private static final String PARENT_BINDING = "parent";
     private static final String RECORD_BINDING = "record";
     private static final String COMMIT_BINDING = "commit";
 
     static {
         try {
             GET_IN_PROGRESS_COMMIT = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/get-in-progress-commit.rq"),
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-in-progress-commit.rq"),
+                    "UTF-8"
+            );
+            GET_COMMIT_CHAIN = IOUtils.toString(
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-chain.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -390,6 +399,27 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public List<Resource> getCommitChain(Resource commitId, RepositoryConnection conn) {
+        List<Resource> results = new ArrayList<>();
+        Iterator<Value> commits = getCommitChainIterator(commitId, conn, false);
+        commits.forEachRemaining(commit -> results.add((Resource) commit));
+        return results;
+    }
+
+    @Override
+    public Iterator<Value> getCommitChainIterator(Resource commitId, RepositoryConnection conn, boolean asc) {
+        TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_CHAIN);
+        query.setBinding(COMMIT_BINDING, commitId);
+        TupleQueryResult result = query.evaluate();
+        LinkedList<Value> commits = new LinkedList<>();
+        result.forEach(bindingSet -> bindingSet.getBinding(PARENT_BINDING).ifPresent(binding ->
+                commits.add(binding.getValue())));
+        commits.addFirst(commitId);
+        return asc ? commits.descendingIterator() : commits.iterator();
+    }
+
+    
+    @Override
     public Resource getAdditionsResource(Resource commitId, RepositoryConnection conn) {
         RepositoryResult<Statement> results = conn.getStatements(null, vf.createIRI(Revision.additions_IRI), null,
                 commitId);
@@ -441,6 +471,17 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                     conn.remove(statement, oppositeNamedGraph);
                 }
             });
+        }
+    }
+
+    @Override
+    public void validateCommitPath(Resource catalogId, Resource recordId, Resource branchId, Resource commitId, 
+                      RepositoryConnection conn) {
+        validateBranch(catalogId, recordId, branchId, conn);
+        Branch branch = getExpectedObject(branchId, branchFactory, conn);
+        Resource head = getHeadCommitIRI(branch);
+        if (!(head.equals(commitId) || getCommitChain(head, conn).contains(commitId))) {
+            throw throwDoesNotBelong(commitId, commitFactory, branchId, branchFactory);
         }
     }
 

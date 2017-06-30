@@ -234,9 +234,6 @@ public class SimpleCatalogManager implements CatalogManager {
     private static final String FIND_RECORDS_QUERY;
     private static final String COUNT_RECORDS_QUERY;
     private static final String GET_NEW_LATEST_VERSION;
-    private static final String GET_COMMIT_CHAIN;
-    private static final String COMMIT_BINDING = "commit";
-    private static final String PARENT_BINDING = "parent";
     private static final String RECORD_BINDING = "record";
     private static final String CATALOG_BINDING = "catalog";
     private static final String RECORD_COUNT_BINDING = "record_count";
@@ -255,10 +252,6 @@ public class SimpleCatalogManager implements CatalogManager {
             );
             GET_NEW_LATEST_VERSION = IOUtils.toString(
                     SimpleCatalogManager.class.getResourceAsStream("/get-new-latest-version.rq"),
-                    "UTF-8"
-            );
-            GET_COMMIT_CHAIN = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/get-commit-chain.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -862,7 +855,7 @@ public class SimpleCatalogManager implements CatalogManager {
         removeObjectWithRelationship(branch.getResource(), recordId, VersionedRDFRecord.branch_IRI, conn);
         Optional<Resource> headCommit = branch.getHead_resource();
         if (headCommit.isPresent()) {
-            List<Resource> chain = getCommitChain(headCommit.get(), conn);
+            List<Resource> chain = utils.getCommitChain(headCommit.get(), conn);
             IRI commitIRI = vf.createIRI(Tag.commit_IRI);
             Set<Resource> deltaIRIs = new HashSet<>();
             for (Resource commitId : chain) {
@@ -1026,14 +1019,10 @@ public class SimpleCatalogManager implements CatalogManager {
                                       Resource commitId) {
         long start = System.currentTimeMillis();
         try (RepositoryConnection conn = repository.getConnection()) {
-            utils.validateBranch(catalogId, versionedRDFRecordId, branchId, conn);
-            Branch branch = utils.getExpectedObject(branchId, branchFactory, conn);
-            Resource head = utils.getHeadCommitIRI(branch);
-            if (head.equals(commitId) || getCommitChain(head, conn).contains(commitId)) {
-                return Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
-            } else {
-                return Optional.empty();
-            }
+            utils.validateCommitPath(catalogId, versionedRDFRecordId, branchId, commitId, conn);
+            return Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
+        } catch(IllegalArgumentException e) {
+            return Optional.empty();
         } finally {
             log.trace("getCommit took {}ms", System.currentTimeMillis() - start);
         }
@@ -1135,17 +1124,10 @@ public class SimpleCatalogManager implements CatalogManager {
     public List<Commit> getCommitChain(Resource commitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
-            return getCommitChain(commitId, conn).stream()
+            return utils.getCommitChain(commitId, conn).stream()
                     .map(resource -> utils.getExpectedObject(resource, commitFactory, conn))
                     .collect(Collectors.toList());
         }
-    }
-
-    private List<Resource> getCommitChain(Resource commitId, RepositoryConnection conn) {
-        List<Resource> results = new ArrayList<>();
-        Iterator<Value> commits = getCommitChainIterator(commitId, conn, false);
-        commits.forEachRemaining(commit -> results.add((Resource) commit));
-        return results;
     }
 
     @Override
@@ -1153,7 +1135,7 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
             Resource head = utils.getHeadCommitIRI(branch);
-            return getCommitChain(head, conn).stream()
+            return utils.getCommitChain(head, conn).stream()
                     .map(resource -> utils.getExpectedObject(resource, commitFactory, conn))
                     .collect(Collectors.toList());
         }
@@ -1166,9 +1148,17 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
+    @Override
+    public Model getCompiledResource(Resource commitId, Resource branchId, Resource versionedRDFRecordId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.validateCommitPath(localCatalogIRI, versionedRDFRecordId, branchId, commitId, conn);
+            return getCompiledResource(commitId, conn);
+        }
+    }
+
     private Model getCompiledResource(Resource commitId, RepositoryConnection conn) {
         utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
-        Iterator<Value> iterator = getCommitChainIterator(commitId, conn, true);
+        Iterator<Value> iterator = utils.getCommitChainIterator(commitId, conn, true);
         Model model = createModelFromIterator(iterator, conn);
         model.remove(null, null, null, vf.createIRI(DELETION_CONTEXT));
         return model;
@@ -1182,8 +1172,8 @@ public class SimpleCatalogManager implements CatalogManager {
             LinkedList<Value> leftList = new LinkedList<>();
             LinkedList<Value> rightList = new LinkedList<>();
 
-            getCommitChainIterator(leftId, conn, true).forEachRemaining(leftList::add);
-            getCommitChainIterator(rightId, conn, true).forEachRemaining(rightList::add);
+            utils.getCommitChainIterator(leftId, conn, true).forEachRemaining(leftList::add);
+            utils.getCommitChainIterator(rightId, conn, true).forEachRemaining(rightList::add);
 
             ListIterator<Value> leftIterator = leftList.listIterator();
             ListIterator<Value> rightIterator = rightList.listIterator();
@@ -1281,7 +1271,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 .deletions(originalCopy)
                 .build();
     }
-
+       
     /**
      * Creates a conflict using the provided parameters as the data to construct it.
      *
@@ -1459,26 +1449,6 @@ public class SimpleCatalogManager implements CatalogManager {
             }
         });
         return model;
-    }
-
-    /**
-     * Gets an iterator which contains all of the Resources (commits) is the specified direction, either ascending or
-     * descending by date. If descending, the provided Resource identifying a commit will be first.
-     *
-     * @param commitId The Resource identifying the commit that you want to get the chain for.
-     * @param conn     The RepositoryConnection which will be queried for the Commits.
-     * @param asc      Whether or not the iterator should be ascending by date
-     * @return Iterator of Values containing the requested commits.
-     */
-    private Iterator<Value> getCommitChainIterator(Resource commitId, RepositoryConnection conn, boolean asc) {
-        TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_CHAIN);
-        query.setBinding(COMMIT_BINDING, commitId);
-        TupleQueryResult result = query.evaluate();
-        LinkedList<Value> commits = new LinkedList<>();
-        result.forEach(bindingSet -> bindingSet.getBinding(PARENT_BINDING).ifPresent(binding ->
-                commits.add(binding.getValue())));
-        commits.addFirst(commitId);
-        return asc ? commits.descendingIterator() : commits.iterator();
     }
 
     /**

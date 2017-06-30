@@ -60,6 +60,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.CatalogUtilsService;
 import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
@@ -261,19 +262,30 @@ public class OntologyRestImpl implements OntologyRest {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
         try {
+            Resource recordId = valueFactory.createIRI(recordIdStr);
+            Resource branchId = valueFactory.createIRI(branchIdStr);
+            Resource commitId = valueFactory.createIRI(commitIdStr);
+            
             Model changedOnt = ontologyManager.createOntology(fileInputStream).asModel(modelFactory);
-            Model currentOnt = catalogManager.getCompiledResource(valueFactory.createIRI(commitIdStr));
+            Model currentOnt = catalogManager.getCompiledResource(commitId, branchId, recordId);
 
             Difference diff = catalogManager.getDiff(currentOnt, changedOnt);
-            Resource recordId = valueFactory.createIRI(recordIdStr);
             User user = getUserFromContext(context);
-            catalogManager.createInProgressCommit(user);
+            Optional<InProgressCommit> commit = catalogManager.getInProgressCommit(catalogManager.getLocalCatalogIRI(), recordId, user);
+            
+            if (commit.isPresent()) {
+                Exception e = new MatOntoException("User has an in progress commit already.");
+                throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            }
+            
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
             catalogManager.updateInProgressCommit(catalogManager.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
                     diff.getAdditions(), diff.getDeletions());
             return Response.ok().build();
 
-        } catch (MatOntoException e) {
+        } catch(IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        }catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             IOUtils.closeQuietly(fileInputStream);
@@ -1221,7 +1233,7 @@ public class OntologyRestImpl implements OntologyRest {
         Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
         catalogManager.updateInProgressCommit(catalogManager.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
                 entityModel, null);
-        return Response.status(HttpStatus.SC_CREATED).build();
+        return Response.status(Response.Status.CREATED).build();
     }
 
     /**
@@ -1324,7 +1336,7 @@ public class OntologyRestImpl implements OntologyRest {
                 .element("recordId", record.getResource().stringValue())
                 .element("branchId", masterBranchId.stringValue())
                 .element("commitId", commitId.stringValue());
-        return Response.status(HttpStatus.SC_CREATED).entity(response).build();
+        return Response.status(Response.Status.CREATED).entity(response).build();
     }
 
     /**
