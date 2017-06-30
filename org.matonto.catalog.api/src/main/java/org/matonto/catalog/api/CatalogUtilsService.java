@@ -414,13 +414,22 @@ public interface CatalogUtilsService {
     Resource getAdditionsResource(Commit commit);
 
     /**
-     * Gets the Stream of addition statements from the provided commit.
+     * Gets the Stream of addition statements from the Commit identified by the provided Resource.
      *
      * @param commitId The Resource identifying the commit
      * @param conn The connection to the repository
      * @return The Stream of addition statements
      */
     Stream<Statement> getAdditions(Resource commitId, RepositoryConnection conn);
+
+    /**
+     * Gets the Stream of addition statements from the provided Commit.
+     *
+     * @param commit The Commit
+     * @param conn The connection to the repository
+     * @return The Stream of addition statements
+     */
+    Stream<Statement> getAdditions(Commit commit, RepositoryConnection conn);
 
     /**
      * Gets the Resource identifying the graph that contains the deletions statements of the Commit identified by the
@@ -443,13 +452,22 @@ public interface CatalogUtilsService {
     Resource getDeletionsResource(Commit commit);
 
     /**
-     * Gets the Stream of deletion statements from the provided commit.
+     * Gets the Stream of deletion statements from the Commit identified by the provided Resource.
      *
      * @param commitId The Resource identifying the commit
      * @param conn The connection to the repository
      * @return The Stream of deletion statements
      */
     Stream<Statement> getDeletions(Resource commitId, RepositoryConnection conn);
+
+    /**
+     * Gets the Stream of deletion statements from the provided Commit.
+     *
+     * @param commit The Commit
+     * @param conn The connection to the repository
+     * @return The Stream of deletion statements
+     */
+    Stream<Statement> getDeletions(Commit commit, RepositoryConnection conn);
 
     /**
      * Adds the provided statements as changes in the target named graph. If a statement in the changes exists in the

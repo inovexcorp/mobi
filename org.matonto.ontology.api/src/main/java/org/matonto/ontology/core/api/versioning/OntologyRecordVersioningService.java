@@ -163,7 +163,7 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
     }
 
     private void updateOntologyIRI(Resource recordId, Commit commit, RepositoryConnection conn) {
-        updateOntologyIRI(recordId, catalogUtils.getAdditions(commit.getResource(), conn), conn);
+        updateOntologyIRI(recordId, catalogUtils.getAdditions(commit, conn), conn);
     }
 
     private void updateOntologyIRI(Resource recordId, Stream<Statement> additions, RepositoryConnection conn) {
