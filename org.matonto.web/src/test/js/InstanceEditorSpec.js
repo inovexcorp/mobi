@@ -133,9 +133,6 @@ describe('Instance Editor directive', function() {
         it('for a h2', function() {
             expect(element.find('h2').length).toBe(1);
         });
-        it('for .keys', function() {
-            expect(element.querySelectorAll('.key').length).toBe(4);
-        });
         it('for a static-iri', function() {
             expect(element.find('static-iri').length).toBe(1);
         });

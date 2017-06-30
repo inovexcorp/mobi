@@ -38,30 +38,20 @@
          * @name breadcrumbs.directive:breadcrumbs
          * @scope
          * @restrict E
-         * @requires discoverState.service:discoverStateService
          *
          * @description
-         * HTML contents which shows the breadcrumb trail for the current page of the explore UI.
+         * HTML contents which shows the breadcrumb trail for the current page.
          */
         .directive('breadcrumbs', breadcrumbs);
-        
-        breadcrumbs.$inject = ['discoverStateService'];
 
-        function breadcrumbs(discoverStateService) {
+        function breadcrumbs() {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/breadcrumbs/breadcrumbs.html',
+                templateUrl: 'directives/breadcrumbs/breadcrumbs.html',
                 replace: true,
-                scope: {},
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    dvm.ds = discoverStateService;
-                    
-                    dvm.clickCrumb = function(index) {
-                        dvm.ds.explore.breadcrumbs = _.take(dvm.ds.explore.breadcrumbs, index + 1);
-                        dvm.ds.explore.editing = false;
-                    }
+                scope: {
+                    items: '<',
+                    onClick: '&'
                 }
             }
         }

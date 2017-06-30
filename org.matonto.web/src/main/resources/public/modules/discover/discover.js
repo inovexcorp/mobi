@@ -33,13 +33,11 @@
             'discoverTabset',
             
             /* Explore tab */
-            'breadcrumbs',
             'classBlock',
             'classBlockHeader',
             'classCards',
             'exploreTab',
             'instanceBlock',
-            'instanceBlockHeader',
             'instanceCards',
             'instanceEditor',
             'instanceView',

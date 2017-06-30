@@ -212,7 +212,7 @@
                     
                     function getProperties() {
                         $q.all(_.map(dvm.ds.explore.instance.entity['@type'], type => es.getClassPropertyDetails(dvm.ds.explore.recordId, type)))
-                            .then(responses => dvm.properties = _.concat(dvm.properties, _.uniq(_.flatten(responses))), () => dvm.properties = []);
+                            .then(responses => dvm.properties = _.concat(dvm.properties, _.uniq(_.flatten(responses))), () => dvm.util.createErrorToast('An error occurred retrieving the instance properties.'));
                     }
                     
                     function getRange(propertyIRI) {

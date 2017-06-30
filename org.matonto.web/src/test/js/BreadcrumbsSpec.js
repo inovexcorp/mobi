@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Breadcrumbs directive', function() {
-    var $compile, scope, element, discoverStateSvc, controller;
+    var $compile, scope, element, discoverStateSvc, controller, isolatedScope;
 
     beforeEach(function() {
         module('templates');
@@ -34,12 +34,25 @@ describe('Breadcrumbs directive', function() {
             discoverStateSvc = _discoverStateService_;
         });
 
-        discoverStateSvc.explore.breadcrumbs = ['', ''];
-        element = $compile(angular.element('<breadcrumbs></breadcrumbs>'))(scope);
+        scope.items = ['', ''];
+        scope.onClick = jasmine.createSpy('onClick');
+        element = $compile(angular.element('<breadcrumbs items="items" on-click="onClick()"></breadcrumbs>'))(scope);
         scope.$digest();
         controller = element.controller('breadcrumbs');
+        isolatedScope = element.isolateScope();
     });
 
+    describe('in isolated scope', function() {
+        it('items should be one way bound', function() {
+            isolatedScope.items = [];
+            scope.$digest();
+            expect(scope.items).toEqual(['', '']);
+        });
+        it('onClick to be called in parent scope', function() {
+            isolatedScope.onClick();
+            expect(scope.onClick).toHaveBeenCalled();
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('OL');
@@ -61,14 +74,6 @@ describe('Breadcrumbs directive', function() {
             expect(secondItem.hasClass('active')).toBe(true);
             expect(secondItem.find('span').length).toBe(1);
             expect(secondItem.find('a').length).toBe(0);
-        });
-    });
-    describe('controller methods', function() {
-        it('should navigate to the selected crumb', function() {
-            discoverStateSvc.explore.editing = true;
-            controller.clickCrumb(0);
-            expect(discoverStateSvc.explore.breadcrumbs.length).toBe(1);
-            expect(discoverStateSvc.explore.editing).toBe(false);
         });
     });
 });

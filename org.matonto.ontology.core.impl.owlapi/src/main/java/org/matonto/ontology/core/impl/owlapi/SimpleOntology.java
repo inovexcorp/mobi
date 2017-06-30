@@ -335,17 +335,13 @@ public class SimpleOntology implements Ontology {
     @Override
     public boolean containsClass(IRI iri) {
         org.semanticweb.owlapi.model.IRI classIRI = SimpleOntologyValues.owlapiIRI(iri);
-        return containsClass(classIRI);
-    }
-
-    private boolean containsClass(org.semanticweb.owlapi.model.IRI iri) {
-        return owlOntology.containsClassInSignature(iri);
+        return owlOntology.containsClassInSignature(classIRI);
     }
 
     @Override
     public Set<ObjectProperty> getAllClassObjectProperties(IRI iri) {
         org.semanticweb.owlapi.model.IRI classIRI = SimpleOntologyValues.owlapiIRI(iri);
-        if (containsClass(classIRI)) {
+        if (owlOntology.containsClassInSignature(classIRI)) {
             return owlOntology.objectPropertiesInSignature(Imports.INCLUDED)
                     .filter(property -> hasClassAsDomain(owlOntology.objectPropertyDomainAxioms(property), classIRI)
                                 || hasNoDomain(owlOntology.objectPropertyDomainAxioms(property)))
@@ -358,7 +354,7 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<DataProperty> getAllClassDataProperties(IRI iri) {
         org.semanticweb.owlapi.model.IRI classIRI = SimpleOntologyValues.owlapiIRI(iri);
-        if (containsClass(classIRI)) {
+        if (owlOntology.containsClassInSignature(classIRI)) {
             return owlOntology.dataPropertiesInSignature(Imports.INCLUDED)
                     .filter(property -> hasClassAsDomain(owlOntology.dataPropertyDomainAxioms(property), classIRI)
                                 || hasNoDomain(owlOntology.dataPropertyDomainAxioms(property)))

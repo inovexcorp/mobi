@@ -96,7 +96,7 @@ public interface ExplorableDatasetRest {
      * @param uriInfo   The URI information of the request.
      * @param recordIRI The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                  {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
-     * @param classIRI  The IRI of the class type to get
+     * @param classIRI  The IRI of the class type to get property details for.
      * @return A {@link Response} with a JSON array.
      */
     @GET
@@ -115,7 +115,7 @@ public interface ExplorableDatasetRest {
      * @param uriInfo     The URI information of the request.
      * @param recordIRI   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                    {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
-     * @param instanceIRI The IRI of the instance to get
+     * @param instanceIRI The IRI of the instance to get.
      * @return A {@link Response} with a JSON-LD serialization of the desired instance.
      */
     @GET
@@ -134,7 +134,7 @@ public interface ExplorableDatasetRest {
      * @param uriInfo     The URI information of the request.
      * @param recordIRI   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                    {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
-     * @param instanceIRI The IRI of the instance to get
+     * @param instanceIRI The IRI of the instance to update.
      * @return A {@link Response} indicating whether or not the Instance was updated.
      */
     @PUT

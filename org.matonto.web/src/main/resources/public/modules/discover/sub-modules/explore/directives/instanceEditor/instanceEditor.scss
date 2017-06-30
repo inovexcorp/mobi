@@ -23,8 +23,12 @@
             margin: 0;
         }
         
-        .has-autocomplete .md-chips .md-chip-input-container {
+        .md-chips .md-chip-input-container {
             width: 100%;
+            
+            input {
+                width: 100%;
+            }
             
             md-autocomplete md-autocomplete-wrap {
                 width: 100%;

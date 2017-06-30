@@ -23,8 +23,6 @@ package org.matonto.explorable.dataset.rest.jaxb;
  * #L%
  */
 
-import org.matonto.rdf.api.Resource;
-
 import java.util.Set;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;

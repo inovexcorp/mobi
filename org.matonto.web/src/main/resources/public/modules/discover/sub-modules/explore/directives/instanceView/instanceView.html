@@ -23,7 +23,8 @@
 <div class="instance-view">
     <block>
         <block-header>
-            <instance-block-header></instance-block-header>
+            <breadcrumbs class="pull-left" items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
+            <a class="pull-right edit-button" ng-click="dvm.ds.explore.editing = true"><i class="fa fa-pencil-square-o"></i>Edit</a>
         </block-header>
         <block-content>
             <div class="row">
@@ -31,7 +32,7 @@
                     <h2>{{dvm.ds.explore.instance.metadata.title}} <small>&lt;{{dvm.ds.explore.instance.metadata.instanceIRI}}&gt;</small></h2>
                     <p class="lead">{{dvm.ds.explore.instance.metadata.description}}</p>
                     <div ng-repeat="(key, value) in dvm.entity track by $index" ng-init="more = false">
-                        <h3 class="property" ng-class="{'changed': dvm.isChanged(key)}">{{dvm.util.getBeautifulIRI(key)}}</h3>
+                        <h3 class="property">{{dvm.util.getBeautifulIRI(key)}}</h3>
                         <ul class="values" ng-class="{'show-more': more, 'show-link': value.length > 1}">
                             <li ng-repeat="item in value">
                                 <value-display value="item"></value-display>

@@ -60,6 +60,7 @@
             'blockFooter',
             'blockHeader',
             'blockSearch',
+            'breadcrumbs',
             'checkbox',
             'circleButton',
             'circleButtonStack',

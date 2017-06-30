@@ -149,4 +149,12 @@ describe('Discover State Service', function() {
             expect(discoverStateSvc.resetPagedInstanceDetails).not.toHaveBeenCalled();
         });
     });
+    
+    it('should navigate to the selected crumb', function() {
+        discoverStateSvc.explore.breadcrumbs = ['', ''];
+        discoverStateSvc.explore.editing = true;
+        discoverStateSvc.clickCrumb(0);
+        expect(discoverStateSvc.explore.breadcrumbs.length).toBe(1);
+        expect(discoverStateSvc.explore.editing).toBe(false);
+    });
 });

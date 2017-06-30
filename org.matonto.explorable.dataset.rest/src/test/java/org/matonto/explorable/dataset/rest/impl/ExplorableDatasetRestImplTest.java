@@ -46,8 +46,6 @@ import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
-import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
-import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -109,8 +107,8 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     private String commitId;
     private Model compiledModel;
     private IRI classId;
-    private DataProperty dataProperty;
-    private ObjectProperty objectProperty;
+    private IRI dataPropertyId;
+    private IRI objectPropertyId;
 
     private static Set<DataProperty> dataProperties = new HashSet<>();
     private static Set<ObjectProperty> objectProperties = new HashSet<>();
@@ -142,6 +140,12 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @Mock
     private OntologyManager ontologyManager;
+
+    @Mock
+    private DataProperty dataProperty;
+
+    @Mock
+    private ObjectProperty objectProperty;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -188,14 +192,12 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         compiledModel = Values.matontoModel(Rio.parse(compiledData, "", RDFFormat.TRIG));
 
         classId = vf.createIRI(CLASS_ID_STR);
-
-        dataProperty = new SimpleDataProperty(vf.createIRI(DATA_PROPERTY_ID));
-        dataProperties.add(dataProperty);
-
-        objectProperty = new SimpleObjectProperty(vf.createIRI(OBJECT_PROPERTY_ID));
-        objectProperties.add(objectProperty);
+        dataPropertyId = vf.createIRI(DATA_PROPERTY_ID);
+        objectPropertyId = vf.createIRI(OBJECT_PROPERTY_ID);
 
         range.add(vf.createIRI(MISSING_ID));
+        dataProperties.add(dataProperty);
+        objectProperties.add(objectProperty);
 
         rest = new ExplorableDatasetRestImpl();
         rest.setCatalogManager(catalogManager);
@@ -210,7 +212,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(datasetManager, datasetConnection, catalogManager, sesameTransformer, ontology, ontologyManager);
+        reset(datasetManager, datasetConnection, catalogManager, sesameTransformer, ontology, ontologyManager, dataProperty, objectProperty);
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.of(record));
         when(datasetManager.getConnection(recordId)).thenReturn(datasetConnection);
         when(datasetConnection.prepareTupleQuery(any(String.class))).thenAnswer(i -> conn.prepareTupleQuery(i.getArgumentAt(0, String.class)));
@@ -224,6 +226,8 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         when(ontology.getObjectPropertyRange(objectProperty)).thenReturn(range);
         when(ontology.containsClass(classId)).thenReturn(true);
         when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
+        when(dataProperty.getIRI()).thenReturn(dataPropertyId);
+        when(objectProperty.getIRI()).thenReturn(objectPropertyId);
     }
 
     @AfterTest
@@ -480,10 +484,9 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     @Test
     public void updateInstanceTest() {
         JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR)
-                .element(_Thing.title_IRI, new JSONObject().element("@value", "title"));
+                .element(_Thing.title_IRI, new JSONArray().add(new JSONObject().element("@value", "title")));
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance));
-        Resource instanceId = vf.createIRI(INSTANCE_ID_STR);
         assertEquals(response.getStatus(), 200);
         verify(datasetConnection).begin();
         verify(datasetConnection).remove(any(Iterable.class));

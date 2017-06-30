@@ -246,7 +246,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             }
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (IllegalStateException e) {
+        } catch (IllegalStateException | MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
