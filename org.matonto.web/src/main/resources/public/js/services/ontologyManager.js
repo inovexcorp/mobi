@@ -1477,7 +1477,7 @@
             }
             /* Private helper functions */
             function getAllRecords(sortingOption = _.find(cm.sortOptions, {label: 'Title (desc)'})) {
-                var ontologyRecordType = prefixes.catalog + 'OntologyRecord';
+                var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
                 var paginatedConfig = {
                     pageIndex: 0,
                     limit: 100,

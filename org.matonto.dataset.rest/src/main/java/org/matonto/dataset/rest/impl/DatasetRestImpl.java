@@ -36,9 +36,6 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
-import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.api.builder.OntologyIdentifier;
@@ -70,8 +67,6 @@ public class DatasetRestImpl implements DatasetRest {
     private DatasetManager manager;
     private EngineManager engineManager;
     private CatalogManager catalogManager;
-    private OntologyRecordFactory ontologyRecordFactory;
-    private BranchFactory branchFactory;
     private SesameTransformer transformer;
     private ValueFactory vf;
     private ModelFactory mf;
@@ -89,16 +84,6 @@ public class DatasetRestImpl implements DatasetRest {
     @Reference
     public void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
-        this.ontologyRecordFactory = ontologyRecordFactory;
-    }
-
-    @Reference
-    public void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
     }
 
     @Reference
@@ -223,7 +208,7 @@ public class DatasetRestImpl implements DatasetRest {
     private OntologyIdentifier getOntologyIdentifer(Resource recordId) {
         Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
         Resource commitId = masterBranch.getHead_resource().orElseThrow(() ->
-                ErrorUtils.sendError("Branch " + masterBranch.getResource().stringValue() + " has no head Commit set.",
+                ErrorUtils.sendError("Branch " + masterBranch.getResource() + " has no head Commit set.",
                         Response.Status.INTERNAL_SERVER_ERROR));
         return new OntologyIdentifier(recordId, masterBranch.getResource(), commitId, vf, mf);
     }

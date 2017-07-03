@@ -45,6 +45,7 @@
                     var sm = stateManagerService;
                     var ontologyRecords = [];
 
+                    dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ms = mapperStateService;

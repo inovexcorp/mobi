@@ -31,6 +31,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
 import org.matonto.catalog.api.ontologies.mcat.CatalogFactory;
@@ -49,6 +50,7 @@ import org.matonto.catalog.api.ontologies.mcat.VersionFactory;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRecordFactory;
+import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.persistence.utils.RepositoryResults;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -75,8 +77,6 @@ import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
-import org.openrdf.model.vocabulary.DCTERMS;
-import org.openrdf.model.vocabulary.RDFS;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
@@ -84,6 +84,7 @@ import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -105,6 +106,10 @@ public class SimpleCatalogUtilsServiceTest {
     private CommitFactory commitFactory = new CommitFactory();
     private InProgressCommitFactory inProgressCommitFactory = new InProgressCommitFactory();
 
+    private final IRI typeIRI = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI);
+    private final IRI labelIRI = vf.createIRI(org.matonto.ontologies.rdfs.Resource.label_IRI);
+    private final IRI titleIRI = vf.createIRI(_Thing.title_IRI);
+    private final IRI descriptionIRI = vf.createIRI(_Thing.description_IRI);
     private final IRI MISSING_IRI = vf.createIRI("http://matonto.org/test#missing");
     private final IRI EMPTY_IRI = vf.createIRI("http://matonto.org/test#empty");
     private final IRI RANDOM_IRI = vf.createIRI("http://matonto.org/test#random");
@@ -1236,14 +1241,11 @@ public class SimpleCatalogUtilsServiceTest {
             Commit commit = getThing(COMMIT_IRI, commitFactory, conn);
             Resource additionId = getAdditionsResource(COMMIT_IRI);
             Resource deletionId = getDeletionsResource(COMMIT_IRI);
-            IRI rdfsLabel = vf.createIRI(RDFS.LABEL.stringValue());
-            IRI dcTitle = vf.createIRI(DCTERMS.TITLE.stringValue());
-            IRI dcDescription = vf.createIRI(DCTERMS.DESCRIPTION.stringValue());
-            Statement statement1 = vf.createStatement(vf.createIRI("https://matonto.org/test"), dcTitle, vf.createLiteral("Title"));
-            Statement statement2 = vf.createStatement(vf.createIRI("https://matonto.org/test"), dcDescription, vf.createLiteral("Description"));
-            Statement statement3 = vf.createStatement(vf.createIRI("https://matonto.org/test"), rdfsLabel, vf.createLiteral("Label"));
-            Statement existingDeleteStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/delete"), dcTitle, vf.createLiteral("Delete"));
-            Statement existingAddStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/add"), dcTitle, vf.createLiteral("Add"));
+            Statement statement1 = vf.createStatement(vf.createIRI("https://matonto.org/test"), titleIRI, vf.createLiteral("Title"));
+            Statement statement2 = vf.createStatement(vf.createIRI("https://matonto.org/test"), descriptionIRI, vf.createLiteral("Description"));
+            Statement statement3 = vf.createStatement(vf.createIRI("https://matonto.org/test"), labelIRI, vf.createLiteral("Label"));
+            Statement existingDeleteStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/delete"), titleIRI, vf.createLiteral("Delete"));
+            Statement existingAddStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/add"), titleIRI, vf.createLiteral("Add"));
             Model additions = mf.createModel(Stream.of(statement1, statement2, existingDeleteStatement).collect(Collectors.toSet()));
             Model deletions = mf.createModel(Stream.of(statement2, statement3, existingAddStatement).collect(Collectors.toSet()));
             Model expectedAdditions = mf.createModel(Stream.of(statement1).collect(Collectors.toSet()));
@@ -1288,14 +1290,11 @@ public class SimpleCatalogUtilsServiceTest {
         // Setup:
         Resource additionId = getAdditionsResource(COMMIT_IRI);
         Resource deletionId = getDeletionsResource(COMMIT_IRI);
-        IRI rdfsLabel = vf.createIRI(RDFS.LABEL.stringValue());
-        IRI dcTitle = vf.createIRI(DCTERMS.TITLE.stringValue());
-        IRI dcDescription = vf.createIRI(DCTERMS.DESCRIPTION.stringValue());
-        Statement statement1 = vf.createStatement(vf.createIRI("https://matonto.org/test"), dcTitle, vf.createLiteral("Title"));
-        Statement statement2 = vf.createStatement(vf.createIRI("https://matonto.org/test"), dcDescription, vf.createLiteral("Description"));
-        Statement statement3 = vf.createStatement(vf.createIRI("https://matonto.org/test"), rdfsLabel, vf.createLiteral("Label"));
-        Statement existingDeleteStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/delete"), dcTitle, vf.createLiteral("Delete"));
-        Statement existingAddStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/add"), dcTitle, vf.createLiteral("Add"));
+        Statement statement1 = vf.createStatement(vf.createIRI("https://matonto.org/test"), titleIRI, vf.createLiteral("Title"));
+        Statement statement2 = vf.createStatement(vf.createIRI("https://matonto.org/test"), descriptionIRI, vf.createLiteral("Description"));
+        Statement statement3 = vf.createStatement(vf.createIRI("https://matonto.org/test"), labelIRI, vf.createLiteral("Label"));
+        Statement existingDeleteStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/delete"), titleIRI, vf.createLiteral("Delete"));
+        Statement existingAddStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/add"), titleIRI, vf.createLiteral("Add"));
         Model additions = mf.createModel(Stream.of(statement1, statement2, existingDeleteStatement).collect(Collectors.toSet()));
         Model deletions = mf.createModel(Stream.of(statement2, statement3, existingAddStatement).collect(Collectors.toSet()));
         Model expectedAdditions = mf.createModel(Stream.of(statement1).collect(Collectors.toSet()));
@@ -1367,7 +1366,7 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    /* getAdditionsResource(Resource, conn) */
+    /* getAdditionsResource(Resource, RepositoryConnection) */
 
     @Test
     public void getAdditionsResourceWithResourceTest() {
@@ -1388,7 +1387,31 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    /* getDeletionsResource(Resource, conn) */
+    /* getAdditions(Resource, RepositoryConnection) */
+
+    @Test
+    public void getAdditionsWithResourceTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Model expected = mf.createModel(Stream.of(vf.createStatement(vf.createIRI("http://matonto.org/test/add"), titleIRI, vf.createLiteral("Add"))).collect(Collectors.toList()));
+
+            Stream<Statement> result = service.getAdditions(COMMIT_IRI, conn);
+            result.forEach(statement -> assertTrue(expected.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+    }
+
+    @Test
+    public void getAdditionsWithResourceAndAdditionsNotSetTest() {
+        // Setup:
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage("Additions not set on Commit " + COMMIT_NO_ADDITIONS_IRI);
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            service.getAdditions(COMMIT_NO_ADDITIONS_IRI, conn);
+        }
+    }
+
+    /* getDeletionsResource(Resource, RepositoryConnection) */
 
     @Test
     public void getDeletionsResourceWithResourceTest() {
@@ -1409,7 +1432,31 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    /* getAdditionsResource(Resource, conn) */
+    /* getAdditions(Resource, RepositoryConnection) */
+
+    @Test
+    public void getDeletionsWithResourceTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Model expected = mf.createModel(Stream.of(vf.createStatement(vf.createIRI("http://matonto.org/test/delete"), titleIRI, vf.createLiteral("Delete"))).collect(Collectors.toList()));
+
+            Stream<Statement> result = service.getDeletions(COMMIT_IRI, conn);
+            result.forEach(statement -> assertTrue(expected.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+    }
+
+    @Test
+    public void getDeletionsWithResourceAndDeletionsNotSetTest() {
+        // Setup:
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage("Deletions not set on Commit " + COMMIT_NO_DELETIONS_IRI);
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            service.getDeletions(COMMIT_NO_DELETIONS_IRI, conn);
+        }
+    }
+
+    /* getAdditionsResource(Commit, RepositoryConnection) */
 
     @Test
     public void getAdditionsResourceWithCommitTest() {
@@ -1434,7 +1481,33 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    /* getDeletionsResource(Resource, conn) */
+    /* getAdditions(Commit, RepositoryConnection) */
+
+    @Test
+    public void getAdditionsWithCommitTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Commit commit = getThing(COMMIT_IRI, commitFactory, conn);
+            Model expected = mf.createModel(Stream.of(vf.createStatement(vf.createIRI("http://matonto.org/test/add"), titleIRI, vf.createLiteral("Add"))).collect(Collectors.toList()));
+
+            Stream<Statement> result = service.getAdditions(commit, conn);
+            result.forEach(statement -> assertTrue(expected.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+    }
+
+    @Test
+    public void getAdditionsWithCommitAndAdditionsNotSetTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Commit commit = getThing(COMMIT_NO_ADDITIONS_IRI, commitFactory, conn);
+            thrown.expect(IllegalStateException.class);
+            thrown.expectMessage("Additions not set on Commit " + COMMIT_NO_ADDITIONS_IRI);
+
+            service.getAdditions(commit, conn);
+        }
+    }
+
+    /* getDeletionsResource(Commit, RepositoryConnection) */
 
     @Test
     public void getDeletionsResourceWithCommitTest() {
@@ -1459,6 +1532,32 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
+    /* getAdditions(Commit, RepositoryConnection) */
+
+    @Test
+    public void getDeletionsWithCommitTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Commit commit = getThing(COMMIT_IRI, commitFactory, conn);
+            Model expected = mf.createModel(Stream.of(vf.createStatement(vf.createIRI("http://matonto.org/test/delete"), titleIRI, vf.createLiteral("Delete"))).collect(Collectors.toList()));
+
+            Stream<Statement> result = service.getDeletions(commit, conn);
+            result.forEach(statement -> assertTrue(expected.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+    }
+
+    @Test
+    public void getDeletionsWithCommitAndDeletionsNotSetTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Commit commit = getThing(COMMIT_NO_DELETIONS_IRI, commitFactory, conn);
+            thrown.expect(IllegalStateException.class);
+            thrown.expectMessage("Deletions not set on Commit " + COMMIT_NO_DELETIONS_IRI);
+
+            service.getDeletions(commit, conn);
+        }
+    }
+
     /* addChanges */
 
     @Test
@@ -1467,10 +1566,9 @@ public class SimpleCatalogUtilsServiceTest {
             // Setup:
             Resource additionId = getAdditionsResource(COMMIT_IRI);
             Resource deletionId = getDeletionsResource(COMMIT_IRI);
-            IRI dcTitle = vf.createIRI(DCTERMS.TITLE.stringValue());
-            Statement statement1 = vf.createStatement(vf.createIRI("https://matonto.org/test"), dcTitle, vf.createLiteral("Title"));
-            Statement existingAddStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/add"), dcTitle, vf.createLiteral("Add"));
-            Statement existingDeleteStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/delete"), dcTitle, vf.createLiteral("Delete"));
+            Statement statement1 = vf.createStatement(vf.createIRI("https://matonto.org/test"), titleIRI, vf.createLiteral("Title"));
+            Statement existingAddStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/add"), titleIRI, vf.createLiteral("Add"));
+            Statement existingDeleteStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/delete"), titleIRI, vf.createLiteral("Delete"));
             Model additions = mf.createModel(Stream.of(statement1, existingDeleteStatement).collect(Collectors.toSet()));
             Model expectedAdditions = mf.createModel(Stream.of(existingAddStatement, statement1).collect(Collectors.toSet()));
 
@@ -1479,6 +1577,156 @@ public class SimpleCatalogUtilsServiceTest {
                     assertTrue(expectedAdditions.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
             assertEquals(0, conn.size(deletionId));
         }
+    }
+
+    /* getCommitChain */
+
+    @Test
+    public void getCommitChainDescTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> expect = Stream.of(vf.createIRI("http://matonto.org/test/commits#test3"),
+                    vf.createIRI("http://matonto.org/test/commits#test4b"),
+                    vf.createIRI("http://matonto.org/test/commits#test4a"),
+                    vf.createIRI("http://matonto.org/test/commits#test2"),
+                    vf.createIRI("http://matonto.org/test/commits#test1"),
+                    vf.createIRI("http://matonto.org/test/commits#test0")).collect(Collectors.toList());
+            Resource commitId = vf.createIRI("http://matonto.org/test/commits#test3");
+
+            List<Resource> result = service.getCommitChain(commitId, false, conn);
+            assertEquals(expect, result);
+        }
+    }
+
+    @Test
+    public void getCommitChainAscTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> expect = Stream.of(vf.createIRI("http://matonto.org/test/commits#test0"),
+                    vf.createIRI("http://matonto.org/test/commits#test1"),
+                    vf.createIRI("http://matonto.org/test/commits#test2"),
+                    vf.createIRI("http://matonto.org/test/commits#test4a"),
+                    vf.createIRI("http://matonto.org/test/commits#test4b"),
+                    vf.createIRI("http://matonto.org/test/commits#test3")).collect(Collectors.toList());
+            Resource commitId = vf.createIRI("http://matonto.org/test/commits#test3");
+
+            List<Resource> result = service.getCommitChain(commitId, true, conn);
+            assertEquals(expect, result);
+        }
+    }
+
+    @Test
+    public void getCommitChainMissingCommitTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = vf.createIRI("http://matonto.org/test/commits#error");
+
+            List<Resource> result = service.getCommitChain(commitId, true, conn);
+            assertEquals(1, result.size());
+        }
+    }
+
+    /* getModelFromCommits(List<Resource>, RepositoryConnection) */
+
+    @Test
+    public void getRevisionChangesWithListTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource subject = vf.createIRI("http://matonto.org/test/ontology");
+            List<Resource> commits = Stream.of(vf.createIRI("http://matonto.org/test/commits#test1"),
+                    vf.createIRI("http://matonto.org/test/commits#test2")).collect(Collectors.toList());
+
+            Model expectAdd = mf.createModel();
+            expectAdd.add(vf.createStatement(subject, titleIRI, vf.createLiteral("Test 2 Title")));
+            Model expectDel = mf.createModel();
+            expectDel.add(vf.createStatement(subject, titleIRI, vf.createLiteral("Test 0 Title")));
+
+            Difference result = service.getRevisionChanges(commits, conn);
+            result.getAdditions().forEach(statement -> assertTrue(expectAdd.contains(statement)));
+            result.getDeletions().forEach(statement -> assertTrue(expectDel.contains(statement)));
+        }
+    }
+
+    @Test
+    public void getRevisionChangesWithListAndMissingCommitTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = vf.createIRI("http://matonto.org/test/commits#error");
+            thrown.expect(IllegalStateException.class);
+            thrown.expectMessage("Additions not set on Commit " + commitId);
+
+            service.getRevisionChanges(Collections.singletonList(commitId), conn);
+        }
+    }
+
+    /* getCompiledResource(List<Resource>, RepositoryConnection) */
+
+    @Test
+    public void getCompiledResourceWithListTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = vf.createIRI("http://matonto.org/test/commits#test1");
+            Resource ontologyId = vf.createIRI("http://matonto.org/test/ontology");
+            Model expected = mf.createModel();
+            expected.add(ontologyId, typeIRI, vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
+            expected.add(ontologyId, titleIRI, vf.createLiteral("Test 1 Title"));
+            expected.add(vf.createIRI("http://matonto.org/test/class0"), typeIRI, vf.createIRI("http://www.w3.org/2002/07/owl#Class"));
+
+            Model result = service.getCompiledResource(commitId, conn);
+            result.forEach(statement -> assertTrue(expected.contains(statement)));
+        }
+    }
+
+    /* getCompiledResource(Resource, RepositoryConnection) */
+
+    @Test
+    public void getCompiledResourceWithIdTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            List<Resource> commits = Stream.of(vf.createIRI("http://matonto.org/test/commits#test2"), vf.createIRI("http://matonto.org/test/commits#test1")).collect(Collectors.toList());
+            Model expected = mf.createModel(Collections.singleton(
+                    vf.createStatement(vf.createIRI("http://matonto.org/test/ontology"), titleIRI, vf.createLiteral("Test 2 Title"))));
+
+            Model result = service.getCompiledResource(commits, conn);
+            result.forEach(statement -> assertTrue(expected.contains(statement)));
+        }
+    }
+
+    /* getCommitDifference */
+
+    @Test
+    public void getCommitDifferenceTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = vf.createIRI("http://matonto.org/test/commits#test1");
+            Resource ontologyId = vf.createIRI("http://matonto.org/test/ontology");
+            Statement addStatement = vf.createStatement(ontologyId, titleIRI, vf.createLiteral("Test 1 Title"));
+            Statement delStatement = vf.createStatement(ontologyId, titleIRI, vf.createLiteral("Test 0 Title"));
+
+            Difference diff = service.getCommitDifference(commitId, conn);
+            assertTrue(diff.getAdditions().contains(addStatement));
+            assertTrue(diff.getDeletions().contains(delStatement));
+        }
+    }
+
+    /* applyDifference */
+
+    @Test
+    public void applyDifferenceTest() {
+        // Setup:
+        IRI sub = vf.createIRI("http://test.com#sub");
+        Statement existing = vf.createStatement(sub, titleIRI, vf.createLiteral("Existing"));
+        Statement toDelete = vf.createStatement(sub, titleIRI, vf.createLiteral("Delete"));
+        Statement toAdd = vf.createStatement(sub, titleIRI, vf.createLiteral("Add"));
+        Difference diff = new Difference.Builder()
+                .additions(mf.createModel(Collections.singleton(toAdd)))
+                .deletions(mf.createModel(Collections.singleton(toDelete))).build();
+        Model model = mf.createModel(Stream.of(existing, toDelete).collect(Collectors.toList()));
+
+        Model result = service.applyDifference(model, diff);
+        assertTrue(result.contains(existing));
+        assertTrue(result.contains(toAdd));
+        assertFalse(result.contains(toDelete));
     }
 
     /* throwAlreadyExists */

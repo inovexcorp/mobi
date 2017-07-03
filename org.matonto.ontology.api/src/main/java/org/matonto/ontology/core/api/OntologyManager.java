@@ -23,19 +23,29 @@ package org.matonto.ontology.core.api;
  * #L%
  */
 
-import javax.annotation.Nonnull;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import java.util.Optional;
-
+import org.matonto.ontology.core.api.builder.OntologyRecordConfig;
+import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import org.matonto.ontology.core.utils.MatontoOntologyCreationException;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.util.Optional;
+import javax.annotation.Nonnull;
+
 public interface OntologyManager {
+
+    /**
+     * Creates a new OntologyRecord using the provided OntologyRecordConfig.
+     *
+     * @param config the configuration to use when creating the OntologyRecord
+     * @return a OntologyRecord
+     */
+    OntologyRecord createOntologyRecord(OntologyRecordConfig config);
 
     /**
      * Creates a new Ontology Object using the provided OntologyId.
@@ -91,6 +101,14 @@ public interface OntologyManager {
      * @throws MatontoOntologyCreationException - if the ontology can't be created.
      */
     Ontology createOntology(Model model);
+
+    /**
+     * Tests whether an OntologyRecord with the provided OntologyIRI Resource exists in the Catalog.
+     *
+     * @param ontologyIRI An ontology IRI
+     * @return True if the ontology exists; false otherwise
+     */
+    boolean ontologyIriExists(Resource ontologyIRI);
 
     /**
      * Retrieves an Ontology using a record id and the head commit of its MASTER branch. Returns an Optional of the
