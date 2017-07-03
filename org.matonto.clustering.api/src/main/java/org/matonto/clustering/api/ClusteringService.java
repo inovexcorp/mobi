@@ -40,5 +40,4 @@ public interface ClusteringService {
      * @return The number of discovered local nodes in this cluster.
      */
     int getMemberCount();
-
 }

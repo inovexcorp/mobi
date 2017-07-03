@@ -57,5 +57,4 @@ public interface ClusteringServiceConfig {
      */
     @Meta.AD(required = false)
     String description();
-
 }
