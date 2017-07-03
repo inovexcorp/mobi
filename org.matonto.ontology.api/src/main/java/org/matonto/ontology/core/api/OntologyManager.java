@@ -111,8 +111,16 @@ public interface OntologyManager {
     boolean ontologyIriExists(Resource ontologyIRI);
 
     /**
-     * Retrieves an Ontology using a record id and the head commit of its MASTER branch. Returns an Optional of the
-     * Ontology if found, otherwise Optional.empty().
+     * Retrieves an Ontology using an ontology IRI.
+     *
+     * @param ontologyIRI The IRI of the ontology the OntologyRecord represents.
+     * @return Returns an Optional of the Ontology if found, otherwise Optional.empty().
+     * @throws IllegalStateException - the system Repository could not be found.
+     */
+    Optional<Ontology> retrieveOntologyByIRI(@Nonnull IRI ontologyIRI);
+
+    /**
+     * Retrieves an Ontology using a record id and the head commit of its MASTER branch.
      *
      * @param recordId the record id for the OntologyRecord you want to retrieve.
      * @return Returns an Optional of the Ontology if found, otherwise Optional.empty().
@@ -121,27 +129,25 @@ public interface OntologyManager {
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId);
 
     /**
-     * Retrieves an Ontology using a record id and the head commit of the specified branch. Returns an Optional of the
-     * Ontology if found, otherwise Optional.empty().
+     * Retrieves an Ontology using a record id and the head commit of the specified branch.
      *
      * @param recordId the record id for the OntologyRecord you want to retrieve.
      * @param branchId the branch id for the Branch you want to retrieve.
      * @return an Optional of the Ontology if found, otherwise Optional.empty().
      * @throws MatontoOntologyCreationException - the ontology can't be created.
-     * @throws IllegalArgumentException         if the branch cannot be found.
+     * @throws IllegalArgumentException - the branch cannot be found.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId);
 
     /**
-     * Retrieves an Ontology using a record id, branch id, and the id of a commit on that branch. Returns an Optional
-     * of the Ontology if found, otherwise Optional.empty().
+     * Retrieves an Ontology using a record id, branch id, and the id of a commit on that branch.
      *
      * @param recordId the record id for the OntologyRecord you want to retrieve.
      * @param branchId the branch id for the Branch you want to retrieve.
      * @param commitId the commit id for the Commit you want to retrieve.
      * @return an Optional of the Ontology if found, otherwise Optional.empty().
      * @throws MatontoOntologyCreationException - the ontology can't be created.
-     * @throws IllegalArgumentException         if the branch or commit cannot be found.
+     * @throws IllegalArgumentException - the branch or commit cannot be found.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                         @Nonnull Resource commitId);
