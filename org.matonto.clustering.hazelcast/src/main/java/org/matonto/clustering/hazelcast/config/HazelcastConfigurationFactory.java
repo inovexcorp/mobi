@@ -28,6 +28,7 @@ import com.hazelcast.config.Config;
 import com.hazelcast.config.MulticastConfig;
 import com.hazelcast.config.TcpIpConfig;
 import org.apache.commons.lang.StringUtils;
+import org.matonto.exception.MatOntoException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,16 +58,15 @@ public class HazelcastConfigurationFactory {
         // Protected Hazelcast group.
         configureHazelcastGroup(serviceConfig, config);
 
-        // Multicast
-        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(serviceConfig.multicastEnabled());
-        if (serviceConfig.multicastEnabled()) {
-            configureMulticast(serviceConfig, config);
-        }
 
-        // TCP/IP Clustering
-        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(serviceConfig.tcpIpEnabled());
-        if (serviceConfig.tcpIpEnabled()) {
-            configureTcpIpJoining(serviceConfig, config);
+        switch (serviceConfig.joinMechanism()) {
+            case TCPIP:
+                configureTcpIpJoining(serviceConfig, config);
+                break;
+            case MULTICAST:
+                configureMulticast(serviceConfig, config);
+            default:
+                throw new MatOntoException("Unknown join mechanism: " + serviceConfig.joinMechanism());
         }
 
         return config;

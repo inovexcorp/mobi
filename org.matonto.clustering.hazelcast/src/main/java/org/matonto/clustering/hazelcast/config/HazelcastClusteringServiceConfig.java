@@ -62,6 +62,13 @@ public interface HazelcastClusteringServiceConfig extends ClusteringServiceConfi
 
     /**
      *
+     * @return The Hazelcast join mechanism to use (MULTICAST vs TCPIP).
+     */
+    @Meta.AD(required = false, deflt = "MULTICAST")
+    JoinMechanism joinMechanism();
+
+    /**
+     *
      * @return Whether or not tcp/ip configured clustering is enabled.
      */
     @Meta.AD(required = false, deflt = "false")

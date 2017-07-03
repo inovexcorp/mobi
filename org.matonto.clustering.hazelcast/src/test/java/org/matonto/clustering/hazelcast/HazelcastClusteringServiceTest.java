@@ -25,6 +25,7 @@ package org.matonto.clustering.hazelcast;
 
 import junit.framework.TestCase;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -47,8 +48,6 @@ import java.util.concurrent.ForkJoinTask;
 @RunWith(MockitoJUnitRunner.class)
 public class HazelcastClusteringServiceTest extends TestCase {
 
-    private static String MULTICAST_GROUP = null;
-
     @Mock
     private MatOnto matOnto1;
 
@@ -62,10 +61,6 @@ public class HazelcastClusteringServiceTest extends TestCase {
 
     @BeforeClass
     public static void init() {
-        String osName = System.getProperty("os.name");
-        if (osName.contains("Mac") || osName.contains("Linux")) {
-            MULTICAST_GROUP = "224.0.0.1";
-        }
         MODEL_FACTORY = new LinkedHashModelFactoryService();
     }
 
@@ -90,11 +85,9 @@ public class HazelcastClusteringServiceTest extends TestCase {
         s3.setModelFactory(MODEL_FACTORY);
         ForkJoinPool pool = new ForkJoinPool(3);
 
-
         ForkJoinTask<?> task1 = createNode(pool, s1, 5123, new HashSet<>(Arrays.asList("localhost:5234", "localhost:5345")));
         ForkJoinTask<?> task2 = createNode(pool, s2, 5234, new HashSet<>(Arrays.asList("localhost:5123", "localhost:5345")));
         ForkJoinTask<?> task3 = createNode(pool, s3, 5345, new HashSet<>(Arrays.asList("localhost:5123", "localhost:5234")));
-
 
         task1.get();
         task2.get();
@@ -119,17 +112,13 @@ public class HazelcastClusteringServiceTest extends TestCase {
 
     private ForkJoinTask<?> createNode(ForkJoinPool pool, HazelcastClusteringService service, int port, Set<String> members) {
         return pool.submit(() -> {
-            Map<String, Object> map = new HashMap<>();
+            final Map<String, Object> map = new HashMap<>();
+            map.put("enabled", "true");
             map.put("instanceName", service.hashCode());
-            map.put("listeningPort", port);
-            map.put("multicastEnabled", false);
-            map.put("tcpIpEnabled", true);
-            map.put("tcpIpMembers", members);
-            if (MULTICAST_GROUP != null) {
-                map.put("multicastGroup", MULTICAST_GROUP);
-            }
+            map.put("listeningPort", Integer.toString(port));
+            map.put("joinMechanism", "TCPIP");
+            map.put("tcpIpMembers", StringUtils.join(members, ", "));
             service.activate(map);
         });
     }
-
 }
