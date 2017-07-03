@@ -52,6 +52,11 @@
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>jaas.api</artifactId>
+            <version>1.7.20</version>
+        </dependency>
     </dependencies>
 
     <build>
