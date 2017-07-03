@@ -72,7 +72,7 @@ public class HazelcastClusteringService extends Constants implements ClusteringS
     private static final Logger LOGGER = LoggerFactory.getLogger(HazelcastClusteringService.class);
 
     /**
-     * Core platform service for access central server functionality.
+     * Core platform service for accessing central server functionality.
      */
     private MatOnto matOntoServer;
 
