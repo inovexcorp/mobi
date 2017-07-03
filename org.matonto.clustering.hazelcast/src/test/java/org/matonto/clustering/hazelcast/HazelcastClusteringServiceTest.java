@@ -128,7 +128,7 @@ public class HazelcastClusteringServiceTest extends TestCase {
             if (MULTICAST_GROUP != null) {
                 map.put("multicastGroup", MULTICAST_GROUP);
             }
-            service.activate(null, map);
+            service.activate(map);
         });
     }
 

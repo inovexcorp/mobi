@@ -86,10 +86,6 @@ public class HazelcastClusteringService extends Constants implements ClusteringS
      */
     private HazelcastInstance hazelcastInstance;
 
-    /**
-     * {@link BundleContext} for this service.
-     */
-    private BundleContext bundleContext;
 
     /**
      * Map of MatOnto nodes currently on the cluster to some metadata about the node.
@@ -102,9 +98,8 @@ public class HazelcastClusteringService extends Constants implements ClusteringS
      * Method that joins the hazelcast cluster when the service is activated.
      */
     @Activate
-    public void activate(BundleContext context, Map<String, Object> configuration) {
+    public void activate(Map<String, Object> configuration) {
         final HazelcastClusteringServiceConfig serviceConfig = Configurable.createConfigurable(HazelcastClusteringServiceConfig.class, configuration);
-        this.bundleContext = context;
         if (serviceConfig.enabled()) {
             LOGGER.debug("Spinning up underlying hazelcast instance");
             this.hazelcastInstance = Hazelcast.newHazelcastInstance(HazelcastConfigurationFactory.build(serviceConfig, this.matOntoServer.getServerIdentifier().toString()));
@@ -124,14 +119,13 @@ public class HazelcastClusteringService extends Constants implements ClusteringS
     /**
      * Method triggered when the configuration changes for this service.
      *
-     * @param context       The {@link BundleContext} for this service
      * @param configuration The configuration map for this service
      */
     @Modified
-    public void modified(BundleContext context, Map<String, Object> configuration) {
+    public void modified(Map<String, Object> configuration) {
         LOGGER.warn("Modified configuration of service! Going to deactivate, and re-activate with new configuration...");
         deactivate();
-        activate(context, configuration);
+        activate(configuration);
     }
 
     /**
