@@ -199,6 +199,17 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         dataProperties.add(dataProperty);
         objectProperties.add(objectProperty);
 
+        when(dataProperty.getIRI()).thenReturn(dataPropertyId);
+        when(objectProperty.getIRI()).thenReturn(objectPropertyId);
+        when(datasetConnection.prepareTupleQuery(any(String.class))).thenAnswer(i -> conn.prepareTupleQuery(i.getArgumentAt(0, String.class)));
+        when(datasetConnection.getStatements(any(Resource.class), any(IRI.class), any(Value.class))).thenAnswer(i -> conn.getStatements(i.getArgumentAt(0, Resource.class), i.getArgumentAt(1, IRI.class), i.getArgumentAt(2, Value.class)));
+        when(ontology.getAllClassDataProperties(classId)).thenReturn(dataProperties);
+        when(ontology.getAllClassObjectProperties(classId)).thenReturn(objectProperties);
+        when(ontology.getDataPropertyRange(dataProperty)).thenReturn(range);
+        when(ontology.getObjectPropertyRange(objectProperty)).thenReturn(range);
+        when(ontology.containsClass(classId)).thenReturn(true);
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
+
         rest = new ExplorableDatasetRestImpl();
         rest.setCatalogManager(catalogManager);
         rest.setDatasetManager(datasetManager);
@@ -212,22 +223,12 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(datasetManager, datasetConnection, catalogManager, sesameTransformer, ontology, ontologyManager, dataProperty, objectProperty);
+        reset(datasetManager, catalogManager, sesameTransformer);
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.of(record));
         when(datasetManager.getConnection(recordId)).thenReturn(datasetConnection);
-        when(datasetConnection.prepareTupleQuery(any(String.class))).thenAnswer(i -> conn.prepareTupleQuery(i.getArgumentAt(0, String.class)));
-        when(datasetConnection.getStatements(any(Resource.class), any(IRI.class), any(Value.class))).thenAnswer(i -> conn.getStatements(i.getArgumentAt(0, Resource.class), i.getArgumentAt(1, IRI.class), i.getArgumentAt(2, Value.class)));
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(compiledModel);
         when(sesameTransformer.matontoModel(any(org.openrdf.model.Model.class))).thenAnswer(i -> Values.matontoModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
         when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
-        when(ontology.getAllClassDataProperties(classId)).thenReturn(dataProperties);
-        when(ontology.getAllClassObjectProperties(classId)).thenReturn(objectProperties);
-        when(ontology.getDataPropertyRange(dataProperty)).thenReturn(range);
-        when(ontology.getObjectPropertyRange(objectProperty)).thenReturn(range);
-        when(ontology.containsClass(classId)).thenReturn(true);
-        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
-        when(dataProperty.getIRI()).thenReturn(dataPropertyId);
-        when(objectProperty.getIRI()).thenReturn(objectPropertyId);
     }
 
     @AfterTest

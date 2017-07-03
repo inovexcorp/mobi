@@ -63,7 +63,7 @@ describe('Explore Service', function() {
     describe('getClassInstanceDetails calls the correct functions when GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/instance-details', function() {
         it('succeeds', function() {
             var data = [{}];
-            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/instance-details?limit=99&offset=0').respond(200, data, null);
+            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/instance-details?limit=99&offset=0').respond(200, data);
             exploreSvc.getClassInstanceDetails('recordId', 'classId', {limit: 99, offset: 0})
                 .then(function(response) {
                     expect(response).toEqual(jasmine.objectContaining({
@@ -90,7 +90,7 @@ describe('Explore Service', function() {
     describe('getClassPropertyDetails calls the correct functions when GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/property-details', function() {
         it('succeeds', function() {
             var data = [{}];
-            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/property-details').respond(200, data, null);
+            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/property-details').respond(200, data);
             exploreSvc.getClassPropertyDetails('recordId', 'classId')
                 .then(function(response) {
                     expect(response).toEqual(data);

@@ -46,7 +46,7 @@
                                     <md-chip-template>{{$chip['@value']}}</md-chip-template>
                                 </md-chips>
                             </div>
-                            <md-chips class="object-property" ng-if="dvm.isPropertyOfType(key, 'Object')" ng-model="dvm.ds.explore.instance.entity[key]" ng-pattern="dvm.regex.IRI" md-transform-chip="dvm.createIdObj($chip)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key)" md-on-select="dvm.onSelect($chip)">
+                            <md-chips class="object-property" ng-if="dvm.isPropertyOfType(key, 'Object')" ng-model="dvm.ds.explore.instance.entity[key]" md-transform-chip="dvm.createIdObj($chip)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key)" md-on-select="dvm.onSelect($chip)">
                                 <md-autocomplete md-input-name="{{key}}" md-items="iri in dvm.getOptions(key)" placeholder="Enter IRI..." ng-pattern="dvm.regex.IRI" md-search-text="dvm.searchText[key]" md-no-cache="true">
                                     <span md-highlight-text="dvm.searchText[key]">{{dvm.util.getBeautifulIRI(iri)}} :: {{iri}}</span>
                                 </md-autocomplete>
