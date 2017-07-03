@@ -206,6 +206,10 @@
                         dvm.ds.explore.editing = false;
                     }
                     
+                    dvm.onSelect = function(chip) {
+                        console.log(chip);
+                    }
+                    
                     function contains(string, part) {
                         return _.includes(_.toLower(string), _.toLower(part));
                     }

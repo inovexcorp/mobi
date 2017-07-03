@@ -27,9 +27,9 @@
         .module('newInstancePropertyOverlay', [])
         .directive('newInstancePropertyOverlay', newInstancePropertyOverlay);
         
-        newInstancePropertyOverlay.$inject = ['utilService', 'discoverStateService'];
+        newInstancePropertyOverlay.$inject = ['$timeout', 'utilService', 'discoverStateService'];
         
-        function newInstancePropertyOverlay(utilService, discoverStateService) {
+        function newInstancePropertyOverlay($timeout, utilService, discoverStateService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/newInstancePropertyOverlay/newInstancePropertyOverlay.html',
@@ -45,6 +45,10 @@
                     var ds = discoverStateService;
                     dvm.util = utilService;
                     dvm.newPropertyText = '';
+                    
+                    $timeout(function() {
+                        document.querySelector('#auto-complete').focus();
+                    }, 0);
                 }
             }
         }
