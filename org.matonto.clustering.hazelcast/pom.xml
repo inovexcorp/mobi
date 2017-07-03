@@ -79,7 +79,7 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.clustering.api; provide:=true
+                            org.matonto.clustering.api; provide:=true,
                             org.matonto.clustering.hazelcast
                         </Export-Package>
                         <Service-Component>*</Service-Component>
