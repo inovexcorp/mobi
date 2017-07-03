@@ -49,11 +49,6 @@
             <version>${orm.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>jaas</artifactId>
-            <version>1.7.20</version>
-        </dependency>
-        <dependency>
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>
