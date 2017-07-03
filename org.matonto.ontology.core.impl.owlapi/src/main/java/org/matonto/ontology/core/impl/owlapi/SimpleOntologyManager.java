@@ -40,6 +40,7 @@ import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFac
 import org.matonto.ontology.core.utils.MatontoOntologyCreationException;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.ontology.utils.cache.OntologyCache;
+import org.matonto.persistence.utils.Bindings;
 import org.matonto.persistence.utils.QueryResults;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.GraphQuery;
@@ -109,7 +110,6 @@ public class SimpleOntologyManager implements OntologyManager {
     private static final String ONTOLOGY_IRI = "ontologyIRI";
     private static final String CATALOG = "catalog";
     private static final String RECORD = "record";
-
 
     static {
         try {
@@ -271,10 +271,34 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public Optional<Ontology> retrieveOntologyByIRI(@Nonnull IRI ontologyIRI) {
+        long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
+        Repository system = repositoryManager.getRepository("system").orElseThrow(() ->
+                new IllegalStateException("System Repository unavailable"));
+        try (RepositoryConnection conn = system.getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(FIND_ONTOLOGY);
+            query.setBinding(ONTOLOGY_IRI, ontologyIRI);
+            query.setBinding(CATALOG, catalogManager.getLocalCatalogIRI());
+            TupleQueryResult result = query.evaluate();
+            if (!result.hasNext()) {
+                return Optional.empty();
+            }
+            Resource recordId = Bindings.requiredResource(result.next(), RECORD);
+            Optional<Ontology> ontology = retrieveOntologyWithRecordId(recordId);
+
+            if (log.isTraceEnabled()) {
+                log.trace(String.format("retrieveOntology(record) complete in %d ms",
+                        System.currentTimeMillis() - start));
+            }
+
+            return ontology;
+        }
+    }
+
+    @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId) {
         long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
-        Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
-        Optional<Ontology> result = getOntology(recordId, masterBranch.getResource(), getHeadOfBranch(masterBranch));
+        Optional<Ontology> result = retrieveOntologyWithRecordId(recordId);
 
         if (log.isTraceEnabled()) {
             log.trace(String.format("retrieveOntology(record) complete in %d ms", System.currentTimeMillis() - start));
@@ -503,5 +527,10 @@ public class SimpleOntologyManager implements OntologyManager {
             cache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class);
         }
         return cache;
+    }
+
+    private Optional<Ontology> retrieveOntologyWithRecordId(Resource recordId) {
+        Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
+        return getOntology(recordId, masterBranch.getResource(), getHeadOfBranch(masterBranch));
     }
 }
