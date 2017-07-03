@@ -41,7 +41,7 @@ public interface ClusteringServiceConfig {
      *
      * @return Whether or not the {@link ClusteringService} should be enabled.
      */
-    @Meta.AD(deflt = "true", required = false)
+    @Meta.AD(deflt = "false", required = false)
     boolean enabled();
 
     /**

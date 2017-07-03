@@ -32,7 +32,6 @@ import java.util.UUID;
 public interface ClusteringService {
 
     /**
-     *
      * @return The set of UUIDs representing servers that are part of this cluster.
      */
     Set<UUID> getClusteredNodeIds();

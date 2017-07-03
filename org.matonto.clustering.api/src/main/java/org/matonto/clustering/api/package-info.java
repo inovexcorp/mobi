@@ -4,7 +4,7 @@ package org.matonto.clustering.api;
 
 /*-
  * #%L
- * org.matonto.dataset.rest
+ * org.matonto.clustering.api
  * $Id:$
  * $HeadURL:$
  * %%
