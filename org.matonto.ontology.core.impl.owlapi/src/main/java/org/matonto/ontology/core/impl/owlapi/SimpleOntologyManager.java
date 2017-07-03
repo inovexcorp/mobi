@@ -284,13 +284,13 @@ public class SimpleOntologyManager implements OntologyManager {
                 return Optional.empty();
             }
             Resource recordId = Bindings.requiredResource(result.next(), RECORD);
-            Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
-            Optional<Ontology> ontology = getOntology(recordId, masterBranch.getResource(),
-                    getHeadOfBranch(masterBranch));
+            Optional<Ontology> ontology = retrieveOntologyWithRecordId(recordId);
+
             if (log.isTraceEnabled()) {
                 log.trace(String.format("retrieveOntology(record) complete in %d ms",
                         System.currentTimeMillis() - start));
             }
+
             return ontology;
         }
     }
@@ -298,8 +298,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId) {
         long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
-        Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
-        Optional<Ontology> result = getOntology(recordId, masterBranch.getResource(), getHeadOfBranch(masterBranch));
+        Optional<Ontology> result = retrieveOntologyWithRecordId(recordId);
 
         if (log.isTraceEnabled()) {
             log.trace(String.format("retrieveOntology(record) complete in %d ms", System.currentTimeMillis() - start));
@@ -528,5 +527,10 @@ public class SimpleOntologyManager implements OntologyManager {
             cache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class);
         }
         return cache;
+    }
+
+    private Optional<Ontology> retrieveOntologyWithRecordId(Resource recordId) {
+        Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
+        return getOntology(recordId, masterBranch.getResource(), getHeadOfBranch(masterBranch));
     }
 }
