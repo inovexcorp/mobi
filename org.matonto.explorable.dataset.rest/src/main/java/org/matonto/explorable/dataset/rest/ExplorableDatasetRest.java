@@ -30,6 +30,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -107,6 +108,25 @@ public interface ExplorableDatasetRest {
     Response getClassPropertyDetails(@Context UriInfo uriInfo,
                                      @PathParam("recordIRI") String recordIRI,
                                      @PathParam("classIRI") String classIRI);
+
+    /**
+     * Creates an instance owned by a {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
+     * {@link org.matonto.catalog.api.ontologies.mcat.Catalog}.
+     *
+     * @param uriInfo     The URI information of the request.
+     * @param recordIRI   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
+     *                    {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
+     * @return A {@link Response} with the IRI string of the created Instance.
+     */
+    @POST
+    @Path("{recordIRI}/instances")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
+    @RolesAllowed("user")
+    @ApiOperation("Creates an instance of a particular class type in a Dataset in the local Catalog")
+    Response createInstance(@Context UriInfo uriInfo,
+                            @PathParam("recordIRI") String recordIRI,
+                            String newInstanceJson);
 
     /**
      * Retrieves an instance owned by a {@link org.matonto.dataset.ontology.dataset.Dataset} in the local

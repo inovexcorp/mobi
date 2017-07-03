@@ -59,6 +59,7 @@ import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
+import org.matonto.rest.util.RestUtils;
 import org.matonto.rest.util.jaxb.Links;
 import org.openrdf.model.vocabulary.RDFS;
 
@@ -197,6 +198,28 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                     ErrorUtils.sendError("The Dataset Record could not be found.", Response.Status.BAD_REQUEST));
             return Response.ok(getClassProperties(record, classIRI)).build();
         } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public Response createInstance(UriInfo uriInfo, String recordIRI, String newInstanceJson) {
+        checkStringParam(recordIRI, "The Dataset Record IRI is required.");
+        checkStringParam(newInstanceJson, "The Instance's JSON-LD is required.");
+        try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
+            Model instanceModel = sesameTransformer.matontoModel(jsonldToModel(newInstanceJson));
+            Resource instanceId = instanceModel.stream().findAny().orElseThrow(() ->
+                    ErrorUtils.sendError("The new instance's IRI could not be found in the provided JSON-LD.",
+                            Response.Status.INTERNAL_SERVER_ERROR)).getSubject();
+            if (conn.getStatements(instanceId, null, null).hasNext()) {
+                throw ErrorUtils.sendError("The new instance's IRI is already taken.",
+                        Response.Status.INTERNAL_SERVER_ERROR);
+            }
+            conn.add(instanceModel);
+            return Response.status(201).entity(instanceId.stringValue()).build();
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
