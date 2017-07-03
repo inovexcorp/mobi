@@ -40,7 +40,6 @@ import org.matonto.clustering.hazelcast.listener.ClusterServiceLifecycleListener
 import org.matonto.platform.config.api.server.MatOnto;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
-import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +58,12 @@ import java.util.UUID;
                 "clusteringType=hazelcast"
         }
 )
-public class HazelcastClusteringService extends Constants implements ClusteringService {
+public class HazelcastClusteringService implements ClusteringService {
+
+    /**
+     * Key where we'll store a {@link com.hazelcast.core.ReplicatedMap} of cluster nodes and metadata about them.
+     */
+    public static final String CLUSTER_MEMBERS_KEY = "cluster.members";
 
     /**
      * The name of this service type.
@@ -86,12 +90,14 @@ public class HazelcastClusteringService extends Constants implements ClusteringS
      */
     private HazelcastInstance hazelcastInstance;
 
-
     /**
      * Map of MatOnto nodes currently on the cluster to some metadata about the node.
      */
-    private ReplicatedMap<UUID, Model> activeClusterNodes;
+    private ReplicatedMap<UUID, Model> clusterNodes;
 
+    /**
+     * Listener for membership changes and lifecycle changes.
+     */
     private ClusterServiceLifecycleListener listener;
 
     /**
@@ -109,7 +115,7 @@ public class HazelcastClusteringService extends Constants implements ClusteringS
             this.hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
             this.hazelcastInstance.getCluster().addMembershipListener(listener);
 
-            registerWithActiveNodes();
+            registerWithClusterNodes();
         } else {
             LOGGER.warn("Clustering Service {}: Service initialized in disabled state... Not going to start a hazelcast node " +
                     "instance and join cluster", this.matOntoServer.getServerIdentifier());
@@ -149,27 +155,41 @@ public class HazelcastClusteringService extends Constants implements ClusteringS
         return this.hazelcastInstance.getCluster().getMembers().size();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Set<UUID> getClusteredNodeIds() {
-        return this.activeClusterNodes.keySet();
+        return this.clusterNodes.keySet();
     }
 
+    /**
+     * Inject the {@link MatOnto} service
+     *
+     * @param matOntoServer The service for the platform
+     */
     @Reference
     public void setMatOntoServer(MatOnto matOntoServer) {
         this.matOntoServer = matOntoServer;
     }
 
+    /**
+     * Inject the {@link ModelFactory} service.
+     *
+     * @param modelFactory The {@link ModelFactory} we'll use to construct RDF models
+     */
     @Reference
     public void setModelFactory(ModelFactory modelFactory) {
         this.modelFactory = modelFactory;
     }
 
     /**
-     * Simple method that will register this node as it comes alive with the active cluster registry.
+     * Simple method that will register this node as it comes alive with the cluster registry.
      */
-    private void registerWithActiveNodes() {
-        this.activeClusterNodes = this.hazelcastInstance.getReplicatedMap(ACTIVE_CLUSTER_MEMBERS_KEY);
+    private void registerWithClusterNodes() {
+        this.clusterNodes = this.hazelcastInstance.getReplicatedMap(CLUSTER_MEMBERS_KEY);
         //TODO - add metadata about this node to the model in the map.
-        this.activeClusterNodes.put(matOntoServer.getServerIdentifier(), this.modelFactory.createModel());
+        this.clusterNodes.put(matOntoServer.getServerIdentifier(), this.modelFactory.createModel());
     }
+
 }

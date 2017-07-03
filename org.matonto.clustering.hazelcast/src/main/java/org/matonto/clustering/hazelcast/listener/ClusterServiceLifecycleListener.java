@@ -28,7 +28,6 @@ import com.hazelcast.core.LifecycleListener;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
-import org.matonto.clustering.hazelcast.Constants;
 import org.matonto.clustering.hazelcast.HazelcastClusteringService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * This {@link LifecycleListener} implementation provides hooks for the {@link HazelcastClusteringService} implementation
  * of the {@link org.matonto.clustering.api.ClusteringService} to listen to changes in the cluster.
  */
-public class ClusterServiceLifecycleListener extends Constants implements LifecycleListener, MembershipListener {
+public class ClusterServiceLifecycleListener implements LifecycleListener, MembershipListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterServiceLifecycleListener.class);
 

@@ -4,7 +4,7 @@ package org.matonto.clustering.hazelcast;
 
 /*-
  * #%L
- * org.matonto.dataset.rest
+ * org.matonto.clustering.hazelcast
  * $Id:$
  * $HeadURL:$
  * %%
