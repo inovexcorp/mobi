@@ -237,7 +237,8 @@
              * @returns {Promise} A promise with the new in-progress commit to be applied or error message.
              */
             self.uploadChangesFile = function(file, recordId, branchId, commitId) {
-                var fd = new FormData(),
+                var deferred = $q.defer(),
+                    fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         headers: {

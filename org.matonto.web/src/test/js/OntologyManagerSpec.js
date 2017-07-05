@@ -1767,4 +1767,63 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getConceptSchemeIRIs([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
     });
+    describe('uploadChangesFile hits the proper endpoint', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({ branchId: branchId, commitId: commitId });
+        });
+        it('with recordId, branchId and commitId', function(done) {
+            $httpBackend.expectPUT('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+                function(data) {
+                    return data instanceof FormData;
+                }, function(headers) {
+                    return headers['Content-Type'] === undefined;
+                }).respond(200, { additions: [], deletions: [] });
+            ontologyManagerSvc.uploadChangesFile(file, recordId, branchId, commitId)
+                .then(function() {
+                    expect(true).toBe(true);
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('with no branchId', function(done) {
+            params = paramSerializer({ branchId: undefined, commitId: commitId });
+            $httpBackend.expectPUT('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+                function(data) {
+                    return data instanceof FormData;
+                }, function(headers) {
+                    return headers['Content-Type'] === undefined;
+                }).respond(200, { additions: [], deletions: [] });
+            ontologyManagerSvc.uploadChangesFile(file, recordId, undefined, commitId)
+                .then(function() {
+                    expect(true).toBe(true);
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('unless an error occurs', function(done) {
+            $httpBackend.expectPUT('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+                function(data) {
+                    return data instanceof FormData;
+                },
+                function(headers) {
+                    return headers['Content-Type'] === undefined;
+                }).respond(400, null, null, error);
+            ontologyManagerSvc.uploadChangesFile(file, recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                    done();
+                }, function(response) {
+                    expect(response).toEqual(error);
+                    done();
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
 });

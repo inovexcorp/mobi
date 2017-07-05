@@ -251,6 +251,7 @@ function mockOntologyManager() {
             this.downloadOntology = jasmine.createSpy('downloadOntology');
             this.deleteOntology = jasmine.createSpy('deleteOntology').and.returnValue($q.when());
             this.getAnnotationPropertyHierarchies = jasmine.createSpy('getAnnotationPropertyHierarchies');
+            this.uploadChangesFile = jasmine.createSpy('uploadChangesFile').and.returnValue($q.when({}));
         });
     });
 }
@@ -564,6 +565,7 @@ function mockOntologyState() {
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue({});
             this.createOntology = jasmine.createSpy('createOntology').and.returnValue($q.resolve({}));
             this.uploadThenGet = jasmine.createSpy('uploadThenGet').and.returnValue($q.resolve(''));
+            this.uploadChanges = jasmine.createSpy('uploadChanges').and.returnValue($q.resolve(''));
             this.updateOntology = jasmine.createSpy('updateOntology');
             this.addOntologyToList = jasmine.createSpy('addOntologyToList').and.returnValue($q.when([]));
             this.addVocabularyToList = jasmine.createSpy('addVocabularyToList').and.returnValue($q.when([]));
@@ -625,6 +627,7 @@ function mockOntologyState() {
             this.updatePropertyIcon = jasmine.createSpy('updatePropertyIcon');
             this.isDerivedConcept = jasmine.createSpy('isDerivedConcept');
             this.isDerivedConceptScheme = jasmine.createSpy('isDerivedConceptScheme');
+            this.hasInProgressCommit = jasmine.createSpy('hasInProgressCommit').and.returnValue(false);
         });
     });
 }

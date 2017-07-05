@@ -3116,5 +3116,72 @@ describe('Ontology State Service', function() {
                 expect(_.get(entity, 'matonto.icon')).toBe('fa-link');
             });
         });
-    })
+    });
+    describe('uploadChanges should call the proper methods', function() {
+        var uploadDeferred;
+        beforeEach(function() {
+            ontologyStateSvc.list = [{ ontologyRecord: { recordId: 'recordId' }, inProgressCommit: {  } }];
+            uploadDeferred = $q.defer();
+            ontologyManagerSvc.uploadChangesFile.and.returnValue(uploadDeferred.promise);
+        });
+        describe('when uploadChangesFile resolves', function() {
+            var getDeferred;
+            beforeEach(function() {
+                uploadDeferred.resolve();
+                getDeferred = $q.defer();
+                catalogManagerSvc.getInProgressCommit.and.returnValue(getDeferred);
+            });
+            it('and getInProgressCommit resolves', function() {
+                getDeferred.promise = { additions: ['a'], deletions: [] };
+                catalogManagerSvc.getInProgressCommit.and.returnValue(getDeferred.promise);
+                ontologyStateSvc.uploadChanges({}, recordId, branchId, commitId);
+                scope.$apply();
+                expect(ontologyManagerSvc.uploadChangesFile).toHaveBeenCalledWith({}, recordId, branchId, commitId);
+                expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+                expect(ontologyStateSvc.hasInProgressCommit(ontologyStateSvc.list[0])).toBe(true);
+            });
+            it ('and getInProgressCommit rejects', function() {
+                getDeferred.reject(error);
+                ontologyStateSvc.uploadChanges({}, recordId, branchId, commitId);
+                scope.$apply();
+                expect(ontologyManagerSvc.uploadChangesFile).toHaveBeenCalledWith({}, recordId, branchId, commitId);
+                expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+                expect(ontologyStateSvc.hasInProgressCommit(ontologyStateSvc.list[0])).toBe(false);
+            });
+        });
+        it('when uploadChangesFile rejects', function() {
+            uploadDeferred.reject(error);
+            ontologyStateSvc.uploadChanges({}, recordId, branchId, commitId);
+            scope.$apply();
+            expect(ontologyManagerSvc.uploadChangesFile).toHaveBeenCalledWith({}, recordId, branchId, commitId);
+            expect(catalogManagerSvc.getInProgressCommit).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.hasInProgressCommit(ontologyStateSvc.list[0])).toBe(false);
+        });
+    });
+    describe('hasInProgressCommit returns the correct value', function() {
+        it('when listItem.inProgressCommit is undefined.', function() {
+            listItem.inProgressCommit = undefined;
+            expect(ontologyStateSvc.hasInProgressCommit(listItem)).toBe(false);
+        });
+        it('when additions and deletions are undefined.', function() {
+            listItem.inProgressCommit = {};
+            expect(ontologyStateSvc.hasInProgressCommit(listItem)).toBe(false);
+        });
+        it('when additions and/or deletions are defined but empty.', function() {
+            listItem.inProgressCommit = {additions: []};
+            expect(ontologyStateSvc.hasInProgressCommit(listItem)).toBe(false);
+            listItem.inProgressCommit = {deletions: []};
+            expect(ontologyStateSvc.hasInProgressCommit(listItem)).toBe(false);
+            listItem.inProgressCommit = {additions: [], deletions: []};
+            expect(ontologyStateSvc.hasInProgressCommit(listItem)).toBe(false);
+        });
+        it('when additions and/or deletions are defined and not empty.', function() {
+            listItem.inProgressCommit = {additions: ['a'], deletions: []};
+            expect(ontologyStateSvc.hasInProgressCommit(listItem)).toBe(true);
+            listItem.inProgressCommit = {additions: [], deletions: ['b']};
+            expect(ontologyStateSvc.hasInProgressCommit(listItem)).toBe(true);
+            listItem.inProgressCommit = {additions: ['a'], deletions: ['b']};
+            expect(ontologyStateSvc.hasInProgressCommit(listItem)).toBe(true);
+        });
+    });
 });

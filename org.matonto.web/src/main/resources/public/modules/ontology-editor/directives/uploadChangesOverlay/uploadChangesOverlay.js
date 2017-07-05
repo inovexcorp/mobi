@@ -49,11 +49,16 @@
                             dvm.os.uploadChanges(dvm.file, ontRecord.recordId, ontRecord.branchId, ontRecord.commitId).then(() => {
                                 dvm.os.getActivePage().active = false;
                                 dvm.os.listItem.editorTabStates.savedChanges.active = true;
-                                dvm.os.showUploadChangesOverlay = false;
+                                dvm.closeOverlay();
                             }, errorMessage => dvm.error = errorMessage);
                         }
-                    }
+                    };
+                    
+                    dvm.closeOverlay = function() {
+                        dvm.os.showUploadChangesOverlay = false;
+                        dvm.error = undefined;
+                    };
                 }
-            }
+            };
         }
 })();
