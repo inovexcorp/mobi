@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Mapping Select Page directive', function() {
+describe('Mapping Select Page directive', function() {
     var $compile, scope, $q, element, controller, mappingManagerSvc, mapperStateSvc;
 
     beforeEach(function() {
@@ -28,6 +28,7 @@ fdescribe('Mapping Select Page directive', function() {
         module('mappingSelectPage');
         mockMappingManager();
         mockMapperState();
+        mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _$q_) {
             $compile = _$compile_;
@@ -65,12 +66,7 @@ fdescribe('Mapping Select Page directive', function() {
             expect(mapperStateSvc.displayDownloadMappingOverlay).toBe(true);
         });
         it('should set the correct state for duplicating a mapping', function() {
-            var mapping = angular.copy(mapperStateSvc.mapping);
             controller.duplicate();
-            expect(mapperStateSvc.createMapping).toHaveBeenCalled();
-            expect(mapperStateSvc.mapping.record).toEqual(mapping.record);
-            expect(mapperStateSvc.mapping.jsonld).toEqual(mapping.jsonld);
-            expect(mapperStateSvc.mapping.ontology).toEqual(mapping.ontology);
             expect(mapperStateSvc.displayCreateMappingOverlay).toBe(true);
         });
         describe('should load an ontology and continue', function() {
@@ -136,12 +132,22 @@ fdescribe('Mapping Select Page directive', function() {
         it('depending on whether a mapping has been selected', function() {
             var mappingHeader = angular.element(element.querySelectorAll('.col-xs-8 block-header .mapping-preview-header')[0]);
             expect(mappingHeader.hasClass('invisible')).toBe(false);
-            expect(element.find('mapping-preview').length).toBe(1);
+            expect(element.querySelectorAll('.preview').length).toBe(1);
 
             mapperStateSvc.mapping = undefined;
             scope.$digest();
             expect(mappingHeader.hasClass('invisible')).toBe(true);
-            expect(element.find('mapping-preview').length).toBe(0);
+            expect(element.querySelectorAll('.preview').length).toBe(0);
+        });
+        it('with the correct classes based on whether the source ontology record was set', function() {
+            var sourceOntologyName = angular.element(element.querySelectorAll('.source-ontology')[0]);
+            expect(sourceOntologyName.hasClass('text-danger')).toBe(false);
+            expect(sourceOntologyName.find('span').length).toBe(0);
+
+            delete mapperStateSvc.mapping.ontology;
+            scope.$digest();
+            expect(sourceOntologyName.hasClass('text-danger')).toBe(true);
+            expect(sourceOntologyName.find('span').length).toBe(1);
         });
     });
     it('should call downloadMapping when the button is clicked', function() {

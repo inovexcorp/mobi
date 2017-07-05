@@ -83,7 +83,7 @@
                         if (dvm.state.editMapping) {
                             dvm.state.saveMapping().then(runMapping, onError);
                         } else {
-                            runMapping();
+                            runMapping(dvm.state.mapping.record.id);
                         }
                     }
                     dvm.cancel = function() {
@@ -93,13 +93,14 @@
                     function onError(errorMessage) {
                         dvm.errorMessage = errorMessage;
                     }
-                    function runMapping() {
+                    function runMapping(id) {
+                        dvm.state.mapping.record.id = id;
                         if (dvm.runMethod === 'download') {
                             dvm.state.changedMapping = false;
-                            dvm.dm.mapAndDownload(dvm.state.mapping.record.id, dvm.format, dvm.fileName);
+                            dvm.dm.mapAndDownload(id, dvm.format, dvm.fileName);
                             reset();
                         } else {
-                            dvm.dm.mapAndUpload(dvm.state.mapping.record.id, dvm.datasetRecordIRI).then(reset, onError);
+                            dvm.dm.mapAndUpload(id, dvm.datasetRecordIRI).then(reset, onError);
                         }
                     }
                     function reset() {

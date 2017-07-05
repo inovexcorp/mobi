@@ -22,7 +22,7 @@
   -->
 <div class="mapping-select-page row">
     <mapping-list-block></mapping-list-block>
-    <div class="col-xs-8">
+    <div class="col-xs-8 full-height">
         <block>
             <block-header>
                 <div class="mapping-preview-header" ng-class="{'invisible': !dvm.state.mapping}">
@@ -53,7 +53,12 @@
                     <p class="lead">Welcome to the Mapping Tool!</p>
                     <p>If this is your first time here, you may want to check the <a href="http://docs.matonto.org/#mapping_tool" target="_blank">User's Guide</a>. Get started by clicking a mapping name in the list or creating a new mapping.</p>
                 </div>
-                <mapping-preview ng-if="dvm.state.mapping"></mapping-preview>
+                <div class="preview" ng-if="dvm.state.mapping">
+                    <p>{{dvm.state.mapping.record.description}}</p>
+                    <h3>Source Ontology</h3>
+                    <p class="source-ontology" ng-class="{'text-danger': !dvm.state.mapping.ontology}">{{dvm.util.getDctermsValue(dvm.state.mapping.ontology, 'title')}} <span ng-if="!dvm.state.mapping.ontology" class="text-muted">(This ontology could not be found)</span></p>
+                    <mapping-preview></mapping-preview>
+                </div>
             </block-content>
         </block>
     </div>

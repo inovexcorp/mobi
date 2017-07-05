@@ -77,16 +77,6 @@ describe('Mapping Preview directive', function() {
         it('for wrapping containers', function() {
             expect(element.hasClass('mapping-preview')).toBe(true);
         });
-        it('with the correct classes based on whether the source ontology record was set', function() {
-            var sourceOntologyName = angular.element(element.querySelectorAll('.source-ontology')[0]);
-            expect(sourceOntologyName.hasClass('text-danger')).toBe(true);
-            expect(sourceOntologyName.find('span').length).toBe(1);
-
-            mapperStateSvc.mapping.ontology = {};
-            scope.$digest();
-            expect(sourceOntologyName.hasClass('text-danger')).toBe(false);
-            expect(sourceOntologyName.find('span').length).toBe(0);
-        });
         it('with all class and property mappings displayed', function() {
             mappingManagerSvc.isDataMapping.and.returnValue(false);
             var classMappings = [{}];

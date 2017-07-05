@@ -57,7 +57,7 @@ describe('Mapping List Block directive', function() {
     describe('controller methods', function() {
         it('should open the create mapping overlay', function() {
             controller.createMapping();
-            expect(mapperStateSvc.createMapping).toHaveBeenCalled();
+            expect(mapperStateSvc.mapping).toBeUndefined();
             expect(mapperStateSvc.displayCreateMappingOverlay).toEqual(true);
         });
         describe('should delete a mapping', function() {

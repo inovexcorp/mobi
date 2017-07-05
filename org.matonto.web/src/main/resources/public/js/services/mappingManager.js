@@ -81,7 +81,6 @@
              * @description
              * Calls the GET /matontorest/mappings endpoint which retrieves a paginated list of MappingRecords
              * sorted by dcterms:title.
-             *
              */
             self.getMappingRecords = function() {
                 var config = {
@@ -256,38 +255,6 @@
                 });
                 return newMapping;
             }
-
-            /**
-             * @ngdoc method
-             * @name renameMapping
-             * @methodOf mappingManager.service:mappingManagerService
-             *
-             * @description
-             * Creates a copy of a mapping using the passed new id, updating all ids to use the new
-             * mapping id without creating new instances of mapping objects.
-             *
-             * @param {Object[]} mapping A mapping JSON-LD array
-             * @param {string} newId The id of the new mapping
-             * @return {Object[]} A copy of the passed mapping with the new id
-             */
-            self.renameMapping = function(mapping, newId) {
-                var newMapping = angular.copy(mapping);
-                self.getMappingEntity(newMapping)['@id'] = newId;
-                _.forEach(self.getAllClassMappings(newMapping), classMapping => {
-                    classMapping['@id'] = newId + '/' + $filter('splitIRI')(classMapping['@id']).end;
-                    _.forEach(_.concat(getDataProperties(classMapping), getObjectProperties(classMapping)), propIdObj => {
-                        propIdObj['@id'] = newId + '/' + $filter('splitIRI')(propIdObj['@id']).end;
-                    });
-                });
-                _.forEach(_.concat(self.getAllDataMappings(newMapping), self.getAllObjectMappings(newMapping)), propMapping => {
-                    if (self.isObjectMapping(propMapping)) {
-                        propMapping[prefixes.delim + 'classMapping'][0]['@id'] = newId + '/' + $filter('splitIRI')(propMapping[prefixes.delim + 'classMapping'][0]['@id']).end;
-                    }
-                    propMapping['@id'] = newId + '/' + $filter('splitIRI')(propMapping['@id']).end;
-                });
-                return newMapping;
-            }
-
             /**
              * @ngdoc method
              * @name addClass
@@ -438,6 +405,7 @@
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {string} classMappingId The id of the class mapping with the property mapping to remove
              * @param {string} propMappingId The id of the property mapping to remove
+             * @return {Object} The deleted property mapping
              */
             self.removeProp = function(mapping, classMappingId, propMappingId) {
                 if (entityExists(mapping, propMappingId)) {
@@ -465,6 +433,7 @@
              *
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {string} classMappingId The id of the class mapping to remove
+             * @return {Object} The deleted class mapping
              */
             self.removeClass = function(mapping, classMappingId) {
                 if (entityExists(mapping, classMappingId)) {

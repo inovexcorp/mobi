@@ -63,29 +63,34 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.errorMessage = '';
+                    console.log('Result: ', dvm.state.createMapping());
+                    dvm.newMapping = dvm.state.createMapping();
+                    if (dvm.state.mapping) {
+                        dvm.newMapping.record = angular.copy(dvm.state.mapping.record);
+                        dvm.newMapping.jsonld = angular.copy(dvm.state.mapping.jsonld);
+                        dvm.newMapping.ontology = angular.copy(dvm.state.mapping.ontology);
+                    }
 
                     dvm.cancel = function() {
                         dvm.state.editMapping = false;
                         dvm.state.newMapping = false;
-                        dvm.state.mapping = undefined;
-                        dvm.state.sourceOntologies = [];
                         dvm.state.displayCreateMappingOverlay = false;
                     }
                     dvm.continue = function() {
-                        var newId = dvm.mm.getMappingId(dvm.state.mapping.record.title);
-                        if (dvm.state.mapping.jsonld.length === 0) {
-                            dvm.state.mapping.jsonld = dvm.mm.createNewMapping(newId);
+                        var newId = dvm.mm.getMappingId(dvm.newMapping.record.title);
+                        if (dvm.newMapping.jsonld.length === 0) {
+                            dvm.newMapping.jsonld = dvm.mm.createNewMapping(newId);
                             dvm.sourceOntologies = [];
                             dvm.availableClasses = [];
                             nextStep();
                         } else {
-                            dvm.state.mapping.jsonld = dvm.mm.copyMapping(dvm.state.mapping.jsonld, newId);
-                            var sourceOntologyInfo = dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld);
+                            dvm.newMapping.jsonld = dvm.mm.copyMapping(dvm.newMapping.jsonld, newId);
+                            var sourceOntologyInfo = dvm.mm.getSourceOntologyInfo(dvm.newMapping.jsonld);
                             dvm.mm.getSourceOntologies(sourceOntologyInfo)
                                 .then(ontologies => {
-                                    if (dvm.mm.areCompatible(dvm.state.mapping.jsonld, ontologies)) {
+                                    if (dvm.mm.areCompatible(dvm.newMapping.jsonld, ontologies)) {
                                         dvm.state.sourceOntologies = ontologies;
-                                        var usedClassIds = _.map(dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld), dvm.mm.getClassIdByMapping);
+                                        var usedClassIds = _.map(dvm.mm.getAllClassMappings(dvm.newMapping.jsonld), dvm.mm.getClassIdByMapping);
                                         dvm.state.availableClasses = _.filter(dvm.state.getClasses(ontologies), clazz => !_.includes(usedClassIds, clazz.classObj['@id']));
                                         nextStep();
                                     } else {
@@ -96,6 +101,7 @@
                     }
 
                     function nextStep() {
+                        dvm.state.mapping = dvm.newMapping;
                         dvm.errorMessage = '';
                         dvm.state.mapping.difference.additions = angular.copy(dvm.state.mapping.jsonld);
                         dvm.state.mappingSearchString = '';

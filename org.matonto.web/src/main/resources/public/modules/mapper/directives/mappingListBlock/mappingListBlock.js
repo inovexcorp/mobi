@@ -69,7 +69,7 @@
                     dvm.list = [];
 
                     dvm.createMapping = function() {
-                        dvm.state.createMapping();
+                        dvm.state.mapping = undefined;
                         dvm.state.displayCreateMappingOverlay = true;
                     }
                     dvm.deleteMapping = function() {

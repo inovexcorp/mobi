@@ -134,6 +134,20 @@
             self.step = 0;
             /**
              * @ngdoc property
+             * @name editTabs
+             * @propertyOf mapperState.service:mapperStateService
+             * @type {Object}
+             *
+             * @description
+             * `editTabs` holds an object that represents which tab is open on the
+             * {@link editMappingPage.directive:editMappingPage editMappingPage}.
+             */
+            self.editTabs = {
+                edit: true,
+                commits: false
+            };
+            /**
+             * @ngdoc property
              * @name invalidProps
              * @propertyOf mapperState.service:mapperStateService
              * @type {Object[]}
@@ -400,6 +414,10 @@
                 self.editMapping = false;
                 self.newMapping = false;
                 self.step = 0;
+                self.editTabs = {
+                    edit: true,
+                    commits: false
+                };
                 self.invalidProps = [];
                 self.availablePropsByClass = {};
                 self.availableClasses = [];
@@ -427,14 +445,17 @@
              * @methodOf mapperState.service:mapperStateService
              *
              * @description
-             * Sets the state variables, {@link mapperState.service:mapperStateService#mapping mapping}, and
+             * Sets the state variables and
              * {@link mapperState.service:mapperStateService#sourceOntologies sourceOntologies} to indicate creating
-             * a new mapping.
+             * a new mapping. Returns a new mapping object.
              */
             self.createMapping = function() {
                 self.editMapping = true;
                 self.newMapping = true;
-                self.mapping = {
+                self.sourceOntologies = [];
+                self.resetEdit();
+                self.availablePropsByClass = {};
+                return {
                     jsonld: [],
                     record: {},
                     ontology: undefined,
@@ -443,10 +464,15 @@
                         deletions: []
                     }
                 };
-                self.sourceOntologies = [];
-                self.resetEdit();
-                self.availablePropsByClass = {};
             }
+            /**
+             * @ngdoc method
+             * @name saveMapping
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Saves the current mapping appropriately depending on whether it is a new mapping or an existing mapping.
+             */
             self.saveMapping = function() {
                 var catalogId = _.get(cm.localCatalog, '@id', '');
                 if (self.newMapping) {
@@ -455,10 +481,25 @@
                     return cm.createInProgressCommit(self.mapping.record.id, catalogId)
                         .then(() => cm.updateInProgressCommit(self.mapping.record.id, catalogId, self.mapping.difference), $q.reject)
                         .then(() => {
-                            var commitMessage = 'Changed ' + _.join(_.concat(_.map(self.mapping.difference.additions, '@id'), _.map(self.mapping.difference.deletions, '@id')), ', ');
+                            var commitMessage = 'Changed ' + _.join(_.union(_.map(self.mapping.difference.additions, '@id'), _.map(self.mapping.difference.deletions, '@id')), ', ');
                             return cm.createBranchCommit(self.mapping.record.branch, self.mapping.record.id, catalogId, commitMessage);
-                        }, $q.reject);
+                        }, $q.reject)
+                        .then(() => self.mapping.record.id, $q.reject);
                 }
+            }
+            /**
+             * @ngdoc method
+             * @name setMasterBranch
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Retrieves and saves the master branch of the current mapping for use on the
+             * {@link mappingCommitsPage.directive:mappingCommitsPage mappingCommitsPage}.
+             */
+            self.setMasterBranch = function() {
+                var catalogId = _.get(cm.localCatalog, '@id', '');
+                cm.getRecordMasterBranch(self.mapping.record.id, catalogId)
+                    .then(branch => _.set(self.mapping, 'branch', branch), util.createErrorToast);
             }
             /**
              * @ngdoc method
@@ -604,32 +645,61 @@
                 });
                 return classes;
             }
-
+            /**
+             * @ngdoc method
+             * @name changeProp
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Updates the additions and deletions of the current mapping appropriately when a single property
+             * value is changed.
+             *
+             * @param {string} entityId The id of the entity in the mapping whose property value was changed
+             * @param {string} propId The id of the property that was changed
+             * @param {string} newValue The new value of the property
+             * @param {string} originalValue The original value of the property
+             */
             self.changeProp = function(entityId, propId, newValue, originalValue) {
                 if (newValue !== originalValue) {
                     var additionsObj = _.find(self.mapping.difference.additions, {'@id': entityId});
                     var deletionsObj = _.find(self.mapping.difference.deletions, {'@id': entityId});
-                    if (originalValue && !util.getPropertyValue(deletionsObj, propId)) {
-                        additionsObj[propId] = [{'@value': newValue}];
-                    } else {
-                        if (additionsObj) {
-                            additionsObj[propId] = [{'@value': newValue}];
-                        } else {
-                            additionsObj = {'@id': entityId, [propId]: [{'@value': newValue}]};
-                            self.mapping.difference.additions.push(additionsObj);
-                        }
-                        if (originalValue !== undefined) {
-                            if (deletionsObj) {
-                                deletionsObj[propId] = [{'@value': originalValue}];
-                            } else {
-                                deletionsObj = {'@id': entityId, [propId]: [{'@value': originalValue}]};
-                                self.mapping.difference.deletions.push(deletionsObj);
+                    if (additionsObj) {
+                        if (util.getPropertyValue(deletionsObj, propId) === newValue) {
+                            delete additionsObj[propId];
+                            if (_.isEqual(additionsObj, {'@id': entityId})) {
+                                _.remove(self.mapping.difference.additions, additionsObj);
                             }
+                            delete deletionsObj[propId];
+                            if (_.isEqual(deletionsObj, {'@id': entityId})) {
+                                _.remove(self.mapping.difference.deletions, deletionsObj);
+                            }
+                        } else {
+                            additionsObj[propId] = [{'@value': newValue}];
+                            if (deletionsObj && originalValue && !_.has(deletionsObj, "['" + propId + "']")) {
+                                deletionsObj[propId] = [{'@value': originalValue}];
+                            }
+                        }
+                    } else {
+                        additionsObj = {'@id': entityId, [propId]: [{'@value': newValue}]};
+                        self.mapping.difference.additions.push(additionsObj);
+
+                        if (originalValue) {
+                            deletionsObj = {'@id': entityId, [propId]: [{'@value': originalValue}]};
+                            self.mapping.difference.deletions.push(deletionsObj);
                         }
                     }
                 }
             }
-
+            /**
+             * @ngdoc method
+             * @name deleteEntity
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Updates the additions and deletions of the current mapping appropriately when an entity is deleted.
+             *
+             * @param {Object} entity The JSON-LD object of the entity to delete
+             */
             self.deleteEntity = function(entity) {
                 var additionsObj = _.find(self.mapping.difference.additions, {'@id': entity['@id']});
                 if (_.isEqual(angular.copy(additionsObj), angular.copy(entity))) {
@@ -643,7 +713,18 @@
                     }
                 }
             }
-
+            /**
+             * @ngdoc method
+             * @name deleteClass
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Deletes a ClassMapping with the provided id from the current mapping, updating the additions and
+             * deletions appropriately for all properties that point to the ClassMapping and the properties on the
+             * ClassMapping.
+             *
+             * @param {string} classMappingId The id of the ClassMapping to delete.
+             */
             self.deleteClass = function(classMappingId) {
                 var propsLinkingToClass = _.map(mm.getPropsLinkingToClass(self.mapping.jsonld, classMappingId), propMapping => {
                     return {
@@ -667,7 +748,16 @@
                     self.availableClasses.push({ontologyId: ontology.id, classObj});
                 }
             }
-
+            /**
+             * @ngdoc method
+             * @name deleteProp
+             * @description
+             * Deletes a PropertyMapping with the provided id from the current mapping, updating the additions and
+             * deletions appropriately for the parent ClassMapping.
+             *
+             * @param {string} propMappingId The id of the PropertyMapping to delete
+             * @param {string} parentClassMappingId The id of the parent ClassMapping for the PropertyMapping
+             */
             self.deleteProp = function(propMappingId, parentClassMappingId) {
                 var deletedProp = mm.removeProp(self.mapping.jsonld, parentClassMappingId, propMappingId);
                 cleanUpDeletedProp(deletedProp, parentClassMappingId);

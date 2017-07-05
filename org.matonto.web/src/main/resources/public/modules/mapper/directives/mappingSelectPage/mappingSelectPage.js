@@ -53,9 +53,9 @@
          */
         .directive('mappingSelectPage', mappingSelectPage);
 
-        mappingSelectPage.$inject = ['mapperStateService', 'mappingManagerService'];
+        mappingSelectPage.$inject = ['mapperStateService', 'mappingManagerService', 'utilService'];
 
-        function mappingSelectPage(mapperStateService, mappingManagerService) {
+        function mappingSelectPage(mapperStateService, mappingManagerService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -66,6 +66,7 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
+                    dvm.util = utilService;
 
                     dvm.run = function() {
                         dvm.state.mappingSearchString = '';
@@ -81,11 +82,6 @@
                         dvm.state.displayDownloadMappingOverlay = true;
                     }
                     dvm.duplicate = function() {
-                        var selectedMapping = angular.copy(dvm.state.mapping);
-                        dvm.state.createMapping();
-                        dvm.state.mapping.record = selectedMapping.record;
-                        dvm.state.mapping.jsonld = selectedMapping.jsonld;
-                        dvm.state.mapping.ontology = selectedMapping.ontology;
                         dvm.state.displayCreateMappingOverlay = true;
                     }
                     dvm.loadOntologyAndContinue = function() {

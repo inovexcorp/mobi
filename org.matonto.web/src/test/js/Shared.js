@@ -349,6 +349,10 @@ function mockMapperState() {
             this.editMapping = false;
             this.newMapping = false;
             this.step = 0;
+            this.editTabs = {
+                edit: true,
+                commits: false
+            };
             this.invalidProps = [];
             this.availableClasses = [];
             this.invalidOntology = false;
@@ -370,8 +374,9 @@ function mockMapperState() {
 
             this.initialize = jasmine.createSpy('initialize');
             this.resetEdit = jasmine.createSpy('resetEdit');
-            this.createMapping = jasmine.createSpy('createMapping');
+            this.createMapping = jasmine.createSpy('createMapping').and.returnValue({record: {}, ontology: undefined, jsonld: [], difference: {additions: [], deletions: []}});
             this.saveMapping = jasmine.createSpy("saveMapping").and.returnValue($q.when());
+            this.setMasterBranch = jasmine.createSpy("setMasterBranch");
             this.setInvalidProps = jasmine.createSpy('setInvalidProps');
             this.getAvailableProps = jasmine.createSpy('getAvailableProps').and.returnValue([]);
             this.setAvailableProps = jasmine.createSpy('setAvailableProps');

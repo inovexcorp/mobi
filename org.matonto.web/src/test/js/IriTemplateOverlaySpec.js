@@ -48,6 +48,7 @@ describe('IRI Template Overlay directive', function() {
             utilSvc = _utilService_;
         });
 
+        mapperStateSvc.selectedClassMappingId = 'classMapping';
         classMapping = {
             '@id': mapperStateSvc.selectedClassMappingId,
             'hasPrefix': begin + then,
@@ -83,7 +84,10 @@ describe('IRI Template Overlay directive', function() {
     });
     describe('controller methods', function() {
         it('should correctly set the iri template', function() {
+            utilSvc.getPropertyValue.calls.reset();
             controller.set();
+            expect(utilSvc.getPropertyValue).toHaveBeenCalledWith(classMapping, prefixes.delim + 'hasPrefix');
+            expect(utilSvc.getPropertyValue).toHaveBeenCalledWith(classMapping, prefixes.delim + 'localName');
             expect(mappingManagerSvc.editIriTemplate).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.selectedClassMappingId,
                 controller.beginsWith + controller.then, controller.endsWith.value);
             expect(mapperStateSvc.changeProp).toHaveBeenCalledWith(mapperStateSvc.selectedClassMappingId, prefixes.delim + 'hasPrefix', controller.beginsWith + controller.then, classMapping.hasPrefix);
