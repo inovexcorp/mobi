@@ -207,8 +207,8 @@
                         dvm.ds.explore.editing = false;
                     }
                     
-                    dvm.onSelect = function(chip) {
-                        dvm.fullText = _.get(chip, '@value', _.get(chip, '@id'));
+                    dvm.onSelect = function(text) {
+                        dvm.fullText = text;
                         dvm.showText = true;
                     }
                     

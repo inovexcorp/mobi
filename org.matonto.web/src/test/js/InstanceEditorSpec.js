@@ -369,20 +369,11 @@ describe('Instance Editor directive', function() {
             expect(discoverStateSvc.explore.instance.entity).toEqual(controller.original);
             expect(discoverStateSvc.explore.editing).toBe(false);
         });
-        describe('onSelect sets the correct variables when variable has', function() {
-            beforeEach(function() {
-                controller.showText = false;
-            });
-            it('@id', function() {
-                controller.onSelect({'@id': 'id'});
-                controller.fullText = 'id';
-                controller.showText = true;
-            });
-            it('@value', function() {
-                controller.onSelect({'@value': 'value'});
-                controller.fullText = 'value';
-                controller.showText = true;
-            });
+        it('onSelect sets the correct variables', function() {
+            controller.showText = false;
+            controller.onSelect('text');
+            controller.fullText = 'text';
+            controller.showText = true;
         });
     });
 });
