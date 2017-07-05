@@ -80,7 +80,7 @@
 
                     dvm.getClassMappingName = function() {
                         var className = dvm.util.getBeautifulIRI(_.get(dvm.rangeClass, "classObj['@id']"));
-                        return dvm.rangeClassMapping ? className : '[New ' + className + ']';
+                        return dvm.rangeClassMapping ? dvm.util.getBeautifulIRI(dvm.mm.getClassIdByMapping(dvm.rangeClassMapping)) : '[New ' + className + ']';
                     }
                     dvm.disableSet = function() {
                         var propObj = _.get(dvm.selectedProp, 'propObj');
