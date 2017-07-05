@@ -481,7 +481,27 @@
                     return cm.createInProgressCommit(self.mapping.record.id, catalogId)
                         .then(() => cm.updateInProgressCommit(self.mapping.record.id, catalogId, self.mapping.difference), $q.reject)
                         .then(() => {
-                            var commitMessage = 'Changed ' + _.join(_.union(_.map(self.mapping.difference.additions, '@id'), _.map(self.mapping.difference.deletions, '@id')), ', ');
+                            var addedNames = _.map(self.mapping.difference.additions, obj => {
+                                var entity = _.find(self.mapping.jsonld, {'@id': obj['@id']});
+                                if (mm.isClassMapping(entity)) {
+                                    return util.getBeautifulIRI(mm.getClassIdByMapping(entity));
+                                } else if (mm.isPropertyMapping(entity)) {
+                                    return util.getBeautifulIRI(mm.getPropIdByMapping(entity));
+                                } else {
+                                    return util.getBeautifulIRI(obj['@id']);
+                                }
+                            });
+                            var deletedNames = _.map(self.mapping.difference.deletions, obj => {
+                                var entity = _.find(self.mapping.jsonld, {'@id': obj['@id']}) || obj;
+                                if (mm.isClassMapping(entity)) {
+                                    return util.getBeautifulIRI(mm.getClassIdByMapping(entity));
+                                } else if (mm.isPropertyMapping(entity)) {
+                                    return util.getBeautifulIRI(mm.getPropIdByMapping(entity));
+                                } else {
+                                    return util.getBeautifulIRI(obj['@id']);
+                                }
+                            });
+                            var commitMessage = 'Changed ' + _.join(_.union(addedNames, deletedNames), ', ');
                             return cm.createBranchCommit(self.mapping.record.branch, self.mapping.record.id, catalogId, commitMessage);
                         }, $q.reject)
                         .then(() => self.mapping.record.id, $q.reject);

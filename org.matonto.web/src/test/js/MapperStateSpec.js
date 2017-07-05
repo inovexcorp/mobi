@@ -141,14 +141,36 @@ describe('Mapper State service', function() {
                     });
                     it('and createBranchCommit resolves', function(done) {
                         createCommitDeferred.resolve('');
-                        mapperStateSvc.mapping.difference.additions = [{'@id': 'add1'}, {'@id': 'add2'}];
-                        mapperStateSvc.mapping.difference.deletions = [{'@id': 'del1'}, {'@id': 'add2'}];
+                        var add1 = {'@id': 'add1'};
+                        var add2 = {'@id': 'add2'};
+                        var add3 = {'@id': 'add3'};
+                        var del1 = {'@id': 'del1'};
+                        mapperStateSvc.mapping.difference.additions = [add1, add2, add3];
+                        mapperStateSvc.mapping.difference.deletions = [del1, add2];
+                        mapperStateSvc.mapping.jsonld = [add1, add2, add3];
+                        mappingManagerSvc.isClassMapping.and.callFake(function(obj) {
+                            return _.isEqual(obj, add1);
+                        });
+                        mappingManagerSvc.isPropertyMapping.and.callFake(function(obj) {
+                            return _.isEqual(obj, add2) || _.isEqual(obj, del1);
+                        });
+                        mappingManagerSvc.getClassIdByMapping.and.callFake(function(obj) {
+                            return 'Class';
+                        });
+                        mappingManagerSvc.getPropIdByMapping.and.callFake(function(obj) {
+                            if (_.isEqual(obj, add2)) {
+                                return 'Prop 1';
+                            } else {
+                                return 'Prop 2';
+                            }
+                        });
+                        utilSvc.getBeautifulIRI.and.callFake(_.identity);
                         mapperStateSvc.saveMapping().then(function(response) {
                             expect(response).toEqual(mapperStateSvc.mapping.record.id);
                             expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId);
                             expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
                             expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId, mapperStateSvc.mapping.difference);
-                            expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.branch, mapperStateSvc.mapping.record.id, catalogId, 'Changed add1, add2, del1');
+                            expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.branch, mapperStateSvc.mapping.record.id, catalogId, 'Changed Class, Prop 1, add3, Prop 2');
                             done();
                         }, function(response) {
                             fail('Promise should have resolved');
