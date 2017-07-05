@@ -50,7 +50,7 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>jaas.api</artifactId>
+            <artifactId>jaas</artifactId>
             <version>1.7.20</version>
         </dependency>
         <dependency>
