@@ -62,10 +62,7 @@ import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.CatalogUtilsService;
 import org.matonto.catalog.api.builder.Difference;
-import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.catalog.api.versioning.VersioningManager;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
@@ -76,6 +73,8 @@ import org.matonto.ontology.core.api.Entity;
 import org.matonto.ontology.core.api.NamedIndividual;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
+import org.matonto.ontology.core.api.builder.OntologyRecordConfig;
+import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
@@ -106,7 +105,6 @@ public class OntologyRestImpl implements OntologyRest {
     private ValueFactory valueFactory;
     private OntologyManager ontologyManager;
     private CatalogManager catalogManager;
-    private OntologyRecordFactory ontologyRecordFactory;
     private EngineManager engineManager;
     private SesameTransformer sesameTransformer;
     private CacheManager cacheManager;
@@ -132,11 +130,6 @@ public class OntologyRestImpl implements OntologyRest {
     @Reference
     public void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
-        this.ontologyRecordFactory = ontologyRecordFactory;
     }
 
     @Reference
@@ -1309,7 +1302,9 @@ public class OntologyRestImpl implements OntologyRest {
     private Response uploadOntology(ContainerRequestContext context, Ontology ontology, String title,
                                     String description, String keywords) throws MatOntoException {
         User user = getUserFromContext(context);
-        RecordConfig.Builder builder = new RecordConfig.Builder(title, Collections.singleton(user));
+        OntologyRecordConfig.OntologyRecordBuilder builder = new OntologyRecordConfig.OntologyRecordBuilder(title,
+                Collections.singleton(user));
+        ontology.getOntologyId().getOntologyIRI().ifPresent(builder::ontologyIRI);
         if (description != null) {
             builder.description(description);
         }
@@ -1317,7 +1312,8 @@ public class OntologyRestImpl implements OntologyRest {
             builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
         }
         Resource catalogId = catalogManager.getLocalCatalogIRI();
-        OntologyRecord record = catalogManager.createRecord(builder.build(), ontologyRecordFactory);
+        OntologyRecord record = ontologyManager.createOntologyRecord(builder.build());
+        record.getOntologyIRI().ifPresent(this::testOntologyIRIUniqueness);
         catalogManager.addRecord(catalogId, record);
         Resource masterBranchId = record.getMasterBranch_resource().get();
         Resource commitId = versioningManager.commit(catalogId, record.getResource(), masterBranchId, user,
@@ -1339,8 +1335,14 @@ public class OntologyRestImpl implements OntologyRest {
         return Response.status(Response.Status.CREATED).entity(response).build();
     }
 
+    private void testOntologyIRIUniqueness(Resource ontologyIRI) {
+        if (ontologyManager.ontologyIriExists(ontologyIRI)) {
+            throw ErrorUtils.sendError("Ontology already exists with IRI " + ontologyIRI, Response.Status.BAD_REQUEST);
+        }
+    }
+
     /**
-     * Parse the provided Set to provide a map with all the Individuals using their parent(class) as key
+     * Parse the provided Set to provide a map with all the Individuals using their parent(class) as key.
      *
      * @param tupleQueryResult the TupleQueryResult that contains the parent-individuals relationships for creating the
      *                         map.
