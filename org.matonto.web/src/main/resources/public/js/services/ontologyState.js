@@ -409,12 +409,11 @@
              * @param {string} the ontology commit ID.
              */
             self.uploadChanges = function(file, recordId, branchId, commitId) {
-                return om.uploadChangesFile(file, recordId, branchId, commitId).then(() => {
-                    cm.getInProgressCommit(recordId, catalogId).then((commit) => {
-                        var listItem = self.getListItemByRecordId(recordId);
-                        listItem.inProgressCommit = commit;
-                    }, $q.reject());
-                }, $q.reject());
+                return om.uploadChangesFile(file, recordId, branchId, commitId).then(() => 
+                        cm.getInProgressCommit(recordId, catalogId), $q.reject()).then(commit => {
+                            var listItem = self.getListItemByRecordId(recordId);
+                            listItem.inProgressCommit = commit;
+                        }, $q.reject());
             }
             /**
              * @ngdoc method

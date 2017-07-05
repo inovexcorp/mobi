@@ -27,10 +27,9 @@
         .module('uploadChangesOverlay', [])
         .directive('uploadChangesOverlay', uploadChangesOverlay);
 
-        uploadChangesOverlay.$inject = ['catalogManagerService', 'ontologyStateService', 'stateManagerService',
-            'prefixes'];
+        uploadChangesOverlay.$inject = ['ontologyStateService'];
 
-        function uploadChangesOverlay(catalogManagerService, ontologyStateService, stateManagerService, prefixes) {
+        function uploadChangesOverlay(ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -40,8 +39,6 @@
                 controller: function() {
                     var dvm = this;
                     dvm.error;
-                    dvm.cm = catalogManagerService;
-                    dvm.sm = stateManagerService;
                     dvm.os = ontologyStateService;
 
                     dvm.upload = function() {

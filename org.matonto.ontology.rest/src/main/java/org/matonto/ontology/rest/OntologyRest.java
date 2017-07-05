@@ -215,8 +215,7 @@ public interface OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @param fileInputStream the ontology file to upload.
-     * @return OK with new in-progress commit object if successful or METHOD_NOT_ALLOWED if the changes can not be 
-     *         applied to the commit specified.
+     * @return OK if successful or METHOD_NOT_ALLOWED if the changes can not be applied to the commit specified.
      */
     @PUT
     @Path("{recordId}")
