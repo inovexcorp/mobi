@@ -30,6 +30,14 @@ package org.matonto.clustering.hazelcast.config;
  */
 public enum JoinMechanism {
 
-    MULTICAST, TCPIP;
+    /**
+     * Cluster nodes together automatically using hazelcast's multicast functionality.
+     */
+    MULTICAST,
+
+    /**
+     * Cluster known nodes together using direct TCP/IP connections.
+     */
+    TCPIP;
 
 }
