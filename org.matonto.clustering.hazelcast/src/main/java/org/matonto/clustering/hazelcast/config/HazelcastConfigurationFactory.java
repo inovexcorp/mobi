@@ -65,6 +65,7 @@ public class HazelcastConfigurationFactory {
                 break;
             case MULTICAST:
                 configureMulticast(serviceConfig, config);
+                break;
             default:
                 throw new MatOntoException("Unknown join mechanism: " + serviceConfig.joinMechanism());
         }
@@ -100,6 +101,8 @@ public class HazelcastConfigurationFactory {
 
     private static void configureMulticast(HazelcastClusteringServiceConfig serviceConfig, Config config) {
         final MulticastConfig multicastConfig = config.getNetworkConfig().getJoin().getMulticastConfig();
+        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(true);
+        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
         if (serviceConfig.multicastPort() > 0) {
             multicastConfig.setMulticastPort(serviceConfig.multicastPort());
             LOGGER.debug("Configured our multicast port to: {}", serviceConfig.multicastPort());
@@ -116,6 +119,8 @@ public class HazelcastConfigurationFactory {
 
     private static void configureTcpIpJoining(HazelcastClusteringServiceConfig serviceConfig, Config config) {
         final TcpIpConfig tcpIpConfig = config.getNetworkConfig().getJoin().getTcpIpConfig();
+        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
         if (serviceConfig.tcpIpMembers() != null && !serviceConfig.tcpIpMembers().isEmpty()) {
             serviceConfig.tcpIpMembers().forEach(tcpIpConfig::addMember);
             LOGGER.debug("Configured TCP/IP members to: {}",

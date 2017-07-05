@@ -69,13 +69,6 @@ public interface HazelcastClusteringServiceConfig extends ClusteringServiceConfi
 
     /**
      *
-     * @return Whether or not tcp/ip configured clustering is enabled.
-     */
-    @Meta.AD(required = false, deflt = "false")
-    boolean tcpIpEnabled();
-
-    /**
-     *
      * @return Configured tcp/ip members the cluster will attempt to communicate with.
      */
     @Meta.AD(required = false)
@@ -87,13 +80,6 @@ public interface HazelcastClusteringServiceConfig extends ClusteringServiceConfi
      */
     @Meta.AD(required = false)
     int tcpIpTimeoutSeconds();
-
-    /**
-     *
-     * @return Whether or not multicast should be enabled
-     */
-    @Meta.AD(required = false, deflt = "true")
-    boolean multicastEnabled();
 
     /**
      * @return The port to use for multicast in this {@link com.hazelcast.core.HazelcastInstance}

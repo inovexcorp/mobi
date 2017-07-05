@@ -85,9 +85,9 @@ public class HazelcastClusteringServiceTest extends TestCase {
         s3.setModelFactory(MODEL_FACTORY);
         ForkJoinPool pool = new ForkJoinPool(3);
 
-        ForkJoinTask<?> task1 = createNode(pool, s1, 5123, new HashSet<>(Arrays.asList("localhost:5234", "localhost:5345")));
-        ForkJoinTask<?> task2 = createNode(pool, s2, 5234, new HashSet<>(Arrays.asList("localhost:5123", "localhost:5345")));
-        ForkJoinTask<?> task3 = createNode(pool, s3, 5345, new HashSet<>(Arrays.asList("localhost:5123", "localhost:5234")));
+        ForkJoinTask<?> task1 = createNode(pool, s1, 5123, new HashSet<>(Arrays.asList("127.0.0.1:5234", "127.0.0.1:5345")));
+        ForkJoinTask<?> task2 = createNode(pool, s2, 5234, new HashSet<>(Arrays.asList("127.0.0.1:5123", "127.0.0.1:5345")));
+        ForkJoinTask<?> task3 = createNode(pool, s3, 5345, new HashSet<>(Arrays.asList("127.0.0.1:5123", "127.0.0.1:5234")));
 
         task1.get();
         task2.get();
