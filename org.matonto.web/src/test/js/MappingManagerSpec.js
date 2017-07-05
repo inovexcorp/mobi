@@ -217,44 +217,6 @@ describe('Mapping Manager service', function() {
             }
         });
     });
-    it('should rewrite the @id URI path without modifying the local names.', function() {
-        splitIRI.and.callFake(function(iri) {
-            var re = /^([^:]*[:])\/\/(.*)\/([^/]*)$/
-            var matches = iri.match(re);
-            return {
-                begin: matches[1],
-                then: matches[2],
-                end: matches[3]
-            }
-        });
-        var mappingEntity = {'@id': 'uri://olduri/originalMapping', '@type': [prefixes.delim + 'Mapping'], id: 'mapping'};
-        var classMapping1 = {'@id': 'uri://olduri/originalMapping/class1', 'id': 'class1'};
-        var classMapping2 = {'@id': 'uri://olduri/originalMapping/class2', 'id': 'class2'};
-        var objectMapping = {'@id': 'uri://olduri/originalMapping/object', 'id': 'object'};
-        objectMapping[prefixes.delim + 'classMapping'] = [angular.copy(classMapping2)];
-        var dataMapping = {'@id': 'uri://olduri/originalMapping/data', 'id': 'data'};
-        spyOn(mappingManagerSvc, 'getAllClassMappings').and.returnValue([classMapping1, classMapping2]);
-        spyOn(mappingManagerSvc, 'getAllObjectMappings').and.returnValue([objectMapping]);
-        spyOn(mappingManagerSvc, 'getAllDataMappings').and.returnValue([dataMapping]);
-        spyOn(mappingManagerSvc, 'isObjectMapping').and.callFake(function(entity) {
-            return entity.id === objectMapping.id;
-        });
-        var changedMapping = [classMapping1, classMapping2, objectMapping, dataMapping];
-        var mapping = _.concat(angular.copy(changedMapping), mappingEntity);
-        var result = mappingManagerSvc.renameMapping(mapping, 'uri://newuri/originalMapping');
-        expect(result.length).toBe(mapping.length);
-        expect(_.find(result, {id: 'mapping'})['@id']).toBe('uri://newuri/originalMapping');
-        _.forEach(changedMapping, function(entity) {
-            var original = _.find(mapping, {'id': entity.id});
-            expect(original['@id']).not.toBe(entity['@id']);
-            expect(splitIRI(original['@id']).end).toBe(splitIRI(entity['@id']).end);
-            if (_.has(entity, "['" + prefixes.delim + "classMapping']")){
-                expect(entity[prefixes.delim + 'classMapping']).not.toEqual(original[prefixes.delim + 'classMapping']);
-                expect(splitIRI(entity[prefixes.delim + 'classMapping'][0]['@id']).end)
-                    .toEqual(splitIRI(original[prefixes.delim + 'classMapping'][0]['@id']).end);
-            }
-        });
-    });
     describe('should add a class mapping to a mapping', function() {
         beforeEach(function() {
             this.ontologyId = 'http://example.com';

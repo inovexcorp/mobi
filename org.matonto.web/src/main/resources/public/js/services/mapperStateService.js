@@ -751,6 +751,8 @@
             /**
              * @ngdoc method
              * @name deleteProp
+             * @methodOf mapperState.service:mapperStateService
+             *
              * @description
              * Deletes a PropertyMapping with the provided id from the current mapping, updating the additions and
              * deletions appropriately for the parent ClassMapping.
