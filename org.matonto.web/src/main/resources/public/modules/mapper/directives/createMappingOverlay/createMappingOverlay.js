@@ -63,7 +63,6 @@
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
                     dvm.errorMessage = '';
-                    console.log('Result: ', dvm.state.createMapping());
                     dvm.newMapping = dvm.state.createMapping();
                     if (dvm.state.mapping) {
                         dvm.newMapping.record = angular.copy(dvm.state.mapping.record);
