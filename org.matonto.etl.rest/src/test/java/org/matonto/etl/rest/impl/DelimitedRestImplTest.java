@@ -101,7 +101,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
     private Repository repo;
     private ValueFactory vf;
     private ModelFactory mf;
-    private static final String MAPPING_IRI = "http://test.org/mapping";
+    private static final String MAPPING_RECORD_IRI = "http://test.org/mapping-record";
     private static final String DATASET_RECORD_IRI = "http://test.org/dataset-record";
     private static final String DATASET_IRI = "http://test.org/dataset";
     private static final String NAMED_GRAPH_IRI = "http://test.org/named-graph";
@@ -145,7 +145,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         rest.setMappingManager(mappingManager);
         rest.setDatasetManager(datasetManager);
         rest.setRepositoryManager(repositoryManager);
-        rest.setFactory(vf);
+        rest.setVf(vf);
         rest.setTransformer(transformer);
         rest.start();
 
@@ -159,7 +159,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
         when(repositoryManager.getRepository(REPOSITORY_ID)).thenReturn(Optional.of(repo));
         when(mappingManager.retrieveMapping(any(Resource.class))).thenReturn(Optional.empty());
-        when(mappingManager.retrieveMapping(vf.createIRI(MAPPING_IRI))).thenReturn(Optional.of(mappingWrapper));
+        when(mappingManager.retrieveMapping(vf.createIRI(MAPPING_RECORD_IRI))).thenReturn(Optional.of(mappingWrapper));
         when(mappingManager.createMappingId(any(IRI.class))).thenAnswer(i -> new MappingId() {
             @Override
             public Optional<IRI> getMappingIRI() {
@@ -338,7 +338,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
     public void mapCsvWithDefaultsTest() throws Exception {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
-        Response response = testMapDownload(fileName, MAPPING_IRI, null);
+        Response response = testMapDownload(fileName, MAPPING_RECORD_IRI, null);
         isJsonld(response.readEntity(String.class));
         String disposition = response.getStringHeaders().get("Content-Disposition").toString();
         assertTrue(disposition.contains(fileName));
@@ -354,7 +354,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test_tabs.csv", fileName);
 
-        Response response = testMapDownload(fileName, MAPPING_IRI, params);
+        Response response = testMapDownload(fileName, MAPPING_RECORD_IRI, params);
         isNotJsonld(response.readEntity(String.class));
         String disposition = response.getStringHeaders().get("Content-Disposition").toString();
         assertTrue(disposition.contains(params.get("fileName").toString()));
@@ -365,7 +365,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        Response response = testMapDownload(fileName, MAPPING_IRI, null);
+        Response response = testMapDownload(fileName, MAPPING_RECORD_IRI, null);
         isJsonld(response.readEntity(String.class));
         String disposition = response.getStringHeaders().get("Content-Disposition").toString();
         assertTrue(disposition.contains(fileName));
@@ -380,7 +380,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        Response response = testMapDownload(fileName, MAPPING_IRI, params);
+        Response response = testMapDownload(fileName, MAPPING_RECORD_IRI, params);
         isNotJsonld(response.readEntity(String.class));
         String disposition = response.getStringHeaders().get("Content-Disposition").toString();
         assertTrue(disposition.contains(params.get("fileName").toString()));
@@ -388,7 +388,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void mapNonexistentDelimitedTest() {
-        Response response = target().path("delimited-files/error/map").queryParam("mappingIRI", MAPPING_IRI)
+        Response response = target().path("delimited-files/error/map").queryParam("mappingIRI", MAPPING_RECORD_IRI)
                 .request().get();
         assertEquals(response.getStatus(), 400);
     }
@@ -402,7 +402,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
 
         assertTrue(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
 
-        testMapDownload(fileName, MAPPING_IRI, params);
+        testMapDownload(fileName, MAPPING_RECORD_IRI, params);
         assertFalse(Files.exists(Paths.get(DelimitedRestImpl.TEMP_DIR + "/" + fileName)));
     }
 
@@ -473,7 +473,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void mapIntoDatasetWithoutMappingTest() {
-        Response response = target().path("delimited-files/test.csv/map").queryParam("mappingIRI", "")
+        Response response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", "")
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
 
@@ -484,18 +484,18 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void mapIntoDatasetWithoutDatasetTest() {
-        Response response = target().path("delimited-files/test.csv/map").queryParam("mappingIRI", MAPPING_IRI)
+        Response response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", "").request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
 
-        response = target().path("delimited-files/test.csv/map").queryParam("mappingIRI", MAPPING_IRI)
+        response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void mapIntoNonexistentDatasetTest() {
-        Response response = target().path("delimited-files/test.csv/map").queryParam("mappingIRI", MAPPING_IRI)
+        Response response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", ERROR_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
@@ -506,7 +506,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
-        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", ERROR_IRI)
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", ERROR_IRI)
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
@@ -518,7 +518,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
-        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", MAPPING_IRI)
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 500);
     }
@@ -530,7 +530,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
-        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", MAPPING_IRI)
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 500);
     }
@@ -542,7 +542,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
-        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", MAPPING_IRI)
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
     }
@@ -554,7 +554,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
-        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", MAPPING_IRI)
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 500);
     }
@@ -568,7 +568,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
-        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", MAPPING_IRI)
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 200);
         RepositoryConnection conn = repo.getConnection();
@@ -585,7 +585,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         String fileName = UUID.randomUUID().toString() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", MAPPING_IRI)
+        Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
         assertEquals(response.getStatus(), 200);
         RepositoryConnection conn = repo.getConnection();
@@ -625,7 +625,7 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
     }
 
     private Response testMapDownload(String fileName, String mappingName, Map<String, Object> params) {
-        WebTarget wt = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", mappingName);
+        WebTarget wt = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", mappingName);
         if (params != null) {
             for (String k : params.keySet()) {
                 wt = wt.queryParam(k, params.get(k));

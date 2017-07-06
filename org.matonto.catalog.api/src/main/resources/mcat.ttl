@@ -93,13 +93,6 @@
     rdfs:domain :VersionedRDFRecord;
     rdfs:range :Branch.
 
-# MappingRecord
-
-:MappingRecord a owl:Class;
-    rdfs:subClassOf :VersionedRDFRecord;
-    rdfs:label "Mapping"@en;
-    rdfs:comment "A collection of RDF data that defines a mapping resource."@en.
-
 # Branch
 
 :Branch a owl:Class;

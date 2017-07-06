@@ -30,7 +30,7 @@
          *
          * @description
          * The `mappingPreview` module only provides the `mappingPreview` directive which creates
-         * a "boxed" area with a preview of a mapping and a button to select it.
+         * a "boxed" area with a preview of a mapping.
          */
         .module('mappingPreview', [])
         /**
@@ -38,17 +38,16 @@
          * @name mappingPreview.directive:mappingPreview
          * @scope
          * @restrict E
-         * @requires  prefixes.service:prefixes
-         * @requires  ontologyManager.service:ontologyManagerService
-         * @requires  mappingManager.service:mappingManagerService
-         * @requires  mapperState.service:mapperStateService
-         * @requires  delimitedManager.service:delimitedManagerService
+         * @requires prefixes.service:prefixes
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires mappingManager.service:mappingManagerService
+         * @requires mapperState.service:mapperStateService
+         * @requires delimitedManager.service:delimitedManagerService
          *
          * @description
          * `mappingPreview` is a directive that creates a "boxed" div with a preview of a mapping with
-         * its source ontology and all its mapped classes and properties. It also provides a button to
-         * select the mapping for mapping delimited data. The directive is replaced by the contents of
-         * its template.
+         * its description, source ontology, and all its mapped classes and properties. The directive
+         * is replaced bym the contents of its template.
          */
         .directive('mappingPreview', mappingPreview);
 

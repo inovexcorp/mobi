@@ -43,7 +43,6 @@
          * @requires catalogManager.service:catalogManagerService
          * @requires catalogState.service:catalogStateService
          * @requires ontologyManager.service:ontologyManagerService
-         * @requires mappingManager.service:mappingManagerService
          * @requires userManager.service:userManagerService
          *
          * @description
@@ -52,9 +51,9 @@
          */
         .service('loginManagerService', loginManagerService);
 
-        loginManagerService.$inject = ['$q', '$http', '$state', 'catalogManagerService', 'catalogStateService', 'ontologyManagerService', 'mappingManagerService', 'userManagerService', 'stateManagerService', 'ontologyStateService', 'datasetManagerService'];
+        loginManagerService.$inject = ['$q', '$http', '$state', 'catalogManagerService', 'catalogStateService', 'ontologyManagerService', 'userManagerService', 'stateManagerService', 'ontologyStateService', 'datasetManagerService'];
 
-        function loginManagerService($q, $http, $state, catalogManagerService, catalogStateService, ontologyManagerService, mappingManagerService, userManagerService, stateManagerService, ontologyStateService, datasetManagerService) {
+        function loginManagerService($q, $http, $state, catalogManagerService, catalogStateService, ontologyManagerService, userManagerService, stateManagerService, ontologyStateService, datasetManagerService) {
             var self = this,
                 anon = 'self anon';
 
@@ -141,7 +140,6 @@
              * is logged in, intitializes the {@link catalogManager.service:catalogManagerService catalogManagerService},
              * {@link catalogState.service:catalogStateService catalogStateService},
              * {@link ontologyManager.service:ontologyManagerService ontologyManagerService},
-             * {@link mappingManager.service:mappingManagerService mappingManagerService},
              * and the {@link userManager.service:userManagerService userManagerService}. Returns
              * a Promise with whether or not a user is logged in.
              *
@@ -162,7 +160,6 @@
                             ontologyManagerService.initialize();
                             ontologyStateService.initialize();
                         });
-                        mappingManagerService.initialize();
                         userManagerService.initialize();
                         stateManagerService.initialize();
                         datasetManagerService.initialize();

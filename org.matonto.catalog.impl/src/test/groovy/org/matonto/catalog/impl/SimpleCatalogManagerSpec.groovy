@@ -51,7 +51,6 @@ class SimpleCatalogManagerSpec extends Specification {
     def unversionedRecordFactory = new UnversionedRecordFactory()
     def versionedRecordFactory = new VersionedRecordFactory()
     def versionedRDFRecordFactory = new VersionedRDFRecordFactory()
-    def mappingRecordFactory = new MappingRecordFactory()
     def distributionFactory = new DistributionFactory()
     def versionFactory = new VersionFactory()
     def branchFactory = new BranchFactory()
@@ -98,9 +97,6 @@ class SimpleCatalogManagerSpec extends Specification {
         versionedRDFRecordFactory.setValueFactory(vf)
         versionedRDFRecordFactory.setModelFactory(mf)
         versionedRDFRecordFactory.setValueConverterRegistry(vcr)
-        mappingRecordFactory.setValueFactory(vf)
-        mappingRecordFactory.setModelFactory(mf)
-        mappingRecordFactory.setValueConverterRegistry(vcr)
         distributionFactory.setValueFactory(vf)
         distributionFactory.setModelFactory(mf)
         distributionFactory.setValueConverterRegistry(vcr)
@@ -141,7 +137,6 @@ class SimpleCatalogManagerSpec extends Specification {
         vcr.registerValueConverter(unversionedRecordFactory)
         vcr.registerValueConverter(versionedRecordFactory)
         vcr.registerValueConverter(versionedRDFRecordFactory)
-        vcr.registerValueConverter(mappingRecordFactory)
         vcr.registerValueConverter(tagFactory)
         vcr.registerValueConverter(inProgressCommitFactory)
         vcr.registerValueConverter(commitFactory)
@@ -287,28 +282,6 @@ class SimpleCatalogManagerSpec extends Specification {
 
         expect:
         record instanceof VersionedRDFRecord
-        def keywords = record.getKeyword()
-        record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
-        record.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
-        record.getProperty(vf.createIRI(dcIdentifier)).get().stringValue() == identifier
-        record.getProperty(vf.createIRI(dcIssued)).isPresent()
-        record.getProperty(vf.createIRI(dcModified)).isPresent()
-        keywords.contains(vf.createLiteral("keyword1"))
-        keywords.contains(vf.createLiteral("keyword2"))
-        publishers.contains(user.getResource())
-    }
-    def "createRecord creates a MappingRecord when provided a MappingRecordFactory"() {
-        setup:
-        def recordConfig = new RecordConfig.Builder(title, publishers)
-                .identifier(identifier)
-                .description(description)
-                .keywords(keywords)
-                .build()
-        def record = service.createRecord(recordConfig, mappingRecordFactory)
-        def publishers = record.getProperties(vf.createIRI(dcPublisher))
-
-        expect:
-        record instanceof MappingRecord
         def keywords = record.getKeyword()
         record.getProperty(vf.createIRI(dcTitle)).get().stringValue() == title
         record.getProperty(vf.createIRI(dcDescription)).get().stringValue() == description
