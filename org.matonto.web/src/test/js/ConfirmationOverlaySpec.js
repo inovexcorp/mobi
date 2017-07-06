@@ -32,20 +32,19 @@ describe('Confirmation Overlay directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
+        
+        scope.cancelText = 'cancel';
+        scope.confirmText = 'confirm';
+        scope.cancelClick = jasmine.createSpy('cancelClick');
+        scope.confirmClick = jasmine.createSpy('confirmClick');
+        scope.headerText = 'header';
+        scope.size = '';
+
+        this.element = $compile(angular.element('<confirmation-overlay cancel-text="cancelText" confirm-text="confirmText" cancel-click="cancelClick()" confirm-click="confirmClick()" header-text="headerText" size="size"></confirmation-overlay>'))(scope);
+        scope.$digest();
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            scope.cancelText = '';
-            scope.confirmText = '';
-            scope.cancelClick = jasmine.createSpy('cancelClick');
-            scope.confirmClick = jasmine.createSpy('confirmClick');
-            scope.headerText = '';
-            scope.size = '';
-
-            this.element = $compile(angular.element('<confirmation-overlay cancel-text="cancelText" confirm-text="confirmText" cancel-click="cancelClick()" confirm-click="confirmClick()" header-text="headerText" size="size"></confirmation-overlay>'))(scope);
-            scope.$digest();
-        });
         it('cancelText should be two way bound', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.cancelText = 'Cancel';
@@ -84,15 +83,6 @@ describe('Confirmation Overlay directive', function() {
         });
     });
     describe('contains the correct html', function() {
-        beforeEach(function() {
-            scope.cancelText = '';
-            scope.confirmText = '';
-            scope.headerText = '';
-            scope.size = '';
-
-            this.element = $compile(angular.element('<confirmation-overlay cancel-text="cancelText" confirm-text="confirmText" cancel-click="cancelClick()" confirm-click="confirmClick()" header-text="headerText" size="size"></confirmation-overlay>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('overlay')).toBe(true);
             expect(this.element.querySelectorAll('.content').length).toBe(1);

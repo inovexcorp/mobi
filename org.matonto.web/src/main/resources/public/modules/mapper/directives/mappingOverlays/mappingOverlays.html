@@ -20,7 +20,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<mapping-name-overlay ng-if="dvm.state.editMappingName"></mapping-name-overlay>
 <iri-template-overlay ng-if="dvm.state.editIriTemplate"></iri-template-overlay>
 <invalid-ontology-overlay ng-if="dvm.state.invalidOntology"></invalid-ontology-overlay>
 <create-mapping-overlay ng-if="dvm.state.displayCreateMappingOverlay"></create-mapping-overlay>
@@ -58,11 +57,3 @@
         Are you sure you want to delete <strong>{{dvm.getClassName(dvm.state.selectedClassMappingId)}}</strong>?
         <p class="help-block">Deleting a class will remove any properties that link to it.</p>
 </confirmation-overlay>
-
-<confirmation-overlay ng-if="dvm.state.displayDeleteMappingConfirm"
-    class="delete-mapping"
-    header-text="'Delete ' + (dvm.state.mapping.id | splitIRI).end"
-    confirm-click="dvm.state.displayDeleteMappingConfirm = false; dvm.deleteMapping()"
-    cancel-click="dvm.state.displayDeleteMappingConfirm = false"
-    confirm-text="'Yes'"
-    cancel-text="'No'">Are you sure you want to delete <strong>{{(dvm.state.mapping.id | splitIRI).end}}</strong>?</confirmation-overlay>

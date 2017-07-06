@@ -56,7 +56,11 @@ function injectRegexConstant() {
             'IRI': /[a-zA-Z]/,
             'LOCALNAME': /[a-zA-Z]/,
             'FILENAME': /[a-zA-Z]/,
-            'UUID': /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
+            'UUID': /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+            'DATETIME': /[a-zA-Z]/,
+            'INTEGER': /[a-zA-Z]/,
+            'DECIMAL': /[a-zA-Z]/,
+            'ANYTHING': /[a-zA-Z]/
         });
     });
 }
@@ -258,15 +262,12 @@ function mockOntologyManager() {
 function mockMappingManager() {
     module(function($provide) {
         $provide.service('mappingManagerService', function($q) {
-            this.mappingIds = [];
             this.annotationProperties = [];
 
-            this.reset = jasmine.createSpy('reset');
-            this.initialize = jasmine.createSpy('initialize');
             this.upload = jasmine.createSpy('upload').and.returnValue($q.when());
+            this.getMappingRecords = jasmine.createSpy("getMappingRecords").and.returnValue($q.when([]));
             this.getMapping = jasmine.createSpy('getMapping').and.returnValue($q.when([]));
             this.downloadMapping = jasmine.createSpy('downloadMapping');
-            this.updateMapping = jasmine.createSpy('updateMapping').and.returnValue($q.when());
             this.deleteMapping = jasmine.createSpy('deleteMapping').and.returnValue($q.when());
             this.getMappingId = jasmine.createSpy('getMappingId').and.returnValue('');
             this.createNewMapping = jasmine.createSpy('createNewMapping').and.returnValue([]);
@@ -283,6 +284,7 @@ function mockMappingManager() {
             this.isObjectMapping = jasmine.createSpy('isObjectMapping').and.returnValue(true);
             this.isDataMapping = jasmine.createSpy('isDataMapping').and.returnValue(true);
             this.isClassMapping = jasmine.createSpy('isClassMapping').and.returnValue(true);
+            this.getMappingEntity = jasmine.createSpy('getMappingEntity').and.returnValue({});
             this.getPropMappingsByClass = jasmine.createSpy('getPropMappingsByClass').and.returnValue([]);
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
             this.getSourceOntologies = jasmine.createSpy('getSourceOntologies').and.returnValue($q.when([]));
@@ -340,7 +342,7 @@ function mockDelimitedManager() {
 
 function mockMapperState() {
     module(function($provide) {
-        $provide.service('mapperStateService', function() {
+        $provide.service('mapperStateService', function($q) {
             this.selectMappingStep = 0;
             this.fileUploadStep = 1;
             this.editMappingStep = 2;
@@ -351,6 +353,10 @@ function mockMapperState() {
             this.editMapping = false;
             this.newMapping = false;
             this.step = 0;
+            this.editTabs = {
+                edit: true,
+                commits: false
+            };
             this.invalidProps = [];
             this.availableClasses = [];
             this.invalidOntology = false;
@@ -372,7 +378,9 @@ function mockMapperState() {
 
             this.initialize = jasmine.createSpy('initialize');
             this.resetEdit = jasmine.createSpy('resetEdit');
-            this.createMapping = jasmine.createSpy('createMapping');
+            this.createMapping = jasmine.createSpy('createMapping').and.returnValue({record: {}, ontology: undefined, jsonld: [], difference: {additions: [], deletions: []}});
+            this.saveMapping = jasmine.createSpy("saveMapping").and.returnValue($q.when());
+            this.setMasterBranch = jasmine.createSpy("setMasterBranch");
             this.setInvalidProps = jasmine.createSpy('setInvalidProps');
             this.getAvailableProps = jasmine.createSpy('getAvailableProps').and.returnValue([]);
             this.setAvailableProps = jasmine.createSpy('setAvailableProps');
@@ -381,6 +389,10 @@ function mockMapperState() {
             this.getClassProps = jasmine.createSpy('getClassProps').and.returnValue([]);
             this.getClasses = jasmine.createSpy('getClasses').and.returnValue([]);
             this.getMappedColumns = jasmine.createSpy('getMappedColumns').and.returnValue([]);
+            this.changeProp = jasmine.createSpy('changeProp');
+            this.deleteEntity = jasmine.createSpy('deleteEntity');
+            this.deleteClass = jasmine.createSpy('deleteClass');
+            this.deleteProp = jasmine.createSpy('deleteProp');
         });
     });
 }
@@ -867,8 +879,12 @@ function mockUtil() {
             this.getBeautifulIRI = jasmine.createSpy('getBeautifulIRI').and.callFake(_.identity);
             this.getPropertyValue = jasmine.createSpy('getPropertyValue').and.returnValue('');
             this.setPropertyValue = jasmine.createSpy('setPropertyValue').and.returnValue({});
+            this.hasPropertyValue = jasmine.createSpy('hasPropertyValue').and.returnValue(false);
+            this.removePropertyValue = jasmine.createSpy('removePropertyValue');
             this.setPropertyId = jasmine.createSpy('setPropertyId').and.returnValue({});
             this.getPropertyId = jasmine.createSpy('getPropertyId').and.returnValue('');
+            this.hasPropertyId = jasmine.createSpy('hasPropertyId').and.returnValue(false);
+            this.removePropertyId = jasmine.createSpy('removePropertyId');
             this.getDctermsValue = jasmine.createSpy('getDctermsValue').and.returnValue('');
             this.setDctermsValue = jasmine.createSpy('setDctermsValue').and.returnValue({});
             this.mergingArrays = jasmine.createSpy('mergingArrays');
@@ -885,6 +901,7 @@ function mockUtil() {
             this.onError = jasmine.createSpy('onError').and.callFake(function(error, deferred) {
                 deferred.reject(_.get(error, 'statusText', ''));
             });
+            this.rejectError = jasmine.createSpy("rejectError").and.returnValue($q.reject(''));
             this.getErrorMessage = jasmine.createSpy('getErrorMessage').and.returnValue('');
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getChangesById = jasmine.createSpy('getChangesById');
@@ -987,7 +1004,9 @@ function mockExplore() {
         $provide.service('exploreService', function($q) {
             this.getClassDetails = jasmine.createSpy('getClassDetails').and.returnValue($q.when([]));
             this.getClassInstanceDetails = jasmine.createSpy('getClassInstanceDetails').and.returnValue($q.when([]));
+            this.getClassPropertyDetails = jasmine.createSpy('getClassPropertyDetails').and.returnValue($q.when([]));
             this.getInstance = jasmine.createSpy('getInstance').and.returnValue($q.when({}));
+            this.updateInstance = jasmine.createSpy('updateInstance').and.returnValue($q.when({}));
             this.createPagedResultsObject = jasmine.createSpy('createPagedResultsObject').and.returnValue({});
         });
     });

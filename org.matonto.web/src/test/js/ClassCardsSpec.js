@@ -134,7 +134,8 @@ describe('Class Cards directive', function() {
                 exploreSvc.createPagedResultsObject.and.returnValue({prop: 'paged', data: [{prop: 'new'}]});
                 controller.exploreData({classTitle: 'new', classIRI: 'classId'});
                 scope.$apply();
-                expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith('recordId', 'classId');
+                expect(discoverStateSvc.explore.classId).toBe('classId');
+                expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith('recordId', 'classId', {offset: 0, limit: discoverStateSvc.explore.instanceDetails.limit});
                 expect(discoverStateSvc.resetPagedInstanceDetails).toHaveBeenCalled();
                 expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith({data: data, headers: headers});
                 expect(discoverStateSvc.explore.instanceDetails).toEqual(jasmine.objectContaining({
@@ -147,7 +148,7 @@ describe('Class Cards directive', function() {
                 exploreSvc.getClassInstanceDetails.and.returnValue($q.reject('error'));
                 controller.exploreData({classTitle: 'new', classIRI: 'classId'});
                 scope.$apply();
-                expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith('recordId', 'classId');
+                expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith('recordId', 'classId', {offset: 0, limit: discoverStateSvc.explore.instanceDetails.limit});
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
             });
         });

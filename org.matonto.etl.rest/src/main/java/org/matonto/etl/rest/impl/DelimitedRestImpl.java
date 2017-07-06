@@ -97,7 +97,7 @@ import javax.ws.rs.core.StreamingOutput;
 public class DelimitedRestImpl implements DelimitedRest {
     private DelimitedConverter converter;
     private MappingManager mappingManager;
-    private ValueFactory factory;
+    private ValueFactory vf;
     private DatasetManager datasetManager;
     private RepositoryManager repositoryManager;
 
@@ -119,8 +119,8 @@ public class DelimitedRestImpl implements DelimitedRest {
     }
 
     @Reference
-    public void setFactory(ValueFactory factory) {
-        this.factory = factory;
+    public void setVf(ValueFactory vf) {
+        this.vf = vf;
     }
 
     @Reference
@@ -195,13 +195,13 @@ public class DelimitedRestImpl implements DelimitedRest {
     }
 
     @Override
-    public Response etlFile(String fileName, String mappingIRI, String format, boolean containsHeaders,
+    public Response etlFile(String fileName, String mappingRecordIRI, String format, boolean containsHeaders,
                             String separator, String downloadFileName) {
-        checkStringParam(mappingIRI, "Must provide the IRI of an uploaded mapping");
+        checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
 
         // Convert the data
-        Model data = transformer.sesameModel(etlFile(fileName, () -> getUploadedMapping(mappingIRI), containsHeaders,
-                separator, false));
+        Model data = transformer.sesameModel(etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI),
+                containsHeaders, separator, false));
         String result = groupedModelToString(data, format);
 
         // Write data into a stream
@@ -224,17 +224,17 @@ public class DelimitedRestImpl implements DelimitedRest {
     }
 
     @Override
-    public Response etlFile(String fileName, String mappingIRI, String datasetRecordIRI, boolean containsHeaders,
+    public Response etlFile(String fileName, String mappingRecordIRI, String datasetRecordIRI, boolean containsHeaders,
                             String separator) {
-        checkStringParam(mappingIRI, "Must provide the IRI of an uploaded mapping");
+        checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
         checkStringParam(datasetRecordIRI, "Must provide the IRI of a dataset record");
 
         // Collect the DatasetRecord
-        DatasetRecord record = datasetManager.getDatasetRecord(factory.createIRI(datasetRecordIRI)).orElseThrow(() ->
+        DatasetRecord record = datasetManager.getDatasetRecord(vf.createIRI(datasetRecordIRI)).orElseThrow(() ->
                 ErrorUtils.sendError("Dataset " + datasetRecordIRI + " does not exist", Response.Status.BAD_REQUEST));
 
         // Convert the data
-        org.matonto.rdf.api.Model data = etlFile(fileName, () -> getUploadedMapping(mappingIRI), containsHeaders,
+        org.matonto.rdf.api.Model data = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
                 separator, false);
 
         // Add data to the dataset
@@ -246,7 +246,7 @@ public class DelimitedRestImpl implements DelimitedRest {
                 .orElseThrow(() -> ErrorUtils.sendError("Repository is not available.", Response.Status.BAD_REQUEST));
         try (RepositoryConnection conn = repository.getConnection()) {
             RepositoryResult<Statement> statements = conn.getStatements(datasetIri,
-                    factory.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
+                    vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
             if (statements.hasNext()) {
                 Resource context = (Resource) statements.next().getObject();
                 conn.add(data, context);
@@ -492,18 +492,14 @@ public class DelimitedRestImpl implements DelimitedRest {
     /**
      * Retrieves a Sesame Model of an uploaded mapping by its IRI.
      *
-     * @param mappingIRI the IRI of a mapping
+     * @param mappingRecordIRI the IRI of a mapping
      * @return a Sesame Model with a mapping
      */
-    private Model getUploadedMapping(String mappingIRI) {
+    private Model getUploadedMapping(String mappingRecordIRI) {
         // Collect uploaded mapping model
-        Resource mappingId = mappingManager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
-        Optional<MappingWrapper> mappingOptional = mappingManager.retrieveMapping(mappingId);
-        if (mappingOptional.isPresent()) {
-            return transformer.sesameModel(mappingOptional.get().getModel());
-        } else {
-            throw ErrorUtils.sendError("Mapping " + mappingId + " does not exist", Response.Status.BAD_REQUEST);
-        }
+        MappingWrapper mapping = mappingManager.retrieveMapping(vf.createIRI(mappingRecordIRI)).orElseThrow(() ->
+                ErrorUtils.sendError("Mapping " + mappingRecordIRI + " does not exist", Response.Status.BAD_REQUEST));
+        return transformer.sesameModel(mapping.getModel());
     }
 
     private void removeTempFile(String fileName) {

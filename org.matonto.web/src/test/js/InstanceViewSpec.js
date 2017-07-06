@@ -60,8 +60,11 @@ describe('Instance View directive', function() {
         it('for a block-header', function() {
             expect(element.find('block-header').length).toBe(1);
         });
-        it('for a instance-block-header', function() {
-            expect(element.find('instance-block-header').length).toBe(1);
+        it('with a breadcrumbs', function() {
+            expect(element.find('breadcrumbs').length).toBe(1);
+        });
+        it('with a .pull-right.edit-button', function() {
+            expect(element.querySelectorAll('.pull-right.edit-button').length).toBe(1);
         });
         it('for a block-content', function() {
             expect(element.find('block-content').length).toBe(1);
@@ -119,5 +122,11 @@ describe('Instance View directive', function() {
                 expect(controller.getLimit(['', ''], 1)).toBe(2);
             });
         });
+    });
+    it('should set the variable correctly when edit button is clicked', function() {
+        discoverStateSvc.explore.editing = false;
+        var button = angular.element(element.querySelectorAll('.pull-right.edit-button')[0]);
+        button.triggerHandler('click');
+        expect(discoverStateSvc.explore.editing).toBe(true);
     });
 });

@@ -96,12 +96,38 @@
              * @param {string} value The new value for the property
              */
             self.setPropertyValue = function(entity, propertyIRI, value) {
-                var valueObj = {'@value': value};
-                if (_.has(entity, "['" + propertyIRI + "']")) {
-                    entity[propertyIRI].push(valueObj);
-                } else {
-                    _.set(entity, "['" + propertyIRI + "'][0]", valueObj);
-                }
+                setValue(entity, propertyIRI, {'@value': value});
+            }
+            /**
+             * @ngdoc method
+             * @name hasPropertyValue
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Tests whether or not the passed entity contains the passed value for the passed property.
+             *
+             * @param {Object} entity The entity to look for the property value in
+             * @param {string} propertyIRI The IRI of a property
+             * @param {string} value The value to search for
+             * @return {boolean} True if the entity has the property value; false otherwise
+             */
+            self.hasPropertyValue = function(entity, propertyIRI, value) {
+                return hasValue(entity, propertyIRI, {'@value': value});
+            }
+            /**
+             * @ngdoc method
+             * @name removePropertyValue
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Remove the passed value of the passed property from the passed entity.
+             *
+             * @param {Object} entity The entity to remove the property value from
+             * @param {string} propertyIRI The IRI of a property
+             * @param {string} value The value to remove
+             */
+            self.removePropertyValue = function(entity, propertyIRI, value) {
+                removeValue(entity, propertyIRI, {'@value': value});
             }
             /**
              * @ngdoc method
@@ -130,15 +156,41 @@
              *
              * @param {Object} entity The entity to set the property value of
              * @param {string} propertyIRI The IRI of a property
-             * @param {string} id The new id for the property
+             * @param {string} id The new id value for the property
              */
             self.setPropertyId = function(entity, propertyIRI, id) {
-                var idObj = {'@id': id};
-                if (_.has(entity, "['" + propertyIRI + "']")) {
-                    entity[propertyIRI].push(idObj);
-                } else {
-                    _.set(entity, "['" + propertyIRI + "'][0]", idObj);
-                }
+                setValue(entity, propertyIRI, {'@id': id});
+            }
+            /**
+             * @ngdoc method
+             * @name hasPropertyId
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Tests whether or not the passed entity contains the passed id value for the passed property.
+             *
+             * @param {Object} entity The entity to look for the property id value in
+             * @param {string} propertyIRI The IRI of a property
+             * @param {string} id The id value to search for
+             * @return {boolean} True if the entity has the property id value; false otherwise
+             */
+            self.hasPropertyId = function(entity, propertyIRI, id) {
+                return hasValue(entity, propertyIRI, {'@id': id});
+            }
+            /**
+             * @ngdoc method
+             * @name removePropertyId
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Remove the passed id value of the passed property from the passed entity.
+             *
+             * @param {Object} entity The entity to remove the property id value from
+             * @param {string} propertyIRI The IRI of a property
+             * @param {string} id The id value to remove
+             */
+            self.removePropertyId = function(entity, propertyIRI, id) {
+                removeValue(entity, propertyIRI, {'@id': id});
             }
             /**
              * @ngdoc method
@@ -407,6 +459,22 @@
             }
             /**
              * @ngdoc method
+             * @name rejectError
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Returns a rejected promise with the status text of the passed HTTP response object if present,
+             * otherwise uses the passed default message.
+             *
+             * @param {Object} error A HTTP response object
+             * @param {string} defaultMessage The optional default error text for the rejection
+             * @return {Promise} A Promise that rejects with an error message
+             */
+            self.rejectError = function(error, defaultMessage) {
+                return $q.reject(self.getErrorMessage(error, defaultMessage));
+            }
+            /**
+             * @ngdoc method
              * @name getErrorMessage
              * @methodOf util.service:utilService
              *
@@ -468,6 +536,25 @@
              */
             self.getPredicateLocalName = function(partialStatement) {
                 return $filter('splitIRI')(_.get(partialStatement, 'p', '')).end;
+            }
+
+            function setValue(entity, propertyIRI, valueObj) {
+                if (_.has(entity, "['" + propertyIRI + "']")) {
+                    entity[propertyIRI].push(valueObj);
+                } else {
+                    _.set(entity, "['" + propertyIRI + "'][0]", valueObj);
+                }
+            }
+            function hasValue(entity, propertyIRI, valueObj) {
+                return _.some(_.get(entity, "['" + propertyIRI + "']", []), valueObj);
+            }
+            function removeValue(entity, propertyIRI, valueObj) {
+                if (_.has(entity, "['" + propertyIRI + "']")) {
+                    _.remove(entity[propertyIRI], valueObj);
+                    if (entity[propertyIRI].length === 0) {
+                        delete entity[propertyIRI];
+                    }
+                }
             }
         }
 })();

@@ -55,8 +55,8 @@ describe('Instance Block directive', function() {
         it('with a block-header', function() {
             expect(element.find('block-header').length).toBe(1);
         });
-        it('with a instance-tab-header', function() {
-            expect(element.find('instance-block-header').length).toBe(1);
+        it('with a breadcrumbs', function() {
+            expect(element.find('breadcrumbs').length).toBe(1);
         });
         it('with a block-content', function() {
             expect(element.querySelectorAll('block-content').length).toBe(1);

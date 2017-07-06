@@ -20,34 +20,44 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Instance Block Header directive', function() {
-    var $compile, scope, element, exploreSvc, discoverStateSvc, $q, controller, util;
+describe('Breadcrumbs directive', function() {
+    var $compile, scope, element, discoverStateSvc, controller, isolatedScope;
 
     beforeEach(function() {
         module('templates');
-        module('instanceBlockHeader');
+        module('breadcrumbs');
         mockDiscoverState();
-        mockExplore();
-        mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _exploreService_, _discoverStateService_, _$q_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _discoverStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            exploreSvc = _exploreService_;
             discoverStateSvc = _discoverStateService_;
-            $q = _$q_;
-            util = _utilService_;
         });
 
-        discoverStateSvc.explore.breadcrumbs = ['', ''];
-        element = $compile(angular.element('<instance-block-header></instance-block-header>'))(scope);
+        scope.items = ['', ''];
+        scope.onClick = jasmine.createSpy('onClick');
+        element = $compile(angular.element('<breadcrumbs items="items" on-click="onClick()"></breadcrumbs>'))(scope);
         scope.$digest();
+        controller = element.controller('breadcrumbs');
+        isolatedScope = element.isolateScope();
     });
 
+    describe('in isolated scope', function() {
+        it('items should be one way bound', function() {
+            isolatedScope.items = [];
+            scope.$digest();
+            expect(scope.items).toEqual(['', '']);
+        });
+        it('onClick to be called in parent scope', function() {
+            isolatedScope.onClick();
+            expect(scope.onClick).toHaveBeenCalled();
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('OL');
-            expect(element.hasClass('instance-block-header')).toBe(true);
+            expect(element.hasClass('breadcrumbs')).toBe(true);
+            expect(element.hasClass('breadcrumb')).toBe(true);
         });
         it('depending on how many entities are in the path', function() {
             expect(element.find('li').length).toBe(2);
@@ -64,15 +74,6 @@ describe('Instance Block Header directive', function() {
             expect(secondItem.hasClass('active')).toBe(true);
             expect(secondItem.find('span').length).toBe(1);
             expect(secondItem.find('a').length).toBe(0);
-        });
-    });
-    describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('instanceBlockHeader');
-        });
-        it('should navigate to the selected crumb', function() {
-            controller.clickCrumb(0);
-            expect(discoverStateSvc.explore.breadcrumbs.length).toBe(1);
         });
     });
 });
