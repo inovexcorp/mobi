@@ -150,6 +150,7 @@
         .constant('INDENT', 1.28571429)
         .config(httpInterceptorConfig)
         .config(ariaConfig)
+        .config(theming)
         .factory('requestInterceptor', requestInterceptor)
         .service('beforeUnload', beforeUnload)
         .run(function(beforeUnload) {
@@ -217,5 +218,14 @@
             $ariaProvider.config({
                 tabindex: false
             });
+        }
+
+        function theming($mdThemingProvider) {
+            var bootstrapBlue = $mdThemingProvider.extendPalette('blue', {
+                500: '#337ab7'
+            });
+            $mdThemingProvider.definePalette('bootstrapBlue', bootstrapBlue);
+            $mdThemingProvider.theme('default')
+                .primaryPalette('bootstrapBlue');
         }
 })();
