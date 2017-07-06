@@ -119,6 +119,24 @@
         
         /**
          * @ngdoc method
+         * @name createInstance
+         * @methodOf explore.service:exploreService
+         *
+         * @description
+         * Calls the POST /matontorest/explorable-datasets/{recordId}/classes/{classId}/instances endpoint
+         * and returns the instance IRI.
+         *
+         * @param {string} recordId The id of the Record
+         * @param {Object} json The JSON-LD of the instance being created
+         * @returns {Promise} A promise that resolves to the instance IRI.
+         */
+        self.createInstance = function(recordId, json) {
+            return $http.post(prefix + encodeURIComponent(recordId) + '/instances', json)
+                .then(response => response.data, response => $q.reject(response.statusText));
+        }
+        
+        /**
+         * @ngdoc method
          * @name getInstance
          * @methodOf explore.service:exploreService
          *

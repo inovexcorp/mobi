@@ -111,6 +111,30 @@ describe('Explore Service', function() {
         });
     });
     
+    describe('createInstance calls the correct functions when POST /matontorest/explorable-datasets/{recordId}/classes/{classId}/instances', function() {
+        var json = {'@id': 'id'};
+        it('succeeds', function() {
+            $httpBackend.expectPOST('/matontorest/explorable-datasets/recordId/instances', json).respond(200, 'instanceId');
+            exploreSvc.createInstance('recordId', json)
+                .then(function(response) {
+                    expect(response).toEqual('instanceId');
+                }, function() {
+                    fail('Should have been resolved.');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('fails', function() {
+            $httpBackend.expectPOST('/matontorest/explorable-datasets/recordId/instances', json).respond(400, null, null, 'error');
+            exploreSvc.createInstance('recordId', json)
+                .then(function() {
+                    fail('Should have been rejected.');
+                }, function(response) {
+                    expect(response).toBe('error');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
+    
     describe('getInstance calls the correct functions when GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId}', function() {
         it('succeeds', function() {
             var data = {'@id': 'instanceId'};

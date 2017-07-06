@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Instance Editor directive', function() {
+describe('Instance Creator directive', function() {
     var $compile, scope, element, discoverStateSvc, controller, exploreSvc, $q, util;
 
     beforeEach(function() {
         module('templates');
-        module('instanceEditor');
+        module('instanceCreator');
         mockDiscoverState();
         mockUtil();
         mockExplore();
@@ -39,14 +39,15 @@ describe('Instance Editor directive', function() {
             util = _utilService_;
         });
         
-        element = $compile(angular.element('<instance-editor></instance-editor>'))(scope);
+        element = $compile(angular.element('<instance-creator></instance-creator>'))(scope);
         scope.$digest();
-        controller = element.controller('instanceEditor');
+        controller = element.controller('instanceCreator');
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
+            expect(element.hasClass('instance-creator')).toBe(true);
             expect(element.hasClass('instance-editor')).toBe(true);
         });
         it('for a block', function() {
@@ -69,12 +70,10 @@ describe('Instance Editor directive', function() {
         });
     });
     describe('controller methods', function() {
-        describe('save should call the correct functions when updateInstance is', function() {
+        describe('save should call the correct functions when createInstance is', function() {
             describe('resolved and getClassInstanceDetails is', function() {
-                var instanceIRI;
                 beforeEach(function() {
-                    instanceIRI = discoverStateSvc.explore.instance.metadata.instanceIRI;
-                    exploreSvc.updateInstance.and.returnValue($q.when());
+                    exploreSvc.createInstance.and.returnValue($q.when());
                 });
                 it('resolved', function() {
                     var data = [{
@@ -82,43 +81,49 @@ describe('Instance Editor directive', function() {
                         title: 'title'
                     }, {
                         instanceIRI: 'id2'
+                    }, {
+                        instanceIRI: 'id3'
+                    }, {
+                        instanceIRI: 'id4'
                     }];
                     discoverStateSvc.explore.breadcrumbs = ['old title'];
                     discoverStateSvc.explore.instance.entity = {'@id': 'id'};
                     exploreSvc.getClassInstanceDetails.and.returnValue($q.when({data: data}));
+                    discoverStateSvc.explore.instanceDetails.limit = 1;
                     controller.save();
                     scope.$apply();
-                    expect(exploreSvc.updateInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, instanceIRI, discoverStateSvc.explore.instance.entity);
-                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: discoverStateSvc.explore.instanceDetails.currentPage * discoverStateSvc.explore.instanceDetails.limit, limit: discoverStateSvc.explore.instanceDetails.limit});
-                    expect(discoverStateSvc.explore.instanceDetails.data).toEqual(data);
+                    expect(exploreSvc.createInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.instance.entity);
+                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {});
+                    expect(discoverStateSvc.explore.instanceDetails.data).toEqual([data[0]]);
                     expect(discoverStateSvc.explore.instance.metadata).toEqual({instanceIRI: 'id', title: 'title'});
                     expect(_.last(discoverStateSvc.explore.breadcrumbs)).toBe('title');
-                    expect(discoverStateSvc.explore.editing).toEqual(false);
+                    expect(discoverStateSvc.explore.creating).toEqual(false);
                 });
                 it('rejected', function() {
                     exploreSvc.getClassInstanceDetails.and.returnValue($q.reject('error'));
                     controller.save();
                     scope.$apply();
-                    expect(exploreSvc.updateInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, instanceIRI, discoverStateSvc.explore.instance.entity);
-                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: discoverStateSvc.explore.instanceDetails.currentPage * discoverStateSvc.explore.instanceDetails.limit, limit: discoverStateSvc.explore.instanceDetails.limit});
+                    expect(exploreSvc.createInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.instance.entity);
+                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {});
                     expect(util.createErrorToast).toHaveBeenCalledWith('error');
                 });
             });
             it('rejected', function() {
-                exploreSvc.updateInstance.and.returnValue($q.reject('error'));
+                exploreSvc.createInstance.and.returnValue($q.reject('error'));
                 controller.save();
                 scope.$apply();
-                expect(exploreSvc.updateInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.instance.metadata.instanceIRI, discoverStateSvc.explore.instance.entity);
+                expect(exploreSvc.createInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.instance.entity);
                 expect(exploreSvc.getClassInstanceDetails).not.toHaveBeenCalled();
                 expect(util.createErrorToast).toHaveBeenCalledWith('error');
             });
         });
         it('cancel sets the correct variables', function() {
-            controller.original = {'@id': 'original'};
             discoverStateSvc.explore.instance.entity = {'@id': 'entity'};
+            discoverStateSvc.explore.breadcrumbs = ['classId', 'new'];
             controller.cancel();
-            expect(discoverStateSvc.explore.instance.entity).toEqual(controller.original);
-            expect(discoverStateSvc.explore.editing).toBe(false);
+            expect(discoverStateSvc.explore.instance.entity).toEqual({});
+            expect(discoverStateSvc.explore.creating).toBe(false);
+            expect(discoverStateSvc.explore.breadcrumbs).toEqual(['classId']);
         });
     });
 });

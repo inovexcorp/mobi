@@ -23,8 +23,8 @@
 <div class="instance-block">
     <block>
         <block-header>
-            <breadcrumbs items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
-            <a class="pull-right edit-button" ng-click="dvm.create()"><i class="fa fa-plus"></i>Create</a>
+            <breadcrumbs class="pull-left" items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
+            <a class="pull-right create-button" ng-click="dvm.create()"><i class="fa fa-plus"></i>Create {{dvm.getClassName()}}</a>
         </block-header>
         <block-content>
             <instance-cards></instance-cards>
