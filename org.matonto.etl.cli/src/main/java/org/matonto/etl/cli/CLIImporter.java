@@ -111,7 +111,7 @@ public class CLIImporter implements Action {
                 LOGGER.info("Importing RDF into repository " + repositoryId);
                 importService.importFile(repositoryId, newFile, continueOnError);
             } else {
-                LOGGER.info("Importing RDF into dataset" + datasetRecordId);
+                LOGGER.info("Importing RDF into dataset " + datasetRecordId);
                 RDFFormat format = Rio.getParserFormatForFileName(file)
                         .orElseThrow(() -> new IllegalStateException("File is not a supported RDFFormat"));
                 DatasetConnection conn = datasetManager.getConnection(vf.createIRI(datasetRecordId));
