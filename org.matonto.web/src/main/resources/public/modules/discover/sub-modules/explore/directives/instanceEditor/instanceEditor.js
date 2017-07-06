@@ -81,6 +81,7 @@
                     dvm.prefixes = prefixes;
                     dvm.searchText = {};
                     dvm.showOverlay = false;
+                    dvm.showText = false;
                     dvm.changed = [];
                     dvm.original = angular.copy(dvm.ds.explore.instance.entity);
                     
@@ -206,8 +207,9 @@
                         dvm.ds.explore.editing = false;
                     }
                     
-                    dvm.onSelect = function(chip) {
-                        console.log(chip);
+                    dvm.onSelect = function(text) {
+                        dvm.fullText = text;
+                        dvm.showText = true;
                     }
                     
                     function contains(string, part) {

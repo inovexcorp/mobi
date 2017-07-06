@@ -180,6 +180,14 @@ describe('Instance Editor directive', function() {
             
             expect(element.find('new-instance-property-overlay').length).toBe(1);
         });
+        it('for a confirmation-overlay', function() {
+            expect(element.find('confirmation-overlay').length).toBe(0);
+            
+            controller.showText = true;
+            scope.$digest();
+            
+            expect(element.find('confirmation-overlay').length).toBe(1);
+        });
     });
     describe('controller methods', function() {
         describe('getOptions should result in the correct list when the propertyIRI', function() {
@@ -360,6 +368,12 @@ describe('Instance Editor directive', function() {
             controller.cancel();
             expect(discoverStateSvc.explore.instance.entity).toEqual(controller.original);
             expect(discoverStateSvc.explore.editing).toBe(false);
+        });
+        it('onSelect sets the correct variables', function() {
+            controller.showText = false;
+            controller.onSelect('text');
+            controller.fullText = 'text';
+            controller.showText = true;
         });
     });
 });
