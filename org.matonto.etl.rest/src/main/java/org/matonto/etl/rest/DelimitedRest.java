@@ -51,7 +51,7 @@ public interface DelimitedRest {
     @RolesAllowed("user")
     @ApiOperation("Upload delimited file sent as form data.")
     Response upload(@FormDataParam("delimitedFile") InputStream fileInputStream,
-                    @FormDataParam("delimitedFile")FormDataContentDisposition fileDetail);
+                    @FormDataParam("delimitedFile") FormDataContentDisposition fileDetail);
 
     /**
      * Replaces an uploaded delimited document in the temp directory with another
@@ -117,11 +117,11 @@ public interface DelimitedRest {
 
     /**
      * Maps the data in an uploaded delimited document into RDF in the requested format
-     * using an uploaded Mapping and downloads the result in a file with the requested
+     * using a MappingRecord's Mapping and downloads the result in a file with the requested
      * name. The file must be present in the data/tmp/ directory.
      *
      * @param fileName the name of the delimited document in the data/tmp/ directory
-     * @param mappingIRI the id of the Mapping
+     * @param mappingRecordIRI the id of the MappingRecord
      * @param format the RDF serialization to use
      * @param containsHeaders whether the delimited file has headers
      * @param separator the character the columns are separated by if it is a CSV
@@ -134,19 +134,19 @@ public interface DelimitedRest {
     @RolesAllowed("user")
     @ApiOperation("ETL an uploaded delimited document using an uploaded Mapping file and download the data")
     Response etlFile(@PathParam("documentName") String fileName,
-                     @QueryParam("mappingIRI") String mappingIRI,
+                     @QueryParam("mappingRecordIRI") String mappingRecordIRI,
                      @DefaultValue("jsonld") @QueryParam("format") String format,
                      @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
                      @DefaultValue(",") @QueryParam("separator") String separator,
                      @QueryParam("fileName") String downloadFileName);
 
     /**
-     * Maps the data in an uploaded delimited document into RDF using an uploaded Mapping and
+     * Maps the data in an uploaded delimited document into RDF using a MappingRecord's Mapping and
      * adds it to the system default named graph of the requested DatasetRecord's Dataset. The
      * file must be present in the data/tmp/ directory.
      *
      * @param fileName the name of the delimited document in the data/tmp/ directory
-     * @param mappingIRI the id of the Mapping
+     * @param mappingRecordIRI the id of the MappingRecord
      * @param datasetRecordIRI the id of the DatasetRecord
      * @param containsHeaders whether the delimited file has headers
      * @param separator the character the columns are separated by if it is a CSV
@@ -157,7 +157,7 @@ public interface DelimitedRest {
     @RolesAllowed("user")
     @ApiOperation("ETL an uploaded delimited document using an uploaded Mapping file and load data into a Dataset")
     Response etlFile(@PathParam("documentName") String fileName,
-                     @QueryParam("mappingIRI") String mappingIRI,
+                     @QueryParam("mappingRecordIRI") String mappingRecordIRI,
                      @QueryParam("datasetRecordIRI") String datasetRecordIRI,
                      @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
                      @DefaultValue(",") @QueryParam("separator") String separator);
