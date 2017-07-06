@@ -3135,7 +3135,7 @@ describe('Ontology State Service', function() {
             it('and getInProgressCommit resolves', function() {
                 createDeferred = $q.defer();
                 spyOn(ontologyStateSvc, 'updateOntology').and.returnValue(createDeferred.promise);
-                ontologyStateSvc.list[0].ontologyStatus = { upToDate: true };
+                ontologyStateSvc.list[0].ontologyState = { upToDate: true };
                 getDeferred.promise = { additions: ['a'], deletions: [] };
                 catalogManagerSvc.getInProgressCommit.and.returnValue(getDeferred.promise);
                 ontologyStateSvc.uploadChanges({}, recordId, branchId, commitId);
@@ -3144,7 +3144,7 @@ describe('Ontology State Service', function() {
                 expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
             });
             it ('and getInProgressCommit rejects', function() {
-                ontologyStateSvc.list[0].ontologyStatus = { upToDate: true };
+                ontologyStateSvc.list[0].ontologyState = { upToDate: true };
                 getDeferred.reject(error);
                 ontologyStateSvc.uploadChanges({}, recordId, branchId, commitId);
                 scope.$apply();

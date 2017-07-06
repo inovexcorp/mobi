@@ -748,7 +748,7 @@ public interface CatalogManager {
      * @return Model which represents the resource at the Commit's point in history.
      * @throws IllegalArgumentException Thrown if the Commit could not be found.
      */
-    Model getCompiledResource(Resource commitId, Resource branchId, Resource versionedRDFRecordId);
+    Model getCompiledResource(Resource versionedRDFRecordId, Resource branchId, Resource commitId);
 
     /**
      * Gets all of the conflicts between the Commits identified by the two provided Resources.

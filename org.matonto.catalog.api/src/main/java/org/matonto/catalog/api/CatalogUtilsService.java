@@ -396,30 +396,6 @@ public interface CatalogUtilsService {
     void addCommit(Branch branch, Commit commit, RepositoryConnection conn);
 
     /**
-     * Gets a List of Commits ordered by date descending within the repository. The Commit identified by the provided
-     * Resource is the first item in the List and it was informed by the previous Commit in the List. This association
-     * is repeated until you get to the beginning of the List. The resulting List can then be thought about the chain
-     * of Commits on a Branch starting with the Commit identified by the provided Resource.
-     *
-     * @param commitId The Resource identifying the Commit for the desired chain.
-     * @param conn A RepositoryConnection to use for lookup.
-     * @return List of Resources which make up the commit chain for the provided Commit.
-     * @throws IllegalArgumentException Thrown if any of the Commits could not be found.
-     */
-    List<Resource> getCommitChain(Resource commitId, RepositoryConnection conn);
-
-    /**
-     * Gets an iterator which contains all of the Resources (commits) is the specified direction, either ascending or
-     * descending by date. If descending, the provided Resource identifying a commit will be first.
-     *
-     * @param commitId The Resource identifying the commit that you want to get the chain for.
-     * @param conn     The RepositoryConnection which will be queried for the Commits.
-     * @param asc      Whether or not the iterator should be ascending by date
-     * @return Iterator of Values containing the requested commits.
-     */
-    Iterator<Value> getCommitChainIterator(Resource commitId, RepositoryConnection conn, boolean asc);
-
-    /**
      * Gets the Resource identifying the graph that contains the additions statements of the Commit identified by the
      * provided Resource.
      *
@@ -522,6 +498,16 @@ public interface CatalogUtilsService {
      */
     void validateCommitPath(Resource catalogId, Resource recordId, Resource branchId, Resource commitId, RepositoryConnection conn);
 
+    /**
+     * 
+     * @param branchId The {@link Resource} of the {@link Branch} which should have the {@link Commit}.
+     * @param commitId The {@link Resource} of the {@link Commit}.
+     * @param conn A RepositoryConnection to use for lookup.
+     * @return {@code true} is the (@link Commit} {@link Resource} is in the {@link Branch}'s commit chain and 
+     *         {@code false} otherwise.
+     */
+    boolean isCommitInBranch(Resource branchId, Resource commitId, RepositoryConnection conn);
+    
     /**
      * Gets a List which represents the commit chain from the initial commit to the specified commit in either
      * ascending or descending date order.

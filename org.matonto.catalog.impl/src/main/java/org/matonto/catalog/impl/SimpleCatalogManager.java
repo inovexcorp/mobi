@@ -31,6 +31,9 @@ import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.CatalogUtilsService;
 import org.matonto.catalog.api.PaginatedSearchParams;
@@ -85,8 +88,6 @@ import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
@@ -100,6 +101,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -1014,14 +1016,16 @@ public class SimpleCatalogManager implements CatalogManager {
     public Optional<Commit> getCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
                                       Resource commitId) {
         long start = System.currentTimeMillis();
+        Optional<Commit> rtn = Optional.empty();
         try (RepositoryConnection conn = repository.getConnection()) {
-            utils.validateCommitPath(catalogId, versionedRDFRecordId, branchId, commitId, conn);
-            return Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
-        } catch(IllegalArgumentException e) {
-            return Optional.empty();
+            utils.validateBranch(catalogId, versionedRDFRecordId, branchId, conn);
+            if (utils.isCommitInBranch(branchId, commitId, conn)) {
+                rtn =  Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
+            }
         } finally {
             log.trace("getCommit took {}ms", System.currentTimeMillis() - start);
         }
+        return rtn;
     }
 
     @Override
@@ -1132,7 +1136,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Model getCompiledResource(Resource commitId, Resource branchId, Resource versionedRDFRecordId) {
+    public Model getCompiledResource(Resource versionedRDFRecordId, Resource branchId, Resource commitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateCommitPath(localCatalogIRI, versionedRDFRecordId, branchId, commitId, conn);
             return utils.getCompiledResource(commitId, conn);

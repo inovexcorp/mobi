@@ -399,27 +399,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         updateObject(branch, conn);
         addObject(commit, conn);
     }
-
-    @Override
-    public List<Resource> getCommitChain(Resource commitId, RepositoryConnection conn) {
-        List<Resource> results = new ArrayList<>();
-        Iterator<Value> commits = getCommitChainIterator(commitId, conn, false);
-        commits.forEachRemaining(commit -> results.add((Resource) commit));
-        return results;
-    }
-
-    @Override
-    public Iterator<Value> getCommitChainIterator(Resource commitId, RepositoryConnection conn, boolean asc) {
-        TupleQuery query = conn.prepareTupleQuery(GET_COMMIT_CHAIN);
-        query.setBinding(COMMIT_BINDING, commitId);
-        TupleQueryResult result = query.evaluate();
-        LinkedList<Value> commits = new LinkedList<>();
-        result.forEach(bindingSet -> bindingSet.getBinding(PARENT_BINDING).ifPresent(binding ->
-                commits.add(binding.getValue())));
-        commits.addFirst(commitId);
-        return asc ? commits.descendingIterator() : commits.iterator();
-    }
-
     
     @Override
     public Resource getAdditionsResource(Resource commitId, RepositoryConnection conn) {
@@ -508,13 +487,18 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     public void validateCommitPath(Resource catalogId, Resource recordId, Resource branchId, Resource commitId, 
                       RepositoryConnection conn) {
         validateBranch(catalogId, recordId, branchId, conn);
-        Branch branch = getExpectedObject(branchId, branchFactory, conn);
-        Resource head = getHeadCommitIRI(branch);
-        if (!(head.equals(commitId) || getCommitChain(head, conn).contains(commitId))) {
+        if (!isCommitInBranch(branchId, commitId, conn)) {
             throw throwDoesNotBelong(commitId, commitFactory, branchId, branchFactory);
         }
     }
 
+    @Override
+    public boolean isCommitInBranch(Resource branchId, Resource commitId, RepositoryConnection conn) {
+        Branch branch = getExpectedObject(branchId, branchFactory, conn);
+        Resource head = getHeadCommitIRI(branch);
+        return (head.equals(commitId) || getCommitChain(head, false, conn).contains(commitId));
+    }
+    
     @Override
     public List<Resource> getCommitChain(Resource commitId, boolean asc, RepositoryConnection conn) {
         List<Resource> results = new ArrayList<>();

@@ -3956,7 +3956,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void testUploadChangesToOntology() {
-        when(catalogManager.getCompiledResource(eq(commitId), eq(branchId), eq(recordId)))
+        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(ontologyModel);
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
                 any(User.class))).thenReturn(Optional.empty());
@@ -3973,7 +3973,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         assertGetUserFromContext();
         verify(ontologyManager).createOntology(any(FileInputStream.class));
-        verify(catalogManager).getCompiledResource(eq(commitId), eq(branchId), eq(recordId));
+        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
         verify(catalogManager).getDiff(any(Model.class), any(Model.class));
         verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
         verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
@@ -3981,7 +3981,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void testUploadChangesToOntologyWithoutBranchId() {
-        when(catalogManager.getCompiledResource(eq(commitId), eq(branchId), eq(recordId)))
+        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(ontologyModel);
         when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
                 any(User.class))).thenReturn(Optional.empty());
@@ -3998,7 +3998,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertGetUserFromContext();
         verify(catalogManager).getMasterBranch(eq(catalogId), eq(recordId));
         verify(ontologyManager).createOntology(any(FileInputStream.class));
-        verify(catalogManager).getCompiledResource(eq(commitId), eq(branchId), eq(recordId));
+        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
         verify(catalogManager).getDiff(any(Model.class), any(Model.class));
         verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
         verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
@@ -4023,7 +4023,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertGetUserFromContext();
         verify(catalogManager).getHeadCommit(eq(catalogId), eq(recordId), eq(branchId));
         verify(ontologyManager).createOntology(any(FileInputStream.class));
-        verify(catalogManager).getCompiledResource(eq(commitId), eq(branchId), eq(recordId));
+        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
         verify(catalogManager).getDiff(any(Model.class), any(Model.class));
         verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
         verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());

@@ -1762,24 +1762,29 @@ public class SimpleCatalogUtilsServiceTest {
         throw service.throwThingNotFound(RECORD_IRI, recordFactory);
     }
 
-        /* getCommitChain(Resource) */
-
     @Test
-    public void testGetCommitChain() throws Exception {
-        // Setup:
-        List<Resource> expect = Stream.of(vf.createIRI("http://matonto.org/test/commits#test3"),
-                vf.createIRI("http://matonto.org/test/commits#test4b"),
-                vf.createIRI("http://matonto.org/test/commits#test4a"),
-                vf.createIRI("http://matonto.org/test/commits#test2"),
-                vf.createIRI("http://matonto.org/test/commits#test1"),
-                vf.createIRI("http://matonto.org/test/commits#test0")).collect(Collectors.toList());
-        Resource commitId = vf.createIRI("http://matonto.org/test/commits#test3");
-
-        List<Resource> result = service.getCommitChain(commitId, repo.getConnection());
-        assertEquals(expect.size(), result.size());
-        assertEquals(expect, result);
+    public void isCommitBranchHeadTest() {
+        Resource commitId = vf.createIRI("http://matonto.org/test/commits#conflict2");
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(service.isCommitInBranch(BRANCH_IRI, commitId, conn));
+        }
     }
 
+    @Test
+    public void isCommitBranchNotHeadTest() {
+        Resource commitId = vf.createIRI("http://matonto.org/test/commits#conflict0");
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(service.isCommitInBranch(BRANCH_IRI, commitId, conn));
+        }
+    }
+
+    @Test
+    public void isCommitBranchNotTest() {
+        Resource commitId = vf.createIRI("http://matonto.org/test/commits#test4a");
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(service.isCommitInBranch(BRANCH_IRI, commitId, conn));
+        }
+    }
 
     private void testBadRecordId(Resource resource) {
         // Setup:
