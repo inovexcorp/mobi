@@ -97,6 +97,11 @@
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-multipart</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>ontology.api</artifactId>
+            <version>1.8.25-SNAPSHOT</version>
+        </dependency>
 
         <dependency>
             <groupId>org.glassfish.jersey.test-framework.providers</groupId>

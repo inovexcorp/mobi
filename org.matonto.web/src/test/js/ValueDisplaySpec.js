@@ -38,6 +38,7 @@ describe('Value Display directive', function() {
         element = $compile(angular.element('<value-display value="value"></value-display>'))(scope);
         scope.$digest();
         isolatedScope = element.isolateScope();
+        controller = element.controller('valueDisplay');
     });
 
     describe('in isolated scope', function() {
@@ -83,6 +84,17 @@ describe('Value Display directive', function() {
             scope.$apply();
 
             expect(element.querySelectorAll('.text-muted.type-display').length).toBe(1);
+        });
+    });
+    describe('controller methods', function() {
+        describe('has should return', function() {
+            var obj = {prop: 'value'};
+            it('true when property is present', function() {
+                expect(controller.has(obj, 'prop')).toBe(true);
+            });
+            it('false when property is not present', function() {
+                expect(controller.has(obj, 'missing')).toBe(false);
+            });
         });
     });
 });
