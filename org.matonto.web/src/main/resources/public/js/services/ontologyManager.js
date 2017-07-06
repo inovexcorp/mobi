@@ -200,14 +200,13 @@
              * @returns {Promise} A promise indicating whether the ontology was persisted.
              */
             self.uploadFile = function(file, title, description, keywords) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
-                    config = {
-                        transformRequest: angular.identity,
-                        headers: {
-                            'Content-Type': undefined
-                        }
-                    };
+                var fd = new FormData(),
+                config = {
+                    transformRequest: angular.identity,
+                    headers: {
+                        'Content-Type': undefined
+                    }
+                };
                 fd.append('file', file);
                 fd.append('title', title);
                 if (description) {
@@ -216,10 +215,8 @@
                 if (keywords) {
                     fd.append('keywords', keywords);
                 }
-                $http.post(prefix, fd, config)
-                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
-
-                return deferred.promise;
+                return $http.post(prefix, fd, config)
+                    .then(response => response.data, response => $q.reject(response.statusText));
             }
             /**
              * @ngdoc method
@@ -237,8 +234,7 @@
              * @returns {Promise} A promise with the new in-progress commit to be applied or error message.
              */
             self.uploadChangesFile = function(file, recordId, branchId, commitId) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                    var fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         headers: {
@@ -252,10 +248,8 @@
                     };
                 fd.append('file', file);
                 
-                $http.put(prefix + '/' + encodeURIComponent(recordId), fd, config)
+                return $http.put(prefix + '/' + encodeURIComponent(recordId), fd, config)
                     .then(response => response.data, response => $q.reject(response.statusText));
-
-                return deferred.promise;
             }
             /**
              * @ngdoc method

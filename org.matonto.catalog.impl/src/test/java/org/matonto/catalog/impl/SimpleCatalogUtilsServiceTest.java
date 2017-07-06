@@ -27,6 +27,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -81,13 +88,6 @@ import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
 import org.openrdf.sail.memory.MemoryStore;
-
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class SimpleCatalogUtilsServiceTest {
     private SimpleCatalogUtilsService service;
@@ -425,7 +425,7 @@ public class SimpleCatalogUtilsServiceTest {
     }
 
     @Test
-    public void getRecordWithMissingCatalog(){
+    public void getRecordWithMissingCatalog() {
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Catalog " + MISSING_IRI + " could not be found");
@@ -1203,7 +1203,7 @@ public class SimpleCatalogUtilsServiceTest {
             Resource additionsResource = getAdditionsResource(IN_PROGRESS_COMMIT_IRI);
             Resource deletionsResource = getDeletionsResource(IN_PROGRESS_COMMIT_IRI);
             assertTrue(conn.size(additionsResource) > 0);
-            assertTrue(conn.size(deletionsResource ) > 0);
+            assertTrue(conn.size(deletionsResource) > 0);
 
             service.removeInProgressCommit(commit, conn);
             assertFalse(conn.getStatements(null, null, null, IN_PROGRESS_COMMIT_IRI).hasNext());
@@ -1223,7 +1223,7 @@ public class SimpleCatalogUtilsServiceTest {
             commit.getModel().add(commit.getResource(), vf.createIRI(Revision.deletions_IRI), deletionsResource, commit.getResource());
             assertTrue(conn.getStatements(null, null, null, commit.getResource()).hasNext());
             assertTrue(conn.size(additionsResource) > 0);
-            assertTrue(conn.size(deletionsResource ) > 0);
+            assertTrue(conn.size(deletionsResource) > 0);
 
             service.removeInProgressCommit(commit, conn);
             assertFalse(conn.getStatements(null, null, null, commit.getResource()).hasNext());
@@ -1760,6 +1760,24 @@ public class SimpleCatalogUtilsServiceTest {
         thrown.expectMessage("Record " + RECORD_IRI + " could not be found");
 
         throw service.throwThingNotFound(RECORD_IRI, recordFactory);
+    }
+
+        /* getCommitChain(Resource) */
+
+    @Test
+    public void testGetCommitChain() throws Exception {
+        // Setup:
+        List<Resource> expect = Stream.of(vf.createIRI("http://matonto.org/test/commits#test3"),
+                vf.createIRI("http://matonto.org/test/commits#test4b"),
+                vf.createIRI("http://matonto.org/test/commits#test4a"),
+                vf.createIRI("http://matonto.org/test/commits#test2"),
+                vf.createIRI("http://matonto.org/test/commits#test1"),
+                vf.createIRI("http://matonto.org/test/commits#test0")).collect(Collectors.toList());
+        Resource commitId = vf.createIRI("http://matonto.org/test/commits#test3");
+
+        List<Resource> result = service.getCommitChain(commitId, repo.getConnection());
+        assertEquals(expect.size(), result.size());
+        assertEquals(expect, result);
     }
 
 

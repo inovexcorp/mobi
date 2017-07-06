@@ -253,30 +253,31 @@ public class OntologyRestImpl implements OntologyRest {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
         try {
+            Resource catalogIRI = catalogManager.getLocalCatalogIRI();
             Resource recordId = valueFactory.createIRI(recordIdStr);
-            Resource branchId = valueFactory.createIRI(branchIdStr);
-            Resource commitId = valueFactory.createIRI(commitIdStr);
-            
+            Resource branchId = StringUtils.isBlank(branchIdStr) ? catalogManager.getMasterBranch(catalogIRI, recordId).getResource() : valueFactory.createIRI(branchIdStr);
+            Resource commitId = StringUtils.isBlank(commitIdStr) ? catalogManager.getHeadCommit(catalogIRI, recordId, branchId).getResource() : valueFactory.createIRI(commitIdStr);
+
             Model changedOnt = ontologyManager.createOntology(fileInputStream).asModel(modelFactory);
             Model currentOnt = catalogManager.getCompiledResource(commitId, branchId, recordId);
 
             Difference diff = catalogManager.getDiff(currentOnt, changedOnt);
             User user = getUserFromContext(context);
-            Optional<InProgressCommit> commit = catalogManager.getInProgressCommit(catalogManager.getLocalCatalogIRI(), recordId, user);
-            
+            Optional<InProgressCommit> commit = catalogManager.getInProgressCommit(catalogIRI, recordId, user);
+
             if (commit.isPresent()) {
                 Exception e = new MatOntoException("User has an in progress commit already.");
                 throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
             }
-            
+
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
-            catalogManager.updateInProgressCommit(catalogManager.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
+            catalogManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
                     diff.getAdditions(), diff.getDeletions());
             return Response.ok().build();
 
-        } catch(IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
-        }catch (MatOntoException e) {
+        } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             IOUtils.closeQuietly(fileInputStream);

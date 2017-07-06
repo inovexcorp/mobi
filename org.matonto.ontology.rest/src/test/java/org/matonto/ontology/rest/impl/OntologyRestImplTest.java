@@ -38,6 +38,22 @@ import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
+import javax.cache.Cache;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collections;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -125,22 +141,6 @@ import org.openrdf.rio.helpers.JSONLDMode;
 import org.openrdf.rio.helpers.JSONLDSettings;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collections;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import javax.cache.Cache;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 public class OntologyRestImplTest extends MatontoRestTestNg {
     private OntologyRestImpl rest;
@@ -782,7 +782,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
         assertEquals(response.getStatus(), 500);
     }
-    
+
     // Test upload changes to ontology 
     /*
     @Test
@@ -803,7 +803,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @Test
     public void testUploadChangesToOntologyInvalidOntology() {}
     */
-    
+
 
     @Test
     public void testUploadExistingOntologyJson() {
@@ -3949,6 +3949,100 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("branchId", branchId.stringValue()).request().delete();
 
         assertEquals(response.getStatus(), 500);
-        verify(ontologyManager, times(0)).deleteOntology(Mockito.any());
+        verify(ontologyManager, times(0)).deleteOntology(any());
+    }
+
+    // Test upload changes
+
+    @Test
+    public void testUploadChangesToOntology() {
+        when(catalogManager.getCompiledResource(eq(commitId), eq(branchId), eq(recordId)))
+                .thenReturn(ontologyModel);
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
+                any(User.class))).thenReturn(Optional.empty());
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertGetUserFromContext();
+        verify(ontologyManager).createOntology(any(FileInputStream.class));
+        verify(catalogManager).getCompiledResource(eq(commitId), eq(branchId), eq(recordId));
+        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
+        verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+    }
+
+    @Test
+    public void testUploadChangesToOntologyWithoutBranchId() {
+        when(catalogManager.getCompiledResource(eq(commitId), eq(branchId), eq(recordId)))
+                .thenReturn(ontologyModel);
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
+                any(User.class))).thenReturn(Optional.empty());
+        when(catalogManager.getMasterBranch(eq(catalogId), eq(recordId))).thenReturn(branch);
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertGetUserFromContext();
+        verify(catalogManager).getMasterBranch(eq(catalogId), eq(recordId));
+        verify(ontologyManager).createOntology(any(FileInputStream.class));
+        verify(catalogManager).getCompiledResource(eq(commitId), eq(branchId), eq(recordId));
+        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
+        verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+    }
+
+    @Test
+    public void testUploadChangesToOntologyWithoutCommitId() {
+        when(catalogManager.getCompiledResource(eq(commitId), eq(branchId), eq(recordId)))
+                .thenReturn(ontologyModel);
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
+                any(User.class))).thenReturn(Optional.empty());
+        when(catalogManager.getHeadCommit(eq(catalogId), eq(recordId), eq(branchId))).thenReturn(commit);
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertGetUserFromContext();
+        verify(catalogManager).getHeadCommit(eq(catalogId), eq(recordId), eq(branchId));
+        verify(ontologyManager).createOntology(any(FileInputStream.class));
+        verify(catalogManager).getCompiledResource(eq(commitId), eq(branchId), eq(recordId));
+        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
+        verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+    }
+
+    @Test
+    public void testUploadChangesToOntologyWithExistingInProgressCommit() {
+        when(catalogManager.getInProgressCommit(eq(catalogManager.getLocalCatalogIRI()), eq(recordId), any(User.class)))
+                .thenReturn(Optional.of(inProgressCommit));
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/search-results.json"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
     }
 }

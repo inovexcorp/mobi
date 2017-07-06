@@ -290,7 +290,6 @@ describe('Ontology Manager service', function() {
                     done();
                 }, function(response) {
                     expect(response).toEqual(error);
-                    expect(util.onError).toHaveBeenCalled();
                     done();
                 });
             flushAndVerify($httpBackend);
