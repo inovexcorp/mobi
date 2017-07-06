@@ -21,39 +21,31 @@
   #L%
   -->
 <div class="mapping-select-page row">
-    <div class="col-xs-4">
-        <block has-header="true">
-            <block-header>
-                <span>Mappings</span>
-                <button class="btn btn-link pull-right" ng-click="dvm.createMapping()">
-                    <i class="fa fa-plus"></i>Create Mapping
-                </button>
-            </block-header>
-            <block-search ng-model="dvm.state.mappingSearchString" clear-event="dvm.state.mappingSearchString = ''"></block-search>
-            <block-content>
-                <mapping-list></mapping-list>
-            </block-content>
-            <block-footer class="centered">
-                <button class="btn btn-link" ng-click="dvm.deleteMapping()" ng-disabled="!dvm.state.mapping">
-                    <i class="fa fa-trash"></i>Delete Mapping
-                </button>
-            </block-footer>
-        </block>
-    </div>
-    <div class="col-xs-8">
-        <block has-header="true">
+    <mapping-list-block></mapping-list-block>
+    <div class="col-xs-8 full-height">
+        <block>
             <block-header>
                 <div class="mapping-preview-header" ng-class="{'invisible': !dvm.state.mapping}">
-                    <span>{{(dvm.state.mapping.id | splitIRI).end}}</span>
-                    <button class="btn btn-link pull-right download-btn" ng-click="dvm.downloadMapping()">
-                        <i class="fa fa-download"></i>Download
-                    </button>
-                    <button class="btn btn-link pull-right run-btn" ng-click="dvm.run()" ng-disabled="!dvm.state.mapping.record">
-                        <i class="fa fa-play-circle-o"></i>Run
-                    </button>
-                    <button class="btn btn-link pull-right edit-btn" ng-click="dvm.edit()" ng-disabled="!dvm.state.mapping.record">
-                        <i class="fa fa-pencil"></i>Edit
-                    </button>
+                    <span>{{dvm.state.mapping.record.title}}</span>
+                    <div uib-dropdown class="pull-right">
+                        <button uib-dropdown-toggle title="Actions" class="btn btn-xs btn-default">
+                            <i class="fa fa-fw fa-ellipsis-h"></i>
+                        </button>
+                        <ul uib-dropdown-menu>
+                            <li><a class="run-btn" ng-click="dvm.run()" a-disabled="!dvm.state.mapping.ontology">
+                                <i class="fa fa-play-circle-o"></i>Run
+                            </a></li>
+                            <li><a class="edit-btn" ng-click="dvm.edit()" a-disabled="!dvm.state.mapping.ontology">
+                                <i class="fa fa-pencil"></i>Edit
+                            </a></li>
+                            <li><a class="duplicate-btn" ng-click="dvm.duplicate()" a-disabled="!dvm.state.mapping.ontology">
+                                <i class="fa fa-files-o"></i>Duplicate
+                            </a></li>
+                            <li><a class="download-btn" ng-click="dvm.download()">
+                                <i class="fa fa-download"></i>Download
+                            </a></li>
+                        </ul>
+                    </div>
                 </div>
             </block-header>
             <block-content class="padding">
@@ -61,7 +53,12 @@
                     <p class="lead">Welcome to the Mapping Tool!</p>
                     <p>If this is your first time here, you may want to check the <a href="http://docs.matonto.org/#mapping_tool" target="_blank">User's Guide</a>. Get started by clicking a mapping name in the list or creating a new mapping.</p>
                 </div>
-                <mapping-preview ng-if="dvm.state.mapping"></mapping-preview>
+                <div class="preview" ng-if="dvm.state.mapping">
+                    <p>{{dvm.state.mapping.record.description}}</p>
+                    <h3>Source Ontology</h3>
+                    <p class="source-ontology" ng-class="{'text-danger': !dvm.state.mapping.ontology}">{{dvm.util.getDctermsValue(dvm.state.mapping.ontology, 'title')}} <span ng-if="!dvm.state.mapping.ontology" class="text-muted">(This ontology could not be found)</span></p>
+                    <mapping-preview></mapping-preview>
+                </div>
             </block-content>
         </block>
     </div>

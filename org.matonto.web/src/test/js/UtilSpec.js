@@ -73,50 +73,86 @@ describe('Util service', function() {
         });
     });
     describe('should get a property value from an entity', function() {
+        var prop = 'property';
         it('if it contains the property', function() {
-            var prop = 'property';
             var entity = {'property': [{'@value': 'value'}]};
             expect(utilSvc.getPropertyValue(entity, prop)).toBe('value');
         });
         it('if it does not contain the property', function() {
-            expect(utilSvc.getPropertyValue({}, 'prop')).toBe('');
+            expect(utilSvc.getPropertyValue({}, prop)).toBe('');
         });
     });
     describe('should set a property value for an entity', function() {
+        var prop = 'property', value = 'value';
         it('when not there', function() {
-            var prop = 'property';
-            var value = 'value';
             var entity = {};
             var expected = {'property': [{'@value': value}]};
             utilSvc.setPropertyValue(entity, prop, value);
             expect(entity).toEqual(expected);
         });
         it('when there', function() {
-            var prop = 'property';
-            var value = 'value';
             var entity = {'property': [{'@value': 'other'}]};
             var expected = {'property': [{'@value': 'other'}, {'@value': value}]};
             utilSvc.setPropertyValue(entity, prop, value);
             expect(entity).toEqual(expected);
         });
     });
-    describe('should set a property id for an entity', function() {
+    it('should test whether an entity has a property value', function() {
+        var prop = 'property';
+        var value = {'@value': 'value'};
+        expect(utilSvc.hasPropertyValue({}, prop, value['@value'])).toEqual(false);
+        expect(utilSvc.hasPropertyValue({'property': [value]}, prop, value['@value'])).toEqual(true);
+    });
+    it('should remove a property value from an entity', function() {
+        var prop = 'property';
+        var value = {'@value': 'value'};
+        var other = {'@value': 'other'};
+        var entity = {'property': [value, other]};
+        utilSvc.removePropertyValue(entity, prop, value['@value']);
+        expect(entity[prop]).not.toContain(value);
+        utilSvc.removePropertyValue(entity, prop, other['@value']);
+        expect(_.has(entity, prop)).toEqual(false);
+    });
+    describe('should get a property id value from an entity', function() {
+        var prop = 'property';
+        it('if it contains the property', function() {
+            var entity = {'property': [{'@id': 'id'}]};
+            expect(utilSvc.getPropertyId(entity, prop)).toBe('id');
+        });
+        it('if it does not contain the property', function() {
+            expect(utilSvc.getPropertyId({}, prop)).toBe('');
+        });
+    });
+    describe('should set a property id value for an entity', function() {
+        var prop = 'property', id = 'id';
         it('when not there', function() {
-            var prop = 'property';
-            var id = 'id';
             var entity = {};
             var expected = {'property': [{'@id': id}]};
             utilSvc.setPropertyId(entity, prop, id);
             expect(entity).toEqual(expected);
         });
         it('when there', function() {
-            var prop = 'property';
-            var id = 'id';
             var entity = {'property': [{'@id': 'otherId'}]};
             var expected = {'property': [{'@id': 'otherId'}, {'@id': id}]};
             utilSvc.setPropertyId(entity, prop, id);
             expect(entity).toEqual(expected);
         });
+    });
+    it('should test whether an entity has a property id value', function() {
+        var prop = 'property';
+        var value = {'@id': 'id'};
+        expect(utilSvc.hasPropertyId({}, prop, value['@id'])).toEqual(false);
+        expect(utilSvc.hasPropertyId({'property': [value]}, prop, value['@id'])).toEqual(true);
+    });
+    it('should remove a property id value from an entity', function() {
+        var prop = 'property';
+        var value = {'@id': 'id'};
+        var other = {'@id': 'other'};
+        var entity = {'property': [value, other]};
+        utilSvc.removePropertyId(entity, prop, value['@id']);
+        expect(entity[prop]).not.toContain(value);
+        utilSvc.removePropertyId(entity, prop, other['@id']);
+        expect(_.has(entity, prop)).toEqual(false);
     });
     describe('should get a dcterms property value from an entity', function() {
         it('if it contains the property', function() {
@@ -270,6 +306,18 @@ describe('Util service', function() {
             });
             $timeout.flush();
         });
+    });
+    it('should create a rejected promise with an error message', function(done) {
+        spyOn(utilSvc, 'getErrorMessage').and.returnValue('Test');
+        utilSvc.rejectError({}, 'Test').then(function() {
+            fail('Promise should have rejected.');
+            done();
+        }, function(error) {
+            expect(error).toBe('Test');
+            expect(utilSvc.getErrorMessage).toHaveBeenCalledWith({}, 'Test');
+            done();
+        });
+        $timeout.flush();
     });
     it('should retrieve an error message from a http response', function() {
         expect(utilSvc.getErrorMessage({}, 'default')).toBe('default');

@@ -55,7 +55,6 @@
                 util = utilService,
                 prefix = '/matontorest/delimited-files';
 
-
             /**
              * @ngdoc property
              * @name dataRows
@@ -144,8 +143,7 @@
              * error message otherwise
              */
             self.upload = function(file) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         headers: {
@@ -154,10 +152,8 @@
                         }
                     };
                 fd.append('delimitedFile', file);
-                $http.post(prefix, fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-
-                return deferred.promise;
+                return $http.post(prefix, fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -179,28 +175,25 @@
              * or the call did not succeed
              */
             self.previewFile = function(rowEnd) {
-                var deferred = $q.defer(),
-                    config = {
+                var config = {
                         params: {
                             'rowCount': rowEnd ? rowEnd : 0,
                             'separator': self.separator
                         }
                     };
-                $http.get(prefix + '/' + encodeURIComponent(self.fileName), config)
+                return $http.get(prefix + '/' + encodeURIComponent(self.fileName), config)
                     .then(response => {
                         if (response.data.length === 0) {
                             self.dataRows = undefined;
-                            deferred.reject("No rows were found");
+                            return $q.reject("No rows were found");
                         } else {
                             self.dataRows = response.data;
-                            deferred.resolve();
+                            return;
                         }
                     }, error => {
                         self.dataRows = undefined;
-                        util.onError(error, deferred);
+                        return util.rejectError(error);
                     });
-
-                return deferred.promise;
             }
 
             /**
@@ -222,8 +215,7 @@
              * @return {Promise} A Promise that resolves with the mapped data in the specified RDF format
              */
             self.previewMap = function(jsonld, format) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         params: {
@@ -237,9 +229,8 @@
                         }
                     };
                 fd.append('jsonld', angular.toJson(jsonld));
-                $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map-preview', fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map-preview', fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -256,16 +247,16 @@
              * {@link delimitedManager.delimitedManager#fileName fileName} to create the URL to set the window
              * location to.
              *
-             * @param {string} mappingIRI the IRI of a saved Mapping
+             * @param {string} mappingRecordIRI the IRI of a saved MappingRecord
              * @param {string} format the RDF format for the mapped data
              * @param {string} fileName the file name for the downloaded mapped data
              */
-            self.mapAndDownload = function(mappingIRI, format, fileName) {
+            self.mapAndDownload = function(mappingRecordIRI, format, fileName) {
                 var params = {
                     containsHeaders: self.containsHeaders,
                     separator: self.separator,
                     format,
-                    mappingIRI
+                    mappingRecordIRI
                 };
                 if (fileName) {
                     params.fileName = fileName;
@@ -287,19 +278,17 @@
              * @param {string} datasetRecordIRI the IRI of a DatasetRecord
              * @return {Promise} A Promise that resolves if the upload was successful; rejects with an error message otherwise
              */
-            self.mapAndUpload = function(mappingIRI, datasetRecordIRI) {
-                var deferred = $q.defer(),
-                    config = {
+            self.mapAndUpload = function(mappingRecordIRI, datasetRecordIRI) {
+                var config = {
                         params: {
-                            mappingIRI,
+                            mappingRecordIRI,
                             datasetRecordIRI,
                             containsHeaders: self.containsHeaders,
                             separator: self.separator
                         }
                     };
-                $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map', null, config)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map', null, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**

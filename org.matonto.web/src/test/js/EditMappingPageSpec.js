@@ -21,14 +21,7 @@
  * #L%
  */
 describe('Edit Mapping Page directive', function() {
-    var $compile,
-        scope,
-        $q,
-        element,
-        controller,
-        mappingManagerSvc,
-        mapperStateSvc,
-        delimitedManagerSvc;
+    var $compile, scope, $q, element, controller, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -46,7 +39,7 @@ describe('Edit Mapping Page directive', function() {
             delimitedManagerSvc = _delimitedManagerService_;
         });
 
-        mapperStateSvc.mapping = {id: '', jsonld: []};
+        mapperStateSvc.mapping = {record: {id: 'Id', title: 'Title', description: 'Description', keywords: ['Keyword']}, jsonld: []};
         element = $compile(angular.element('<edit-mapping-page></edit-mapping-page>'))(scope);
         scope.$digest();
         controller = element.controller('editMappingPage');
@@ -61,60 +54,30 @@ describe('Edit Mapping Page directive', function() {
             expect(controller.configNotSet()).toBe(false);
         });
         describe('should set the correct state for saving a mapping', function() {
-            describe('if it already exists', function() {
-                beforeEach(function() {
-                    mappingManagerSvc.mappingIds = [mapperStateSvc.mapping.id];
-                });
-                it('unless an error occurs', function() {
-                    var step = mapperStateSvc.step;
-                    mappingManagerSvc.updateMapping.and.returnValue($q.reject('Error message'));
-                    controller.save();
-                    scope.$apply();
-                    expect(mappingManagerSvc.updateMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.id, mapperStateSvc.mapping.jsonld);
-                    expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.step).toBe(step);
-                    expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
-                    expect(delimitedManagerSvc.reset).not.toHaveBeenCalled();
-                    expect(controller.errorMessage).toBe('Error message');
-                });
-                it('successfully', function() {
-                    controller.save();
-                    scope.$apply();
-                    expect(mappingManagerSvc.updateMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.id, mapperStateSvc.mapping.jsonld);
-                    expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
-                    expect(mapperStateSvc.initialize).toHaveBeenCalled();
-                    expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                    expect(controller.errorMessage).toBe('');
-                });
+            var step;
+            beforeEach(function() {
+                step = mapperStateSvc.step;
             });
-            describe('if does not exist yet', function() {
-                it('unless an error occurs', function() {
-                    var step = mapperStateSvc.step;
-                    mappingManagerSvc.upload.and.returnValue($q.reject('Error message'));
-                    controller.save();
-                    scope.$apply();
-                    expect(mappingManagerSvc.updateMapping).not.toHaveBeenCalled();
-                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
-                    expect(mapperStateSvc.step).toBe(step);
-                    expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
-                    expect(delimitedManagerSvc.reset).not.toHaveBeenCalled();
-                    expect(controller.errorMessage).toBe('Error message');
-                });
-                it('successfully', function() {
-                    controller.save();
-                    scope.$apply();
-                    expect(mappingManagerSvc.updateMapping).not.toHaveBeenCalled();
-                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld);
-                    expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
-                    expect(mapperStateSvc.initialize).toHaveBeenCalled();
-                    expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-                    expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-                    expect(controller.errorMessage).toBe('');
-                });
+            it('unless an error occurs', function() {
+                mapperStateSvc.saveMapping.and.returnValue($q.reject('Error message'));
+                controller.save();
+                scope.$apply();
+                expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
+                expect(mapperStateSvc.step).toBe(step);
+                expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
+                expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
+                expect(delimitedManagerSvc.reset).not.toHaveBeenCalled();
+                expect(controller.errorMessage).toBe('Error message');
+            });
+            it('successfully', function() {
+                controller.save();
+                scope.$apply();
+                expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
+                expect(mapperStateSvc.initialize).toHaveBeenCalled();
+                expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                expect(delimitedManagerSvc.reset).toHaveBeenCalled();
+                expect(controller.errorMessage).toBe('');
             });
         });
         it('should set the correct state for canceling', function() {

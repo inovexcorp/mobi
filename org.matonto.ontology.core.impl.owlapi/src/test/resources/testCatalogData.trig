@@ -1,0 +1,8 @@
+@prefix mcat: <http://matonto.org/ontologies/catalog#> .
+@prefix ontedit: <http://matonto.org/ontologies/ontology-editor#> .
+
+<http://matonto.org/record> a ontedit:OntologyRecord, mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
+    mcat:catalog <http://matonto.org/catalog> ;
+    mcat:branch <http://matonto.org/branch> ;
+    mcat:masterBranch <http://matonto.org/branch> ;
+    ontedit:ontologyIRI <http://matonto.org/ontology> .
