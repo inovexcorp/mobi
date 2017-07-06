@@ -81,6 +81,11 @@
                                 util.createErrorToast(response.statusText);
                             });
                     }
+                    
+                    dvm.create = function() {
+                        
+                        dvm.ds.explore.editing = true;
+                    }
                 }
             }
         }
