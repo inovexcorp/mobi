@@ -26,6 +26,7 @@ package org.matonto.dataset.rest.impl;
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
+import static org.matonto.rest.util.RestUtils.getObjectFromJsonld;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
@@ -52,6 +53,7 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
+import org.matonto.rest.util.RestUtils;
 import org.matonto.rest.util.jaxb.Links;
 
 import java.util.Arrays;

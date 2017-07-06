@@ -27,12 +27,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -73,6 +76,8 @@ import org.matonto.rdf.orm.conversion.impl.ResourceValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
 import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
+import org.matonto.repository.api.Repository;
+import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.impl.core.SimpleRepositoryManager;
 import org.mockito.Mock;
@@ -117,6 +122,9 @@ public class SimpleOntologyManagerTest {
     @Mock
     private Cache<String, Ontology> mockCache;
 
+    @Mock
+    private RepositoryManager mockRepoManager;
+
     private SimpleOntologyManager manager;
     private ValueFactory valueFactory = SimpleValueFactory.getInstance();
     private ModelFactory modelFactory = LinkedHashModelFactory.getInstance();
@@ -136,6 +144,7 @@ public class SimpleOntologyManagerTest {
     private org.semanticweb.owlapi.model.IRI owlOntologyIRI;
     private org.semanticweb.owlapi.model.IRI owlVersionIRI;
     private RepositoryManager repoManager = new SimpleRepositoryManager();
+    private Repository repo;
 
     @Before
     public void setUp() throws Exception {
@@ -211,6 +220,15 @@ public class SimpleOntologyManagerTest {
 
         when(cacheManager.getCache(Mockito.anyString(), Mockito.eq(String.class), Mockito.eq(Ontology.class))).thenReturn(Optional.of(mockCache));
 
+        repo = repoManager.createMemoryRepository();
+        repo.initialize();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
+            conn.add(Values.matontoModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+        }
+        when(mockRepoManager.createMemoryRepository()).thenReturn(repoManager.createMemoryRepository());
+        when(mockRepoManager.getRepository("system")).thenReturn(Optional.of(repo));
+
         manager = Mockito.spy(new SimpleOntologyManager());
         manager.setValueFactory(valueFactory);
         manager.setModelFactory(modelFactory);
@@ -218,8 +236,13 @@ public class SimpleOntologyManagerTest {
         manager.setCatalogManager(catalogManager);
         manager.setOntologyRecordFactory(ontologyRecordFactory);
         manager.setBranchFactory(branchFactory);
-        manager.setRepositoryManager(repoManager);
+        manager.setRepositoryManager(mockRepoManager);
         manager.setCacheManager(cacheManager);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        repo.shutDown();
     }
 
     @Test
@@ -246,6 +269,56 @@ public class SimpleOntologyManagerTest {
     public void testCreateOntology() throws Exception {
         Ontology result = manager.createOntology(modelFactory.createModel());
         assertEquals(ontology, result);
+    }
+
+    // Testing retrieveOntologyByIRI
+
+    @Test(expected = IllegalStateException.class)
+    public void testRetrieveOntologyByIRIWithMissingRepo() {
+        // Setup:
+        doReturn(Optional.empty()).when(mockRepoManager).getRepository(anyString());
+
+        manager.retrieveOntologyByIRI(ontologyIRI);
+    }
+
+    @Test
+    public void testRetrieveOntologyByIRIThatDoesNotExist() {
+        Optional<Ontology> result = manager.retrieveOntologyByIRI(missingIRI);
+        assertFalse(result.isPresent());
+    }
+
+    @Test
+    public void testRetrieveOntologyByIRIWithCacheMiss() {
+        // Setup
+        Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commitFactory.createNew(commitIRI));
+        when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(modelFactory.createModel());
+
+        Optional<Ontology> result = manager.retrieveOntologyByIRI(ontologyIRI);
+        assertTrue(result.isPresent());
+        assertEquals(ontology, result.get());
+        String key = OntologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
+        verify(mockCache).containsKey(Mockito.matches(key));
+        verify(mockCache).put(Mockito.matches(key), Mockito.eq(result.get()));
+    }
+
+    @Test
+    public void testRetrieveOntologyByIRIWithCacheHit() {
+        // Setup
+        Branch branch = branchFactory.createNew(branchIRI);
+        branch.setHead(commitFactory.createNew(commitIRI));
+        String key = OntologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
+        when(catalogManager.getMasterBranch(catalogIRI, recordIRI)).thenReturn(branch);
+        when(catalogManager.getCompiledResource(commitIRI)).thenReturn(modelFactory.createModel());
+        when(mockCache.containsKey(key)).thenReturn(true);
+        when(mockCache.get(key)).thenReturn(ontology);
+
+        Optional<Ontology> result = manager.retrieveOntologyByIRI(ontologyIRI);
+        assertTrue(result.isPresent());
+        verify(mockCache).containsKey(Mockito.matches(key));
+        verify(mockCache).get(Mockito.matches(key));
+        verify(mockCache, Mockito.times(0)).put(Mockito.matches(key), Mockito.eq(result.get()));
     }
 
     // Testing retrieveOntology(Resource recordId)
