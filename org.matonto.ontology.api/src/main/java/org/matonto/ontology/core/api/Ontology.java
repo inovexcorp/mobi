@@ -33,6 +33,7 @@ import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
+import org.matonto.ontology.core.api.propertyexpression.Property;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -114,7 +115,31 @@ public interface Ontology {
      */
     Set<AnnotationProperty> getAllAnnotationProperties();
 
+    /**
+     * Determines if the class iri is found in the ontology.
+     *
+     * @param iri the IRI of the class
+     * @return true if the class is in the ontology; otherwise, false
+     */
+    boolean containsClass(IRI iri);
+
     Set<OClass> getAllClasses();
+
+    /**
+     * Attempts to get all of the object properties that can be set on the class with the specified IRI in the ontology.
+     *
+     * @param iri the IRI of the class
+     * @return a Set of all class object properties
+     */
+    Set<ObjectProperty> getAllClassObjectProperties(IRI iri);
+
+    /**
+     * Attempts to get all of the data properties that can be set on the class with the specified IRI in the ontology.
+     *
+     * @param iri the IRI of the class
+     * @return a Set of all class data properties
+     */
+    Set<DataProperty> getAllClassDataProperties(IRI iri);
 
     Set<Axiom> getAxioms();
 

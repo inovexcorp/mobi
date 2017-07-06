@@ -56,7 +56,11 @@ function injectRegexConstant() {
             'IRI': /[a-zA-Z]/,
             'LOCALNAME': /[a-zA-Z]/,
             'FILENAME': /[a-zA-Z]/,
-            'UUID': /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
+            'UUID': /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+            'DATETIME': /[a-zA-Z]/,
+            'INTEGER': /[a-zA-Z]/,
+            'DECIMAL': /[a-zA-Z]/,
+            'ANYTHING': /[a-zA-Z]/
         });
     });
 }
@@ -1000,7 +1004,9 @@ function mockExplore() {
         $provide.service('exploreService', function($q) {
             this.getClassDetails = jasmine.createSpy('getClassDetails').and.returnValue($q.when([]));
             this.getClassInstanceDetails = jasmine.createSpy('getClassInstanceDetails').and.returnValue($q.when([]));
+            this.getClassPropertyDetails = jasmine.createSpy('getClassPropertyDetails').and.returnValue($q.when([]));
             this.getInstance = jasmine.createSpy('getInstance').and.returnValue($q.when({}));
+            this.updateInstance = jasmine.createSpy('updateInstance').and.returnValue($q.when({}));
             this.createPagedResultsObject = jasmine.createSpy('createPagedResultsObject').and.returnValue({});
         });
     });

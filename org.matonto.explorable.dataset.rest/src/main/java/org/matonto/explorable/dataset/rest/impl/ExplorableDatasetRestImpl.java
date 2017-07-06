@@ -24,6 +24,7 @@ package org.matonto.explorable.dataset.rest.impl;
  */
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
+import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
@@ -38,13 +39,16 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.explorable.dataset.rest.ExplorableDatasetRest;
 import org.matonto.explorable.dataset.rest.jaxb.ClassDetails;
 import org.matonto.explorable.dataset.rest.jaxb.InstanceDetails;
+import org.matonto.explorable.dataset.rest.jaxb.PropertyDetails;
 import org.matonto.ontologies.dcterms._Thing;
+import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.persistence.utils.Bindings;
+import org.matonto.persistence.utils.Statements;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
-import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -65,7 +69,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.ws.rs.core.Response;
@@ -79,6 +82,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private ValueFactory factory;
     private ModelFactory modelFactory;
     private SesameTransformer sesameTransformer;
+    private OntologyManager ontologyManager;
 
     private static final String GET_CLASSES_TYPES;
     private static final String GET_CLASSES_DETAILS;
@@ -145,6 +149,11 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         this.sesameTransformer = sesameTransformer;
     }
 
+    @Reference
+    public void setOntologyManager(OntologyManager ontologyManager) {
+        this.ontologyManager = ontologyManager;
+    }
+
     @Override
     public Response getClassDetails(UriInfo uriInfo, String recordIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
@@ -179,6 +188,20 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     }
 
     @Override
+    public Response getClassPropertyDetails(UriInfo uriInfo, String recordIRI, String classIRI) {
+        checkStringParam(recordIRI, "The Dataset Record IRI is required.");
+        checkStringParam(classIRI, "The Class IRI is required.");
+        Resource recordId = factory.createIRI(recordIRI);
+        try {
+            DatasetRecord record = datasetManager.getDatasetRecord(recordId).orElseThrow(() ->
+                    ErrorUtils.sendError("The Dataset Record could not be found.", Response.Status.BAD_REQUEST));
+            return Response.ok(getClassProperties(record, classIRI)).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
     public Response getInstance(UriInfo uriInfo, String recordIRI, String instanceIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(instanceIRI, "The Instance IRI is required.");
@@ -201,6 +224,29 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public Response updateInstance(UriInfo uriInfo, String recordIRI, String instanceIRI, String json) {
+        checkStringParam(recordIRI, "The Dataset Record IRI is required.");
+        checkStringParam(instanceIRI, "The Instance IRI is required.");
+        try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
+            Resource instanceId = factory.createIRI(instanceIRI);
+            RepositoryResult<Statement> statements = conn.getStatements(instanceId, null, null);
+            if (!statements.hasNext()) {
+                throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
+            } else {
+                conn.begin();
+                conn.remove(statements);
+                conn.add(sesameTransformer.matontoModel(jsonldToModel(json)));
+                conn.commit();
+                return Response.ok().build();
+            }
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -391,16 +437,11 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         List<ClassDetails> copy = new ArrayList<>(classes);
         Iterator<Value> iterator = ontologies.iterator();
         while (iterator.hasNext() && copy.size() != 0) {
-            BNode blankNode = factory.createBNode(iterator.next().stringValue());
-            Optional<IRI> ontologyRecordIRIOpt = recordModel.filter(blankNode, factory.createIRI(DatasetRecord
-                    .linksToRecord_IRI), null).stream()
-                    .findFirst()
-                    .flatMap(statement -> Optional.of(factory.createIRI(statement.getObject().stringValue())));
-            Optional<Model> compiledResourceOpt = recordModel.filter(blankNode, factory.createIRI(DatasetRecord
-                    .linksToCommit_IRI), null).stream()
-                    .findFirst()
-                    .flatMap(statement -> Optional.of(catalogManager.getCompiledResource(factory.createIRI(statement
-                            .getObject().stringValue()))));
+            Value value = iterator.next();
+            Optional<IRI> ontologyRecordIRIOpt = getObjectOf(recordModel, value, DatasetRecord.linksToRecord_IRI)
+                    .flatMap(object -> Optional.of(factory.createIRI(object.stringValue())));
+            Optional<Model> compiledResourceOpt = getObjectOf(recordModel, value, DatasetRecord.linksToCommit_IRI)
+                    .flatMap(object -> Optional.of(catalogManager.getCompiledResource(object)));
             if (ontologyRecordIRIOpt.isPresent() && compiledResourceOpt.isPresent()) {
                 Model compiledResource = compiledResourceOpt.get();
                 IRI ontologyRecordIRI = ontologyRecordIRIOpt.get();
@@ -465,5 +506,80 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             instances.add(instanceDetails);
         });
         return instances;
+    }
+
+    /**
+     * Gets all of the properties from the ontologies associated with the DatasetRecord that can be set on the provided
+     * class IRI.
+     *
+     * @param record   the DatasetRecord which contains the list of ontologies to search
+     * @param classIRI the IRI of the class
+     * @return list of property details with their IRI, range, and type
+     */
+    private List<PropertyDetails> getClassProperties(DatasetRecord record, String classIRI) {
+        List<PropertyDetails> details = new ArrayList<>();
+        Model recordModel = record.getModel();
+        IRI classId = factory.createIRI(classIRI);
+        record.getOntology().forEach(value -> getOntology(recordModel, value).ifPresent(ontology -> {
+            if (ontology.containsClass(classId)) {
+                details.addAll(ontology.getAllClassDataProperties(classId).stream()
+                        .map(dataProperty -> createPropertyDetails(dataProperty.getIRI(),
+                                ontology.getDataPropertyRange(dataProperty), "Data"))
+                        .collect(Collectors.toSet()));
+                details.addAll(ontology.getAllClassObjectProperties(classId).stream()
+                        .map(objectProperty -> createPropertyDetails(objectProperty.getIRI(),
+                                ontology.getObjectPropertyRange(objectProperty), "Object"))
+                        .collect(Collectors.toSet()));
+            }
+        }));
+        return details;
+    }
+
+    /**
+     * Gets the ontology based on the statements with the provided value as a subject found within the provided model.
+     *
+     * @param model the Model which contains the statements identifying the record, branch, and commit IRIs
+     * @param value the Value which is the common subject for all of the statements containing the ontology details
+     * @return an Optional containing the ontology if it was found
+     */
+    private Optional<Ontology> getOntology(Model model, Value value) {
+        Optional<Resource> recordId = getObjectOf(model, value, DatasetRecord.linksToRecord_IRI);
+        Optional<Resource> branchId = getObjectOf(model, value, DatasetRecord.linksToBranch_IRI);
+        Optional<Resource> commitId = getObjectOf(model, value, DatasetRecord.linksToCommit_IRI);
+        if (recordId.isPresent() && branchId.isPresent() && commitId.isPresent()) {
+            return ontologyManager.retrieveOntology(recordId.get(), branchId.get(), commitId.get());
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Gets the object of the statement contained in the model with a subject equal to the provided Value and a
+     * predicate equal to the IRI created using the provided property String.
+     *
+     * @param model    the Model containing the desired statement
+     * @param value    the Value which will be the subject of the statement
+     * @param property the String which will be used to create the IRI for the predicate
+     * @return an Optional containing the Resource if it was found
+     */
+    private Optional<Resource> getObjectOf(Model model, Value value, String property) {
+        return model.filter((Resource) value, factory.createIRI(property), null).stream()
+                .findFirst()
+                .flatMap(Statements::objectResource);
+    }
+
+    /**
+     * Creates a PropertDetails object using the IRI, range, and type.
+     *
+     * @param propertyIRI the IRI of the property
+     * @param range       the range of the property
+     * @param type        the type of the property
+     * @return a new PropertyDetails object constructed from the parameters
+     */
+    private PropertyDetails createPropertyDetails(IRI propertyIRI, Set<Resource> range, String type) {
+        PropertyDetails details = new PropertyDetails();
+        details.setPropertyIRI(propertyIRI.toString());
+        details.setRange(range.stream().map(Value::stringValue).collect(Collectors.toSet()));
+        details.setType(type);
+        return details;
     }
 }
