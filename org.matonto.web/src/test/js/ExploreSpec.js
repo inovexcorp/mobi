@@ -63,9 +63,8 @@ describe('Explore Service', function() {
     describe('getClassInstanceDetails calls the correct functions when GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/instance-details', function() {
         it('succeeds', function() {
             var data = [{}];
-            var headers = {};
-            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/instance-details?limit=99&offset=0').respond(200, data, headers);
-            exploreSvc.getClassInstanceDetails('recordId', 'classId')
+            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/instance-details?limit=99&offset=0').respond(200, data);
+            exploreSvc.getClassInstanceDetails('recordId', 'classId', {limit: 99, offset: 0})
                 .then(function(response) {
                     expect(response).toEqual(jasmine.objectContaining({
                         data: data,
@@ -78,7 +77,31 @@ describe('Explore Service', function() {
         });
         it('fails', function() {
             $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/instance-details?limit=99&offset=0').respond(400, null, null, 'error');
-            exploreSvc.getClassInstanceDetails('recordId', 'classId')
+            exploreSvc.getClassInstanceDetails('recordId', 'classId', {limit: 99, offset: 0})
+                .then(function() {
+                    fail('Should have been rejected.');
+                }, function(response) {
+                    expect(response).toBe('error');
+                });
+             flushAndVerify($httpBackend);
+        });
+    });
+    
+    describe('getClassPropertyDetails calls the correct functions when GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/property-details', function() {
+        it('succeeds', function() {
+            var data = [{}];
+            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/property-details').respond(200, data);
+            exploreSvc.getClassPropertyDetails('recordId', 'classId')
+                .then(function(response) {
+                    expect(response).toEqual(data);
+                }, function() {
+                    fail('Should have been resolved.');
+                });
+             flushAndVerify($httpBackend);
+        });
+        it('fails', function() {
+            $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/classes/classId/property-details').respond(400, null, null, 'error');
+            exploreSvc.getClassPropertyDetails('recordId', 'classId')
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
@@ -103,6 +126,30 @@ describe('Explore Service', function() {
         it('fails', function() {
             $httpBackend.expectGET('/matontorest/explorable-datasets/recordId/instances/instanceId').respond(400, null, null, 'error');
             exploreSvc.getInstance('recordId', 'instanceId')
+                .then(function() {
+                    fail('Should have been rejected.');
+                }, function(response) {
+                    expect(response).toBe('error');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
+    
+    describe('updateInstance calls the correct functions when PUT /matontorest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId}', function() {
+        var newInstance = {'@id': 'instanceId', 'prop': 'property'};
+        it('succeeds', function() {
+            $httpBackend.expectPUT('/matontorest/explorable-datasets/recordId/instances/instanceId', newInstance).respond(200);
+            exploreSvc.updateInstance('recordId', 'instanceId', newInstance)
+                .then(function(response) {
+                    expect(response).toBeUndefined();
+                }, function() {
+                    fail('Should have been resolved.');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('fails', function() {
+            $httpBackend.expectPUT('/matontorest/explorable-datasets/recordId/instances/instanceId', newInstance).respond(400, null, null, 'error');
+            exploreSvc.updateInstance('recordId', 'instanceId', newInstance)
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {

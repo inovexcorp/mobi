@@ -92,7 +92,6 @@
             'searchTab',
             'selectedDetails',
             'serializationSelect',
-            'staticIri',
             'superClassSelect',
             'superPropertySelect',
             'treeItem',

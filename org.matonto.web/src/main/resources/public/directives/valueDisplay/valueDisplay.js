@@ -62,6 +62,10 @@
                 controller: function() {
                     var dvm = this;
                     dvm.util = utilService;
+                    
+                    dvm.has = function(obj, key) {
+                        return _.has(obj, key);
+                    }
                 }
             }
         }

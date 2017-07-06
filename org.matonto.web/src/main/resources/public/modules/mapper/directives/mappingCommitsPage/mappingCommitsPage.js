@@ -26,43 +26,47 @@
     angular
         /**
          * @ngdoc overview
-         * @name instanceBlockHeader
+         * @name mappingCommitsPage
          *
          * @description
-         * The `instanceBlockHeader` module only provides the `instanceBlockHeader` directive which creates
-         * the instance block header.
+         * The `mappingCommitsPage` module only provides the `mappingCommitsPage` directive which creates
+         * a Bootstrap `row` with {@link block.directive:block blocks} for editing the current
+         * {@link mapperState.service:mapperStateService#mapping mapping}.
          */
-        .module('instanceBlockHeader', [])
+        .module('mappingCommitsPage', [])
         /**
          * @ngdoc directive
-         * @name sparqlResultTable.directive:instanceBlockHeader
+         * @name mappingCommitsPage.directive:mappingCommitsPage
          * @scope
          * @restrict E
-         * @requires discoverState.service:discoverStateService
+         * @requires mapperState.service:mapperStateService
+         * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
          *
          * @description
-         * HTML contents in the instance block header which shows users a bread crumb trail to get to earlier
-         * pages.
+         * 
          */
-        .directive('instanceBlockHeader', instanceBlockHeader);
-        
-        instanceBlockHeader.$inject = ['discoverStateService'];
+        .directive('mappingCommitsPage', mappingCommitsPage);
 
-        function instanceBlockHeader(discoverStateService) {
+        mappingCommitsPage.$inject = ['mapperStateService', 'utilService', 'prefixes'];
+
+        function mappingCommitsPage(mapperStateService, utilService, prefixes) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/instanceBlockHeader/instanceBlockHeader.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.ds = discoverStateService;
-                    
-                    dvm.clickCrumb = function(index) {
-                        dvm.ds.explore.breadcrumbs = _.take(dvm.ds.explore.breadcrumbs, index + 1);
+                    dvm.prefixes = prefixes;
+                    dvm.util = utilService;
+                    dvm.state = mapperStateService;
+
+                    if (!dvm.state.mapping.branch && !dvm.state.newMapping) {
+                        dvm.state.setMasterBranch();
                     }
-                }
+                },
+                templateUrl: 'modules/mapper/directives/mappingCommitsPage/mappingCommitsPage.html'
             }
         }
 })();

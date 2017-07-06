@@ -29,6 +29,7 @@
     <form name="dvm.iriForm" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
         <h6>Edit IRI</h6>
+        <div ng-transclude></div>
         <error-display ng-if="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd)">This IRI already exists</error-display>
         <!-- Begins with -->
         <div ng-class="{'has-error': dvm.iriForm.iriBegin.$error.pattern}" class="form-group begin-container">
