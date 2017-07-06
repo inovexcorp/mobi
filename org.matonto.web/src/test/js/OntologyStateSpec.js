@@ -3117,6 +3117,7 @@ describe('Ontology State Service', function() {
             });
         });
     });
+
     describe('uploadChanges should call the proper methods', function() {
         var uploadDeferred;
         beforeEach(function() {
@@ -3129,24 +3130,26 @@ describe('Ontology State Service', function() {
             beforeEach(function() {
                 uploadDeferred.resolve();
                 getDeferred = $q.defer();
-                catalogManagerSvc.getInProgressCommit.and.returnValue(getDeferred);
+                catalogManagerSvc.getInProgressCommit.and.returnValue(getDeferred.promise);
             });
             it('and getInProgressCommit resolves', function() {
+                createDeferred = $q.defer();
+                spyOn(ontologyStateSvc, 'updateOntology').and.returnValue(createDeferred.promise);
+                ontologyStateSvc.list[0].ontologyStatus = { upToDate: true };
                 getDeferred.promise = { additions: ['a'], deletions: [] };
                 catalogManagerSvc.getInProgressCommit.and.returnValue(getDeferred.promise);
                 ontologyStateSvc.uploadChanges({}, recordId, branchId, commitId);
                 scope.$apply();
                 expect(ontologyManagerSvc.uploadChangesFile).toHaveBeenCalledWith({}, recordId, branchId, commitId);
                 expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                expect(ontologyStateSvc.hasInProgressCommit(ontologyStateSvc.list[0])).toBe(true);
             });
             it ('and getInProgressCommit rejects', function() {
+                ontologyStateSvc.list[0].ontologyStatus = { upToDate: true };
                 getDeferred.reject(error);
                 ontologyStateSvc.uploadChanges({}, recordId, branchId, commitId);
                 scope.$apply();
                 expect(ontologyManagerSvc.uploadChangesFile).toHaveBeenCalledWith({}, recordId, branchId, commitId);
                 expect(catalogManagerSvc.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
-                expect(ontologyStateSvc.hasInProgressCommit(ontologyStateSvc.list[0])).toBe(false);
             });
         });
         it('when uploadChangesFile rejects', function() {
