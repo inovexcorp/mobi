@@ -44,8 +44,9 @@ import org.mockito.MockitoAnnotations;
 import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
 
-import javax.ws.rs.container.ContainerRequestContext;
+import java.nio.charset.Charset;
 import java.util.Optional;
+import javax.ws.rs.container.ContainerRequestContext;
 
 public class RestUtilsTest {
     private Model model;
@@ -70,11 +71,11 @@ public class RestUtilsTest {
     public void setUp() throws Exception {
         setUpModel();
 
-        expectedJsonld = IOUtils.toString(getClass().getResourceAsStream("/test.json"));
-        expectedTurtle = IOUtils.toString(getClass().getResourceAsStream("/test.ttl"));
-        expectedGroupedTurtle = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.ttl"));
-        expectedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/test.xml"));
-        expectedGroupedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.xml"));
+        expectedJsonld = IOUtils.toString(getClass().getResourceAsStream("/test.json"), Charset.forName("UTF-8"));
+        expectedTurtle = IOUtils.toString(getClass().getResourceAsStream("/test.ttl"), Charset.forName("UTF-8"));
+        expectedGroupedTurtle = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.ttl"), Charset.forName("UTF-8"));
+        expectedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/test.xml"), Charset.forName("UTF-8"));
+        expectedGroupedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.xml"), Charset.forName("UTF-8"));
 
         MockitoAnnotations.initMocks(this);
         when(context.getProperty(AuthenticationProps.USERNAME)).thenReturn("tester");
