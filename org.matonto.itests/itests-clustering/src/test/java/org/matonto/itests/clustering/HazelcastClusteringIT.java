@@ -1,7 +1,14 @@
 package org.matonto.itests.clustering;
 
-/**
- * Created by bdgould on 7/7/17.
- */
+import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.junit.PaxExam;
+import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
+import org.ops4j.pax.exam.spi.reactors.PerClass;
+
+@RunWith(PaxExam.class)
+@ExamReactorStrategy(PerClass.class)
 public class HazelcastClusteringIT {
+
+
+
 }
