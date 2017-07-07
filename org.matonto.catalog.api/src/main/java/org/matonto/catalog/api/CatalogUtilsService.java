@@ -35,12 +35,10 @@ import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
-import org.matonto.rdf.api.Value;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.repository.api.RepositoryConnection;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;

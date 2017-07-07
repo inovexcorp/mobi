@@ -28,22 +28,23 @@ import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
+import com.google.common.collect.Iterables;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.google.common.collect.Iterables;
+import javax.cache.Cache;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.openrdf.model.vocabulary.OWL;
-import org.openrdf.model.vocabulary.SKOS;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.builder.Difference;
+import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.versioning.VersioningManager;
 import org.matonto.exception.MatOntoException;
@@ -75,6 +76,10 @@ import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.web.security.util.AuthenticationProps;
+import org.openrdf.model.vocabulary.OWL;
+import org.openrdf.model.vocabulary.SKOS;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.InputStream;
@@ -92,11 +97,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import javax.cache.Cache;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
 
 @Component(immediate = true)
 public class OntologyRestImpl implements OntologyRest {
@@ -257,9 +257,24 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Resource catalogIRI = catalogManager.getLocalCatalogIRI();
             Resource recordId = valueFactory.createIRI(recordIdStr);
-            Resource branchId = StringUtils.isBlank(branchIdStr) ? catalogManager.getMasterBranch(catalogIRI, recordId).getResource() : valueFactory.createIRI(branchIdStr);
-            Resource commitId = StringUtils.isBlank(commitIdStr) ? catalogManager.getHeadCommit(catalogIRI, recordId, branchId).getResource() : valueFactory.createIRI(commitIdStr);
+            Resource branchId;
+            Resource commitId;
+            {
+                Branch branch = null;
+                if (StringUtils.isBlank(branchIdStr)) {
+                    branch = catalogManager.getMasterBranch(catalogIRI, recordId);
+                    branchId = branch.getResource();
+                } else {
+                    branchId = valueFactory.createIRI(branchIdStr);
+                }
 
+                if (StringUtils.isBlank(commitIdStr)) {
+                    commitId = branch == null ? catalogManager.getHeadCommit(catalogIRI, recordId, branchId).getResource() : branch.getHead_resource().get();
+                } else {
+                    commitId = valueFactory.createIRI(commitIdStr);
+                }
+            }
+            
             Model changedOnt = ontologyManager.createOntology(fileInputStream).asModel(modelFactory);
             Model currentOnt = catalogManager.getCompiledResource(recordId, branchId, commitId);
 
@@ -276,9 +291,7 @@ public class OntologyRestImpl implements OntologyRest {
                     diff.getAdditions(), diff.getDeletions());
             return Response.ok().build();
 
-        } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MatOntoException e) {
+        } catch (IllegalArgumentException | MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } finally {
             IOUtils.closeQuietly(fileInputStream);

@@ -43,15 +43,6 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
-
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.glassfish.jersey.client.ClientConfig;
@@ -125,6 +116,15 @@ import org.mockito.MockitoAnnotations;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class CatalogRestImplTest extends MatontoRestTestNg {
     private CatalogRestImpl rest;

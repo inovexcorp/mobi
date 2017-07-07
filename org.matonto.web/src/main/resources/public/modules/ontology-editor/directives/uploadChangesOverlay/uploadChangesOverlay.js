@@ -38,7 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.error;
+                    dvm.error = '';
                     dvm.os = ontologyStateService;
 
                     dvm.upload = function() {
@@ -56,7 +56,7 @@
                     
                     dvm.closeOverlay = function() {
                         dvm.os.showUploadChangesOverlay = false;
-                        dvm.error = undefined;
+                        dvm.error = '';
                     };
                 }
             };
