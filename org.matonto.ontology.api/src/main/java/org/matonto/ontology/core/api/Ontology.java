@@ -93,6 +93,8 @@ public interface Ontology {
      */
     Set<Ontology> getImportsClosure();
 
+    Set<IRI> getImportedOntologyIRIs();
+
     /**
      * Gets the ontology annotations, excluding annotations for other objects such as classes and entities.
      *

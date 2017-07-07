@@ -45,6 +45,7 @@ import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Resource;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.semanticweb.owlapi.model.OWLAnnotation;
@@ -97,6 +98,7 @@ public class SimpleOntologyTest {
 
         expect(ontologyManager.createOntologyId(isA(IRI.class), isA(IRI.class))).andReturn(ontologyIdMock).anyTimes();
         expect(ontologyManager.createOntologyId(isA(IRI.class))).andReturn(ontologyIdMock).anyTimes();
+        expect(ontologyManager.retrieveOntologyRecordId(isA(IRI.class))).andReturn(Optional.empty()).anyTimes();
     }
 
     @Test

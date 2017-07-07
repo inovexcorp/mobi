@@ -110,6 +110,8 @@ public interface OntologyManager {
      */
     boolean ontologyIriExists(Resource ontologyIRI);
 
+    Optional<Resource> retrieveOntologyRecordId(@Nonnull Resource ontologyIRI);
+
     /**
      * Retrieves an Ontology using an ontology IRI.
      *
@@ -117,7 +119,7 @@ public interface OntologyManager {
      * @return Returns an Optional of the Ontology if found, otherwise Optional.empty().
      * @throws IllegalStateException - the system Repository could not be found.
      */
-    Optional<Ontology> retrieveOntologyByIRI(@Nonnull IRI ontologyIRI);
+    Optional<Ontology> retrieveOntologyByIRI(@Nonnull Resource ontologyIRI);
 
     /**
      * Retrieves an Ontology using a record id and the head commit of its MASTER branch.
@@ -294,4 +296,6 @@ public interface OntologyManager {
      * @return a Set with the query results.
      */
     TupleQueryResult getSearchResults(Ontology ontology, String searchText);
+
+    void cleanUpCache(Resource removedOntologyIRI);
 }

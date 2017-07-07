@@ -69,6 +69,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -271,8 +272,7 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public Optional<Ontology> retrieveOntologyByIRI(@Nonnull IRI ontologyIRI) {
-        long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
+    public Optional<Resource> retrieveOntologyRecordId(@Nonnull Resource ontologyIRI) {
         Repository system = repositoryManager.getRepository("system").orElseThrow(() ->
                 new IllegalStateException("System Repository unavailable"));
         try (RepositoryConnection conn = system.getConnection()) {
@@ -283,16 +283,22 @@ public class SimpleOntologyManager implements OntologyManager {
             if (!result.hasNext()) {
                 return Optional.empty();
             }
-            Resource recordId = Bindings.requiredResource(result.next(), RECORD);
-            Optional<Ontology> ontology = retrieveOntologyWithRecordId(recordId);
-
-            if (log.isTraceEnabled()) {
-                log.trace(String.format("retrieveOntology(record) complete in %d ms",
-                        System.currentTimeMillis() - start));
-            }
-
-            return ontology;
+            return Optional.of(Bindings.requiredResource(result.next(), RECORD));
         }
+    }
+
+    @Override
+    public Optional<Ontology> retrieveOntologyByIRI(@Nonnull Resource ontologyIRI) {
+        long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
+        Optional<Ontology> ontology = retrieveOntologyRecordId(ontologyIRI)
+                .flatMap(this::retrieveOntologyWithRecordId);
+
+        if (log.isTraceEnabled()) {
+            log.trace(String.format("retrieveOntology(record) complete in %d ms",
+                    System.currentTimeMillis() - start));
+        }
+
+        return ontology;
     }
 
     @Override
@@ -458,6 +464,21 @@ public class SimpleOntologyManager implements OntologyManager {
         });
     }
 
+    @Override
+    public void cleanUpCache(Resource removedOntologyIRI) {
+        Optional<Cache<String, Ontology>> optCache = getOntologyCache();
+        optCache.ifPresent(cache -> {
+            Set<String> cachesToRemove = new HashSet<>();
+            cache.forEach(entry -> {
+                Set<? extends Resource> importedIRIs = entry.getValue().getImportedOntologyIRIs();
+                if (importedIRIs.contains(removedOntologyIRI)) {
+                    cachesToRemove.add(entry.getKey());
+                }
+            });
+            cache.removeAll(cachesToRemove);
+        });
+    }
+
     private Optional<Ontology> getOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                            @Nonnull Resource commitId) {
         Optional<Ontology> result;
@@ -471,9 +492,7 @@ public class SimpleOntologyManager implements OntologyManager {
             log.trace("cache miss");
             final Ontology ontology = createOntologyFromCommit(commitId);
             result = Optional.of(ontology);
-            getOntologyCache().ifPresent(cache -> {
-                cache.put(key, ontology);
-            });
+            getOntologyCache().ifPresent(cache -> cache.put(key, ontology));
         }
         return result;
     }

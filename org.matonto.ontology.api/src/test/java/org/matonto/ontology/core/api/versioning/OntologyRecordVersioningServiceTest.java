@@ -284,6 +284,7 @@ public class OntologyRecordVersioningServiceTest {
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
+            verify(ontologyManager, times(0)).cleanUpCache(any(Resource.class));
         }
     }
 
@@ -298,6 +299,7 @@ public class OntologyRecordVersioningServiceTest {
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
+            verify(ontologyManager, times(0)).cleanUpCache(any(Resource.class));
         }
     }
 
@@ -315,6 +317,8 @@ public class OntologyRecordVersioningServiceTest {
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(newIRI, record.getOntologyIRI().get());
             verify(catalogUtils).updateObject(record, conn);
+            verify(ontologyManager).cleanUpCache(originalIRI);
+            verify(ontologyManager).cleanUpCache(newIRI);
         }
     }
 
@@ -334,6 +338,7 @@ public class OntologyRecordVersioningServiceTest {
             assertTrue(newRecord.getOntologyIRI().isPresent());
             assertEquals(newIRI, newRecord.getOntologyIRI().get());
             verify(catalogUtils).updateObject(newRecord, conn);
+            verify(ontologyManager).cleanUpCache(newIRI);
         }
     }
 
@@ -355,6 +360,7 @@ public class OntologyRecordVersioningServiceTest {
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(eq(record), any(RepositoryConnection.class));
+            verify(ontologyManager, times(0)).cleanUpCache(any(Resource.class));
         }
     }
 
@@ -373,6 +379,7 @@ public class OntologyRecordVersioningServiceTest {
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
+            verify(ontologyManager, times(0)).cleanUpCache(any(Resource.class));
         }
     }
 
@@ -399,6 +406,7 @@ public class OntologyRecordVersioningServiceTest {
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
+            verify(ontologyManager, times(0)).cleanUpCache(any(Resource.class));
         }
     }
 
@@ -422,6 +430,7 @@ public class OntologyRecordVersioningServiceTest {
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
+            verify(ontologyManager, times(0)).cleanUpCache(any(Resource.class));
         }
     }
 
@@ -445,6 +454,8 @@ public class OntologyRecordVersioningServiceTest {
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(newIRI, record.getOntologyIRI().get());
             verify(catalogUtils).updateObject(record, conn);
+            verify(ontologyManager).cleanUpCache(originalIRI);
+            verify(ontologyManager).cleanUpCache(newIRI);
         }
     }
 
@@ -468,6 +479,8 @@ public class OntologyRecordVersioningServiceTest {
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(newIRI, record.getOntologyIRI().get());
             verify(catalogUtils).updateObject(record, conn);
+            verify(ontologyManager).cleanUpCache(originalIRI);
+            verify(ontologyManager).cleanUpCache(newIRI);
         }
     }
 
@@ -493,6 +506,7 @@ public class OntologyRecordVersioningServiceTest {
             assertTrue(newRecord.getOntologyIRI().isPresent());
             assertEquals(newIRI, newRecord.getOntologyIRI().get());
             verify(catalogUtils).updateObject(newRecord, conn);
+            verify(ontologyManager).cleanUpCache(newIRI);
         }
     }
 
@@ -519,6 +533,7 @@ public class OntologyRecordVersioningServiceTest {
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(eq(record), any(RepositoryConnection.class));
+            verify(ontologyManager, times(0)).cleanUpCache(any(Resource.class));
         }
     }
 
@@ -543,6 +558,7 @@ public class OntologyRecordVersioningServiceTest {
             assertTrue(record.getOntologyIRI().isPresent());
             assertEquals(originalIRI, record.getOntologyIRI().get());
             verify(catalogUtils, times(0)).updateObject(record, conn);
+            verify(ontologyManager, times(0)).cleanUpCache(any(Resource.class));
         }
     }
 }

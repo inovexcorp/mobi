@@ -171,8 +171,10 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
             OntologyRecord record = catalogUtils.getObject(recordId, ontologyRecordFactory, conn);
             if (!record.getOntologyIRI().isPresent() || !newIRI.equals(record.getOntologyIRI().get())) {
                 testOntologyIRIUniqueness(newIRI);
+                record.getOntologyIRI().ifPresent(resource -> ontologyManager.cleanUpCache(resource));
                 record.setOntologyIRI(newIRI);
                 catalogUtils.updateObject(record, conn);
+                ontologyManager.cleanUpCache(newIRI);
             }
         });
     }

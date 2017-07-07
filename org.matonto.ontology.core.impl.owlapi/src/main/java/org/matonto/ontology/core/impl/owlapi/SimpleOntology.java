@@ -71,10 +71,12 @@ import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
 import org.semanticweb.owlapi.model.MissingImportListener;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyFactory;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -146,6 +148,7 @@ public class SimpleOntology implements Ontology {
         this.ontologyManager = ontologyManager;
         this.ontologyId = ontologyId;
         this.transformer = transformer;
+        setUpOwlManager(ontologyManager);
 
         try {
             Optional<org.semanticweb.owlapi.model.IRI> owlOntIRI = Optional.empty();
@@ -174,6 +177,7 @@ public class SimpleOntology implements Ontology {
             throws MatontoOntologyException {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
+        setUpOwlManager(ontologyManager);
 
         try {
             owlOntology = owlManager.loadOntologyFromOntologyDocument(inputStream);
@@ -201,6 +205,7 @@ public class SimpleOntology implements Ontology {
             throws MatontoOntologyException {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
+        setUpOwlManager(ontologyManager);
 
         try {
             OWLOntologyDocumentSource documentSource = new IRIDocumentSource(SimpleOntologyValues.owlapiIRI(iri));
@@ -218,6 +223,7 @@ public class SimpleOntology implements Ontology {
             throws MatontoOntologyException {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
+        setUpOwlManager(ontologyManager);
 
         OWLParserFactory factory = new RioJsonLDParserFactory();
         OWLParser parser = factory.createParser();
@@ -238,6 +244,7 @@ public class SimpleOntology implements Ontology {
                              SesameTransformer transformer) {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
+        setUpOwlManager(ontologyManager);
 
         try {
             owlOntology = owlManager.copyOntology(ontology, OntologyCopy.DEEP);
@@ -298,6 +305,14 @@ public class SimpleOntology implements Ontology {
     public Set<Ontology> getImportsClosure() {
         return owlOntology.importsClosure()
                 .map(SimpleOntologyValues::matontoOntology)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<IRI> getImportedOntologyIRIs() {
+        return owlOntology.importsDeclarations()
+                .map(OWLImportsDeclaration::getIRI)
+                .map(SimpleOntologyValues::matontoIRI)
                 .collect(Collectors.toSet());
     }
 
@@ -614,5 +629,11 @@ public class SimpleOntology implements Ontology {
 
     private <T extends OWLPropertyDomainAxiom<?>> boolean hasNoDomain(Stream<T> stream) {
         return stream.map(HasDomain::getDomain).count() == 0;
+    }
+
+    private void setUpOwlManager(OntologyManager ontologyManager) {
+        owlManager.getIRIMappers().add(new MatOntoOntologyIRIMapper(ontologyManager));
+        OWLOntologyFactory originalFactory = owlManager.getOntologyFactories().iterator().next();
+        owlManager.getOntologyFactories().add(new MatOntoOntologyFactory(ontologyManager, originalFactory));
     }
 }
