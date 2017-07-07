@@ -115,7 +115,7 @@ public class HazelcastClusteringService implements ClusteringService {
 
                 registerWithClusterNodes();
                 // Register service
-                context.registerService(ClusteringService.class, HazelcastClusteringService.this, new Hashtable<>(configuration));
+                context.registerService(ClusteringService.class, this, new Hashtable<>(configuration));
             });
         } else {
             LOGGER.warn("Clustering Service {}: Service initialized in disabled state... Not going to start a hazelcast node " +

@@ -46,6 +46,8 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.util.tracker.ServiceTracker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -67,7 +69,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -75,6 +79,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 import javax.inject.Inject;
 import javax.security.auth.Subject;
 
@@ -86,6 +91,11 @@ public class KarafTestSupport {
     public static final String RMI_REG_PORT = "1100";
     public static final String SSH_PORT = "8102";
     public static final String NEXUS = "http://nexus.inovexcorp.com/nexus/content/groups/public/";
+
+    protected static Set<String> bundleList = new HashSet<>();
+    protected static Set<String> serviceFilters = new HashSet<>();
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(KarafTestSupport.class);
 
     static final Long COMMAND_TIMEOUT = 30000L;
     static final Long SERVICE_TIMEOUT = 30000L;
@@ -410,5 +420,24 @@ public class KarafTestSupport {
                 throw new RuntimeException(e.getMessage(), e);
             }
         }
+    }
+
+    protected synchronized void setup(BundleContext thisBundleContext) throws Exception {
+        bundleList = new HashSet<>();
+        serviceFilters = new HashSet<>();
+
+        LOGGER.info("Setting up test suite...");
+
+        String servicesFilename = "/registered-services.txt";
+        try (Stream<String> stream = getReaderForEntry(thisBundleContext, servicesFilename).lines()) {
+            stream.forEach(serviceFilters::add);
+        }
+
+        String bundlesFilename = "/active-bundles.txt";
+        try (Stream<String> stream = getReaderForEntry(thisBundleContext, bundlesFilename).lines()) {
+            stream.forEach(bundleList::add);
+        }
+
+        LOGGER.info("Setup complete.");
     }
 }
