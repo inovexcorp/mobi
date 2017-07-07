@@ -1,0 +1,1 @@
+(&(objectClass=org.matonto.clustering.hazelcast.HazelcastClusteringService)(id=org.matonto.clustering.hazelcast))

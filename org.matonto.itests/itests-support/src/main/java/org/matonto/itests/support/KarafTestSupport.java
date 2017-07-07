@@ -97,7 +97,7 @@ public class KarafTestSupport {
     protected FeaturesService featureService;
 
     @Inject
-    ConfigurationAdmin configAdmin;
+    protected ConfigurationAdmin configAdmin;
 
     ExecutorService executor = Executors.newCachedThreadPool();
 
