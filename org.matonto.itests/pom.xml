@@ -44,6 +44,7 @@
         <module>itests-platform</module>
         <module>itests-etl</module>
         <module>itests-rest</module>
+        <module>itests-clustering</module>
     </modules>
 
     <properties>

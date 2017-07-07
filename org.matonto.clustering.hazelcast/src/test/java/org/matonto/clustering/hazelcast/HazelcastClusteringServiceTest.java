@@ -28,12 +28,15 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.matonto.clustering.api.ClusteringService;
 import org.matonto.platform.config.api.server.MatOnto;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.osgi.framework.BundleContext;
 
 import java.util.Arrays;
+import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -53,6 +56,9 @@ public class HazelcastClusteringServiceTest extends TestCase {
 
     @Mock
     private MatOnto matOnto3;
+
+    @Mock
+    private BundleContext context;
 
     @Test
     public void testClustering() throws Exception {
@@ -75,10 +81,14 @@ public class HazelcastClusteringServiceTest extends TestCase {
         ForkJoinTask<?> task1 = createNode(pool, s1, 5123, new HashSet<>(Arrays.asList("127.0.0.1:5234", "127.0.0.1:5345")));
         ForkJoinTask<?> task2 = createNode(pool, s2, 5234, new HashSet<>(Arrays.asList("127.0.0.1:5123", "127.0.0.1:5345")));
         ForkJoinTask<?> task3 = createNode(pool, s3, 5345, new HashSet<>(Arrays.asList("127.0.0.1:5123", "127.0.0.1:5234")));
-
         task1.get();
         task2.get();
         task3.get();
+
+        Mockito.verify(context, Mockito.timeout(30000L)
+                .times(3))
+                .registerService(Mockito.any(Class.class), Mockito.any(HazelcastClusteringService.class), Mockito.any(Dictionary.class));
+
         assertEquals(3, s1.getMemberCount());
         assertEquals(3, s2.getMemberCount());
         assertEquals(3, s3.getMemberCount());
@@ -97,6 +107,10 @@ public class HazelcastClusteringServiceTest extends TestCase {
         s3.deactivate();
     }
 
+    private void waitOnInitialize(HazelcastClusteringService s) {
+
+    }
+
     private ForkJoinTask<?> createNode(ForkJoinPool pool, HazelcastClusteringService service, int port, Set<String> members) {
         return pool.submit(() -> {
             final Map<String, Object> map = new HashMap<>();
@@ -105,7 +119,7 @@ public class HazelcastClusteringServiceTest extends TestCase {
             map.put("listeningPort", Integer.toString(port));
             map.put("joinMechanism", "TCPIP");
             map.put("tcpIpMembers", StringUtils.join(members, ", "));
-            service.activate(map);
+            service.activate(context, map);
         });
     }
 }
