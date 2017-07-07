@@ -262,7 +262,7 @@ public class RestUtilsTest {
         model = Values.sesameModel(temp);
     }
 
-    public boolean equalsIgnoreNewline(String s1, String s2) {
+    private boolean equalsIgnoreNewline(String s1, String s2) {
         return s1 != null && s2 != null && normalizeLineEnds(s1).equals(normalizeLineEnds(s2));
     }
 
