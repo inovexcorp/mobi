@@ -26,12 +26,9 @@ package org.matonto.clustering.hazelcast;
 import junit.framework.TestCase;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.matonto.platform.config.api.server.MatOnto;
-import org.matonto.rdf.api.ModelFactory;
-import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactoryService;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -57,13 +54,6 @@ public class HazelcastClusteringServiceTest extends TestCase {
     @Mock
     private MatOnto matOnto3;
 
-    private static ModelFactory MODEL_FACTORY;
-
-    @BeforeClass
-    public static void init() {
-        MODEL_FACTORY = new LinkedHashModelFactoryService();
-    }
-
     @Test
     public void testClustering() throws Exception {
         UUID u1 = UUID.randomUUID();
@@ -76,13 +66,10 @@ public class HazelcastClusteringServiceTest extends TestCase {
         System.setProperty("java.net.preferIPv4Stack", "true");
         final HazelcastClusteringService s1 = new HazelcastClusteringService();
         s1.setMatOntoServer(matOnto1);
-        s1.setModelFactory(MODEL_FACTORY);
         final HazelcastClusteringService s2 = new HazelcastClusteringService();
         s2.setMatOntoServer(matOnto2);
-        s2.setModelFactory(MODEL_FACTORY);
         final HazelcastClusteringService s3 = new HazelcastClusteringService();
         s3.setMatOntoServer(matOnto3);
-        s3.setModelFactory(MODEL_FACTORY);
         ForkJoinPool pool = new ForkJoinPool(3);
 
         ForkJoinTask<?> task1 = createNode(pool, s1, 5123, new HashSet<>(Arrays.asList("127.0.0.1:5234", "127.0.0.1:5345")));
