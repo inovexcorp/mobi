@@ -783,28 +783,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 500);
     }
 
-    // Test upload changes to ontology 
-    /*
-    @Test
-    public void testUploadChangesToOntology() {}
-    
-    @Test
-    public void testUploadChangesToOntologyWithoutFile() {}
-    
-    @Test
-    public void testUploadChangesToOntologyInvalidRecordId() {}
-    
-//    @Test - BranchId is not currently used but is included 
-//    public void testUploadChangesToOntologyInvalidBranchId() {}
-    
-    @Test
-    public void testUploadChangesToOntologyInvalidCommitId() {}
-    
-    @Test
-    public void testUploadChangesToOntologyInvalidOntology() {}
-    */
-
-
     @Test
     public void testUploadExistingOntologyJson() {
         // Setup:

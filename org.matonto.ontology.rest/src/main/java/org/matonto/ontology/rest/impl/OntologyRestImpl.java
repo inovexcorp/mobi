@@ -268,8 +268,7 @@ public class OntologyRestImpl implements OntologyRest {
             Optional<InProgressCommit> commit = catalogManager.getInProgressCommit(catalogIRI, recordId, user);
 
             if (commit.isPresent()) {
-                Exception e = new MatOntoException("User has an in progress commit already.");
-                throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError("User has an in progress commit already.", Response.Status.BAD_REQUEST);
             }
 
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);

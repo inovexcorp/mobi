@@ -276,7 +276,6 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('unless an error occurs', function(done) {
-            var params = paramSerializer({ title: title });
             $httpBackend.expectPOST('/matontorest/ontologies',
                 function(data) {
                     return data instanceof FormData;
@@ -288,8 +287,8 @@ describe('Ontology Manager service', function() {
                 .then(function() {
                     fail('Promise should have rejected');
                     done();
-                }, function(response) {
-                    expect(response).toEqual(error);
+                }, function() {
+                    expect(util.rejectError).toHaveBeenCalled();
                     done();
                 });
             flushAndVerify($httpBackend);
@@ -1818,8 +1817,8 @@ describe('Ontology Manager service', function() {
                 .then(function() {
                     fail('Promise should have rejected');
                     done();
-                }, function(response) {
-                    expect(response).toEqual(error);
+                }, function() {
+                    expect(util.rejectError).toHaveBeenCalled();
                     done();
                 });
             flushAndVerify($httpBackend);

@@ -410,11 +410,11 @@
              */
             self.uploadChanges = function(file, recordId, branchId, commitId) {
                 return om.uploadChangesFile(file, recordId, branchId, commitId)
-                    .then(() => cm.getInProgressCommit(recordId, catalogId), $q.reject())
+                    .then(() => cm.getInProgressCommit(recordId, catalogId), $q.reject)
                     .then(commit => {
                         var listItem = self.getListItemByRecordId(recordId);
                         return self.updateOntology(recordId, branchId, commitId, listItem.ontologyRecord.type, listItem.ontologyState.upToDate, commit);
-                    }, $q.reject());
+                    }, $q.reject);
             }
             /**
              * @ngdoc method

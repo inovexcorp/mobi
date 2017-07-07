@@ -201,12 +201,12 @@
              */
             self.uploadFile = function(file, title, description, keywords) {
                 var fd = new FormData(),
-                config = {
-                    transformRequest: angular.identity,
-                    headers: {
-                        'Content-Type': undefined
-                    }
-                };
+                    config = {
+                        transformRequest: angular.identity,
+                        headers: {
+                            'Content-Type': undefined
+                        }
+                    };
                 fd.append('file', file);
                 fd.append('title', title);
                 if (description) {
@@ -216,7 +216,7 @@
                     fd.append('keywords', keywords);
                 }
                 return $http.post(prefix, fd, config)
-                    .then(response => response.data, response => $q.reject(response.statusText));
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -249,7 +249,7 @@
                 fd.append('file', file);
                 
                 return $http.put(prefix + '/' + encodeURIComponent(recordId), fd, config)
-                    .then(response => response.data, response => $q.reject(response.statusText));
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method

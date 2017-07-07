@@ -25,7 +25,8 @@ describe('Upload Changes Overlay directive', function() {
         scope,
         $q,
         ontologyStateSvc,
-        ontologyManagerSvc;
+        ontologyManagerSvc,
+        controller;
 
     beforeEach(function() {
         module('templates');
@@ -42,6 +43,7 @@ describe('Upload Changes Overlay directive', function() {
         });
         element = $compile(angular.element('<upload-changes-overlay></upload-changes-overlay>'))(scope);
         scope.$digest();
+        controller = element.controller('uploadChangesOverlay');
     });
 
     describe('contains the correct html', function() {
@@ -65,7 +67,6 @@ describe('Upload Changes Overlay directive', function() {
             var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
-            controller = element.controller('uploadChangesOverlay');
             controller.form.$invalid = false;
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
@@ -73,16 +74,12 @@ describe('Upload Changes Overlay directive', function() {
         it('depending on whether there is an error', function() {
             expect(element.find('error-display').length).toBe(0);
 
-            controller = element.controller('uploadChangesOverlay');
             controller.error = true;
             scope.$digest();
             expect(element.find('error-display').length).toBe(1);
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('uploadChangesOverlay');
-        });
         describe('should upload an ontology', function() {
             beforeEach(function() {
                 controller.os.listItem = { 
