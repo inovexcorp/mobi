@@ -59,8 +59,7 @@ public interface ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves all the data associated with ontology objects, from a Dataset in the local Catalog")
-    Response getClassDetails(@Context UriInfo uriInfo,
-                             @PathParam("recordIRI") String recordIRI);
+    Response getClassDetails(@PathParam("recordIRI") String recordIRI);
 
     /**
      * Retrieves all the instance details associated with a specific class found in the ontologies linked to a
@@ -105,17 +104,15 @@ public interface ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves a list of all properties available for a class from a Dataset in the local Catalog")
-    Response getClassPropertyDetails(@Context UriInfo uriInfo,
-                                     @PathParam("recordIRI") String recordIRI,
+    Response getClassPropertyDetails(@PathParam("recordIRI") String recordIRI,
                                      @PathParam("classIRI") String classIRI);
 
     /**
      * Creates an instance owned by a {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
      * {@link org.matonto.catalog.api.ontologies.mcat.Catalog}.
      *
-     * @param uriInfo     The URI information of the request.
      * @param recordIRI   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
-     *                    {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
+     *                    {@link org.matonto.dataset.ontology.dataset.Dataset}.
      * @return A {@link Response} with the IRI string of the created Instance.
      */
     @POST
@@ -124,8 +121,7 @@ public interface ExplorableDatasetRest {
     @Produces(MediaType.TEXT_PLAIN)
     @RolesAllowed("user")
     @ApiOperation("Creates an instance of a particular class type in a Dataset in the local Catalog")
-    Response createInstance(@Context UriInfo uriInfo,
-                            @PathParam("recordIRI") String recordIRI,
+    Response createInstance(@PathParam("recordIRI") String recordIRI,
                             String newInstanceJson);
 
     /**
@@ -143,8 +139,7 @@ public interface ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves an instance of a particular class type from a Dataset in the local Catalog")
-    Response getInstance(@Context UriInfo uriInfo,
-                         @PathParam("recordIRI") String recordIRI,
+    Response getInstance(@PathParam("recordIRI") String recordIRI,
                          @PathParam("instanceIRI") String instanceIRI);
 
     /**
@@ -163,8 +158,7 @@ public interface ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Updates an instance of a particular class type from a Dataset in the local Catalog")
-    Response updateInstance(@Context UriInfo uriInfo,
-                            @PathParam("recordIRI") String recordIRI,
+    Response updateInstance(@PathParam("recordIRI") String recordIRI,
                             @PathParam("instanceIRI") String instanceIRI,
                             String json);
 }

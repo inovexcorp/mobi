@@ -50,22 +50,22 @@ describe('Instance Creator directive', function() {
             expect(element.hasClass('instance-creator')).toBe(true);
             expect(element.hasClass('instance-editor')).toBe(true);
         });
-        it('for a block', function() {
+        it('with a block', function() {
             expect(element.find('block').length).toBe(1);
         });
-        it('for a block-header', function() {
+        it('with a block-header', function() {
             expect(element.find('block-header').length).toBe(1);
         });
-        it('for a breadcrumbs', function() {
+        it('with a breadcrumbs', function() {
             expect(element.find('breadcrumbs').length).toBe(1);
         });
-        it('for block-header .links', function() {
+        it('with block-header .links', function() {
             expect(element.querySelectorAll('block-header .link').length).toBe(2);
         });
-        it('for a block-content', function() {
+        it('with a block-content', function() {
             expect(element.find('block-content').length).toBe(1);
         });
-        it('for a instance-form', function() {
+        it('with a instance-form', function() {
             expect(element.find('instance-form').length).toBe(1);
         });
     });

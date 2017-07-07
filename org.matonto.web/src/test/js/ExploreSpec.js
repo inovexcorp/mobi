@@ -34,6 +34,8 @@ describe('Explore Service', function() {
             $httpBackend = _$httpBackend_;
             utilSvc = _utilService_;
         });
+
+        utilSvc.rejectError.and.returnValue($q.reject('error'));
     });
     
     describe('getClassDetails calls the correct functions when GET /matontorest/explorable-datasets/{recordId}/class-details', function() {
@@ -54,6 +56,10 @@ describe('Explore Service', function() {
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: 'error'
+                    }));
                     expect(response).toBe('error');
                 });
             flushAndVerify($httpBackend);
@@ -81,6 +87,10 @@ describe('Explore Service', function() {
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: 'error'
+                    }));
                     expect(response).toBe('error');
                 });
              flushAndVerify($httpBackend);
@@ -105,6 +115,10 @@ describe('Explore Service', function() {
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: 'error'
+                    }));
                     expect(response).toBe('error');
                 });
              flushAndVerify($httpBackend);
@@ -129,6 +143,10 @@ describe('Explore Service', function() {
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: 'error'
+                    }));
                     expect(response).toBe('error');
                 });
             flushAndVerify($httpBackend);
@@ -153,6 +171,10 @@ describe('Explore Service', function() {
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: 'error'
+                    }));
                     expect(response).toBe('error');
                 });
             flushAndVerify($httpBackend);
@@ -177,6 +199,10 @@ describe('Explore Service', function() {
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: 'error'
+                    }));
                     expect(response).toBe('error');
                 });
             flushAndVerify($httpBackend);
