@@ -24,12 +24,14 @@ package org.matonto.rest.util;
  */
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.matonto.jaas.api.engines.EngineManager;
@@ -71,11 +73,11 @@ public class RestUtilsTest {
     public void setUp() throws Exception {
         setUpModel();
 
-        expectedJsonld = IOUtils.toString(getClass().getResourceAsStream("/test.json"), Charset.forName("UTF-8"));
-        expectedTurtle = IOUtils.toString(getClass().getResourceAsStream("/test.ttl"), Charset.forName("UTF-8"));
-        expectedGroupedTurtle = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.ttl"), Charset.forName("UTF-8"));
-        expectedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/test.xml"), Charset.forName("UTF-8"));
-        expectedGroupedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.xml"), Charset.forName("UTF-8"));
+        expectedJsonld = IOUtils.toString(getClass().getResourceAsStream("/test.json"));
+        expectedTurtle = IOUtils.toString(getClass().getResourceAsStream("/test.ttl"));
+        expectedGroupedTurtle = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.ttl"));
+        expectedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/test.xml"));
+        expectedGroupedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.xml"));
 
         MockitoAnnotations.initMocks(this);
         when(context.getProperty(AuthenticationProps.USERNAME)).thenReturn("tester");
@@ -129,14 +131,14 @@ public class RestUtilsTest {
     public void modelToStringWithRDFFormatTest() throws Exception {
         assertEquals(expectedJsonld, RestUtils.modelToString(model, RDFFormat.JSONLD));
         assertEquals(expectedTurtle, RestUtils.modelToString(model, RDFFormat.TURTLE));
-        assertEquals(expectedRdfxml, RestUtils.modelToString(model, RDFFormat.RDFXML));
+        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, RDFFormat.RDFXML)));
     }
 
     @Test
     public void modelToStringTest() throws Exception {
         assertEquals(expectedJsonld, RestUtils.modelToString(model, "jsonld"));
         assertEquals(expectedTurtle, RestUtils.modelToString(model, "turtle"));
-        assertEquals(expectedRdfxml, RestUtils.modelToString(model, "rdf/xml"));
+        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, "rdf/xml")));
         assertEquals(expectedJsonld, RestUtils.modelToString(model, "something"));
     }
 
@@ -144,14 +146,14 @@ public class RestUtilsTest {
     public void groupedModelToStringWithRDFFormatTest() throws Exception {
         assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, RDFFormat.JSONLD));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, RDFFormat.TURTLE));
-        assertEquals(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, RDFFormat.RDFXML));
+        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, RDFFormat.RDFXML)));
     }
 
     @Test
     public void groupedModelToStringTest() throws Exception {
         assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, "jsonld"));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, "turtle"));
-        assertEquals(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, "rdf/xml"));
+        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, "rdf/xml")));
         assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, "something"));
     }
 
@@ -260,5 +262,13 @@ public class RestUtilsTest {
         temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("true"));
         temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("false"));
         model = Values.sesameModel(temp);
+    }
+
+    public boolean equalsIgnoreNewline(String s1, String s2) {
+        return s1 != null && s2 != null && normalizeLineEnds(s1).equals(normalizeLineEnds(s2));
+    }
+
+    private String normalizeLineEnds(String s) {
+        return s.replace("\r\n", "\n").replace('\r', '\n');
     }
 }
