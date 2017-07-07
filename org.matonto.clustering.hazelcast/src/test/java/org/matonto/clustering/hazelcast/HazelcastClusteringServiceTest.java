@@ -32,6 +32,7 @@ import org.matonto.platform.config.api.server.MatOnto;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.osgi.framework.BundleContext;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -54,6 +55,9 @@ public class HazelcastClusteringServiceTest extends TestCase {
     @Mock
     private MatOnto matOnto3;
 
+    @Mock
+    private BundleContext context;
+
     @Test
     public void testClustering() throws Exception {
         UUID u1 = UUID.randomUUID();
@@ -75,10 +79,15 @@ public class HazelcastClusteringServiceTest extends TestCase {
         ForkJoinTask<?> task1 = createNode(pool, s1, 5123, new HashSet<>(Arrays.asList("127.0.0.1:5234", "127.0.0.1:5345")));
         ForkJoinTask<?> task2 = createNode(pool, s2, 5234, new HashSet<>(Arrays.asList("127.0.0.1:5123", "127.0.0.1:5345")));
         ForkJoinTask<?> task3 = createNode(pool, s3, 5345, new HashSet<>(Arrays.asList("127.0.0.1:5123", "127.0.0.1:5234")));
-
         task1.get();
         task2.get();
         task3.get();
+
+        s1.waitOnInitialize();
+        s2.waitOnInitialize();
+        s3.waitOnInitialize();
+
+
         assertEquals(3, s1.getMemberCount());
         assertEquals(3, s2.getMemberCount());
         assertEquals(3, s3.getMemberCount());
@@ -105,7 +114,7 @@ public class HazelcastClusteringServiceTest extends TestCase {
             map.put("listeningPort", Integer.toString(port));
             map.put("joinMechanism", "TCPIP");
             map.put("tcpIpMembers", StringUtils.join(members, ", "));
-            service.activate(map);
+            service.activate(context, map);
         });
     }
 }

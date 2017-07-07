@@ -38,12 +38,16 @@ import org.matonto.clustering.hazelcast.config.HazelcastClusteringServiceConfig;
 import org.matonto.clustering.hazelcast.config.HazelcastConfigurationFactory;
 import org.matonto.clustering.hazelcast.listener.ClusterServiceLifecycleListener;
 import org.matonto.platform.config.api.server.MatOnto;
+import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Hashtable;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.Semaphore;
 
 /**
  * This is the {@link ClusteringService} implementation built on top of Hazelcast.
@@ -54,7 +58,8 @@ import java.util.UUID;
         name = HazelcastClusteringService.NAME,
         properties = {
                 "clusteringType=hazelcast"
-        }
+        },
+        provide = {}
 )
 public class HazelcastClusteringService implements ClusteringService {
 
@@ -93,25 +98,34 @@ public class HazelcastClusteringService implements ClusteringService {
      */
     private ClusterServiceLifecycleListener listener;
 
+    private Semaphore lock = new Semaphore(1, true);
+
     /**
      * Method that joins the hazelcast cluster when the service is activated.
      */
     @Activate
-    public void activate(Map<String, Object> configuration) {
+    public void activate(BundleContext context, Map<String, Object> configuration) {
+        lock.acquireUninterruptibly();
         final HazelcastClusteringServiceConfig serviceConfig = Configurable.createConfigurable(HazelcastClusteringServiceConfig.class, configuration);
         if (serviceConfig.enabled()) {
-            LOGGER.debug("Spinning up underlying hazelcast instance");
-            this.hazelcastInstance = Hazelcast.newHazelcastInstance(HazelcastConfigurationFactory.build(serviceConfig, this.matOntoServer.getServerIdentifier().toString()));
-            LOGGER.info("Clustering Service {}: Successfully initialized Hazelcast instance", this.matOntoServer.getServerIdentifier());
-            // Listen to lifecycle changes...
-            this.listener = new ClusterServiceLifecycleListener();
-            this.hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
-            this.hazelcastInstance.getCluster().addMembershipListener(listener);
+            ForkJoinPool.commonPool().submit(() -> {
+                LOGGER.debug("Spinning up underlying hazelcast instance");
+                this.hazelcastInstance = Hazelcast.newHazelcastInstance(HazelcastConfigurationFactory.build(serviceConfig, this.matOntoServer.getServerIdentifier().toString()));
+                LOGGER.info("Clustering Service {}: Successfully initialized Hazelcast instance", this.matOntoServer.getServerIdentifier());
+                // Listen to lifecycle changes...
+                this.listener = new ClusterServiceLifecycleListener();
+                this.hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
+                this.hazelcastInstance.getCluster().addMembershipListener(listener);
 
-            registerWithClusterNodes();
+                registerWithClusterNodes();
+                // Register service
+                context.registerService(ClusteringService.class, HazelcastClusteringService.this, new Hashtable<>(configuration));
+                lock.release();
+            });
         } else {
             LOGGER.warn("Clustering Service {}: Service initialized in disabled state... Not going to start a hazelcast node " +
                     "instance and join cluster", this.matOntoServer.getServerIdentifier());
+            context.registerService(ClusteringService.class, HazelcastClusteringService.this, new Hashtable<>(configuration));
         }
     }
 
@@ -121,10 +135,10 @@ public class HazelcastClusteringService implements ClusteringService {
      * @param configuration The configuration map for this service
      */
     @Modified
-    public void modified(Map<String, Object> configuration) {
+    public void modified(BundleContext context, Map<String, Object> configuration) {
         LOGGER.warn("Modified configuration of service! Going to deactivate, and re-activate with new configuration...");
         deactivate();
-        activate(configuration);
+        activate(context, configuration);
     }
 
     /**
@@ -173,6 +187,11 @@ public class HazelcastClusteringService implements ClusteringService {
         this.clusterNodes = this.hazelcastInstance.getReplicatedMap(CLUSTER_MEMBERS_KEY);
         //TODO - add metadata about this node to the model in the map.
         this.clusterNodes.put(matOntoServer.getServerIdentifier(), "");
+    }
+
+    public void waitOnInitialize() {
+        lock.acquireUninterruptibly();
+        lock.release();
     }
 
 }
