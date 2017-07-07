@@ -49,7 +49,6 @@ public interface ExplorableDatasetRest {
      * {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
      * {@link org.matonto.catalog.api.ontologies.mcat.Catalog} in a JSON array.
      *
-     * @param uriInfo   The URI information of the request.
      * @param recordIRI The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                  {@link org.matonto.dataset.ontology.dataset.Dataset} from which to retrieve the data.
      * @return A {@link Response} with a JSON array of ontology objects.
@@ -93,7 +92,6 @@ public interface ExplorableDatasetRest {
      * {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
      * {@link org.matonto.catalog.api.ontologies.mcat.Catalog} in a JSON array.
      *
-     * @param uriInfo   The URI information of the request.
      * @param recordIRI The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                  {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
      * @param classIRI  The IRI of the class type to get property details for.
@@ -128,7 +126,6 @@ public interface ExplorableDatasetRest {
      * Retrieves an instance owned by a {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
      * {@link org.matonto.catalog.api.ontologies.mcat.Catalog}.
      *
-     * @param uriInfo     The URI information of the request.
      * @param recordIRI   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                    {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
      * @param instanceIRI The IRI of the instance to get.
@@ -146,7 +143,6 @@ public interface ExplorableDatasetRest {
      * Updates an instance owned by a {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
      * {@link org.matonto.catalog.api.ontologies.mcat.Catalog} using the modifications from the provided JSON-LD.
      *
-     * @param uriInfo     The URI information of the request.
      * @param recordIRI   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                    {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
      * @param instanceIRI The IRI of the instance to update.
