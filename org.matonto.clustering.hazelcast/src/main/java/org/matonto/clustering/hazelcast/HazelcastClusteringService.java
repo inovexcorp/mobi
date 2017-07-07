@@ -38,7 +38,6 @@ import org.matonto.clustering.hazelcast.config.HazelcastClusteringServiceConfig;
 import org.matonto.clustering.hazelcast.config.HazelcastConfigurationFactory;
 import org.matonto.clustering.hazelcast.listener.ClusterServiceLifecycleListener;
 import org.matonto.platform.config.api.server.MatOnto;
-import org.matonto.rdf.api.ModelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,11 +77,6 @@ public class HazelcastClusteringService implements ClusteringService {
      * Core platform service for accessing central server functionality.
      */
     private MatOnto matOntoServer;
-
-    /**
-     * Model factory to work with.
-     */
-    private ModelFactory modelFactory;
 
     /**
      * Hazelcast instance that will drive the features of this {@link ClusteringService} implementation.
@@ -170,16 +164,6 @@ public class HazelcastClusteringService implements ClusteringService {
     @Reference
     public void setMatOntoServer(MatOnto matOntoServer) {
         this.matOntoServer = matOntoServer;
-    }
-
-    /**
-     * Inject the {@link ModelFactory} service.
-     *
-     * @param modelFactory The {@link ModelFactory} we'll use to construct RDF models
-     */
-    @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
-        this.modelFactory = modelFactory;
     }
 
     /**
