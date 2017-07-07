@@ -28,6 +28,7 @@ import aQute.bnd.annotation.metatype.Meta;
 /**
  * Configuration for Application objects in the repository.
  */
+@Meta.OCD
 public interface ApplicationConfig {
 
     /**
