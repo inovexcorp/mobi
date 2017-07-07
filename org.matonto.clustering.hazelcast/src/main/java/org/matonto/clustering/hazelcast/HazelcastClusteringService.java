@@ -38,7 +38,6 @@ import org.matonto.clustering.hazelcast.config.HazelcastClusteringServiceConfig;
 import org.matonto.clustering.hazelcast.config.HazelcastConfigurationFactory;
 import org.matonto.clustering.hazelcast.listener.ClusterServiceLifecycleListener;
 import org.matonto.platform.config.api.server.MatOnto;
-import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,7 +92,7 @@ public class HazelcastClusteringService implements ClusteringService {
     /**
      * Map of MatOnto nodes currently on the cluster to some metadata about the node.
      */
-    private ReplicatedMap<UUID, Model> clusterNodes;
+    private ReplicatedMap<UUID, String> clusterNodes;
 
     /**
      * Listener for membership changes and lifecycle changes.
@@ -189,7 +188,7 @@ public class HazelcastClusteringService implements ClusteringService {
     private void registerWithClusterNodes() {
         this.clusterNodes = this.hazelcastInstance.getReplicatedMap(CLUSTER_MEMBERS_KEY);
         //TODO - add metadata about this node to the model in the map.
-        this.clusterNodes.put(matOntoServer.getServerIdentifier(), this.modelFactory.createModel());
+        this.clusterNodes.put(matOntoServer.getServerIdentifier(), "");
     }
 
 }
