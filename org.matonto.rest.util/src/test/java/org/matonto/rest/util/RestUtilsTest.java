@@ -31,7 +31,6 @@ import static org.mockito.Mockito.when;
 
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.matonto.jaas.api.engines.EngineManager;
@@ -46,7 +45,6 @@ import org.mockito.MockitoAnnotations;
 import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
 
-import java.nio.charset.Charset;
 import java.util.Optional;
 import javax.ws.rs.container.ContainerRequestContext;
 
