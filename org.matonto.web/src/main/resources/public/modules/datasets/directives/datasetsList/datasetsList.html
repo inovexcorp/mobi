@@ -28,6 +28,7 @@
                     <div class="action-container">
                         <a ng-click="dvm.selectedDataset = dataset; dvm.showClearConfirm = true; $event.stopPropagation()" class="action clear-dataset"><i class="fa fa-fw fa-eraser"></i> Clear</a>
                         <a ng-click="dvm.selectedDataset = dataset; dvm.showDeleteConfirm = true; $event.stopPropagation()" class="action delete-dataset"><i class="fa fa-fw fa-trash-o"></i> Delete</a>
+                        <a ng-click="dvm.selectedDataset = dataset; dvm.edit(); $event.stopPropagation()" class="action update-dataset"><i class="fa fa-fw fa-pencil"></i> Delete</a>
                     </div>
                     <div class="details">
                         <h3 class="header"><i class="fa" ng-class="{'fa-caret-right': dataset.record['@id'] !== dvm.openedDatasetId, 'fa-caret-down': dataset.record['@id'] === dvm.openedDatasetId}"></i>{{dvm.util.getDctermsValue(dataset.record, 'title')}}</h3>
