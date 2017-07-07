@@ -28,6 +28,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.matonto.clustering.api.ClusteringService;
 import org.matonto.platform.config.api.server.MatOnto;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -35,6 +36,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.osgi.framework.BundleContext;
 
 import java.util.Arrays;
+import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -83,10 +85,9 @@ public class HazelcastClusteringServiceTest extends TestCase {
         task2.get();
         task3.get();
 
-        s1.waitOnInitialize();
-        s2.waitOnInitialize();
-        s3.waitOnInitialize();
-
+        Mockito.verify(context, Mockito.timeout(30000L)
+                .times(3))
+                .registerService(Mockito.any(Class.class), Mockito.any(HazelcastClusteringService.class), Mockito.any(Dictionary.class));
 
         assertEquals(3, s1.getMemberCount());
         assertEquals(3, s2.getMemberCount());
@@ -104,6 +105,10 @@ public class HazelcastClusteringServiceTest extends TestCase {
         s2.deactivate();
         assertEquals(1, s3.getMemberCount());
         s3.deactivate();
+    }
+
+    private void waitOnInitialize(HazelcastClusteringService s) {
+
     }
 
     private ForkJoinTask<?> createNode(ForkJoinPool pool, HazelcastClusteringService service, int port, Set<String> members) {

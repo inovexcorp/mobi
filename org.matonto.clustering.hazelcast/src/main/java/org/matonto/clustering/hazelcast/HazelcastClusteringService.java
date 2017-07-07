@@ -47,7 +47,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Semaphore;
 
 /**
  * This is the {@link ClusteringService} implementation built on top of Hazelcast.
@@ -98,14 +97,11 @@ public class HazelcastClusteringService implements ClusteringService {
      */
     private ClusterServiceLifecycleListener listener;
 
-    private Semaphore lock = new Semaphore(1, true);
-
     /**
      * Method that joins the hazelcast cluster when the service is activated.
      */
     @Activate
     public void activate(BundleContext context, Map<String, Object> configuration) {
-        lock.acquireUninterruptibly();
         final HazelcastClusteringServiceConfig serviceConfig = Configurable.createConfigurable(HazelcastClusteringServiceConfig.class, configuration);
         if (serviceConfig.enabled()) {
             ForkJoinPool.commonPool().submit(() -> {
@@ -120,12 +116,10 @@ public class HazelcastClusteringService implements ClusteringService {
                 registerWithClusterNodes();
                 // Register service
                 context.registerService(ClusteringService.class, HazelcastClusteringService.this, new Hashtable<>(configuration));
-                lock.release();
             });
         } else {
             LOGGER.warn("Clustering Service {}: Service initialized in disabled state... Not going to start a hazelcast node " +
                     "instance and join cluster", this.matOntoServer.getServerIdentifier());
-            context.registerService(ClusteringService.class, HazelcastClusteringService.this, new Hashtable<>(configuration));
         }
     }
 
@@ -188,10 +182,4 @@ public class HazelcastClusteringService implements ClusteringService {
         //TODO - add metadata about this node to the model in the map.
         this.clusterNodes.put(matOntoServer.getServerIdentifier(), "");
     }
-
-    public void waitOnInitialize() {
-        lock.acquireUninterruptibly();
-        lock.release();
-    }
-
 }
