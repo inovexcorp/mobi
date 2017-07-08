@@ -1,12 +1,12 @@
-package org.matonto.platform.config.api.application;
+package org.matonto.clustering.api;
 
 /*-
  * #%L
- * org.matonto.platform.config.api
+ * clustering.api
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,31 +26,34 @@ package org.matonto.platform.config.api.application;
 import aQute.bnd.annotation.metatype.Meta;
 
 /**
- * Configuration for Application objects in the repository.
+ * This interface describes the base service configuration for a {@link ClusteringService} implementation.
  */
 @Meta.OCD
-public interface ApplicationConfig {
+public interface ClusteringServiceConfig {
 
     /**
-     * The ID of the Application service. Used as the local name of the Application IRI.
      *
-     * @return the id of the Application
+     * @return An ID for the clustering service instance.
      */
-    @Meta.AD
     String id();
 
     /**
-     * The title of the Application. Used as the dct:title of the Application object.
      *
-     * @return the display title of the Application
+     * @return Whether or not the {@link ClusteringService} should be enabled.
+     */
+    @Meta.AD(deflt = "false", required = false)
+    boolean enabled();
+
+    /**
+     *
+     * @return The name of the clustering service instance.
      */
     @Meta.AD(required = false)
     String title();
 
     /**
-     * The description of the Application. Used as the dct:description of the Application object.
      *
-     * @return the description of the Application
+     * @return A brief description of the clustering service.
      */
     @Meta.AD(required = false)
     String description();

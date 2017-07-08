@@ -1,14 +1,12 @@
-@Version("1.0.1.${build}")
-
-package org.matonto.platform.config.api.application;
+package org.matonto.clustering.api;
 
 /*-
  * #%L
- * org.matonto.platform.config.api
+ * clustering.api
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,21 @@ package org.matonto.platform.config.api.application;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import java.util.Set;
+import java.util.UUID;
+
+/**
+ * This service represents a way to navigate the local topology of nodes on the local network.
+ */
+public interface ClusteringService {
+
+    /**
+     * @return The set of UUIDs representing servers that are part of this cluster.
+     */
+    Set<UUID> getClusteredNodeIds();
+
+    /**
+     * @return The number of discovered local nodes in this cluster.
+     */
+    int getMemberCount();
+}

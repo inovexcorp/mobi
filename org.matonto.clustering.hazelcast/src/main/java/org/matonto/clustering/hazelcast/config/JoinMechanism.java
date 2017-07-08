@@ -1,14 +1,12 @@
-@Version("1.0.1.${build}")
-
-package org.matonto.platform.config.api.application;
+package org.matonto.clustering.hazelcast.config;
 
 /*-
  * #%L
- * org.matonto.platform.config.api
+ * org.matonto.clustering.hazelcast
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,21 @@ package org.matonto.platform.config.api.application;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+/**
+ * Simple enumeration of possible values for the join mechanism to use in the
+ * {@link HazelcastClusteringServiceConfig} when creating a {@link org.matonto.clustering.hazelcast.HazelcastClusteringService}
+ * instance.
+ */
+public enum JoinMechanism {
+
+    /**
+     * Cluster nodes together automatically using hazelcast's multicast functionality.
+     */
+    MULTICAST,
+
+    /**
+     * Cluster known nodes together using direct TCP/IP connections.
+     */
+    TCPIP;
+
+}

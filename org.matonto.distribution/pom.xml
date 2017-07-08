@@ -224,6 +224,7 @@
                         <feature>matonto-core</feature>
                         <feature>matonto-cli</feature>
                         <feature>matonto-web</feature>
+                        <feature>matonto-clustering</feature>
                     </bootFeatures>
                 </configuration>
             </plugin>

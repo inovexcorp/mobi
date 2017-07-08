@@ -77,6 +77,8 @@
         <module>org.matonto.jaas</module>
         <module>org.matonto.web.security</module>
         <module>org.matonto.jaas.rest</module>
+        <module>org.matonto.clustering.api</module>
+        <module>org.matonto.clustering.hazelcast</module>
         <module>org.matonto.karaf.feature</module>
         <module>org.matonto.rdf.orm.ontologies</module>
         <module>rdf-orm</module>

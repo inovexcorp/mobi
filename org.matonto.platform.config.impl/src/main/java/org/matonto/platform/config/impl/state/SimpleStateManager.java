@@ -25,7 +25,6 @@ package org.matonto.platform.config.impl.state;
 
 
 import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -50,25 +49,18 @@ import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.config.RepositoryConsumerConfig;
-import org.matonto.repository.exception.RepositoryException;
 import org.openrdf.model.vocabulary.RDF;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
-@Component(
-        name = SimpleStateManager.COMPONENT_NAME,
-        designateFactory = RepositoryConsumerConfig.class,
-        configurationPolicy = ConfigurationPolicy.require
-    )
+@Component(name = SimpleStateManager.COMPONENT_NAME)
 public class SimpleStateManager implements StateManager {
     protected static final String COMPONENT_NAME = "org.matonto.platform.config.state.StateManager";
     private Repository repository;

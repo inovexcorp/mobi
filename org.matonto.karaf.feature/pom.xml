@@ -232,6 +232,16 @@
             <artifactId>explorable.dataset.rest</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>clustering.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>clustering.hazelcast</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>

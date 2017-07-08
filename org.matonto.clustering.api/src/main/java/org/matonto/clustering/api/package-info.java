@@ -1,14 +1,14 @@
-@Version("1.0.1.${build}")
+@Version("1.0.0.${build}")
 
-package org.matonto.platform.config.api.application;
+package org.matonto.clustering.api;
 
 /*-
  * #%L
- * org.matonto.platform.config.api
+ * org.matonto.clustering.api
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
