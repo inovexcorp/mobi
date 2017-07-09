@@ -26,16 +26,16 @@
     angular
         /**
          * @ngdoc overview
-         * @name instanceEditor
+         * @name instanceCreator
          *
          * @description
-         * The `instanceEditor` module only provides the `instanceEditor` directive which creates
-         * the instance editor page.
+         * The `instanceCreator` module only provides the `instanceCreator` directive which creates
+         * the instance creator page.
          */
-        .module('instanceEditor', [])
+        .module('instanceCreator', [])
         /**
          * @ngdoc directive
-         * @name instanceEditor.directive:instanceEditor
+         * @name instanceCreator.directive:instanceCreator
          * @scope
          * @restrict E
          * @requires $q
@@ -45,16 +45,16 @@
          *
          * @description
          * HTML contents in the instance view page which shows the complete list of properites
-         * associated with the selected instance in an editable format.
+         * available for the new instance in an editable format.
          */
-        .directive('instanceEditor', instanceEditor);
+        .directive('instanceCreator', instanceCreator);
         
-        instanceEditor.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService'];
+        instanceCreator.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService'];
 
-        function instanceEditor($q, discoverStateService, utilService, exploreService) {
+        function instanceCreator($q, discoverStateService, utilService, exploreService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/explore/directives/instanceEditor/instanceEditor.html',
+                templateUrl: 'modules/discover/sub-modules/explore/directives/instanceCreator/instanceCreator.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
@@ -63,7 +63,6 @@
                     var es = exploreService;
                     dvm.ds = discoverStateService;
                     dvm.util = utilService;
-                    dvm.original = angular.copy(dvm.ds.explore.instance.entity);
                     
                     dvm.save = function() {
                         _.forOwn(dvm.ds.explore.instance.entity, (value, key) => {
@@ -71,19 +70,20 @@
                                 delete dvm.ds.explore.instance.entity[key];
                             }
                         });
-                        es.updateInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.metadata.instanceIRI, dvm.ds.explore.instance.entity)
-                            .then(() => es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {offset: dvm.ds.explore.instanceDetails.currentPage * dvm.ds.explore.instanceDetails.limit, limit: dvm.ds.explore.instanceDetails.limit}), $q.reject)
+                        es.createInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.entity)
+                            .then(() => es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {}), $q.reject)
                             .then(response => {
-                                dvm.ds.explore.instanceDetails.data = response.data;
+                                dvm.ds.explore.instanceDetails.data = _.slice(response.data, dvm.ds.explore.instanceDetails.currentPage * dvm.ds.explore.instanceDetails.limit, dvm.ds.explore.instanceDetails.limit);
                                 dvm.ds.explore.instance.metadata = _.find(response.data, {instanceIRI: dvm.ds.explore.instance.entity['@id']});
                                 dvm.ds.explore.breadcrumbs[dvm.ds.explore.breadcrumbs.length - 1] = dvm.ds.explore.instance.metadata.title;
-                                dvm.ds.explore.editing = false;
+                                dvm.ds.explore.creating = false;
                             }, dvm.util.createErrorToast);
                     }
                     
                     dvm.cancel = function() {
-                        dvm.ds.explore.instance.entity = dvm.original;
-                        dvm.ds.explore.editing = false;
+                        dvm.ds.explore.instance.entity = {};
+                        dvm.ds.explore.creating = false;
+                        dvm.ds.explore.breadcrumbs = _.initial(dvm.ds.explore.breadcrumbs);
                     }
                 }
             }

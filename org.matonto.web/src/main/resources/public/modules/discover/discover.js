@@ -39,7 +39,9 @@
             'exploreTab',
             'instanceBlock',
             'instanceCards',
+            'instanceCreator',
             'instanceEditor',
+            'instanceForm',
             'instanceView',
             'newInstancePropertyOverlay',
             

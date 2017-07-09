@@ -49,6 +49,7 @@ import org.matonto.persistence.utils.Statements;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.BindingSet;
 import org.matonto.query.api.TupleQuery;
+import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -155,7 +156,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     }
 
     @Override
-    public Response getClassDetails(UriInfo uriInfo, String recordIRI) {
+    public Response getClassDetails(String recordIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         Resource datasetRecordRsr = factory.createIRI(recordIRI);
         try {
@@ -188,7 +189,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     }
 
     @Override
-    public Response getClassPropertyDetails(UriInfo uriInfo, String recordIRI, String classIRI) {
+    public Response getClassPropertyDetails(String recordIRI, String classIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(classIRI, "The Class IRI is required.");
         Resource recordId = factory.createIRI(recordIRI);
@@ -202,7 +203,31 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     }
 
     @Override
-    public Response getInstance(UriInfo uriInfo, String recordIRI, String instanceIRI) {
+    public Response createInstance(String recordIRI, String newInstanceJson) {
+        checkStringParam(recordIRI, "The Dataset Record IRI is required.");
+        checkStringParam(newInstanceJson, "The Instance's JSON-LD is required.");
+        try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
+            Model instanceModel = sesameTransformer.matontoModel(jsonldToModel(newInstanceJson));
+            Resource instanceId = instanceModel.stream()
+                    .filter(statement -> !(statement.getSubject() instanceof BNode))
+                    .findAny().orElseThrow(() ->
+                    ErrorUtils.sendError("The new instance's IRI could not be found on any statement in the JSON-LD.",
+                            Response.Status.INTERNAL_SERVER_ERROR)).getSubject();
+            if (conn.contains(instanceId, null, null)) {
+                throw ErrorUtils.sendError("The new instance's IRI is already taken.",
+                        Response.Status.INTERNAL_SERVER_ERROR);
+            }
+            conn.add(instanceModel);
+            return Response.status(201).entity(instanceId.stringValue()).build();
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public Response getInstance(String recordIRI, String instanceIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(instanceIRI, "The Instance IRI is required.");
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
@@ -229,7 +254,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     }
 
     @Override
-    public Response updateInstance(UriInfo uriInfo, String recordIRI, String instanceIRI, String json) {
+    public Response updateInstance(String recordIRI, String instanceIRI, String json) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(instanceIRI, "The Instance IRI is required.");
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
