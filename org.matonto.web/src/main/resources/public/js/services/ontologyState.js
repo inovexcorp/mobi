@@ -58,41 +58,68 @@
             var mc = manchesterConverterService;
             var catalogId = '';
 
+            var ontologyEditorTabStates = {
+                project: {
+                    entityIRI: '',
+                    active: true
+                },
+                overview: {
+                    active: false
+                },
+                classes: {
+                    active: false
+                },
+                properties: {
+                    active: false
+                },
+                individuals: {
+                    active: false
+                },
+                search: {
+                    active: false
+                },
+                savedChanges: {
+                    active: false
+                },
+                merge: {
+                    active: false
+                },
+                commits: {
+                    active: false
+                }
+            };
+
+            var vocabularyEditorTabStates = {
+                project: {
+                    active: true,
+                    entityIRI: ''
+                },
+                schemes: {
+                    active: false
+                },
+                concepts: {
+                    active: false
+                },
+                search: {
+                    active: false
+                },
+                savedChanges: {
+                    active: false
+                },
+                merge: {
+                    active: false
+                },
+                commits: {
+                    active: false
+                }
+            };
+
             var ontologyListItemTemplate = {
                 ontologyState: {
                     active: true,
                     upToDate: true
                 },
-                editorTabStates: {
-                   project: {
-                       entityIRI: '',
-                       active: true
-                   },
-                   overview: {
-                       active: false
-                   },
-                   classes: {
-                       active: false
-                   },
-                   properties: {
-                       active: false
-                   },
-                   individuals: {
-                       active: false
-                   },
-                   search: {
-                       active: false
-                   },
-                   savedChanges: {
-                       active: false
-                   },
-                   merge: {
-                       active: false
-                   },
-                   commits: {
-                       active: false
-                   }
-                },
+                editorTabStates: angular.copy(ontologyEditorTabStates),
                 ontologyRecord: {
                     title: '',
                     recordId: '',
@@ -142,30 +169,7 @@
                     active: true,
                     upToDate: true
                 },
-                editorTabStates: {
-                   project: {
-                       active: true,
-                       entityIRI: ''
-                   },
-                   schemes: {
-                       active: false
-                   },
-                   concepts: {
-                       active: false
-                   },
-                   search: {
-                       active: false
-                   },
-                   savedChanges: {
-                       active: false
-                   },
-                   merge: {
-                       active: false
-                   },
-                   commits: {
-                       active: false
-                   }
-                },
+                editorTabStates: angular.copy(vocabularyEditorTabStates),
                 ontologyRecord: {
                     title: '',
                     recordId: '',
@@ -442,14 +446,24 @@
                     .then(ontology => {
                         var ontologyId = om.getOntologyIRI(ontology);
                         if (type === 'ontology') {
+                            if (ontologyId !== oldListItem.ontologyId) {
+                                oldListItem.editorTabStates = angular.copy(ontologyEditorTabStates);
+                            }
                             return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, oldListItem.ontologyRecord.title);
                         } else if (type === 'vocabulary') {
+                            if (ontologyId !== oldListItem.ontologyId) {
+                                oldListItem.editorTabStates = angular.copy(vocabularyEditorTabStates);
+                            }
                             return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, oldListItem.ontologyRecord.title);
                         }
                     }, $q.reject)
                     .then(response => {
                         listItem = response;
-                        listItem.selected = oldListItem.selected;
+                        if (listItem.ontologyId !== oldListItem.ontologyId) {
+                            self.setSelected(listItem.ontologyId, true, listItem);
+                        } else {
+                            listItem.selected = oldListItem.selected;
+                        }
                         listItem.editorTabStates = oldListItem.editorTabStates;
                         return sm.updateOntologyState(recordId, branchId, commitId);
                     }, $q.reject)
@@ -837,7 +851,10 @@
              * @param {string} entityIRI The IRI of the entity that you want.
              * @returns {Object} An Object which represents the requested entity.
              */
-            self.getEntityByRecordId = function(recordId, entityIRI) {
+            self.getEntityByRecordId = function(recordId, entityIRI, listItem) {
+                if (listItem) {
+                    return getEntityFromListItem(listItem, entityIRI);
+                }
                 return getEntityFromListItem(self.getListItemByRecordId(recordId), entityIRI);
             }
             /**
@@ -1035,9 +1052,9 @@
                 _.set(self.listItem, 'iriBegin', iriBegin);
                 _.set(self.listItem, 'iriThen', iriThen);
             }
-            self.setSelected = function(entityIRI, getUsages = true) {
-                self.listItem.selected = self.getEntityByRecordId(self.listItem.ontologyRecord.recordId, entityIRI);
-                if (getUsages && !_.has(self.getActivePage(), 'usages') && self.listItem.selected) {
+            self.setSelected = function(entityIRI, getUsages = true, listItem = self.listItem) {
+                listItem.selected = self.getEntityByRecordId(listItem.ontologyRecord.recordId, entityIRI, listItem);
+                if (getUsages && !_.has(self.getActivePage(), 'usages') && listItem.selected) {
                     self.setEntityUsages(entityIRI);
                 }
             }
@@ -1050,20 +1067,20 @@
                         response => _.set(page, 'usages', []));
             }
 
-            self.resetStateTabs = function() {
-                _.forOwn(self.listItem.editorTabStates, (value, key) => {
+            self.resetStateTabs = function(listItem = self.listItem) {
+                _.forOwn(listItem.editorTabStates, (value, key) => {
                     if (key !== 'project') {
                         _.unset(value, 'entityIRI');
                     } else {
-                        value.entityIRI = om.getOntologyIRI(self.listItem.ontology);
+                        value.entityIRI = om.getOntologyIRI(listItem.ontology);
                         value.preview = '';
                     }
                     _.unset(value, 'usages');
                 });
                 if (self.getActiveKey() !== 'project') {
-                    self.listItem.selected = undefined;
+                    listItem.selected = undefined;
                 } else {
-                    self.listItem.selected = self.getEntityByRecordId(self.listItem.ontologyRecord.recordId, self.listItem.editorTabStates.project.entityIRI);
+                    listItem.selected = self.getEntityByRecordId(listItem.ontologyRecord.recordId, listItem.editorTabStates.project.entityIRI);
                 }
             }
             self.getActiveKey = function(listItem = self.listItem) {

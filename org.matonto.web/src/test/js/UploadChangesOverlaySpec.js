@@ -117,7 +117,7 @@ describe('Upload Changes Overlay directive', function() {
                         controller.os.listItem.ontologyRecord.commitId);
                 expect(ontologyStateSvc.showUploadChangesOverlay).toBe(false);
                 expect(ontologyStateSvc.listItem.editorTabStates.savedChanges.active).toBe(true);
-                expect(controller.error).toBeUndefined();
+                expect(controller.error).toBeFalsy();
             });
         });
     });

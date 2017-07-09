@@ -2136,28 +2136,28 @@ describe('Ontology State Service', function() {
         });
         it('when getUsages is true and getActivePage object does not have a usages property', function() {
             ontologyStateSvc.setSelected(id, true);
-            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, id);
+            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, id, ontologyStateSvc.listItem);
             expect(ontologyStateSvc.listItem.selected).toEqual(object);
             expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
             expect(ontologyStateSvc.setEntityUsages).toHaveBeenCalledWith(id);
         });
         it('when getUsages is false', function() {
             ontologyStateSvc.setSelected(id, false);
-            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, id);
+            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, id, ontologyStateSvc.listItem);
             expect(ontologyStateSvc.listItem.selected).toEqual(object);
             expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
         });
         it('when getEntityByRecordId returns undefined', function() {
             ontologyStateSvc.getEntityByRecordId.and.returnValue(undefined);
             ontologyStateSvc.setSelected(id, true);
-            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, id);
+            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, id, ontologyStateSvc.listItem);
             expect(ontologyStateSvc.listItem.selected).toEqual(undefined);
             expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
         });
         it('when getActivePage object does have a usages property', function() {
             ontologyStateSvc.getActivePage.and.returnValue({usages: []});
             ontologyStateSvc.setSelected(id, true);
-            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, id);
+            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, id, ontologyStateSvc.listItem);
             expect(ontologyStateSvc.listItem.selected).toEqual(object);
             expect(ontologyStateSvc.getActivePage).toHaveBeenCalled();
             expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
