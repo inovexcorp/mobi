@@ -34,6 +34,8 @@ describe('Explore Service', function() {
             $httpBackend = _$httpBackend_;
             utilSvc = _utilService_;
         });
+
+        utilSvc.rejectError.and.returnValue($q.reject('error'));
     });
     
     describe('getClassDetails calls the correct functions when GET /matontorest/explorable-datasets/{recordId}/class-details', function() {
@@ -54,6 +56,10 @@ describe('Explore Service', function() {
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: 'error'
+                    }));
                     expect(response).toBe('error');
                 });
             flushAndVerify($httpBackend);
@@ -81,6 +87,10 @@ describe('Explore Service', function() {
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: 'error'
+                    }));
                     expect(response).toBe('error');
                 });
              flushAndVerify($httpBackend);
@@ -105,9 +115,41 @@ describe('Explore Service', function() {
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: 'error'
+                    }));
                     expect(response).toBe('error');
                 });
              flushAndVerify($httpBackend);
+        });
+    });
+    
+    describe('createInstance calls the correct functions when POST /matontorest/explorable-datasets/{recordId}/classes/{classId}/instances', function() {
+        var json = {'@id': 'id'};
+        it('succeeds', function() {
+            $httpBackend.expectPOST('/matontorest/explorable-datasets/recordId/instances', json).respond(200, 'instanceId');
+            exploreSvc.createInstance('recordId', json)
+                .then(function(response) {
+                    expect(response).toEqual('instanceId');
+                }, function() {
+                    fail('Should have been resolved.');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('fails', function() {
+            $httpBackend.expectPOST('/matontorest/explorable-datasets/recordId/instances', json).respond(400, null, null, 'error');
+            exploreSvc.createInstance('recordId', json)
+                .then(function() {
+                    fail('Should have been rejected.');
+                }, function(response) {
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: 'error'
+                    }));
+                    expect(response).toBe('error');
+                });
+            flushAndVerify($httpBackend);
         });
     });
     
@@ -129,6 +171,10 @@ describe('Explore Service', function() {
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: 'error'
+                    }));
                     expect(response).toBe('error');
                 });
             flushAndVerify($httpBackend);
@@ -153,6 +199,10 @@ describe('Explore Service', function() {
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: 'error'
+                    }));
                     expect(response).toBe('error');
                 });
             flushAndVerify($httpBackend);
