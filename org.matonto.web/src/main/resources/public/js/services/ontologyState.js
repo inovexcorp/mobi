@@ -448,11 +448,13 @@
                         if (type === 'ontology') {
                             if (ontologyId !== oldListItem.ontologyId) {
                                 oldListItem.editorTabStates = angular.copy(ontologyEditorTabStates);
+                                oldListItem.editorTabStates.project.entityIRI = ontologyId;
                             }
                             return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, oldListItem.ontologyRecord.title);
                         } else if (type === 'vocabulary') {
                             if (ontologyId !== oldListItem.ontologyId) {
                                 oldListItem.editorTabStates = angular.copy(vocabularyEditorTabStates);
+                                oldListItem.editorTabStates.project.entityIRI = ontologyId;
                             }
                             return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, oldListItem.ontologyRecord.title);
                         }
