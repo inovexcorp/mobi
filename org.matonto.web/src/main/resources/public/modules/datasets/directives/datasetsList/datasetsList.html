@@ -25,13 +25,20 @@
         <block>
             <block-content class="padding">
                 <div class="dataset padding" ng-click="dvm.clickDataset(dataset)" ng-repeat="dataset in dvm.state.results" ng-class="{'open': dataset.record['@id'] === dvm.openedDatasetId}">
-                    <div class="action-container">
-                        <a ng-click="dvm.selectedDataset = dataset; dvm.showClearConfirm = true; $event.stopPropagation()" class="action clear-dataset"><i class="fa fa-fw fa-eraser"></i> Clear</a>
-                        <a ng-click="dvm.selectedDataset = dataset; dvm.showDeleteConfirm = true; $event.stopPropagation()" class="action delete-dataset"><i class="fa fa-fw fa-trash-o"></i> Delete</a>
-                        <a ng-click="dvm.selectedDataset = dataset; dvm.edit(); $event.stopPropagation()" class="action update-dataset"><i class="fa fa-fw fa-pencil"></i> Delete</a>
-                    </div>
                     <div class="details">
-                        <h3 class="header"><i class="fa" ng-class="{'fa-caret-right': dataset.record['@id'] !== dvm.openedDatasetId, 'fa-caret-down': dataset.record['@id'] === dvm.openedDatasetId}"></i>{{dvm.util.getDctermsValue(dataset.record, 'title')}}</h3>
+                        <h3 class="header">
+                            <i class="fa" ng-class="{'fa-caret-right': dataset.record['@id'] !== dvm.openedDatasetId, 'fa-caret-down': dataset.record['@id'] === dvm.openedDatasetId}"></i>{{dvm.util.getDctermsValue(dataset.record, 'title')}}
+                            <span uib-dropdown ng-click='$event.stopPropagation()' class='pull-right'>
+                                <a uib-dropdown-toggle title="Dataset Actions">
+                                    <i class="fa fa-ellipsis-h fa-fw"></i>
+                                </a>
+                                <ul uib-dropdown-menu>
+                                    <li><a ng-click="dvm.selectedDataset = dataset; dvm.edit(dataset.record); $event.stopPropagation()" class="action update-dataset"><i class="fa fa-fw fa-pencil"></i> Edit</a></li>
+                                    <li><a ng-click="dvm.selectedDataset = dataset; dvm.showClearConfirm = true; $event.stopPropagation()" class="action clear-dataset" ><i class="fa fa-fw fa-eraser"></i> Clear</a></li>
+                                    <li><a ng-click="dvm.selectedDataset = dataset; dvm.showDeleteConfirm = true; $event.stopPropagation()" class="action delete-dataset"><i class="fa fa-fw fa-trash-o"></i> Delete</a></li>
+                                </ul>
+                            </span>
+                        </h3>
                         <p class="text-muted"><small>{{dvm.util.getPropertyId(dataset.record, dvm.prefixes.dataset + 'dataset')}}</small></p>
                         <p class="description">{{dvm.util.getDctermsValue(dataset.record, 'description') || '(None Specified)'}}</p>
                         <div class="full-details" ng-if="dataset.record['@id'] === dvm.openedDatasetId">
@@ -69,4 +76,5 @@
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         <p>Are you sure that you want to clear <strong>{{dvm.util.getDctermsValue(dvm.selectedDataset.record, 'title')}}</strong>?</p>
     </confirmation-overlay>
+    <edit-dataset-overlay ng-if="dvm.showEditOverlay === true" on-close="dvm.showEditOverlay = false"></edit-dataset-overlay>
 </div>

@@ -76,6 +76,7 @@
                     dvm.openedDatasetId = '';
                     dvm.showDeleteConfirm = false;
                     dvm.showClearConfirm = false;
+                    dvm.showEditOverlay = false;
                     dvm.cachedOntologyIds = [];
 
                     dvm.getIdentifiedOntologyIds = function(dataset) {
@@ -128,6 +129,9 @@
                                 dvm.showClearConfirm = false;
                                 dvm.error = '';
                             }, onError);
+                    }
+                    dvm.edit = function(datasetRecord) {
+                        dvm.showEditOverlay = true;
                     }
 
                     function onError(errorMessage) {

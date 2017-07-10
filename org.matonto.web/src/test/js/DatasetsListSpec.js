@@ -315,7 +315,7 @@ describe('Datasets List directive', function() {
         datasetStateSvc.results = [dataset];
         scope.$digest();
 
-        var link = angular.element(element.querySelectorAll('block-content .dataset .action-container .delete-dataset')[0]);
+        var link = angular.element(element.querySelectorAll('block-content .dataset [uib-dropdown] .delete-dataset')[0]);
         link.triggerHandler('click');
         expect(controller.selectedDataset).toEqual(dataset);
         expect(controller.showDeleteConfirm).toBe(true);
@@ -325,7 +325,7 @@ describe('Datasets List directive', function() {
         datasetStateSvc.results = [dataset];
         scope.$digest();
 
-        var link = angular.element(element.querySelectorAll('block-content .dataset .action-container .clear-dataset')[0]);
+        var link = angular.element(element.querySelectorAll('block-content .dataset [uib-dropdown] .clear-dataset')[0]);
         link.triggerHandler('click');
         expect(controller.selectedDataset).toEqual(dataset);
         expect(controller.showClearConfirm).toBe(true);
