@@ -31,13 +31,22 @@ import org.matonto.rdf.orm.conversion.AbstractValueConverter;
 import org.matonto.rdf.orm.conversion.ValueConversionException;
 import org.matonto.rdf.orm.conversion.ValueConverter;
 
+/**
+ * {@link ValueConverter} implementation for converting {@link Boolean} values from statements.
+ */
 @Component(provide = ValueConverter.class)
 public class BooleanValueConverter extends AbstractValueConverter<Boolean> {
 
+    /**
+     * Create a new instance of a {@link BooleanValueConverter}.
+     */
     public BooleanValueConverter() {
         super(Boolean.class);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Boolean convertValue(final Value value, final Thing thing, final Class<? extends Boolean> desiredType) throws ValueConversionException {
         try {
@@ -47,6 +56,9 @@ public class BooleanValueConverter extends AbstractValueConverter<Boolean> {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Value convertType(final Boolean value, final Thing thing) throws ValueConversionException {
         return this.valueFactory.createLiteral(value);
