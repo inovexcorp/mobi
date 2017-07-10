@@ -25,19 +25,19 @@ package org.matonto.rdf.orm.conversion.impl;
 
 import junit.framework.TestCase;
 import org.junit.Test;
-import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.IRI;
 
-public class TestValueValueConverter extends ValueConverterTestCase<Value> {
+public class IRIValueConverterTest extends ValueConverterTestCase<IRI> {
 
-    public TestValueValueConverter() {
-        super(new ValueValueConverter(), Value.class);
+    public IRIValueConverterTest() {
+        super(new IRIValueConverter(), IRI.class);
     }
 
     @Test
-    public void testBasic() {
-        Value test = valueFactory.createIRI("urn://silly.test");
+    public void simpleTest() {
+        IRI test = valueFactory.createIRI("http://test.com/test");
         TestCase.assertEquals(test,
-                valueConverter.convertValue(valueConverter.convertType(test, null), null, Value.class));
+                valueConverter.convertValue(valueConverter.convertType(test, null), null, IRI.class));
     }
 
 }
