@@ -113,7 +113,7 @@
                             onError(errorMessage);
                         });
                     }
-                    dvm.create = function() {
+                    dvm.update = function() {
                         dvm.recordConfig.keywords = _.map(dvm.keywords, _.trim);
                         dvm.recordConfig.ontologies = _.map(dvm.selectedOntologies, '@id');
                         dm.createDatasetRecord(dvm.recordConfig)
