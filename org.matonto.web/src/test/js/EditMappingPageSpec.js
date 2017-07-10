@@ -121,7 +121,7 @@ describe('Edit Mapping Page directive', function() {
                 expect(['Cancel', 'Save', 'Save & Run']).toContain(angular.element(buttons[2]).text().trim());
             });
         });
-        it('depending on whether the mapping configuration has been set', function() {
+        /*it('depending on whether the mapping configuration has been set', function() {
             spyOn(controller, 'configNotSet').and.returnValue(true);
             scope.$digest();
             var buttons = element.querySelectorAll('tab block-footer button.btn-primary');
@@ -141,7 +141,7 @@ describe('Edit Mapping Page directive', function() {
             _.forEach(_.toArray(buttons), function(button) {
                 expect(angular.element(button).attr('disabled')).toBeFalsy();
             });
-        });
+        });*/
     });
     it('should call cancel when a cancel button is clicked', function() {
         spyOn(controller, 'cancel');
