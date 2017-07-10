@@ -494,7 +494,8 @@ public interface CatalogUtilsService {
      *      be found, the {@link Record} does not belong to the {@link Catalog}, the {@link Branch} does not belong to 
      *      the {@link Record}, or the {@link Commit} does not belong to the {@link Branch}.
      */
-    void validateCommitPath(Resource catalogId, Resource recordId, Resource branchId, Resource commitId, RepositoryConnection conn);
+    void validateCommitPath(Resource catalogId, Resource recordId, Resource branchId, Resource commitId,
+            RepositoryConnection conn);
 
     /**
      * 
