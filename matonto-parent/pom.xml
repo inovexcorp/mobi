@@ -28,7 +28,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>matonto-parent</artifactId>
-    <version>1.8.26-SNAPSHOT</version>
+    <version>1.8.28-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -77,6 +77,7 @@
         <ehcache.version>3.3.1</ehcache.version>
         <javax.cache.version>1.0.0</javax.cache.version>
         <orm.version>1.8.14</orm.version>
+        <hazelcast.version>3.8.2</hazelcast.version>
     </properties>
 
     <dependencyManagement>
@@ -176,6 +177,11 @@
             </dependency>
 
             <!-- Other Dependencies -->
+            <dependency>
+                <groupId>com.hazelcast</groupId>
+                <artifactId>hazelcast</artifactId>
+                <version>${hazelcast.version}</version>
+            </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>

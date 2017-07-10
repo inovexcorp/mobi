@@ -2,6 +2,12 @@
 @import "./src/main/resources/public/css/variables";
 
 .instance-block {
+    .create-button {
+        display: inline-block;
+        line-height: 33px;
+        margin-right: 15px;
+    }
+    
     .block-footer {
         .paging-details p {
             line-height: 34px;

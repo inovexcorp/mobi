@@ -122,6 +122,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     private static final String LARGE_ID = "http://matonto.org/data/large";
     private static final String DATA_PROPERTY_ID = "http://matonto.org/data-property";
     private static final String OBJECT_PROPERTY_ID = "http://matonto.org/object-property";
+    private static final String NEW_INSTANCE_ID_STR = "http://matonto.org/new-instance";
 
     @Mock
     private DatasetManager datasetManager;
@@ -201,8 +202,6 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
         when(dataProperty.getIRI()).thenReturn(dataPropertyId);
         when(objectProperty.getIRI()).thenReturn(objectPropertyId);
-        when(datasetConnection.prepareTupleQuery(any(String.class))).thenAnswer(i -> conn.prepareTupleQuery(i.getArgumentAt(0, String.class)));
-        when(datasetConnection.getStatements(any(Resource.class), any(IRI.class), any(Value.class))).thenAnswer(i -> conn.getStatements(i.getArgumentAt(0, Resource.class), i.getArgumentAt(1, IRI.class), i.getArgumentAt(2, Value.class)));
         when(ontology.getAllClassDataProperties(classId)).thenReturn(dataProperties);
         when(ontology.getAllClassObjectProperties(classId)).thenReturn(objectProperties);
         when(ontology.getDataPropertyRange(dataProperty)).thenReturn(range);
@@ -223,12 +222,15 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(datasetManager, catalogManager, sesameTransformer);
+        reset(datasetManager, catalogManager, sesameTransformer, datasetConnection);
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.of(record));
         when(datasetManager.getConnection(recordId)).thenReturn(datasetConnection);
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(compiledModel);
         when(sesameTransformer.matontoModel(any(org.openrdf.model.Model.class))).thenAnswer(i -> Values.matontoModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
         when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
+        when(datasetConnection.prepareTupleQuery(any(String.class))).thenAnswer(i -> conn.prepareTupleQuery(i.getArgumentAt(0, String.class)));
+        when(datasetConnection.getStatements(any(Resource.class), any(IRI.class), any(Value.class))).thenAnswer(i -> conn.getStatements(i.getArgumentAt(0, Resource.class), i.getArgumentAt(1, IRI.class), i.getArgumentAt(2, Value.class)));
+        when(datasetConnection.contains(any(Resource.class), any(IRI.class), any(Value.class))).thenAnswer(i -> conn.contains(i.getArgumentAt(0, Resource.class), i.getArgumentAt(1, IRI.class), i.getArgumentAt(2, Value.class)));
     }
 
     @AfterTest
@@ -438,6 +440,53 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/property-details").request().get();
         assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void createInstanceTest() {
+        //Setup:
+        JSONObject instance = new JSONObject().element("@id", NEW_INSTANCE_ID_STR).element(_Thing.title_IRI,
+                new JSONArray().element(new JSONObject().element("@value", "title")));
+
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances").request()
+                .post(Entity.json(instance.toString()));
+        assertEquals(response.getStatus(), 201);
+        assertEquals(response.readEntity(String.class), NEW_INSTANCE_ID_STR);
+    }
+
+    @Test
+    public void createInstanceTestWhenIRIAlreadyTaken() {
+        //Setup:
+        JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR).element(_Thing.title_IRI, new JSONArray()
+                .element(new JSONObject().element("@value", "title")));
+
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances").request()
+                .post(Entity.json(instance.toString()));
+        assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void createInstanceTestWithNoDatasetConnectionTestIllegalArgumentThrown() {
+        //Setup:
+        when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
+        JSONObject instance = new JSONObject().element("@id", NEW_INSTANCE_ID_STR).element(_Thing.title_IRI,
+                new JSONArray().element(new JSONObject().element("@value", "title")));
+
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances").request()
+                .post(Entity.json(instance.toString()));
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void createInstanceTestWithNoDatasetConnectionTestIllegalStateThrown() {
+        //Setup:
+        when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
+        JSONObject instance = new JSONObject().element("@id", NEW_INSTANCE_ID_STR).element(_Thing.title_IRI,
+                new JSONArray().element(new JSONObject().element("@value", "title")));
+
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances").request()
+                .post(Entity.json(instance.toString()));
+        assertEquals(response.getStatus(), 500);
     }
 
     @Test
