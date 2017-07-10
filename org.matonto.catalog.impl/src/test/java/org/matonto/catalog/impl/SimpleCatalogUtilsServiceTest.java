@@ -1766,7 +1766,7 @@ public class SimpleCatalogUtilsServiceTest {
     public void isCommitBranchHeadTest() {
         Resource commitId = vf.createIRI("http://matonto.org/test/commits#conflict2");
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(service.isCommitInBranch(BRANCH_IRI, commitId, conn));
+            assertTrue(service.commitInBranch(BRANCH_IRI, commitId, conn));
         }
     }
 
@@ -1774,7 +1774,7 @@ public class SimpleCatalogUtilsServiceTest {
     public void isCommitBranchNotHeadTest() {
         Resource commitId = vf.createIRI("http://matonto.org/test/commits#conflict0");
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertTrue(service.isCommitInBranch(BRANCH_IRI, commitId, conn));
+            assertTrue(service.commitInBranch(BRANCH_IRI, commitId, conn));
         }
     }
 
@@ -1782,7 +1782,7 @@ public class SimpleCatalogUtilsServiceTest {
     public void isCommitBranchNotTest() {
         Resource commitId = vf.createIRI("http://matonto.org/test/commits#test4a");
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertFalse(service.isCommitInBranch(BRANCH_IRI, commitId, conn));
+            assertFalse(service.commitInBranch(BRANCH_IRI, commitId, conn));
         }
     }
 

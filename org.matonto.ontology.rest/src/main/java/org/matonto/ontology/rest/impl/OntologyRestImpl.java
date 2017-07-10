@@ -260,11 +260,11 @@ public class OntologyRestImpl implements OntologyRest {
             Resource branchId;
             Resource commitId;
             {
-                if (!stringParamIsMissing(commitIdStr)) {
+                if (StringUtils.isNotBlank(commitIdStr)) {
                     throwErrorIfMissingStringParam(branchIdStr, "The branchIdStr is missing.");
                     commitId = valueFactory.createIRI(commitIdStr);
                     branchId = valueFactory.createIRI(branchIdStr);
-                } else if (!stringParamIsMissing(branchIdStr)) {
+                } else if (StringUtils.isNotBlank(branchIdStr)) {
                     branchId = valueFactory.createIRI(branchIdStr);
                     commitId = catalogManager.getHeadCommit(catalogIRI, recordId, branchId).getResource();
                 } else {
@@ -820,23 +820,13 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     /**
-     * Checks to make sure that the provided String is not null or empty.
-     *
-     * @param param the parameter String to check
-     * @return true if it is null or empty; otherwise, false
-     */
-    private boolean stringParamIsMissing(String param) {
-        return param == null || param.length() == 0;
-    }
-
-    /**
      * Checks to make sure that the parameter is present. If it is not, it throws an error with the provided String.
      *
      * @param param        the parameter String to check
      * @param errorMessage the message String for the thrown error
      */
     private void throwErrorIfMissingStringParam(String param, String errorMessage) {
-        if (stringParamIsMissing(param)) {
+        if (StringUtils.isBlank(param)) {
             throw ErrorUtils.sendError(errorMessage, Response.Status.BAD_REQUEST);
         }
     }
@@ -896,11 +886,11 @@ public class OntologyRestImpl implements OntologyRest {
             } else {
                 Resource recordId = valueFactory.createIRI(recordIdStr);
 
-                if (!stringParamIsMissing(commitIdStr)) {
+                if (StringUtils.isNotBlank(commitIdStr)) {
                     throwErrorIfMissingStringParam(branchIdStr, "The branchIdStr is missing.");
                     optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr),
                             valueFactory.createIRI(commitIdStr));
-                } else if (!stringParamIsMissing(branchIdStr)) {
+                } else if (StringUtils.isNotBlank(branchIdStr)) {
                     optionalOntology = ontologyManager.retrieveOntology(recordId, valueFactory.createIRI(branchIdStr));
                 } else {
                     optionalOntology = ontologyManager.retrieveOntology(recordId);

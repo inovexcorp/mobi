@@ -487,13 +487,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     public void validateCommitPath(Resource catalogId, Resource recordId, Resource branchId, Resource commitId, 
                       RepositoryConnection conn) {
         validateBranch(catalogId, recordId, branchId, conn);
-        if (!isCommitInBranch(branchId, commitId, conn)) {
+        if (!commitInBranch(branchId, commitId, conn)) {
             throw throwDoesNotBelong(commitId, commitFactory, branchId, branchFactory);
         }
     }
 
     @Override
-    public boolean isCommitInBranch(Resource branchId, Resource commitId, RepositoryConnection conn) {
+    public boolean commitInBranch(Resource branchId, Resource commitId, RepositoryConnection conn) {
         Branch branch = getExpectedObject(branchId, branchFactory, conn);
         Resource head = getHeadCommitIRI(branch);
         return (head.equals(commitId) || getCommitChain(head, false, conn).contains(commitId));

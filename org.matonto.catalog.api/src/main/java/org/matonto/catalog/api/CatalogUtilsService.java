@@ -505,7 +505,7 @@ public interface CatalogUtilsService {
      * @return {@code true} is the (@link Commit} {@link Resource} is in the {@link Branch}'s commit chain and 
      *         {@code false} otherwise.
      */
-    boolean isCommitInBranch(Resource branchId, Resource commitId, RepositoryConnection conn);
+    boolean commitInBranch(Resource branchId, Resource commitId, RepositoryConnection conn);
     
     /**
      * Gets a List which represents the commit chain from the initial commit to the specified commit in either

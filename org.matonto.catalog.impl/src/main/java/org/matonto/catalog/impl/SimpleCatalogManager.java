@@ -1017,7 +1017,7 @@ public class SimpleCatalogManager implements CatalogManager {
         Optional<Commit> rtn = Optional.empty();
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateBranch(catalogId, versionedRDFRecordId, branchId, conn);
-            if (utils.isCommitInBranch(branchId, commitId, conn)) {
+            if (utils.commitInBranch(branchId, commitId, conn)) {
                 rtn =  Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
             }
         } finally {
