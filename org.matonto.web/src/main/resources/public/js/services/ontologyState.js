@@ -446,27 +446,20 @@
                     .then(ontology => {
                         var ontologyId = om.getOntologyIRI(ontology);
                         if (type === 'ontology') {
-                            if (ontologyId !== oldListItem.ontologyId) {
-                                oldListItem.editorTabStates = angular.copy(ontologyEditorTabStates);
-                                oldListItem.editorTabStates.project.entityIRI = ontologyId;
-                            }
                             return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, oldListItem.ontologyRecord.title);
                         } else if (type === 'vocabulary') {
-                            if (ontologyId !== oldListItem.ontologyId) {
-                                oldListItem.editorTabStates = angular.copy(vocabularyEditorTabStates);
-                                oldListItem.editorTabStates.project.entityIRI = ontologyId;
-                            }
                             return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, oldListItem.ontologyRecord.title);
                         }
                     }, $q.reject)
                     .then(response => {
                         listItem = response;
+                        listItem.editorTabStates = oldListItem.editorTabStates;
                         if (listItem.ontologyId !== oldListItem.ontologyId) {
                             self.setSelected(listItem.ontologyId, true, listItem);
+                            self.resetStateTabs(listItem);
                         } else {
                             listItem.selected = oldListItem.selected;
                         }
-                        listItem.editorTabStates = oldListItem.editorTabStates;
                         return sm.updateOntologyState(recordId, branchId, commitId);
                     }, $q.reject)
                     .then(() => {
