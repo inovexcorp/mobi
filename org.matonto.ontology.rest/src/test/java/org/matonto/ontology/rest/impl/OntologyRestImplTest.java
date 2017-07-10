@@ -3972,14 +3972,13 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .request()
                 .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
-        assertGetUserFromContext();
-        verify(catalogManager).getMasterBranch(eq(catalogId), eq(recordId));
-        verify(ontologyManager).createOntology(any(FileInputStream.class));
-        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
-        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
-        verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
-        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+        verify(catalogManager, times(0)).getMasterBranch(eq(catalogId), eq(recordId));
+        verify(ontologyManager, times(0)).createOntology(any(FileInputStream.class));
+        verify(catalogManager, times(0)).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager, times(0)).getDiff(any(Model.class), any(Model.class));
+        verify(catalogManager, times(0)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(catalogManager, times(0)).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
     }
 
     @Test
