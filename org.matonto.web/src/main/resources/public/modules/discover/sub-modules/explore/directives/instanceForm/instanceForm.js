@@ -85,7 +85,6 @@
                     dvm.showOverlay = false;
                     dvm.showText = false;
                     dvm.changed = [];
-                    dvm.original = angular.copy(dvm.ds.explore.instance.entity);
                     
                     dvm.getOptions = function(propertyIRI) {
                         var range = getRange(propertyIRI);
@@ -202,11 +201,6 @@
                         dvm.ds.explore.instance.entity[property] = [];
                         dvm.addToChanged(property);
                         dvm.showOverlay = false;
-                    }
-                    
-                    dvm.cancel = function() {
-                        dvm.ds.explore.instance.entity = dvm.original;
-                        dvm.ds.explore.editing = false;
                     }
                     
                     dvm.onSelect = function(text) {

@@ -23,6 +23,9 @@ package org.matonto.itests.platform;
  * #L%
  */
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,39 +38,17 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
 import javax.inject.Inject;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Stream;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
 public class PlatformIT extends KarafTestSupport {
-
-    private Set<String> bundleList = new HashSet<>();
-    private Set<String> serviceFilters = new HashSet<>();
-    private static boolean setupComplete = false;
 
     @Inject
     protected BundleContext thisBundleContext;
 
     @Before
     public synchronized void setup() throws Exception {
-        if (setupComplete) return;
-
-        String bundlesFilename = "/active-bundles.txt";
-        try (Stream<String> stream = getReaderForEntry(thisBundleContext, bundlesFilename).lines()) {
-            stream.forEach(bundleList::add);
-        }
-
-        String servicesFilename = "/registered-services.txt";
-        try (Stream<String> stream = getReaderForEntry(thisBundleContext, servicesFilename).lines()) {
-            stream.forEach(serviceFilters::add);
-        }
-
-        setupComplete = true;
+        setup(thisBundleContext);
     }
 
     /**

@@ -68,7 +68,7 @@
          */
         self.getClassDetails = function(recordId) {
             return $http.get(prefix + encodeURIComponent(recordId) + '/class-details')
-                .then(response => response.data, response => $q.reject(response.statusText));
+                .then(response => response.data, util.rejectError);
         }
         
         /**
@@ -95,7 +95,7 @@
                 config.timeout = undefined;
             }
             return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/instance-details', config)
-                .then(response => response, response => $q.reject(response.statusText));
+                .then(response => response, util.rejectError);
         }
         
         /**
@@ -114,7 +114,7 @@
          */
         self.getClassPropertyDetails = function(recordId, classId) {
             return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/property-details')
-                .then(response => response.data, response => $q.reject(response.statusText));
+                .then(response => response.data, util.rejectError);
         }
         
         /**
@@ -132,7 +132,7 @@
          */
         self.createInstance = function(recordId, json) {
             return $http.post(prefix + encodeURIComponent(recordId) + '/instances', json)
-                .then(response => response.data, response => $q.reject(response.statusText));
+                .then(response => response.data, util.rejectError);
         }
         
         /**
@@ -151,7 +151,7 @@
          */
         self.getInstance = function(recordId, instanceId) {
             return $http.get(prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId))
-                .then(response => response.data, response => $q.reject(response.statusText));
+                .then(response => response.data, util.rejectError);
         }
         
         /**
@@ -170,7 +170,7 @@
          */
         self.updateInstance = function(recordId, instanceId, json) {
             return $http.put(prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId), angular.toJson(json))
-                .then(response => $q.when(), response => $q.reject(response.statusText));
+                .then(response => $q.when(), util.rejectError);
         }
         
         /**

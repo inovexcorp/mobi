@@ -118,22 +118,22 @@ describe('Instance Form directive', function() {
             expect(element.hasClass('instance-form')).toBe(true);
             expect(element.hasClass('row')).toBe(true);
         });
-        it('for a .col-xs-8.col-xs-offset-2', function() {
+        it('with a .col-xs-8.col-xs-offset-2', function() {
             expect(element.querySelectorAll('.col-xs-8.col-xs-offset-2').length).toBe(1);
         });
-        it('for a h2', function() {
+        it('with a h2', function() {
             expect(element.find('h2').length).toBe(1);
         });
-        it('for a static-iri', function() {
+        it('with a static-iri', function() {
             expect(element.find('static-iri').length).toBe(1);
         });
-        it('for a .form-group', function() {
+        it('with a .form-group', function() {
             expect(element.querySelectorAll('.form-group').length).toBe(2);
         });
-        it('for a custom-label', function() {
+        it('with a custom-label', function() {
             expect(element.find('custom-label').length).toBe(2);
         });
-        it('for a .boolean-property', function() {
+        it('with a .boolean-property', function() {
             expect(element.querySelectorAll('.boolean-property').length).toBe(0);
             
             spyOn(controller, 'isBoolean').and.returnValue(true);
@@ -141,7 +141,7 @@ describe('Instance Form directive', function() {
             
             expect(element.querySelectorAll('.boolean-property').length).toBe(2);
         });
-        it('for a .data-property', function() {
+        it('with a .data-property', function() {
             expect(element.querySelectorAll('.data-property').length).toBe(0);
             
             spyOn(controller, 'isPropertyOfType').and.returnValue(true);
@@ -149,7 +149,7 @@ describe('Instance Form directive', function() {
             
             expect(element.querySelectorAll('.data-property').length).toBe(2);
         });
-        it('for a .object-property', function() {
+        it('with a .object-property', function() {
             expect(element.querySelectorAll('.object-property').length).toBe(0);
             
             spyOn(controller, 'isPropertyOfType').and.returnValue(true);
@@ -157,13 +157,13 @@ describe('Instance Form directive', function() {
             
             expect(element.querySelectorAll('.object-property').length).toBe(2);
         });
-        it('for a .btn-container.clearfix', function() {
+        it('with a .btn-container.clearfix', function() {
             expect(element.querySelectorAll('.btn-container.clearfix').length).toBe(1);
         });
-        it('for a .btn.btn-link', function() {
+        it('with a .btn.btn-link', function() {
             expect(element.querySelectorAll('.btn.btn-link').length).toBe(1);
         });
-        it('for a new-instance-property-overlay', function() {
+        it('with a new-instance-property-overlay', function() {
             expect(element.find('new-instance-property-overlay').length).toBe(0);
             
             controller.showOverlay = true;
@@ -171,7 +171,7 @@ describe('Instance Form directive', function() {
             
             expect(element.find('new-instance-property-overlay').length).toBe(1);
         });
-        it('for a confirmation-overlay', function() {
+        it('with a confirmation-overlay', function() {
             expect(element.find('confirmation-overlay').length).toBe(0);
             
             controller.showText = true;

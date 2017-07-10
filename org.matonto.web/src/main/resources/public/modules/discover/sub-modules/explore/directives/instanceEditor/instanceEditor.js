@@ -63,6 +63,7 @@
                     var es = exploreService;
                     dvm.ds = discoverStateService;
                     dvm.util = utilService;
+                    dvm.original = angular.copy(dvm.ds.explore.instance.entity);
                     
                     dvm.save = function() {
                         _.forOwn(dvm.ds.explore.instance.entity, (value, key) => {
