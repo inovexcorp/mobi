@@ -25,6 +25,7 @@ package org.matonto.ontology.core.impl.owlapi;
 
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
+import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -65,17 +66,13 @@ public class MatOntoOntologyFactory implements OWLOntologyFactory {
                                        OWLOntologyCreationHandler handler, OWLOntologyLoaderConfiguration config)
             throws OWLOntologyCreationException {
         IRI iri = source.getDocumentIRI();
-        if (manager.contains(iri)) {
-            return manager.getOntology(iri);
-        } else {
-            IRI recordId = IRI.create(iri.getIRIString().replace(MatOntoOntologyIRIMapper.protocol,
-                    "https:"));
-            Ontology matOnt = ontologyManager.retrieveOntology(SimpleOntologyValues.matontoIRI(recordId))
-                    .orElseThrow(() -> new OWLOntologyCreationException("Ontology " + recordId
-                            + " could not be found"));
-            OWLOntology ont = SimpleOntologyValues.owlapiOntology(matOnt);
-            handler.ontologyCreated(ont);
-            return ont;
-        }
+        IRI recordId = IRI.create(iri.getIRIString().replace(MatOntoOntologyIRIMapper.protocol,
+                "https:"));
+        Ontology matOnt = ontologyManager.retrieveOntology(SimpleOntologyValues.matontoIRI(recordId))
+                .orElseThrow(() -> new OWLOntologyCreationException("Ontology " + recordId
+                        + " could not be found"));
+        OWLOntology ont = SimpleOntologyValues.owlapiOntology(matOnt);
+        handler.ontologyCreated(ont);
+        return ont;
     }
 }

@@ -167,11 +167,12 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
     }
 
     private void updateOntologyIRI(Resource recordId, Stream<Statement> additions, RepositoryConnection conn) {
+        OntologyRecord record = catalogUtils.getObject(recordId, ontologyRecordFactory, conn);
+        Optional<Resource> iri = record.getOntologyIRI();
+        iri.ifPresent(resource -> ontologyManager.cleanUpCache(resource));
         getNewOntologyIRI(additions).ifPresent(newIRI -> {
-            OntologyRecord record = catalogUtils.getObject(recordId, ontologyRecordFactory, conn);
-            if (!record.getOntologyIRI().isPresent() || !newIRI.equals(record.getOntologyIRI().get())) {
+            if (!iri.isPresent() || !newIRI.equals(iri.get())) {
                 testOntologyIRIUniqueness(newIRI);
-                record.getOntologyIRI().ifPresent(resource -> ontologyManager.cleanUpCache(resource));
                 record.setOntologyIRI(newIRI);
                 catalogUtils.updateObject(record, conn);
                 ontologyManager.cleanUpCache(newIRI);
