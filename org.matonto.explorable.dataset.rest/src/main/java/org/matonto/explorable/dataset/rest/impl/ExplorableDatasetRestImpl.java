@@ -43,6 +43,11 @@ import org.matonto.explorable.dataset.rest.jaxb.PropertyDetails;
 import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
+import org.matonto.ontology.core.api.classexpression.CardinalityRestriction;
+import org.matonto.ontology.core.api.classexpression.DataCardinalityRestriction;
+import org.matonto.ontology.core.api.propertyexpression.DataProperty;
+import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
+import org.matonto.ontology.core.api.propertyexpression.PropertyExpression;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.persistence.utils.Statements;
@@ -66,6 +71,7 @@ import org.openrdf.model.vocabulary.RDFS;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -545,13 +551,14 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         IRI classId = factory.createIRI(classIRI);
         record.getOntology().forEach(value -> getOntology(recordModel, value).ifPresent(ontology -> {
             if (ontology.containsClass(classId)) {
+                Set<CardinalityRestriction> restrictions = ontology.getCardinalityProperties(classId);
                 details.addAll(ontology.getAllClassDataProperties(classId).stream()
                         .map(dataProperty -> createPropertyDetails(dataProperty.getIRI(),
-                                ontology.getDataPropertyRange(dataProperty), "Data"))
+                                ontology.getDataPropertyRange(dataProperty), "Data", restrictions))
                         .collect(Collectors.toSet()));
                 details.addAll(ontology.getAllClassObjectProperties(classId).stream()
                         .map(objectProperty -> createPropertyDetails(objectProperty.getIRI(),
-                                ontology.getObjectPropertyRange(objectProperty), "Object"))
+                                ontology.getObjectPropertyRange(objectProperty), "Object", restrictions))
                         .collect(Collectors.toSet()));
             }
         }));
@@ -591,18 +598,31 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     }
 
     /**
-     * Creates a PropertDetails object using the IRI, range, and type.
+     * Creates a PropertDetails object using the IRI, range, type, and cardinality restrictions.
      *
-     * @param propertyIRI the IRI of the property
-     * @param range       the range of the property
-     * @param type        the type of the property
+     * @param propertyIRI  the IRI of the property
+     * @param range        the range of the property
+     * @param type         the type of the property
+     * @param restrictions list of cardinality restrictions to check for the property
      * @return a new PropertyDetails object constructed from the parameters
      */
-    private PropertyDetails createPropertyDetails(IRI propertyIRI, Set<Resource> range, String type) {
+    private PropertyDetails createPropertyDetails(IRI propertyIRI, Set<Resource> range, String type,
+                                                  Set<CardinalityRestriction> allRestrictions) {
         PropertyDetails details = new PropertyDetails();
         details.setPropertyIRI(propertyIRI.toString());
         details.setRange(range.stream().map(Value::stringValue).collect(Collectors.toSet()));
         details.setType(type);
+        Set<CardinalityRestriction> restrictions = new HashSet<>();
+        allRestrictions.forEach(restriction -> {
+            PropertyExpression pe = restriction.getProperty();
+            if ((pe instanceof ObjectProperty && ((ObjectProperty) pe).getIRI() == propertyIRI)
+                    || (pe instanceof DataProperty && ((DataProperty) pe).getIRI() == propertyIRI)) {
+                restrictions.add(restriction);
+            }
+        });
+        if (restrictions.size() > 0) {
+            details.setRestrictions(restrictions);
+        }
         return details;
     }
 }

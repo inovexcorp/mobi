@@ -30,6 +30,7 @@ import static org.easymock.EasyMock.mock;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.powermock.api.easymock.PowerMock.mockStatic;
 import static org.powermock.api.easymock.PowerMock.replay;
 
@@ -43,22 +44,33 @@ import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.axiom.Axiom;
+import org.matonto.ontology.core.api.classexpression.OClass;
+import org.matonto.ontology.core.impl.owlapi.classexpression.SimpleClass;
+import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
+import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.semanticweb.owlapi.model.OWLAnnotation;
 import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLObjectProperty;
+import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Paths;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SimpleOntologyValues.class)
 public class SimpleOntologyTest {
+    private ValueFactory vf = SimpleValueFactory.getInstance();
 
     OntologyId ontologyIdMock;
     OntologyManager ontologyManager;
@@ -90,6 +102,22 @@ public class SimpleOntologyTest {
         Capture<org.semanticweb.owlapi.model.IRI> capture2 = Capture.newInstance();
         expect(SimpleOntologyValues.matontoIRI(capture(capture2)))
                 .andAnswer(() -> mock(IRI.class))
+                .anyTimes();
+
+        Capture<OClass> capture3 = Capture.newInstance();
+        expect(SimpleOntologyValues.owlapiClass(capture(capture3)))
+                .andAnswer(() -> new OWLClassImpl(org.semanticweb.owlapi.model.IRI.create(capture3.getValue().getIRI()
+                        .stringValue())))
+                .anyTimes();
+
+        Capture<OWLObjectProperty> capture4 = Capture.newInstance();
+        expect(SimpleOntologyValues.matontoObjectProperty(capture(capture4)))
+                .andAnswer(() -> new SimpleObjectProperty(vf.createIRI(capture4.getValue().getIRI().toString())))
+                .anyTimes();
+
+        Capture<OWLDataProperty> capture5 = Capture.newInstance();
+        expect(SimpleOntologyValues.matontoDataProperty(capture(capture5)))
+                .andAnswer(() -> new SimpleDataProperty(vf.createIRI(capture5.getValue().getIRI().toString())))
                 .anyTimes();
 
         expect(ontologyIdMock.getOntologyIRI()).andReturn(Optional.of(ontologyIRI)).anyTimes();
@@ -251,6 +279,50 @@ public class SimpleOntologyTest {
         Ontology ontology = new SimpleOntology(file, ontologyManager, transformer);
 
         assertEquals(5, ontology.getUnloadableImportIRIs().size());
+    }
+
+    @Test
+    public void getCardinalityPropertiesText() throws Exception {
+        replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock);
+        OClass clazz = new SimpleClass(vf.createIRI("http://example.com/owl/families#Woman"));
+
+        File file = Paths.get(getClass().getResource("/restriction-test-ontology.ttl").toURI()).toFile();
+        Ontology ontology = new SimpleOntology(file, ontologyManager, transformer);
+
+        assertEquals(0, ontology.getCardinalityProperties(clazz).size());
+    }
+
+    @Test
+    public void getCardinalityPropertiesOfSubClassText() throws Exception {
+        replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock);
+        OClass clazz = new SimpleClass(vf.createIRI("http://example.com/owl/families#Parent"));
+
+        File file = Paths.get(getClass().getResource("/restriction-test-ontology.ttl").toURI()).toFile();
+        Ontology ontology = new SimpleOntology(file, ontologyManager, transformer);
+
+        assertEquals(1, ontology.getCardinalityProperties(clazz).size());
+    }
+
+    @Test
+    public void getCardinalityPropertiesOfEquivalentClassText() throws Exception {
+        replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock);
+        OClass clazz = new SimpleClass(vf.createIRI("http://example.com/owl/families#Person"));
+
+        File file = Paths.get(getClass().getResource("/restriction-test-ontology.ttl").toURI()).toFile();
+        Ontology ontology = new SimpleOntology(file, ontologyManager, transformer);
+
+        assertEquals(1, ontology.getCardinalityProperties(clazz).size());
+    }
+
+    @Test
+    public void getCardinalityPropertiesOfEquivalentClassAndSubClassText() throws Exception {
+        replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock);
+        OClass clazz = new SimpleClass(vf.createIRI("http://example.com/owl/families#Man"));
+
+        File file = Paths.get(getClass().getResource("/restriction-test-ontology.ttl").toURI()).toFile();
+        Ontology ontology = new SimpleOntology(file, ontologyManager, transformer);
+
+        assertEquals(2, ontology.getCardinalityProperties(clazz).size());
     }
 
     // TODO: Test asModel

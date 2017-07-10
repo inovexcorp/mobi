@@ -23,8 +23,11 @@ package org.matonto.explorable.dataset.rest.jaxb;
  * #L%
  */
 
+import org.matonto.ontology.core.api.classexpression.CardinalityRestriction;
+
 import java.util.Set;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementRef;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
@@ -32,6 +35,7 @@ public class PropertyDetails {
     private String propertyIRI;
     private String type;
     private Set<String> range;
+    private Set<CardinalityRestriction> restrictions;
 
     @XmlElement
     public String getPropertyIRI() {
@@ -58,5 +62,14 @@ public class PropertyDetails {
 
     public void setRange(Set<String> range) {
         this.range = range;
+    }
+
+    @XmlElement
+    public Set<CardinalityRestriction> getRestrictions() {
+        return restrictions;
+    }
+
+    public void setRestrictions(Set<CardinalityRestriction> restrictions) {
+        this.restrictions = restrictions;
     }
 }
