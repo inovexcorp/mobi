@@ -30,6 +30,7 @@ import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -48,7 +49,6 @@ public interface ExplorableDatasetRest {
      * {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
      * {@link org.matonto.catalog.api.ontologies.mcat.Catalog} in a JSON array.
      *
-     * @param uriInfo   The URI information of the request.
      * @param recordIRI The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                  {@link org.matonto.dataset.ontology.dataset.Dataset} from which to retrieve the data.
      * @return A {@link Response} with a JSON array of ontology objects.
@@ -58,8 +58,7 @@ public interface ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves all the data associated with ontology objects, from a Dataset in the local Catalog")
-    Response getClassDetails(@Context UriInfo uriInfo,
-                             @PathParam("recordIRI") String recordIRI);
+    Response getClassDetails(@PathParam("recordIRI") String recordIRI);
 
     /**
      * Retrieves all the instance details associated with a specific class found in the ontologies linked to a
@@ -93,7 +92,6 @@ public interface ExplorableDatasetRest {
      * {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
      * {@link org.matonto.catalog.api.ontologies.mcat.Catalog} in a JSON array.
      *
-     * @param uriInfo   The URI information of the request.
      * @param recordIRI The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                  {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
      * @param classIRI  The IRI of the class type to get property details for.
@@ -104,15 +102,30 @@ public interface ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves a list of all properties available for a class from a Dataset in the local Catalog")
-    Response getClassPropertyDetails(@Context UriInfo uriInfo,
-                                     @PathParam("recordIRI") String recordIRI,
+    Response getClassPropertyDetails(@PathParam("recordIRI") String recordIRI,
                                      @PathParam("classIRI") String classIRI);
+
+    /**
+     * Creates an instance owned by a {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
+     * {@link org.matonto.catalog.api.ontologies.mcat.Catalog}.
+     *
+     * @param recordIRI   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
+     *                    {@link org.matonto.dataset.ontology.dataset.Dataset}.
+     * @return A {@link Response} with the IRI string of the created Instance.
+     */
+    @POST
+    @Path("{recordIRI}/instances")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.TEXT_PLAIN)
+    @RolesAllowed("user")
+    @ApiOperation("Creates an instance of a particular class type in a Dataset in the local Catalog")
+    Response createInstance(@PathParam("recordIRI") String recordIRI,
+                            String newInstanceJson);
 
     /**
      * Retrieves an instance owned by a {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
      * {@link org.matonto.catalog.api.ontologies.mcat.Catalog}.
      *
-     * @param uriInfo     The URI information of the request.
      * @param recordIRI   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                    {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
      * @param instanceIRI The IRI of the instance to get.
@@ -123,15 +136,13 @@ public interface ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Retrieves an instance of a particular class type from a Dataset in the local Catalog")
-    Response getInstance(@Context UriInfo uriInfo,
-                         @PathParam("recordIRI") String recordIRI,
+    Response getInstance(@PathParam("recordIRI") String recordIRI,
                          @PathParam("instanceIRI") String instanceIRI);
 
     /**
      * Updates an instance owned by a {@link org.matonto.dataset.ontology.dataset.Dataset} in the local
      * {@link org.matonto.catalog.api.ontologies.mcat.Catalog} using the modifications from the provided JSON-LD.
      *
-     * @param uriInfo     The URI information of the request.
      * @param recordIRI   The id of the {@link org.matonto.dataset.ontology.dataset.DatasetRecord} for the
      *                    {@link org.matonto.dataset.ontology.dataset.Dataset} to summarize.
      * @param instanceIRI The IRI of the instance to update.
@@ -143,8 +154,7 @@ public interface ExplorableDatasetRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Updates an instance of a particular class type from a Dataset in the local Catalog")
-    Response updateInstance(@Context UriInfo uriInfo,
-                            @PathParam("recordIRI") String recordIRI,
+    Response updateInstance(@PathParam("recordIRI") String recordIRI,
                             @PathParam("instanceIRI") String instanceIRI,
                             String json);
 }

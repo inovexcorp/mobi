@@ -975,7 +975,11 @@ function mockDiscoverState() {
                 active: true,
                 breadcrumbs: ['Classes'],
                 classDetails: [],
+                classId: '',
+                creating: false,
+                editing: false,
                 instance: {
+                    changed: [],
                     entity: {},
                     metadata: {}
                 },
@@ -989,8 +993,7 @@ function mockDiscoverState() {
                     },
                     total: 0
                 },
-                recordId: '',
-                recordTitle: ''
+                recordId: ''
             };
             this.query = {
                 active: false
@@ -1008,6 +1011,7 @@ function mockExplore() {
             this.getClassDetails = jasmine.createSpy('getClassDetails').and.returnValue($q.when([]));
             this.getClassInstanceDetails = jasmine.createSpy('getClassInstanceDetails').and.returnValue($q.when([]));
             this.getClassPropertyDetails = jasmine.createSpy('getClassPropertyDetails').and.returnValue($q.when([]));
+            this.createInstance = jasmine.createSpy('createInstance').and.returnValue($q.when(''));
             this.getInstance = jasmine.createSpy('getInstance').and.returnValue($q.when({}));
             this.updateInstance = jasmine.createSpy('updateInstance').and.returnValue($q.when({}));
             this.createPagedResultsObject = jasmine.createSpy('createPagedResultsObject').and.returnValue({});
