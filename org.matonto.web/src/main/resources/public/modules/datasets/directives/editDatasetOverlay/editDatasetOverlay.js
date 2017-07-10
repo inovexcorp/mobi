@@ -63,7 +63,8 @@
                 templateUrl: 'modules/datasets/directives/editDatasetOverlay/editDatasetOverlay.html',
                 scope: {},
                 bindToController: {
-                    onClose: '&'
+                    onClose: '&',
+                    dataset: '='
                 },
                 controllerAs: 'dvm',
                 controller: function() {
@@ -75,12 +76,12 @@
                     dvm.util = utilService;
                     dvm.error = '';
                     dvm.recordConfig = {
-                        title: '',
-                        repositoryId: 'system',
-                        datasetIRI: '',
-                        description: ''
+                        title: dvm.util.getPropertyValue(dvm.dataset.record, prefixes.dcterms + 'title'),
+                        repositoryId: dvm.util.getPropertyValue(dvm.dataset.record, prefixes.dataset + 'repository'),
+                        datasetIRI: dvm.dataset.record['@id'],
+                        description: dvm.util.getPropertyValue(dvm.dataset.record, prefixes.dcterms + 'description')
                     };
-                    dvm.keywords = [];
+                    dvm.keywords = _.map(_.get(dvm.dataset.record, prefixes.catalog + 'keyword', []), '@value').sort();
                     dvm.ontologySearchConfig = {
                         pageIndex: 0,
                         sortOption: _.find(cm.sortOptions, {field: prefixes.dcterms + 'title', ascending: true}),
@@ -95,16 +96,11 @@
                     };
                     dvm.ontologies = [];
                     dvm.selectedOntologies = [];
-                    dvm.step = 0;
 
-                    $scope.$on('DATASET_RECORD_TO_EDIT', function(record) {
-                        dvm.recordConfig.datasetIRI = record['@id'];
-                        dvm.recordConfig.repositoryId = dvm.util.getPropertyValue(record, dvm.prefixes.dataset + 'repository');
-                        dvm.recordConfig.title = dvm.util.getPropertyValue(record, dvm.prefixes.dataset + 'title');
-                        dvm.recordConfig.description = dvm.util.getPropertyValue(record, dvm.prefixes.dataset + 'description');
-                        dvm.keywords
-                    })
-                    
+                    _.forEach(_.map(dvm.dataset.identifiers, identifier => identifier[prefixes.dataset + 'linksToRecord'][0]['@id']), 
+                        ontologyId => cm.getRecord(ontologyId, cm.localCatalog['@id']).then(ontology => dvm.selectedOntologies.push(ontology), onError)
+                    );
+
                     dvm.getOntologies = function() {
                         dvm.ontologySearchConfig.pageIndex = 0;
                         cm.getRecords(cm.localCatalog['@id'], dvm.ontologySearchConfig).then(parseOntologyResults, errorMessage => {

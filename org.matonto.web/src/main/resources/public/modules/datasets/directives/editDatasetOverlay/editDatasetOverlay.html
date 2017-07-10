@@ -22,14 +22,15 @@
   -->
 <div class="edit-dataset-overlay overlay">
     <form name="dvm.infoForm" class="clearfix content" novalidate autocomplete="off">
-        <h1>Edit Dataset<br />
-            <small><custom-label>Dataset IRI</custom-label>{{dvm.recordConfig.datasetIRI}}</small><br />
-            <small><custom-label>Repository ID</custom-label>{{dvm.recordConfig.repositoryId}}</small>
-        </h1>
+        <h1>Edit Dataset</h1>
+        <div>
+            <small><custom-label>Dataset IRI: </custom-label>{{dvm.recordConfig.datasetIRI}}</small><br />
+            <small><custom-label>Repository ID: </custom-label>{{dvm.recordConfig.repositoryId}}</small>
+        </div>
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         <div class="form-group">
             <custom-label>Title</custom-label>
-            <input class="form-control" type="text" name="title" ng-model="dvm.recordConfig.title" required focus-me>
+            <input class="form-control" type="text" name="title" value="dvm.recordConfig.title" ng-model="dvm.recordConfig.title" required focus-me>
         </div>
         <text-area ng-model="dvm.recordConfig.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <keyword-select ng-model="dvm.keywords"></keyword-select>

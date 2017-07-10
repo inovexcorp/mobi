@@ -72,6 +72,7 @@
                     dvm.util = utilService;
                     dvm.prefixes = prefixes;
                     dvm.error = '';
+                    dvm.editRecord = undefined;
                     dvm.selectedDataset = undefined;
                     dvm.openedDatasetId = '';
                     dvm.showDeleteConfirm = false;
@@ -130,8 +131,20 @@
                                 dvm.error = '';
                             }, onError);
                     }
-                    dvm.edit = function(datasetRecord) {
+                    dvm.showEdit = function(dataset, event) {
+                        dvm.selectedDataset = dataset;
                         dvm.showEditOverlay = true;
+                        event.stopPropagation();
+                    }
+                    dvm.showClear = function(dataset, event) {
+                        dvm.selectedDataset = dataset;
+                        dvm.showClearConfirm = true;
+                        event.stopPropagation();
+                    }
+                    dvm.showDelete = function(dataset, event) {
+                        dvm.selectedDataset = dataset;
+                        dvm.showDeleteConfirm = true;
+                        event.stopPropagation();
                     }
 
                     function onError(errorMessage) {

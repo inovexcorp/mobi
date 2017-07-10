@@ -33,9 +33,9 @@
                                     <i class="fa fa-ellipsis-h fa-fw"></i>
                                 </a>
                                 <ul uib-dropdown-menu>
-                                    <li><a ng-click="dvm.selectedDataset = dataset; dvm.edit(dataset.record); $event.stopPropagation()" class="action update-dataset"><i class="fa fa-fw fa-pencil"></i> Edit</a></li>
-                                    <li><a ng-click="dvm.selectedDataset = dataset; dvm.showClearConfirm = true; $event.stopPropagation()" class="action clear-dataset" ><i class="fa fa-fw fa-eraser"></i> Clear</a></li>
-                                    <li><a ng-click="dvm.selectedDataset = dataset; dvm.showDeleteConfirm = true; $event.stopPropagation()" class="action delete-dataset"><i class="fa fa-fw fa-trash-o"></i> Delete</a></li>
+                                    <li><a ng-click="dvm.showEdit(dataset, $event)" class="action update-dataset"><i class="fa fa-fw fa-pencil"></i> Edit</a></li>
+                                    <li><a ng-click="dvm.showClear(dataset, $event)" class="action clear-dataset" ><i class="fa fa-fw fa-eraser"></i> Clear</a></li>
+                                    <li><a ng-click="dvm.showDelete(dataset, $event)" class="action delete-dataset"><i class="fa fa-fw fa-trash-o"></i> Delete</a></li>
                                 </ul>
                             </span>
                         </h3>
@@ -76,5 +76,5 @@
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         <p>Are you sure that you want to clear <strong>{{dvm.util.getDctermsValue(dvm.selectedDataset.record, 'title')}}</strong>?</p>
     </confirmation-overlay>
-    <edit-dataset-overlay ng-if="dvm.showEditOverlay === true" on-close="dvm.showEditOverlay = false"></edit-dataset-overlay>
+    <edit-dataset-overlay ng-if="dvm.showEditOverlay" dataset="dvm.selectedDataset" on-close="dvm.showEditOverlay = false; dvm.editRecord = undefined"></edit-dataset-overlay>
 </div>

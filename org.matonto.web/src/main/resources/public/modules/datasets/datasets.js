@@ -28,6 +28,7 @@
             /* Custom Directives */
             'datasetsList',
             'datasetsTabset',
+            'editDatasetOverlay',
             'newDatasetOverlay'
         ]);
 })();
