@@ -260,18 +260,18 @@ public class OntologyRestImpl implements OntologyRest {
             Resource branchId;
             Resource commitId;
             {
-                Branch branch = null;
-                if (StringUtils.isBlank(branchIdStr)) {
-                    branch = catalogManager.getMasterBranch(catalogIRI, recordId);
-                    branchId = branch.getResource();
-                } else {
-                    branchId = valueFactory.createIRI(branchIdStr);
-                }
-
-                if (StringUtils.isBlank(commitIdStr)) {
-                    commitId = branch == null ? catalogManager.getHeadCommit(catalogIRI, recordId, branchId).getResource() : branch.getHead_resource().get();
-                } else {
+                if (!stringParamIsMissing(commitIdStr)) {
+                    throwErrorIfMissingStringParam(branchIdStr, "The branchIdStr is missing.");
                     commitId = valueFactory.createIRI(commitIdStr);
+                    branchId = valueFactory.createIRI(branchIdStr);
+                } else if (!stringParamIsMissing(branchIdStr)) {
+                    branchId = valueFactory.createIRI(branchIdStr);
+                    commitId = catalogManager.getHeadCommit(catalogIRI, recordId, branchId).getResource();
+                } else {
+                    Branch branch = catalogManager.getMasterBranch(catalogIRI, recordId);
+                    branchId = branch.getResource();
+                    commitId = branch.getHead_resource().orElseThrow(() -> new IllegalStateException("Branch "
+                            + branchIdStr + " has no head Commit set"));
                 }
             }
             
