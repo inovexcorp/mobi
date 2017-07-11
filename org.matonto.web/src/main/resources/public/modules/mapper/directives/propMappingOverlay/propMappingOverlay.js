@@ -152,7 +152,6 @@
                             }
                         }
 
-                        dvm.state.changedMapping = true;
                         var selectedClassMappingId = dvm.state.selectedClassMappingId;
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = selectedClassMappingId;
