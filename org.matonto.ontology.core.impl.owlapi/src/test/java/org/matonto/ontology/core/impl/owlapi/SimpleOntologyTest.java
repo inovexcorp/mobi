@@ -56,6 +56,7 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.Optional;
@@ -112,7 +113,7 @@ public class SimpleOntologyTest {
 
     @Test
     public void testStreamConstructor() throws Exception {
-        InputStream stream = this.getClass().getResourceAsStream("/test.owl");
+        InputStream stream = new FileInputStream(testFile);
         Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer);
         assertEquals(ontologyIRI, ontology.getOntologyId().getOntologyIRI().get());
         assertEquals(versionIRI, ontology.getOntologyId().getVersionIRI().get());
@@ -127,8 +128,8 @@ public class SimpleOntologyTest {
 
     @Test
     public void testEquals() throws Exception {
-        InputStream stream1 = this.getClass().getResourceAsStream("/test.owl");
-        InputStream stream2 = this.getClass().getResourceAsStream("/test.owl");
+        InputStream stream1 = new FileInputStream(testFile);
+        InputStream stream2 = new FileInputStream(testFile);
 
         Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
         Ontology ontology2 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
@@ -147,7 +148,7 @@ public class SimpleOntologyTest {
 
     @Test
     public void testNotEquals() throws Exception {
-        InputStream stream1 = this.getClass().getResourceAsStream("/test.owl");
+        InputStream stream1 = new FileInputStream(testFile);
         InputStream stream2 = this.getClass().getResourceAsStream("/travel.owl");
 
         Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
@@ -162,8 +163,8 @@ public class SimpleOntologyTest {
     @Test
     @Ignore
     public void testHashCode() throws Exception {
-        InputStream stream1 = this.getClass().getResourceAsStream("/test.owl");
-        InputStream stream2 = this.getClass().getResourceAsStream("/test.owl");
+        InputStream stream1 = new FileInputStream(testFile);
+        InputStream stream2 = new FileInputStream(testFile);
 
         Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
         Ontology ontology2 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
@@ -193,7 +194,7 @@ public class SimpleOntologyTest {
         when(SimpleOntologyValues.matontoAnnotation(any(OWLAnnotation.class))).thenReturn(mock(Annotation.class));
 
         // Setup
-        InputStream stream = this.getClass().getResourceAsStream("/test.owl");
+        InputStream stream = new FileInputStream(testFile);
         Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer);
 
         // Test
@@ -216,7 +217,7 @@ public class SimpleOntologyTest {
         when(SimpleOntologyValues.matontoAxiom(any(OWLAxiom.class))).thenReturn(mock(Axiom.class));
 
         // Setup
-        InputStream stream = this.getClass().getResourceAsStream("/test.owl");
+        InputStream stream = new FileInputStream(testFile);
         Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer);
 
         // Test
