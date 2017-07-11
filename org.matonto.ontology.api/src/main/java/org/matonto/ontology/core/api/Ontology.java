@@ -203,6 +203,12 @@ public interface Ontology {
      */
     Set<Individual> getIndividualsOfType(OClass clazz);
 
+    /**
+     * Searches for all cardinality properties associated with a particular class.
+     *
+     * @param classIRI The {@link IRI} of the class.
+     * @return The {@link Set} of {@link CardinalityRestriction}s.
+     */
     Set<CardinalityRestriction> getCardinalityProperties(IRI classIRI);
 
     /**
