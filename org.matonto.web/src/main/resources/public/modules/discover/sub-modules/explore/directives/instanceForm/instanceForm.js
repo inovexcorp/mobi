@@ -88,6 +88,7 @@
                     dvm.showOverlay = false;
                     dvm.showText = false;
                     dvm.changed = [];
+                    dvm.missingProperties = [];
                     
                     dvm.getOptions = function(propertyIRI) {
                         var range = getRange(propertyIRI);
@@ -126,6 +127,7 @@
                     
                     dvm.addToChanged = function(propertyIRI) {
                         dvm.changed = _.uniq(_.concat(dvm.changed, [propertyIRI]));
+                        dvm.missingProperties = dvm.getMissingProperties();
                     }
                     
                     dvm.isChanged = function(propertyIRI) {
@@ -214,18 +216,16 @@
                     dvm.getMissingProperties = function() {
                         var missing = [];
                         _.forEach(dvm.properties, property => {
-                            if (_.has(property, 'restrictions')) {
-                                _.forEach(property.restrictions, restriction => {
-                                    var length = _.get(dvm.ds.explore.instance.entity, property.propertyIRI, []).length;
-                                    if (_.includes(restriction.classExpressionType, 'EXACT') && length !== restriction.cardinality) {
-                                        missing.push('Must have exactly ' + restriction.cardinality + ' value(s) for ' + property.propertyIRI);
-                                    } else if (_.includes(restriction.classExpressionType, 'MIN') && length < restriction.cardinality) {
-                                        missing.push('Must have at least ' + restriction.cardinality + ' value(s) for ' + property.propertyIRI);
-                                    } else if (_.includes(restriction.classExpressionType, 'MAX') && length > restriction.cardinality) {
-                                        missing.push('Must have at most ' + restriction.cardinality + ' value(s) for ' + property.propertyIRI);
-                                    }
-                                });
-                            }
+                            _.forEach(_.get(property, 'restrictions', []), restriction => {
+                                var length = _.get(dvm.ds.explore.instance.entity, property.propertyIRI, []).length;
+                                if (_.includes(restriction.classExpressionType, 'EXACT') && length !== restriction.cardinality) {
+                                    missing.push('Must have exactly ' + restriction.cardinality + ' value(s) for ' + property.propertyIRI);
+                                } else if (_.includes(restriction.classExpressionType, 'MIN') && length < restriction.cardinality) {
+                                    missing.push('Must have at least ' + restriction.cardinality + ' value(s) for ' + property.propertyIRI);
+                                } else if (_.includes(restriction.classExpressionType, 'MAX') && length > restriction.cardinality) {
+                                    missing.push('Must have at most ' + restriction.cardinality + ' value(s) for ' + property.propertyIRI);
+                                }
+                            });
                         });
                         dvm.isValid = !missing.length;
                         return missing;
@@ -233,20 +233,17 @@
                     
                     dvm.getRestrictionText = function(propertyIRI) {
                         var details = _.find(dvm.properties, {propertyIRI});
-                        if (_.has(details, 'restrictions')) {
-                            var results = [];
-                            _.forEach(details.restrictions, restriction => {
-                                if (_.includes(restriction.classExpressionType, 'EXACT')) {
-                                    results.push('needs exactly ' + restriction.cardinality);
-                                } else if (_.includes(restriction.classExpressionType, 'MIN')) {
-                                    results.push('needs at least ' + restriction.cardinality);
-                                } else if (_.includes(restriction.classExpressionType, 'MAX')) {
-                                    results.push('needs at most ' + restriction.cardinality);
-                                }
-                            });
-                            return '[' + _.join(results, ', ') + ']';
-                        }
-                        return '';
+                        var results = [];
+                        _.forEach(_.get(details, 'restrictions', []), restriction => {
+                            if (_.includes(restriction.classExpressionType, 'EXACT')) {
+                                results.push('exactly ' + restriction.cardinality);
+                            } else if (_.includes(restriction.classExpressionType, 'MIN')) {
+                                results.push('at least ' + restriction.cardinality);
+                            } else if (_.includes(restriction.classExpressionType, 'MAX')) {
+                                results.push('at most ' + restriction.cardinality);
+                            }
+                        });
+                        return results.length ? ('[' + _.join(results, ', ') + ']') : '';
                     }
                     
                     function contains(string, part) {
@@ -255,7 +252,10 @@
                     
                     function getProperties() {
                         $q.all(_.map(dvm.ds.explore.instance.entity['@type'], type => es.getClassPropertyDetails(dvm.ds.explore.recordId, type)))
-                            .then(responses => dvm.properties = _.concat(dvm.properties, _.uniq(_.flatten(responses))), () => dvm.util.createErrorToast('An error occurred retrieving the instance properties.'));
+                            .then(responses => {
+                                dvm.properties = _.concat(dvm.properties, _.uniq(_.flatten(responses)));
+                                dvm.missingProperties = dvm.getMissingProperties();
+                            }, () => dvm.util.createErrorToast('An error occurred retrieving the instance properties.'));
                     }
                     
                     function getRange(propertyIRI) {

@@ -48,6 +48,7 @@ import org.matonto.ontology.core.api.classexpression.CardinalityRestriction;
 import org.matonto.ontology.core.api.classexpression.DataCardinalityRestriction;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
+import org.matonto.ontology.core.api.propertyexpression.Property;
 import org.matonto.ontology.core.api.propertyexpression.PropertyExpression;
 import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.persistence.utils.Bindings;
@@ -615,17 +616,18 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         details.setPropertyIRI(propertyIRI.toString());
         details.setRange(range.stream().map(Value::stringValue).collect(Collectors.toSet()));
         details.setType(type);
-        Set<RestrictionDetails> allRestrictionDetails = new HashSet<>();
-        allRestrictions.forEach(restriction -> {
-            PropertyExpression pe = restriction.getProperty();
-            if ((pe instanceof ObjectProperty && ((ObjectProperty) pe).getIRI().equals(propertyIRI))
-                    || (pe instanceof DataProperty && ((DataProperty) pe).getIRI().equals(propertyIRI))) {
+        Set<RestrictionDetails> allRestrictionDetails = allRestrictions.stream()
+            .filter(restriction -> {
+                PropertyExpression pe = restriction.getProperty();
+                return pe instanceof Property && ((Property) pe).getIRI().equals(propertyIRI);
+            })
+            .map(restriction -> {
                 RestrictionDetails restrictionDetails = new RestrictionDetails();
                 restrictionDetails.setCardinality(restriction.getCardinality());
                 restrictionDetails.setClassExpressionType(restriction.getClassExpressionType());
-                allRestrictionDetails.add(restrictionDetails);
-            }
-        });
+                return restrictionDetails;
+            })
+            .collect(Collectors.toSet());
         if (allRestrictionDetails.size() > 0) {
             details.setRestrictions(allRestrictionDetails);
         }

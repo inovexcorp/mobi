@@ -106,6 +106,7 @@ import org.semanticweb.owlapi.util.OWLOntologyWalker;
 import org.semanticweb.owlapi.util.OWLOntologyWalkerVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -472,7 +473,8 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<CardinalityRestriction> getCardinalityProperties(IRI classIRI) {
         CardinalityVisitor cardinalityVisitor = new CardinalityVisitor();
-        OWLClass owlClass = SimpleOntologyValues.owlapiClass(new SimpleClass(classIRI));
+        // OWLClass owlClass = SimpleOntologyValues.owlapiClass(new SimpleClass(classIRI));
+        OWLClass owlClass = new OWLClassImpl(org.semanticweb.owlapi.model.IRI.create(classIRI.stringValue()));
         owlOntology.subClassAxiomsForSubClass(owlClass).forEach(ax -> ax.getSuperClass().accept(cardinalityVisitor));
         owlOntology.equivalentClassesAxioms(owlClass).forEach(ax -> ax.classExpressions().forEach(classExpression ->
                 classExpression.accept(cardinalityVisitor)));

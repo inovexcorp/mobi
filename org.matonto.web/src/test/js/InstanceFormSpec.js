@@ -264,11 +264,22 @@ describe('Instance Form directive', function() {
                 expect(controller.createValueObj('value', 'propertyId2')).toEqual({'@value': 'value'});
             });
         });
-        it('addToChanged adds the provided iri to the changed array', function() {
-            controller.addToChanged('new');
-            expect(controller.changed).toEqual(['iri', 'new']);
-            controller.addToChanged('iri');
-            expect(controller.changed).toEqual(['iri', 'new']);
+        describe('addToChanged adds the provided iri to the changed array', function() {
+            beforeEach(function() {
+                spyOn(controller, 'getMissingProperties').and.returnValue(['missing property']);
+            });
+            it('when it is new', function() {
+                controller.addToChanged('new');
+                expect(controller.changed).toEqual(['iri', 'new']);
+                expect(controller.getMissingProperties).toHaveBeenCalled();
+                expect(controller.missingProperties).toEqual(['missing property']);
+            });
+            it('when it is not new', function() {
+                controller.addToChanged('iri');
+                expect(controller.changed).toEqual(['iri']);
+                expect(controller.getMissingProperties).toHaveBeenCalled();
+                expect(controller.missingProperties).toEqual(['missing property']);
+            });
         });
         it('isChanged should return the proper value', function() {
             expect(controller.isChanged('iri')).toBe(true);

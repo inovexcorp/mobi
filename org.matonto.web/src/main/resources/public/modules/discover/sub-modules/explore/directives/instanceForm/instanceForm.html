@@ -23,7 +23,7 @@
 <div class="instance-form row">
     <div class="col-xs-8 col-xs-offset-2">
         <h2>{{header}}</h2>
-        <div ng-repeat="missing in dvm.getMissingProperties()">
+        <div ng-repeat="missing in dvm.missingProperties track by $index">
             <error-display>{{missing}}</error-display>
         </div>
         <static-iri iri="dvm.ds.explore.instance.entity['@id']" on-edit="dvm.setIRI(iriBegin, iriThen, iriEnd)">
