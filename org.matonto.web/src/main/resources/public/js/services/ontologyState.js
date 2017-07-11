@@ -58,41 +58,68 @@
             var mc = manchesterConverterService;
             var catalogId = '';
 
+            var ontologyEditorTabStates = {
+                project: {
+                    entityIRI: '',
+                    active: true
+                },
+                overview: {
+                    active: false
+                },
+                classes: {
+                    active: false
+                },
+                properties: {
+                    active: false
+                },
+                individuals: {
+                    active: false
+                },
+                search: {
+                    active: false
+                },
+                savedChanges: {
+                    active: false
+                },
+                merge: {
+                    active: false
+                },
+                commits: {
+                    active: false
+                }
+            };
+
+            var vocabularyEditorTabStates = {
+                project: {
+                    active: true,
+                    entityIRI: ''
+                },
+                schemes: {
+                    active: false
+                },
+                concepts: {
+                    active: false
+                },
+                search: {
+                    active: false
+                },
+                savedChanges: {
+                    active: false
+                },
+                merge: {
+                    active: false
+                },
+                commits: {
+                    active: false
+                }
+            };
+
             var ontologyListItemTemplate = {
                 ontologyState: {
                     active: true,
                     upToDate: true
                 },
-                editorTabStates: {
-                   project: {
-                       entityIRI: '',
-                       active: true
-                   },
-                   overview: {
-                       active: false
-                   },
-                   classes: {
-                       active: false
-                   },
-                   properties: {
-                       active: false
-                   },
-                   individuals: {
-                       active: false
-                   },
-                   search: {
-                       active: false
-                   },
-                   savedChanges: {
-                       active: false
-                   },
-                   merge: {
-                       active: false
-                   },
-                   commits: {
-                       active: false
-                   }
-                },
+                editorTabStates: angular.copy(ontologyEditorTabStates),
                 ontologyRecord: {
                     title: '',
                     recordId: '',
@@ -142,30 +169,7 @@
                     active: true,
                     upToDate: true
                 },
-                editorTabStates: {
-                   project: {
-                       active: true,
-                       entityIRI: ''
-                   },
-                   schemes: {
-                       active: false
-                   },
-                   concepts: {
-                       active: false
-                   },
-                   search: {
-                       active: false
-                   },
-                   savedChanges: {
-                       active: false
-                   },
-                   merge: {
-                       active: false
-                   },
-                   commits: {
-                       active: false
-                   }
-                },
+                editorTabStates: angular.copy(vocabularyEditorTabStates),
                 ontologyRecord: {
                     title: '',
                     recordId: '',
@@ -397,6 +401,27 @@
             }
             /**
              * @ngdoc method
+             * @name uploadChanges
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Uploads the provided file as an ontology and uses it as a basis for updating the existing ontology .
+             *
+             * @param {File} file The updated ontology file.
+             * @param {string} the ontology record ID.
+             * @param {string} the ontology branch ID.
+             * @param {string} the ontology commit ID.
+             */
+            self.uploadChanges = function(file, recordId, branchId, commitId) {
+                return om.uploadChangesFile(file, recordId, branchId, commitId)
+                    .then(() => cm.getInProgressCommit(recordId, catalogId), $q.reject)
+                    .then(commit => {
+                        var listItem = self.getListItemByRecordId(recordId);
+                        return self.updateOntology(recordId, branchId, commitId, listItem.ontologyRecord.type, listItem.ontologyState.upToDate, commit);
+                    }, $q.reject);
+            }
+            /**
+             * @ngdoc method
              * @name updateOntology
              * @methodOf ontologyState.service:ontologyStateService
              *
@@ -428,8 +453,13 @@
                     }, $q.reject)
                     .then(response => {
                         listItem = response;
-                        listItem.selected = oldListItem.selected;
                         listItem.editorTabStates = oldListItem.editorTabStates;
+                        if (listItem.ontologyId !== oldListItem.ontologyId) {
+                            self.setSelected(listItem.ontologyId, true, listItem);
+                            self.resetStateTabs(listItem);
+                        } else {
+                            listItem.selected = oldListItem.selected;
+                        }
                         return sm.updateOntologyState(recordId, branchId, commitId);
                     }, $q.reject)
                     .then(() => {
@@ -816,7 +846,10 @@
              * @param {string} entityIRI The IRI of the entity that you want.
              * @returns {Object} An Object which represents the requested entity.
              */
-            self.getEntityByRecordId = function(recordId, entityIRI) {
+            self.getEntityByRecordId = function(recordId, entityIRI, listItem) {
+                if (listItem) {
+                    return getEntityFromListItem(listItem, entityIRI);
+                }
                 return getEntityFromListItem(self.getListItemByRecordId(recordId), entityIRI);
             }
             /**
@@ -1014,9 +1047,9 @@
                 _.set(self.listItem, 'iriBegin', iriBegin);
                 _.set(self.listItem, 'iriThen', iriThen);
             }
-            self.setSelected = function(entityIRI, getUsages = true) {
-                self.listItem.selected = self.getEntityByRecordId(self.listItem.ontologyRecord.recordId, entityIRI);
-                if (getUsages && !_.has(self.getActivePage(), 'usages') && self.listItem.selected) {
+            self.setSelected = function(entityIRI, getUsages = true, listItem = self.listItem) {
+                listItem.selected = self.getEntityByRecordId(listItem.ontologyRecord.recordId, entityIRI, listItem);
+                if (getUsages && !_.has(self.getActivePage(), 'usages') && listItem.selected) {
                     self.setEntityUsages(entityIRI);
                 }
             }
@@ -1029,20 +1062,20 @@
                         response => _.set(page, 'usages', []));
             }
 
-            self.resetStateTabs = function() {
-                _.forOwn(self.listItem.editorTabStates, (value, key) => {
+            self.resetStateTabs = function(listItem = self.listItem) {
+                _.forOwn(listItem.editorTabStates, (value, key) => {
                     if (key !== 'project') {
                         _.unset(value, 'entityIRI');
                     } else {
-                        value.entityIRI = om.getOntologyIRI(self.listItem.ontology);
+                        value.entityIRI = om.getOntologyIRI(listItem.ontology);
                         value.preview = '';
                     }
                     _.unset(value, 'usages');
                 });
                 if (self.getActiveKey() !== 'project') {
-                    self.listItem.selected = undefined;
+                    listItem.selected = undefined;
                 } else {
-                    self.listItem.selected = self.getEntityByRecordId(self.listItem.ontologyRecord.recordId, self.listItem.editorTabStates.project.entityIRI);
+                    listItem.selected = self.getEntityByRecordId(listItem.ontologyRecord.recordId, listItem.editorTabStates.project.entityIRI);
                 }
             }
             self.getActiveKey = function(listItem = self.listItem) {
@@ -1220,6 +1253,12 @@
                 if (om.isProperty(entity)) {
                     setPropertyIcon(entity);
                 }
+            }
+
+            self.hasInProgressCommit = function(listItem = self.listItem) {
+                return listItem.inProgressCommit !== undefined 
+                        && ((listItem.inProgressCommit.additions !== undefined && listItem.inProgressCommit.additions.length > 0) 
+                        || (listItem.inProgressCommit.deletions !== undefined && listItem.inProgressCommit.deletions.length > 0));
             }
 
             /* Private helper functions */
