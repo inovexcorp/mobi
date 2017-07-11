@@ -54,7 +54,6 @@ describe('Class Mapping Overlay directive', function() {
             expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(classMapping['@id']);
             expect(mapperStateSvc.availableClasses).not.toContain(controller.selectedClass);
             expect(mapperStateSvc.mapping.difference.additions).toContain(classMapping);
-            expect(mapperStateSvc.changedMapping).toBe(true);
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.selectedClassMappingId).toBe(classMapping['@id']);
             expect(mapperStateSvc.displayClassMappingOverlay).toBe(false);

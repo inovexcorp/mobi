@@ -388,17 +388,6 @@
              * {@link mappingList.directive:mappingList mapping list}.
              */
             self.mappingSearchString = '';
-            /**
-             * @ngdoc property
-             * @name changedMapping
-             * @propertyOf mapperState.service:mapperStateService
-             * @type {boolean}
-             *
-             * @description
-             * `changedMapping` holds a boolean indicating whether or not the opened mapping has been changed.
-             * If the current mapping is a new mapping, this variable should be true.
-             */
-            self.changedMapping = false;
 
             /**
              * @ngdoc method
@@ -423,7 +412,6 @@
                 self.availableClasses = [];
                 self.mapping = undefined;
                 self.sourceOntologies = [];
-                self.changedMapping = false;
             }
             /**
              * @ngdoc method
@@ -464,6 +452,19 @@
                         deletions: []
                     }
                 };
+            }
+            /**
+             * @ngdoc method
+             * @name isMappingChanged
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Tests whether changes have been made to the opened mapping.
+             *
+             * @return {boolean} True if the mapping has been changed; false otherwise
+             */
+            self.isMappingChanged = function() {
+                return _.get(self.mapping, 'difference.additions', []).length > 0 || _.get(self.mapping, 'difference.deletions', []).length > 0;
             }
             /**
              * @ngdoc method
@@ -782,7 +783,10 @@
                 var additionsObj = _.find(self.mapping.difference.additions, {'@id': parentClassMappingId});
                 var prop = prefixes.delim + (mm.isDataMapping(propMapping) ? 'dataProperty' : 'objectProperty');
                 if (util.hasPropertyId(additionsObj, prop, propMapping['@id'])) {
-                    util.removePropertyId(additionsObj, prop, propMapping['@id'])
+                    util.removePropertyId(additionsObj, prop, propMapping['@id']);
+                    if (_.isEqual(additionsObj, {'@id': parentClassMappingId})) {
+                        _.remove(self.mapping.difference.additions, additionsObj);
+                    }
                 } else {
                     var deletionsObj = _.find(self.mapping.difference.deletions, {'@id': parentClassMappingId});
                     if (deletionsObj) {
