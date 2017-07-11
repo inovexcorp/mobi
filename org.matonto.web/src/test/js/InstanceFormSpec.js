@@ -424,13 +424,13 @@ describe('Instance Form directive', function() {
                 }];
             });
             it('exact restriction', function() {
-                expect(controller.getRestrictionText('propertyId')).toBe('[needs exactly 1]');
+                expect(controller.getRestrictionText('propertyId')).toBe('[exactly 1]');
             });
             it('min restriction', function() {
-                expect(controller.getRestrictionText('propertyId2')).toBe('[needs at least 1]');
+                expect(controller.getRestrictionText('propertyId2')).toBe('[at least 1]');
             });
             it('max restriction', function() {
-                expect(controller.getRestrictionText('propertyId3')).toBe('[needs at most 1]');
+                expect(controller.getRestrictionText('propertyId3')).toBe('[at most 1]');
             });
             it('no restriction', function() {
                 expect(controller.getRestrictionText('propertyId4')).toBe('');
