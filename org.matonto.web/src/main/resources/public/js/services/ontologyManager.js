@@ -200,8 +200,7 @@
              * @returns {Promise} A promise indicating whether the ontology was persisted.
              */
             self.uploadFile = function(file, title, description, keywords) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         headers: {
@@ -216,10 +215,41 @@
                 if (keywords) {
                     fd.append('keywords', keywords);
                 }
-                $http.post(prefix, fd, config)
-                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
-
-                return deferred.promise;
+                return $http.post(prefix, fd, config)
+                    .then(response => response.data, util.rejectError);
+            }
+            /**
+             * @ngdoc method
+             * @name uploadFile
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the PUT /matontorest/ontologies/{recordId} endpoint which will return a new in-progress commit 
+             * object to be applied to the ontology.
+             *
+             * @param {File} file The updated ontology file.
+             * @param {string} the ontology record ID.
+             * @param {string} the ontology branch ID.
+             * @param {string} the ontology commit ID.
+             * @returns {Promise} A promise with the new in-progress commit to be applied or error message.
+             */
+            self.uploadChangesFile = function(file, recordId, branchId, commitId) {
+                    var fd = new FormData(),
+                    config = {
+                        transformRequest: angular.identity,
+                        headers: {
+                            'Content-Type': undefined,
+                            'Accept': 'application/json'
+                        },
+                        params: {
+                            branchId,
+                            commitId
+                        }
+                    };
+                fd.append('file', file);
+                
+                return $http.put(prefix + '/' + encodeURIComponent(recordId), fd, config)
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
