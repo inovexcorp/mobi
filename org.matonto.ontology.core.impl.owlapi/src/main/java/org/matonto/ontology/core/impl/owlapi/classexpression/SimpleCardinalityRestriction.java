@@ -1,5 +1,28 @@
 package org.matonto.ontology.core.impl.owlapi.classexpression;
 
+/*-
+ * #%L
+ * org.matonto.ontology.core.impl.owlapi
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import org.matonto.ontology.core.api.classexpression.CardinalityRestriction;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.propertyexpression.PropertyExpression;
@@ -13,10 +36,13 @@ public class SimpleCardinalityRestriction implements CardinalityRestriction {
 
     private int cardinality;
     private PropertyExpression propertyExpression;
+    private ClassExpressionType classExpressionType;
 
-    public SimpleCardinalityRestriction(@Nonnull PropertyExpression propertyExpression, int cardinality) {
+    public SimpleCardinalityRestriction(@Nonnull PropertyExpression propertyExpression, int cardinality,
+                                        ClassExpressionType classExpressionType) {
         this.cardinality = cardinality;
         this.propertyExpression = propertyExpression;
+        this.classExpressionType = classExpressionType;
     }
 
     @Override
@@ -31,7 +57,7 @@ public class SimpleCardinalityRestriction implements CardinalityRestriction {
 
     @Override
     public ClassExpressionType getClassExpressionType() {
-        return null;
+        return classExpressionType;
     }
 
     @Override

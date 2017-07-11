@@ -24,7 +24,6 @@ package org.matonto.ontology.core.impl.owlapi;
  */
 
 import org.apache.commons.io.IOUtils;
-import org.jetbrains.annotations.NotNull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Individual;
 import org.matonto.ontology.core.api.Ontology;
@@ -33,16 +32,14 @@ import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.api.classexpression.CardinalityRestriction;
 import org.matonto.ontology.core.api.classexpression.OClass;
-import org.matonto.ontology.core.api.classexpression.ObjectMinCardinality;
 import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.api.propertyexpression.PropertyExpression;
+import org.matonto.ontology.core.api.types.ClassExpressionType;
 import org.matonto.ontology.core.impl.owlapi.classexpression.SimpleCardinalityRestriction;
 import org.matonto.ontology.core.impl.owlapi.classexpression.SimpleClass;
-import org.matonto.ontology.core.impl.owlapi.classexpression.SimpleObjectMinCardinality;
-import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectPropertyExpression;
 import org.matonto.ontology.core.utils.MatOntoStringUtils;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.api.SesameTransformer;
@@ -76,9 +73,7 @@ import org.semanticweb.owlapi.model.HasDomain;
 import org.semanticweb.owlapi.model.HasRange;
 import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
 import org.semanticweb.owlapi.model.MissingImportListener;
-import org.semanticweb.owlapi.model.OWLCardinalityRestriction;
 import org.semanticweb.owlapi.model.OWLClass;
-import org.semanticweb.owlapi.model.OWLClassExpression;
 import org.semanticweb.owlapi.model.OWLClassExpressionVisitor;
 import org.semanticweb.owlapi.model.OWLDataCardinalityRestriction;
 import org.semanticweb.owlapi.model.OWLDataExactCardinality;
@@ -91,7 +86,6 @@ import org.semanticweb.owlapi.model.OWLObjectExactCardinality;
 import org.semanticweb.owlapi.model.OWLObjectMaxCardinality;
 import org.semanticweb.owlapi.model.OWLObjectMinCardinality;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
-import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -100,8 +94,6 @@ import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLPropertyDomainAxiom;
-import org.semanticweb.owlapi.model.OWLPropertyExpression;
-import org.semanticweb.owlapi.model.OWLSubClassOfAxiom;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
@@ -503,42 +495,44 @@ public class SimpleOntology implements Ontology {
             return cardinalityProperties;
         }
 
-        public void visit(@NotNull OWLObjectMinCardinality ce) {
-            addObjectPropertyExpression(ce);
+        public void visit(@Nonnull OWLObjectMinCardinality ce) {
+            addObjectPropertyExpression(ce, ClassExpressionType.OBJECT_MIN_CARDINALITY);
         }
 
-        public void visit(@NotNull OWLObjectExactCardinality ce) {
-            addObjectPropertyExpression(ce);
+        public void visit(@Nonnull OWLObjectExactCardinality ce) {
+            addObjectPropertyExpression(ce, ClassExpressionType.OBJECT_EXACT_CARDINALITY);
         }
 
-        public void visit(@NotNull OWLObjectMaxCardinality ce) {
-            addObjectPropertyExpression(ce);
+        public void visit(@Nonnull OWLObjectMaxCardinality ce) {
+            addObjectPropertyExpression(ce, ClassExpressionType.OBJECT_MAX_CARDINALITY);
         }
 
-        public void visit(@NotNull OWLDataMinCardinality ce) {
-            addDataPropertyExpression(ce);
+        public void visit(@Nonnull OWLDataMinCardinality ce) {
+            addDataPropertyExpression(ce, ClassExpressionType.DATA_MIN_CARDINALITY);
         }
 
-        public void visit(@NotNull OWLDataExactCardinality ce) {
-            addDataPropertyExpression(ce);
+        public void visit(@Nonnull OWLDataExactCardinality ce) {
+            addDataPropertyExpression(ce, ClassExpressionType.DATA_EXACT_CARDINALITY);
         }
 
-        public void visit(@NotNull OWLDataMaxCardinality ce) {
-            addDataPropertyExpression(ce);
+        public void visit(@Nonnull OWLDataMaxCardinality ce) {
+            addDataPropertyExpression(ce, ClassExpressionType.DATA_MAX_CARDINALITY);
         }
 
-        private void addObjectPropertyExpression(OWLObjectCardinalityRestriction ce) {
+        private void addObjectPropertyExpression(OWLObjectCardinalityRestriction ce,
+                                                 ClassExpressionType classExpressionType) {
             add(SimpleOntologyValues.matontoObjectProperty(ce.getProperty().asOWLObjectProperty()),
-                    ce.getCardinality());
+                    ce.getCardinality(), classExpressionType);
         }
 
-        private void addDataPropertyExpression(OWLDataCardinalityRestriction ce) {
+        private void addDataPropertyExpression(OWLDataCardinalityRestriction ce,
+                                               ClassExpressionType classExpressionType) {
             add(SimpleOntologyValues.matontoDataProperty(ce.getProperty().asOWLDataProperty()),
-                    ce.getCardinality());
+                    ce.getCardinality(), classExpressionType);
         }
 
-        private void add(PropertyExpression pe, int cardinality) {
-            cardinalityProperties.add(new SimpleCardinalityRestriction(pe, cardinality));
+        private void add(PropertyExpression pe, int cardinality, ClassExpressionType classExpressionType) {
+            cardinalityProperties.add(new SimpleCardinalityRestriction(pe, cardinality, classExpressionType));
         }
     }
 

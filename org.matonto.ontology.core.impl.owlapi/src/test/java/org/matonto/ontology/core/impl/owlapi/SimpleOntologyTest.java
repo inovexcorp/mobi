@@ -284,45 +284,41 @@ public class SimpleOntologyTest {
     @Test
     public void getCardinalityPropertiesText() throws Exception {
         replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock);
-        OClass clazz = new SimpleClass(vf.createIRI("http://example.com/owl/families#Woman"));
 
         File file = Paths.get(getClass().getResource("/restriction-test-ontology.ttl").toURI()).toFile();
         Ontology ontology = new SimpleOntology(file, ontologyManager, transformer);
 
-        assertEquals(0, ontology.getCardinalityProperties(clazz).size());
+        assertEquals(0, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Woman")).size());
     }
 
     @Test
     public void getCardinalityPropertiesOfSubClassText() throws Exception {
         replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock);
-        OClass clazz = new SimpleClass(vf.createIRI("http://example.com/owl/families#Parent"));
 
         File file = Paths.get(getClass().getResource("/restriction-test-ontology.ttl").toURI()).toFile();
         Ontology ontology = new SimpleOntology(file, ontologyManager, transformer);
 
-        assertEquals(1, ontology.getCardinalityProperties(clazz).size());
+        assertEquals(1, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Parent")).size());
     }
 
     @Test
     public void getCardinalityPropertiesOfEquivalentClassText() throws Exception {
         replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock);
-        OClass clazz = new SimpleClass(vf.createIRI("http://example.com/owl/families#Person"));
 
         File file = Paths.get(getClass().getResource("/restriction-test-ontology.ttl").toURI()).toFile();
         Ontology ontology = new SimpleOntology(file, ontologyManager, transformer);
 
-        assertEquals(1, ontology.getCardinalityProperties(clazz).size());
+        assertEquals(1, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Person")).size());
     }
 
     @Test
     public void getCardinalityPropertiesOfEquivalentClassAndSubClassText() throws Exception {
         replay(ontologyManager, SimpleOntologyValues.class, ontologyIdMock);
-        OClass clazz = new SimpleClass(vf.createIRI("http://example.com/owl/families#Man"));
 
         File file = Paths.get(getClass().getResource("/restriction-test-ontology.ttl").toURI()).toFile();
         Ontology ontology = new SimpleOntology(file, ontologyManager, transformer);
 
-        assertEquals(2, ontology.getCardinalityProperties(clazz).size());
+        assertEquals(2, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Man")).size());
     }
 
     // TODO: Test asModel

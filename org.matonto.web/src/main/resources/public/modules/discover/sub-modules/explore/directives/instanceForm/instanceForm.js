@@ -60,6 +60,9 @@
                 scope: {
                     header: '<'
                 },
+                bindToController: {
+                    isValid: '='
+                },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
@@ -206,6 +209,44 @@
                     dvm.onSelect = function(text) {
                         dvm.fullText = text;
                         dvm.showText = true;
+                    }
+                    
+                    dvm.getMissingProperties = function() {
+                        var missing = [];
+                        _.forEach(dvm.properties, property => {
+                            if (_.has(property, 'restrictions')) {
+                                _.forEach(property.restrictions, restriction => {
+                                    var length = _.get(dvm.ds.explore.instance.entity, property.propertyIRI, []).length;
+                                    if (_.includes(restriction.classExpressionType, 'EXACT') && length !== restriction.cardinality) {
+                                        missing.push('Must have exactly ' + restriction.cardinality + ' value(s) for ' + property.propertyIRI);
+                                    } else if (_.includes(restriction.classExpressionType, 'MIN') && length < restriction.cardinality) {
+                                        missing.push('Must have at least ' + restriction.cardinality + ' value(s) for ' + property.propertyIRI);
+                                    } else if (_.includes(restriction.classExpressionType, 'MAX') && length > restriction.cardinality) {
+                                        missing.push('Must have at most ' + restriction.cardinality + ' value(s) for ' + property.propertyIRI);
+                                    }
+                                });
+                            }
+                        });
+                        dvm.isValid = !missing.length;
+                        return missing;
+                    }
+                    
+                    dvm.getRestrictionText = function(propertyIRI) {
+                        var details = _.find(dvm.properties, {propertyIRI});
+                        if (_.has(details, 'restrictions')) {
+                            var results = [];
+                            _.forEach(details.restrictions, restriction => {
+                                if (_.includes(restriction.classExpressionType, 'EXACT')) {
+                                    results.push('needs exactly ' + restriction.cardinality);
+                                } else if (_.includes(restriction.classExpressionType, 'MIN')) {
+                                    results.push('needs at least ' + restriction.cardinality);
+                                } else if (_.includes(restriction.classExpressionType, 'MAX')) {
+                                    results.push('needs at most ' + restriction.cardinality);
+                                }
+                            });
+                            return '[' + _.join(results, ', ') + ']';
+                        }
+                        return '';
                     }
                     
                     function contains(string, part) {

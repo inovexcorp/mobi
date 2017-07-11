@@ -63,6 +63,7 @@
                     var es = exploreService;
                     dvm.ds = discoverStateService;
                     dvm.util = utilService;
+                    dvm.isValid = true;
                     
                     dvm.save = function() {
                         _.forOwn(dvm.ds.explore.instance.entity, (value, key) => {

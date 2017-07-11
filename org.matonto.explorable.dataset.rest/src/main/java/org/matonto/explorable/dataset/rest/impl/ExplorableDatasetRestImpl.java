@@ -40,6 +40,7 @@ import org.matonto.explorable.dataset.rest.ExplorableDatasetRest;
 import org.matonto.explorable.dataset.rest.jaxb.ClassDetails;
 import org.matonto.explorable.dataset.rest.jaxb.InstanceDetails;
 import org.matonto.explorable.dataset.rest.jaxb.PropertyDetails;
+import org.matonto.explorable.dataset.rest.jaxb.RestrictionDetails;
 import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
@@ -605,7 +606,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
      * @param propertyIRI  the IRI of the property
      * @param range        the range of the property
      * @param type         the type of the property
-     * @param restrictions list of cardinality restrictions to check for the property
+     * @param allRestrictions list of cardinality restrictions to check for the property
      * @return a new PropertyDetails object constructed from the parameters
      */
     private PropertyDetails createPropertyDetails(IRI propertyIRI, Set<Resource> range, String type,
@@ -614,16 +615,19 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         details.setPropertyIRI(propertyIRI.toString());
         details.setRange(range.stream().map(Value::stringValue).collect(Collectors.toSet()));
         details.setType(type);
-        Set<CardinalityRestriction> restrictions = new HashSet<>();
+        Set<RestrictionDetails> allRestrictionDetails = new HashSet<>();
         allRestrictions.forEach(restriction -> {
             PropertyExpression pe = restriction.getProperty();
-            if ((pe instanceof ObjectProperty && ((ObjectProperty) pe).getIRI() == propertyIRI)
-                    || (pe instanceof DataProperty && ((DataProperty) pe).getIRI() == propertyIRI)) {
-                restrictions.add(restriction);
+            if ((pe instanceof ObjectProperty && ((ObjectProperty) pe).getIRI().equals(propertyIRI))
+                    || (pe instanceof DataProperty && ((DataProperty) pe).getIRI().equals(propertyIRI))) {
+                RestrictionDetails restrictionDetails = new RestrictionDetails();
+                restrictionDetails.setCardinality(restriction.getCardinality());
+                restrictionDetails.setClassExpressionType(restriction.getClassExpressionType());
+                allRestrictionDetails.add(restrictionDetails);
             }
         });
-        if (restrictions.size() > 0) {
-            details.setRestrictions(restrictions);
+        if (allRestrictionDetails.size() > 0) {
+            details.setRestrictions(allRestrictionDetails);
         }
         return details;
     }
