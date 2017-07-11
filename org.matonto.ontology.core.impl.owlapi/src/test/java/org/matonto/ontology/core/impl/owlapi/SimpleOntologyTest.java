@@ -66,6 +66,7 @@ import java.util.Set;
 public class SimpleOntologyTest {
     private ValueFactory vf = SimpleValueFactory.getInstance();
     private File restrictionFile;
+    private File testFile;
 
     OntologyId ontologyIdMock;
     OntologyManager ontologyManager;
@@ -76,6 +77,7 @@ public class SimpleOntologyTest {
     @Before
     public void setUp() throws Exception {
         restrictionFile = Paths.get(getClass().getResource("/restriction-test-ontology.ttl").toURI()).toFile();
+        testFile = Paths.get(getClass().getResource("/test.owl").toURI()).toFile();
 
         ontologyIdMock = mock(OntologyId.class);
         transformer = mock(SesameTransformer.class);
@@ -90,7 +92,7 @@ public class SimpleOntologyTest {
         mockStatic(SimpleOntologyValues.class);
 
         when(SimpleOntologyValues.owlapiIRI(any(IRI.class))).thenAnswer(i -> org.semanticweb.owlapi.model.IRI.create(i.getArgumentAt(0, IRI.class).stringValue()));
-        when(SimpleOntologyValues.matontoIRI(any(org.semanticweb.owlapi.model.IRI.class))).thenReturn(mock(IRI.class));
+        when(SimpleOntologyValues.matontoIRI(any(org.semanticweb.owlapi.model.IRI.class))).thenAnswer(i -> vf.createIRI(i.getArgumentAt(0, org.semanticweb.owlapi.model.IRI.class).toString()));
         when(SimpleOntologyValues.owlapiClass(any(OClass.class))).thenAnswer(i -> new OWLClassImpl(org.semanticweb.owlapi.model.IRI.create(i.getArgumentAt(0, OClass.class).getIRI().stringValue())));
         when(SimpleOntologyValues.matontoObjectProperty(any(OWLObjectProperty.class))).thenAnswer(i -> new SimpleObjectProperty(vf.createIRI(i.getArgumentAt(0, OWLObjectProperty.class).getIRI().toString())));
         when(SimpleOntologyValues.matontoDataProperty(any(OWLDataProperty.class))).thenAnswer(i -> new SimpleDataProperty(vf.createIRI(i.getArgumentAt(0, OWLDataProperty.class).getIRI().toString())));
@@ -118,8 +120,7 @@ public class SimpleOntologyTest {
 
     @Test
     public void testFileConstructor() throws Exception {
-        File file = Paths.get(getClass().getResource("/test.owl").toURI()).toFile();
-        Ontology ontology = new SimpleOntology(file, ontologyManager, transformer);
+        Ontology ontology = new SimpleOntology(testFile, ontologyManager, transformer);
         assertEquals(ontologyIRI, ontology.getOntologyId().getOntologyIRI().get());
         assertEquals(versionIRI, ontology.getOntologyId().getVersionIRI().get());
     }
@@ -128,13 +129,12 @@ public class SimpleOntologyTest {
     public void testEquals() throws Exception {
         InputStream stream1 = this.getClass().getResourceAsStream("/test.owl");
         InputStream stream2 = this.getClass().getResourceAsStream("/test.owl");
-        File file = Paths.get(getClass().getResource("/test.owl").toURI()).toFile();
 
         Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
         Ontology ontology2 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
 
-        Ontology ontology3 = new SimpleOntology(file, ontologyManager, transformer);
-        Ontology ontology4 = new SimpleOntology(file, ontologyManager, transformer);
+        Ontology ontology3 = new SimpleOntology(testFile, ontologyManager, transformer);
+        Ontology ontology4 = new SimpleOntology(testFile, ontologyManager, transformer);
 
         Ontology ontology5 = new SimpleOntology(stream1, ontologyManager, transformer);
         Ontology ontology6 = new SimpleOntology(stream2, ontologyManager, transformer);
@@ -164,13 +164,12 @@ public class SimpleOntologyTest {
     public void testHashCode() throws Exception {
         InputStream stream1 = this.getClass().getResourceAsStream("/test.owl");
         InputStream stream2 = this.getClass().getResourceAsStream("/test.owl");
-        File file = Paths.get(getClass().getResource("/test.owl").toURI()).toFile();
 
         Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
         Ontology ontology2 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
 
-        Ontology ontology3 = new SimpleOntology(file, ontologyManager, transformer);
-        Ontology ontology4 = new SimpleOntology(file, ontologyManager, transformer);
+        Ontology ontology3 = new SimpleOntology(testFile, ontologyManager, transformer);
+        Ontology ontology4 = new SimpleOntology(testFile, ontologyManager, transformer);
 
         Ontology ontology5 = new SimpleOntology(stream1, ontologyManager, transformer);
         Ontology ontology6 = new SimpleOntology(stream2, ontologyManager, transformer);

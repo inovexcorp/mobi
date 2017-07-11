@@ -473,7 +473,6 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<CardinalityRestriction> getCardinalityProperties(IRI classIRI) {
         CardinalityVisitor cardinalityVisitor = new CardinalityVisitor();
-        // OWLClass owlClass = SimpleOntologyValues.owlapiClass(new SimpleClass(classIRI));
         OWLClass owlClass = new OWLClassImpl(org.semanticweb.owlapi.model.IRI.create(classIRI.stringValue()));
         owlOntology.subClassAxiomsForSubClass(owlClass).forEach(ax -> ax.getSuperClass().accept(cardinalityVisitor));
         owlOntology.equivalentClassesAxioms(owlClass).forEach(ax -> ax.classExpressions().forEach(classExpression ->
