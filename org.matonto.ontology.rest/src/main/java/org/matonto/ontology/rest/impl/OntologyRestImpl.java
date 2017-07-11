@@ -257,6 +257,14 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Resource catalogIRI = catalogManager.getLocalCatalogIRI();
             Resource recordId = valueFactory.createIRI(recordIdStr);
+
+            User user = getUserFromContext(context);
+            Optional<InProgressCommit> commit = catalogManager.getInProgressCommit(catalogIRI, recordId, user);
+
+            if (commit.isPresent()) {
+                throw ErrorUtils.sendError("User has an in progress commit already.", Response.Status.BAD_REQUEST);
+            }
+
             Resource branchId;
             Resource commitId;
             {
@@ -279,12 +287,6 @@ public class OntologyRestImpl implements OntologyRest {
             Model currentOnt = catalogManager.getCompiledResource(recordId, branchId, commitId);
 
             Difference diff = catalogManager.getDiff(currentOnt, changedOnt);
-            User user = getUserFromContext(context);
-            Optional<InProgressCommit> commit = catalogManager.getInProgressCommit(catalogIRI, recordId, user);
-
-            if (commit.isPresent()) {
-                throw ErrorUtils.sendError("User has an in progress commit already.", Response.Status.BAD_REQUEST);
-            }
 
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId);
             catalogManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
