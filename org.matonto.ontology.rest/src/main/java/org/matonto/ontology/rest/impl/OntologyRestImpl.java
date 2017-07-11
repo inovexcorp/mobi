@@ -28,14 +28,9 @@ import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
-import com.google.common.collect.Iterables;
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import javax.cache.Cache;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.StreamingOutput;
+import com.google.common.collect.Iterables;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
@@ -83,6 +78,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -97,6 +93,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.cache.Cache;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
 
 @Component(immediate = true)
 public class OntologyRestImpl implements OntologyRest {
@@ -188,7 +188,9 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            return Response.ok(getOntologyAsRdf(ontology, rdfFormat)).build();
+            String ontologyAsRdf = getOntologyAsRdf(ontology, rdfFormat);
+            Response.ResponseBuilder ok = Response.ok(ontologyAsRdf);
+            return ok.build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1158,7 +1160,8 @@ public class OntologyRestImpl implements OntologyRest {
             case "turtle":
                 return ontology.asTurtle().toString();
             default:
-                return ontology.asJsonLD().toString();
+                OutputStream outputStream = ontology.asJsonLD();
+                return outputStream.toString();
         }
     }
 
@@ -1321,8 +1324,9 @@ public class OntologyRestImpl implements OntologyRest {
         record.getOntologyIRI().ifPresent(this::testOntologyIRIUniqueness);
         catalogManager.addRecord(catalogId, record);
         Resource masterBranchId = record.getMasterBranch_resource().get();
+        Model model = ontology.asModel(modelFactory);
         Resource commitId = versioningManager.commit(catalogId, record.getResource(), masterBranchId, user,
-                "The initial commit.", ontology.asModel(modelFactory), null);
+                "The initial commit.", model, null);
 
         // Cache
         getOntologyCache().ifPresent(cache -> {

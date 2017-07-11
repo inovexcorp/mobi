@@ -122,6 +122,7 @@ public class SimpleOntology implements Ontology {
     private Set<Annotation> annotations;
     private Set<AnnotationProperty> annotationProperties;
     private Set<IRI> missingImports = new HashSet<>();
+    private org.openrdf.model.Model sesameModel;
 
     //Owlapi variables
     private OWLOntology owlOntology;
@@ -458,19 +459,24 @@ public class SimpleOntology implements Ontology {
     /**
      * @return the unmodifiable sesame model that represents this Ontology.
      */
-    protected org.openrdf.model.Model asSesameModel() throws MatontoOntologyException {
-        org.openrdf.model.Model sesameModel = new org.openrdf.model.impl.LinkedHashModel();
-        RDFHandler rdfHandler = new StatementCollector(sesameModel);
-        RioRenderer renderer = new RioRenderer(this.owlOntology, rdfHandler, this.owlOntology.getFormat());
-        renderer.render();
-        return sesameModel.unmodifiable();
+    protected synchronized org.openrdf.model.Model asSesameModel() throws MatontoOntologyException {
+        if (sesameModel != null) {
+            return sesameModel.unmodifiable();
+        } else {
+            sesameModel = new org.openrdf.model.impl.LinkedHashModel();
+            RDFHandler rdfHandler = new StatementCollector(sesameModel);
+            RioRenderer renderer = new RioRenderer(this.owlOntology, rdfHandler, this.owlOntology.getFormat());
+            renderer.render();
+            return sesameModel.unmodifiable();
+        }
     }
 
     @Override
     public Model asModel(ModelFactory factory) throws MatontoOntologyException {
         Model matontoModel = factory.createModel();
 
-        asSesameModel().forEach(stmt -> matontoModel.add(transformer.matontoStatement(stmt)));
+        org.openrdf.model.Model sesameModel = asSesameModel();
+        sesameModel.forEach(stmt -> matontoModel.add(transformer.matontoStatement(stmt)));
 
         return matontoModel;
     }
@@ -496,7 +502,8 @@ public class SimpleOntology implements Ontology {
         WriterConfig config = new WriterConfig();
         config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
         try {
-            Rio.write(asSesameModel(), outputStream, RDFFormat.JSONLD, config);
+            org.openrdf.model.Model sesameModel = asSesameModel();
+            Rio.write(sesameModel, outputStream, RDFFormat.JSONLD, config);
         } catch (RDFHandlerException e) {
             throw new MatontoOntologyException("Error while parsing Ontology.");
         }
@@ -514,7 +521,9 @@ public class SimpleOntology implements Ontology {
             SimpleOntology simpleOntology = (SimpleOntology) obj;
             OntologyId ontologyId = simpleOntology.getOntologyId();
             if (this.ontologyId.equals(ontologyId)) {
-                return Models.isomorphic(this.asSesameModel(), simpleOntology.asSesameModel());
+                org.openrdf.model.Model thisSesameModel = this.asSesameModel();
+                org.openrdf.model.Model otherSesameModel = simpleOntology.asSesameModel();
+                return Models.isomorphic(thisSesameModel, otherSesameModel);
             }
         }
 
@@ -524,7 +533,8 @@ public class SimpleOntology implements Ontology {
     @Override
     public int hashCode() {
         // TODO: This looks like an expensive operation
-        return this.ontologyId.hashCode() + this.asSesameModel().hashCode();
+        org.openrdf.model.Model sesameModel = this.asSesameModel();
+        return this.ontologyId.hashCode() + sesameModel.hashCode();
     }
 
     protected OWLOntology getOwlapiOntology() {
