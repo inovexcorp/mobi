@@ -494,12 +494,11 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                 IRI ontologyRecordIRI = ontologyRecordIRIOpt.get();
                 Optional<OntologyRecord> ontologyRecordOpt = catalogManager.getRecord(catalogManager
                                 .getLocalCatalogIRI(), ontologyRecordIRI, ontologyRecordFactory);
-                Model ontologyRecordModel = modelFactory.createModel();
-                if (ontologyRecordOpt.isPresent()) {
-                    ontologyRecordModel = ontologyRecordOpt.get().getModel();
-                } else {
+                if (!ontologyRecordOpt.isPresent()) {
                     log.warn("OntologyRecord " + ontologyRecordIRI + " could not be found");
                 }
+                Model ontologyRecordModel = ontologyRecordOpt.map(Thing::getModel).orElseGet(() ->
+                        modelFactory.createModel());
                 List<ClassDetails> found = new ArrayList<>();
                 copy.forEach(classDetails -> {
                     IRI classIRI = factory.createIRI(classDetails.getClassIRI());
