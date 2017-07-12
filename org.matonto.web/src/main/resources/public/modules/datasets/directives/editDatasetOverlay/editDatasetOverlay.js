@@ -96,13 +96,13 @@
                     };
                     dvm.ontologies = [];
                     dvm.selectedOntologies = [];
+                    dvm.step = 0;
 
                     _.forEach(_.map(dvm.dataset.identifiers, identifier => identifier[prefixes.dataset + 'linksToRecord'][0]['@id']), 
                         ontologyId => cm.getRecord(ontologyId, cm.localCatalog['@id']).then(ontology => dvm.selectedOntologies.push(ontology), onError)
                     );
 
                     dvm.getOntologies = function() {
-                        dvm.ontologySearchConfig.pageIndex = 0;
                         cm.getRecords(cm.localCatalog['@id'], dvm.ontologySearchConfig).then(parseOntologyResults, errorMessage => {
                             dvm.ontologies = [];
                             dvm.links = {
@@ -112,6 +112,19 @@
                             dvm.totalSize = 0;
                             onError(errorMessage);
                         });
+                    }
+                    dvm.getRecordPage = function(direction) {
+                        if (direction === 'prev') {
+                            dvm.util.getResultsPage(dvm.links.prev).then(response => {
+                                dvm.ontologySearchConfig.pageIndex -= 1;
+                                parseOntologyResults(response);
+                            }, onError);
+                        } else {
+                            dvm.util.getResultsPage(dvm.links.next).then(response => {
+                                dvm.ontologySearchConfig.pageIndex += 1;
+                                parseOntologyResults(response);
+                            }, onError);
+                        }
                     }
                     dvm.update = function() {
                         dvm.dataset.record[prefixes.catalog + 'keyword'] = _.map(dvm.keywords, _.trim);
