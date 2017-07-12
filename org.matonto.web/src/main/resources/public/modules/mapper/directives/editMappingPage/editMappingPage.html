@@ -32,8 +32,8 @@
                     </block-content>
                     <block-footer>
                         <button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
-                        <button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="(dvm.configNotSet() && dvm.state.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save</button>
-                        <button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="(dvm.configNotSet() && dvm.state.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save &amp; Run</button>
+                        <button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="!dvm.state.isMappingChanged() || dvm.state.invalidProps.length > 0">Save</button>
+                        <button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="!dvm.state.isMappingChanged() || dvm.state.invalidProps.length > 0">Save &amp; Run</button>
                     </block-footer>
                 </block>
             </tab>
@@ -45,8 +45,8 @@
                     </block-content>
                     <block-footer>
                         <button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
-                        <button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="(dvm.configNotSet() && dvm.state.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save</button>
-                        <button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="(dvm.configNotSet() && dvm.state.mapping.jsonld.length <= 1) || dvm.state.invalidProps.length > 0">Save &amp; Run</button>
+                        <button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="!dvm.state.isMappingChanged() || dvm.state.invalidProps.length > 0">Save</button>
+                        <button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="!dvm.state.isMappingChanged() || dvm.state.invalidProps.length > 0">Save &amp; Run</button>
                     </block-footer>
                 </block>
             </tab>

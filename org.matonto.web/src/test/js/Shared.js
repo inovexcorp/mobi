@@ -375,11 +375,11 @@ function mockMapperState() {
             this.selectedPropMappingId = '';
             this.newProp = false;
             this.highlightIndexes = [];
-            this.changedMapping = false;
 
             this.initialize = jasmine.createSpy('initialize');
             this.resetEdit = jasmine.createSpy('resetEdit');
             this.createMapping = jasmine.createSpy('createMapping').and.returnValue({record: {}, ontology: undefined, jsonld: [], difference: {additions: [], deletions: []}});
+            this.isMappingChanged = jasmine.createSpy("isMappingChanged").and.returnValue(false);
             this.saveMapping = jasmine.createSpy("saveMapping").and.returnValue($q.when());
             this.setMasterBranch = jasmine.createSpy("setMasterBranch");
             this.setInvalidProps = jasmine.createSpy('setInvalidProps');
