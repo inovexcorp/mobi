@@ -92,7 +92,6 @@ describe('IRI Template Overlay directive', function() {
                 controller.beginsWith + controller.then, controller.endsWith.value);
             expect(mapperStateSvc.changeProp).toHaveBeenCalledWith(mapperStateSvc.selectedClassMappingId, prefixes.delim + 'hasPrefix', controller.beginsWith + controller.then, classMapping.hasPrefix);
             expect(mapperStateSvc.changeProp).toHaveBeenCalledWith(mapperStateSvc.selectedClassMappingId, prefixes.delim + 'localName', controller.endsWith.value, classMapping.localName);
-            expect(mapperStateSvc.changedMapping).toBe(true);
         });
     });
     describe('replaces the element with the correct html', function() {
