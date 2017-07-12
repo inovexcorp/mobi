@@ -190,6 +190,8 @@
 
                         return angular.fromJson(jsonString);
                     }
+                    
+                    dvm.getOntologies();
                 }
             }
         }
