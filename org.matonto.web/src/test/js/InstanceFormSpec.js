@@ -339,9 +339,7 @@ describe('Instance Form directive', function() {
             controller.showText = true;
         });
         it('getMissingProperties retrieves the proper list of messages', function() {
-            util.getBeautifulIRI.and.callFake(function(iri) {
-                return iri;
-            });
+            util.getBeautifulIRI.and.callFake(_.identity);
             controller.properties = [{
                 propertyIRI: 'propertyId',
                 restrictions: [{

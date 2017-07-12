@@ -45,7 +45,6 @@ import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.classexpression.CardinalityRestriction;
-import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import org.matonto.ontology.core.api.propertyexpression.Property;
 import org.matonto.ontology.core.api.propertyexpression.PropertyExpression;
@@ -68,6 +67,8 @@ import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
 import org.matonto.rest.util.jaxb.Links;
 import org.openrdf.model.vocabulary.RDFS;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -83,6 +84,8 @@ import javax.ws.rs.core.UriInfo;
 
 @Component(immediate = true)
 public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
+
+    private final Logger log = LoggerFactory.getLogger(ExplorableDatasetRestImpl.class);
 
     private DatasetManager datasetManager;
     private CatalogManager catalogManager;
@@ -477,14 +480,22 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             Value value = iterator.next();
             Optional<IRI> ontologyRecordIRIOpt = getObjectOf(recordModel, value, DatasetRecord.linksToRecord_IRI)
                     .flatMap(object -> Optional.of(factory.createIRI(object.stringValue())));
-            Optional<Model> compiledResourceOpt = getObjectOf(recordModel, value, DatasetRecord.linksToCommit_IRI)
-                    .flatMap(object -> Optional.of(catalogManager.getCompiledResource(object)));
+            Optional<Model> compiledResourceOpt = Optional.empty();
+            try {
+                compiledResourceOpt = getObjectOf(recordModel, value, DatasetRecord.linksToCommit_IRI)
+                        .flatMap(object -> Optional.of(catalogManager.getCompiledResource(object)));
+            } catch (IllegalArgumentException ex) {
+                log.warn(ex.getMessage());
+            }
             if (ontologyRecordIRIOpt.isPresent() && compiledResourceOpt.isPresent()) {
                 Model compiledResource = compiledResourceOpt.get();
                 IRI ontologyRecordIRI = ontologyRecordIRIOpt.get();
                 Model ontologyRecordModel = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(),
                         ontologyRecordIRI, ontologyRecordFactory).orElse(ontologyRecordFactory
                         .createNew(ontologyRecordIRI)).getModel();
+                if (ontologyRecordModel.size() == 0) {
+                    log.warn("OntologyRecord " + ontologyRecordIRI.stringValue() + " could not be found");
+                }
                 List<ClassDetails> found = new ArrayList<>();
                 copy.forEach(classDetails -> {
                     IRI classIRI = factory.createIRI(classDetails.getClassIRI());
@@ -498,6 +509,11 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                     }
                 });
                 copy.removeAll(found);
+            } else if (!ontologyRecordIRIOpt.isPresent() && !compiledResourceOpt.isPresent()) {
+                log.warn("The Compiled Resource and Ontology Record IRI could not be found");
+            } else {
+                ontologyRecordIRIOpt.ifPresent(iri -> log.warn("The Compiled Resource for OntologyRecord "
+                        + iri.stringValue() + " could not be found"));
             }
         }
         return result;
