@@ -219,11 +219,11 @@
                             _.forEach(_.get(property, 'restrictions', []), restriction => {
                                 var length = _.get(dvm.ds.explore.instance.entity, property.propertyIRI, []).length;
                                 if (_.includes(restriction.classExpressionType, 'EXACT') && length !== restriction.cardinality) {
-                                    missing.push('Must have exactly ' + restriction.cardinality + ' value(s) for ' + property.propertyIRI);
+                                    missing.push('Must have exactly ' + restriction.cardinality + ' value(s) for ' + dvm.util.getBeautifulIRI(property.propertyIRI));
                                 } else if (_.includes(restriction.classExpressionType, 'MIN') && length < restriction.cardinality) {
-                                    missing.push('Must have at least ' + restriction.cardinality + ' value(s) for ' + property.propertyIRI);
+                                    missing.push('Must have at least ' + restriction.cardinality + ' value(s) for ' + dvm.util.getBeautifulIRI(property.propertyIRI));
                                 } else if (_.includes(restriction.classExpressionType, 'MAX') && length > restriction.cardinality) {
-                                    missing.push('Must have at most ' + restriction.cardinality + ' value(s) for ' + property.propertyIRI);
+                                    missing.push('Must have at most ' + restriction.cardinality + ' value(s) for ' + dvm.util.getBeautifulIRI(property.propertyIRI));
                                 }
                             });
                         });

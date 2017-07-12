@@ -45,9 +45,8 @@ import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.classexpression.CardinalityRestriction;
-import org.matonto.ontology.core.api.classexpression.DataCardinalityRestriction;
-import org.matonto.ontology.core.api.propertyexpression.DataProperty;
-import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
+import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import org.matonto.ontology.core.api.propertyexpression.Property;
 import org.matonto.ontology.core.api.propertyexpression.PropertyExpression;
 import org.matonto.ontology.utils.api.SesameTransformer;
@@ -73,7 +72,6 @@ import org.openrdf.model.vocabulary.RDFS;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -92,6 +90,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private ModelFactory modelFactory;
     private SesameTransformer sesameTransformer;
     private OntologyManager ontologyManager;
+    private OntologyRecordFactory ontologyRecordFactory;
 
     private static final String GET_CLASSES_TYPES;
     private static final String GET_CLASSES_DETAILS;
@@ -161,6 +160,11 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     @Reference
     public void setOntologyManager(OntologyManager ontologyManager) {
         this.ontologyManager = ontologyManager;
+    }
+
+    @Reference
+    public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
+        this.ontologyRecordFactory = ontologyRecordFactory;
     }
 
     @Override
@@ -478,13 +482,16 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             if (ontologyRecordIRIOpt.isPresent() && compiledResourceOpt.isPresent()) {
                 Model compiledResource = compiledResourceOpt.get();
                 IRI ontologyRecordIRI = ontologyRecordIRIOpt.get();
+                Model ontologyRecordModel = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(),
+                        ontologyRecordIRI, ontologyRecordFactory).orElse(ontologyRecordFactory
+                        .createNew(ontologyRecordIRI)).getModel();
                 List<ClassDetails> found = new ArrayList<>();
                 copy.forEach(classDetails -> {
                     IRI classIRI = factory.createIRI(classDetails.getClassIRI());
                     Model classModel = compiledResource.filter(classIRI, null, null);
                     if (classModel.size() > 0) {
                         found.add(classDetails);
-                        classDetails.setOntologyRecordTitle(findLabelToDisplay(compiledResource, ontologyRecordIRI));
+                        classDetails.setOntologyRecordTitle(findLabelToDisplay(ontologyRecordModel, ontologyRecordIRI));
                         classDetails.setClassTitle(findLabelToDisplay(classModel, classIRI));
                         classDetails.setClassDescription(findDescriptionToDisplay(classModel, classIRI));
                         result.add(classDetails);

@@ -339,6 +339,9 @@ describe('Instance Form directive', function() {
             controller.showText = true;
         });
         it('getMissingProperties retrieves the proper list of messages', function() {
+            util.getBeautifulIRI.and.callFake(function(iri) {
+                return iri;
+            });
             controller.properties = [{
                 propertyIRI: 'propertyId',
                 restrictions: [{
@@ -397,6 +400,9 @@ describe('Instance Form directive', function() {
                 'Must have at most 1 value(s) for propertyId6'
             ];
             expect(controller.getMissingProperties()).toEqual(expected);
+            _.forEach(['propertyId', 'propertyId2', 'propertyId3', 'propertyId4', 'propertyId5', 'propertyId6'], function(item) {
+                expect(util.getBeautifulIRI).toHaveBeenCalledWith(item);
+            });
             expect(controller.isValid).toBe(false);
         });
         describe('getRestrictionText should return the correct value for', function() {
