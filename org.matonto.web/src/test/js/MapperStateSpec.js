@@ -83,6 +83,15 @@ describe('Mapper State service', function() {
         expect(mapperStateSvc.sourceOntologies).toEqual([]);
         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
     });
+    it('should test whether the mapping has been changed', function() {
+        expect(mapperStateSvc.isMappingChanged()).toEqual(false);
+        mapperStateSvc.mapping.difference.additions = [{}];
+        expect(mapperStateSvc.isMappingChanged()).toEqual(true);
+        mapperStateSvc.mapping.difference.deletions = [{}];
+        expect(mapperStateSvc.isMappingChanged()).toEqual(true);
+        mapperStateSvc.mapping.difference.additions = [];
+        expect(mapperStateSvc.isMappingChanged()).toEqual(true);
+    });
     describe('should save the current mapping', function() {
         describe('if it is a new mapping', function() {
             var uploadDeferred;

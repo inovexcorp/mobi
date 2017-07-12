@@ -3927,6 +3927,99 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("branchId", branchId.stringValue()).request().delete();
 
         assertEquals(response.getStatus(), 500);
-        verify(ontologyManager, times(0)).deleteOntology(Mockito.any());
+        verify(ontologyManager, times(0)).deleteOntology(any());
+    }
+
+    // Test upload changes
+
+    @Test
+    public void testUploadChangesToOntology() {
+        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+                .thenReturn(ontologyModel);
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
+                any(User.class))).thenReturn(Optional.empty());
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertGetUserFromContext();
+        verify(ontologyManager).createOntology(any(FileInputStream.class));
+        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
+        verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+    }
+
+    @Test
+    public void testUploadChangesToOntologyWithoutBranchId() {
+        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+                .thenReturn(ontologyModel);
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
+                any(User.class))).thenReturn(Optional.empty());
+        when(catalogManager.getMasterBranch(eq(catalogId), eq(recordId))).thenReturn(branch);
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+        verify(catalogManager, times(0)).getMasterBranch(eq(catalogId), eq(recordId));
+        verify(ontologyManager, times(0)).createOntology(any(FileInputStream.class));
+        verify(catalogManager, times(0)).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager, times(0)).getDiff(any(Model.class), any(Model.class));
+        verify(catalogManager, times(1)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(catalogManager, times(0)).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+    }
+
+    @Test
+    public void testUploadChangesToOntologyWithoutCommitId() {
+        when(catalogManager.getCompiledResource(eq(commitId), eq(branchId), eq(recordId)))
+                .thenReturn(ontologyModel);
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
+                any(User.class))).thenReturn(Optional.empty());
+        when(catalogManager.getHeadCommit(eq(catalogId), eq(recordId), eq(branchId))).thenReturn(commit);
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertGetUserFromContext();
+        verify(catalogManager).getHeadCommit(eq(catalogId), eq(recordId), eq(branchId));
+        verify(ontologyManager).createOntology(any(FileInputStream.class));
+        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
+        verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+    }
+
+    @Test
+    public void testUploadChangesToOntologyWithExistingInProgressCommit() {
+        when(catalogManager.getInProgressCommit(eq(catalogManager.getLocalCatalogIRI()), eq(recordId), any(User.class)))
+                .thenReturn(Optional.of(inProgressCommit));
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/search-results.json"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
     }
 }
