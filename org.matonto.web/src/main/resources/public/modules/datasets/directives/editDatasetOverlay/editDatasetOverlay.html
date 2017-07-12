@@ -47,10 +47,6 @@
                     <span>{{dvm.util.getDctermsValue(ontology, 'title')}}</span>
                 </button>
             </div>
-            <div class="paging-wrapper">
-                <paging-details total-size="dvm.totalSize" page-index="dvm.ontologySearchConfig.pageIndex" limit="dvm.ontologySearchConfig.limit"></paging-details>
-                <pagination links="dvm.links" current-page="dvm.ontologySearchConfig.pageIndex" get-page="dvm.getRecordPage(direction)"></pagination>
-            </div>
             <div class="selected-ontologies">
                 <span class="field-name">Selected: </span>
                 <span ng-if="dvm.selectedOntologies.length === 0">(None)</span>

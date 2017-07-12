@@ -55,9 +55,9 @@
          */
         .directive('editDatasetOverlay', editDatasetOverlay);
 
-        editDatasetOverlay.$inject = ['datasetManagerService', 'datasetStateService', 'catalogManagerService', 'utilService', 'prefixes', 'uuid', '$q'];
+        editDatasetOverlay.$inject = ['datasetStateService', 'catalogManagerService', 'utilService', 'prefixes', 'uuid'];
 
-        function editDatasetOverlay(datasetManagerService, datasetStateService, catalogManagerService, utilService, prefixes, uuid, $q) {
+        function editDatasetOverlay(datasetStateService, catalogManagerService, utilService, prefixes, uuid) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/datasets/directives/editDatasetOverlay/editDatasetOverlay.html',
@@ -69,9 +69,8 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var state = datasetStateService;
-                    var dm = datasetManagerService;
                     var cm = catalogManagerService;
+                    var ds = datasetStateService;
                     
                     dvm.util = utilService;
                     dvm.error = '';
@@ -171,8 +170,13 @@
                             if (ontologyIds.length > 1) {
                                 createBlankNodes(_.tail(ontologyIds));
                             } else {
-                                cm.updateRecord(_.get(dvm.dataset.record, '@id'), cm.localCatalog['@id'], dvm.dataset).then(() => { 
-                                    // TODO: Close overlay...
+                                var jsonld = [];
+                                _.forEach(dvm.dataset.identifiers, o => jsonld.push(o));
+                                jsonld.push(dvm.dataset.record);
+                                cm.updateRecord(_.get(dvm.dataset.record, '@id'), cm.localCatalog['@id'], jsonld).then(() => { 
+                                    dvm.util.createSuccessToast('Dataset successfully updated');
+                                    ds.setResults();
+                                    dvm.onClose();
                                 }, onError);
                             }
                         }, onError);
