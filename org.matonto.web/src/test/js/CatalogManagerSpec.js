@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Catalog Manager service', function() {
-    var $httpBackend, catalogManagerSvc, prefixes, utilSvc, $q, windowSvc,
+    var catalogManagerSvc, scope, $httpBackend, prefixes, utilSvc, $q, windowSvc, httpSvc,
         catalogId = 'http://matonto.org/catalogs/local',
         recordId = 'http://matonto.org/records/test',
         distributionId = 'http://matonto.org/distributions/test',
@@ -33,6 +33,7 @@ describe('Catalog Manager service', function() {
         module('catalogManager');
         mockPrefixes();
         mockUtil();
+        mockHttpService();
 
         module(function($provide) {
             $provide.service('$window', function() {
@@ -40,30 +41,31 @@ describe('Catalog Manager service', function() {
             });
         });
 
-        inject(function(catalogManagerService, _prefixes_, _utilService_, _$httpBackend_, _$httpParamSerializer_, _$q_, _$window_) {
+        inject(function(catalogManagerService, _$rootScope_, _prefixes_, _utilService_, _$httpBackend_, _httpService_, _$httpParamSerializer_, _$q_, _$window_) {
             catalogManagerSvc = catalogManagerService;
+            scope = _$rootScope_;
             prefixes = _prefixes_;
             utilSvc = _utilService_;
             $httpBackend = _$httpBackend_;
+            httpSvc = _httpService_;
             $httpParamSerializer = _$httpParamSerializer_;
             $q = _$q_;
             windowSvc = _$window_;
         });
 
         utilSvc.paginatedConfigToParams.and.callFake(_.identity);
+        utilSvc.rejectError.and.returnValue($q.reject('Error Message'));
     });
 
     describe('should set the correct initial state', function() {
-        it('unless an error occurs', function(done) {
+        it('unless an error occurs', function() {
             spyOn(catalogManagerSvc, 'getRecordTypes').and.returnValue($q.reject());
             spyOn(catalogManagerSvc, 'getSortOptions').and.returnValue($q.reject());
             $httpBackend.whenGET('/matontorest/catalogs').respond(400, '');
             catalogManagerSvc.initialize().then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function() {
                 expect(true).toBe(true);
-                done();
             });
             flushAndVerify($httpBackend);
         });
@@ -74,18 +76,16 @@ describe('Catalog Manager service', function() {
                 spyOn(catalogManagerSvc, 'getRecordTypes').and.returnValue($q.when(this.types));
                 spyOn(catalogManagerSvc, 'getSortOptions').and.returnValue($q.when(this.sortOptions));
             });
-            it('unless a catalog cannot be found', function(done) {
+            it('unless a catalog cannot be found', function() {
                 $httpBackend.whenGET('/matontorest/catalogs').respond(200, []);
                 catalogManagerSvc.initialize().then(function(response) {
                     fail('Promise should have rejected');
-                    done();
                 }, function(error) {
                     expect(error).toContain('Could not find');
-                    done();
                 });
                 flushAndVerify($httpBackend);
             });
-            it('with all important data', function(done) {
+            it('with all important data', function() {
                 var types = this.types;
                 var sortOptions = this.sortOptions;
                 var localCatalog = {};
@@ -102,67 +102,59 @@ describe('Catalog Manager service', function() {
                         expect(_.find(catalogManagerSvc.sortOptions, {field: option, asc: true})).not.toBeUndefined();
                         expect(_.find(catalogManagerSvc.sortOptions, {field: option, asc: false})).not.toBeUndefined();
                     });
-                    done();
                 }, function(response) {
                     fail('Promise should have resolved');
-                    done();
                 });
                 flushAndVerify($httpBackend);
             });
         });
     });
-    it('should get the IRIs for all record types', function(done) {
+    it('should get the IRIs for all record types', function() {
         $httpBackend.whenGET('/matontorest/catalogs/record-types').respond(200, []);
         catalogManagerSvc.getRecordTypes().then(function(value) {
             expect(value).toEqual([]);
-            done();
         }, function(response) {
             fail('Promise should have resolved');
-            done();
         });
         flushAndVerify($httpBackend);
     });
-    it('should get the IRIs for all sort options', function(done) {
+    it('should get the IRIs for all sort options', function() {
         $httpBackend.whenGET('/matontorest/catalogs/sort-options').respond(200, []);
         catalogManagerSvc.getSortOptions().then(function(value) {
             expect(value).toEqual([]);
-            done();
         }, function(response) {
             fail('Promise should have resolved');
-            done();
         });
         flushAndVerify($httpBackend);
     });
     describe('should get a page of results based on the passed URL', function() {
-        beforeEach(function() {
-            this.url = 'matontorest/catalogs/local/records';
-        });
-        it('unless there is an error', function(done) {
-            $httpBackend.expectGET(this.url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getResultsPage(this.url).then(function(response) {
+        var url = 'matontorest/catalogs/local/records';
+        it('unless there is an error', function() {
+            $httpBackend.expectGET(url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getResultsPage(url).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             },function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.expectGET(this.url).respond(200, []);
-            catalogManagerSvc.getResultsPage(this.url).then(function(response) {
+        it('successfully', function() {
+            $httpBackend.expectGET(url).respond(200, []);
+            catalogManagerSvc.getResultsPage(url).then(function(response) {
                 expect(response.data).toEqual([]);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a list of Records', function() {
+        var promiseId = 'id',
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records',
+            config;
         beforeEach(function(){
-            this.config = {
+            config = {
                 limit: 10,
                 offset: 0,
                 sort: 'http://purl.org/dc/terms/issued',
@@ -172,842 +164,809 @@ describe('Catalog Manager service', function() {
             };
             catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title', asc: false}];
         });
-        it('unless an error occurs', function(done) {
-            var params = $httpParamSerializer(this.config);
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getRecords(catalogId, this.config).then(function(response) {
-                fail('Promise should have rejected');
-                done();
-            }, function(response) {
-                expect(response).toBe('Error Message');
-                done();
+        describe('unless an error occurs', function() {
+            it('with no promise id set', function() {
+                var params = $httpParamSerializer(config);
+                $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
+                catalogManagerSvc.getRecords(catalogId, config).then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    expect(response).toBe('Error Message');
+                });
+                flushAndVerify($httpBackend);
             });
-            flushAndVerify($httpBackend);
+            it('with a promise id set', function() {
+                httpSvc.get.and.returnValue($q.reject({}));
+                catalogManagerSvc.getRecords(catalogId, config, promiseId).then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(httpSvc.get).toHaveBeenCalledWith(url, {params: config}, promiseId);
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.any(Object));
+                    expect(response).toBe('Error Message');
+                });
+                scope.$apply();
+            });
         });
-        it('with all config passed', function(done) {
-            var params = $httpParamSerializer(this.config);
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records?' + params).respond(200, []);
-            catalogManagerSvc.getRecords(catalogId, this.config).then(function(response) {
-                expect(response.data).toEqual([]);
-                done();
-            }, function(response) {
-                fail('Promise should have resolved');
-                done();
+        describe('successfully', function() {
+            describe('with no promise id set', function() {
+                it('and all config passed', function() {
+                    var params = $httpParamSerializer(config);
+                    $httpBackend.whenGET(url + '?' + params).respond(200, []);
+                    catalogManagerSvc.getRecords(catalogId, config).then(function(response) {
+                        expect(response.data).toEqual([]);
+                    }, function(response) {
+                        fail('Promise should have resolved');
+                    });
+                    flushAndVerify($httpBackend);
+                });
+                it('and no config passed', function() {
+                    var params = $httpParamSerializer({
+                        sort: catalogManagerSvc.sortOptions[0].field,
+                        ascending: catalogManagerSvc.sortOptions[0].asc
+                    });
+                    $httpBackend.whenGET(url + '?' + params).respond(200, []);
+                    catalogManagerSvc.getRecords(catalogId, {}).then(function(response) {
+                        expect(response.data).toEqual([]);
+                    }, function(response) {
+                        fail('Promise should have resolved');
+                    });
+                    flushAndVerify($httpBackend);
+                });
             });
-            flushAndVerify($httpBackend);
-        });
-        it('without any config', function(done) {
-            var params = $httpParamSerializer({
-                sort: catalogManagerSvc.sortOptions[0].field,
-                ascending: catalogManagerSvc.sortOptions[0].asc
+            describe('with a promise id set', function() {
+                beforeEach(function() {
+                    httpSvc.get.and.returnValue($q.when({data: []}));
+                });
+                it('and all config passed', function() {
+                    catalogManagerSvc.getRecords(catalogId, config, promiseId).then(function(response) {
+                        expect(httpSvc.get).toHaveBeenCalledWith(url, {params: config}, promiseId);
+                        expect(response.data).toEqual([]);
+                    }, function(response) {
+                        fail('Promise should have resolved');
+                    });
+                    scope.$apply();
+                });
+                it('and no config passed', function() {
+                    var params = {
+                        sort: catalogManagerSvc.sortOptions[0].field,
+                        ascending: catalogManagerSvc.sortOptions[0].asc
+                    };
+                    catalogManagerSvc.getRecords(catalogId, {}, promiseId).then(function(response) {
+                        expect(httpSvc.get).toHaveBeenCalledWith(url, {params: params}, promiseId);
+                        expect(response.data).toEqual([]);
+                    }, function(response) {
+                        fail('Promise should have resolved');
+                    });
+                    scope.$apply();
+                });
             });
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records?' + params).respond(200, []);
-            catalogManagerSvc.getRecords(catalogId, {}).then(function(response) {
-                expect(response.data).toEqual([]);
-                done();
-            }, function(response) {
-                fail('Promise should have resolved');
-                done();
-            });
-            flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Record', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId)).respond(400, null, null, 'Error Message');
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId);
+        it('unless an error occurs', function() {
+            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecord(recordId, catalogId).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId)).respond(200, {});
+        it('successfully', function() {
+            $httpBackend.whenGET(url).respond(200, {});
             catalogManagerSvc.getRecord(recordId, catalogId).then(function(response) {
                 expect(response).toEqual({});
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Record', function() {
+        var recordConfig,
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records';
         beforeEach(function() {
-            this.recordConfig = {
+            recordConfig = {
                 type: prefixes.catalog + 'Record',
                 title: 'Title',
                 description: 'Description',
                 keywords: ['keyword0', 'keyword1']
             };
         });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records',
+        it('unless an error occurs', function() {
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createRecord(catalogId, this.recordConfig).then(function() {
+            catalogManagerSvc.createRecord(catalogId, recordConfig).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with a description and keywords', function(done) {
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records',
+        it('with a description and keywords', function() {
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, recordId);
-            catalogManagerSvc.createRecord(catalogId, this.recordConfig).then(function(response) {
+            catalogManagerSvc.createRecord(catalogId, recordConfig).then(function(response) {
                 expect(response).toBe(recordId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without a description or keywords', function(done) {
-            delete this.recordConfig.description;
-            delete this.recordConfig.keywords;
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records',
+        it('without a description or keywords', function() {
+            delete recordConfig.description;
+            delete recordConfig.keywords;
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, recordId);
-            catalogManagerSvc.createRecord(catalogId, this.recordConfig).then(function(response) {
+            catalogManagerSvc.createRecord(catalogId, recordConfig).then(function(response) {
                 expect(response).toBe(recordId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should update a Record', function() {
-        beforeEach(function() {
-            this.newRecord = {};
-        });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId), this.newRecord).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.updateRecord(recordId, catalogId, this.newRecord).then(function() {
+        var newRecord = {},
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId);
+        it('unless an error occurs', function() {
+            $httpBackend.expectPUT(url, newRecord).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.updateRecord(recordId, catalogId, newRecord).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId), this.newRecord).respond(200);
-            catalogManagerSvc.updateRecord(recordId, catalogId, this.newRecord).then(function() {
+        it('successfully', function() {
+            $httpBackend.expectPUT(url, newRecord).respond(200);
+            catalogManagerSvc.updateRecord(recordId, catalogId, newRecord).then(function() {
                 expect(true).toBe(true);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should delete a Record', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId)).respond(400, null, null, 'Error Message');
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId);
+        it('unless an error occurs', function() {
+            $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteRecord(recordId, catalogId).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId)).respond(200);
+        it('successfully', function() {
+            $httpBackend.whenDELETE(url).respond(200);
             catalogManagerSvc.deleteRecord(recordId, catalogId).then(function() {
                 expect(true).toBe(true);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a list of Record Distributions', function() {
-        beforeEach(function(){
-            this.config = {
+        var config = {
                 limit: 10,
                 offset: 0,
                 sort: 'http://purl.org/dc/terms/issued',
                 ascending: true
-            };
+            },
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions';
+        beforeEach(function() {
             catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title', asc: false}];
         });
-        it('unless an error occurs', function(done) {
-            var params = $httpParamSerializer(this.config);
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getRecordDistributions(recordId, catalogId, this.config).then(function(response) {
+        it('unless an error occurs', function() {
+            var params = $httpParamSerializer(config);
+            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getRecordDistributions(recordId, catalogId, config).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with all config passed', function(done) {
-            var params = $httpParamSerializer(this.config);
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions?' + params).respond(200, []);
-            catalogManagerSvc.getRecordDistributions(recordId, catalogId, this.config).then(function(response) {
+        it('with all config passed', function() {
+            var params = $httpParamSerializer(config);
+            $httpBackend.whenGET(url + '?' + params).respond(200, []);
+            catalogManagerSvc.getRecordDistributions(recordId, catalogId, config).then(function(response) {
                 expect(response.data).toEqual([]);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without any config passed', function(done) {
+        it('without any config passed', function() {
             var params = $httpParamSerializer({
                 sort: catalogManagerSvc.sortOptions[0].field,
                 ascending: catalogManagerSvc.sortOptions[0].asc
             });
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions?' + params).respond(200, []);
+            $httpBackend.whenGET(url + '?' + params).respond(200, []);
             catalogManagerSvc.getRecordDistributions(recordId, catalogId, {}).then(function(response) {
                 expect(response.data).toEqual([]);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Record Distribution', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId)).respond(400, null, null, 'Error Message');
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId);
+        it('unless an error occurs', function() {
+            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordDistribution(distributionId, recordId, catalogId).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId)).respond(200, {});
+        it('successfully', function() {
+            $httpBackend.whenGET(url).respond(200, {});
             catalogManagerSvc.getRecordDistribution(distributionId, recordId, catalogId).then(function(response) {
                 expect(response).toEqual({});
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Record Distribution', function() {
-        beforeEach(function() {
-            this.distributionConfig = {
+        var distributionConfig = {
                 title: 'Title',
                 description: 'Description',
                 format: 'text/plain',
                 accessURL: 'http://example.com/access',
                 downloadURL: 'http://example.com/download',
-            };
-        });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions',
+            },
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions';
+        it('unless an error occurs', function() {
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createRecordDistribution(recordId, catalogId, this.distributionConfig).then(function() {
+            catalogManagerSvc.createRecordDistribution(recordId, catalogId, distributionConfig).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with a description, format, access URL, and download URL', function(done) {
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions',
+        it('with a description, format, access URL, and download URL', function() {
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, distributionId);
-            catalogManagerSvc.createRecordDistribution(recordId, catalogId, this.distributionConfig).then(function(response) {
+            catalogManagerSvc.createRecordDistribution(recordId, catalogId, distributionConfig).then(function(response) {
                 expect(response).toBe(distributionId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without a description, format, access URL, or download URL', function(done) {
-            delete this.distributionConfig.description;
-            delete this.distributionConfig.format;
-            delete this.distributionConfig.accessURL;
-            delete this.distributionConfig.downloadURL;
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions',
+        it('without a description, format, access URL, or download URL', function() {
+            delete distributionConfig.description;
+            delete distributionConfig.format;
+            delete distributionConfig.accessURL;
+            delete distributionConfig.downloadURL;
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, distributionId);
-            catalogManagerSvc.createRecordDistribution(recordId, catalogId, this.distributionConfig).then(function(response) {
+            catalogManagerSvc.createRecordDistribution(recordId, catalogId, distributionConfig).then(function(response) {
                 expect(response).toBe(distributionId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should update a Record Distribution', function() {
-        beforeEach(function() {
-            this.newDistribution = {};
-        });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId), this.newDistribution).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.updateRecordDistribution(distributionId, recordId, catalogId, this.newDistribution).then(function() {
+        var newDistribution = {},
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId);
+        it('unless an error occurs', function() {
+            $httpBackend.expectPUT(url, newDistribution).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.updateRecordDistribution(distributionId, recordId, catalogId, newDistribution).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId), this.newDistribution).respond(200);
-            catalogManagerSvc.updateRecordDistribution(distributionId, recordId, catalogId, this.newDistribution).then(function() {
+        it('successfully', function() {
+            $httpBackend.expectPUT(url, newDistribution).respond(200);
+            catalogManagerSvc.updateRecordDistribution(distributionId, recordId, catalogId, newDistribution).then(function() {
                 expect(true).toBe(true);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should delete a Record Distribution', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId)).respond(400, null, null, 'Error Message');
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId);
+        it('unless an error occurs', function() {
+            $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteRecordDistribution(distributionId, recordId, catalogId).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId)).respond(200);
+        it('successfully', function() {
+            $httpBackend.whenDELETE(url).respond(200);
             catalogManagerSvc.deleteRecordDistribution(distributionId, recordId, catalogId).then(function() {
                 expect(true).toBe(true);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a list of Record Versions', function() {
-        beforeEach(function(){
-            this.config = {
+        var config = {
                 limit: 10,
                 offset: 0,
                 sort: 'http://purl.org/dc/terms/issued',
                 ascending: true
-            };
+            },
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions';
+        beforeEach(function() {
             catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title', asc: false}];
         });
-        it('unless an error occurs', function(done) {
-            var params = $httpParamSerializer(this.config);
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getRecordVersions(recordId, catalogId, this.config).then(function(response) {
+        it('unless an error occurs', function() {
+            var params = $httpParamSerializer(config);
+            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getRecordVersions(recordId, catalogId, config).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with all config passed', function(done) {
-            var params = $httpParamSerializer(this.config);
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions?' + params).respond(200, []);
-            catalogManagerSvc.getRecordVersions(recordId, catalogId, this.config).then(function(response) {
+        it('with all config passed', function() {
+            var params = $httpParamSerializer(config);
+            $httpBackend.whenGET(url + '?' + params).respond(200, []);
+            catalogManagerSvc.getRecordVersions(recordId, catalogId, config).then(function(response) {
                 expect(response.data).toEqual([]);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without any config', function(done) {
+        it('without any config', function() {
             var params = $httpParamSerializer({
                 sort: catalogManagerSvc.sortOptions[0].field,
                 ascending: catalogManagerSvc.sortOptions[0].asc
             });
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions?' + params).respond(200, []);
+            $httpBackend.whenGET(url + '?' + params).respond(200, []);
             catalogManagerSvc.getRecordVersions(recordId, catalogId, {}).then(function(response) {
                 expect(response.data).toEqual([]);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve the latest Record Version', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/latest').respond(400, null, null, 'Error Message');
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/latest';
+        it('unless an error occurs', function() {
+            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordLatestVersion(recordId, catalogId).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/latest').respond(200, {});
+        it('successfully', function() {
+            $httpBackend.whenGET(url).respond(200, {});
             catalogManagerSvc.getRecordLatestVersion(recordId, catalogId).then(function(response) {
                 expect(response).toEqual({});
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Record Version', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId)).respond(400, null, null, 'Error Message');
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId);
+        it('unless an error occurs', function() {
+            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordVersion(versionId, recordId, catalogId).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId)).respond(200, {});
+        it('successfully', function() {
+            $httpBackend.whenGET(url).respond(200, {});
             catalogManagerSvc.getRecordVersion(versionId, recordId, catalogId).then(function(response) {
                 expect(response).toEqual({});
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Version', function() {
-        beforeEach(function() {
-            this.versionConfig = {
+        var versionConfig = {
                 title: 'Title',
                 description: 'Description'
-            };
-        });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
+            },
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions';
+        it('unless an error occurs', function() {
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createRecordVersion(recordId, catalogId, this.versionConfig).then(function() {
+            catalogManagerSvc.createRecordVersion(recordId, catalogId, versionConfig).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with a description', function(done) {
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
+        it('with a description', function() {
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, versionId);
-            catalogManagerSvc.createRecordVersion(recordId, catalogId, this.versionConfig).then(function(response) {
+            catalogManagerSvc.createRecordVersion(recordId, catalogId, versionConfig).then(function(response) {
                 expect(response).toBe(versionId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without a description', function(done) {
-            delete this.versionConfig.description;
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
+        it('without a description', function() {
+            delete versionConfig.description;
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, versionId);
-            catalogManagerSvc.createRecordVersion(recordId, catalogId, this.versionConfig).then(function(response) {
+            catalogManagerSvc.createRecordVersion(recordId, catalogId, versionConfig).then(function(response) {
                 expect(response).toBe(versionId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Tag', function() {
-        beforeEach(function() {
-            this.versionConfig = {
+        var version,
+            versionConfig = {
                 title: 'Title',
                 description: 'Description'
-            };
-            this.version = {'@id': versionId};
-            spyOn(catalogManagerSvc, 'getRecordVersion').and.returnValue($q.when(this.version));
+            },
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions';
+        beforeEach(function() {
+            version = {'@id': versionId};
+            spyOn(catalogManagerSvc, 'getRecordVersion').and.returnValue($q.when(version));
             spyOn(catalogManagerSvc, 'updateRecordVersion').and.returnValue($q.when(versionId));
         });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
+        it('unless an error occurs', function() {
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createRecordTag(recordId, catalogId, this.versionConfig, commitId).then(function() {
+            catalogManagerSvc.createRecordTag(recordId, catalogId, versionConfig, commitId).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with a description', function(done) {
-            var expectedVersion = angular.copy(this.version);
+        it('with a description', function() {
+            var expectedVersion = angular.copy(version);
             expectedVersion[prefixes.catalog + 'commit'] = [{'@id': commitId}];
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, versionId);
-            catalogManagerSvc.createRecordTag(recordId, catalogId, this.versionConfig, commitId).then(function(response) {
+            catalogManagerSvc.createRecordTag(recordId, catalogId, versionConfig, commitId).then(function(response) {
                 expect(catalogManagerSvc.getRecordVersion).toHaveBeenCalledWith(versionId, recordId, catalogId);
                 expect(catalogManagerSvc.updateRecordVersion).toHaveBeenCalledWith(versionId, recordId, catalogId, expectedVersion);
                 expect(response).toBe(versionId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without a description', function(done) {
-            delete this.versionConfig.description;
-            var expectedVersion = angular.copy(this.version);
+        it('without a description', function() {
+            delete versionConfig.description;
+            var expectedVersion = angular.copy(version);
             expectedVersion[prefixes.catalog + 'commit'] = [{'@id': commitId}];
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions',
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, versionId);
-            catalogManagerSvc.createRecordTag(recordId, catalogId, this.versionConfig, commitId).then(function(response) {
+            catalogManagerSvc.createRecordTag(recordId, catalogId, versionConfig, commitId).then(function(response) {
                 expect(catalogManagerSvc.getRecordVersion).toHaveBeenCalledWith(versionId, recordId, catalogId);
                 expect(catalogManagerSvc.updateRecordVersion).toHaveBeenCalledWith(versionId, recordId, catalogId, expectedVersion);
                 expect(response).toBe(versionId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should update a Record Version', function() {
-        beforeEach(function() {
-            this.newVersion = {};
-        });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId), this.newVersion).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.updateRecordVersion(versionId, recordId, catalogId, this.newVersion).then(function() {
+        var newVersion = {},
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId);
+        it('unless an error occurs', function() {
+            $httpBackend.expectPUT(url, newVersion).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.updateRecordVersion(versionId, recordId, catalogId, newVersion).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId), this.newVersion).respond(200);
-            catalogManagerSvc.updateRecordVersion(versionId, recordId, catalogId, this.newVersion).then(function() {
+        it('successfully', function() {
+            $httpBackend.expectPUT(url, newVersion).respond(200);
+            catalogManagerSvc.updateRecordVersion(versionId, recordId, catalogId, newVersion).then(function() {
                 expect(true).toBe(true);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should delete a Record Version', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId)).respond(400, null, null, 'Error Message');
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId);
+        it('unless an error occurs', function() {
+            $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteRecordVersion(versionId, recordId, catalogId).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId)).respond(200);
+        it('successfully', function() {
+            $httpBackend.whenDELETE(url).respond(200);
             catalogManagerSvc.deleteRecordVersion(versionId, recordId, catalogId).then(function() {
                 expect(true).toBe(true);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve the Commit of a Version', function() {
-        it('unless an error occurs', function(done) {
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit';
+        it('unless an error occurs', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit?' + params).respond(400, null, null, 'Error Message');
+            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getVersionCommit(versionId, recordId, catalogId, 'jsonld').then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with a format', function(done) {
+        it('with a format', function() {
             var params = $httpParamSerializer({format: 'turtle'});
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit?' + params).respond(200, {});
+            $httpBackend.whenGET(url + '?' + params).respond(200, {});
             catalogManagerSvc.getVersionCommit(versionId, recordId, catalogId, 'turtle').then(function(response) {
                 expect(response).toEqual({});
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without a format', function(done) {
+        it('without a format', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit?' + params).respond(200, {});
+            $httpBackend.whenGET(url + '?' + params).respond(200, {});
             catalogManagerSvc.getVersionCommit(versionId, recordId, catalogId).then(function(response) {
                 expect(response).toEqual({});
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a list of Version Distributions', function() {
-        beforeEach(function(){
-            this.config = {
+        var config = {
                 limit: 10,
                 offset: 0,
                 sort: 'http://purl.org/dc/terms/issued',
                 ascending: true
-            };
+            },
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions';
+        beforeEach(function() {
             catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title', asc: false}];
         });
-        it('unless an error occurs', function(done) {
-            var params = $httpParamSerializer(this.config);
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, this.config).then(function(response) {
+        it('unless an error occurs', function() {
+            var params = $httpParamSerializer(config);
+            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, config).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with all config passed', function(done) {
-            var params = $httpParamSerializer(this.config);
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions?' + params).respond(200, []);
-            catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, this.config).then(function(response) {
+        it('with all config passed', function() {
+            var params = $httpParamSerializer(config);
+            $httpBackend.whenGET(url + '?' + params).respond(200, []);
+            catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, config).then(function(response) {
                 expect(response.data).toEqual([]);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without any config', function(done) {
+        it('without any config', function() {
             var params = $httpParamSerializer({
                 sort: catalogManagerSvc.sortOptions[0].field,
                 ascending: catalogManagerSvc.sortOptions[0].asc
             });
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions?' + params).respond(200, []);
+            $httpBackend.whenGET(url + '?' + params).respond(200, []);
             catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, {}).then(function(response) {
                 expect(response.data).toEqual([]);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Version Distribution', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId)).respond(400, null, null, 'Error Message');
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId);
+        it('unless an error occurs', function() {
+            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getVersionDistribution(distributionId, versionId, recordId, catalogId).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId)).respond(200, {});
+        it('successfully', function() {
+            $httpBackend.whenGET(url).respond(200, {});
             catalogManagerSvc.getVersionDistribution(distributionId, versionId, recordId, catalogId).then(function(response) {
                 expect(response).toEqual({});
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Version Distribution', function() {
-        beforeEach(function() {
-            this.distributionConfig = {
+        var distributionConfig = {
                 title: 'Title',
                 description: 'Description',
                 format: 'text/plain',
                 accessURL: 'http://example.com/access',
                 downloadURL: 'http://example.com/download',
-            };
-        });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions',
+            },
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions';
+        it('unless an error occurs', function() {
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createVersionDistribution(versionId, recordId, catalogId, this.distributionConfig).then(function() {
+            catalogManagerSvc.createVersionDistribution(versionId, recordId, catalogId, distributionConfig).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with a description, format, access URL, and download URL', function(done) {
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions',
+        it('with a description, format, access URL, and download URL', function() {
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, distributionId);
-            catalogManagerSvc.createVersionDistribution(versionId, recordId, catalogId, this.distributionConfig).then(function(response) {
+            catalogManagerSvc.createVersionDistribution(versionId, recordId, catalogId, distributionConfig).then(function(response) {
                 expect(response).toBe(distributionId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without a description, format, access URL, or download URL', function(done) {
-            delete this.distributionConfig.description;
-            delete this.distributionConfig.format;
-            delete this.distributionConfig.accessURL;
-            delete this.distributionConfig.downloadURL;
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions',
+        it('without a description, format, access URL, or download URL', function() {
+            delete distributionConfig.description;
+            delete distributionConfig.format;
+            delete distributionConfig.accessURL;
+            delete distributionConfig.downloadURL;
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, distributionId);
-            catalogManagerSvc.createVersionDistribution(versionId, recordId, catalogId, this.distributionConfig).then(function(response) {
+            catalogManagerSvc.createVersionDistribution(versionId, recordId, catalogId, distributionConfig).then(function(response) {
                 expect(response).toBe(distributionId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should update a Version Distribution', function() {
-        beforeEach(function() {
-            this.newDistribution = {};
-        });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId), this.newDistribution).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.updateVersionDistribution(distributionId, versionId, recordId, catalogId, this.newDistribution).then(function() {
+        var newDistribution = {},
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId);
+        it('unless an error occurs', function() {
+            $httpBackend.expectPUT(url, newDistribution).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.updateVersionDistribution(distributionId, versionId, recordId, catalogId, newDistribution).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId), this.newDistribution).respond(200);
-            catalogManagerSvc.updateVersionDistribution(distributionId, versionId, recordId, catalogId, this.newDistribution).then(function() {
+        it('successfully', function() {
+            $httpBackend.expectPUT(url, newDistribution).respond(200);
+            catalogManagerSvc.updateVersionDistribution(distributionId, versionId, recordId, catalogId, newDistribution).then(function() {
                 expect(true).toBe(true);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should delete a Version Distribution', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId)).respond(400, null, null, 'Error Message');
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId);
+        it('unless an error occurs', function() {
+            $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteVersionDistribution(distributionId, versionId, recordId, catalogId).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId)).respond(200);
+        it('successfully', function() {
+            $httpBackend.whenDELETE(url).respond(200);
             catalogManagerSvc.deleteVersionDistribution(distributionId, versionId, recordId, catalogId).then(function() {
                 expect(true).toBe(true);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a list of Record Branches', function() {
-        beforeEach(function(){
-            this.config = {
+        var config,
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches';
+        beforeEach(function() {
+            config = {
                 limit: 10,
                 offset: 0,
                 sort: 'http://purl.org/dc/terms/issued',
@@ -1016,671 +975,613 @@ describe('Catalog Manager service', function() {
             };
             catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title', asc: false}];
         });
-        it('unless an error occurs', function(done) {
-            var params = $httpParamSerializer(this.config);
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getRecordBranches(recordId, catalogId, this.config).then(function(response) {
+        it('unless an error occurs', function() {
+            var params = $httpParamSerializer(config);
+            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getRecordBranches(recordId, catalogId, config).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with all config passed', function(done) {
-            this.config.applyUserFilter = true;
-            var params = $httpParamSerializer(this.config);
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches?' + params).respond(200, []);
-            catalogManagerSvc.getRecordBranches(recordId, catalogId, this.config, true).then(function(response) {
+        it('with all config passed', function() {
+            config.applyUserFilter = true;
+            var params = $httpParamSerializer(config);
+            $httpBackend.whenGET(url + '?' + params).respond(200, []);
+            catalogManagerSvc.getRecordBranches(recordId, catalogId, config, true).then(function(response) {
                 expect(response.data).toEqual([]);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without any config', function(done) {
+        it('without any config', function() {
             var params = $httpParamSerializer({
                 sort: catalogManagerSvc.sortOptions[0].field,
                 ascending: catalogManagerSvc.sortOptions[0].asc,
                 applyUserFilter: false
             });
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches?' + params).respond(200, []);
+            $httpBackend.whenGET(url + '?' + params).respond(200, []);
             catalogManagerSvc.getRecordBranches(recordId, catalogId, {}).then(function(response) {
                 expect(response.data).toEqual([]);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve the master Branch of a Record', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/master').respond(400, null, null, 'Error Message');
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/master';
+        it('unless an error occurs', function() {
+            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordMasterBranch(recordId, catalogId).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/master').respond(200, {});
+        it('successfully', function() {
+            $httpBackend.whenGET(url).respond(200, {});
             catalogManagerSvc.getRecordMasterBranch(recordId, catalogId).then(function(response) {
                 expect(response).toEqual({});
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Record Branch', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId)).respond(400, null, null, 'Error Message');
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId);
+        it('unless an error occurs', function() {
+            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordBranch(branchId, recordId, catalogId).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId)).respond(200, {});
+        it('successfully', function() {
+            $httpBackend.whenGET(url).respond(200, {});
             catalogManagerSvc.getRecordBranch(branchId, recordId, catalogId).then(function(response) {
                 expect(response).toEqual({});
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Branch', function() {
-        beforeEach(function() {
-            this.branchConfig = {
+        var branch,
+            branchConfig = {
                 title: 'Title',
                 description: 'Description'
-            };
-            this.branch = {'@id': branchId};
-            spyOn(catalogManagerSvc, 'getRecordBranch').and.returnValue($q.when(this.branch));
+            },
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches';
+        beforeEach(function() {
+            branch = {'@id': branchId};
+            spyOn(catalogManagerSvc, 'getRecordBranch').and.returnValue($q.when(branch));
             spyOn(catalogManagerSvc, 'updateRecordBranch').and.returnValue($q.when(branchId));
         });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches',
+        it('unless an error occurs', function() {
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createRecordBranch(recordId, catalogId, this.branchConfig, commitId).then(function() {
+            catalogManagerSvc.createRecordBranch(recordId, catalogId, branchConfig, commitId).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with a description', function(done) {
-            var expectedBranch = angular.copy(this.branch);
+        it('with a description', function() {
+            var expectedBranch = angular.copy(branch);
             expectedBranch[prefixes.catalog + 'head'] = [{'@id': commitId}];
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches',
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, branchId);
-            catalogManagerSvc.createRecordBranch(recordId, catalogId, this.branchConfig, commitId).then(function(response) {
+            catalogManagerSvc.createRecordBranch(recordId, catalogId, branchConfig, commitId).then(function(response) {
                 expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId);
                 expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId, expectedBranch);
                 expect(response).toBe(branchId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without a description', function(done) {
-            delete this.branchConfig.description;
-            var expectedBranch = angular.copy(this.branch);
+        it('without a description', function() {
+            delete branchConfig.description;
+            var expectedBranch = angular.copy(branch);
             expectedBranch[prefixes.catalog + 'head'] = [{'@id': commitId}];
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches',
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, branchId);
-            catalogManagerSvc.createRecordBranch(recordId, catalogId, this.branchConfig, commitId).then(function(response) {
+            catalogManagerSvc.createRecordBranch(recordId, catalogId, branchConfig, commitId).then(function(response) {
                 expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId);
                 expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId, expectedBranch);
                 expect(response).toBe(branchId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should create a new UserBranch', function() {
-        beforeEach(function() {
-            this.branchConfig = {
+        var branch,
+            branchConfig = {
                 title: 'Title',
                 description: 'Description'
-            };
-            this.branch = {'@id': branchId};
-            spyOn(catalogManagerSvc, 'getRecordBranch').and.returnValue($q.when(this.branch));
+            },
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches';
+        beforeEach(function() {
+            branch = {'@id': branchId};
+            spyOn(catalogManagerSvc, 'getRecordBranch').and.returnValue($q.when(branch));
             spyOn(catalogManagerSvc, 'updateRecordBranch').and.returnValue($q.when(branchId));
         });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches',
+        it('unless an error occurs', function() {
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createRecordUserBranch(recordId, catalogId, this.branchConfig, commitId, branchId).then(function() {
+            catalogManagerSvc.createRecordUserBranch(recordId, catalogId, branchConfig, commitId, branchId).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with a description', function(done) {
-            var expectedBranch = angular.copy(this.branch);
+        it('with a description', function() {
+            var expectedBranch = angular.copy(branch);
             expectedBranch[prefixes.catalog + 'head'] = [{'@id': commitId}];
             expectedBranch[prefixes.catalog + 'createdFrom'] = [{'@id': branchId}];
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches',
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, branchId);
-            catalogManagerSvc.createRecordUserBranch(recordId, catalogId, this.branchConfig, commitId, branchId).then(function(response) {
+            catalogManagerSvc.createRecordUserBranch(recordId, catalogId, branchConfig, commitId, branchId).then(function(response) {
                 expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId);
                 expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId, expectedBranch);
                 expect(response).toBe(branchId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without a description', function(done) {
-            delete this.branchConfig.description;
-            var expectedBranch = angular.copy(this.branch);
+        it('without a description', function() {
+            delete branchConfig.description;
+            var expectedBranch = angular.copy(branch);
             expectedBranch[prefixes.catalog + 'head'] = [{'@id': commitId}];
             expectedBranch[prefixes.catalog + 'createdFrom'] = [{'@id': branchId}];
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches',
+            $httpBackend.expectPOST(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, branchId);
-            catalogManagerSvc.createRecordUserBranch(recordId, catalogId, this.branchConfig, commitId, branchId).then(function(response) {
+            catalogManagerSvc.createRecordUserBranch(recordId, catalogId, branchConfig, commitId, branchId).then(function(response) {
                 expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId);
                 expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId, expectedBranch);
                 expect(response).toBe(branchId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should update a Record Branch', function() {
-        beforeEach(function() {
-            this.newBranch = {};
-        });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId), this.newBranch).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.updateRecordBranch(branchId, recordId, catalogId, this.newBranch).then(function() {
+        var newBranch = {},
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId);
+        it('unless an error occurs', function() {
+            $httpBackend.expectPUT(url, newBranch).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.updateRecordBranch(branchId, recordId, catalogId, newBranch).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.expectPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId), this.newBranch).respond(200);
-            catalogManagerSvc.updateRecordBranch(branchId, recordId, catalogId, this.newBranch).then(function() {
+        it('successfully', function() {
+            $httpBackend.expectPUT(url, newBranch).respond(200);
+            catalogManagerSvc.updateRecordBranch(branchId, recordId, catalogId, newBranch).then(function() {
                 expect(true).toBe(true);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should delete a Record Branch', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId)).respond(400, null, null, 'Error Message');
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId);
+        it('unless an error occurs', function() {
+            $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteRecordBranch(branchId, recordId, catalogId).then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId)).respond(200);
+        it('successfully', function() {
+            $httpBackend.whenDELETE(url).respond(200);
             catalogManagerSvc.deleteRecordBranch(branchId, recordId, catalogId).then(function() {
                 expect(true).toBe(true);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve Branch Commits', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits').respond(400, null, null, 'Error Message');
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits';
+        it('unless an error occurs', function() {
+            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getBranchCommits(branchId, recordId, catalogId).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits').respond(200, []);
+        it('successfully', function() {
+            $httpBackend.whenGET(url).respond(200, []);
             catalogManagerSvc.getBranchCommits(branchId, recordId, catalogId).then(function(response) {
                 expect(response).toEqual([]);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should create a new commit on a Branch', function() {
-        beforeEach(function() {
-            this.message = 'Message';
-        });
-        it('unless an error occurs', function(done) {
-            var params = $httpParamSerializer({message: this.message});
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createBranchCommit(branchId, recordId, catalogId, this.message).then(function(response) {
+        var message = 'Message',
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits';
+        it('unless an error occurs', function() {
+            var params = $httpParamSerializer({message: message});
+            $httpBackend.expectPOST(url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.createBranchCommit(branchId, recordId, catalogId, message).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            var params = $httpParamSerializer({message: this.message});
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits?' + params).respond(200, commitId);
-            catalogManagerSvc.createBranchCommit(branchId, recordId, catalogId, this.message).then(function(response) {
+        it('successfully', function() {
+            var params = $httpParamSerializer({message: message});
+            $httpBackend.expectPOST(url + '?' + params).respond(200, commitId);
+            catalogManagerSvc.createBranchCommit(branchId, recordId, catalogId, message).then(function(response) {
                 expect(response).toBe(commitId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve the head Commit of a Branch', function() {
-        it('unless an error occurs', function(done) {
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head';
+        it('unless an error occurs', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head?' + params).respond(400, null, null, 'Error Message');
+            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getBranchHeadCommit(branchId, recordId, catalogId, 'jsonld').then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with a format', function(done) {
+        it('with a format', function() {
             var params = $httpParamSerializer({format: 'turtle'});
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head?' + params).respond(200, {});
+            $httpBackend.whenGET(url + '?' + params).respond(200, {});
             catalogManagerSvc.getBranchHeadCommit(branchId, recordId, catalogId, 'turtle').then(function(response) {
                 expect(response).toEqual({});
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without a format', function(done) {
+        it('without a format', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head?' + params).respond(200, {});
+            $httpBackend.whenGET(url + '?' + params).respond(200, {});
             catalogManagerSvc.getBranchHeadCommit(branchId, recordId, catalogId).then(function(response) {
                 expect(response).toEqual({});
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Branch Commit', function() {
-        it('unless an error occurs', function(done) {
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId);
+        it('unless an error occurs', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '?' + params).respond(400, null, null, 'Error Message');
+            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getBranchCommit(commitId, branchId, recordId, catalogId, 'jsonld').then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with a format', function(done) {
+        it('with a format', function() {
             var params = $httpParamSerializer({format: 'turtle'});
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '?' + params).respond(200, {});
+            $httpBackend.whenGET(url + '?' + params).respond(200, {});
             catalogManagerSvc.getBranchCommit(commitId, branchId, recordId, catalogId, 'turtle').then(function(response) {
                 expect(response).toEqual({});
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without a format', function(done) {
+        it('without a format', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '?' + params).respond(200, {});
+            $httpBackend.whenGET(url + '?' + params).respond(200, {});
             catalogManagerSvc.getBranchCommit(commitId, branchId, recordId, catalogId).then(function(response) {
                 expect(response).toEqual({});
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should get the conflicts between two Branches', function() {
-        it('unless an error occurs', function(done) {
-            var params = $httpParamSerializer({
+        var config,
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts';
+        beforeEach(function() {
+            config = {
                 format: 'jsonld',
                 targetId: branchId
-            });
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts?' + params).respond(400, null, null, 'Error Message');
+            };
+        });
+        it('unless an error occurs', function() {
+            var params = $httpParamSerializer(config);
+            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getBranchConflicts(branchId, branchId, recordId, catalogId, 'jsonld').then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with a format', function(done) {
-            var params = $httpParamSerializer({
-                format: 'turtle',
-                targetId: branchId
-            });
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts?' + params).respond(200, []);
+        it('with a format', function() {
+            config.format = 'turtle';
+            var params = $httpParamSerializer(config);
+            $httpBackend.whenGET(url + '?' + params).respond(200, []);
             catalogManagerSvc.getBranchConflicts(branchId, branchId, recordId, catalogId, 'turtle').then(function(response) {
                 expect(response).toEqual([]);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with a format', function(done) {
-            var params = $httpParamSerializer({
-                format: 'jsonld',
-                targetId: branchId
-            });
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts?' + params).respond(200, []);
+        it('without a format', function() {
+            var params = $httpParamSerializer(config);
+            $httpBackend.whenGET(url + '?' + params).respond(200, []);
             catalogManagerSvc.getBranchConflicts(branchId, branchId, recordId, catalogId).then(function(response) {
                 expect(response).toEqual([]);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should merge two Branches', function() {
-        it('unless an error occurs', function(done) {
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts/resolution';
+        it('unless an error occurs', function() {
             var differenceObj = {};
             var params = $httpParamSerializer({targetId: branchId});
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts/resolution?' + params,
+            $httpBackend.expectPOST(url + '?' + params,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
             catalogManagerSvc.mergeBranches(branchId, branchId, recordId, catalogId, differenceObj).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with additions and deletions', function(done) {
+        it('with additions and deletions', function() {
             var differenceObj = {additions: [], deletions: []};
             var params = $httpParamSerializer({targetId: branchId});
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts/resolution?' + params,
+            $httpBackend.expectPOST(url + '?' + params,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, commitId);
             catalogManagerSvc.mergeBranches(branchId, branchId, recordId, catalogId, differenceObj).then(function(response) {
                 expect(response).toEqual(commitId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without additions and deletions', function(done) {
+        it('without additions and deletions', function() {
             var differenceObj = {};
             var params = $httpParamSerializer({targetId: branchId});
-            $httpBackend.expectPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts/resolution?' + params,
+            $httpBackend.expectPOST(url + '?' + params,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, commitId);
             catalogManagerSvc.mergeBranches(branchId, branchId, recordId, catalogId, differenceObj).then(function(response) {
                 expect(response).toEqual(commitId);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve the compiled resource from a Branch Commit', function() {
-        it('unless an error occurs', function(done) {
-            var params = $httpParamSerializer({
+        var config,
+            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource';
+        beforeEach(function() {
+            config = {
                 applyInProgressCommit: true,
                 format: 'jsonld'
-            });
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?' + params).respond(400, null, null, 'Error Message');
+            };
+        });
+        it('unless an error occurs', function() {
+            var params = $httpParamSerializer(config);
+            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getResource(commitId, branchId, recordId, catalogId, true, 'jsonld').then(function() {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with a format', function(done) {
-            var params = $httpParamSerializer({
-                applyInProgressCommit: true,
-                format: 'turtle'
-            });
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?' + params).respond(200, '');
+        it('with a format', function() {
+            config.format = 'turtle';
+            var params = $httpParamSerializer(config);
+            $httpBackend.whenGET(url + '?' + params).respond(200, '');
             catalogManagerSvc.getResource(commitId, branchId, recordId, catalogId, true, 'turtle').then(function(response) {
                 expect(response).toBe('');
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without a format', function(done) {
-            var params = $httpParamSerializer({
-                applyInProgressCommit: true,
-                format: 'jsonld'
-            });
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?' + params).respond(200, '');
+        it('without a format', function() {
+            var params = $httpParamSerializer(config);
+            $httpBackend.whenGET(url + '?' + params).respond(200, '');
             catalogManagerSvc.getResource(commitId, branchId, recordId, catalogId, true).then(function(response) {
                 expect(response).toBe('');
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should download the compiled resource from a Branch Commit', function() {
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource';
         it('with a format', function() {
             catalogManagerSvc.downloadResource(commitId, branchId, recordId, catalogId, true, 'turtle');
-            expect(windowSvc.location).toBe('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=true&format=turtle&fileName=resource');
+            expect(windowSvc.location).toBe(url + '?applyInProgressCommit=true&format=turtle&fileName=resource');
         });
         it('without a format', function() {
             catalogManagerSvc.downloadResource(commitId, branchId, recordId, catalogId, true);
-            expect(windowSvc.location).toBe('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource?applyInProgressCommit=true&format=jsonld&fileName=resource');
+            expect(windowSvc.location).toBe(url + '?applyInProgressCommit=true&format=jsonld&fileName=resource');
         });
     });
     describe('should create a new InProgressCommit for the logged-in User', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit').respond(400, null, null, 'Error Message');
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
+        it('unless an error occurs', function() {
+            $httpBackend.whenPOST(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.createInProgressCommit(recordId, catalogId).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.whenPOST('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit').respond(200);
+        it('successfully', function() {
+            $httpBackend.whenPOST(url).respond(200);
             catalogManagerSvc.createInProgressCommit(recordId, catalogId).then(function(response) {
                 expect(true).toBe(true);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve an InProgressCommit for the logged-in User', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit').respond(400, null, null, 'Error Message');
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
+        it('unless an error occurs', function() {
+            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getInProgressCommit(recordId, catalogId).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.whenGET('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit').respond(200, {});
+        it('successfully', function() {
+            $httpBackend.whenGET(url).respond(200, {});
             catalogManagerSvc.getInProgressCommit(recordId, catalogId).then(function(response) {
                 expect(response).toEqual({});
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should update an InProgressCommit for the logged-in User', function() {
-        it('unless an error occurs', function(done) {
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
+        it('unless an error occurs', function() {
             var differenceObj = {};
-            $httpBackend.whenPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit',
+            $httpBackend.whenPUT(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
             catalogManagerSvc.updateInProgressCommit(recordId, catalogId, differenceObj).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('with additions and deletions', function(done) {
+        it('with additions and deletions', function() {
             var differenceObj = {additions: [], deletions: []};
-            $httpBackend.whenPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit',
+            $httpBackend.whenPUT(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200);
             catalogManagerSvc.updateInProgressCommit(recordId, catalogId, differenceObj).then(function(response) {
                 expect(true).toEqual(true);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('without additions and deletions', function(done) {
+        it('without additions and deletions', function() {
             var differenceObj = {};
-            $httpBackend.whenPUT('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit',
+            $httpBackend.whenPUT(url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200);
             catalogManagerSvc.updateInProgressCommit(recordId, catalogId, differenceObj).then(function(response) {
                 expect(true).toEqual(true);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });
     });
     describe('should remove an InProgressCommit for the logged-in User', function() {
-        it('unless an error occurs', function(done) {
-            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit').respond(400, null, null, 'Error Message');
+        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
+        it('unless an error occurs', function() {
+            $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteInProgressCommit(recordId, catalogId).then(function(response) {
                 fail('Promise should have rejected');
-                done();
             }, function(response) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
-                done();
             });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.whenDELETE('/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit').respond(200);
+        it('successfully', function() {
+            $httpBackend.whenDELETE(url).respond(200);
             catalogManagerSvc.deleteInProgressCommit(recordId, catalogId).then(function(response) {
                 expect(true).toEqual(true);
-                done();
             }, function(response) {
                 fail('Promise should have resolved');
-                done();
             });
             flushAndVerify($httpBackend);
         });

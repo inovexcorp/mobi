@@ -49,9 +49,9 @@
          */
         .service('catalogManagerService', catalogManagerService);
 
-        catalogManagerService.$inject = ['$window', '$http', '$q', 'prefixes', 'utilService'];
+        catalogManagerService.$inject = ['$window', '$http', 'httpService', '$q', 'prefixes', 'utilService'];
 
-        function catalogManagerService($window, $http, $q, prefixes, utilService) {
+        function catalogManagerService($window, $http, httpService, $q, prefixes, utilService) {
             var self = this,
                 util = utilService,
                 prefix = '/matontorest/catalogs';
@@ -165,8 +165,7 @@
              * record types in the catalog
              */
             self.getRecordTypes = function() {
-                return $http.get(prefix + '/record-types')
-                    .then(response => $q.resolve(response.data));
+                return $http.get(prefix + '/record-types').then(response => response.data, util.rejectError);
             }
 
             /**
@@ -182,8 +181,7 @@
              * supported record properties to sort by
              */
             self.getSortOptions = function() {
-                return $http.get(prefix + '/sort-options')
-                    .then(response => $q.resolve(response.data));
+                return $http.get(prefix + '/sort-options').then(response => response.data, util.rejectError);
             }
 
             /**
@@ -202,10 +200,7 @@
              * with a error message
              */
             self.getResultsPage = function(url) {
-                var deferred = $q.defer();
-                $http.get(url)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(url).then($q.resolve, util.rejectError);
             }
 
             /**
@@ -231,11 +226,10 @@
              * @returns {Promise} A promise that either resolves with the paginated response or is rejected
              * with a error message
              */
-            self.getRecords = function(catalogId, paginatedConfig) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: util.paginatedConfigToParams(paginatedConfig)
-                    };
+            self.getRecords = function(catalogId, paginatedConfig, id = '') {
+                var config = {
+                    params: util.paginatedConfigToParams(paginatedConfig)
+                };
                 setDefaultSort(config.params);
                 if (_.get(paginatedConfig, 'searchText')) {
                     config.params.searchText = paginatedConfig.searchText;
@@ -243,9 +237,9 @@
                 if (_.get(paginatedConfig, 'recordType')) {
                     config.params.type = paginatedConfig.recordType;
                 }
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records', config)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                var url = prefix + '/' + encodeURIComponent(catalogId) + '/records';
+                var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+                return promise.then($q.resolve, util.rejectError);
             }
 
             /**
@@ -263,10 +257,8 @@
              * an error message
              */
             self.getRecord = function(recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId))
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId))
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -290,8 +282,7 @@
              * message
              */
             self.createRecord = function(catalogId, recordConfig) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: _.identity,
                         headers: {
@@ -306,9 +297,8 @@
                 if (_.get(recordConfig, 'keywords', []).length > 0) {
                     fd.append('keywords', _.join(recordConfig.keywords, ','));
                 }
-                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records', fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records', fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -326,10 +316,8 @@
              * @return {Promise} A promise that resolves if the update was successful or rejects with an error message
              */
             self.updateRecord = function(recordId, catalogId, newRecord) {
-                var deferred = $q.defer();
-                $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId), angular.toJson(newRecord))
-                    .then(response => deferred.resolve(recordId), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId), angular.toJson(newRecord))
+                    .then(response => recordId, util.rejectError);
             }
 
             /**
@@ -346,10 +334,8 @@
              * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
              */
             self.deleteRecord = function(recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId))
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId))
+                    .then(response => $q.resolve(), util.rejectError);
             }
 
             /**
@@ -374,14 +360,12 @@
              * with a error message
              */
             self.getRecordDistributions = function(recordId, catalogId, paginatedConfig) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: util.paginatedConfigToParams(paginatedConfig)
-                    };
+                var config = {
+                    params: util.paginatedConfigToParams(paginatedConfig)
+                };
                 setDefaultSort(config.params);
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', config)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', config)
+                    .then($q.resolve, util.rejectError);
             }
 
             /**
@@ -400,10 +384,8 @@
              * with an error message
              */
             self.getRecordDistribution = function(distributionId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId))
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId))
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -428,8 +410,7 @@
              * message
              */
             self.createRecordDistribution = function(recordId, catalogId, distributionConfig) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: _.identity,
                         headers: {
@@ -449,9 +430,8 @@
                 if (_.has(distributionConfig, 'downloadURL')) {
                     fd.append('downloadURL', distributionConfig.downloadURL);
                 }
-                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -471,10 +451,8 @@
              * @return {Promise} A promise that resolves if the update was successful or rejects with an error message
              */
             self.updateRecordDistribution = function(distributionId, recordId, catalogId, newDistribution) {
-                var deferred = $q.defer();
-                $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId), angular.toJson(newDistribution))
-                    .then(response => deferred.resolve(distributionId), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId), angular.toJson(newDistribution))
+                    .then(response => distributionId, util.rejectError);
             }
 
             /**
@@ -493,10 +471,8 @@
              * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
              */
             self.deleteRecordDistribution = function(distributionId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId))
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId))
+                    .then(response => $q.resolve(), util.rejectError);
             }
 
             /**
@@ -521,14 +497,12 @@
              * with a error message
              */
             self.getRecordVersions = function(recordId, catalogId, paginatedConfig) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: util.paginatedConfigToParams(paginatedConfig)
-                    };
+                var config = {
+                    params: util.paginatedConfigToParams(paginatedConfig)
+                };
                 setDefaultSort(config.params);
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', config)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', config)
+                    .then($q.resolve, util.rejectError);
             }
 
             /**
@@ -614,11 +588,11 @@
             self.createRecordTag = function(recordId, catalogId, versionConfig, commitId) {
                 versionConfig.type = prefixes.catalog + 'Tag';
                 return createVersion(recordId, catalogId, versionConfig)
-                    .then(iri => self.getRecordVersion(iri, recordId, catalogId), error => $q.reject(error))
+                    .then(iri => self.getRecordVersion(iri, recordId, catalogId), $q.reject)
                     .then(version => {
                         version[prefixes.catalog + 'commit'] = [{'@id': commitId}];
                         return self.updateRecordVersion(version['@id'], recordId, catalogId, version);
-                    }, error => $q.reject(error))
+                    }, $q.reject)
             }
 
             /**
@@ -638,10 +612,8 @@
              * @return {Promise} A promise that resolves if the update was successful or rejects with an error message
              */
             self.updateRecordVersion = function(versionId, recordId, catalogId, newVersion) {
-                var deferred = $q.defer();
-                $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId), angular.toJson(newVersion))
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId), angular.toJson(newVersion))
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -660,10 +632,8 @@
              * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
              */
             self.deleteRecordVersion = function(versionId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId))
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId))
+                    .then(response => $q.resolve(), util.rejectError);
             }
 
             /**
@@ -683,13 +653,9 @@
              * @return {Promise} A promise that resolves to the Version's Commit if found or rejects with an error message
              */
             self.getVersionCommit = function(versionId, recordId, catalogId, format = 'jsonld') {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {format}
-                    };
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit', config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                var config = { params: {format} };
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit', config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -715,14 +681,12 @@
              * with a error message
              */
             self.getVersionDistributions = function(versionId, recordId, catalogId, paginatedConfig) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: util.paginatedConfigToParams(paginatedConfig)
-                    };
+                var config = {
+                    params: util.paginatedConfigToParams(paginatedConfig)
+                };
                 setDefaultSort(config.params);
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', config)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', config)
+                    .then($q.resolve, util.rejectError);
             }
 
             /**
@@ -742,10 +706,8 @@
              * with an error message
              */
             self.getVersionDistribution = function(distributionId, versionId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId))
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId))
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -772,8 +734,7 @@
              * message
              */
             self.createVersionDistribution = function(versionId, recordId, catalogId, distributionConfig) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: _.identity,
                         headers: {
@@ -793,9 +754,8 @@
                 if (_.has(distributionConfig, 'downloadURL')) {
                     fd.append('format', distributionConfig.downloadURL);
                 }
-                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -816,10 +776,8 @@
              * @return {Promise} A promise that resolves if the update was successful or rejects with an error message
              */
             self.updateVersionDistribution = function(distributionId, versionId, recordId, catalogId, newDistribution) {
-                var deferred = $q.defer();
-                $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId), angular.toJson(newDistribution))
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId), angular.toJson(newDistribution))
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -839,10 +797,8 @@
              * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
              */
             self.deleteVersionDistribution = function(distributionId, versionId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId))
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId))
+                    .then(response => $q.resolve(), util.rejectError);
             }
 
             /**
@@ -869,15 +825,13 @@
              * with a error message
              */
             self.getRecordBranches = function(recordId, catalogId, paginatedConfig, applyUserFilter = false) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: util.paginatedConfigToParams(paginatedConfig)
-                    };
+                var config = {
+                    params: util.paginatedConfigToParams(paginatedConfig)
+                };
                 setDefaultSort(config.params);
                 config.params.applyUserFilter = applyUserFilter;
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', config)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', config)
+                    .then($q.resolve, util.rejectError);
             }
 
             /**
@@ -995,10 +949,8 @@
              * rejects with an error message
              */
             self.updateRecordBranch = function(branchId, recordId, catalogId, newBranch) {
-                var deferred = $q.defer();
-                $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId), angular.toJson(newBranch))
-                    .then(response => deferred.resolve(branchId), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId), angular.toJson(newBranch))
+                    .then(response => branchId, util.rejectError);
             }
 
             /**
@@ -1017,10 +969,8 @@
              * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
              */
             self.deleteRecordBranch = function(branchId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId))
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId))
+                    .then(response => $q.resolve(), util.rejectError);
             }
 
             /**
@@ -1038,10 +988,8 @@
              * @return {Promise} A promise that resolves with the list of Branch Commits or rejects with an error message
              */
             self.getBranchCommits = function(branchId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits')
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits')
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1061,15 +1009,9 @@
              * @return {Promise} A promise that resolves to the if of the new Commit or rejects with an error message
              */
             self.createBranchCommit = function(branchId, recordId, catalogId, message) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {
-                            message
-                        }
-                    };
-                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits', null, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                var config = { params: {message} };
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits', null, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1088,13 +1030,9 @@
              * @return {Promise} A promise that resolves to the Commit if found or rejects with an error message
              */
             self.getBranchHeadCommit = function(branchId, recordId, catalogId, format = 'jsonld') {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {format}
-                    };
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head', config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                var config = { params: {format} };
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head', config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1114,13 +1052,9 @@
              * @return {Promise} A promise that resolves to the Commit if found or rejects with an error message
              */
             self.getBranchCommit = function(commitId, branchId, recordId, catalogId, format = 'jsonld') {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {format}
-                    };
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId), config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                var config = { params: {format} };
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId), config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1141,16 +1075,14 @@
              * @return {Promise} A promise that resolves to the array of Conflict objects or rejects with an error message
              */
             self.getBranchConflicts = function(sourceId, targetId, recordId, catalogId, format = 'jsonld') {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {
-                            format,
-                            targetId
-                        }
-                    };
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts', config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                var config = {
+                    params: {
+                        format,
+                        targetId
+                    }
+                };
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts', config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1174,8 +1106,7 @@
              * message
              */
             self.mergeBranches = function(sourceId, targetId, recordId, catalogId, differenceObj) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: _.identity,
                         headers: {
@@ -1185,9 +1116,8 @@
                     };
                 fd.append('additions', _.has(differenceObj, 'additions') ? JSON.stringify(differenceObj.additions) : '[]');
                 fd.append('deletions', _.has(differenceObj, 'deletions') ? JSON.stringify(differenceObj.deletions) : '[]');
-                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts/resolution', fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts/resolution', fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1209,20 +1139,18 @@
              * @return {Promise} A promise that resolves to the compiled resource or rejects with an error message.
              */
             self.getResource = function(commitId, branchId, recordId, catalogId, applyInProgressCommit, format = 'jsonld') {
-                var deferred = $q.defer(),
-                    config = {
-                        headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
-                        },
-                        params: {
-                            format,
-                            applyInProgressCommit
-                        }
-                    };
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource', config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                var config = {
+                    headers: {
+                        'Content-Type': undefined,
+                        'Accept': 'text/plain'
+                    },
+                    params: {
+                        format,
+                        applyInProgressCommit
+                    }
+                };
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource', config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1261,10 +1189,8 @@
              * @return {Promise} A promise that resolves if the creation was successful or rejects with an error message
              */
             self.createInProgressCommit = function(recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
+                    .then(response => $q.resolve(), util.rejectError);
             }
 
             /**
@@ -1281,10 +1207,8 @@
              * @return {Promise} A promise that resolves with the InProgessCommit or rejects with an error message
              */
             self.getInProgressCommit = function(recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1305,8 +1229,7 @@
              * @return {Promise} A promise that resolves if the update was successful or rejects with an error message
              */
             self.updateInProgressCommit = function(recordId, catalogId, differenceObj) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: _.identity,
                         headers: {
@@ -1319,9 +1242,8 @@
                 if (_.has(differenceObj, 'deletions')) {
                     fd.append('deletions', JSON.stringify(differenceObj.deletions));
                 }
-                $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit', fd, config)
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit', fd, config)
+                    .then(response => $q.resolve(), util.rejectError);
             }
 
             /**
@@ -1338,10 +1260,8 @@
              * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
              */
             self.deleteInProgressCommit = function(recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
+                    .then(response => $q.resolve(), util.rejectError);
             }
 
             /**
@@ -1435,8 +1355,7 @@
             }
 
             function createVersion(recordId, catalogId, versionConfig) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: _.identity,
                         headers: {
@@ -1448,14 +1367,12 @@
                 if (_.has(versionConfig, 'description')) {
                     fd.append('description', versionConfig.description);
                 }
-                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             function createBranch(recordId, catalogId, branchConfig) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: _.identity,
                         headers: {
@@ -1467,23 +1384,18 @@
                 if (_.has(branchConfig, 'description')) {
                     fd.append('description', branchConfig.description);
                 }
-                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             function getRecordVersion(versionIdentifier, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + versionIdentifier)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + versionIdentifier)
+                    .then(response => response.data, util.rejectError);
             }
 
             function getRecordBranch(branchIdentifier, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + branchIdentifier)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + branchIdentifier)
+                    .then(response => response.data, util.rejectError);
             }
 
             function setDefaultSort(configParams) {

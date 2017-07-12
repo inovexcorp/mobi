@@ -27,9 +27,9 @@
         .module('importsOverlay', [])
         .directive('importsOverlay', importsOverlay);
 
-        importsOverlay.$inject = ['$http', '$q', 'REGEX', 'ontologyStateService', 'utilService', 'prefixes'];
+        importsOverlay.$inject = ['$http', 'httpService', '$q', 'REGEX', 'ontologyStateService', 'ontologyManagerService', 'utilService', 'prefixes'];
 
-        function importsOverlay($http, $q, REGEX, ontologyStateService, utilService, prefixes) {
+        function importsOverlay($http, httpService, $q, REGEX, ontologyStateService, ontologyManagerService, utilService, prefixes) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,35 +41,68 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var om = ontologyManagerService;
                     var os = ontologyStateService;
-                    var util = utilService;
+                    dvm.spinnerId = 'imports-overlay';
+                    dvm.util = utilService;
                     dvm.url = '';
+                    dvm.urls = [];
+                    dvm.ontologies = [];
                     dvm.iriPattern = REGEX.IRI;
-                    dvm.error = '';
-                    dvm.openConfirmation = false;
+                    dvm.urlError = '';
+                    dvm.matError = '';
+                    dvm.tabs = {
+                        url: true,
+                        matonto: false
+                    };
 
-                    dvm.create = function() {
-                        $http.get('/matontorest/imported-ontologies/' + encodeURIComponent(dvm.url))
-                            .then(response => {
-                                if (os.hasChanges(os.listItem.ontologyRecord.recordId)) {
-                                    dvm.openConfirmation = true;
-                                } else {
-                                    dvm.confirmed();
-                                }
-                            }, () => dvm.error = 'The provided URL was unresolvable.');
+                    dvm.clickTab = function() {
+                        if (dvm.tabs.matonto) {
+                            dvm.urls = [];
+                            httpService.cancel(dvm.spinnerId);
+                            om.getAllOntologyRecords(undefined, dvm.spinnerId)
+                                .then(ontologies => {
+                                    dvm.ontologies = _.filter(ontologies, record => record['@id'] !== os.listItem.ontologyRecord.recordId);
+                                }, errorMessage => dvm.matError = errorMessage);
+                        }
                     }
-
-                    dvm.confirmed = function() {
+                    dvm.toggleOntology = function(record) {
+                        var ontologyIRI = dvm.getOntologyIRI(record);
+                        if (_.indexOf(dvm.urls, ontologyIRI) < 0) {
+                            dvm.urls.push(ontologyIRI);
+                        } else {
+                            _.pull(dvm.urls, ontologyIRI);
+                        }
+                    }
+                    dvm.getOntologyIRI = function(record) {
+                        return dvm.util.getPropertyId(record, prefixes.ontologyEditor + 'ontologyIRI');
+                    }
+                    dvm.addImport = function() {
+                        if (dvm.tabs.url) {
+                            $http.get('/matontorest/imported-ontologies/' + encodeURIComponent(dvm.url))
+                                .then(response => {
+                                    dvm.confirmed([dvm.url]);
+                                }, () => dvm.urlError = 'The provided URL was unresolvable.');
+                        } else if (dvm.tabs.matonto) {
+                            dvm.confirmed(dvm.urls);
+                        }
+                    }
+                    dvm.confirmed = function(urls) {
                         var importsIRI = prefixes.owl + 'imports';
-                        util.setPropertyId(os.listItem.selected, importsIRI, dvm.url);
-                        os.addToAdditions(os.listItem.ontologyRecord.recordId, util.createJson(os.listItem.selected['@id'], importsIRI, {'@id': dvm.url}));
+                        _.forEach(urls, url => {
+                            dvm.util.setPropertyId(os.listItem.selected, importsIRI, url);
+                            os.addToAdditions(os.listItem.ontologyRecord.recordId, dvm.util.createJson(os.listItem.selected['@id'], importsIRI, {'@id': url}));
+                        });
                         os.saveChanges(os.listItem.ontologyRecord.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions})
                             .then(() => os.afterSave(), $q.reject)
                             .then(() => os.updateOntology(os.listItem.ontologyRecord.recordId, os.listItem.ontologyRecord.branchId, os.listItem.ontologyRecord.commitId, os.listItem.ontologyRecord.type, os.listItem.ontologyState.upToDate, os.listItem.inProgressCommit), $q.reject)
                             .then(() => {
                                 os.listItem.isSaved = os.isCommittable(os.listItem.ontologyRecord.recordId);
                                 dvm.onClose();
-                            }, errorMessage => dvm.error = errorMessage);
+                            }, errorMessage => {
+                                dvm.urlError = errorMessage;
+                                dvm.matError = errorMessage;
+                            });
                     }
                 }
             }
