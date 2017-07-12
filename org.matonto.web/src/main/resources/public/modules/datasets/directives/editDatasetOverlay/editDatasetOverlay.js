@@ -157,6 +157,7 @@
                         dvm.links.next = _.get(links, 'next', '');
                         dvm.error = '';
                     }
+                    // Iterates recursively through the array of ontologies to add and fetches their head commit id.
                     function createBlankNodes(ontologyIds) {
                         var ontologyId = _.head(ontologyIds);
                         var ontology = _.find(dvm.selectedOntologies, o => {if(_.get(o, '@id') === ontologyId) return o});
@@ -168,11 +169,14 @@
                             dvm.dataset.identifiers.push(createBlankNode(id, recordId, branchId, response.commit['@id']));
                             dvm.dataset.record[prefixes.dataset + 'ontology'].push(angular.fromJson('{ "@id": "' + id + '" }'));
                             if (ontologyIds.length > 1) {
+                                // We have more ontologies to add...
                                 createBlankNodes(_.tail(ontologyIds));
                             } else {
+                                // Unparse the JSON object...
                                 var jsonld = [];
                                 _.forEach(dvm.dataset.identifiers, o => jsonld.push(o));
                                 jsonld.push(dvm.dataset.record);
+                                // Send unparsed object to the update endpoint.
                                 cm.updateRecord(_.get(dvm.dataset.record, '@id'), cm.localCatalog['@id'], jsonld).then(() => { 
                                     dvm.util.createSuccessToast('Dataset successfully updated');
                                     ds.setResults();
@@ -191,7 +195,7 @@
                         return angular.fromJson(jsonString);
                     }
                     
-                    dvm.getOntologies();
+                    dvm.getOntologies(); // Populate the list automatically...
                 }
             }
         }
