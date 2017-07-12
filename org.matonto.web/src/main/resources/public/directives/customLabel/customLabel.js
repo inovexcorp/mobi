@@ -63,7 +63,7 @@
                 transclude: true,
                 replace: true,
                 scope: {
-                    mutedText: '='
+                    mutedText: '<'
                 },
                 templateUrl: 'directives/customLabel/customLabel.html'
             }
