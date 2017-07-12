@@ -56,7 +56,8 @@ describe('Instance Form directive', function() {
             }]
         };
         scope.header = 'header';
-        element = $compile(angular.element('<instance-form header="header"></instance-form>'))(scope);
+        scope.isValid = false;
+        element = $compile(angular.element('<instance-form header="header" is-valid="isValid"></instance-form>'))(scope);
         scope.$digest();
         controller = element.controller('instanceForm');
         controller.properties = [{
@@ -110,6 +111,13 @@ describe('Instance Form directive', function() {
             element.isolateScope().header = 'new';
             scope.$digest();
             expect(scope.header).toBe('header');
+        });
+    });
+    describe('controller bound variables', function() {
+        it('isValid should be two way bound', function() {
+            controller.isValid = true;
+            scope.$digest();
+            expect(scope.isValid).toEqual(true);
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -256,11 +264,22 @@ describe('Instance Form directive', function() {
                 expect(controller.createValueObj('value', 'propertyId2')).toEqual({'@value': 'value'});
             });
         });
-        it('addToChanged adds the provided iri to the changed array', function() {
-            controller.addToChanged('new');
-            expect(controller.changed).toEqual(['iri', 'new']);
-            controller.addToChanged('iri');
-            expect(controller.changed).toEqual(['iri', 'new']);
+        describe('addToChanged adds the provided iri to the changed array', function() {
+            beforeEach(function() {
+                spyOn(controller, 'getMissingProperties').and.returnValue(['missing property']);
+            });
+            it('when it is new', function() {
+                controller.addToChanged('new');
+                expect(controller.changed).toEqual(['iri', 'new']);
+                expect(controller.getMissingProperties).toHaveBeenCalled();
+                expect(controller.missingProperties).toEqual(['missing property']);
+            });
+            it('when it is not new', function() {
+                controller.addToChanged('iri');
+                expect(controller.changed).toEqual(['iri']);
+                expect(controller.getMissingProperties).toHaveBeenCalled();
+                expect(controller.missingProperties).toEqual(['missing property']);
+            });
         });
         it('isChanged should return the proper value', function() {
             expect(controller.isChanged('iri')).toBe(true);
@@ -318,6 +337,108 @@ describe('Instance Form directive', function() {
             controller.onSelect('text');
             controller.fullText = 'text';
             controller.showText = true;
+        });
+        it('getMissingProperties retrieves the proper list of messages', function() {
+            util.getBeautifulIRI.and.callFake(_.identity);
+            controller.properties = [{
+                propertyIRI: 'propertyId',
+                restrictions: [{
+                    cardinality: 1,
+                    classExpressionType: 'DATA_EXACT_CARDINALITY'
+                }]
+            }, {
+                propertyIRI: 'propertyId2',
+                restrictions: [{
+                    cardinality: 1,
+                    classExpressionType: 'DATA_MIN_CARDINALITY'
+                }]
+            }, {
+                propertyIRI: 'propertyId3',
+                restrictions: [{
+                    cardinality: 1,
+                    classExpressionType: 'DATA_MAX_CARDINALITY'
+                }]
+            }, {
+                propertyIRI: 'propertyId4',
+                restrictions: [{
+                    cardinality: 1,
+                    classExpressionType: 'OBJECT_EXACT_CARDINALITY'
+                }]
+            }, {
+                propertyIRI: 'propertyId5',
+                restrictions: [{
+                    cardinality: 1,
+                    classExpressionType: 'OBJECT_MIN_CARDINALITY'
+                }]
+            }, {
+                propertyIRI: 'propertyId6',
+                restrictions: [{
+                    cardinality: 1,
+                    classExpressionType: 'OBJECT_MAX_CARDINALITY'
+                }]
+            }, {
+                propertyIRI: 'propertyId7',
+                restrictions: [{
+                    cardinality: 1,
+                    classExpressionType: 'DATA_EXACT_CARDINALITY'
+                }]
+            }];
+            discoverStateSvc.explore.instance.entity = {
+                '@id': 'id',
+                propertyId7: [{'@value': 'just the one'}],
+                propertyId3: [{'@value': 'one'}, {'@value': 'two'}],
+                propertyId6: [{'@value': 'one'}, {'@value': 'two'}]
+            };
+            var expected = [
+                'Must have exactly 1 value(s) for propertyId',
+                'Must have at least 1 value(s) for propertyId2',
+                'Must have at most 1 value(s) for propertyId3',
+                'Must have exactly 1 value(s) for propertyId4',
+                'Must have at least 1 value(s) for propertyId5',
+                'Must have at most 1 value(s) for propertyId6'
+            ];
+            expect(controller.getMissingProperties()).toEqual(expected);
+            _.forEach(['propertyId', 'propertyId2', 'propertyId3', 'propertyId4', 'propertyId5', 'propertyId6'], function(item) {
+                expect(util.getBeautifulIRI).toHaveBeenCalledWith(item);
+            });
+            expect(controller.isValid).toBe(false);
+        });
+        describe('getRestrictionText should return the correct value for', function() {
+            beforeEach(function() {
+                controller.properties = [{
+                    propertyIRI: 'propertyId',
+                    restrictions: [{
+                        cardinality: 1,
+                        classExpressionType: 'DATA_EXACT_CARDINALITY'
+                    }]
+                }, {
+                    propertyIRI: 'propertyId2',
+                    restrictions: [{
+                        cardinality: 1,
+                        classExpressionType: 'DATA_MIN_CARDINALITY'
+                    }]
+                }, {
+                    propertyIRI: 'propertyId3',
+                    restrictions: [{
+                        cardinality: 1,
+                        classExpressionType: 'DATA_MAX_CARDINALITY'
+                    }]
+                }, {
+                    propertyIRI: 'propertyId4'
+                }];
+            });
+            it('exact restriction', function() {
+                expect(controller.getRestrictionText('propertyId')).toBe('[exactly 1]');
+            });
+            it('min restriction', function() {
+                expect(controller.getRestrictionText('propertyId2')).toBe('[at least 1]');
+            });
+            it('max restriction', function() {
+                expect(controller.getRestrictionText('propertyId3')).toBe('[at most 1]');
+            });
+            it('no restriction', function() {
+                expect(controller.getRestrictionText('propertyId4')).toBe('');
+            });
         });
     });
 });
