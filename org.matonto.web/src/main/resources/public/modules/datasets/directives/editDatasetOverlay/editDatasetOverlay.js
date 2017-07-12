@@ -116,6 +116,7 @@
                     }
                     dvm.update = function() {
                         dvm.dataset.record[prefixes.catalog + 'keyword'] = _.map(dvm.keywords, _.trim);
+                        dvm.dataset.record[prefixes.dcterms + 'description'] = dvm.recordConfig.description.trim();
                         
                         var curOntologies = _.map(dvm.selectedOntologies, o => _.get(o, '@id'));
                         var oldOntologies = _.map(dvm.dataset.identifiers, r => _.get(_.get(r, prefixes.dataset + 'linksToRecord')[0], '@id'));
@@ -124,21 +125,14 @@
                         var deleted = _.difference(oldOntologies, curOntologies);
                         
                         _.forEach(deleted, id => {
-                            // Remove blank node from dvm.dataset.identifiers
                             var identifier = _.find(dvm.dataset.identifiers, o => { if(_.get(o[prefixes.dataset + 'linksToRecord'][0], '@id') === id) return o; });
                             if (identifier) {
                                 _.remove(dvm.dataset.identifiers, identifier);
+                                _.remove(dvm.dataset.record[prefixes.dataset + 'ontology'], o => _.get(o, '@id') === _.get(identifier, '@id'));
                             }
                         });
                         
-                        _.forEach(added, id => {
-                            // TODO: create blank node and add to dvm.dataset.identifiers
-                            createBlankNode(_.find(dvm.selectedOntologies, o => {if(_.get(o, '@id') === id) return o}))
-                                    .then(response => {
-                                        dvm.dataset.identifiers.push(response);
-                            }, onError);
-                        });
-                        cm.updateRecord(recordId, cm.localCatalog['@id'], dvm.dataset);
+                        createBlankNodes(added);
                     }
                     dvm.isSelected = function(ontologyId) {
                         return _.some(dvm.selectedOntologies, {'@id': ontologyId});
@@ -164,24 +158,33 @@
                         dvm.links.next = _.get(links, 'next', '');
                         dvm.error = '';
                     }
-                    function createBlankNode(ontology) {
-                        var deferred = $q.defer();
-                        var id = '"_:matonto/bnode/' + uuid.v4() + '"';
+                    function createBlankNodes(ontologyIds) {
+                        var ontologyId = _.head(ontologyIds);
+                        var ontology = _.find(dvm.selectedOntologies, o => {if(_.get(o, '@id') === ontologyId) return o});
                         var recordId = _.get(ontology, '@id');
                         var branchId = _.get(_.get(ontology, prefixes.catalog + 'branch')[0], '@id');
-                        var commitId = '';
                         
                         cm.getBranchHeadCommit(branchId, recordId, cm.localCatalog['@id']).then(response => {
-                            commitId = response.commit['@id'];
-                        
-                            var jsonString = '{\n\t"@id": ' + id + ',\n\t"' 
-                                    + prefixes.dataset + 'linksToRecord":[{"@id": "' + recordId + '"}],\n\t"'
-                                    + prefixes.dataset + 'linksToBranch":[{"@id": "' + branchId + '"}],\n\t"'
-                                    + prefixes.dataset + 'linksToCommit":[{"@id": "' + commitId + '"}]\n}'
-
-                            return angular.fromJson(jsonString);
+                            var id = '_:matonto/bnode/' + uuid.v4();
+                            dvm.dataset.identifiers.push(createBlankNode(id, recordId, branchId, response.commit['@id']));
+                            dvm.dataset.record[prefixes.dataset + 'ontology'].push(angular.fromJson('{ "@id": "' + id + '" }'));
+                            if (ontologyIds.length > 1) {
+                                createBlankNodes(_.tail(ontologyIds));
+                            } else {
+                                cm.updateRecord(_.get(dvm.dataset.record, '@id'), cm.localCatalog['@id'], dvm.dataset).then(() => { 
+                                    // TODO: Close overlay...
+                                }, onError);
+                            }
                         }, onError);
-                        return deferred.promise;
+
+                    }
+                    function createBlankNode(id, recordId, branchId, commitId) {
+                        var jsonString = '{\n\t"@id": "' + id + '",\n\t"' 
+                                + prefixes.dataset + 'linksToRecord":[{"@id": "' + recordId + '"}],\n\t"'
+                                + prefixes.dataset + 'linksToBranch":[{"@id": "' + branchId + '"}],\n\t"'
+                                + prefixes.dataset + 'linksToCommit":[{"@id": "' + commitId + '"}]\n}';
+
+                        return angular.fromJson(jsonString);
                     }
                 }
             }
