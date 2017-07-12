@@ -23,14 +23,14 @@ package org.matonto.etl.api.rdf;
  * #L%
  */
 
-import java.io.File;
-import java.io.IOException;
-
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.repository.exception.RepositoryException;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFParseException;
+
+import java.io.File;
+import java.io.IOException;
 
 public interface RDFImportService {
 

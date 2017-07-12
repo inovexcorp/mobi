@@ -41,19 +41,6 @@ import java.io.File;
 @Service
 public class CLIImporter implements Action {
 
-    //Command Line Arguments and Options
-    @Argument(index = 0, name = "ImportFile", description = "The file to be imported into the repository", required = true)
-    String file = null;
-
-    @Option(name = "-r", aliases = "--repository", description = "The id of the repository the file will be imported to")
-    String repositoryId = null;
-
-    @Option( name = "-d", aliases = "--dataset", description = "The id of the DatasetRecord the file will be imported to")
-    String datasetRecordId = null;
-
-    @Option( name = "-c", aliases = "--continueOnError", description = "If true, continue parsing even if there is an error on a line.")
-    boolean continueOnError = false;
-
     private static final Logger LOGGER = LoggerFactory.getLogger(CLIImporter.class);
 
     @Reference
@@ -61,6 +48,23 @@ public class CLIImporter implements Action {
 
     @Reference
     private ValueFactory vf;
+
+    //Command Line Arguments and Options
+    @Argument(index = 0, name = "ImportFile", description = "The file to be imported into the repository",
+            required = true)
+    String file = null;
+
+    @Option(name = "-r", aliases = "--repository", description = "The id of the repository the file will be"
+            + " imported to")
+    String repositoryId = null;
+
+    @Option( name = "-d", aliases = "--dataset", description = "The id of the DatasetRecord the file will be "
+            + "imported to")
+    String datasetRecordId = null;
+
+    @Option( name = "-c", aliases = "--continueOnError", description = "If true, continue parsing even if there is an "
+            + "error on a line.")
+    boolean continueOnError = false;
 
     public void setImportService(RDFImportService importService) {
         this.importService = importService;
@@ -72,7 +76,8 @@ public class CLIImporter implements Action {
 
     @Override
     public Object execute() throws Exception {
-        if ((StringUtils.isEmpty(repositoryId) && StringUtils.isEmpty(datasetRecordId)) || (!StringUtils.isEmpty(repositoryId) && !StringUtils.isEmpty(datasetRecordId))) {
+        if ((StringUtils.isEmpty(repositoryId) && StringUtils.isEmpty(datasetRecordId))
+                || (!StringUtils.isEmpty(repositoryId) && !StringUtils.isEmpty(datasetRecordId))) {
             String msg = "Repository ID or DatasetRecord ID is required";
             LOGGER.error(msg);
             System.out.println(msg);
