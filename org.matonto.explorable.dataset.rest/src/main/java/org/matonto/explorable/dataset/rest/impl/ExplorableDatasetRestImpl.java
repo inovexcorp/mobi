@@ -45,6 +45,7 @@ import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.classexpression.CardinalityRestriction;
+import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import org.matonto.ontology.core.api.propertyexpression.Property;
 import org.matonto.ontology.core.api.propertyexpression.PropertyExpression;
@@ -62,6 +63,7 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.orm.Thing;
 import org.matonto.repository.base.RepositoryResult;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
@@ -490,11 +492,13 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             if (ontologyRecordIRIOpt.isPresent() && compiledResourceOpt.isPresent()) {
                 Model compiledResource = compiledResourceOpt.get();
                 IRI ontologyRecordIRI = ontologyRecordIRIOpt.get();
-                Model ontologyRecordModel = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(),
-                        ontologyRecordIRI, ontologyRecordFactory).orElse(ontologyRecordFactory
-                        .createNew(ontologyRecordIRI)).getModel();
-                if (ontologyRecordModel.size() == 0) {
-                    log.warn("OntologyRecord " + ontologyRecordIRI.stringValue() + " could not be found");
+                Optional<OntologyRecord> ontologyRecordOpt = catalogManager.getRecord(catalogManager
+                                .getLocalCatalogIRI(), ontologyRecordIRI, ontologyRecordFactory);
+                Model ontologyRecordModel = modelFactory.createModel();
+                if (ontologyRecordOpt.isPresent()) {
+                    ontologyRecordModel = ontologyRecordOpt.get().getModel();
+                } else {
+                    log.warn("OntologyRecord " + ontologyRecordIRI + " could not be found");
                 }
                 List<ClassDetails> found = new ArrayList<>();
                 copy.forEach(classDetails -> {
@@ -512,8 +516,8 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             } else if (!ontologyRecordIRIOpt.isPresent() && !compiledResourceOpt.isPresent()) {
                 log.warn("The Compiled Resource and Ontology Record IRI could not be found");
             } else {
-                ontologyRecordIRIOpt.ifPresent(iri -> log.warn("The Compiled Resource for OntologyRecord "
-                        + iri.stringValue() + " could not be found"));
+                ontologyRecordIRIOpt.ifPresent(iri -> log.warn("The Compiled Resource for OntologyRecord " + iri
+                        + " could not be found"));
             }
         }
         return result;
