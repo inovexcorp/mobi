@@ -95,6 +95,7 @@
             'superClassSelect',
             'superPropertySelect',
             'treeItem',
+            'uploadChangesOverlay',
             'uploadOntologyTab',
             'usagesBlock',
             'vocabularyTab',

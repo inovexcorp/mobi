@@ -99,18 +99,18 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private static final String GET_IN_PROGRESS_COMMIT;
     private static final String GET_COMMIT_CHAIN;
     private static final String USER_BINDING = "user";
+    private static final String PARENT_BINDING = "parent";
     private static final String RECORD_BINDING = "record";
     private static final String COMMIT_BINDING = "commit";
-    private static final String PARENT_BINDING = "parent";
 
     static {
         try {
             GET_IN_PROGRESS_COMMIT = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/get-in-progress-commit.rq"),
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-in-progress-commit.rq"),
                     "UTF-8"
             );
             GET_COMMIT_CHAIN = IOUtils.toString(
-                    SimpleCatalogManager.class.getResourceAsStream("/get-commit-chain.rq"),
+                    SimpleCatalogUtilsService.class.getResourceAsStream("/get-commit-chain.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -399,7 +399,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         updateObject(branch, conn);
         addObject(commit, conn);
     }
-
+    
     @Override
     public Resource getAdditionsResource(Resource commitId, RepositoryConnection conn) {
         RepositoryResult<Statement> results = conn.getStatements(null, vf.createIRI(Revision.additions_IRI), null,
@@ -483,6 +483,22 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         }
     }
 
+    @Override
+    public void validateCommitPath(Resource catalogId, Resource recordId, Resource branchId, Resource commitId, 
+                      RepositoryConnection conn) {
+        validateBranch(catalogId, recordId, branchId, conn);
+        if (!commitInBranch(branchId, commitId, conn)) {
+            throw throwDoesNotBelong(commitId, commitFactory, branchId, branchFactory);
+        }
+    }
+
+    @Override
+    public boolean commitInBranch(Resource branchId, Resource commitId, RepositoryConnection conn) {
+        Branch branch = getExpectedObject(branchId, branchFactory, conn);
+        Resource head = getHeadCommitIRI(branch);
+        return (head.equals(commitId) || getCommitChain(head, false, conn).contains(commitId));
+    }
+    
     @Override
     public List<Resource> getCommitChain(Resource commitId, boolean asc, RepositoryConnection conn) {
         List<Resource> results = new ArrayList<>();

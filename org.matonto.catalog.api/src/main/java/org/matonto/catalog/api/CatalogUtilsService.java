@@ -483,6 +483,31 @@ public interface CatalogUtilsService {
     void addChanges(Resource targetNamedGraph, Resource oppositeNamedGraph, Model changes, RepositoryConnection conn);
 
     /**
+     * Validates the existence of a Commit on a Branch of a VersionedRDFRecord.
+     *
+     * @param catalogId The {@link Resource} identifying the {@link Catalog} which should have the {@link Record}.
+     * @param recordId The {@link Resource} identifying the {@link Record} which should have the {@link Branch}.
+     * @param branchId The {@link Resource} of the {@link Branch} which should have the {@link Commit}.
+     * @param commitId The {@link Resource} of the {@link Commit}.
+     * @param conn A RepositoryConnection to use for lookup.
+     * @throws IllegalArgumentException Thrown if the {@link Catalog} could not be found, the {@link Record} could not 
+     *      be found, the {@link Record} does not belong to the {@link Catalog}, the {@link Branch} does not belong to 
+     *      the {@link Record}, or the {@link Commit} does not belong to the {@link Branch}.
+     */
+    void validateCommitPath(Resource catalogId, Resource recordId, Resource branchId, Resource commitId,
+            RepositoryConnection conn);
+
+    /**
+     * 
+     * @param branchId The {@link Resource} of the {@link Branch} which should have the {@link Commit}.
+     * @param commitId The {@link Resource} of the {@link Commit}.
+     * @param conn A RepositoryConnection to use for lookup.
+     * @return {@code true} is the (@link Commit} {@link Resource} is in the {@link Branch}'s commit chain and 
+     *         {@code false} otherwise.
+     */
+    boolean commitInBranch(Resource branchId, Resource commitId, RepositoryConnection conn);
+    
+    /**
      * Gets a List which represents the commit chain from the initial commit to the specified commit in either
      * ascending or descending date order.
      *

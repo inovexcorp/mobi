@@ -1014,18 +1014,16 @@ public class SimpleCatalogManager implements CatalogManager {
     public Optional<Commit> getCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
                                       Resource commitId) {
         long start = System.currentTimeMillis();
+        Optional<Commit> rtn = Optional.empty();
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateBranch(catalogId, versionedRDFRecordId, branchId, conn);
-            Branch branch = utils.getExpectedObject(branchId, branchFactory, conn);
-            Resource head = utils.getHeadCommitIRI(branch);
-            if (head.equals(commitId) || utils.getCommitChain(head, false, conn).contains(commitId)) {
-                return Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
-            } else {
-                return Optional.empty();
+            if (utils.commitInBranch(branchId, commitId, conn)) {
+                rtn =  Optional.of(utils.getExpectedObject(commitId, commitFactory, conn));
             }
         } finally {
             log.trace("getCommit took {}ms", System.currentTimeMillis() - start);
         }
+        return rtn;
     }
 
     @Override
@@ -1136,6 +1134,14 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public Model getCompiledResource(Resource versionedRDFRecordId, Resource branchId, Resource commitId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.validateCommitPath(localCatalogIRI, versionedRDFRecordId, branchId, commitId, conn);
+            return utils.getCompiledResource(commitId, conn);
+        }
+    }
+
+    @Override
     public Set<Conflict> getConflicts(Resource leftId, Resource rightId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(leftId, commitFactory.getTypeIRI(), conn);
@@ -1223,7 +1229,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 .deletions(originalCopy)
                 .build();
     }
-
+       
     /**
      * Creates a conflict using the provided parameters as the data to construct it.
      *

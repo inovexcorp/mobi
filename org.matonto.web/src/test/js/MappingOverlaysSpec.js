@@ -72,7 +72,6 @@ describe('Mapping Overlays directive', function() {
             expect(mapperStateSvc.deleteClass).toHaveBeenCalledWith(classMappingId);
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.selectedClassMappingId).toBe('');
-            expect(mapperStateSvc.changedMapping).toBe(true);
         });
         describe('should delete a property mapping from the mapping', function() {
             var classMapping = {'@id': 'class'};
@@ -86,14 +85,12 @@ describe('Mapping Overlays directive', function() {
                 expect(mapperStateSvc.deleteProp).toHaveBeenCalledWith(mapperStateSvc.selectedPropMappingId, classMapping['@id']);
                 expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                 expect(mapperStateSvc.selectedClassMappingId).toBe(classMapping['@id']);
-                expect(mapperStateSvc.changedMapping).toBe(true);
             });
             it('if it is not for an annotation', function() {
                 controller.deleteProp();
                 expect(mapperStateSvc.deleteProp).toHaveBeenCalledWith(mapperStateSvc.selectedPropMappingId, classMapping['@id']);
                 expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                 expect(mapperStateSvc.selectedClassMappingId).toBe(classMapping['@id']);
-                expect(mapperStateSvc.changedMapping).toBe(true);
             });
         });
     });
