@@ -32,6 +32,7 @@ public class PropertyDetails {
     private String propertyIRI;
     private String type;
     private Set<String> range;
+    private Set<RestrictionDetails> restrictions;
 
     @XmlElement
     public String getPropertyIRI() {
@@ -58,5 +59,14 @@ public class PropertyDetails {
 
     public void setRange(Set<String> range) {
         this.range = range;
+    }
+
+    @XmlElement
+    public Set<RestrictionDetails> getRestrictions() {
+        return restrictions;
+    }
+
+    public void setRestrictions(Set<RestrictionDetails> restrictions) {
+        this.restrictions = restrictions;
     }
 }

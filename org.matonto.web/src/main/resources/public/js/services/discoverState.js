@@ -60,6 +60,7 @@
         self.explore = {
             active: true,
             breadcrumbs: ['Classes'],
+            classDeprecated: false,
             classDetails: [],
             classId: '',
             creating: false,

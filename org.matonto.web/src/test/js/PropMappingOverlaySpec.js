@@ -200,7 +200,6 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(classMapping['@id']);
                         expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(classMappingId);
                         expect(mapperStateSvc.newProp).toBe(false);
-                        expect(mapperStateSvc.changedMapping).toBe(true);
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
                     });
@@ -219,7 +218,6 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(classMapping['@id']);
                         expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(classMappingId);
                         expect(mapperStateSvc.newProp).toBe(false);
-                        expect(mapperStateSvc.changedMapping).toBe(true);
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
                     });
@@ -235,7 +233,6 @@ describe('Prop Mapping Overlay directive', function() {
                     expect(mapperStateSvc.mapping.difference.additions).toContain(propMapping);
                     expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(classMappingId);
                     expect(mapperStateSvc.newProp).toBe(false);
-                    expect(mapperStateSvc.changedMapping).toBe(true);
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
                 });
@@ -254,7 +251,6 @@ describe('Prop Mapping Overlay directive', function() {
                     mappingManagerSvc.isDataMapping.and.returnValue(false);
                     controller.set();
                     expect(propMapping[prefixes.delim + 'columnIndex'][0]['@value']).toBe(originalIndex);
-                    expect(mapperStateSvc.changedMapping).toBe(true);
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(mapperStateSvc.selectedClassMappingId).toBe(classMappingId);
                     expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);
@@ -265,7 +261,6 @@ describe('Prop Mapping Overlay directive', function() {
                     controller.set();
                     expect(propMapping[prefixes.delim + 'columnIndex'][0]['@value']).not.toBe(originalIndex);
                     expect(mapperStateSvc.invalidProps).not.toContain({'@id': controller.selectedProp.propObj['@id']});
-                    expect(mapperStateSvc.changedMapping).toBe(true);
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(mapperStateSvc.selectedClassMappingId).toBe(classMappingId);
                     expect(mapperStateSvc.displayPropMappingOverlay).toBe(false);

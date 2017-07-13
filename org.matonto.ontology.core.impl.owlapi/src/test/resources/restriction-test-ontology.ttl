@@ -1,0 +1,183 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix f: <http://example.com/owl/families#> .
+
+<http://example.com/owl/families> a owl:Ontology .
+
+###########################################
+# Object properties
+###########################################
+
+f:hasAncestor a owl:ObjectProperty ,
+        owl:TransitiveProperty ,
+        owl:IrreflexiveProperty .
+
+f:hasChild a owl:ObjectProperty ;
+    rdfs:subPropertyOf f:hasAncestor ;
+    rdfs:domain f:Person ;
+    rdfs:range f:Person .
+
+_:x0 a owl:Restriction ;
+    owl:onProperty f:hasGender ;
+    owl:hasValue f:female .
+_:x1 a owl:Class ;
+    owl:intersectionOf (f:Person _:x0) .
+f:hasDaughter a owl:ObjectProperty ;
+    rdfs:range _:x1 ,
+        f:Person ;
+    rdfs:domain f:Person , f:Parent;
+    rdfs:subPropertyOf f:hasChild ;
+    owl:propertyDisjointWith f:hasSon .
+
+f:hasGender a owl:ObjectProperty .
+
+f:hasHusband a owl:ObjectProperty ;
+    owl:inverseOf f:hasWife .
+
+f:hasSon a owl:ObjectProperty .
+_:x3 a owl:Restriction ;
+    owl:onProperty f:hasGender ;
+    owl:hasValue f:male .
+_:x4 a owl:Class ;
+    owl:intersectionOf (f:Person _:x3) .
+f:hasSon rdfs:range _:x4 ;
+    rdfs:subPropertyOf f:hasChild ;
+    rdfs:range f:Person ;
+    rdfs:domain f:Person ,
+        f:Parent .
+
+f:hasSpouse a owl:ObjectProperty ,
+        owl:SymmetricProperty ,
+        owl:IrreflexiveProperty .
+
+f:hasWife a owl:ObjectProperty ,
+        owl:InverseFunctionalProperty ,
+        owl:FunctionalProperty ,
+        owl:AsymmetricProperty ,
+        owl:IrreflexiveProperty ;
+    rdfs:domain f:Person , f:Man ;
+    rdfs:range f:Person , f:Woman ;
+    rdfs:subPropertyOf f:loves , f:hasSpouse .
+
+f:loves a owl:ObjectProperty ;
+    rdfs:domain f:Person .
+
+###########################################
+# Data properties
+###########################################
+
+f:hasAge a owl:DatatypeProperty ,
+        owl:FunctionalProperty ;
+    rdfs:domain f:Person ;
+    rdfs:range xsd:integer .
+
+###########################################
+# Classes
+###########################################
+
+f:Adult a owl:Class .
+_:x5 a rdfs:Datatype ;
+    owl:onDataRange xsd:integer ;
+    owl:withRestrictions ( [ xsd:minInclusive "21"^^xsd:integer ] ) .
+_:x6 a owl:Restriction ;
+    owl:onProperty f:hasAge ;
+    owl:someValuesFrom _:x5 .
+_:x7 a owl:Class ;
+    owl:intersectionOf (f:Person _:x6) .
+f:Adult owl:equivalentClass _:x7 .
+
+f:Child a owl:Class .
+_:x8 a rdfs:Datatype ;
+    owl:onDataRange xsd:integer ;
+    owl:withRestrictions ( [ xsd:minInclusive "21"^^xsd:integer ] ) .
+_:x9 a owl:Restriction ;
+    owl:onProperty f:hasAge ;
+    owl:someValuesFrom _:x8 .
+_:x10 a owl:Class ;
+    owl:complementOf _:x9 .
+_:x11 a owl:Class ;
+    owl:intersectionOf (f:Person _:x10) .
+f:Child owl:equivalentClass _:x11 .
+
+f:CivilMarriage a owl:Class .
+
+f:Gender a owl:Class .
+
+f:Man a owl:Class ;
+    rdfs:subClassOf _:x12 .
+_:x12 a owl:Restriction ;
+    owl:onProperty f:hasChild ;
+    owl:onClass f:Person ;
+    owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger .
+_:x13 a owl:Restriction ;
+    owl:onProperty f:hasGender ;
+    owl:cardinality "1"^^xsd:nonNegativeInteger .
+f:Man owl:equivalentClass _:x13 .
+
+f:Marriage a owl:Class .
+_:x14 a owl:Class ;
+    owl:unionOf (f:CivilMarriage f:ReligiousMarriage) .
+f:Marriage owl:equivalentClass _:x14 .
+
+f:Narcissist a owl:Class .
+_:x15 a owl:Restriction ;
+    owl:onProperty f:loves ;
+    owl:hasSelf "true"^^xsd:boolean .
+_:x16 a owl:Class ;
+    owl:intersectionOf (_:x15 f:Person) .
+f:Narcissist owl:equivalentClass _:x16 .
+
+f:Mother a owl:Class ;
+    owl:equivalentClass [ a owl:Class ; owl:intersectionOf ( f:Woman f:Parent ) ] .
+
+f:Parent a owl:Class ;
+    rdfs:subClassOf _:x17 .
+_:x17 a owl:Restriction ;
+    owl:onProperty f:hasChild ;
+    owl:onClass f:Person ;
+    owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger .
+
+f:Person a owl:Class .
+_:x21 a owl:Restriction ;
+    owl:onProperty f:hasGender ;
+    owl:cardinality "1"^^xsd:nonNegativeInteger .
+f:Person owl:equivalentClass _:x21 .
+
+f:ReligiousMarriage a owl:Class ;
+    owl:disjointWith f:CivilMarriage .
+
+f:Teenager a owl:Class .
+_:x24 a rdfs:Datatype ;
+    owl:onDataRange xsd:integer ;
+    owl:withRestrictions ( [ xsd:minInclusive "13"^^xsd:integer ]
+                           [ xsd:maxExclusive "20"^^xsd:integer ] ) .
+_:x25 a owl:Restriction ;
+    owl:onProperty f:hasAge ;
+    owl:someValuesFrom _:x24 .
+_:x26 a owl:Class ;
+    owl:intersectionOf (f:Person _:x25) .
+f:Teenager owl:equivalentClass _:x26 .
+
+f:Woman a owl:Class .
+_:x27 a owl:Restriction ;
+    owl:onProperty f:hasGender ;
+    owl:hasValue f:female .
+f:Woman owl:equivalentClass _:x27 .
+
+f:YoungChild a owl:Class .
+_:x29 a owl:Class ;
+    owl:unionOf (f:Adult f:Teenager) .
+_:x30 a owl:Class ;
+    owl:complementOf _:x29 .
+_:x31 a owl:Class ;
+    owl:intersectionOf (f:Person _:x30) .
+f:YoungChild owl:equivalentClass _:x31 .
+
+###########################################
+# Classes
+###########################################
+
+f:female a f:Gender .
+f:male a f:Gender .
