@@ -54,7 +54,7 @@ class RDFImportSpec extends Specification {
         repo.getRepositoryID() >> repoId
         repo.getConnection() >> conn
         datasetManager.getConnection(datasetId) >> datasetConn
-        datasetManager.getConnection({ it != datasetId}) >> {throw new IllegalArgumentException()}
+        datasetManager.getConnection(!datasetId) >> {throw new IllegalArgumentException()}
 
         service.setTransformer(transformer)
         service.setDatasetManager(datasetManager)
@@ -152,7 +152,7 @@ class RDFImportSpec extends Specification {
 
     def "Throws exception if dataset record ID does not exist without format"() {
         when:
-        service.importFile(vf.createIRI("missing"), file, true)
+        service.importFile(vf.createIRI("http://test.com/missing"), file, true)
 
         then:
         thrown IllegalArgumentException
@@ -160,7 +160,7 @@ class RDFImportSpec extends Specification {
 
     def "Throws exception if dataset record ID does not exist with format"() {
         when:
-        service.importFile(vf.createIRI("missing"), file, true, RDFFormat.TRIG)
+        service.importFile(vf.createIRI("http://test.com/missing"), file, true, RDFFormat.TRIG)
 
         then:
         thrown IllegalArgumentException
