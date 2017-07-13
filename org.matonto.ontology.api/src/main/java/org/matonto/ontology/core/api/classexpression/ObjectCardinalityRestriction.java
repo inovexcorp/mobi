@@ -25,11 +25,10 @@ package org.matonto.ontology.core.api.classexpression;
 
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
 
-public interface ObjectCardinalityRestriction extends ClassExpression {
+public interface ObjectCardinalityRestriction extends CardinalityRestriction {
 
+    @Override
     ObjectPropertyExpression getProperty();
-
-    int getCardinality();
 
     ClassExpression getClassExpression();
 }

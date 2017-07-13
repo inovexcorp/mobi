@@ -6,7 +6,7 @@ package org.matonto.ontology.core.api.classexpression;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,13 +23,11 @@ package org.matonto.ontology.core.api.classexpression;
  * #L%
  */
 
-import org.matonto.ontology.core.api.datarange.DataRange;
-import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
+import org.matonto.ontology.core.api.propertyexpression.PropertyExpression;
 
-public interface DataCardinalityRestriction extends CardinalityRestriction {
+public interface CardinalityRestriction extends ClassExpression {
 
-    @Override
-    DataPropertyExpression getProperty();
+    PropertyExpression getProperty();
 
-    DataRange getDataRange();
+    int getCardinality();
 }

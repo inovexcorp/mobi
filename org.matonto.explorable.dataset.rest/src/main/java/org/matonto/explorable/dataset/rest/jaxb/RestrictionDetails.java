@@ -23,50 +23,31 @@ package org.matonto.explorable.dataset.rest.jaxb;
  * #L%
  */
 
-import java.util.Set;
+import org.matonto.ontology.core.api.types.ClassExpressionType;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
-public class PropertyDetails {
-    private String propertyIRI;
-    private String type;
-    private Set<String> range;
-    private Set<RestrictionDetails> restrictions;
+public class RestrictionDetails {
+    private int cardinality;
+    private ClassExpressionType classExpressionType;
 
     @XmlElement
-    public String getPropertyIRI() {
-        return propertyIRI;
+    public int getCardinality() {
+        return cardinality;
     }
 
-    public void setPropertyIRI(String propertyIRI) {
-        this.propertyIRI = propertyIRI;
+    public void setCardinality(int cardinality) {
+        this.cardinality = cardinality;
     }
 
     @XmlElement
-    public String getType() {
-        return type;
+    public ClassExpressionType getClassExpressionType() {
+        return classExpressionType;
     }
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    @XmlElement
-    public Set<String> getRange() {
-        return range;
-    }
-
-    public void setRange(Set<String> range) {
-        this.range = range;
-    }
-
-    @XmlElement
-    public Set<RestrictionDetails> getRestrictions() {
-        return restrictions;
-    }
-
-    public void setRestrictions(Set<RestrictionDetails> restrictions) {
-        this.restrictions = restrictions;
+    public void setClassExpressionType(ClassExpressionType classExpressionType) {
+        this.classExpressionType = classExpressionType;
     }
 }
