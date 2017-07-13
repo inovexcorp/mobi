@@ -68,6 +68,7 @@ import org.matonto.repository.base.RepositoryResult;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
 import org.matonto.rest.util.jaxb.Links;
+import org.openrdf.model.vocabulary.OWL;
 import org.openrdf.model.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -508,6 +509,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                         classDetails.setOntologyRecordTitle(findLabelToDisplay(ontologyRecordModel, ontologyRecordIRI));
                         classDetails.setClassTitle(findLabelToDisplay(classModel, classIRI));
                         classDetails.setClassDescription(findDescriptionToDisplay(classModel, classIRI));
+                        classDetails.setDeprecated(isClassDeprecated(classModel, classIRI));
                         result.add(classDetails);
                     }
                 });
@@ -658,5 +660,19 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             details.setRestrictions(allRestrictionDetails);
         }
         return details;
+    }
+
+    /**
+     * Checks to see if the class represented by the provided model contains a triple identifying it as a deprecated
+     * class.
+     *
+     * @param classModel the Model with all the class triples
+     * @param classId    the class IRI
+     * @return true if class is deprecated; otherwise, false
+     */
+    private boolean isClassDeprecated(Model classModel, Resource classId) {
+        IRI deprecatedIRI = factory.createIRI(OWL.NAMESPACE + "deprecated");
+        return classModel.contains(classId, deprecatedIRI, factory.createLiteral(true))
+                || classModel.contains(classId, deprecatedIRI, factory.createLiteral("1"));
     }
 }

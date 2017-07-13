@@ -132,9 +132,10 @@ describe('Class Cards directive', function() {
                 discoverStateSvc.explore.instanceDetails.data = [{prop: 'old'}];
                 exploreSvc.getClassInstanceDetails.and.returnValue($q.when({data: data, headers: headers}));
                 exploreSvc.createPagedResultsObject.and.returnValue({prop: 'paged', data: [{prop: 'new'}]});
-                controller.exploreData({classTitle: 'new', classIRI: 'classId'});
+                controller.exploreData({classTitle: 'new', classIRI: 'classId', deprecated: true});
                 scope.$apply();
                 expect(discoverStateSvc.explore.classId).toBe('classId');
+                expect(discoverStateSvc.explore.classDeprecated).toBe(true);
                 expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith('recordId', 'classId', {offset: 0, limit: discoverStateSvc.explore.instanceDetails.limit});
                 expect(discoverStateSvc.resetPagedInstanceDetails).toHaveBeenCalled();
                 expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith({data: data, headers: headers});
