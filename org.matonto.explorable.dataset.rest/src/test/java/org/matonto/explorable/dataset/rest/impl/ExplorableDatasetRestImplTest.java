@@ -275,7 +275,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void getClassDetailsWhenPartialClassesFound() throws Exception {
+    public void getClassDetailsWhenDeprecatedClassFound() throws Exception {
         InputStream partialData = getClass().getResourceAsStream("/partial-compiled-resource.trig");
         Model partialModel = Values.matontoModel(Rio.parse(partialData, "", RDFFormat.TRIG));
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(partialModel);
@@ -284,6 +284,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
         assertEquals(responseArray.size(), 1);
+        assertTrue(responseArray.getJSONObject(0).getBoolean("deprecated"));
     }
 
     @Test
