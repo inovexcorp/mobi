@@ -64,7 +64,7 @@
                 scope: {},
                 bindToController: {
                     onClose: '&',
-                    dataset: '='
+                    dataset: '<'
                 },
                 controllerAs: 'dvm',
                 controller: function() {
@@ -127,15 +127,16 @@
                         }
                     }
                     dvm.update = function() {
-                        dvm.dataset.record[prefixes.catalog + 'keyword'] = _.map(dvm.keywords, _.trim);
-                        dvm.dataset.record[prefixes.dcterms + 'description'] = dvm.recordConfig.description.trim();
+                        dvm.dataset.record[prefixes.dcterms + 'title'] = angular.fromJson('[{"@value": "' + dvm.recordConfig.title.trim() + '"}]');
+                        dvm.dataset.record[prefixes.catalog + 'keyword'] = _.map(dvm.keywords, kw => angular.fromJson('{"@value": "' + kw.trim() + '"}'));
+                        dvm.dataset.record[prefixes.dcterms + 'description'] = angular.fromJson('[{"@value": "' + dvm.recordConfig.description.trim() + '"}]');
                         
                         var curOntologies = _.map(dvm.selectedOntologies, o => _.get(o, '@id'));
                         var oldOntologies = _.map(dvm.dataset.identifiers, r => _.get(_.get(r, prefixes.dataset + 'linksToRecord')[0], '@id'));
-                        
+
                         var added = _.difference(curOntologies, oldOntologies);
                         var deleted = _.difference(oldOntologies, curOntologies);
-                        
+
                         _.forEach(deleted, id => {
                             var identifier = _.find(dvm.dataset.identifiers, o => { if(_.get(o[prefixes.dataset + 'linksToRecord'][0], '@id') === id) return o; });
                             if (identifier) {
@@ -144,7 +145,11 @@
                             }
                         });
                         
-                        createBlankNodes(added);
+                        if (added.length > 0) {
+                            createBlankNodes(added);
+                        } else {
+                            triggerUpdate();
+                        }
                     }
                     dvm.isSelected = function(ontologyId) {
                         return _.some(dvm.selectedOntologies, {'@id': ontologyId});
@@ -185,16 +190,7 @@
                                 // We have more ontologies to add...
                                 createBlankNodes(_.tail(ontologyIds));
                             } else {
-                                // Unparse the JSON object...
-                                var jsonld = [];
-                                _.forEach(dvm.dataset.identifiers, o => jsonld.push(o));
-                                jsonld.push(dvm.dataset.record);
-                                // Send unparsed object to the update endpoint.
-                                cm.updateRecord(_.get(dvm.dataset.record, '@id'), cm.localCatalog['@id'], jsonld).then(() => { 
-                                    dvm.util.createSuccessToast('Dataset successfully updated');
-                                    ds.setResults();
-                                    dvm.onClose();
-                                }, onError);
+                                triggerUpdate();
                             }
                         }, onError);
 
@@ -207,7 +203,24 @@
 
                         return angular.fromJson(jsonString);
                     }
-                    
+                    function triggerUpdate() {
+                        // Unparse the JSON object...
+                        var jsonld = [];
+                        
+                        dvm.dataset[prefixes.dataset + 'ontology'] = [];
+                        _.forEach(dvm.dataset.identifiers, o => { 
+                            jsonld.push(o);
+                            dvm.dataset[prefixes.dataset + 'ontology'].push(angular.fromJson('{"@id": "' + _.get(o, '@id') + '"}'))
+                        });
+                        
+                        jsonld.push(dvm.dataset.record);
+                        // Send unparsed object to the update endpoint.
+                        cm.updateRecord(_.get(dvm.dataset.record, '@id'), cm.localCatalog['@id'], jsonld).then(() => { 
+                            dvm.util.createSuccessToast('Dataset successfully updated');
+                            ds.setResults();
+                            dvm.onClose();
+                        }, onError);
+                    }
                     dvm.getOntologies(); // Populate the list automatically...
                 }
             }
