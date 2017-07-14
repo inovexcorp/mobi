@@ -78,8 +78,6 @@
                         next: '',
                         prev: ''
                     };
-                    dvm.ontologies = [];
-                    dvm.selectedOntologies = [];
 
                     dvm.getOntologies = function() {
                         cm.getRecords(cm.localCatalog['@id'], dvm.ontologySearchConfig).then(parseOntologyResults, errorMessage => {

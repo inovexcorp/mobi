@@ -30,6 +30,6 @@
             'datasetsTabset',
             'editDatasetOverlay',
             'newDatasetOverlay',
-            'newDatasetOverlay'
+            'datasetsOntologyPicker'
         ]);
 })();
