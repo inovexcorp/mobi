@@ -86,7 +86,6 @@
                         dvm.mm.editIriTemplate(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId, dvm.beginsWith + dvm.then, dvm.endsWith.value);
                         dvm.state.changeProp(dvm.state.selectedClassMappingId, prefixes.delim + 'hasPrefix', dvm.beginsWith + dvm.then, originalPrefix);
                         dvm.state.changeProp(dvm.state.selectedClassMappingId, prefixes.delim + 'localName', dvm.endsWith.value, originalLocalName);
-                        dvm.state.changedMapping = true;
                     }
                 },
                 templateUrl: 'modules/mapper/directives/iriTemplateOverlay/iriTemplateOverlay.html'

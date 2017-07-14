@@ -425,7 +425,7 @@ public class SimpleCatalogUtilsServiceTest {
     }
 
     @Test
-    public void getRecordWithMissingCatalog(){
+    public void getRecordWithMissingCatalog() {
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Catalog " + MISSING_IRI + " could not be found");
@@ -1203,7 +1203,7 @@ public class SimpleCatalogUtilsServiceTest {
             Resource additionsResource = getAdditionsResource(IN_PROGRESS_COMMIT_IRI);
             Resource deletionsResource = getDeletionsResource(IN_PROGRESS_COMMIT_IRI);
             assertTrue(conn.size(additionsResource) > 0);
-            assertTrue(conn.size(deletionsResource ) > 0);
+            assertTrue(conn.size(deletionsResource) > 0);
 
             service.removeInProgressCommit(commit, conn);
             assertFalse(conn.getStatements(null, null, null, IN_PROGRESS_COMMIT_IRI).hasNext());
@@ -1223,7 +1223,7 @@ public class SimpleCatalogUtilsServiceTest {
             commit.getModel().add(commit.getResource(), vf.createIRI(Revision.deletions_IRI), deletionsResource, commit.getResource());
             assertTrue(conn.getStatements(null, null, null, commit.getResource()).hasNext());
             assertTrue(conn.size(additionsResource) > 0);
-            assertTrue(conn.size(deletionsResource ) > 0);
+            assertTrue(conn.size(deletionsResource) > 0);
 
             service.removeInProgressCommit(commit, conn);
             assertFalse(conn.getStatements(null, null, null, commit.getResource()).hasNext());
@@ -1762,6 +1762,29 @@ public class SimpleCatalogUtilsServiceTest {
         throw service.throwThingNotFound(RECORD_IRI, recordFactory);
     }
 
+    @Test
+    public void isCommitBranchHeadTest() {
+        Resource commitId = vf.createIRI("http://matonto.org/test/commits#conflict2");
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(service.commitInBranch(BRANCH_IRI, commitId, conn));
+        }
+    }
+
+    @Test
+    public void isCommitBranchNotHeadTest() {
+        Resource commitId = vf.createIRI("http://matonto.org/test/commits#conflict0");
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(service.commitInBranch(BRANCH_IRI, commitId, conn));
+        }
+    }
+
+    @Test
+    public void isCommitBranchNotTest() {
+        Resource commitId = vf.createIRI("http://matonto.org/test/commits#test4a");
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertFalse(service.commitInBranch(BRANCH_IRI, commitId, conn));
+        }
+    }
 
     private void testBadRecordId(Resource resource) {
         // Setup:

@@ -70,7 +70,6 @@
                         dvm.state.mapping.difference.additions.push(angular.copy(classMapping));
                         dvm.state.setAvailableProps(classMapping['@id']);
                         _.remove(dvm.state.availableClasses, dvm.selectedClass);
-                        dvm.state.changedMapping = true;
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = classMapping['@id'];
                         dvm.state.displayClassMappingOverlay = false;

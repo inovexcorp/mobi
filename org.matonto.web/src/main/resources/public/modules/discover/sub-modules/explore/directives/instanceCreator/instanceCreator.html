@@ -25,10 +25,10 @@
         <block-header>
             <breadcrumbs class="pull-left" items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
             <a class="pull-right link" ng-click="dvm.cancel()">Cancel</a>
-            <a class="pull-right link" ng-click="dvm.save()"><i class="fa fa-floppy-o"></i>Save</a>
+            <a a-disabled="!dvm.isValid" class="pull-right link" ng-click="dvm.save()"><i class="fa fa-floppy-o"></i>Save</a>
         </block-header>
         <block-content>
-            <instance-form header="'Instance Creator'"></instance-form>
+            <instance-form header="'Instance Creator'" is-valid="dvm.isValid"></instance-form>
         </block-content>
     </block>
 </div>

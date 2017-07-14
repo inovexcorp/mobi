@@ -46,13 +46,6 @@ describe('Edit Mapping Page directive', function() {
     });
 
     describe('controller methods', function() {
-        it('should test whether the mapping config is not set', function() {
-            mappingManagerSvc.getSourceOntologyInfo.and.returnValue({});
-            expect(controller.configNotSet()).toBe(true);
-
-            mappingManagerSvc.getSourceOntologyInfo.and.returnValue({test: true});
-            expect(controller.configNotSet()).toBe(false);
-        });
         describe('should set the correct state for saving a mapping', function() {
             var step;
             beforeEach(function() {
@@ -121,25 +114,28 @@ describe('Edit Mapping Page directive', function() {
                 expect(['Cancel', 'Save', 'Save & Run']).toContain(angular.element(buttons[2]).text().trim());
             });
         });
-        it('depending on whether the mapping configuration has been set', function() {
-            spyOn(controller, 'configNotSet').and.returnValue(true);
-            scope.$digest();
-            var buttons = element.querySelectorAll('tab block-footer button.btn-primary');
-            _.forEach(_.toArray(buttons), function(button) {
-                expect(angular.element(button).attr('disabled')).toBeTruthy();
+        describe('with disabled buttons if', function() {
+            it('no changes have been made', function() {
+                var buttons = element.querySelectorAll('tab block-footer button.btn-primary');
+                _.forEach(_.toArray(buttons), function(button) {
+                    expect(angular.element(button).attr('disabled')).toBeTruthy();
+                });
             });
-
-            mapperStateSvc.mapping.jsonld = [{}, {}];
-            scope.$digest();
-            _.forEach(_.toArray(buttons), function(button) {
-                expect(angular.element(button).attr('disabled')).toBeFalsy();
+            it('there are invalid property mappings', function() {
+                mapperStateSvc.invalidProps = [{}];
+                scope.$digest();
+                var buttons = element.querySelectorAll('tab block-footer button.btn-primary');
+                _.forEach(_.toArray(buttons), function(button) {
+                    expect(angular.element(button).attr('disabled')).toBeTruthy();
+                });
             });
-
-            controller.configNotSet.and.returnValue(false);
-            mapperStateSvc.mapping.jsonld = [];
-            scope.$digest();
-            _.forEach(_.toArray(buttons), function(button) {
-                expect(angular.element(button).attr('disabled')).toBeFalsy();
+            it('unless changes have been made and there are no invalid property mappings', function () {
+                mapperStateSvc.isMappingChanged.and.returnValue(true);
+                scope.$digest();
+                var buttons = element.querySelectorAll('tab block-footer button.btn-primary');
+                _.forEach(_.toArray(buttons), function(button) {
+                    expect(angular.element(button).attr('disabled')).toBeFalsy();
+                });
             });
         });
     });

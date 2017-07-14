@@ -60,6 +60,9 @@
                 scope: {
                     header: '<'
                 },
+                bindToController: {
+                    isValid: '='
+                },
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
@@ -85,6 +88,7 @@
                     dvm.showOverlay = false;
                     dvm.showText = false;
                     dvm.changed = [];
+                    dvm.missingProperties = [];
                     
                     dvm.getOptions = function(propertyIRI) {
                         var range = getRange(propertyIRI);
@@ -123,6 +127,7 @@
                     
                     dvm.addToChanged = function(propertyIRI) {
                         dvm.changed = _.uniq(_.concat(dvm.changed, [propertyIRI]));
+                        dvm.missingProperties = dvm.getMissingProperties();
                     }
                     
                     dvm.isChanged = function(propertyIRI) {
@@ -208,13 +213,49 @@
                         dvm.showText = true;
                     }
                     
+                    dvm.getMissingProperties = function() {
+                        var missing = [];
+                        _.forEach(dvm.properties, property => {
+                            _.forEach(_.get(property, 'restrictions', []), restriction => {
+                                var length = _.get(dvm.ds.explore.instance.entity, property.propertyIRI, []).length;
+                                if (_.includes(restriction.classExpressionType, 'EXACT') && length !== restriction.cardinality) {
+                                    missing.push('Must have exactly ' + restriction.cardinality + ' value(s) for ' + dvm.util.getBeautifulIRI(property.propertyIRI));
+                                } else if (_.includes(restriction.classExpressionType, 'MIN') && length < restriction.cardinality) {
+                                    missing.push('Must have at least ' + restriction.cardinality + ' value(s) for ' + dvm.util.getBeautifulIRI(property.propertyIRI));
+                                } else if (_.includes(restriction.classExpressionType, 'MAX') && length > restriction.cardinality) {
+                                    missing.push('Must have at most ' + restriction.cardinality + ' value(s) for ' + dvm.util.getBeautifulIRI(property.propertyIRI));
+                                }
+                            });
+                        });
+                        dvm.isValid = !missing.length;
+                        return missing;
+                    }
+                    
+                    dvm.getRestrictionText = function(propertyIRI) {
+                        var details = _.find(dvm.properties, {propertyIRI});
+                        var results = [];
+                        _.forEach(_.get(details, 'restrictions', []), restriction => {
+                            if (_.includes(restriction.classExpressionType, 'EXACT')) {
+                                results.push('exactly ' + restriction.cardinality);
+                            } else if (_.includes(restriction.classExpressionType, 'MIN')) {
+                                results.push('at least ' + restriction.cardinality);
+                            } else if (_.includes(restriction.classExpressionType, 'MAX')) {
+                                results.push('at most ' + restriction.cardinality);
+                            }
+                        });
+                        return results.length ? ('[' + _.join(results, ', ') + ']') : '';
+                    }
+                    
                     function contains(string, part) {
                         return _.includes(_.toLower(string), _.toLower(part));
                     }
                     
                     function getProperties() {
                         $q.all(_.map(dvm.ds.explore.instance.entity['@type'], type => es.getClassPropertyDetails(dvm.ds.explore.recordId, type)))
-                            .then(responses => dvm.properties = _.concat(dvm.properties, _.uniq(_.flatten(responses))), () => dvm.util.createErrorToast('An error occurred retrieving the instance properties.'));
+                            .then(responses => {
+                                dvm.properties = _.concat(dvm.properties, _.uniq(_.flatten(responses)));
+                                dvm.missingProperties = dvm.getMissingProperties();
+                            }, () => dvm.util.createErrorToast('An error occurred retrieving the instance properties.'));
                     }
                     
                     function getRange(propertyIRI) {

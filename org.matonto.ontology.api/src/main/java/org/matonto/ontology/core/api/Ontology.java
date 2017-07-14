@@ -23,22 +23,22 @@ package org.matonto.ontology.core.api;
  * #L%
  */
 
-import java.io.OutputStream;
-import java.util.Optional;
-import java.util.Set;
-
 import org.matonto.ontology.core.api.axiom.Axiom;
+import org.matonto.ontology.core.api.classexpression.CardinalityRestriction;
 import org.matonto.ontology.core.api.classexpression.OClass;
 import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
-import org.matonto.ontology.core.api.propertyexpression.Property;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
+
+import java.io.OutputStream;
+import java.util.Optional;
+import java.util.Set;
 
 public interface Ontology {
 
@@ -81,7 +81,7 @@ public interface Ontology {
     /**
      * Gets the set of loaded ontologies that this ontology is related to via the reflexive transitive closure
      * of the directlyImports relation as defined in Section 3.4 of the OWL 2 Structural Specification.
-     * <p>
+     *
      * <p>Note: The import closure of an ontology O is a set containing O and all the ontologies that O imports.
      * The import closure of O SHOULD NOT contain ontologies O1 and O2 such that O1 and O2
      * are different ontology versions
@@ -206,16 +206,24 @@ public interface Ontology {
     Set<Individual> getIndividualsOfType(OClass clazz);
 
     /**
+     * Searches for all cardinality properties associated with a particular class.
+     *
+     * @param classIRI The {@link IRI} of the class.
+     * @return The {@link Set} of {@link CardinalityRestriction}s.
+     */
+    Set<CardinalityRestriction> getCardinalityProperties(IRI classIRI);
+
+    /**
      * Compares two SimpleOntology objects by their resource ids (ontologyId) and RDF model of the ontology objects,
      * and returns true if the resource ids are equal and their RDF models are isomorphic.
-     * <p>
+     *
      * <p>Two models are considered isomorphic if for each of the graphs in one model, an isomorphic graph exists in the
      * other model, and the context identifiers of these graphs are either identical or (in the case of blank nodes)
      * map 1:1 on each other.  RDF graphs are isomorphic graphs if statements from one graphs can be mapped 1:1 on to
      * statements in the other graphs. In this mapping, blank nodes are not considered mapped when having an identical
      * internal id, but are mapped from one graph to the other by looking at the statements in which the blank nodes
      * occur.</p>
-     * <p>
+     *
      * <p>Note: Depending on the size of the models, this can be an expensive operation.</p>
      *
      * @return true if the resource ids are equal and their RDF models are isomorphic.
