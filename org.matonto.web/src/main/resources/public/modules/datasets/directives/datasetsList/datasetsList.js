@@ -130,7 +130,7 @@
                     }
                     dvm.showEdit = function(dataset, event) {
                         dvm.state.selectedDataset = dataset;
-                        dvm.showEditOverlay = true;
+                        dvm.state.showEditOverlay = true;
                         event.stopPropagation();
                     }
                     dvm.showClear = function(dataset, event) {

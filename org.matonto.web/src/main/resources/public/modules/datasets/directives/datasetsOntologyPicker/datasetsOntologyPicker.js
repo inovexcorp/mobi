@@ -116,10 +116,10 @@
                     }
                     dvm.getOntologies(); // Populate the list automatically...
                     
-                    $scope.$watch('dvm.ds.selectedDataset', function() {
-                        if (dvm.ds && dvm.ds.selectedDataset) {
+                    $scope.$watch('ds.selectedDataset', function() {
+                        if (ds.selectedDataset) {
                             dvm.selectedOntologies = [];
-                            var selectedOntologies = _.map(dvm.ds.selectedDataset.identifiers, 
+                            var selectedOntologies = _.map(ds.selectedDataset.identifiers, 
                                     identifier => dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
                             _.forEach(selectedOntologies, id => {
                                 var ontology = _.find(dvm.ontologies, o => { if (o['@id'] === id) { return o; }});

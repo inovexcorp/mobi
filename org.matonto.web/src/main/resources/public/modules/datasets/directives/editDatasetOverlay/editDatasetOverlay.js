@@ -74,7 +74,7 @@
                     dvm.error = '';
                     
                     dvm.recordConfig = {
-                        datasetIRI: dvm.util.getPropertyValue(ds.selectedDataset.record, prefixes.dataset + 'dataset'),
+                        datasetIRI: dvm.util.getPropertyId(ds.selectedDataset.record, prefixes.dataset + 'dataset'),
                         repositoryId: dvm.util.getPropertyValue(ds.selectedDataset.record, prefixes.dataset + 'repository'),
                         title: dvm.util.getDctermsValue(ds.selectedDataset.record, 'title'),
                         description: dvm.util.getDctermsValue(ds.selectedDataset.record, 'description')
@@ -133,7 +133,7 @@
                         });
                         
                         if (added.length > 0) {
-                            $q.all(_.map(added, record => cm.getRecordMasterBranch(record['@id'], cm.localCatalog['@id'])))
+                            $q.all(_.map(added, record => cm.getRecordMasterBranch(record, cm.localCatalog['@id'])))
                                     .then(responses => {
                                         _.forEach(responses, branch => {
                                             var id = dvm.util.getIdForBlankNode();
@@ -173,16 +173,6 @@
                             dvm.onClose();
                         }, onError);
                     }
-                    
-                    var sol = _.map(ds.selectedDataset.identifiers, identifier => dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
-                    _.forEach(sol, id => {
-                        var ontology = _.find(dvm.ontologies, o => { if (o['@id'] === id) { return o; }});
-                        if (ontology) {
-                            dvm.selectedOntologies.push(ontology);
-                        } else {
-                            cm.getRecord(id, cm.localCatalog['@id']).then(ontology => dvm.selectedOntologies.push(ontology), onError);
-                        }
-                    });
                 }
             }
         }
