@@ -1,4 +1,4 @@
-package org.matonto.etl.api.rdf;
+package org.matonto.persistence.utils;
 
 /*-
  * #%L
@@ -23,12 +23,10 @@ package org.matonto.etl.api.rdf;
  * #L%
  */
 
-import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.exception.RepositoryException;
 import org.openrdf.model.Statement;
-import org.openrdf.repository.util.RDFInserter;
-import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.helpers.AbstractRDFHandler;
 
@@ -45,12 +43,17 @@ public class BatchInserter extends AbstractRDFHandler {
 
     private long batchSize = 10000;
 
-    private final Map<String, String> namespaces;
+    private final Map<String, String> namespaces = new HashMap<>();
 
     public BatchInserter(RepositoryConnection conn, SesameTransformer transformer) {
-        namespaces = new HashMap<>();
         this.conn = conn;
         this.transformer = transformer;
+    }
+
+    public BatchInserter(RepositoryConnection conn, SesameTransformer transformer, long batchSize) {
+        this.conn = conn;
+        this.transformer = transformer;
+        this.batchSize = batchSize;
     }
 
     @Override
@@ -78,8 +81,13 @@ public class BatchInserter extends AbstractRDFHandler {
             try {
                 conn.commit();
             } catch (RepositoryException e) {
+                conn.close();
                 throw new RDFHandlerException(e);
             }
         }
+    }
+
+    public long getFinalCount() {
+        return count;
     }
 }

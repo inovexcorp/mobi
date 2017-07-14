@@ -88,6 +88,16 @@
             <groupId>io.swagger</groupId>
             <artifactId>swagger-annotations</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>ontology.utils</artifactId>
+            <version>1.8.30-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>persistence.utils</artifactId>
+            <version>1.8.30-SNAPSHOT</version>
+        </dependency>
 
         <!-- Test dependencies -->
         <dependency>
@@ -107,11 +117,6 @@
             <artifactId>repository.impl.core</artifactId>
             <version>1.7.20</version>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>ontology.utils</artifactId>
-            <version>1.7.20</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.test-framework.providers</groupId>
