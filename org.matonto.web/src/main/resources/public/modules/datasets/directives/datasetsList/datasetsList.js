@@ -72,7 +72,6 @@
                     dvm.util = utilService;
                     dvm.prefixes = prefixes;
                     dvm.error = '';
-                    dvm.editRecord = undefined;
                     dvm.selectedDataset = undefined;
                     dvm.openedDatasetId = '';
                     dvm.showDeleteConfirm = false;

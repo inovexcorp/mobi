@@ -22,7 +22,7 @@
  */
 describe('Edit Dataset Overlay directive', function() {
     var $compile, scope, $q, element, controller, datasetStateSvc, catalogManagerSvc, utilSvc, prefixes, uuid;
-    var headers, response, commitResponse;
+    var headers, response, branchResponse;
     
     var ontology1 = {
                 '@id': 'ontology1',
@@ -140,22 +140,44 @@ describe('Edit Dataset Overlay directive', function() {
         datasetRecord['catalog:keyword'] = [{'@value': 'test'}];
         datasetRecord['dataset:ontology'] = [{ '@id': 'ontology1' }];
 
-        module(function($provide) {
-            $provide.service('uuid', function() {
-                this.v4 = jasmine.createSpy('v4').and.returnValue('1234');
-            });
-        });
-
-        inject(function(_$compile_, _$rootScope_, _datasetStateService_, _catalogManagerService_, _utilService_, _$q_, _prefixes_, _uuid_) {
+        inject(function(_$compile_, _$rootScope_, _datasetStateService_, _catalogManagerService_, _utilService_, _$q_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             datasetStateSvc = _datasetStateService_;
             catalogManagerSvc = _catalogManagerService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
-            uuid = _uuid_;
             $q = _$q_;
         });
+        
+        utilSvc.getIdForBlankNode.and.returnValue('_:matonto/bnode/1234');
+        utilSvc.getPropertyId.and.callFake(function (entity, propertyIRI) { return _.get(entity, "['" + propertyIRI + "'][0]['@id']", '') });
+        utilSvc.getPropertyValue.and.callFake(function (entity, propertyIRI) { return _.get(entity, "['" + propertyIRI + "'][0]['@value']", '') });
+        utilSvc.getDctermsValue.and.callFake(function (entity, property) { return _.get(entity, "['" + prefixes.dcterms + property + "'][0]['@value']", '') });
+        utilSvc.setPropertyId.and.callFake(function (entity, propertyIRI, id) {
+                var valueObj = {'@id': id};
+                if (_.has(entity, "['" + propertyIRI + "']")) {
+                    entity[propertyIRI].push(valueObj);
+                } else {
+                    _.set(entity, "['" + propertyIRI + "'][0]", valueObj);
+                }
+            });
+        utilSvc.setPropertyValue.and.callFake(function (entity, propertyIRI, value) {
+                var valueObj = {'@value': value};
+                if (_.has(entity, "['" + propertyIRI + "']")) {
+                    entity[propertyIRI].push(valueObj);
+                } else {
+                    _.set(entity, "['" + propertyIRI + "'][0]", valueObj);
+                }
+            });
+        utilSvc.setDctermsValue.and.callFake(function (entity, property, value) {
+                var valueObj = {'@value': value};
+                if (_.has(entity, "['" + prefixes.dcterms + property + "']")) {
+                    entity[prefixes.dcterms + property].push(valueObj);
+                } else {
+                    _.set(entity, "['" + prefixes.dcterms + property + "'][0]", valueObj);
+                }
+            });
         
         var parsedDatasetRecord = {
             identifiers: [angular.copy(ontology1)],
@@ -174,8 +196,8 @@ describe('Edit Dataset Overlay directive', function() {
         };
         catalogManagerSvc.getRecords.and.returnValue($q.when(response));
         
-        commitResponse = {'commit': {'@id': 'ontology2Commit'}};
-        catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when(commitResponse));
+        branchResponse = {'@id': 'ontology2Branch', 'catalog:head': [{'@id': 'ontology2Commit'}]};
+        catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.when(branchResponse));
 
         scope.$digest();
         controller = element.controller('editDatasetOverlay');
@@ -392,6 +414,8 @@ describe('Edit Dataset Overlay directive', function() {
             expect(element.querySelectorAll('.selected-ontologies span').length).toBe(controller.selectedOntologies.length + 1);
         });
         it('depending on the validity of the form', function() {
+            controller.infoForm.$invalid = true;
+            scope.$digest();
             var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 

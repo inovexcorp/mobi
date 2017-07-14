@@ -909,6 +909,7 @@ function mockUtil() {
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getChangesById = jasmine.createSpy('getChangesById');
             this.getPredicateLocalName = jasmine.createSpy('getPredicateLocalName');
+            this.getIdForBlankNode = jasmine.createSpy('getIdForBlankNode').and.returnValue('');
         });
     });
 }
