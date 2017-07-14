@@ -26,14 +26,19 @@ package org.matonto.rdf.orm.impl;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.orm.OrmException;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.OrmFactoryRegistry;
 import org.matonto.rdf.orm.Thing;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -110,6 +115,34 @@ public class OrmFactoryRegistryImpl implements OrmFactoryRegistry {
                 .sorted((factory1, factory2) ->
                         factory1.getType().isAssignableFrom(factory2.getType()) ? 1 : -1)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public <T extends Thing> T createNew(Resource resource, Model model, Class<T> type) throws OrmException {
+        OrmFactory<T> factory = getFactoryOfType(type)
+                .orElseThrow(() -> new OrmException("No OrmFactory present of type: " + type.getName()));
+        return factory.createNew(resource, model);
+    }
+
+    @Override
+    public <T extends Thing> Optional<T> getExisting(Resource resource, Model model, Class<T> type) throws OrmException {
+        OrmFactory<T> factory = getFactoryOfType(type)
+                .orElseThrow(() -> new OrmException("No OrmFactory present of type: " + type.getName()));
+        return factory.getExisting(resource, model);
+    }
+
+    @Override
+    public <T extends Thing> Collection<T> getAllExisting(Model model, Class<T> type) throws OrmException {
+        OrmFactory<T> factory = getFactoryOfType(type)
+                .orElseThrow(() -> new OrmException("No OrmFactory present of type: " + type.getName()));
+        return factory.getAllExisting(model);
+    }
+
+    @Override
+    public <T extends Thing> void processAllExisting(Model model, Consumer<T> consumer, Class<T> type) {
+        OrmFactory<T> factory = getFactoryOfType(type)
+                .orElseThrow(() -> new OrmException("No OrmFactory present of type: " + type.getName()));
+        factory.processAllExisting(model, consumer);
     }
 
     @SuppressWarnings("unchecked")
