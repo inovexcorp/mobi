@@ -33,5 +33,6 @@
         </div>
         <datasets-list></datasets-list>
         <new-dataset-overlay ng-if="dvm.showNewOverlay" on-close="dvm.showNewOverlay = false"></new-dataset-overlay>
+        <edit-dataset-overlay ng-if="dvm.showEditOverlay" dataset="dvm.state.selectedDataset" on-close="dvm.showEditOverlay = false"></edit-dataset-overlay>
     </div>
 </div>

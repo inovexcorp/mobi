@@ -71,7 +71,7 @@ describe('Datasets List directive', function() {
             })
             it('if it was open', function() {
                 controller.clickDataset({record: {'@id': controller.openedDatasetId}});
-                expect(controller.selectedDataset).toBeUndefined();
+                expect(controller.state.selectedDataset).toBeUndefined();
                 expect(controller.openedDatasetId).toBe('');
             });
             describe('if it was not open', function() {
@@ -86,7 +86,7 @@ describe('Datasets List directive', function() {
                     spyOn(controller, 'getIdentifiedOntologyIds').and.returnValue([ontologyId]);
                     controller.clickDataset(dataset);
                     scope.$apply();
-                    expect(controller.selectedDataset).toEqual(dataset);
+                    expect(controller.state.selectedDataset).toEqual(dataset);
                     expect(controller.openedDatasetId).toBe(dataset.record['@id']);
                     expect(controller.getIdentifiedOntologyIds).toHaveBeenCalledWith(dataset);
                     expect(catalogManagerSvc.getRecord).toHaveBeenCalledWith(ontologyId, 'catalogId');
@@ -95,7 +95,7 @@ describe('Datasets List directive', function() {
                 it('and it does not link to any ontologies', function() {
                     spyOn(controller, 'getIdentifiedOntologyIds').and.returnValue([]);
                     controller.clickDataset(dataset);
-                    expect(controller.selectedDataset).toEqual(dataset);
+                    expect(controller.state.selectedDataset).toEqual(dataset);
                     expect(controller.openedDatasetId).toBe(dataset.record['@id']);
                     expect(controller.getIdentifiedOntologyIds).toHaveBeenCalledWith(dataset);
                     expect(catalogManagerSvc.getRecord).not.toHaveBeenCalled();
@@ -105,7 +105,7 @@ describe('Datasets List directive', function() {
                     spyOn(controller, 'getIdentifiedOntologyIds').and.returnValue([ontologyId]);
                     controller.cachedOntologyIds = [ontologyId]
                     controller.clickDataset(dataset);
-                    expect(controller.selectedDataset).toEqual(dataset);
+                    expect(controller.state.selectedDataset).toEqual(dataset);
                     expect(controller.openedDatasetId).toBe(dataset.record['@id']);
                     expect(controller.getIdentifiedOntologyIds).toHaveBeenCalledWith(dataset);
                     expect(catalogManagerSvc.getRecord).not.toHaveBeenCalled();
@@ -130,7 +130,7 @@ describe('Datasets List directive', function() {
             var dataset = {record: {'@id': 'dataset'}};
             beforeEach(function() {
                 controller.showDeleteConfirm = true;
-                controller.selectedDataset = dataset;
+                controller.state.selectedDataset = dataset;
             });
             it('unless an error occurs', function() {
                 datasetManagerSvc.deleteDatasetRecord.and.returnValue($q.reject('Error Message'));
@@ -140,7 +140,7 @@ describe('Datasets List directive', function() {
                 expect(controller.showDeleteConfirm).toBe(true);
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
                 expect(controller.error).toBe('Error Message');
-                expect(controller.selectedDataset).toEqual(dataset);
+                expect(controller.state.selectedDataset).toEqual(dataset);
                 expect(datasetStateSvc.resetPagination).not.toHaveBeenCalled();
                 expect(datasetStateSvc.setResults).not.toHaveBeenCalled();
 
@@ -157,7 +157,7 @@ describe('Datasets List directive', function() {
                     expect(controller.showDeleteConfirm).toBe(false);
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(controller.error).toBe('');
-                    expect(controller.selectedDataset).toBeUndefined();
+                    expect(controller.state.selectedDataset).toBeUndefined();
                     expect(datasetStateSvc.paginationConfig.pageIndex).toBe(this.index - 1);
                     expect(datasetStateSvc.setResults).toHaveBeenCalled();
                 });
@@ -169,7 +169,7 @@ describe('Datasets List directive', function() {
                     expect(controller.showDeleteConfirm).toBe(false);
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(controller.error).toBe('');
-                    expect(controller.selectedDataset).toBeUndefined();
+                    expect(controller.state.selectedDataset).toBeUndefined();
                     expect(datasetStateSvc.paginationConfig.pageIndex).toBe(this.index);
                     expect(datasetStateSvc.setResults).toHaveBeenCalled();
                 });
@@ -180,7 +180,7 @@ describe('Datasets List directive', function() {
                     expect(controller.showDeleteConfirm).toBe(false);
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(controller.error).toBe('');
-                    expect(controller.selectedDataset).toBeUndefined();
+                    expect(controller.state.selectedDataset).toBeUndefined();
                     expect(datasetStateSvc.paginationConfig.pageIndex).toBe(this.index);
                     expect(datasetStateSvc.setResults).toHaveBeenCalled();
                 });
@@ -193,7 +193,7 @@ describe('Datasets List directive', function() {
                     expect(controller.showDeleteConfirm).toBe(false);
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(controller.error).toBe('');
-                    expect(controller.selectedDataset).toBeUndefined();
+                    expect(controller.state.selectedDataset).toBeUndefined();
                     expect(datasetStateSvc.paginationConfig.pageIndex).toBe(0);
                     expect(datasetStateSvc.setResults).toHaveBeenCalled();
                 });
@@ -202,13 +202,13 @@ describe('Datasets List directive', function() {
         describe('should clear a dataset', function() {
             beforeEach(function() {
                 controller.showClearConfirm = true;
-                controller.selectedDataset = {record: {'@id': 'dataset'}};
+                controller.state.selectedDataset = {record: {'@id': 'dataset'}};
             });
             it('unless an error occurs', function() {
                 datasetManagerSvc.clearDatasetRecord.and.returnValue($q.reject('Error Message'));
                 controller.clear();
                 scope.$apply();
-                expect(datasetManagerSvc.clearDatasetRecord).toHaveBeenCalledWith(controller.selectedDataset.record['@id']);
+                expect(datasetManagerSvc.clearDatasetRecord).toHaveBeenCalledWith(controller.state.selectedDataset.record['@id']);
                 expect(controller.showClearConfirm).toBe(true);
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
                 expect(controller.error).toBe('Error Message');
@@ -217,7 +217,7 @@ describe('Datasets List directive', function() {
             it('successfully', function() {
                 controller.clear();
                 scope.$apply();
-                expect(datasetManagerSvc.clearDatasetRecord).toHaveBeenCalledWith(controller.selectedDataset.record['@id']);
+                expect(datasetManagerSvc.clearDatasetRecord).toHaveBeenCalledWith(controller.state.selectedDataset.record['@id']);
                 expect(controller.showClearConfirm).toBe(false);
                 expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                 expect(controller.error).toBe('');
@@ -317,7 +317,7 @@ describe('Datasets List directive', function() {
 
         var link = angular.element(element.querySelectorAll('block-content .dataset [uib-dropdown] .delete-dataset')[0]);
         link.triggerHandler('click');
-        expect(controller.selectedDataset).toEqual(dataset);
+        expect(controller.state.selectedDataset).toEqual(dataset);
         expect(controller.showDeleteConfirm).toBe(true);
     });
     it('should set the correct state when a clear link is clicked', function() {
@@ -327,7 +327,7 @@ describe('Datasets List directive', function() {
 
         var link = angular.element(element.querySelectorAll('block-content .dataset [uib-dropdown] .clear-dataset')[0]);
         link.triggerHandler('click');
-        expect(controller.selectedDataset).toEqual(dataset);
+        expect(controller.state.selectedDataset).toEqual(dataset);
         expect(controller.showClearConfirm).toBe(true);
     });
 });
