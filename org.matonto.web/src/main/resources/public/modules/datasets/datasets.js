@@ -29,6 +29,7 @@
             'datasetsList',
             'datasetsTabset',
             'editDatasetOverlay',
+            'newDatasetOverlay',
             'newDatasetOverlay'
         ]);
 })();

@@ -184,10 +184,10 @@ describe('Edit Dataset Overlay directive', function() {
             record: angular.copy(datasetRecord)
         };
 
+        datasetStateSvc.selectedDataset = parsedDatasetRecord;
         catalogManagerSvc.localCatalog = {'@id': 'http://matonto.org/catalog-local'};
         scope.onClose = jasmine.createSpy('onClose');
-        scope.dataset = parsedDatasetRecord;
-        element = $compile(angular.element('<edit-dataset-overlay dataset="dataset" on-close="onClose()"></edit-dataset-overlay>'))(scope);
+        element = $compile(angular.element('<edit-dataset-overlay on-close="onClose()"></edit-dataset-overlay>'))(scope);
 
         headers = { 'x-total-count': 2, link: '' };
         response = {
@@ -201,6 +201,7 @@ describe('Edit Dataset Overlay directive', function() {
 
         scope.$digest();
         controller = element.controller('editDatasetOverlay');
+        controller.ontologies = [ontology1Record, ontology2Record]
     });
 
     describe('controller bound variable', function() {
@@ -208,40 +209,8 @@ describe('Edit Dataset Overlay directive', function() {
             controller.onClose();
             expect(scope.onClose).toHaveBeenCalled();
         });
-        it('dataset should exist when accessed', function() {
-            expect(controller.dataset).toEqual(scope.dataset);
-            expect(controller.dataset.record['@id']).toEqual(scope.dataset.record['@id']);
-        });
     });
     describe('controller methods', function() {
-        describe('should get a list of ontologies', function() {
-            it('unless an error occurs', function() {
-                catalogManagerSvc.getRecords.and.returnValue($q.reject('Error Message'));
-                controller.getOntologies();
-                scope.$apply();
-                expect(controller.ontologySearchConfig.pageIndex).toBe(0);
-                expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogManagerSvc.localCatalog['@id'], controller.ontologySearchConfig);
-                expect(controller.ontologies).toEqual([]);
-                expect(controller.totalSize).toEqual(0);
-                expect(controller.links).toEqual({next: '', prev: ''});
-                expect(utilSvc.parseLinks.calls.count()).toEqual(1);
-                expect(controller.error).toBe('Error Message');
-            });
-            it('successfully', function() {
-                utilSvc.parseLinks.and.returnValue({prev: 'prev', next: 'next'});
-                controller.getOntologies();
-                scope.$apply();
-                expect(controller.ontologySearchConfig.pageIndex).toBe(0);
-                expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogManagerSvc.localCatalog['@id'], controller.ontologySearchConfig);
-                expect(controller.ontologies).toEqual(response.data);
-                expect(response.headers).toHaveBeenCalled();
-                expect(controller.totalSize).toBe(headers['x-total-count']);
-                expect(utilSvc.parseLinks.calls.count()).toEqual(2);
-                expect(controller.links.prev).toBe('prev');
-                expect(controller.links.next).toBe('next');
-                expect(controller.error).toBe('');
-            });
-        });
         describe('should update a dataset', function() {
             beforeEach(function() {
                 datasetRecordExpected['dcterms:title'] = [{'@value': 'Test'}];
@@ -333,29 +302,6 @@ describe('Edit Dataset Overlay directive', function() {
                 });
             });
         });
-        it('should test whether an ontology is selected', function() {
-            expect(controller.isSelected('id')).toBe(false);
-            controller.selectedOntologies = [{'@id': 'id'}];
-            expect(controller.isSelected('id')).toBe(true);
-            expect(controller.isSelected('test')).toBe(false);
-        });
-        it('should select an ontology', function() {
-            var ontology = {'@id': 'id'};
-            spyOn(controller, 'isSelected').and.returnValue(true);
-            controller.selectOntology(ontology);
-            expect(controller.selectedOntologies).not.toContain(ontology);
-
-            controller.isSelected.and.returnValue(false);
-            controller.selectOntology(ontology);
-            expect(controller.selectedOntologies).toContain(ontology);
-        });
-        it('should unselect an ontology', function() {
-            controller.selectedOntologies = [{'@id': 'id'}];
-            controller.unselectOntology('test');
-            expect(controller.selectedOntologies.length).toBe(1);
-            controller.unselectOntology('id');
-            expect(controller.selectedOntologies.length).toBe(0);
-        });
     });
     describe('fills the element with the correct html', function() {
         it('for wrapping containers', function() {
@@ -366,9 +312,8 @@ describe('Edit Dataset Overlay directive', function() {
         });
         it('with a text-input', function() {
             var inputs = element.querySelectorAll('input');
-            expect(inputs.length).toBe(2);
-            expect(['title', 'ontologies-search']).toContain(angular.element(inputs[0]).attr('name').trim());
-            expect(['title', 'ontologies-search']).toContain(angular.element(inputs[1]).attr('name').trim());
+            expect(inputs.length).toBe(1);
+            expect(angular.element(inputs[0]).attr('name').trim()).toEqual('title');
         });
         it('with a text-area', function() {
             expect(element.find('text-area').length).toBe(1);
@@ -376,42 +321,12 @@ describe('Edit Dataset Overlay directive', function() {
         it('with a keyword-select', function() {
             expect(element.find('keyword-select').length).toBe(1);
         });
-        it('with a .input-group', function() {
-            expect(element.querySelectorAll('.input-group.ontologies-search-bar').length).toBe(1);
-        });
-        it('with a .list-group', function() {
-            expect(element.querySelectorAll('.list-group.ontology-records-list').length).toBe(1);
-        });
-        it('with a paging-details', function() {
-            expect(element.find('paging-details').length).toBe(1);
-        });
-        it('with a pagination', function() {
-            expect(element.find('pagination').length).toBe(1);
-        });
         it('depending on whether an error has occured', function() {
             expect(element.find('error-display').length).toBe(0);
 
             controller.error = 'test';
             scope.$digest();
             expect(element.find('error-display').length).toBe(1);
-        });
-        it('depending on how many ontologies there are', function() {
-            controller.ontologies = [{}];
-            scope.$digest();
-            expect(element.querySelectorAll('.ontology-records-list button').length).toBe(controller.ontologies.length);
-        });
-        it('depending on whether an ontology has been selected', function() {
-            controller.ontologies = [{'@id': 'ontology'}];
-            spyOn(controller, 'isSelected').and.returnValue(true);
-            scope.$digest();
-            var button = angular.element(element.querySelectorAll('.ontology-records-list button')[0]);
-            expect(button.hasClass('active')).toBe(true);
-        });
-        it('depending on how many ontologies have been selected', function() {
-            expect(element.querySelectorAll('.selected-ontologies span').length).toBe(2);
-            controller.selectedOntologies = [{'@id': '1'}, {'@id': '2'}];
-            scope.$digest();
-            expect(element.querySelectorAll('.selected-ontologies span').length).toBe(controller.selectedOntologies.length + 1);
         });
         it('depending on the validity of the form', function() {
             controller.infoForm.$invalid = true;
@@ -434,29 +349,6 @@ describe('Edit Dataset Overlay directive', function() {
         var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
         button.triggerHandler('click');
         expect(scope.onClose).toHaveBeenCalled();
-    });
-    it('should call getOntologies when the search button is clicked', function() {
-        scope.$digest();
-        spyOn(controller, 'getOntologies');
-        var searchButton = angular.element(element.querySelectorAll('.ontologies-search-bar button')[0]);
-        searchButton.triggerHandler('click');
-        expect(controller.getOntologies).toHaveBeenCalled();
-    });
-    it('should select an ontology when clicked', function() {
-        controller.ontologies = [{}];
-        scope.$digest();
-        spyOn(controller, 'selectOntology');
-        var button = angular.element(element.querySelectorAll('.ontology-records-list button')[0]);
-        button.triggerHandler('click');
-        expect(controller.selectOntology).toHaveBeenCalledWith({});
-    });
-    it('should unselect an ontology when clicked', function() {
-        controller.selectedOntologies = [{'@id': 'id'}];
-        scope.$digest();
-        spyOn(controller, 'unselectOntology');
-        var link = angular.element(element.querySelectorAll('.selected-ontologies span a')[0]);
-        link.triggerHandler('click');
-        expect(controller.unselectOntology).toHaveBeenCalledWith('id');
     });
     it('should call update when the button is clicked', function() {
         scope.$digest();
