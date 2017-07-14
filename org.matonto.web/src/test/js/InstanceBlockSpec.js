@@ -67,6 +67,9 @@ describe('Instance Block directive', function() {
         it('with a breadcrumbs', function() {
             expect(element.find('breadcrumbs').length).toBe(1);
         });
+        it('with a button', function() {
+            expect(element.find('button').length).toBe(1);
+        });
         it('with a block-content', function() {
             expect(element.querySelectorAll('block-content').length).toBe(1);
         });
@@ -142,6 +145,12 @@ describe('Instance Block directive', function() {
         it('getClassName should return the correct value', function() {
             discoverStateSvc.explore.breadcrumbs = ['not-this', 'class'];
             expect(controller.getClassName()).toBe('class');
+        });
+        it('button should say [Deprecated] if the class is deprecated', function() {
+            expect(angular.element(element.find('button')[0]).text().trim()).not.toContain('[Deprecated]');
+            discoverStateSvc.explore.classDeprecated = true;
+            scope.$apply();
+            expect(angular.element(element.find('button')[0]).text().trim()).toContain('[Deprecated]');
         });
     });
 });
