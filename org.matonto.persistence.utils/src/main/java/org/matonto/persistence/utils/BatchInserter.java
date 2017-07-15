@@ -29,6 +29,7 @@ import org.matonto.repository.exception.RepositoryException;
 import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.helpers.AbstractRDFHandler;
+import org.slf4j.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,34 +37,61 @@ import java.util.Map;
 public class BatchInserter extends AbstractRDFHandler {
 
     private RepositoryConnection conn;
-
     private SesameTransformer transformer;
-
     private long count = 0;
-
     private long batchSize = 10000;
-
     private final Map<String, String> namespaces = new HashMap<>();
+    private Logger logger = null;
+    private boolean printToSystem = false;
 
+    /**
+     * Creates a new BatchInserter that will use the provided RepositoryConnection to insert statements
+     * in batch chunks of the default size. The RepositoryConnection will not be closed after all the statements
+     * are added.
+     *
+     * @param conn The RepositoryConnection to use to add statements
+     * @param transformer A SesameTransformer for converting statements
+     */
     public BatchInserter(RepositoryConnection conn, SesameTransformer transformer) {
         this.conn = conn;
         this.transformer = transformer;
     }
 
+    /**
+     * Creates a new BatchInserter that will use the provided RepositoryConnection to insert statements in the
+     * batch chunks of the provided size. The RepositoryConnection will not be closed after all the statements
+     * are added.
+     *
+     * @param conn The RepositoryConnection to use to add statements
+     * @param transformer A SesameTransformer for converting statements
+     * @param batchSize How may statemtns should be added at a time
+     */
     public BatchInserter(RepositoryConnection conn, SesameTransformer transformer, long batchSize) {
         this.conn = conn;
         this.transformer = transformer;
         this.batchSize = batchSize;
     }
 
+    /**
+     * Begins a transaction for committing statements.
+     */
     @Override
     public void startRDF() throws RDFHandlerException {
         conn.begin();
     }
 
+    /**
+     * Commits any lingering transactions. Does not close the connection.
+     */
     @Override
     public void endRDF() throws RDFHandlerException {
         conn.commit();
+        if (logger != null) {
+            logger.debug("Import complete. " + count + " statements imported");
+        }
+        if (printToSystem) {
+            System.out.println("Import complete. " + count + " statements imported");
+        }
     }
 
     @Override
@@ -80,13 +108,41 @@ public class BatchInserter extends AbstractRDFHandler {
         if (count % batchSize == 0) {
             try {
                 conn.commit();
+                if (logger != null) {
+                    logger.debug(batchSize + " statements imported");
+                }
+                if (printToSystem) {
+                    System.out.println(batchSize + " statements imported");
+                }
             } catch (RepositoryException e) {
-                conn.close();
                 throw new RDFHandlerException(e);
             }
         }
     }
 
+    /**
+     * Sets the Logger for status updates.
+     *
+     * @param logger A Logger
+     */
+    public void setLogger(Logger logger) {
+        this.logger = logger;
+    }
+
+    /**
+     * Sets the value of printToSystem which determines whether or not logging will be printed to System.out.
+     *
+     * @param printToSystem True if logs will be printed; false otherwise
+     */
+    public void setPrintToSystem(boolean printToSystem) {
+        this.printToSystem = printToSystem;
+    }
+
+    /**
+     * Returns the final number of statements added.
+     *
+     * @return The number of statements added
+     */
     public long getFinalCount() {
         return count;
     }
