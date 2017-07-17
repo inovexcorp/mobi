@@ -28,9 +28,9 @@ import org.junit.Test;
 
 import java.math.BigInteger;
 
-public class TestBigIntegerValueConverter extends ValueConverterTestCase<BigInteger> {
+public class BigIntegerValueConverterTest extends ValueConverterTestCase<BigInteger> {
 
-    public TestBigIntegerValueConverter() {
+    public BigIntegerValueConverterTest() {
         super(new BigIntegerValueConverter(), BigInteger.class);
     }
 

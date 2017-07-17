@@ -25,19 +25,26 @@ package org.matonto.rdf.orm.conversion.impl;
 
 import junit.framework.TestCase;
 import org.junit.Test;
-import org.matonto.rdf.api.Literal;
+import org.matonto.rdf.api.Value;
+import org.matonto.rdf.orm.Thing;
 
-public class TestLiteralValueConverter extends ValueConverterTestCase<Literal> {
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 
-    public TestLiteralValueConverter() {
-        super(new LiteralValueConverter(), Literal.class);
+public class CalendarValueConverterTest extends ValueConverterTestCase<Calendar> {
+
+    public CalendarValueConverterTest() {
+        super(new CalendarValueConverter(), Calendar.class);
     }
 
     @Test
-    public void simpleTest() {
-        Literal test = valueFactory.createLiteral(true);
-        TestCase.assertEquals(test,
-                valueConverter.convertValue(valueConverter.convertType(test, null), null, Literal.class));
+    public void test() {
+        Calendar c = new GregorianCalendar();
+        Value v = valueConverter.convertType(c, (Thing) null);
+        Calendar c1 = valueConverter.convertValue(v, null, Calendar.class);
+        // TODO - evalutate why equality doesn't work...
+        TestCase.assertEquals(c.getTimeInMillis(), c1.getTimeInMillis());
+
     }
 
 }

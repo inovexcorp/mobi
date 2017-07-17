@@ -31,6 +31,11 @@ body.collapsed-nav .main-header {
 
     img {
         height: 42px;
+        padding: 8px;
+        
+        &.home {
+            display: none;
+        }
     }
 
     .actions {

@@ -25,19 +25,20 @@ package org.matonto.rdf.orm.conversion.impl;
 
 import junit.framework.TestCase;
 import org.junit.Test;
+import org.matonto.rdf.api.Value;
 import org.matonto.rdf.orm.conversion.ValueConversionException;
 
-public class TestShortValueConverter extends ValueConverterTestCase<Short> {
+public class FloatValueConverterTest extends ValueConverterTestCase<Float> {
 
-    public TestShortValueConverter() {
-        super(new ShortValueConverter(), Short.class);
+    public FloatValueConverterTest() {
+        super(new FloatValueConverter(), Float.class);
     }
 
     @Test
     public void basicTest() {
-        short test = 3;
-        TestCase.assertEquals(test,
-                valueConverter.convertValue(valueConverter.convertType(test, null), null, Short.class).shortValue());
+        float test = 3.141592F;
+        Value v = valueConverter.convertType(test, null);
+        TestCase.assertEquals(test, valueConverter.convertValue(v, null, Float.class));
     }
 
     @Test

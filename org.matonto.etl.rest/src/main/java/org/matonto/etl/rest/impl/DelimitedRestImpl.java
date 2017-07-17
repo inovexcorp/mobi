@@ -37,7 +37,9 @@ import com.opencsv.CSVReader;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -426,6 +428,7 @@ public class DelimitedRestImpl implements DelimitedRest {
     private String convertExcelRows(File input, int numRows) throws IOException, InvalidFormatException {
         try (Workbook wb = WorkbookFactory.create(input)) {
             // Only support single sheet files for now
+            FormulaEvaluator evaluator = wb.getCreationHelper().createFormulaEvaluator();
             Sheet sheet = wb.getSheetAt(0);
             DataFormatter df = new DataFormatter();
             JSONArray rowList = new JSONArray();
@@ -435,7 +438,7 @@ public class DelimitedRestImpl implements DelimitedRest {
                     //getLastCellNumber instead of getPhysicalNumberOfCells so that blank values don't shift cells
                     columns = new String[row.getLastCellNum()];
                     for (int i = 0; i < row.getLastCellNum(); i++ ) {
-                        columns[i] = df.formatCellValue(row.getCell(i));
+                        columns[i] = df.formatCellValue(row.getCell(i), evaluator);
                     }
                     rowList.add(columns);
                 }
