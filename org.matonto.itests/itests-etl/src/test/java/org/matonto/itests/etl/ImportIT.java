@@ -72,11 +72,8 @@ public class ImportIT extends KarafTestSupport {
         Files.copy(getBundleEntry(thisBundleContext, "/" + dataFile), Paths.get(dataFile));
 
         waitForService("(&(objectClass=org.matonto.etl.api.delimited.RDFImportService))", 10000L);
-        waitForService("(&(objectClass=org.matonto.etl.api.delimited.DatasetManager))", 10000L);
-        waitForService("(&(objectClass=org.matonto.rdf.orm.impl.SesameTransformer))", 10000L);
         waitForService("(&(objectClass=org.matonto.ontology.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=org.matonto.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
-        waitForService("(&(objectClass=org.matonto.rdf.api.ValueFactory))", 10000L);
 
         data = Values.matontoModel(Rio.parse(new FileInputStream(new File(dataFile)), "", RDFFormat.TRIG));
 
