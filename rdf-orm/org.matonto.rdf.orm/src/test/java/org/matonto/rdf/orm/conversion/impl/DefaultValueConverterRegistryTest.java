@@ -39,7 +39,7 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 
-public class TestDefaultValueConverterRegistry {
+public class DefaultValueConverterRegistryTest {
 
     protected ValueFactory valueFactory = new ValueFactoryService();
 
