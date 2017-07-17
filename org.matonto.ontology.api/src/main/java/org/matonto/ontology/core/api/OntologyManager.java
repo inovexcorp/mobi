@@ -303,6 +303,4 @@ public interface OntologyManager {
      * @return a Set with the query results.
      */
     TupleQueryResult getSearchResults(Ontology ontology, String searchText);
-
-    void cleanUpCache(Resource removedOntologyIRI);
 }

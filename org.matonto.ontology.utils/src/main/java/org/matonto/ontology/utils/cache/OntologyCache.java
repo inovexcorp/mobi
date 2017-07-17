@@ -23,11 +23,20 @@ package org.matonto.ontology.utils.cache;
  * #L%
  */
 
+import org.matonto.ontology.core.api.Ontology;
+import org.matonto.rdf.api.Resource;
 
-public class OntologyCache {
-    public static final String CACHE_NAME = "ontologyCache";
+import java.util.Optional;
+import javax.annotation.Nonnull;
+import javax.cache.Cache;
 
-    public static String generateKey(String recordIri, String branchIri, String commitIri) {
-        return String.format("%s&%s&%s", recordIri, branchIri, commitIri);
-    }
+
+public interface OntologyCache {
+    String generateKey(String recordIri, String branchIri, String commitIri);
+
+    Optional<Cache<String, Ontology>> getOntologyCache();
+
+    void clearCacheImports(Resource ontologyIRI);
+
+    void clearCache(@Nonnull Resource recordId, Resource branchId);
 }

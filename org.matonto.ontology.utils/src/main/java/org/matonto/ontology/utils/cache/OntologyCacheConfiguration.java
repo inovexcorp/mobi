@@ -1,4 +1,4 @@
-package org.matonto.ontology.core.impl.owlapi.cache;
+package org.matonto.ontology.utils.cache;
 
 /*-
  * #%L
@@ -37,7 +37,7 @@ import org.matonto.ontology.core.api.Ontology;
 import java.util.Map;
 import javax.cache.configuration.Configuration;
 
-@Component(immediate = true, name = "org.matonto.ontology.core.impl.owlapi.cache.OntologyCacheConfiguration")
+@Component(immediate = true, name = "org.matonto.ontology.utils.cache.OntologyCacheConfiguration")
 public class OntologyCacheConfiguration implements CacheConfiguration {
 
     private String cacheId;
