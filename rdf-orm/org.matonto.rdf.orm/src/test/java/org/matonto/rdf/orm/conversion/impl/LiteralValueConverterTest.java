@@ -1,10 +1,8 @@
-@Version("2.0.0.${build}")
-
-package org.matonto.ontology.utils.api;
+package org.matonto.rdf.orm.conversion.impl;
 
 /*-
  * #%L
- * org.matonto.ontology.utils
+ * RDF ORM
  * $Id:$
  * $HeadURL:$
  * %%
@@ -25,4 +23,21 @@ package org.matonto.ontology.utils.api;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import junit.framework.TestCase;
+import org.junit.Test;
+import org.matonto.rdf.api.Literal;
+
+public class LiteralValueConverterTest extends ValueConverterTestCase<Literal> {
+
+    public LiteralValueConverterTest() {
+        super(new LiteralValueConverter(), Literal.class);
+    }
+
+    @Test
+    public void simpleTest() {
+        Literal test = valueFactory.createLiteral(true);
+        TestCase.assertEquals(test,
+                valueConverter.convertValue(valueConverter.convertType(test, null), null, Literal.class));
+    }
+
+}

@@ -25,31 +25,23 @@ package org.matonto.rdf.orm.conversion.impl;
 
 import junit.framework.TestCase;
 import org.junit.Test;
-import org.matonto.rdf.orm.conversion.ValueConversionException;
 
-public class TestIntegerValueConverter extends ValueConverterTestCase<Integer> {
+public class StringValueConverterTest extends ValueConverterTestCase<String> {
 
-    public TestIntegerValueConverter() {
-        super(new IntegerValueConverter(), Integer.class);
+    public StringValueConverterTest() {
+        super(new StringValueConverter(), String.class);
     }
 
     @Test
     public void basicTest() {
-        int test = 3;
-
+        String test = "WHOA";
         TestCase.assertEquals(test,
-                valueConverter.convertValue(valueConverter.convertType(test, null), null, Integer.class).intValue());
+                valueConverter.convertValue(valueConverter.convertType(test, null), null, String.class));
     }
 
     @Test
     public void testEmpty() {
-        try {
-            valueConverter.convertValue(valueFactory.createLiteral(""), null, type);
-            TestCase.fail("Empty string should cause ValueConversionException");
-        } catch (ValueConversionException e) {
-            TestCase.assertTrue("Cause of error should have been NumberFormatException",
-                    e.getCause() instanceof NumberFormatException);
-        }
+        TestCase.assertEquals("", valueConverter.convertValue(valueFactory.createLiteral(""), null, type));
     }
 
 }

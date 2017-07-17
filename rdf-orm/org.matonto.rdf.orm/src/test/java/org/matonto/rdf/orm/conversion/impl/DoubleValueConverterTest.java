@@ -28,17 +28,17 @@ import org.junit.Test;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.orm.conversion.ValueConversionException;
 
-public class TestFloatValueConverter extends ValueConverterTestCase<Float> {
+public class DoubleValueConverterTest extends ValueConverterTestCase<Double> {
 
-    public TestFloatValueConverter() {
-        super(new FloatValueConverter(), Float.class);
+    public DoubleValueConverterTest() {
+        super(new DoubleValueConverter(), Double.class);
     }
 
     @Test
-    public void basicTest() {
-        float test = 3.141592F;
-        Value v = valueConverter.convertType(test, null);
-        TestCase.assertEquals(test, valueConverter.convertValue(v, null, Float.class));
+    public void testSimple() {
+        double test = 3.14159;
+        Value l = valueConverter.convertType(test, null);
+        TestCase.assertEquals(test, valueConverter.convertValue(l, null, Double.class));
     }
 
     @Test

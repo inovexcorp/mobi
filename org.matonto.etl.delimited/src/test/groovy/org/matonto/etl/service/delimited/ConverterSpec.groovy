@@ -67,6 +67,7 @@ class ConverterSpec extends Specification {
 
     /* Test Output Models */
     def testOutput = loadModel("testOutput.ttl")
+    def testFormulaOutput = loadModel("testFormulaOutput.ttl")
     def testOutputWithDatatypes = loadModel("testOutputWithDatatypes.ttl")
     def testOutputWithBlanks = loadModel("testOutputWithBlanks.ttl")
     def testOutputWithMultiIndexUsages = loadModel("testOutputWithMultiIndexUsages.ttl")
@@ -277,6 +278,17 @@ class ConverterSpec extends Specification {
         convertedModel == testOutput
     }
 
+    def "Convert Excel 97-2003 File with Formulas"() {
+        setup:
+        ExcelConfig config = getExcelConfigBuilder("formulaData.xls", "formulaMapping.ttl")
+                .containsHeaders(true)
+                .build()
+        Model convertedModel = c.convert(config)
+
+        expect:
+        convertedModel == testFormulaOutput
+    }
+
     def "Convert Excel 97-2003 File with Multiple Object per Row and Object and Data Properties with Blank Values"() {
         setup:
         ExcelConfig config = getExcelConfigBuilder("testFileWithBlanks.xls", "newestMapping.ttl")
@@ -333,6 +345,17 @@ class ConverterSpec extends Specification {
 
         expect:
         convertedModel == testOutput
+    }
+
+    def "Convert Excel 2007 File with Formulas"() {
+        setup:
+        ExcelConfig config = getExcelConfigBuilder("formulaData.xlsx", "formulaMapping.ttl")
+                .containsHeaders(true)
+                .build()
+        Model convertedModel = c.convert(config)
+
+        expect:
+        convertedModel == testFormulaOutput
     }
 
     def "Convert Excel 2007 File with Multiple Object per Row and Object and Data Properties with Blank Values and Blank Rows"() {
