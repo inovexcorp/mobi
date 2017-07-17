@@ -29,8 +29,8 @@
          * @name editDatasetOverlay
          *
          * @description
-         * The `editDatasetOverlay` module only provides the `editDatasetOverlay` directive which creates
-         * creates overlays with a form to edit a Dataset Record.
+         * The `editDatasetOverlay` module only provides the `editDatasetOverlay` directive which creates an overlay 
+         * with a form to edit a Dataset Record.
          */
         .module('editDatasetOverlay', [])
         /**
@@ -44,9 +44,9 @@
          * @requires prefixes.service:prefixes
          *
          * @description
-         * `editDatasetOverlay` is a directive that creates overlays with form containing fields for editing
-         * an existing Dataset Record. The first overlay contains fields for the title, description, 
-         * {@link keywordSelect.directive:keywordSelect keywords}, and  a searchable list of Ontology Records that can 
+         * `editDatasetOverlay` is a directive that creates an overlay with form containing fields for editing an 
+         * existing Dataset Record. The first overlay contains fields for the title, description, 
+         * {@link keywordSelect.directive:keywordSelect keywords}, and a searchable list of Ontology Records that can 
          * be linked to the Dataset Record.
          *
          * @param {Function} onClose The method to be called when closing the overlay
@@ -79,8 +79,7 @@
                         description: dvm.util.getDctermsValue(ds.selectedDataset.record, 'description')
                     };
                     
-                    dvm.keywords = [];
-                    _.forEach(ds.selectedDataset.record[prefixes.catalog + 'keyword'], kw => dvm.keywords.push(kw['@value']));
+                    dvm.keywords = _.map(ds.selectedDataset.record[prefixes.catalog + 'keyword'], '@value');
                     dvm.keywords.sort();
                     dvm.ontologies = [];
                     dvm.selectedOntologies = [];
@@ -99,14 +98,16 @@
                         }
                     }
                     dvm.update = function() {
-                        ds.selectedDataset.record[prefixes.dcterms + 'title'] = [];
-                        ds.selectedDataset.record[prefixes.dcterms + 'description'] = [];
-                        ds.selectedDataset.record[prefixes.dcterms + 'description'] = [];
-                        ds.selectedDataset.record[prefixes.catalog + 'keyword'] = [];
+                        var newRecord = angular.copy(ds.selectedDataset.record);
 
-                        dvm.util.setDctermsValue(ds.selectedDataset.record, 'title', dvm.recordConfig.title.trim());
-                        dvm.util.setDctermsValue(ds.selectedDataset.record, 'description', dvm.recordConfig.description.trim());
-                        _.forEach(dvm.keywords, kw => dvm.util.setPropertyValue(ds.selectedDataset.record, prefixes.catalog + 'keyword', kw.trim()));
+                        newRecord[prefixes.dcterms + 'title'] = [];
+                        newRecord[prefixes.dcterms + 'description'] = [];
+                        newRecord[prefixes.dcterms + 'description'] = [];
+                        newRecord[prefixes.catalog + 'keyword'] = [];
+
+                        dvm.util.setDctermsValue(newRecord, 'title', dvm.recordConfig.title.trim());
+                        dvm.util.setDctermsValue(newRecord, 'description', dvm.recordConfig.description.trim());
+                        _.forEach(dvm.keywords, kw => dvm.util.setPropertyValue(newRecord, prefixes.catalog + 'keyword', kw.trim()));
 
                         var curOntologies = _.map(dvm.selectedOntologies, '@id');
                         var oldOntologies = [];
@@ -119,15 +120,17 @@
                         var added = _.difference(curOntologies, oldOntologies);
                         var deleted = _.difference(oldOntologies, curOntologies);
 
+                        var newIdentifiers = angular.copy(ds.selectedDataset.identifiers);
+                        
                         _.forEach(deleted, id => {
-                            var identifier = _.find(ds.selectedDataset.identifiers, o => { 
+                            var identifier = _.find(newIdentifiers, o => { 
                                 if (dvm.util.getPropertyId(o, prefixes.dataset + 'linksToRecord') === id) { 
                                     return o;
                                 } 
                             });
                             if (identifier) {
-                                _.remove(ds.selectedDataset.identifiers, identifier);
-                                _.remove(ds.selectedDataset.record[prefixes.dataset + 'ontology'], o => o['@id'] === identifier['@id']);
+                                _.remove(newIdentifiers, identifier);
+                                _.remove(newRecord[prefixes.dataset + 'ontology'], o => o['@id'] === identifier['@id']);
                             }
                         });
                         
@@ -139,14 +142,14 @@
                                             var ontologyRecord = _.find(dvm.ontologies, {[prefixes.catalog + 'branch']: [{'@id': branch['@id']}]});
                                             var recordId = ontologyRecord['@id'];
 
-                                            dvm.util.setPropertyId(ds.selectedDataset.record, prefixes.dataset + 'ontology', id);
-                                            ds.selectedDataset.identifiers.push(createBlankNode(id, recordId, branch['@id'], 
+                                            dvm.util.setPropertyId(newRecord, prefixes.dataset + 'ontology', id);
+                                            newIdentifiers.push(createBlankNode(id, recordId, branch['@id'], 
                                                     dvm.util.getPropertyId(branch, prefixes.catalog + 'head')));
                                         });
-                                        triggerUpdate();
+                                        triggerUpdate(newRecord, newIdentifiers);
                                     }, onError);
                         } else {
-                            triggerUpdate();
+                            triggerUpdate(newRecord, newIdentifiers);
                         }
                     }
 
@@ -161,13 +164,14 @@
                                 [prefixes.dataset + 'linksToCommit']: [{ "@id": commitId }]
                             }
                     }
-                    function triggerUpdate() {
-                        // Unparse the JSON object...
-                        var jsonld = _.concat(ds.selectedDataset.identifiers, ds.selectedDataset.record);
+                    function triggerUpdate(newRecord, newIdentifiers) {
+                        var jsonld = _.concat(newIdentifiers, newRecord);
                         
                         // Send unparsed object to the update endpoint.
-                        cm.updateRecord(ds.selectedDataset.record['@id'], cm.localCatalog['@id'], jsonld).then(() => { 
+                        cm.updateRecord(newRecord['@id'], cm.localCatalog['@id'], jsonld).then(() => { 
                             dvm.util.createSuccessToast('Dataset successfully updated');
+                            ds.selectedDataset.identifiers = newIdentifiers;
+                            ds.selectedDataset.record = newRecord;
                             ds.setResults();
                             dvm.onClose();
                         }, onError);

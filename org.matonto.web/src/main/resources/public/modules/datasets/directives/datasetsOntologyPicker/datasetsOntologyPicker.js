@@ -30,7 +30,7 @@
          *
          * @description
          * The `datasetsOntologyPicker` module only provides the `datasetsOntologyPicker` directive
-         * which creates ...
+         * which creates a paged list for selecting ontologies.
          */
         .module('datasetsOntologyPicker', [])
         /**
@@ -38,10 +38,13 @@
          * @name datasetsTabset.directive:datasetsOntologyPicker
          * @scope
          * @restrict E
+         * @requires datasetState.service:datasetStateService
+         * @requires catalogManager.service:catalogManagerService
+         * @requires util.service:utilService
          * @requires prefixes.service:prefixes
          *
          * @description
-         * `datasetsOntologyPicker` is a directive which ...
+         * `datasetsOntologyPicker` is a directive which creates a paged list for selecting ontologies.
          */
         .directive('datasetsOntologyPicker', datasetsOntologyPicker);
 

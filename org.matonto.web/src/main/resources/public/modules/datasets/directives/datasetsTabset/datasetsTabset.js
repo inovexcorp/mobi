@@ -63,8 +63,6 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = datasetStateService;
-                    dvm.showNewOverlay = false;
-                    dvm.showEditOverlay = false;
 
                     dvm.onKeyUp = function(event) {
                         if (event.keyCode === 13) {
