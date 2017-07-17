@@ -88,7 +88,7 @@ public class CLIImporter implements Action {
         try {
             File newFile = new File(file);
             ImportServiceConfig.Builder builder = new ImportServiceConfig.Builder()
-                    .cont(continueOnError)
+                    .continueOnError(continueOnError)
                     .logOutput(true)
                     .printOutput(true);
             if (repositoryId != null) {

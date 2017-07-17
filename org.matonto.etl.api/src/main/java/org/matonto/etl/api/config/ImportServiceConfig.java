@@ -24,20 +24,23 @@ package org.matonto.etl.api.config;
  */
 
 import org.matonto.rdf.api.Resource;
+import org.openrdf.rio.RDFFormat;
 
 public class ImportServiceConfig {
     private String repository;
     private Resource dataset;
-    private boolean cont = false;
+    private boolean continueOnError = false;
     private boolean logOutput = false;
     private boolean printOutput = false;
+    private RDFFormat format;
 
     protected ImportServiceConfig(Builder builder) {
         this.repository = builder.repository;
         this.dataset = builder.dataset;
-        this.cont = builder.cont;
+        this.continueOnError = builder.continueOnError;
         this.logOutput = builder.logOutput;
         this.printOutput = builder.printOutput;
+        this.format = builder.format;
     }
 
     public Resource getDataset() {
@@ -48,8 +51,8 @@ public class ImportServiceConfig {
         return repository;
     }
 
-    public boolean getCont() {
-        return cont;
+    public boolean getContinueOnError() {
+        return continueOnError;
     }
 
     public boolean getLogOutput() {
@@ -60,12 +63,17 @@ public class ImportServiceConfig {
         return printOutput;
     }
 
+    public RDFFormat getFormat() {
+        return format;
+    }
+
     public static class Builder {
         private String repository;
         private Resource dataset;
-        private boolean cont = false;
+        private boolean continueOnError = false;
         private boolean logOutput = false;
         private boolean printOutput = false;
+        private RDFFormat format;
 
         public Builder() {}
 
@@ -97,8 +105,8 @@ public class ImportServiceConfig {
          * @param cont True if the service should continue on error; false otherwise
          * @return The Builder
          */
-        public Builder cont(boolean cont) {
-            this.cont = cont;
+        public Builder continueOnError(boolean cont) {
+            this.continueOnError = cont;
             return this;
         }
 
@@ -121,6 +129,18 @@ public class ImportServiceConfig {
          */
         public Builder printOutput(boolean printOutput) {
             this.printOutput = printOutput;
+            return this;
+        }
+
+        /**
+         * The RDFFormat of the data to be imported. If importing a file, overrides the format found from the file
+         * extension.
+         *
+         * @param format The RDFFormat of data being imported
+         * @return The Builder
+         */
+        public Builder format(RDFFormat format) {
+            this.format = format;
             return this;
         }
 

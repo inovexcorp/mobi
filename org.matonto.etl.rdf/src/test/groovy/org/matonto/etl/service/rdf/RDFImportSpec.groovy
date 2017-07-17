@@ -64,7 +64,7 @@ class RDFImportSpec extends Specification {
 
     def "Imports trig file to repository without format"() {
         setup:
-        def config = new ImportServiceConfig.Builder().cont(true).repository(repoId).build()
+        def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).build()
 
         when:
         service.importFile(config, file)
@@ -75,10 +75,10 @@ class RDFImportSpec extends Specification {
 
     def "Imports trig file to repository with format"() {
         setup:
-        def config = new ImportServiceConfig.Builder().cont(true).repository(repoId).build()
+        def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).format(RDFFormat.TRIG).build()
 
         when:
-        service.importFile(config, file, RDFFormat.TRIG)
+        service.importFile(config, file)
 
         then:
         (1.._) * conn.add(*_)
@@ -86,7 +86,7 @@ class RDFImportSpec extends Specification {
 
     def "Imports Model to repository"() {
         setup:
-        def config = new ImportServiceConfig.Builder().cont(true).repository(repoId).build()
+        def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).build()
 
         when:
         service.importModel(config, model)
@@ -95,9 +95,9 @@ class RDFImportSpec extends Specification {
         (1.._) * conn.add(*_)
     }
 
-    def "Throws exception if repository ID does not exist without format"() {
+    def "Throws exception if repository ID does not exist"() {
         setup:
-        def config = new ImportServiceConfig.Builder().cont(true).repository("missing").build()
+        def config = new ImportServiceConfig.Builder().continueOnError(true).repository("missing").build()
 
         when:
         service.importFile(config, file)
@@ -106,20 +106,9 @@ class RDFImportSpec extends Specification {
         thrown IllegalArgumentException
     }
 
-    def "Throws exception if repository ID does not exist with format"() {
-        setup:
-        def config = new ImportServiceConfig.Builder().cont(true).repository("missing").build()
-
-        when:
-        service.importFile(config, file, RDFFormat.TRIG)
-
-        then:
-        thrown IllegalArgumentException
-    }
-
     def "Throws exception for repository if invalid file type"() {
         setup:
-        def config = new ImportServiceConfig.Builder().cont(true).repository(repoId).build()
+        def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).build()
         File f = new ClassPathResource("importer/testFile.txt").getFile()
 
         when:
@@ -129,10 +118,10 @@ class RDFImportSpec extends Specification {
         thrown IOException
     }
 
-    def "Throws exception for repository if nonexistent file without format"() {
+    def "Throws exception for repository if nonexistent file"() {
         setup:
-        def config = new ImportServiceConfig.Builder().cont(true).repository(repoId).build()
-        File f = new File("importer/FakeFile.txt")
+        def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).build()
+        File f = new File("importer/FakeFile.trig")
 
         when:
         service.importFile(config, f)
@@ -141,21 +130,9 @@ class RDFImportSpec extends Specification {
         thrown IOException
     }
 
-    def "Throws exception for repository if nonexistent file with format"() {
-        setup:
-        def config = new ImportServiceConfig.Builder().cont(true).repository(repoId).build()
-        File f = new File("importer/FakeFile.txt")
-
-        when:
-        service.importFile(config, f, RDFFormat.TRIG)
-
-        then:
-        thrown IOException
-    }
-
     def "Imports trig file to dataset without format"() {
         setup:
-        def config = new ImportServiceConfig.Builder().cont(true).dataset(datasetId).build()
+        def config = new ImportServiceConfig.Builder().continueOnError(true).dataset(datasetId).build()
 
         when:
         service.importFile(config, file)
@@ -166,18 +143,18 @@ class RDFImportSpec extends Specification {
 
     def "Imports trig file to dataset with format"() {
         setup:
-        def config = new ImportServiceConfig.Builder().cont(true).dataset(datasetId).build()
+        def config = new ImportServiceConfig.Builder().continueOnError(true).dataset(datasetId).format(RDFFormat.TRIG).build()
 
         when:
-        service.importFile(config, file,  RDFFormat.TRIG)
+        service.importFile(config, file)
 
         then:
         (1.._) * datasetConn.add(*_)
     }
 
-    def "Throws exception if dataset record ID does not exist without format"() {
+    def "Throws exception if dataset record ID does not exist"() {
         setup:
-        def config = new ImportServiceConfig.Builder().cont(true).dataset(vf.createIRI("http://test.com/missing")).build()
+        def config = new ImportServiceConfig.Builder().continueOnError(true).dataset(vf.createIRI("http://test.com/missing")).build()
 
         when:
         service.importFile(config, file)
@@ -186,20 +163,9 @@ class RDFImportSpec extends Specification {
         thrown IllegalArgumentException
     }
 
-    def "Throws exception if dataset record ID does not exist with format"() {
-        setup:
-        def config = new ImportServiceConfig.Builder().cont(true).dataset(vf.createIRI("http://test.com/missing")).build()
-
-        when:
-        service.importFile(config, file, RDFFormat.TRIG)
-
-        then:
-        thrown IllegalArgumentException
-    }
-
     def "Throws exception for dataset if invalid file type"(){
         setup:
-        def config = new ImportServiceConfig.Builder().cont(true).dataset(datasetId).build()
+        def config = new ImportServiceConfig.Builder().continueOnError(true).dataset(datasetId).build()
         File f = new ClassPathResource("importer/testFile.txt").getFile()
 
         when:
@@ -209,25 +175,13 @@ class RDFImportSpec extends Specification {
         thrown IOException
     }
 
-    def "Throws exception for dataset if nonexistent file without format"(){
+    def "Throws exception for dataset if nonexistent file"(){
         setup:
-        def config = new ImportServiceConfig.Builder().cont(true).dataset(datasetId).build()
-        File f = new File("importer/FakeFile.txt")
+        def config = new ImportServiceConfig.Builder().continueOnError(true).dataset(datasetId).build()
+        File f = new File("importer/FakeFile.trig")
 
         when:
         service.importFile(config, f)
-
-        then:
-        thrown IOException
-    }
-
-    def "Throws exception for dataset if nonexistent file with format"(){
-        setup:
-        def config = new ImportServiceConfig.Builder().cont(true).dataset(datasetId).build()
-        File f = new File("importer/FakeFile.txt")
-
-        when:
-        service.importFile(config, f, RDFFormat.TRIG)
 
         then:
         thrown IOException

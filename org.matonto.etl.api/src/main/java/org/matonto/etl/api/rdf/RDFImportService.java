@@ -49,21 +49,6 @@ public interface RDFImportService {
     void importFile(ImportServiceConfig config, File file) throws IOException;
 
     /**
-     * Imports an RDF File with a specified format to a specific Repository or DatasetRecord depending on the
-     * provided configuration.
-     *
-     * @param config The configuration for the import specifying the target
-     * @param file An RDF file to import
-     * @param format The RDF format of the imported file
-     * @throws RDFParseException thrown if there is a problem parsing the RDF File
-     * @throws RepositoryException thrown if there is a problem connecting to the specified Repository or the
-     *      Dataset of the specified DatasetRecord
-     * @throws IOException thrown if there is a problem reading the File or the File could not be found
-     * @throws IllegalArgumentException thrown if the Repository or DatasetRecord does not exist
-     */
-    void importFile(ImportServiceConfig config, File file, RDFFormat format) throws IOException;
-
-    /**
      * Imports a Model into a specific Repository or DatasetRecord depending on the provided configuration.
      *
      * @param config The configuration for the import specifying the target
