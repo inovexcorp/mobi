@@ -26,30 +26,18 @@ package org.matonto.rdf.orm.conversion.impl;
 import junit.framework.TestCase;
 import org.junit.Test;
 import org.matonto.rdf.api.Value;
-import org.matonto.rdf.orm.conversion.ValueConversionException;
 
-public class TestDoubleValueConverter extends ValueConverterTestCase<Double> {
+public class ValueValueConverterTest extends ValueConverterTestCase<Value> {
 
-    public TestDoubleValueConverter() {
-        super(new DoubleValueConverter(), Double.class);
+    public ValueValueConverterTest() {
+        super(new ValueValueConverter(), Value.class);
     }
 
     @Test
-    public void testSimple() {
-        double test = 3.14159;
-        Value l = valueConverter.convertType(test, null);
-        TestCase.assertEquals(test, valueConverter.convertValue(l, null, Double.class));
-    }
-
-    @Test
-    public void testEmpty() {
-        try {
-            valueConverter.convertValue(valueFactory.createLiteral(""), null, type);
-            TestCase.fail("Empty string should cause ValueConversionException");
-        } catch (ValueConversionException e) {
-            TestCase.assertTrue("Cause of error should have been NumberFormatException",
-                    e.getCause() instanceof NumberFormatException);
-        }
+    public void testBasic() {
+        Value test = valueFactory.createIRI("urn://silly.test");
+        TestCase.assertEquals(test,
+                valueConverter.convertValue(valueConverter.convertType(test, null), null, Value.class));
     }
 
 }
