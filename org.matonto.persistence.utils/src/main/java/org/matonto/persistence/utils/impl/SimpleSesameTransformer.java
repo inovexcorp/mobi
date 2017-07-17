@@ -1,4 +1,4 @@
-package org.matonto.ontology.utils.impl;
+package org.matonto.persistence.utils.impl;
 
 /*-
  * #%L
@@ -27,7 +27,7 @@ import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
-import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
@@ -77,7 +77,7 @@ public class SimpleSesameTransformer implements SesameTransformer {
     public SimpleSesameTransformer() {}
 
     @Override
-    public org.openrdf.model.Model sesameModel(Model m){
+    public org.openrdf.model.Model sesameModel(Model m) {
         Set<org.openrdf.model.Statement> stmts = m.stream()
                 .map(this::sesameStatement)
                 .collect(Collectors.toSet());
