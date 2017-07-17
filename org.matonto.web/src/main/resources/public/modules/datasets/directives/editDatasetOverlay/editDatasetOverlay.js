@@ -102,7 +102,6 @@
 
                         newRecord[prefixes.dcterms + 'title'] = [];
                         newRecord[prefixes.dcterms + 'description'] = [];
-                        newRecord[prefixes.dcterms + 'description'] = [];
                         newRecord[prefixes.catalog + 'keyword'] = [];
 
                         dvm.util.setDctermsValue(newRecord, 'title', dvm.recordConfig.title.trim());

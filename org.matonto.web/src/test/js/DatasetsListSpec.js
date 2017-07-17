@@ -67,12 +67,12 @@ describe('Datasets List directive', function() {
         });
         describe('should set the correct state for clicking a dataset', function() {
             beforeEach(function() {
-                controller.openedDatasetId = 'test';
+                datasetStateSvc.openedDatasetId = 'test';
             })
             it('if it was open', function() {
-                controller.clickDataset({record: {'@id': controller.openedDatasetId}});
+                controller.clickDataset({record: {'@id': datasetStateSvc.openedDatasetId}});
                 expect(controller.state.selectedDataset).toBeUndefined();
-                expect(controller.openedDatasetId).toBe('');
+                expect(datasetStateSvc.openedDatasetId).toBe('');
             });
             describe('if it was not open', function() {
                 var dataset = {record: {'@id': 'notopen'}};
@@ -87,7 +87,7 @@ describe('Datasets List directive', function() {
                     controller.clickDataset(dataset);
                     scope.$apply();
                     expect(controller.state.selectedDataset).toEqual(dataset);
-                    expect(controller.openedDatasetId).toBe(dataset.record['@id']);
+                    expect(datasetStateSvc.openedDatasetId).toBe(dataset.record['@id']);
                     expect(controller.getIdentifiedOntologyIds).toHaveBeenCalledWith(dataset);
                     expect(catalogManagerSvc.getRecord).toHaveBeenCalledWith(ontologyId, 'catalogId');
                     expect(controller.cachedOntologyIds).toContain(ontologyId);
@@ -96,7 +96,7 @@ describe('Datasets List directive', function() {
                     spyOn(controller, 'getIdentifiedOntologyIds').and.returnValue([]);
                     controller.clickDataset(dataset);
                     expect(controller.state.selectedDataset).toEqual(dataset);
-                    expect(controller.openedDatasetId).toBe(dataset.record['@id']);
+                    expect(datasetStateSvc.openedDatasetId).toBe(dataset.record['@id']);
                     expect(controller.getIdentifiedOntologyIds).toHaveBeenCalledWith(dataset);
                     expect(catalogManagerSvc.getRecord).not.toHaveBeenCalled();
                     expect(controller.cachedOntologyIds).toEqual([]);
@@ -106,7 +106,7 @@ describe('Datasets List directive', function() {
                     controller.cachedOntologyIds = [ontologyId]
                     controller.clickDataset(dataset);
                     expect(controller.state.selectedDataset).toEqual(dataset);
-                    expect(controller.openedDatasetId).toBe(dataset.record['@id']);
+                    expect(datasetStateSvc.openedDatasetId).toBe(dataset.record['@id']);
                     expect(controller.getIdentifiedOntologyIds).toHaveBeenCalledWith(dataset);
                     expect(catalogManagerSvc.getRecord).not.toHaveBeenCalled();
                     expect(controller.cachedOntologyIds).toEqual([ontologyId]);
@@ -265,7 +265,7 @@ describe('Datasets List directive', function() {
         });
         it('depending on whether a dataset is opened', function() {
             datasetStateSvc.results = [{record: {'@id': 'a'}}, {record: {'@id': 'b'}}];
-            controller.openedDatasetId = 'a';
+            datasetStateSvc.openedDatasetId = 'a';
             scope.$digest();
             var datasets = element.querySelectorAll('block-content .dataset');
             expect(angular.element(datasets[0]).hasClass('open')).toBe(true);

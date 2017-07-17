@@ -69,10 +69,10 @@
                     var cachedOntologyRecords = [];
                     var catalogId = _.get(cm.localCatalog, '@id', '');
                     dvm.state = datasetStateService;
+                    dvm.state.openedDatasetId = '';
                     dvm.util = utilService;
                     dvm.prefixes = prefixes;
                     dvm.error = '';
-                    dvm.openedDatasetId = '';
                     dvm.showDeleteConfirm = false;
                     dvm.showClearConfirm = false;
                     dvm.cachedOntologyIds = [];
@@ -84,12 +84,12 @@
                         return dvm.util.getDctermsValue(_.find(cachedOntologyRecords, {'@id': id}), 'title');
                     }
                     dvm.clickDataset = function(dataset) {
-                        if (dvm.openedDatasetId === dataset.record['@id']) {
+                        if (dvm.state.openedDatasetId === dataset.record['@id']) {
                             dvm.state.selectedDataset = undefined;
-                            dvm.openedDatasetId = '';
+                            dvm.state.openedDatasetId = '';
                         } else {
                             dvm.state.selectedDataset = dataset;
-                            dvm.openedDatasetId = dataset.record['@id'];
+                            dvm.state.openedDatasetId = dataset.record['@id'];
                             var toRetrieve = _.filter(dvm.getIdentifiedOntologyIds(dataset), id => !_.includes(dvm.cachedOntologyIds, id));
                             $q.all(_.map(toRetrieve, id => cm.getRecord(id, catalogId)))
                                 .then(responses => {
