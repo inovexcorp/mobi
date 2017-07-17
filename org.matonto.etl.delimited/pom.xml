@@ -47,6 +47,11 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
+            <artifactId>persistence.utils</artifactId>
+            <version>1.8.34-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
             <version>1.8.28</version>
         </dependency>
@@ -74,11 +79,6 @@
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
             <version>1.8.21</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>ontology.utils</artifactId>
-            <version>1.7.20</version>
         </dependency>
 
         <dependency>

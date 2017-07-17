@@ -1,6 +1,6 @@
-@Version("2.0.0.${build}")
+@Version("1.0.0.${build}")
 
-package org.matonto.ontology.utils.api;
+package org.matonto.persistence.utils.api;
 
 /*-
  * #%L
