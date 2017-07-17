@@ -69,7 +69,7 @@ public class MatOntoOntologyIRIMapperTest {
     public void getDocumentIRIThatExistsTest() throws Exception {
         // Setup:
         String recordIRI = "https://matonto.org/records/test";
-        when(ontologyManager.retrieveOntologyRecordId(any(Resource.class))).thenReturn(Optional.of(vf.createIRI(recordIRI)));
+        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.of(vf.createIRI(recordIRI)));
 
         IRI result = mapper.getDocumentIRI(owlIRI);
         assertNotNull(result);
@@ -79,7 +79,7 @@ public class MatOntoOntologyIRIMapperTest {
     @Test
     public void getDocumentIRIThatDoesNotExist() throws Exception {
         // Setup:
-        when(ontologyManager.retrieveOntologyRecordId(any(Resource.class))).thenReturn(Optional.empty());
+        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
 
         assertNull(mapper.getDocumentIRI(owlIRI));
     }

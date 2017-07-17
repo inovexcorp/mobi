@@ -272,7 +272,7 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public Optional<Resource> retrieveOntologyRecordId(@Nonnull Resource ontologyIRI) {
+    public Optional<Resource> getOntologyRecordResource(@Nonnull Resource ontologyIRI) {
         Repository system = repositoryManager.getRepository("system").orElseThrow(() ->
                 new IllegalStateException("System Repository unavailable"));
         try (RepositoryConnection conn = system.getConnection()) {
@@ -290,7 +290,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public Optional<Ontology> retrieveOntologyByIRI(@Nonnull Resource ontologyIRI) {
         long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
-        Optional<Ontology> ontology = retrieveOntologyRecordId(ontologyIRI)
+        Optional<Ontology> ontology = getOntologyRecordResource(ontologyIRI)
                 .flatMap(this::retrieveOntologyWithRecordId);
 
         if (log.isTraceEnabled()) {
@@ -354,8 +354,12 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public void deleteOntology(@Nonnull Resource recordId) {
+        Resource catalogId = catalogManager.getLocalCatalog().getResource();
+        OntologyRecord record = catalogManager.getRecord(catalogId, recordId, ontologyRecordFactory).orElseThrow(() ->
+                new IllegalArgumentException("Ontology Record " + recordId + " not found"));
         catalogManager.removeRecord(catalogManager.getLocalCatalog().getResource(), recordId);
         clearCache(recordId, null);
+        record.getOntologyIRI().ifPresent(this::cleanUpCache);
     }
 
     @Override

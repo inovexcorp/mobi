@@ -67,7 +67,7 @@ public class MatOntoOntologyFactory implements OWLOntologyFactory {
             throws OWLOntologyCreationException {
         IRI iri = source.getDocumentIRI();
         IRI recordId = IRI.create(iri.getIRIString().replace(MatOntoOntologyIRIMapper.protocol,
-                "https:"));
+                MatOntoOntologyIRIMapper.replace));
         Ontology matOnt = ontologyManager.retrieveOntology(SimpleOntologyValues.matontoIRI(recordId))
                 .orElseThrow(() -> new OWLOntologyCreationException("Ontology " + recordId
                         + " could not be found"));

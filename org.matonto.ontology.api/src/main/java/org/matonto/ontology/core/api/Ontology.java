@@ -93,6 +93,11 @@ public interface Ontology {
      */
     Set<Ontology> getImportsClosure();
 
+    /**
+     * Gets the set of IRIs for directly imported ontologies of this ontology.
+     *
+     * @return set of ontology IRIs
+     */
     Set<IRI> getImportedOntologyIRIs();
 
     /**

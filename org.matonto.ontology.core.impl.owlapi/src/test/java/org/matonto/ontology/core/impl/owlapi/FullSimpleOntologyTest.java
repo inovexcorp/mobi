@@ -96,7 +96,7 @@ public class FullSimpleOntologyTest {
         when(ontologyId.getVersionIRI()).thenReturn(Optional.of(versionIRI));
         when(ontologyManager.createOntologyId(any(IRI.class), any(IRI.class))).thenReturn(ontologyId);
         when(ontologyManager.createOntologyId(any(IRI.class))).thenReturn(ontologyId);
-        when(ontologyManager.retrieveOntologyRecordId(any(Resource.class))).thenReturn(Optional.empty());
+        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
 
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");
         ontology = new SimpleOntology(stream, ontologyManager, transformer);

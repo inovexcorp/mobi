@@ -196,6 +196,7 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogIRI);
         when(catalogManager.getLocalCatalog()).thenReturn(catalog);
         when(catalogManager.createRecord(any(RecordConfig.class), eq(ontologyRecordFactory))).thenReturn(record);
+        when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         doThrow(new IllegalArgumentException()).when(catalogManager).getMasterBranch(catalogIRI, missingIRI);
         doThrow(new IllegalArgumentException()).when(catalogManager).getBranch(catalogIRI, recordIRI, missingIRI, branchFactory);
         doThrow(new IllegalArgumentException()).when(catalogManager).getCommit(catalogIRI, recordIRI, branchIRI, missingIRI);
@@ -538,7 +539,7 @@ public class SimpleOntologyManagerTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testDeleteOntologyRecordWithMissingIdentifier() {
-        doThrow(new IllegalArgumentException()).when(catalogManager).removeRecord(catalogIRI, missingIRI);
+        doThrow(new IllegalArgumentException()).when(catalogManager).getRecord(catalogIRI, missingIRI, ontologyRecordFactory);
 
         manager.deleteOntology(missingIRI);
     }
