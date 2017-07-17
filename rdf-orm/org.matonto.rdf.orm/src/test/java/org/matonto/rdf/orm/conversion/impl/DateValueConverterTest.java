@@ -25,23 +25,20 @@ package org.matonto.rdf.orm.conversion.impl;
 
 import junit.framework.TestCase;
 import org.junit.Test;
-import org.matonto.rdf.api.Resource;
 
-public class TestResourceValueConverter extends ValueConverterTestCase<Resource> {
+import java.util.Date;
 
-    public TestResourceValueConverter() {
-        super(new ResourceValueConverter(), Resource.class);
+public class DateValueConverterTest extends ValueConverterTestCase<Date> {
+
+    public DateValueConverterTest() {
+        super(new DateValueConverter(), Date.class);
     }
 
     @Test
     public void simpleTest() {
-        Resource test = valueFactory.createBNode();
+        Date test = new Date();
         TestCase.assertEquals(test,
-                valueConverter.convertValue(valueConverter.convertType(test, null), null, Resource.class));
-        test = valueFactory.createIRI("urn://test.org/test");
-        TestCase.assertEquals(test,
-                valueConverter.convertValue(valueConverter.convertType(test, null), null, Resource.class));
-
+                valueConverter.convertValue(valueConverter.convertType(test, null), null, Date.class));
     }
 
 }
