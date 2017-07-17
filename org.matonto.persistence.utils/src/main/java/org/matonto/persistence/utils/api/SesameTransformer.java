@@ -1,4 +1,4 @@
-package org.matonto.ontology.utils.api;
+package org.matonto.persistence.utils.api;
 
 /*-
  * #%L
