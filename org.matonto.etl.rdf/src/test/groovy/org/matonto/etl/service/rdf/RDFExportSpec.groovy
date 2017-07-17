@@ -22,7 +22,7 @@
  */
 package org.matonto.etl.service.rdf
 
-import org.matonto.ontology.utils.api.SesameTransformer
+import org.matonto.persistence.utils.api.SesameTransformer
 import org.matonto.rdf.api.ModelFactory
 import org.matonto.rdf.core.impl.sesame.LinkedHashModel
 import org.matonto.rdf.core.utils.Values

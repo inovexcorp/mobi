@@ -37,6 +37,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -56,7 +57,7 @@ import org.matonto.etl.api.delimited.DelimitedConverter;
 import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.etl.api.delimited.MappingWrapper;
-import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
@@ -293,6 +294,23 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         response = target().path("delimited-files/" + fileName2).request().get();
         assertEquals(response.getStatus(), 200);
         testResultsRows(response, expectedLines, 10);
+    }
+
+    @Test
+    public void getRowsFromExcelWithFormulasTest() throws Exception {
+        String fileName1 = UUID.randomUUID().toString() + ".xls";
+        copyResourceToTemp("formulaData.xls", fileName1);
+        List<String> expectedLines = getExcelResourceLines("formulaData.xls");
+        Response response = target().path("delimited-files/" + fileName1).request().get();
+        assertEquals(response.getStatus(), 200);
+        testResultsRows(response, expectedLines, 9);
+
+        String fileName2 = UUID.randomUUID().toString() + ".xlsx";
+        copyResourceToTemp("formulaData.xlsx", fileName2);
+        expectedLines = getExcelResourceLines("formulaData.xlsx");
+        response = target().path("delimited-files/" + fileName2).request().get();
+        assertEquals(response.getStatus(), 200);
+        testResultsRows(response, expectedLines, 9);
     }
 
     @Test
@@ -657,13 +675,14 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         List<String> expectedLines = new ArrayList<>();
         try {
             Workbook wb = WorkbookFactory.create(getClass().getResourceAsStream("/" + fileName));
+            FormulaEvaluator evaluator = wb.getCreationHelper().createFormulaEvaluator();
             Sheet sheet = wb.getSheetAt(0);
             DataFormatter df = new DataFormatter();
             int index = 0;
             for (Row row : sheet) {
                 String rowStr = "";
                 for (Cell cell : row) {
-                    rowStr += df.formatCellValue(cell);
+                    rowStr += df.formatCellValue(cell, evaluator);
                 }
                 expectedLines.add(index, rowStr);
                 index++;
