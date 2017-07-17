@@ -66,12 +66,12 @@ public class OntologyCacheImpl implements OntologyCache {
         Optional<Cache<String, Ontology>> optCache = getOntologyCache();
         optCache.ifPresent(cache -> {
             Set<String> cachesToRemove = new HashSet<>();
-            cache.forEach(entry -> {
+            for (Cache.Entry<String, Ontology> entry : cache) {
                 Set<? extends Resource> importedIRIs = entry.getValue().getImportedOntologyIRIs();
                 if (importedIRIs.contains(ontologyIRI)) {
                     cachesToRemove.add(entry.getKey());
                 }
-            });
+            }
             cache.removeAll(cachesToRemove);
         });
     }
@@ -79,10 +79,12 @@ public class OntologyCacheImpl implements OntologyCache {
     @Override
     public void clearCache(@Nonnull Resource recordId, Resource branchId) {
         String key = generateKey(recordId.stringValue(), branchId == null ? null : branchId.stringValue(), null);
-        getOntologyCache().ifPresent(cache -> cache.forEach(entry -> {
-            if (entry.getKey().startsWith(key)) {
-                cache.remove(entry.getKey());
+        getOntologyCache().ifPresent(cache -> {
+            for (Cache.Entry<String, Ontology> entry : cache) {
+                if (entry.getKey().startsWith(key)) {
+                    cache.remove(entry.getKey());
+                }
             }
-        }));
+        });
     }
 }
