@@ -110,13 +110,9 @@
                         _.forEach(dvm.keywords, kw => dvm.util.setPropertyValue(newRecord, prefixes.catalog + 'keyword', kw.trim()));
 
                         var curOntologies = _.map(dvm.selectedOntologies, '@id');
-                        var oldOntologies = [];
+                        var oldOntologies = _.map(ds.selectedDataset.identifiers, identifier => 
+                                dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
                         
-                        _.forEach(ds.selectedDataset.identifiers, identifier => {
-                            var propertyIRI = prefixes.dataset + 'linksToRecord';
-                            oldOntologies.push(dvm.util.getPropertyId(identifier, propertyIRI));
-                        });
-
                         var added = _.difference(curOntologies, oldOntologies);
                         var deleted = _.difference(oldOntologies, curOntologies);
 

@@ -26,19 +26,19 @@
             <block-content class="padding">
                 <div class="dataset padding" ng-click="dvm.clickDataset(dataset)" ng-repeat="dataset in dvm.state.results" ng-class="{'open': dataset.record['@id'] === dvm.openedDatasetId}">
                     <div class="details">
-                        <h3 class="header">
+                        <div class="header dataset-title">
                             <i class="fa" ng-class="{'fa-caret-right': dataset.record['@id'] !== dvm.openedDatasetId, 'fa-caret-down': dataset.record['@id'] === dvm.openedDatasetId}"></i>{{dvm.util.getDctermsValue(dataset.record, 'title')}}
-                        </h3>
-                        <span uib-dropdown ng-click='$event.stopPropagation()' class='pull-right action-container'>
-                            <a uib-dropdown-toggle title="Dataset Actions">
+                        </div>
+                        <div uib-dropdown ng-click='$event.stopPropagation()' class='action-container'>
+                            <button uib-dropdown-toggle title="Dataset Actions"  class="btn btn-xs btn-default">
                                 <i class="fa fa-2x fa-ellipsis-h fa-fw"></i>
-                            </a>
+                            </button>
                             <ul uib-dropdown-menu>
                                 <li><a ng-click="dvm.showEdit(dataset, $event)" class="action update-dataset"><i class="fa fa-fw fa-pencil"></i> Edit</a></li>
                                 <li><a ng-click="dvm.showClear(dataset, $event)" class="action clear-dataset" ><i class="fa fa-fw fa-eraser"></i> Clear</a></li>
                                 <li><a ng-click="dvm.showDelete(dataset, $event)" class="action delete-dataset"><i class="fa fa-fw fa-trash-o"></i> Delete</a></li>
                             </ul>
-                        </span>
+                        </div>
                         <p class="text-muted"><small>{{dvm.util.getPropertyId(dataset.record, dvm.prefixes.dataset + 'dataset')}}</small></p>
                         <p class="description">{{dvm.util.getDctermsValue(dataset.record, 'description') || '(None Specified)'}}</p>
                         <div class="full-details" ng-if="dataset.record['@id'] === dvm.openedDatasetId">
