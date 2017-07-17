@@ -30,6 +30,7 @@ import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.matonto.etl.api.config.ImportServiceConfig;
 import org.matonto.etl.api.rdf.RDFImportService;
 import org.matonto.rdf.api.ValueFactory;
 import org.slf4j.Logger;
@@ -86,13 +87,18 @@ public class CLIImporter implements Action {
 
         try {
             File newFile = new File(file);
+            ImportServiceConfig.Builder builder = new ImportServiceConfig.Builder()
+                    .cont(continueOnError)
+                    .logOutput(true)
+                    .printOutput(true);
             if (repositoryId != null) {
                 LOGGER.info("Importing RDF into repository " + repositoryId);
-                importService.importFile(repositoryId, newFile, continueOnError);
+                builder.repository(repositoryId);
             } else {
                 LOGGER.info("Importing RDF into dataset " + datasetRecordId);
-                importService.importFile(vf.createIRI(datasetRecordId), newFile, continueOnError);
+                builder.dataset(vf.createIRI(datasetRecordId));
             }
+            importService.importFile(builder.build(), newFile);
             System.out.println("Data successfully loaded");
         } catch (Exception e) {
             System.out.println(e.getMessage());

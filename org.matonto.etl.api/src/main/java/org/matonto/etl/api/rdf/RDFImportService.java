@@ -23,6 +23,7 @@ package org.matonto.etl.api.rdf;
  * #L%
  */
 
+import org.matonto.etl.api.config.ImportServiceConfig;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.repository.exception.RepositoryException;
@@ -35,79 +36,41 @@ import java.io.IOException;
 public interface RDFImportService {
 
     /**
-     * Imports an RDF File to a specified Repository.
+     * Imports an RDF File to a specific Repository or DatasetRecord depending on the provided configuration.
      *
-     * @param repositoryID The id of the target Repository
+     * @param config The configuration for the import specifying the target
      * @param file An RDF file to import
-     * @param cont An option to continue import with next triple if error occurs. Warnings will be given.
      * @throws RDFParseException thrown if there is a problem parsing the RDF file
-     * @throws RepositoryException thrown if there is a problem connecting to the specified Repository
+     * @throws RepositoryException thrown if there is a problem connecting to the specified Repository or the
+     *      Dataset of the specified DatasetRecord
      * @throws IOException thrown if there is a problem reading the File or the File could not be found
-     * @throws IllegalArgumentException thrown if the Repository does not exist
+     * @throws IllegalArgumentException thrown if the Repository or DatasetRecord does not exist
      */
-    void importFile(String repositoryID, File file, Boolean cont) throws IOException;
+    void importFile(ImportServiceConfig config, File file) throws IOException;
 
     /**
-     * Imports an RDF File with a specified format to a specified Repository.
+     * Imports an RDF File with a specified format to a specific Repository or DatasetRecord depending on the
+     * provided configuration.
      *
-     * @param repositoryID The id of the target Repository
+     * @param config The configuration for the import specifying the target
      * @param file An RDF file to import
-     * @param cont An option to continue import with next triple if error occurs. Warnings will be given.
      * @param format The RDF format of the imported file
      * @throws RDFParseException thrown if there is a problem parsing the RDF File
-     * @throws RepositoryException thrown if there is a problem connecting to the specified Repository
+     * @throws RepositoryException thrown if there is a problem connecting to the specified Repository or the
+     *      Dataset of the specified DatasetRecord
      * @throws IOException thrown if there is a problem reading the File or the File could not be found
-     * @throws IllegalArgumentException thrown if the Repository does not exist
+     * @throws IllegalArgumentException thrown if the Repository or DatasetRecord does not exist
      */
-    void importFile(String repositoryID, File file, Boolean cont, RDFFormat format) throws IOException;
+    void importFile(ImportServiceConfig config, File file, RDFFormat format) throws IOException;
 
     /**
-     * Imports an RDF Fileto a specified DatasetRecord's Dataset.
+     * Imports a Model into a specific Repository or DatasetRecord depending on the provided configuration.
      *
-     * @param datasetRecordID The id of the DatasetRecord with the target Dataset
-     * @param file An RDF file to import
-     * @param cont An option to continue import with next triple if error occurs. Warnings will be given.
-     * @throws RDFParseException thrown if there is a problem parsing the RDF file
-     * @throws IOException thrown if there is a problem reading the file or the file could not be found
-     * @throws IllegalArgumentException thrown if the DatasetRecord does not exist
-     * @throws RepositoryException thrown if there is a problem connecting to the Dataset of the
-     *      specified DatasetRecord
-     */
-    void importFile(Resource datasetRecordID, File file, Boolean cont) throws IOException;
-
-    /**
-     * Imports an RDF File with a specified format to a specified DatasetRecord's Dataset.
-     *
-     * @param datasetRecordID The id of the DatasetRecord with the target Dataset
-     * @param file An RDF file to import
-     * @param cont An option to continue import with next triple if error occurs. Warnings will be given.
-     * @param format The RDF format of the imported file
-     * @throws RDFParseException thrown if there is a problem parsing the RDF file
-     * @throws IOException thrown if there is a problem reading the file or the file could not be found
-     * @throws IllegalArgumentException thrown if the DatasetRecord does not exist
-     * @throws RepositoryException thrown if there is a problem connecting to the Dataset of the
-     *      specified DatasetRecord
-     */
-    void importFile(Resource datasetRecordID, File file, Boolean cont, RDFFormat format) throws IOException;
-
-    /**
-     * Imports a Model into a specified Repository.
-     *
-     * @param repositoryID The id of the target Repository
+     * @param config The configuration for the import specifying the target
      * @param model An RDF Model to import
-     * @throws IllegalArgumentException thrown if the repository does not exist
-     * @throws RepositoryException thrown if there is a problem connecting to the given repository
+     * @throws IllegalArgumentException thrown if the Repository or DatasetRecord does not exist
+     * @throws RepositoryException thrown if there is a problem connecting to the specified Repository or the
+     *      Dataset of the specified DatasetRecord
      */
-    void importModel(String repositoryID, Model model);
-
-    /**
-     * Imports a Model into a specified DatasetRecord's Dataset.
-     *
-     * @param datasetRecordID The id of the DatasetRecord with the target Dataset
-     * @param model An RDF Model to import
-     * @throws IllegalArgumentException thrown if the DatasetRecord does not exist
-     * @throws RepositoryException thrown if there is a problem connecting to the Dataset of the
-     *      specified DatasetRecord
-     */
-    void importModel(Resource datasetRecordID, Model model);
+    void importModel(ImportServiceConfig config, Model model);
 }

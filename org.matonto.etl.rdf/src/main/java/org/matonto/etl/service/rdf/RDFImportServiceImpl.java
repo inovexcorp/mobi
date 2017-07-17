@@ -27,6 +27,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.api.DatasetManager;
+import org.matonto.etl.api.config.ImportServiceConfig;
 import org.matonto.etl.api.rdf.RDFImportService;
 import org.matonto.persistence.utils.BatchInserter;
 import org.matonto.persistence.utils.api.SesameTransformer;
@@ -40,6 +41,8 @@ import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFParser;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.BasicParserSettings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -52,6 +55,7 @@ import javax.annotation.Nonnull;
 @Component
 public class RDFImportServiceImpl implements RDFImportService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(RDFImportServiceImpl.class);
     private Map<String, Repository> initializedRepositories = new HashMap<>();
 
     private SesameTransformer transformer;
@@ -77,59 +81,44 @@ public class RDFImportServiceImpl implements RDFImportService {
     }
 
     @Override
-    public void importFile(String repositoryID, @Nonnull File file, Boolean cont) throws IOException {
+    public void importFile(ImportServiceConfig config, @Nonnull File file) throws IOException {
         checkFileExists(file);
-        importFileToRepository(repositoryID, file, cont, getFileFormat(file));
+        importFileWithConfig(config, file, getFileFormat(file));
     }
 
     @Override
-    public void importFile(String repositoryID, @Nonnull File file, Boolean cont, @Nonnull RDFFormat format)
+    public void importFile(ImportServiceConfig config, @Nonnull File file, @Nonnull RDFFormat format)
             throws IOException {
         checkFileExists(file);
-        importFileToRepository(repositoryID, file, cont, format);
+        importFileWithConfig(config, file, format);
     }
 
     @Override
-    public void importFile(Resource datasetRecordID, File file, Boolean cont) throws IOException {
-        checkFileExists(file);
-        importFileToDataset(datasetRecordID, file, cont, getFileFormat(file));
-    }
-
-    @Override
-    public void importFile(Resource datasetRecordID, File file, Boolean cont, RDFFormat format)
-            throws IOException {
-        checkFileExists(file);
-        importFileToDataset(datasetRecordID, file, cont, format);
-    }
-
-    @Override
-    public void importModel(String repositoryID, Model model) {
-        Repository repository = getRepo(repositoryID);
-        try (RepositoryConnection conn = repository.getConnection()) {
+    public void importModel(ImportServiceConfig config, Model model) {
+        if (config.getRepository() != null) {
+            Repository repository = getRepo(config.getRepository());
+            try (RepositoryConnection conn = repository.getConnection()) {
+                conn.add(model);
+                if (config.getLogOutput()) {
+                    LOGGER.debug("Import complete. " + model.size() + " statements imported");
+                }
+                if (config.getPrintOutput()) {
+                    System.out.println("Import complete. " + model.size() + " statements imported");
+                }
+            }
+        } else if (config.getDataset() != null) {
+            DatasetConnection conn = datasetManager.getConnection(config.getDataset());
             conn.add(model);
+            if (config.getLogOutput()) {
+                LOGGER.debug("Import complete. " + model.size() + " statements imported");
+            }
+            if (config.getPrintOutput()) {
+                System.out.println("Import complete. " + model.size() + " statements imported");
+            }
+            conn.close();
+        } else {
+            throw new IllegalArgumentException("Must provide either a Repository or a DatasetRecord");
         }
-    }
-
-    @Override
-    public void importModel(Resource datasetRecordID, Model model) {
-        DatasetConnection conn = datasetManager.getConnection(datasetRecordID);
-        conn.add(model);
-        conn.close();
-    }
-
-    private void importFileToRepository(String repositoryID, @Nonnull File file, Boolean cont,
-                                        @Nonnull RDFFormat format) throws IOException {
-        Repository repository = getRepo(repositoryID);
-        try (RepositoryConnection conn = repository.getConnection()) {
-            importFile(conn, file, cont, format);
-        }
-    }
-
-    private void importFileToDataset(Resource datasetRecordID, @Nonnull File file, Boolean cont,
-                                     @Nonnull RDFFormat format) throws IOException {
-        DatasetConnection conn = datasetManager.getConnection(datasetRecordID);
-        importFile(conn, file, cont, format);
-        conn.close();
     }
 
     private Repository getRepo(String repositoryID) {
@@ -152,18 +141,41 @@ public class RDFImportServiceImpl implements RDFImportService {
                 new IOException("Unsupported file type"));
     }
 
-    private void importFile(RepositoryConnection conn, @Nonnull File file, Boolean cont, @Nonnull RDFFormat format)
-            throws IOException {
+    private void importFileWithConfig(ImportServiceConfig config, File file, RDFFormat format) throws IOException {
+        if (config.getRepository() != null) {
+            Repository repository = getRepo(config.getRepository());
+            try (RepositoryConnection conn = repository.getConnection()) {
+                importFile(conn, config, file, format);
+            }
+        } else if (config.getDataset() != null) {
+            DatasetConnection conn = datasetManager.getConnection(config.getDataset());
+            importFile(conn, config, file, format);
+            conn.close();
+        } else {
+            throw new IllegalArgumentException("Must provide either a Repository or a DatasetRecord");
+        }
+    }
+
+    private void importFile(RepositoryConnection conn, ImportServiceConfig config, @Nonnull File file,
+                            @Nonnull RDFFormat format) throws IOException {
         RDFParser parser = Rio.createParser(format);
         ParserConfig parserConfig = new ParserConfig();
-        if (cont) {
+        if (config.getCont()) {
             parserConfig.addNonFatalError(BasicParserSettings.FAIL_ON_UNKNOWN_DATATYPES);
             parserConfig.addNonFatalError(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES);
             parserConfig.addNonFatalError(BasicParserSettings.NORMALIZE_DATATYPE_VALUES);
         }
         parser.setParserConfig(parserConfig);
         BatchInserter inserter = new BatchInserter(conn, transformer);
+        if (config.getLogOutput()) {
+            inserter.setLogger(LOGGER);
+        }
+        if (config.getPrintOutput()) {
+            inserter.setPrintToSystem(true);
+        }
         parser.setRDFHandler(inserter);
         parser.parse(new FileInputStream(file), "");
     }
+
+
 }

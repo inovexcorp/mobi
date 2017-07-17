@@ -24,6 +24,7 @@ package org.matonto.etl.service.rdf
 
 import org.matonto.dataset.api.DatasetConnection
 import org.matonto.dataset.api.DatasetManager
+import org.matonto.etl.api.config.ImportServiceConfig
 import org.matonto.persistence.utils.api.SesameTransformer
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.rdf.core.utils.Values
@@ -61,106 +62,136 @@ class RDFImportSpec extends Specification {
         service.addRepository(repo)
     }
 
-    def "Imports trig file to repository without format"(){
+    def "Imports trig file to repository without format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().cont(true).repository(repoId).build()
+
         when:
-        service.importFile(repoId, file, true)
+        service.importFile(config, file)
 
         then:
         (1.._) * conn.add(*_)
     }
 
-    def "Imports trig file to repository with format"(){
+    def "Imports trig file to repository with format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().cont(true).repository(repoId).build()
+
         when:
-        service.importFile(repoId, file, true, RDFFormat.TRIG)
+        service.importFile(config, file, RDFFormat.TRIG)
 
         then:
         (1.._) * conn.add(*_)
     }
 
     def "Imports Model to repository"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().cont(true).repository(repoId).build()
+
         when:
-        service.importModel(repoId, model)
+        service.importModel(config, model)
 
         then:
         (1.._) * conn.add(*_)
     }
 
-    def "Throws exception if repository ID does not exist without format"(){
-        when:
-        service.importFile("missing", file, true)
-
-        then:
-        thrown IllegalArgumentException
-    }
-
-    def "Throws exception if repository ID does not exist with format"(){
-        when:
-        service.importFile("missing", file, true, RDFFormat.TRIG)
-
-        then:
-        thrown IllegalArgumentException
-    }
-
-    def "Throws exception for repository if invalid file type"(){
+    def "Throws exception if repository ID does not exist without format"() {
         setup:
+        def config = new ImportServiceConfig.Builder().cont(true).repository("missing").build()
+
+        when:
+        service.importFile(config, file)
+
+        then:
+        thrown IllegalArgumentException
+    }
+
+    def "Throws exception if repository ID does not exist with format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().cont(true).repository("missing").build()
+
+        when:
+        service.importFile(config, file, RDFFormat.TRIG)
+
+        then:
+        thrown IllegalArgumentException
+    }
+
+    def "Throws exception for repository if invalid file type"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().cont(true).repository(repoId).build()
         File f = new ClassPathResource("importer/testFile.txt").getFile()
 
         when:
-        service.importFile(repoId, f, true)
+        service.importFile(config, f)
 
         then:
         thrown IOException
     }
 
-    def "Throws exception for repository if nonexistent file without format"(){
+    def "Throws exception for repository if nonexistent file without format"() {
         setup:
+        def config = new ImportServiceConfig.Builder().cont(true).repository(repoId).build()
         File f = new File("importer/FakeFile.txt")
 
         when:
-        service.importFile(repoId, f, true)
+        service.importFile(config, f)
 
         then:
         thrown IOException
     }
 
-    def "Throws exception for repository if nonexistent file with format"(){
+    def "Throws exception for repository if nonexistent file with format"() {
         setup:
+        def config = new ImportServiceConfig.Builder().cont(true).repository(repoId).build()
         File f = new File("importer/FakeFile.txt")
 
         when:
-        service.importFile(repoId, f, true, RDFFormat.TRIG)
+        service.importFile(config, f, RDFFormat.TRIG)
 
         then:
         thrown IOException
     }
 
     def "Imports trig file to dataset without format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().cont(true).dataset(datasetId).build()
+
         when:
-        service.importFile(datasetId, file, true)
+        service.importFile(config, file)
 
         then:
         (1.._) * datasetConn.add(*_)
     }
 
     def "Imports trig file to dataset with format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().cont(true).dataset(datasetId).build()
+
         when:
-        service.importFile(datasetId, file, true, RDFFormat.TRIG)
+        service.importFile(config, file,  RDFFormat.TRIG)
 
         then:
         (1.._) * datasetConn.add(*_)
     }
 
     def "Throws exception if dataset record ID does not exist without format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().cont(true).dataset(vf.createIRI("http://test.com/missing")).build()
+
         when:
-        service.importFile(vf.createIRI("http://test.com/missing"), file, true)
+        service.importFile(config, file)
 
         then:
         thrown IllegalArgumentException
     }
 
     def "Throws exception if dataset record ID does not exist with format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().cont(true).dataset(vf.createIRI("http://test.com/missing")).build()
+
         when:
-        service.importFile(vf.createIRI("http://test.com/missing"), file, true, RDFFormat.TRIG)
+        service.importFile(config, file, RDFFormat.TRIG)
 
         then:
         thrown IllegalArgumentException
@@ -168,10 +199,11 @@ class RDFImportSpec extends Specification {
 
     def "Throws exception for dataset if invalid file type"(){
         setup:
+        def config = new ImportServiceConfig.Builder().cont(true).dataset(datasetId).build()
         File f = new ClassPathResource("importer/testFile.txt").getFile()
 
         when:
-        service.importFile(datasetId, f, true)
+        service.importFile(config, f)
 
         then:
         thrown IOException
@@ -179,10 +211,11 @@ class RDFImportSpec extends Specification {
 
     def "Throws exception for dataset if nonexistent file without format"(){
         setup:
+        def config = new ImportServiceConfig.Builder().cont(true).dataset(datasetId).build()
         File f = new File("importer/FakeFile.txt")
 
         when:
-        service.importFile(datasetId, f, true)
+        service.importFile(config, f)
 
         then:
         thrown IOException
@@ -190,10 +223,11 @@ class RDFImportSpec extends Specification {
 
     def "Throws exception for dataset if nonexistent file with format"(){
         setup:
+        def config = new ImportServiceConfig.Builder().cont(true).dataset(datasetId).build()
         File f = new File("importer/FakeFile.txt")
 
         when:
-        service.importFile(datasetId, f, true, RDFFormat.TRIG)
+        service.importFile(config, f, RDFFormat.TRIG)
 
         then:
         thrown IOException
