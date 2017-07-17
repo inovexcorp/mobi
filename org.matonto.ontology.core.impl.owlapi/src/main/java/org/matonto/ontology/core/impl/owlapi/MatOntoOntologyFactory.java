@@ -25,7 +25,6 @@ package org.matonto.ontology.core.impl.owlapi;
 
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
-import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLOntology;
@@ -67,7 +66,7 @@ public class MatOntoOntologyFactory implements OWLOntologyFactory {
             throws OWLOntologyCreationException {
         IRI iri = source.getDocumentIRI();
         IRI recordId = IRI.create(iri.getIRIString().replace(MatOntoOntologyIRIMapper.protocol,
-                MatOntoOntologyIRIMapper.replace));
+                MatOntoOntologyIRIMapper.standardProtocol));
         Ontology matOnt = ontologyManager.retrieveOntology(SimpleOntologyValues.matontoIRI(recordId))
                 .orElseThrow(() -> new OWLOntologyCreationException("Ontology " + recordId
                         + " could not be found"));

@@ -35,7 +35,7 @@ public class MatOntoOntologyIRIMapper implements OWLOntologyIRIMapper {
     private OntologyManager manager;
 
     public static final String protocol = "matonto:";
-    public static final String replace = "https:";
+    public static final String standardProtocol = "https:";
 
     public MatOntoOntologyIRIMapper(OntologyManager manager) {
         this.manager = manager;
@@ -45,6 +45,6 @@ public class MatOntoOntologyIRIMapper implements OWLOntologyIRIMapper {
     @Override
     public IRI getDocumentIRI(IRI ontologyIRI) {
         Optional<Resource> recordId = manager.getOntologyRecordResource(SimpleOntologyValues.matontoIRI(ontologyIRI));
-        return recordId.map(resource -> IRI.create(resource.stringValue().replace(replace, protocol))).orElse(null);
+        return recordId.map(resource -> IRI.create(resource.stringValue().replace(standardProtocol, protocol))).orElse(null);
     }
 }
