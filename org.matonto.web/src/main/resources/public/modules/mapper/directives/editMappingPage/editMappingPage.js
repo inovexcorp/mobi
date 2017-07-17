@@ -75,9 +75,6 @@
                         preview: false
                     };
 
-                    dvm.configNotSet = function() {
-                        return _.isEmpty(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld));
-                    }
                     dvm.save = function() {
                         dvm.state.saveMapping().then(success, onError);
                     }

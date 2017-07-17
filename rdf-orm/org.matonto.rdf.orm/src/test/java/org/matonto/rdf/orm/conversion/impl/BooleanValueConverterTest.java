@@ -52,18 +52,10 @@ public class BooleanValueConverterTest extends ValueConverterTestCase<Boolean> {
 
     }
 
-    @Test
+    @Test(expected = ValueConversionException.class)
     public void testBad() {
-        try {
-            Value badVal = valueFactory.createLiteral(100L);
-            this.valueConverter.convertValue(badVal, null, null);
-            Assert.fail("Value converter needs to throw exception on failure");
-        } catch (ValueConversionException e) {
-            //Success
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assert.fail(e.getMessage());
-        }
+        Value badVal = valueFactory.createLiteral(100L);
+        this.valueConverter.convertValue(badVal, null, null);
     }
 
 }

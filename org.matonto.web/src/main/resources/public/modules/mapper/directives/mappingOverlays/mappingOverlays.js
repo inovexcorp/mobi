@@ -86,14 +86,12 @@
                         dvm.state.deleteClass(dvm.state.selectedClassMappingId);
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = '';
-                        dvm.state.changedMapping = true;
                     }
                     dvm.deleteProp = function() {
                         var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
                         dvm.state.deleteProp(dvm.state.selectedPropMappingId, classMapping['@id']);
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = classMapping['@id'];
-                        dvm.state.changedMapping = true;
                     }
                 },
                 templateUrl: 'modules/mapper/directives/mappingOverlays/mappingOverlays.html'
