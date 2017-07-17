@@ -50,7 +50,6 @@
          * be linked to the Dataset Record.
          *
          * @param {Function} onClose The method to be called when closing the overlay
-         * @param {Object} dataset The dataset record with associated ontology information.
          */
         .directive('editDatasetOverlay', editDatasetOverlay);
 
