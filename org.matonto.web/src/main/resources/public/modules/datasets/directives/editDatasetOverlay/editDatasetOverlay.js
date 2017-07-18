@@ -29,7 +29,7 @@
          * @name editDatasetOverlay
          *
          * @description
-         * The `editDatasetOverlay` module only provides the `editDatasetOverlay` directive which creates an overlay 
+         * The `editDatasetOverlay` module only provides the `editDatasetOverlay` directive which creates an overlay
          * with a form to edit a Dataset Record.
          */
         .module('editDatasetOverlay', [])
@@ -44,9 +44,9 @@
          * @requires prefixes.service:prefixes
          *
          * @description
-         * `editDatasetOverlay` is a directive that creates an overlay with form containing fields for editing an 
-         * existing Dataset Record. The first overlay contains fields for the title, description, 
-         * {@link keywordSelect.directive:keywordSelect keywords}, and a searchable list of Ontology Records that can 
+         * `editDatasetOverlay` is a directive that creates an overlay with form containing fields for editing an
+         * existing Dataset Record. The first overlay contains fields for the title, description,
+         * {@link keywordSelect.directive:keywordSelect keywords}, and a searchable list of Ontology Records that can
          * be linked to the Dataset Record.
          *
          * @param {Function} onClose The method to be called when closing the overlay
@@ -58,6 +58,7 @@
         function editDatasetOverlay(datasetStateService, catalogManagerService, utilService, prefixes, $q) {
             return {
                 restrict: 'E',
+                replace: true,
                 templateUrl: 'modules/datasets/directives/editDatasetOverlay/editDatasetOverlay.html',
                 scope: {},
                 bindToController: {
@@ -68,22 +69,22 @@
                     var dvm = this;
                     var cm = catalogManagerService;
                     var ds = datasetStateService;
-                    
+
                     dvm.util = utilService;
                     dvm.error = '';
-                    
+
                     dvm.recordConfig = {
                         datasetIRI: dvm.util.getPropertyId(ds.selectedDataset.record, prefixes.dataset + 'dataset'),
                         repositoryId: dvm.util.getPropertyValue(ds.selectedDataset.record, prefixes.dataset + 'repository'),
                         title: dvm.util.getDctermsValue(ds.selectedDataset.record, 'title'),
                         description: dvm.util.getDctermsValue(ds.selectedDataset.record, 'description')
                     };
-                    
+
                     dvm.keywords = _.map(ds.selectedDataset.record[prefixes.catalog + 'keyword'], '@value');
                     dvm.keywords.sort();
                     dvm.ontologies = [];
                     dvm.selectedOntologies = [];
-                    
+
                     dvm.update = function() {
                         var newRecord = angular.copy(ds.selectedDataset.record);
 
@@ -96,11 +97,10 @@
                         _.forEach(dvm.keywords, kw => dvm.util.setPropertyValue(newRecord, prefixes.catalog + 'keyword', kw.trim()));
 
                         var curOntologies = _.map(dvm.selectedOntologies, '@id');
-                        var oldOntologies = _.map(ds.selectedDataset.identifiers, identifier => 
-                                dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
+                        var oldOntologies = _.map(ds.selectedDataset.identifiers, identifier => dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
 
                         var newIdentifiers = angular.copy(ds.selectedDataset.identifiers);
-                        
+
                         var added = _.difference(curOntologies, oldOntologies);
                         var deleted = _.remove(newIdentifiers, identifier => !_.includes(curOntologies, dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord')));
 
@@ -136,9 +136,9 @@
                     }
                     function triggerUpdate(newRecord, newIdentifiers) {
                         var jsonld = _.concat(newIdentifiers, newRecord);
-                        
+
                         // Send unparsed object to the update endpoint.
-                        cm.updateRecord(newRecord['@id'], cm.localCatalog['@id'], jsonld).then(() => { 
+                        cm.updateRecord(newRecord['@id'], cm.localCatalog['@id'], jsonld).then(() => {
                             dvm.util.createSuccessToast('Dataset successfully updated');
                             ds.selectedDataset.identifiers = newIdentifiers;
                             ds.selectedDataset.record = newRecord;

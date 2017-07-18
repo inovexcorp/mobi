@@ -21,111 +21,8 @@
  * #L%
  */
 describe('Edit Dataset Overlay directive', function() {
-    var $compile, scope, $q, element, controller, datasetStateSvc, catalogManagerSvc, utilSvc, prefixes, uuid;
-    var headers, response, branchResponse;
-    
-    var ontology1 = {
-                '@id': 'ontology1',
-                'dataset:linksToRecord': [{ '@id': 'ontology1Record' }],
-                'dataset:linksToBranch': [{ '@id': 'ontology1Branch' }],
-                'dataset:linksToCommit': [{ '@id': 'ontology1Commit' }]
-        };
-    var ontology2 = {
-                '@id': 'ontology2',
-                'dataset:linksToRecord': [{ '@id': 'ontology2Record' }],
-                'dataset:linksToBranch': [{ '@id': 'ontology2Branch' }],
-                'dataset:linksToCommit': [{ '@id': 'ontology2Commit' }]
-        };
-    var ontology2Expected = {
-                '@id': '_:matonto/bnode/1234',
-                'dataset:linksToRecord': [{ '@id': 'ontology2Record' }],
-                'dataset:linksToBranch': [{ '@id': 'ontology2Branch' }],
-                'dataset:linksToCommit': [{ '@id': 'ontology2Commit' }]
-        }
-    var datasetRecord = {
-            '@id': 'datasetRecord1',
-            '@type': ['http://www.w3.org/2002/07/owl#Thing',
-                    'http://matonto.org/ontologies/catalog#Record',
-                    'http://matonto.org/ontologies/catalog#UnversionedRecord',
-                    'http://matonto.org/ontologies/dataset#DatasetRecord'],
-            'catalog:catalog': [{ '@id': 'http://matonto.org/catalog-local' }],
-            'catalog:keyword': [{ '@value': 'test' }],
-            'dataset:dataset': [{ '@id': 'http://matonto.org/dataset/testDataset' }],
-            'dataset:ontology': [{ '@id': 'ontology1' }],
-            'dataset:repository': [{ '@value': 'system' }],
-            'dcterms:description': [{ '@value': 'This is a description.' }],
-            'dcterms:issued': [{ 
-                    '@type': 'http://www.w3.org/2001/XMLSchema#dateTime', 
-                    '@value': '2017-07-12T10:28:15-04:00' }],
-            'dcterms:modified': [{ 
-                    '@type': 'http://www.w3.org/2001/XMLSchema#dateTime', 
-                    '@value': '2017-07-12T10:28:15-04:00' }],
-            'dcterms:publisher': [{ '@id': 'http://matonto.org/users/user1' }],
-            'dcterms:title': [{ '@value': 'Test' }]
-        };
-    var datasetRecordExpected = {
-            '@id': 'datasetRecord1',
-            '@type': ['http://www.w3.org/2002/07/owl#Thing',
-                    'http://matonto.org/ontologies/catalog#Record',
-                    'http://matonto.org/ontologies/catalog#UnversionedRecord',
-                    'http://matonto.org/ontologies/dataset#DatasetRecord'],
-            'catalog:catalog': [{ '@id': 'http://matonto.org/catalog-local' }],
-            'catalog:keyword': [{ '@value': '' }],
-            'dataset:dataset': [{ '@id': 'http://matonto.org/dataset/testDataset' }],
-            'dataset:ontology': [{ '@id': '' }],
-            'dataset:repository': [{ '@value': 'system' }],
-            'dcterms:description': [{ '@value': '' }],
-            'dcterms:issued': [{ 
-                    '@type': 'http://www.w3.org/2001/XMLSchema#dateTime', 
-                    '@value': '2017-07-12T10:28:15-04:00' }],
-            'dcterms:modified': [{ 
-                    '@type': 'http://www.w3.org/2001/XMLSchema#dateTime', 
-                    '@value': '2017-07-12T10:28:15-04:00' }],
-            'dcterms:publisher': [{ '@id': 'http://matonto.org/users/user1' }],
-            'dcterms:title': [{ '@value': '' }]
-        };
-    var ontology1Record = {
-                '@id': 'ontology1Record',
-                '@type': ['http://www.w3.org/2002/07/owl#Thing',
-                        'http://matonto.org/ontologies/catalog#Record',
-                        'http://matonto.org/ontologies/catalog#VersionedRecord',
-                        'http://matonto.org/ontologies/ontology-editor#OntologyRecord',
-                        'http://matonto.org/ontologies/catalog#VersionedRDFRecord'],
-                'catalog:branch': [{ '@id': 'ontology1Branch' }],
-                'catalog:catalog': [{ '@id': 'http://matonto.org/catalog-local' }],
-                'catalog:masterBranch': [{ '@id': 'ontology1Branch' }],
-                'ontEdit:ontologyIRI': [{ '@id': 'ontology1' }],
-                'dcterms:description': [{ '@value': '' }],
-                'dcterms:issued': [{ 
-                        '@type': 'http://www.w3.org/2001/XMLSchema#dateTime', 
-                        '@value': '2017-07-12T10:28:15-04:00' }],
-                'dcterms:modified': [{ 
-                        '@type': 'http://www.w3.org/2001/XMLSchema#dateTime', 
-                        '@value': '2017-07-12T10:28:15-04:00' }],
-                'dcterms:publisher': [{ '@id': 'http://matonto.org/users/user1' }],
-                'dcterms:title': [{ '@value': 'Ontology 1' }]
-        };
-    var ontology2Record = {
-                '@id': 'ontology2Record',
-                '@type': ['http://www.w3.org/2002/07/owl#Thing',
-                        'http://matonto.org/ontologies/catalog#Record',
-                        'http://matonto.org/ontologies/catalog#VersionedRecord',
-                        'http://matonto.org/ontologies/ontology-editor#OntologyRecord',
-                        'http://matonto.org/ontologies/catalog#VersionedRDFRecord'],
-                'catalog:branch': [{ '@id': 'ontology2Branch' }],
-                'catalog:catalog': [{ '@id': 'http://matonto.org/catalog-local' }],
-                'catalog:masterBranch': [{ '@id': 'ontology2Branch' }],
-                'ontEdit:ontologyIRI': [{ '@id': 'ontology2' }],
-                'dcterms:description': [{ '@value': '' }],
-                'dcterms:issued': [{ 
-                        '@type': 'http://www.w3.org/2001/XMLSchema#dateTime', 
-                        '@value': '2017-07-12T10:28:15-04:00' }],
-                'dcterms:modified': [{ 
-                        '@type': 'http://www.w3.org/2001/XMLSchema#dateTime', 
-                        '@value': '2017-07-12T10:28:15-04:00' }],
-                'dcterms:publisher': [{ '@id': 'http://matonto.org/users/user1' }],
-                'dcterms:title': [{ '@value': 'Ontology 2' }]
-        };
+    var $compile, scope, $q, element, controller, datasetStateSvc, catalogManagerSvc, utilSvc, prefixes;
+    var expectedRecord;
 
     beforeEach(function() {
         module('templates');
@@ -134,11 +31,6 @@ describe('Edit Dataset Overlay directive', function() {
         mockCatalogManager();
         mockUtil();
         mockPrefixes();
-
-        datasetRecord['dcterms:title'] = [{'@value': 'Test'}];
-        datasetRecord['dcterms:description'] = [{'@value': 'This is a description.'}];
-        datasetRecord['catalog:keyword'] = [{'@value': 'test'}];
-        datasetRecord['dataset:ontology'] = [{ '@id': 'ontology1' }];
 
         inject(function(_$compile_, _$rootScope_, _datasetStateService_, _catalogManagerService_, _utilService_, _$q_, _prefixes_) {
             $compile = _$compile_;
@@ -149,59 +41,47 @@ describe('Edit Dataset Overlay directive', function() {
             prefixes = _prefixes_;
             $q = _$q_;
         });
-        
-        utilSvc.getIdForBlankNode.and.returnValue('_:matonto/bnode/1234');
-        utilSvc.getPropertyId.and.callFake(function (entity, propertyIRI) { return _.get(entity, "['" + propertyIRI + "'][0]['@id']", '') });
-        utilSvc.getPropertyValue.and.callFake(function (entity, propertyIRI) { return _.get(entity, "['" + propertyIRI + "'][0]['@value']", '') });
-        utilSvc.getDctermsValue.and.callFake(function (entity, property) { return _.get(entity, "['" + prefixes.dcterms + property + "'][0]['@value']", '') });
-        utilSvc.setPropertyId.and.callFake(function (entity, propertyIRI, id) {
-                var valueObj = {'@id': id};
-                if (_.has(entity, "['" + propertyIRI + "']")) {
-                    entity[propertyIRI].push(valueObj);
-                } else {
-                    _.set(entity, "['" + propertyIRI + "'][0]", valueObj);
-                }
-            });
-        utilSvc.setPropertyValue.and.callFake(function (entity, propertyIRI, value) {
-                var valueObj = {'@value': value};
-                if (_.has(entity, "['" + propertyIRI + "']")) {
-                    entity[propertyIRI].push(valueObj);
-                } else {
-                    _.set(entity, "['" + propertyIRI + "'][0]", valueObj);
-                }
-            });
-        utilSvc.setDctermsValue.and.callFake(function (entity, property, value) {
-                var valueObj = {'@value': value};
-                if (_.has(entity, "['" + prefixes.dcterms + property + "']")) {
-                    entity[prefixes.dcterms + property].push(valueObj);
-                } else {
-                    _.set(entity, "['" + prefixes.dcterms + property + "'][0]", valueObj);
-                }
-            });
-        
-        var parsedDatasetRecord = {
-            identifiers: [angular.copy(ontology1)],
-            record: angular.copy(datasetRecord)
-        };
 
-        datasetStateSvc.selectedDataset = parsedDatasetRecord;
+        utilSvc.getIdForBlankNode.and.returnValue('_:matonto/bnode/1234');
+        utilSvc.getPropertyId.and.callFake(function(entity, propertyIRI) {
+            switch (propertyIRI) {
+                case prefixes.dataset + 'dataset':
+                    return 'dataset';
+                    break;
+                case prefixes.dataset + 'linksToRecord':
+                    return 'record';
+                    break;
+                case prefixes.catalog + 'head':
+                    return 'commit';
+                    break;
+                default:
+                    return '';
+            }
+        });
+        utilSvc.getPropertyValue.and.returnValue('repository');
+        utilSvc.getDctermsValue.and.callFake(function(entity, property) {
+            switch (property) {
+                case 'title':
+                    return 'title';
+                    break;
+                case 'description':
+                    return 'description';
+                    break;
+                default:
+                    return '';
+            }
+        });
         catalogManagerSvc.localCatalog = {'@id': 'http://matonto.org/catalog-local'};
+        datasetStateSvc.selectedDataset = {identifiers: [], record: {'@id': 'record'}};
+        datasetStateSvc.selectedDataset[prefixes.catalog + 'keyword'] = [{'@value': 'keyword'}];
+        expectedRecord = {'@id': datasetStateSvc.selectedDataset.record['@id']};
+        expectedRecord[prefixes.dcterms + 'title'] = [];
+        expectedRecord[prefixes.dcterms + 'description'] = [];
+        expectedRecord[prefixes.catalog + 'keyword'] = [];
         scope.onClose = jasmine.createSpy('onClose');
         element = $compile(angular.element('<edit-dataset-overlay on-close="onClose()"></edit-dataset-overlay>'))(scope);
-
-        headers = { 'x-total-count': 2, link: '' };
-        response = {
-            data: [ontology1Record, ontology2Record],
-            headers: jasmine.createSpy('headers').and.returnValue(headers)
-        };
-        catalogManagerSvc.getRecords.and.returnValue($q.when(response));
-        
-        branchResponse = {'@id': 'ontology2Branch', 'catalog:head': [{'@id': 'ontology2Commit'}]};
-        catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.when(branchResponse));
-
         scope.$digest();
         controller = element.controller('editDatasetOverlay');
-        controller.ontologies = [ontology1Record, ontology2Record]
     });
 
     describe('controller bound variable', function() {
@@ -212,89 +92,59 @@ describe('Edit Dataset Overlay directive', function() {
     });
     describe('controller methods', function() {
         describe('should update a dataset', function() {
-            beforeEach(function() {
-                datasetRecordExpected['dcterms:title'] = [{'@value': 'Test'}];
-                datasetRecordExpected['dcterms:description'] = [{'@value': 'This is a description.'}];
-                datasetRecordExpected['catalog:keyword'] = [{'@value': 'test'}];
-                datasetRecordExpected['dataset:ontology'] = [{ '@id': 'ontology1' }];
-                controller.recordConfig.title = 'Test';
-                controller.recordConfig.description = 'This is a description.';
-                controller.keywords = ['test'];
-                controller.selectedOntologies = [ontology1Record];
-                scope.$digest();
-            });
             it('unless an error occurs', function() {
                 catalogManagerSvc.updateRecord.and.returnValue($q.reject('Error Message'));
                 controller.update();
                 scope.$apply();
-                expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith('datasetRecord1', catalogManagerSvc.localCatalog['@id'], [ontology1, datasetRecordExpected]);
+                expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], jasmine.any(Array));
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
                 expect(datasetStateSvc.setResults).not.toHaveBeenCalled();
                 expect(scope.onClose).not.toHaveBeenCalled();
                 expect(controller.error).toBe('Error Message');
             });
             describe('successfully', function() {
-                it('when the title has changed.', function() {
-                    controller.recordConfig.title = 'Changed';
-                    datasetRecordExpected['dcterms:title'] = [{'@value': 'Changed'}];
-                    controller.update();
-                    scope.$apply();
-                    expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith('datasetRecord1', catalogManagerSvc.localCatalog['@id'], [ontology1, datasetRecordExpected]);
-                    expect(utilSvc.createSuccessToast).toHaveBeenCalled();
-                    expect(datasetStateSvc.setResults).toHaveBeenCalled();
-                    expect(scope.onClose).toHaveBeenCalled();
-                    expect(controller.error).toBe('');
+                beforeEach(function() {
+                    catalogManagerSvc.updateRecord.and.returnValue($q.when());
                 });
-                it('when the description has changed.', function() {
-                    controller.recordConfig.description = 'Changed the description.';
-                    datasetRecordExpected['dcterms:description'] = [{'@value': 'Changed the description.'}];
+                it('updating title, description, and keywords', function() {
                     controller.update();
                     scope.$apply();
-                    expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith('datasetRecord1', catalogManagerSvc.localCatalog['@id'], [ontology1, datasetRecordExpected]);
-                    expect(utilSvc.createSuccessToast).toHaveBeenCalled();
-                    expect(datasetStateSvc.setResults).toHaveBeenCalled();
-                    expect(scope.onClose).toHaveBeenCalled();
-                    expect(controller.error).toBe('');
-                });
-                it('when the keywords have changed.', function() {
-                    controller.keywords = ['a ', ' b', 'c d'];
-                    datasetRecordExpected['catalog:keyword'] = [{'@value': 'a'}, {'@value': 'b'}, {'@value': 'c d'}];
-                    controller.update();
-                    scope.$apply();
-                    expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith('datasetRecord1', catalogManagerSvc.localCatalog['@id'], [ontology1, datasetRecordExpected]);
+                    expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(expectedRecord, 'title', controller.recordConfig.title);
+                    expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(expectedRecord, 'description', controller.recordConfig.description);
+                    _.forEach(datasetStateSvc.selectedDataset.record[prefixes.catalog + 'keyword'], function(obj) {
+                        expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(expectedRecord, 'keyword', obj['@value']);
+                    });
+                    expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], jasmine.any(Array));
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(datasetStateSvc.setResults).toHaveBeenCalled();
                     expect(scope.onClose).toHaveBeenCalled();
                     expect(controller.error).toBe('');
                 });
                 it('when all ontologies are removed.', function() {
-                    datasetRecordExpected['dataset:ontology'] = [];
-                    controller.selectedOntologies = [];
+                    datasetStateSvc.selectedDataset.identifier = [{'@id': 'identifier'}];
                     controller.update();
                     scope.$apply();
-                    expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith('datasetRecord1', catalogManagerSvc.localCatalog['@id'], [datasetRecordExpected]);
+                    expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], [expectedRecord]);
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(datasetStateSvc.setResults).toHaveBeenCalled();
                     expect(scope.onClose).toHaveBeenCalled();
                     expect(controller.error).toBe('');
                 });
                 it('when an ontology is added.', function() {
-                    controller.selectedOntologies = [ontology1Record, ontology2Record];
-                    datasetRecordExpected['dataset:ontology'] = [{ '@id': 'ontology1' }, { '@id': '_:matonto/bnode/1234' }];
+                    var branch = {'@id': 'branch'};
+                    controller.selectedOntologies = [{'@id': 'ontology'}];
+                    catalogManagerSvc.getRecordMasterBranch.and.returnValue($q.when(branch));
+                    var expectedBlankNode = {};
+                    expectedBlankNode[prefixes.dataset + 'linksToRecord'] = [{'@id': 'ontology'}];
+                    expectedBlankNode[prefixes.dataset + 'linksToBranch'] = [{'@id': 'branch'}];
+                    expectedBlankNode[prefixes.dataset + 'linksToCommit'] = [{'@id': 'commit'}];
                     controller.update();
                     scope.$apply();
-                    expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith('datasetRecord1', catalogManagerSvc.localCatalog['@id'], [ontology1, ontology2Expected, datasetRecordExpected]);
-                    expect(utilSvc.createSuccessToast).toHaveBeenCalled();
-                    expect(datasetStateSvc.setResults).toHaveBeenCalled();
-                    expect(scope.onClose).toHaveBeenCalled();
-                    expect(controller.error).toBe('');
-                });
-                it('when an ontology is added and removed.', function() {
-                    controller.selectedOntologies = [ontology2Record];
-                    datasetRecordExpected['dataset:ontology'] = [{ '@id': '_:matonto/bnode/1234' }];
-                    controller.update();
-                    scope.$apply();
-                    expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith('datasetRecord1', catalogManagerSvc.localCatalog['@id'], [ontology2Expected, datasetRecordExpected]);
+                    expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith('ontology', catalogManagerSvc.localCatalog['@id']);
+                    expect(utilSvc.getIdForBlankNode).toHaveBeenCalled();
+                    expect(utilSvc.getPropertyId).toHaveBeenCalledWith(branch, prefixes.catalog + 'head');
+                    expect(utilSvc.setPropertyId).toHaveBeenCalledWith(expectedRecord, prefixes.dataset + 'ontology', jasmine.any(String));
+                    expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], [jasmine.objectContaining(expectedBlankNode), expectedRecord]);
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(datasetStateSvc.setResults).toHaveBeenCalled();
                     expect(scope.onClose).toHaveBeenCalled();
@@ -305,10 +155,11 @@ describe('Edit Dataset Overlay directive', function() {
     });
     describe('fills the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('EDIT-DATASET-OVERLAY');
+            expect(element.hasClass('edit-dataset-overlay')).toBe(true);
+            expect(element.hasClass('overlay')).toBe(true);
         });
-        it('with a .overlay', function() {
-            expect(element.querySelectorAll('.edit-dataset-overlay.overlay').length).toBe(1);
+        it('with a .content', function() {
+            expect(element.querySelectorAll('.content').length).toBe(1);
         });
         it('with a text-input', function() {
             var inputs = element.querySelectorAll('input');
