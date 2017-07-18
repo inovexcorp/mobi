@@ -128,20 +128,17 @@
                                 dvm.error = '';
                             }, onError);
                     }
-                    dvm.showEdit = function(dataset, event) {
+                    dvm.showEdit = function(dataset) {
                         dvm.state.selectedDataset = dataset;
                         dvm.state.showEditOverlay = true;
-                        event.stopPropagation();
                     }
-                    dvm.showClear = function(dataset, event) {
+                    dvm.showClear = function(dataset) {
                         dvm.state.selectedDataset = dataset;
                         dvm.showClearConfirm = true;
-                        event.stopPropagation();
                     }
-                    dvm.showDelete = function(dataset, event) {
+                    dvm.showDelete = function(dataset) {
                         dvm.state.selectedDataset = dataset;
                         dvm.showDeleteConfirm = true;
-                        event.stopPropagation();
                     }
 
                     function onError(errorMessage) {
