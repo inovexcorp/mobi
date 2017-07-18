@@ -133,6 +133,8 @@ public interface Ontology {
      */
     Set<ObjectProperty> getAllClassObjectProperties(IRI iri);
 
+    Set<ObjectProperty> getAllNoDomainObjectProperties();
+
     /**
      * Attempts to get all of the data properties that can be set on the class with the specified IRI in the ontology.
      *
@@ -140,6 +142,8 @@ public interface Ontology {
      * @return a Set of all class data properties
      */
     Set<DataProperty> getAllClassDataProperties(IRI iri);
+
+    Set<DataProperty> getAllNoDomainDataProperties();
 
     Set<Axiom> getAxioms();
 

@@ -34,8 +34,8 @@ describe('Instance View directive', function() {
             scope = _$rootScope_;
             discoverStateSvc = _discoverStateService_;
         });
-
-        discoverStateSvc.explore.instance.entity = {
+        
+        discoverStateSvc.getInstance.and.returnValue({
             '@id': 'ignored',
             '@type': ['ignored'],
             'prop1': [{
@@ -46,7 +46,7 @@ describe('Instance View directive', function() {
             }, {
                 '@value': 'value2'
             }]
-        }
+        });
         element = $compile(angular.element('<instance-view></instance-view>'))(scope);
         scope.$digest();
         controller = element.controller('instanceView');
@@ -90,7 +90,13 @@ describe('Instance View directive', function() {
         it('for a .values.show-link', function() {
             expect(element.querySelectorAll('.values.show-link').length).toBe(1);
             
-            discoverStateSvc.explore.instance.entity = _.omit(discoverStateSvc.explore.instance.entity, 'prop2');
+            discoverStateSvc.getInstance.and.returnValue({
+                '@id': 'ignored',
+                '@type': ['ignored'],
+                'prop1': [{
+                    '@id': 'http://matonto.org/id'
+                }]
+            });
             element = $compile(angular.element('<instance-view></instance-view>'))(scope);
             scope.$digest();
             

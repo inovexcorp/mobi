@@ -67,16 +67,17 @@
                     dvm.isValid = true;
                     
                     dvm.save = function() {
-                        _.forOwn(dvm.ds.explore.instance.entity, (value, key) => {
+                        var instance = dvm.ds.getInstance();
+                        _.forOwn(instance, (value, key) => {
                             if (_.isArray(value) && value.length === 0) {
-                                delete dvm.ds.explore.instance.entity[key];
+                                delete instance[key];
                             }
                         });
                         es.updateInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.metadata.instanceIRI, dvm.ds.explore.instance.entity)
                             .then(() => es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {offset: dvm.ds.explore.instanceDetails.currentPage * dvm.ds.explore.instanceDetails.limit, limit: dvm.ds.explore.instanceDetails.limit}), $q.reject)
                             .then(response => {
                                 dvm.ds.explore.instanceDetails.data = response.data;
-                                dvm.ds.explore.instance.metadata = _.find(response.data, {instanceIRI: dvm.ds.explore.instance.entity['@id']});
+                                dvm.ds.explore.instance.metadata = _.find(response.data, {instanceIRI: instance['@id']});
                                 dvm.ds.explore.breadcrumbs[dvm.ds.explore.breadcrumbs.length - 1] = dvm.ds.explore.instance.metadata.title;
                                 dvm.ds.explore.editing = false;
                             }, dvm.util.createErrorToast);

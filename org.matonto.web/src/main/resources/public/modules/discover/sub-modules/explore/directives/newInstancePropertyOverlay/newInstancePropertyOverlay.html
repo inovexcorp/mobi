@@ -25,7 +25,7 @@
         <h6>Add New Property</h6>
         <div class="main">
             <p>Please select a property to add to the instance.</p>
-            <md-autocomplete required md-input-name="autocomplete" md-items="iri in getProperties({text: dvm.newPropertyText})" placeholder="Enter property IRI..." md-search-text="dvm.newPropertyText" md-no-cache="true" md-require-match md-input-id="auto-complete">
+            <md-autocomplete required md-input-name="autocomplete" md-items="iri in getProperties({text: dvm.newPropertyText})" placeholder="Enter property IRI..." md-search-text="dvm.newPropertyText" md-no-cache="true" md-require-match md-input-id="auto-complete" md-min-length="0">
                 <span md-highlight-text="dvm.newPropertyText">{{dvm.util.getBeautifulIRI(iri)}} :: {{iri}}</span>
             </md-autocomplete>
         </div>

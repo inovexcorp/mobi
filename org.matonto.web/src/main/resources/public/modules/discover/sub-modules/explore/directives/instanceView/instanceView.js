@@ -60,7 +60,7 @@
                     var dvm = this;
                     dvm.ds = discoverStateService;
                     dvm.util = utilService;
-                    dvm.entity = _.omit(dvm.ds.explore.instance.entity, ['@id', '@type']);
+                    dvm.entity = _.omit(dvm.ds.getInstance(), ['@id', '@type']);
                     
                     dvm.getLimit = function(array, limit) {
                         var len = array.length;

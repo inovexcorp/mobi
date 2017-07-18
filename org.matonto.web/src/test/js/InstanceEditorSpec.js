@@ -84,7 +84,7 @@ describe('Instance Editor directive', function() {
                         instanceIRI: 'id2'
                     }];
                     discoverStateSvc.explore.breadcrumbs = ['old title'];
-                    discoverStateSvc.explore.instance.entity = {'@id': 'id'};
+                    discoverStateSvc.getInstance.and.returnValue({'@id': 'id'});
                     exploreSvc.getClassInstanceDetails.and.returnValue($q.when({data: data}));
                     controller.save();
                     scope.$apply();

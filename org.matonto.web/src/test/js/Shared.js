@@ -1001,6 +1001,8 @@ function mockDiscoverState() {
             this.resetPagedInstanceDetails = jasmine.createSpy('resetPagedInstanceDetails');
             this.cleanUpOnDatasetDelete = jasmine.createSpy('cleanUpOnDatasetDelete');
             this.cleanUpOnDatasetClear = jasmine.createSpy('cleanUpOnDatasetClear');
+            this.clickCrumb = jasmine.createSpy('clickCrumb');
+            this.getInstance = jasmine.createSpy('getInstance').and.returnValue({});
         });
     });
 }
@@ -1015,6 +1017,22 @@ function mockExplore() {
             this.getInstance = jasmine.createSpy('getInstance').and.returnValue($q.when({}));
             this.updateInstance = jasmine.createSpy('updateInstance').and.returnValue($q.when({}));
             this.createPagedResultsObject = jasmine.createSpy('createPagedResultsObject').and.returnValue({});
+        });
+    });
+}
+
+function mockExploreUtils() {
+    module(function($provide) {
+        $provide.service('exploreUtilsService', function($q) {
+            this.getInputType = jasmine.createSpy('getInputType').and.returnValue('');
+            this.getPattern = jasmine.createSpy('getPattern').and.returnValue(/[a-zA-Z]/);
+            this.isPropertyOfType = jasmine.createSpy('isPropertyOfType').and.returnValue(true);
+            this.isBoolean = jasmine.createSpy('isBoolean').and.returnValue(true);
+            this.createIdObj = jasmine.createSpy('createIdObj').and.returnValue({});
+            this.createValueObj = jasmine.createSpy('createValueObj').and.returnValue({});
+            this.getRange = jasmine.createSpy('getRange').and.returnValue('');
+            this.contains = jasmine.createSpy('contains').and.returnValue(true);
+            this.getNewProperties = jasmine.createSpy('getNewProperties').and.returnValue([]);
         });
     });
 }

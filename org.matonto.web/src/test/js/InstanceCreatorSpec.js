@@ -87,7 +87,7 @@ describe('Instance Creator directive', function() {
                         instanceIRI: 'id4'
                     }];
                     discoverStateSvc.explore.breadcrumbs = ['old title'];
-                    discoverStateSvc.explore.instance.entity = {'@id': 'id'};
+                    discoverStateSvc.getInstance.and.returnValue({'@id': 'id'});
                     exploreSvc.getClassInstanceDetails.and.returnValue($q.when({data: data}));
                     discoverStateSvc.explore.instanceDetails.limit = 1;
                     controller.save();

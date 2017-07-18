@@ -27,6 +27,7 @@ import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -84,6 +85,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -125,6 +127,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     private static final String INSTANCE_ID_STR = "http://matonto.org/data/uhtc/material/c1855eb9-89dc-445e-8f02-22c1162c0844";
     private static final String MISSING_ID = "http://matonto.org/data/missing";
     private static final String LARGE_ID = "http://matonto.org/data/large";
+    private static final String REIFIED_ID = "http://matonto.org/data/uhtc/crystalstructure/Polymorphic";
     private static final String DATA_PROPERTY_ID = "http://matonto.org/data-property";
     private static final String OBJECT_PROPERTY_ID = "http://matonto.org/object-property";
     private static final String NEW_INSTANCE_ID_STR = "http://matonto.org/new-instance";
@@ -216,11 +219,6 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
         when(dataProperty.getIRI()).thenReturn(dataPropertyId);
         when(objectProperty.getIRI()).thenReturn(objectPropertyId);
-        when(ontology.getAllClassDataProperties(classId)).thenReturn(dataProperties);
-        when(ontology.getAllClassObjectProperties(classId)).thenReturn(objectProperties);
-        when(ontology.getDataPropertyRange(dataProperty)).thenReturn(range);
-        when(ontology.getObjectPropertyRange(objectProperty)).thenReturn(range);
-        when(ontology.containsClass(classId)).thenReturn(true);
         when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
 
         rest = new ExplorableDatasetRestImpl();
@@ -237,7 +235,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(datasetManager, catalogManager, sesameTransformer, datasetConnection);
+        reset(datasetManager, catalogManager, sesameTransformer, datasetConnection, ontology);
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.of(record));
         when(datasetManager.getConnection(recordId)).thenReturn(datasetConnection);
         when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogId);
@@ -246,8 +244,17 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         when(sesameTransformer.matontoModel(any(org.openrdf.model.Model.class))).thenAnswer(i -> Values.matontoModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
         when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
         when(datasetConnection.prepareTupleQuery(any(String.class))).thenAnswer(i -> conn.prepareTupleQuery(i.getArgumentAt(0, String.class)));
+        when(datasetConnection.prepareGraphQuery(any(String.class))).thenAnswer(i -> conn.prepareGraphQuery(i.getArgumentAt(0, String.class)));
         when(datasetConnection.getStatements(any(Resource.class), any(IRI.class), any(Value.class))).thenAnswer(i -> conn.getStatements(i.getArgumentAt(0, Resource.class), i.getArgumentAt(1, IRI.class), i.getArgumentAt(2, Value.class)));
         when(datasetConnection.contains(any(Resource.class), any(IRI.class), any(Value.class))).thenAnswer(i -> conn.contains(i.getArgumentAt(0, Resource.class), i.getArgumentAt(1, IRI.class), i.getArgumentAt(2, Value.class)));
+        when(ontology.getAllClassDataProperties(classId)).thenReturn(dataProperties);
+        when(ontology.getAllClassObjectProperties(classId)).thenReturn(objectProperties);
+        when(ontology.getAllNoDomainDataProperties()).thenReturn(dataProperties);
+        when(ontology.getAllNoDomainObjectProperties()).thenReturn(objectProperties);
+        when(ontology.getDataPropertyRange(dataProperty)).thenReturn(range);
+        when(ontology.getObjectPropertyRange(objectProperty)).thenReturn(range);
+        when(ontology.containsClass(classId)).thenReturn(true);
+        when(ontology.containsClass(vf.createIRI(MISSING_ID))).thenReturn(false);
     }
 
     @AfterTest
@@ -439,11 +446,33 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
                 + encode(CLASS_ID_STR) + "/property-details").request().get();
         assertEquals(response.getStatus(), 200);
         JSONArray details = JSONArray.fromObject(response.readEntity(String.class));
+        verify(ontology, times(0)).getAllNoDomainDataProperties();
+        verify(ontology, times(0)).getAllNoDomainObjectProperties();
+        verify(ontology).getAllClassDataProperties(any(IRI.class));
+        verify(ontology).getAllClassObjectProperties(any(IRI.class));
+        assertEquals(details, expected);
+    }
+
+    @Test
+    public void getClassPropertyDetailsWhenNotFoundInOntologyTest() throws Exception {
+        JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
+                .getResourceAsStream("/expected-class-property-details.json")));
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
+                + encode(MISSING_ID) + "/property-details").request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(ontology).getAllNoDomainDataProperties();
+        verify(ontology).getAllNoDomainObjectProperties();
+        verify(ontology, times(0)).getAllClassDataProperties(any(IRI.class));
+        verify(ontology, times(0)).getAllClassObjectProperties(any(IRI.class));
+        JSONArray details = JSONArray.fromObject(response.readEntity(String.class));
         assertEquals(details, expected);
     }
 
     @Test
     public void getClassPropertyDetailsWhenNoPropertiesTest() throws Exception {
+        when(ontology.getAllNoDomainObjectProperties()).thenReturn(Collections.EMPTY_SET);
+        when(ontology.getAllNoDomainDataProperties()).thenReturn(Collections.EMPTY_SET);
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR_2) + "/property-details").request().get();
         assertEquals(response.getStatus(), 200);
@@ -511,7 +540,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().get();
         assertEquals(response.getStatus(), 200);
-        JSONObject instance = JSONObject.fromObject(response.readEntity(String.class));
+        JSONObject instance = JSONArray.fromObject(response.readEntity(String.class)).getJSONObject(0);
         assertTrue(instance.containsKey("@id"));
         assertEquals(instance.getString("@id"), INSTANCE_ID_STR);
     }
@@ -528,8 +557,17 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(LARGE_ID)).request().get();
         assertEquals(response.getStatus(), 200);
-        JSONArray titles = JSONObject.fromObject(response.readEntity(String.class)).getJSONArray("http://purl.org/dc/terms/title");
-        assertEquals(100, titles.size());
+        JSONArray titles = JSONArray.fromObject(response.readEntity(String.class)).getJSONObject(0).getJSONArray("http://purl.org/dc/terms/title");
+        assertEquals(titles.size(), 100);
+    }
+
+    @Test
+    public void getInstanceTestWithReifiedStatements() {
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
+                + encode(REIFIED_ID)).request().get();
+        assertEquals(response.getStatus(), 200);
+        JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+        assertEquals(array.size(), 2);
     }
 
     @Test

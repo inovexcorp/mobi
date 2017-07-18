@@ -87,10 +87,12 @@
                     dvm.create = function() {
                         dvm.ds.explore.creating = true;
                         var split = $filter('splitIRI')(_.head(dvm.ds.explore.instanceDetails.data).instanceIRI);
-                        dvm.ds.explore.instance.entity = {
-                            '@id': split.begin + split.then + uuid.v4(),
+                        var iri = split.begin + split.then + uuid.v4();
+                        dvm.ds.explore.instance.entity = [{
+                            '@id': iri,
                             '@type': [dvm.ds.explore.classId]
-                        };
+                        }];
+                        dvm.ds.explore.instance.metadata.instanceIRI = iri;
                         dvm.ds.explore.breadcrumbs.push('New Instance');
                     }
                     

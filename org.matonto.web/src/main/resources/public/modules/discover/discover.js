@@ -27,6 +27,7 @@
         .module('discover', [
             /* Services */
             'explore',
+            'exploreUtils',
             
             /* Common */
             'datasetSelect',
@@ -44,6 +45,7 @@
             'instanceForm',
             'instanceView',
             'newInstancePropertyOverlay',
+            'propertyValueOverlay',
             
             /* Query tab */
             'downloadQueryOverlay',

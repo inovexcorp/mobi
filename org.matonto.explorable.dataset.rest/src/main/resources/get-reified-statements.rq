@@ -1,0 +1,10 @@
+prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+construct { ?s ?p ?o }
+where {
+    ?s a rdf:Statement ;
+        rdf:subject ?subject ;
+        rdf:predicate ?predicate ;
+        rdf:object ?object .
+    ?s ?p ?o .
+}
