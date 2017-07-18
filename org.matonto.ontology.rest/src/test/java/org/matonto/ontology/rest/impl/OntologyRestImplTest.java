@@ -86,6 +86,7 @@ import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleAnnotation
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.rdf.api.IRI;
@@ -173,7 +174,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     private PaginatedSearchResults<Record> results;
 
     @Mock
-    private CacheManager cacheManager;
+    private OntologyCache ontologyCache;
 
     @Mock
     private VersioningManager versioningManager;
@@ -248,8 +249,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @Override
     protected Application configureApp() throws Exception {
         MockitoAnnotations.initMocks(this);
-
-        when(cacheManager.getCache(Mockito.anyString(), eq(String.class), eq(Ontology.class))).thenReturn(Optional.empty());
+        when(ontologyCache.getOntologyCache()).thenReturn(Optional.of(mockCache));
 
         vcr = new DefaultValueConverterRegistry();
         modelFactory = LinkedHashModelFactory.getInstance();
@@ -308,7 +308,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         rest.setCatalogManager(catalogManager);
         rest.setEngineManager(engineManager);
         rest.setSesameTransformer(sesameTransformer);
-        rest.setCacheManager(cacheManager);
+        rest.setOntologyCache(ontologyCache);
         rest.setVersioningManager(versioningManager);
 
         simpleOntologyManager = new SimpleOntologyManager();
@@ -405,7 +405,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @BeforeMethod
     public void setupMocks() {
         reset(engineManager, versioningManager, ontologyId, ontology, importedOntologyId, importedOntology, catalogManager,
-                ontologyManager, sesameTransformer, results, cacheManager, mockCache);
+                ontologyManager, sesameTransformer, results, mockCache);
 
         final IRI skosConcept = valueFactory.createIRI(SKOS.CONCEPT.stringValue());
         final IRI skosConceptScheme = valueFactory.createIRI(SKOS.CONCEPT_SCHEME.stringValue());
@@ -513,7 +513,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 Values.matontoIRI(invocationOnMock.getArgumentAt(0, org.openrdf.model.IRI.class)));
 
         entityUsagesConstruct = modelToJsonld(sesameTransformer.sesameModel(constructs));
-        when(cacheManager.getCache(anyString(), eq(String.class), eq(Ontology.class))).thenReturn(Optional.of(mockCache));
     }
 
     private JSONObject getResource(String path) throws Exception {
@@ -855,11 +854,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void testGetOntologyCacheHit() {
-        when(cacheManager.getCache(Mockito.anyString(), eq(String.class), eq(Ontology.class))).thenReturn(Optional.of(mockCache));
         when(mockCache.containsKey(Mockito.anyString())).thenReturn(true);
         when(mockCache.get(Mockito.anyString())).thenReturn(ontology);
-
-        rest.setCacheManager(cacheManager);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
@@ -875,10 +871,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void testGetOntologyCacheMiss() {
-        when(cacheManager.getCache(Mockito.anyString(), eq(String.class), eq(Ontology.class))).thenReturn(Optional.of(mockCache));
         when(mockCache.containsKey(Mockito.anyString())).thenReturn(false);
-
-        rest.setCacheManager(cacheManager);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
