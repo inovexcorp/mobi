@@ -171,6 +171,9 @@ describe('Datasets Ontology Picker directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
+        it('for wrapping containers', function() {
+            expect(element.hasClass('datasets-ontology-picker')).toBe(true);
+        });
         it('with a .input-group', function() {
             expect(element.querySelectorAll('.input-group.ontologies-search-bar').length).toBe(1);
         });
