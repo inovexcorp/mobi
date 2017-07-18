@@ -37,7 +37,7 @@ import org.matonto.ontology.core.api.Ontology;
 import java.util.Map;
 import javax.cache.configuration.Configuration;
 
-@Component(immediate = true, name = "org.matonto.ontology.utils.cache.OntologyCacheConfiguration")
+@Component(immediate = true)
 public class OntologyCacheConfiguration implements CacheConfiguration {
 
     private String cacheId;

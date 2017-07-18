@@ -54,11 +54,10 @@ public class OntologyCacheImpl implements OntologyCache {
 
     @Override
     public Optional<Cache<String, Ontology>> getOntologyCache() {
-        Optional<Cache<String, Ontology>> cache = Optional.empty();
         if (cacheManager != null) {
-            cache = cacheManager.getCache(CACHE_NAME, String.class, Ontology.class);
+            return cacheManager.getCache(CACHE_NAME, String.class, Ontology.class);
         }
-        return cache;
+        return Optional.empty();
     }
 
     @Override
