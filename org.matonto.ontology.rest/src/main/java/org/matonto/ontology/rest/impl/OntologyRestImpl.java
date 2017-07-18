@@ -36,7 +36,6 @@ import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
@@ -56,10 +55,10 @@ import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.rest.OntologyRest;
-import org.matonto.ontology.utils.api.SesameTransformer;
 import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.persistence.utils.JSONQueryResults;
+import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
 import org.matonto.rdf.api.BNode;
@@ -107,7 +106,7 @@ public class OntologyRestImpl implements OntologyRest {
     private CatalogManager catalogManager;
     private EngineManager engineManager;
     private SesameTransformer sesameTransformer;
-    private CacheManager cacheManager;
+    private OntologyCache ontologyCache;
     private VersioningManager versioningManager;
 
     private final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
@@ -143,8 +142,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Reference
-    public void setCacheManager(CacheManager cacheManager) {
-        this.cacheManager = cacheManager;
+    public void setOntologyCache(OntologyCache ontologyCache) {
+        this.ontologyCache = ontologyCache;
     }
 
     @Reference
@@ -880,8 +879,8 @@ public class OntologyRestImpl implements OntologyRest {
                                            String commitIdStr) {
         throwErrorIfMissingStringParam(recordIdStr, "The recordIdStr is missing.");
         Optional<Ontology> optionalOntology;
-        Optional<Cache<String, Ontology>> cache = getOntologyCache();
-        String key = OntologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
+        Optional<Cache<String, Ontology>> cache = ontologyCache.getOntologyCache();
+        String key = ontologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
 
         try {
             if (cache.isPresent() && cache.get().containsKey(key)) {
@@ -1329,8 +1328,8 @@ public class OntologyRestImpl implements OntologyRest {
                 "The initial commit.", model, null);
 
         // Cache
-        getOntologyCache().ifPresent(cache -> {
-            String key = OntologyCache.generateKey(record.getResource().stringValue(),
+        ontologyCache.getOntologyCache().ifPresent(cache -> {
+            String key = ontologyCache.generateKey(record.getResource().stringValue(),
                     masterBranchId.stringValue(), commitId.stringValue());
             log.trace("caching " + key);
             cache.put(key, ontology);
@@ -1375,13 +1374,5 @@ public class OntologyRestImpl implements OntologyRest {
             }
         });
         return classIndividuals;
-    }
-
-    private Optional<Cache<String, Ontology>> getOntologyCache() {
-        Optional<Cache<String, Ontology>> cache = Optional.empty();
-        if (cacheManager != null) {
-            cache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class);
-        }
-        return cache;
     }
 }
