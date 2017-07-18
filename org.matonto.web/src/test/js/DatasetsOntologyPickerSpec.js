@@ -44,7 +44,7 @@ describe('Datasets Ontology Picker directive', function() {
             'dcterms:publisher': [{ '@id': 'http://matonto.org/users/user1' }],
             'dcterms:title': [{ '@value': 'Ontology 1' }]
     };
-var ontology2Record = {
+    var ontology2Record = {
             '@id': 'ontology2Record',
             '@type': ['http://www.w3.org/2002/07/owl#Thing',
                     'http://matonto.org/ontologies/catalog#Record',
@@ -101,17 +101,20 @@ var ontology2Record = {
     });
 
     describe('controller bound variable', function() {
-        it('ontologies should exist.', function() {
-            expect(controller.ontologies).toBeDefined();
-            expect(controller.ontologies.length).toEqual(2);
+        it('ontologies should be two way bound.', function() {
+            controller.ontologies = [ontology1Record];
+            scope.$apply();
+            expect(scope.ontologies).toEqual([ontology1Record]);
         });
-        it('selectedOntologies should exist.', function() {
-            expect(controller.selectedOntologies).toBeDefined();
-            expect(controller.selectedOntologies.length).toEqual(0);
+        it('selectedOntologies should be two way bound.', function() {
+            controller.selectedOntologies = [{'@id': 'id'}];
+            scope.$apply();
+            expect(scope.selectedOntologies).toEqual([{'@id': 'id'}]);
         });
-        it('error should exist.', function() {
-            expect(controller.error).toBeDefined();
-            expect(controller.error).toBe('');
+        it('error should be two way bound.', function() {
+            controller.error = 'Error';
+            scope.$apply();
+            expect(scope.error).toEqual('Error');
         });
     });
     describe('controller methods', function() {
@@ -167,7 +170,7 @@ var ontology2Record = {
             expect(controller.selectedOntologies.length).toBe(0);
         });
     });
-    describe('fills the element with the correct html', function() {
+    describe('replaces the element with the correct html', function() {
         it('with a .input-group', function() {
             expect(element.querySelectorAll('.input-group.ontologies-search-bar').length).toBe(1);
         });
