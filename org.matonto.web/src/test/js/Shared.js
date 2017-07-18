@@ -923,6 +923,7 @@ function mockDatasetManager() {
             this.createDatasetRecord = jasmine.createSpy('createDatasetRecord').and.returnValue($q.when(''));
             this.deleteDatasetRecord = jasmine.createSpy('deleteDatasetRecord').and.returnValue($q.when());
             this.clearDatasetRecord = jasmine.createSpy('clearDatasetRecord').and.returnValue($q.when());
+            this.updateDatasetRecord = jasmine.createSpy('updateDatasetRecord').and.returnValue($q.when());
             this.initialize = jasmine.createSpy('initialize');
         });
     });

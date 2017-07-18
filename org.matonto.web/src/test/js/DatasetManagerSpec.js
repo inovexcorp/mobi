@@ -24,6 +24,7 @@ describe('Dataset Manager service', function() {
     var $httpBackend,
         $httpParamSerializer,
         datasetManagerSvc,
+        catalogManagerSvc,
         utilSvc,
         $q,
         scope,
@@ -36,9 +37,11 @@ describe('Dataset Manager service', function() {
         mockUtil();
         mockPrefixes();
         mockDiscoverState();
+        mockCatalogManager();
 
-        inject(function(datasetManagerService, _$httpBackend_, _$httpParamSerializer_, _$q_, _utilService_, _$rootScope_, _prefixes_, _discoverStateService_) {
+        inject(function(datasetManagerService, _catalogManagerService_, _$httpBackend_, _$httpParamSerializer_, _$q_, _utilService_, _$rootScope_, _prefixes_, _discoverStateService_) {
             datasetManagerSvc = datasetManagerService;
+            catalogManagerSvc = _catalogManagerService_;
             $httpBackend = _$httpBackend_;
             $httpParamSerializer = _$httpParamSerializer_;
             $q = _$q_;
@@ -232,6 +235,42 @@ describe('Dataset Manager service', function() {
                 done();
             });
             $httpBackend.flush();
+        });
+    });
+    describe('should update a DatasetRecord', function() {
+        it('unless an error occurs', function(done) {
+            catalogManagerSvc.updateRecord.and.returnValue($q.reject('Error Message'));
+            datasetManagerSvc.updateDatasetRecord(recordId, '', '', '').then(function() {
+                fail('Promise should have rejected');
+                done();
+            }, function() {
+                expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(recordId, '', '');
+                expect(utilSvc.onError).toHaveBeenCalled();
+                done();
+            });
+            scope.$apply();
+        });
+        it('on success.', function(done) {
+            expected = [
+                {'@id': 'record1', 'dcterms:title': [{'@value': 'title 1'}]}, 
+                {'@id': 'record3', 'dcterms:title': [{'@value': 'title 3'}]},
+                {'@id': recordId, 'dcterms:title': [{'@value': ''}]}
+            ];
+            datasetManagerSvc.datasetRecords = [
+                {'@id': 'record1', 'dcterms:title': [{'@value': 'title 1'}]}, 
+                {'@id': recordId, 'dcterms:title': [{'@value': 'title 2'}]}, 
+                {'@id': 'record3', 'dcterms:title': [{'@value': 'title 3'}]}
+            ];
+            catalogManagerSvc.updateRecord.and.returnValue($q.resolve(''));
+            datasetManagerSvc.updateDatasetRecord(recordId, '', '', '').then(function() {
+                expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(recordId, '', '');
+                expect(datasetManagerSvc.datasetRecords).toEqual(expected);
+                done();
+            }, function() {
+                fail('Promise should have resolved');
+                done();
+            });
+            scope.$apply();
         });
     });
     describe('initialize should call the correct method when getDatasetRecords was', function() {

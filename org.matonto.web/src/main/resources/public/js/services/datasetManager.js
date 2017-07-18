@@ -47,12 +47,13 @@
          */
         .service('datasetManagerService', datasetManagerService);
 
-        datasetManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'discoverStateService'];
+        datasetManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'discoverStateService', 'catalogManagerService'];
 
-        function datasetManagerService($http, $q, utilService, prefixes, discoverStateService) {
+        function datasetManagerService($http, $q, utilService, prefixes, discoverStateService, catalogManagerService) {
             var self = this,
                 util = utilService,
                 ds = discoverStateService,
+                cm = catalogManagerService,
                 prefix = '/matontorest/datasets';
 
             /**
@@ -206,8 +207,20 @@
                     }, error => util.onError(error, deferred));
                 return deferred.promise;
             }
-
             
+            self.updateDatasetRecord = function(datasetRecordIRI, catalogIRI, jsonld, title) {
+                var deferred = $q.defer();
+                cm.updateRecord(datasetRecordIRI, catalogIRI, jsonld).then(() => {
+                    _.remove(self.datasetRecords, {'@id': datasetRecordIRI});
+                    self.datasetRecords.push({
+                        '@id': datasetRecordIRI, 
+                        [prefixes.dcterms + 'title']: [{'@value': title}]
+                    });
+                    deferred.resolve();
+                }, error => util.onError(error, deferred));
+                return deferred.promise;
+            }
+
             /**
              * @ngdoc method
              * @name initialize

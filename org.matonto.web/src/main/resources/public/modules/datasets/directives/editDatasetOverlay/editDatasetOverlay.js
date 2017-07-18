@@ -53,9 +53,9 @@
          */
         .directive('editDatasetOverlay', editDatasetOverlay);
 
-        editDatasetOverlay.$inject = ['datasetStateService', 'catalogManagerService', 'utilService', 'prefixes', '$q'];
+        editDatasetOverlay.$inject = ['datasetStateService', 'datasetManagerService', 'catalogManagerService', 'utilService', 'prefixes', '$q'];
 
-        function editDatasetOverlay(datasetStateService, catalogManagerService, utilService, prefixes, $q) {
+        function editDatasetOverlay(datasetStateService, datasetManagerService, catalogManagerService, utilService, prefixes, $q) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -68,6 +68,7 @@
                 controller: function() {
                     var dvm = this;
                     var cm = catalogManagerService;
+                    var dm = datasetManagerService;
                     var ds = datasetStateService;
 
                     dvm.util = utilService;
@@ -138,7 +139,7 @@
                         var jsonld = _.concat(newIdentifiers, newRecord);
 
                         // Send unparsed object to the update endpoint.
-                        cm.updateRecord(newRecord['@id'], cm.localCatalog['@id'], jsonld).then(() => {
+                        dm.updateDatasetRecord(newRecord['@id'], cm.localCatalog['@id'], jsonld, dvm.util.getDctermsValue(newRecord, 'title')).then(() => {
                             dvm.util.createSuccessToast('Dataset successfully updated');
                             ds.selectedDataset.identifiers = newIdentifiers;
                             ds.selectedDataset.record = newRecord;

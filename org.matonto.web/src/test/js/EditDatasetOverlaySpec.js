@@ -21,21 +21,23 @@
  * #L%
  */
 describe('Edit Dataset Overlay directive', function() {
-    var $compile, scope, $q, element, controller, datasetStateSvc, catalogManagerSvc, utilSvc, prefixes;
+    var $compile, scope, $q, element, controller, datasetStateSvc, datasetManagerSvc, catalogManagerSvc, utilSvc, prefixes;
     var expectedRecord;
 
     beforeEach(function() {
         module('templates');
         module('editDatasetOverlay');
         mockDatasetState();
+        mockDatasetManager();
         mockCatalogManager();
         mockUtil();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _datasetStateService_, _catalogManagerService_, _utilService_, _$q_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _datasetStateService_, _datasetManagerService_, _catalogManagerService_, _utilService_, _$q_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             datasetStateSvc = _datasetStateService_;
+            datasetManagerSvc = _datasetManagerService_
             catalogManagerSvc = _catalogManagerService_;
             utilSvc = _utilService_;
             prefixes = _prefixes_;
@@ -93,10 +95,10 @@ describe('Edit Dataset Overlay directive', function() {
     describe('controller methods', function() {
         describe('should update a dataset', function() {
             it('unless an error occurs', function() {
-                catalogManagerSvc.updateRecord.and.returnValue($q.reject('Error Message'));
+                datasetManagerSvc.updateDatasetRecord.and.returnValue($q.reject('Error Message'));
                 controller.update();
                 scope.$apply();
-                expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], jasmine.any(Array));
+                expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], jasmine.any(Array), 'title');
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
                 expect(datasetStateSvc.setResults).not.toHaveBeenCalled();
                 expect(scope.onClose).not.toHaveBeenCalled();
@@ -104,7 +106,7 @@ describe('Edit Dataset Overlay directive', function() {
             });
             describe('successfully', function() {
                 beforeEach(function() {
-                    catalogManagerSvc.updateRecord.and.returnValue($q.when());
+                    datasetManagerSvc.updateDatasetRecord.and.returnValue($q.when());
                 });
                 it('updating title, description, and keywords', function() {
                     controller.update();
@@ -114,7 +116,7 @@ describe('Edit Dataset Overlay directive', function() {
                     _.forEach(datasetStateSvc.selectedDataset.record[prefixes.catalog + 'keyword'], function(obj) {
                         expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(expectedRecord, 'keyword', obj['@value']);
                     });
-                    expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], jasmine.any(Array));
+                    expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], jasmine.any(Array), 'title');
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(datasetStateSvc.setResults).toHaveBeenCalled();
                     expect(scope.onClose).toHaveBeenCalled();
@@ -124,7 +126,7 @@ describe('Edit Dataset Overlay directive', function() {
                     datasetStateSvc.selectedDataset.identifier = [{'@id': 'identifier'}];
                     controller.update();
                     scope.$apply();
-                    expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], [expectedRecord]);
+                    expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], [expectedRecord], 'title');
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(datasetStateSvc.setResults).toHaveBeenCalled();
                     expect(scope.onClose).toHaveBeenCalled();
@@ -144,7 +146,7 @@ describe('Edit Dataset Overlay directive', function() {
                     expect(utilSvc.getIdForBlankNode).toHaveBeenCalled();
                     expect(utilSvc.getPropertyId).toHaveBeenCalledWith(branch, prefixes.catalog + 'head');
                     expect(utilSvc.setPropertyId).toHaveBeenCalledWith(expectedRecord, prefixes.dataset + 'ontology', jasmine.any(String));
-                    expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], [jasmine.objectContaining(expectedBlankNode), expectedRecord]);
+                    expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], [jasmine.objectContaining(expectedBlankNode), expectedRecord], 'title');
                     expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                     expect(datasetStateSvc.setResults).toHaveBeenCalled();
                     expect(scope.onClose).toHaveBeenCalled();
