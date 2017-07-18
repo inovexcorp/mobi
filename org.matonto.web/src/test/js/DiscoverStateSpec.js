@@ -35,6 +35,7 @@ describe('Discover State Service', function() {
         expect(discoverStateSvc.explore).toEqual({
             active: true,
             breadcrumbs: ['Classes'],
+            classDeprecated: false,
             classDetails: [],
             classId: '',
             creating: false,
