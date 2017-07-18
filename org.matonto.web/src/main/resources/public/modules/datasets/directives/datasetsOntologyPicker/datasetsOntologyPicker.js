@@ -62,7 +62,7 @@
                     selectedOntologies: '='
                 },
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: function() {
                     var dvm = this;
                     var cm = catalogManagerService;
                     var ds = datasetStateService;
@@ -117,25 +117,24 @@
                         dvm.links.next = _.get(links, 'next', '');
                         dvm.error = '';
                     }
-                    dvm.getOntologies(); // Populate the list automatically...
+                    // Begin Initialization...
+                    dvm.getOntologies();
                     
-                    $scope.$watch('ds.selectedDataset', function() {
-                        if (ds.selectedDataset) {
-                            dvm.selectedOntologies = [];
-                            var selectedOntologies = _.map(ds.selectedDataset.identifiers, 
-                                    identifier => dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
-                            _.forEach(selectedOntologies, id => {
-                                var ontology = _.find(dvm.ontologies, o => { if (o['@id'] === id) { return o; }});
-                                if (ontology) {
-                                    dvm.selectedOntologies.push(ontology);
-                                } else {
-                                    cm.getRecord(id, cm.localCatalog['@id'])
-                                            .then(ontology => dvm.selectedOntologies.push(ontology), onError);
-                                }
-                            });
-                        }
-                    });
-                }]
+                    if (ds.selectedDataset) {
+                        dvm.selectedOntologies = [];
+                        var selectedOntologies = _.map(ds.selectedDataset.identifiers, 
+                                identifier => dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
+                        _.forEach(selectedOntologies, id => {
+                            var ontology = _.find(dvm.ontologies, o => { if (o['@id'] === id) { return o; }});
+                            if (ontology) {
+                                dvm.selectedOntologies.push(ontology);
+                            } else {
+                                cm.getRecord(id, cm.localCatalog['@id'])
+                                        .then(ontology => dvm.selectedOntologies.push(ontology), onError);
+                            }
+                        });
+                    }
+                }
             }
         }
 })();
