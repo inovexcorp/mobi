@@ -88,7 +88,7 @@
                     dvm.prefixes = prefixes;
                     dvm.searchText = {};
                     dvm.showOverlay = false;
-                    dvm.showText = false;
+                    dvm.showPropertyValueOverlay = false;
                     dvm.changed = [];
                     dvm.missingProperties = [];
                     dvm.propertyIRI = '';
@@ -123,21 +123,6 @@
                         return _.includes(dvm.changed, propertyIRI);
                     }
                     
-                    dvm.save = function() {
-                        _.forOwn(dvm.instance, (value, key) => {
-                            if (_.isArray(value) && value.length === 0) {
-                                delete dvm.instance[key];
-                            }
-                        });
-                        es.updateInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.metadata.instanceIRI, dvm.instance)
-                            .then(() => es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {offset: dvm.ds.explore.instanceDetails.currentPage * dvm.ds.explore.instanceDetails.limit, limit: dvm.ds.explore.instanceDetails.limit}), $q.reject)
-                            .then(response => {
-                                dvm.ds.explore.instanceDetails.data = response.data;
-                                dvm.ds.explore.instance.metadata = _.find(response.data, {instanceIRI: dvm.instance['@id']});
-                                dvm.ds.explore.editing = false;
-                            }, dvm.util.createErrorToast);
-                    }
-                    
                     dvm.setIRI = function(begin, then, end) {
                         dvm.instance['@id'] = begin + then + end;
                     }
@@ -152,7 +137,7 @@
                         dvm.fullText = text;
                         dvm.propertyIRI = propertyIRI;
                         dvm.index = index;
-                        dvm.showText = true;
+                        dvm.showPropertyValueOverlay = true;
                     }
                     
                     dvm.getMissingProperties = function() {

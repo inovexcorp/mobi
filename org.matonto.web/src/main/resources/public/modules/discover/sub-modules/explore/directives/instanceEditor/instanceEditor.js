@@ -49,9 +49,9 @@
          */
         .directive('instanceEditor', instanceEditor);
         
-        instanceEditor.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService'];
+        instanceEditor.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'exploreUtilsService'];
 
-        function instanceEditor($q, discoverStateService, utilService, exploreService) {
+        function instanceEditor($q, discoverStateService, utilService, exploreService, exploreUtilsService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceEditor/instanceEditor.html',
@@ -61,18 +61,14 @@
                 controller: function() {
                     var dvm = this;
                     var es = exploreService;
+                    var eu = exploreUtilsService;
                     dvm.ds = discoverStateService;
                     dvm.util = utilService;
                     dvm.original = angular.copy(dvm.ds.explore.instance.entity);
                     dvm.isValid = true;
                     
                     dvm.save = function() {
-                        var instance = dvm.ds.getInstance();
-                        _.forOwn(instance, (value, key) => {
-                            if (_.isArray(value) && value.length === 0) {
-                                delete instance[key];
-                            }
-                        });
+                        var instance = eu.removeEmptyProperties(dvm.ds.getInstance());
                         es.updateInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.metadata.instanceIRI, dvm.ds.explore.instance.entity)
                             .then(() => es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {offset: dvm.ds.explore.instanceDetails.currentPage * dvm.ds.explore.instanceDetails.limit, limit: dvm.ds.explore.instanceDetails.limit}), $q.reject)
                             .then(response => {

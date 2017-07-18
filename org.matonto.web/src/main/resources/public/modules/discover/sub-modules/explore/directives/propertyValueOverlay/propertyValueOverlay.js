@@ -60,9 +60,9 @@
                     
                     dvm.reification = _.find(ds.explore.instance.entity, thing => {
                         return _.includes(_.get(thing, '@type', []), prefixes.rdf + 'Statement')
-                            && _.isEqual(get(thing, 'subject'), subject)
-                            && _.isEqual(get(thing, 'predicate'), predicate)
-                            && _.isEqual(get(thing, 'object'), object);
+                            && _.isEqual(getRdfProperty(thing, 'subject'), subject)
+                            && _.isEqual(getRdfProperty(thing, 'predicate'), predicate)
+                            && _.isEqual(getRdfProperty(thing, 'object'), object);
                     }) || {
                         '@id': '_:matonto/bnode/' + uuid.v4(),
                         '@type': [prefixes.rdf + 'Statement'],
@@ -70,6 +70,7 @@
                         [prefixes.rdf + 'predicate']: predicate,
                         [prefixes.rdf + 'object']: object
                     };
+                    dvm.isShown = false;
                     
                     dvm.addNewProperty = function(property) {
                         dvm.reification[property] = [];
@@ -87,10 +88,7 @@
                                 delete dvm.reification[key];
                             }
                         });
-                        if (_.some(ds.explore.instance.entity, {'@id': dvm.reification['@id']})) {
-                            var index = _.findIndex(ds.explore.instance.entity, {'@id': dvm.reification['@id']});
-                            ds.explore.instance.entity[index] = dvm.reification;
-                        } else {
+                        if (!_.some(ds.explore.instance.entity, {'@id': dvm.reification['@id']})) {
                             ds.explore.instance.entity.push(dvm.reification);
                         }
                         dvm.onSubmit();
@@ -105,7 +103,7 @@
                         return _.includes(dvm.changed, propertyIRI);
                     }
                     
-                    function get(thing, localName) {
+                    function getRdfProperty(thing, localName) {
                         return _.get(thing, prefixes.rdf + localName, {});
                     }
                 }

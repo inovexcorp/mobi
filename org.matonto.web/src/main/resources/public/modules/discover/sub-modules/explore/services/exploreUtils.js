@@ -26,7 +26,7 @@
     angular
         /**
          * @ngdoc overview
-         * @name explore
+         * @name exploreUtils
          *
          * @description
          * The `exploreUtils` module only provides the `exploreUtilsService` service which provides utility
@@ -115,6 +115,16 @@
         self.getNewProperties = function(properties, entity, text) {
             var properties = _.difference(_.map(properties, 'propertyIRI'), _.keys(entity));
             return text ? _.filter(properties, iri => self.contains(iri, text)) : properties;
+        }
+        
+        self.removeEmptyProperties = function(object) {
+            var copy = angular.copy(object);
+            _.forOwn(copy, (value, key) => {
+                if (_.isArray(value) && value.length === 0) {
+                    delete copy[key];
+                }
+            });
+            return copy;
         }
     }
 })();

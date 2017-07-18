@@ -29,7 +29,7 @@
         <static-iri iri="dvm.instance['@id']" on-edit="dvm.setIRI(iriBegin, iriThen, iriEnd)">
             <info-message>Changing this IRI might break relationships within the dataset.</info-message>
         </static-iri>
-        <form name="dvm.form" autocomplete="off">            
+        <form name="dvm.form" autocomplete="off">
             <div class="form-group" ng-repeat="(key, value) in dvm.instance track by $index" ng-if="key !== '@id' && key !== '@type'">
                 <custom-label ng-class="{'changed': dvm.isChanged(key)}">{{dvm.util.getBeautifulIRI(key)}} {{dvm.getRestrictionText(key)}}</custom-label>
                 <div class="boolean-property" ng-if="dvm.eu.isBoolean(key, dvm.properties)">
@@ -52,5 +52,5 @@
         </div>
     </div>
     <new-instance-property-overlay ng-if="dvm.showOverlay" on-cancel="dvm.showOverlay = false" on-submit="dvm.addNewProperty(propertyIRI)" get-properties="dvm.eu.getNewProperties(dvm.properties, dvm.instance, text)"></new-instance-property-overlay>
-    <property-value-overlay ng-if="dvm.showText" close-overlay="dvm.showText = false" on-submit="dvm.addToChanged(dvm.propertyIRI)" iri="dvm.propertyIRI" index="dvm.index" text="dvm.fullText" properties="dvm.reificationProperties"></property-value-overlay>
+    <property-value-overlay ng-if="dvm.showPropertyValueOverlay" close-overlay="dvm.showPropertyValueOverlay = false" on-submit="dvm.addToChanged(dvm.propertyIRI)" iri="dvm.propertyIRI" index="dvm.index" text="dvm.fullText" properties="dvm.reificationProperties"></property-value-overlay>
 </div>

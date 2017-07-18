@@ -83,6 +83,7 @@ describe('Property Value Overlay directive', function() {
             property1: [{'@value': 'value'}]
         };
         controller.changed = ['iri'];
+        controller.isShown = true;
         scope.$apply();
     });
 
@@ -147,6 +148,30 @@ describe('Property Value Overlay directive', function() {
         });
         it('with a .form-group', function() {
             expect(element.querySelectorAll('.form-group').length).toBe(1);
+        });
+        it('with a .btn-show', function() {
+            expect(element.querySelectorAll('.btn-show').length).toBe(0);
+            
+            controller.isShown = false;
+            scope.$digest();
+            
+            expect(element.querySelectorAll('.btn-show').length).toBe(1);
+        });
+        it('with a .btn-hide', function() {
+            expect(element.querySelectorAll('.btn-hide').length).toBe(1);
+            
+            controller.isShown = false;
+            scope.$digest();
+            
+            expect(element.querySelectorAll('.btn-hide').length).toBe(0);
+        });
+        it('with a .reification-container', function() {
+            expect(element.querySelectorAll('.reification-container').length).toBe(1);
+            
+            controller.isShown = false;
+            scope.$digest();
+            
+            expect(element.querySelectorAll('.reification-container').length).toBe(0);
         });
         it('with a custom-label', function() {
             expect(element.find('custom-label').length).toBe(1);
@@ -214,7 +239,10 @@ describe('Property Value Overlay directive', function() {
                     '@id': '_:b0',
                     key: 'value'
                 };
-                discoverStateSvc.explore.instance.entity = [{'@id': '_:b0'}];
+                discoverStateSvc.explore.instance.entity = [{
+                    '@id': '_:b0',
+                    key: 'value'
+                }];
                 controller.submit();
                 expect(discoverStateSvc.explore.instance.entity).toEqual([{
                     '@id': '_:b0',

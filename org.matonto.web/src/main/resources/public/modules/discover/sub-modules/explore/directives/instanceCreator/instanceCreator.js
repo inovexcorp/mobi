@@ -49,9 +49,9 @@
          */
         .directive('instanceCreator', instanceCreator);
         
-        instanceCreator.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService'];
+        instanceCreator.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'exploreUtilsService'];
 
-        function instanceCreator($q, discoverStateService, utilService, exploreService) {
+        function instanceCreator($q, discoverStateService, utilService, exploreService, exploreUtilsService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceCreator/instanceCreator.html',
@@ -61,17 +61,13 @@
                 controller: function() {
                     var dvm = this;
                     var es = exploreService;
+                    var eu = exploreUtilsService;
                     dvm.ds = discoverStateService;
                     dvm.util = utilService;
                     dvm.isValid = true;
                     
                     dvm.save = function() {
-                        var instance = dvm.ds.getInstance();
-                        _.forOwn(instance, (value, key) => {
-                            if (_.isArray(value) && value.length === 0) {
-                                delete instance[key];
-                            }
-                        });
+                        var instance = eu.removeEmptyProperties(dvm.ds.getInstance());
                         es.createInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.entity)
                             .then(() => es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {}), $q.reject)
                             .then(response => {

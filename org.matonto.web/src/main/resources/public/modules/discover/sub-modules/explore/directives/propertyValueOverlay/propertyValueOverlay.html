@@ -26,24 +26,28 @@
         <div class="main">
             <p>{{text}}</p>
         </div>
-        <div class="form-group" ng-repeat="(key, value) in dvm.reification track by $index" ng-if="dvm.notOmmitted(key)">
-            <custom-label ng-class="{'changed': dvm.isChanged(key)}">{{dvm.util.getBeautifulIRI(key)}} {{dvm.getRestrictionText(key)}}</custom-label>
-            <div class="boolean-property" ng-if="dvm.eu.isBoolean(key, dvm.properties)">
-                <md-checkbox ng-model="dvm.reification[key][0]['@value']" ng-true-value="'1'" ng-false-value="'0'" ng-change="dvm.addToChanged(key)" aria-label="{{dvm.util.getBeautifulIRI(key)}}"></md-checkbox>
+        <a ng-if="!dvm.isShown" class="btn-link btn-show" ng-click="dvm.show()"><i class="fa fa-fw fa-plus"></i>Show Reification Properties</a>
+        <a ng-if="dvm.isShown" class="btn-link btn-hide" ng-click="dvm.hide()"><i class="fa fa-fw fa-times"></i>Hide Reification Properties</a>
+        <div ng-if="dvm.isShown" class="reification-container">
+            <div class="form-group" ng-repeat="(key, value) in dvm.reification track by $index" ng-if="dvm.notOmmitted(key)">
+                <custom-label ng-class="{'changed': dvm.isChanged(key)}">{{dvm.util.getBeautifulIRI(key)}} {{dvm.getRestrictionText(key)}}</custom-label>
+                <div class="boolean-property" ng-if="dvm.eu.isBoolean(key, dvm.properties)">
+                    <md-checkbox ng-model="dvm.reification[key][0]['@value']" ng-true-value="'1'" ng-false-value="'0'" ng-change="dvm.addToChanged(key)" aria-label="{{dvm.util.getBeautifulIRI(key)}}"></md-checkbox>
+                </div>
+                <md-chips class="data-property" ng-if="dvm.eu.isPropertyOfType(key, 'Data', dvm.properties) && !dvm.eu.isBoolean(key, dvm.properties)" ng-model="dvm.reification[key]" md-transform-chip="dvm.eu.createValueObj($chip, key)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key)">
+                    <input type="{{dvm.eu.getInputType(key, dvm.properties)}}" ng-pattern="dvm.eu.getPattern(key, dvm.properties)" placeholder="Enter value...">
+                    <md-chip-template>{{$chip['@value']}}</md-chip-template>
+                </md-chips>
+                <md-chips class="object-property" ng-if="dvm.eu.isPropertyOfType(key, 'Object', dvm.properties)" ng-model="dvm.reification[key]" md-transform-chip="dvm.eu.createIdObj($chip)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key)">
+                    <md-autocomplete md-items="iri in dvm.getOptions(key)" placeholder="Enter IRI..." md-search-text="dvm.searchText[key]" md-no-cache="true" md-min-length="0">
+                        <span md-highlight-text="dvm.searchText[key]">{{dvm.util.getBeautifulIRI(iri)}} :: {{iri}}</span>
+                    </md-autocomplete>
+                    <md-chip-template>{{$chip['@id']}}</md-chip-template>
+                </md-chips>
             </div>
-            <md-chips class="data-property" ng-if="dvm.eu.isPropertyOfType(key, 'Data', dvm.properties) && !dvm.eu.isBoolean(key, dvm.properties)" ng-model="dvm.reification[key]" md-transform-chip="dvm.eu.createValueObj($chip, key)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key)">
-                <input type="{{dvm.eu.getInputType(key, dvm.properties)}}" ng-pattern="dvm.eu.getPattern(key, dvm.properties)" placeholder="Enter value...">
-                <md-chip-template ng-click="dvm.onSelect($chip['@value'], key, $index)">{{$chip['@value']}}</md-chip-template>
-            </md-chips>
-            <md-chips class="object-property" ng-if="dvm.eu.isPropertyOfType(key, 'Object', dvm.properties)" ng-model="dvm.reification[key]" md-transform-chip="dvm.eu.createIdObj($chip)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key)">
-                <md-autocomplete md-items="iri in dvm.getOptions(key)" placeholder="Enter IRI..." md-search-text="dvm.searchText[key]" md-no-cache="true" md-min-length="0">
-                    <span md-highlight-text="dvm.searchText[key]">{{dvm.util.getBeautifulIRI(iri)}} :: {{iri}}</span>
-                </md-autocomplete>
-                <md-chip-template ng-click="dvm.onSelect($chip['@id'], key, $index)">{{$chip['@id']}}</md-chip-template>
-            </md-chips>
-        </div>
-        <div class="btn-container clearfix">
-            <button type="button" ng-disabled="!dvm.eu.getNewProperties(dvm.properties, dvm.reification).length" ng-click="dvm.showOverlay = true" class="btn btn-link pull-left"><i class="fa fa-plus fa-fw"></i>Add New Reification Property</button>
+            <div class="btn-container clearfix">
+                <button type="button" ng-disabled="!dvm.eu.getNewProperties(dvm.properties, dvm.reification).length" ng-click="dvm.showOverlay = true" class="btn btn-link pull-left"><i class="fa fa-plus fa-fw"></i>Add New Reification Property</button>
+            </div>
         </div>
         <div class="btn-container clearfix">
             <button class="btn btn-primary pull-right" ng-click="dvm.submit()">Submit</button>

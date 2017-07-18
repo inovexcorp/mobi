@@ -187,7 +187,7 @@ describe('Instance Form directive', function() {
         it('with a property-value-overlay', function() {
             expect(element.find('property-value-overlay').length).toBe(0);
             
-            controller.showText = true;
+            controller.showPropertyValueOverlay = true;
             scope.$digest();
             
             expect(element.find('property-value-overlay').length).toBe(1);
@@ -293,10 +293,10 @@ describe('Instance Form directive', function() {
             expect(controller.showOverlay).toBe(false);
         });
         it('onSelect sets the correct variables', function() {
-            controller.showText = false;
+            controller.showPropertyValueOverlay = false;
             controller.onSelect('text');
             controller.fullText = 'text';
-            controller.showText = true;
+            controller.showPropertyValueOverlay = true;
         });
         it('getMissingProperties retrieves the proper list of messages', function() {
             util.getBeautifulIRI.and.callFake(_.identity);

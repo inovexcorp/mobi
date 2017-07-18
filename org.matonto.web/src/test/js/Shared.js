@@ -1033,6 +1033,7 @@ function mockExploreUtils() {
             this.getRange = jasmine.createSpy('getRange').and.returnValue('');
             this.contains = jasmine.createSpy('contains').and.returnValue(true);
             this.getNewProperties = jasmine.createSpy('getNewProperties').and.returnValue([]);
+            this.removeEmptyProperties = jasmine.createSpy('removeEmptyProperties').and.returnValue({});
         });
     });
 }

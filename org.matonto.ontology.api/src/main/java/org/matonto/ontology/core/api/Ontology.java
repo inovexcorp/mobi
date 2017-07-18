@@ -133,6 +133,11 @@ public interface Ontology {
      */
     Set<ObjectProperty> getAllClassObjectProperties(IRI iri);
 
+    /**
+     * Attempts to get all of the object properties that have no domain set.
+     *
+     * @return a Set of all object properties without a domain
+     */
     Set<ObjectProperty> getAllNoDomainObjectProperties();
 
     /**
@@ -143,6 +148,11 @@ public interface Ontology {
      */
     Set<DataProperty> getAllClassDataProperties(IRI iri);
 
+    /**
+     * Attempts to get all of the data properties that have no domain set.
+     *
+     * @return a Set of all data properties without a domain
+     */
     Set<DataProperty> getAllNoDomainDataProperties();
 
     Set<Axiom> getAxioms();

@@ -157,4 +157,12 @@ describe('Explore Utils Service', function() {
             expect(exploreUtilsSvc.getNewProperties(fewProperties, entity, '3')).toEqual(['propertyId3']);
         });
     });
+    it('removeEmptyProperties should remove properties that are empty arrays', function() {
+        var object = {
+            '@id': 'id',
+            prop: []
+        };
+        var expected = {'@id': 'id'};
+        expect(exploreUtilsSvc.removeEmptyProperties(object)).toEqual(expected);
+    });
 });
