@@ -583,7 +583,8 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         @Override
         public void enterWhereClause(Sparql11Parser.WhereClauseContext ctx) {
             // Only add a dataset clause to the root select query, not a subselect
-            if (ctx.getParent() instanceof Sparql11Parser.SelectQueryContext) {
+            if (ctx.getParent() instanceof Sparql11Parser.SelectQueryContext ||
+                    ctx.getParent() instanceof Sparql11Parser.ConstructQueryContext) {
                 rewriter.insertBefore(ctx.getStart(), getDatasetClause());
             }
         }

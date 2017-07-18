@@ -39,6 +39,7 @@ import org.openrdf.rio.Rio
 import org.openrdf.sail.memory.MemoryStore
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
@@ -1033,6 +1034,43 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
         when:
         def results = tupleQuery.evaluate()
+
+        then:
+        QueryResults.asList(results).size() == 2
+    }
+
+    def "prepareGraphQuery(query) #msg"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def queryString = query
+        def graphQuery = conn.prepareGraphQuery(queryString)
+
+        when:
+        def results = graphQuery.evaluate()
+
+        then:
+        QueryResults.asList(results).size() == expectedSize
+
+        where:
+        msg | query | expectedSize
+        "without a dataset declaration properly queries the dataset graphs"             | "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"                                             | 2
+        "without a dataset declaration properly queries the dataset graphs with named"  | "CONSTRUCT { ?s ?p ?o } WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"               | 4
+        "with a dataset declaration properly queries the dataset graphs"                | "CONSTRUCT { ?s ?p ?o } FROM NAMED <:g1> WHERE { ?s ?p ?o }"                            | 2
+        "with a dataset declaration properly queries the dataset graphs with named"     | "CONSTRUCT { ?s ?p ?o } FROM <:g1> WHERE { {?s ?p ?o} UNION {GRAPH ?g {?s ?p ?o}} }"    | 4
+        "works regardless of case"                                                      | "CONSTRUCT { ?s ?p ?o } FroM <:g1> WHERE { {?s ?p ?o} UNioN {GRAPH ?g {?s ?p ?o}} }"     | 4
+        "works with a subquery and dataset clause"                                      | "CONSTRUCT { ?s ?p ?o } FROM <:g1> WHERE { ?s ?p ?o . { select * where { ?s a ?o } }}"    | 2
+    }
+
+    def "prepareGraphQuery(query, baseUri) works"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+        def queryString = "CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o }"
+        def graphQuery = conn.prepareGraphQuery(queryString, "urn:test")
+
+        when:
+        def results = graphQuery.evaluate()
 
         then:
         QueryResults.asList(results).size() == 2
