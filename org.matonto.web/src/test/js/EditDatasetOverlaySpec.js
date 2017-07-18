@@ -321,6 +321,9 @@ describe('Edit Dataset Overlay directive', function() {
         it('with a keyword-select', function() {
             expect(element.find('keyword-select').length).toBe(1);
         });
+        it('with a datasets-ontology-picker', function() {
+            expect(element.find('datasets-ontology-picker').length).toBe(1);
+        });
         it('depending on whether an error has occured', function() {
             expect(element.find('error-display').length).toBe(0);
 

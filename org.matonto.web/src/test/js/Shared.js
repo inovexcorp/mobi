@@ -946,6 +946,8 @@ function mockDatasetState() {
             this.setResults = jasmine.createSpy('setResults');
             this.resetPagination = jasmine.createSpy('resetPagination');
             this.setPagination = jasmine.createSpy('setPagination');
+            this.selectedDataset = '';
+            this.openedDatasetId = '';
         })
     })
 }

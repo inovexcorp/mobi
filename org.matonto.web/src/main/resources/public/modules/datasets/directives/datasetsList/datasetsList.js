@@ -69,7 +69,6 @@
                     var cachedOntologyRecords = [];
                     var catalogId = _.get(cm.localCatalog, '@id', '');
                     dvm.state = datasetStateService;
-                    dvm.state.openedDatasetId = '';
                     dvm.util = utilService;
                     dvm.prefixes = prefixes;
                     dvm.error = '';

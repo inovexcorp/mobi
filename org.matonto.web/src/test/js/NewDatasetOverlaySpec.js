@@ -139,6 +139,9 @@ describe('New Dataset Overlay directive', function() {
             it('with a step-progress-bar', function() {
                 expect(element.find('step-progress-bar').length).toBe(1);
             });
+            it('with a datasets-ontology-picker', function() {
+                expect(element.find('datasets-ontology-picker').length).toBe(1);
+            });
             it('depending on whether an error has occured', function() {
                 expect(element.find('error-display').length).toBe(0);
 

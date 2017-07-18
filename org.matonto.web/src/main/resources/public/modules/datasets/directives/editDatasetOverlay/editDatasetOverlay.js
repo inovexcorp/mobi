@@ -84,19 +84,6 @@
                     dvm.ontologies = [];
                     dvm.selectedOntologies = [];
                     
-                    dvm.getRecordPage = function(direction) {
-                        if (direction === 'prev') {
-                            dvm.util.getResultsPage(dvm.links.prev).then(response => {
-                                dvm.ontologySearchConfig.pageIndex -= 1;
-                                parseOntologyResults(response);
-                            }, onError);
-                        } else {
-                            dvm.util.getResultsPage(dvm.links.next).then(response => {
-                                dvm.ontologySearchConfig.pageIndex += 1;
-                                parseOntologyResults(response);
-                            }, onError);
-                        }
-                    }
                     dvm.update = function() {
                         var newRecord = angular.copy(ds.selectedDataset.record);
 
