@@ -78,7 +78,7 @@ public class OntologyCacheImpl implements OntologyCache {
 
     @Override
     public void clearCache(@Nonnull Resource recordId, Resource branchId) {
-        String key = generateKey(recordId.stringValue(), branchId == null ? null : branchId.stringValue(), null);
+        String key = recordId.toString() + (branchId != null ? "&" + branchId.stringValue() : "");
         getOntologyCache().ifPresent(cache -> {
             for (Cache.Entry<String, Ontology> entry : cache) {
                 if (entry.getKey().startsWith(key)) {

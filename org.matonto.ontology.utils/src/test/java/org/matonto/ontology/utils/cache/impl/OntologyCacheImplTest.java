@@ -123,11 +123,11 @@ public class OntologyCacheImplTest {
         verify(cache, times(0)).remove(anyString());
     }
 
-    /*@Test
+    @Test
     public void clearCacheWithOnlyRecordTest() throws Exception {
         service.clearCache(recordId, null);
         verify(cache).remove(key);
-    }*/
+    }
 
     @Test
     public void clearCacheImportsWithHitTest() throws Exception {
