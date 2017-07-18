@@ -26,8 +26,8 @@
         <div class="main">
             <p>{{text}}</p>
         </div>
-        <a ng-if="!dvm.isShown" class="btn-link btn-show" ng-click="dvm.show()"><i class="fa fa-fw fa-plus"></i>Show Reification Properties</a>
-        <a ng-if="dvm.isShown" class="btn-link btn-hide" ng-click="dvm.hide()"><i class="fa fa-fw fa-times"></i>Hide Reification Properties</a>
+        <a ng-if="!dvm.isShown" class="btn-link btn-show" ng-click="dvm.isShown = !dvm.isShown"><i class="fa fa-fw fa-plus"></i>Show Reification Properties</a>
+        <a ng-if="dvm.isShown" class="btn-link btn-hide" ng-click="dvm.isShown = !dvm.isShown"><i class="fa fa-fw fa-times"></i>Hide Reification Properties</a>
         <div ng-if="dvm.isShown" class="reification-container">
             <div class="form-group" ng-repeat="(key, value) in dvm.reification track by $index" ng-if="dvm.notOmmitted(key)">
                 <custom-label ng-class="{'changed': dvm.isChanged(key)}">{{dvm.util.getBeautifulIRI(key)}} {{dvm.getRestrictionText(key)}}</custom-label>
