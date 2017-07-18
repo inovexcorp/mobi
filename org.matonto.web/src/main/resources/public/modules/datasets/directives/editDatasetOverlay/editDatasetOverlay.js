@@ -98,24 +98,16 @@
                         var curOntologies = _.map(dvm.selectedOntologies, '@id');
                         var oldOntologies = _.map(ds.selectedDataset.identifiers, identifier => 
                                 dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
-                        
-                        var added = _.difference(curOntologies, oldOntologies);
-                        var deleted = _.difference(oldOntologies, curOntologies);
 
                         var newIdentifiers = angular.copy(ds.selectedDataset.identifiers);
                         
-                        _.forEach(deleted, id => {
-                            var identifier = _.find(newIdentifiers, o => { 
-                                if (dvm.util.getPropertyId(o, prefixes.dataset + 'linksToRecord') === id) { 
-                                    return o;
-                                } 
-                            });
-                            if (identifier) {
-                                _.remove(newIdentifiers, identifier);
-                                _.remove(newRecord[prefixes.dataset + 'ontology'], o => o['@id'] === identifier['@id']);
-                            }
+                        var added = _.difference(curOntologies, oldOntologies);
+                        var deleted = _.remove(newIdentifiers, identifier => !_.includes(curOntologies, dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord')));
+
+                        _.forEach(deleted, identifier => {
+                            _.remove(newRecord[prefixes.dataset + 'ontology'], {'@id': identifier['@id']});
                         });
-                        
+
                         if (added.length > 0) {
                             $q.all(_.map(added, recordId => cm.getRecordMasterBranch(recordId, cm.localCatalog['@id'])))
                                     .then(responses => {
