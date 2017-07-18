@@ -130,16 +130,12 @@
                         });
                         
                         if (added.length > 0) {
-                            $q.all(_.map(added, record => cm.getRecordMasterBranch(record, cm.localCatalog['@id'])))
+                            $q.all(_.map(added, recordId => cm.getRecordMasterBranch(recordId, cm.localCatalog['@id'])))
                                     .then(responses => {
-                                        _.forEach(responses, branch => {
+                                        _.forEach(responses, (branch, idx) => {
                                             var id = dvm.util.getIdForBlankNode();
-                                            var ontologyRecord = _.find(dvm.ontologies, {[prefixes.catalog + 'branch']: [{'@id': branch['@id']}]});
-                                            var recordId = ontologyRecord['@id'];
-
+                                            newIdentifiers.push(createBlankNode(id, added[idx], branch['@id'], dvm.util.getPropertyId(branch, prefixes.catalog + 'head')));
                                             dvm.util.setPropertyId(newRecord, prefixes.dataset + 'ontology', id);
-                                            newIdentifiers.push(createBlankNode(id, recordId, branch['@id'], 
-                                                    dvm.util.getPropertyId(branch, prefixes.catalog + 'head')));
                                         });
                                         triggerUpdate(newRecord, newIdentifiers);
                                     }, onError);
