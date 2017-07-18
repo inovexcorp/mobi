@@ -103,6 +103,7 @@ public class SimpleOntologyTest {
 
         when(ontologyManager.createOntologyId(any(IRI.class), any(IRI.class))).thenReturn(ontologyIdMock);
         when(ontologyManager.createOntologyId(any(IRI.class))).thenReturn(ontologyIdMock);
+        when(ontologyManager.getOntologyRecordResource(any(IRI.class))).thenReturn(Optional.empty());
     }
 
     @Test
