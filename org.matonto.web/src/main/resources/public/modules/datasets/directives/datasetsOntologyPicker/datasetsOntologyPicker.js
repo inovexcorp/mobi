@@ -93,6 +93,19 @@
                             onError(errorMessage);
                         });
                     }
+                    dvm.getRecordPage = function(direction) {
+                        if (direction === 'prev') {
+                            dvm.util.getResultsPage(dvm.links.prev).then(response => {
+                                dvm.ontologySearchConfig.pageIndex -= 1;
+                                parseOntologyResults(response);
+                            }, onError);
+                        } else {
+                            dvm.util.getResultsPage(dvm.links.next).then(response => {
+                                dvm.ontologySearchConfig.pageIndex += 1;
+                                parseOntologyResults(response);
+                            }, onError);
+                        }
+                    }
                     dvm.isSelected = function(ontologyId) {
                         return _.some(dvm.selectedOntologies, {'@id': ontologyId});
                     }
@@ -125,7 +138,7 @@
                         var selectedOntologies = _.map(ds.selectedDataset.identifiers, 
                                 identifier => dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
                         _.forEach(selectedOntologies, id => {
-                            var ontology = _.find(dvm.ontologies, o => { if (o['@id'] === id) { return o; }});
+                            var ontology = _.find(dvm.ontologies, {'@id': id});
                             if (ontology) {
                                 dvm.selectedOntologies.push(ontology);
                             } else {

@@ -44,8 +44,8 @@
          * @requires prefixes.service:prefixes
          *
          * @description
-         * `editDatasetOverlay` is a directive that creates an overlay with form containing fields for editing an
-         * existing Dataset Record. The first overlay contains fields for the title, description,
+         * `editDatasetOverlay` is a directive that creates an overlay with a form containing fields for editing an
+         * existing Dataset Record. The form contains fields for the title, description,
          * {@link keywordSelect.directive:keywordSelect keywords}, and a searchable list of Ontology Records that can
          * be linked to the Dataset Record.
          *
