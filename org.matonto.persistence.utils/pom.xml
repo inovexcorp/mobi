@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.34-SNAPSHOT</version>
+        <version>1.8.35-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -39,6 +39,11 @@
     <name>${project.groupId}.${project.artifactId}</name>
 
     <dependencies>
+        <dependency>
+            <groupId>org.openrdf.sesame</groupId>
+            <artifactId>sesame-runtime-osgi</artifactId>
+            <version>${openrdf.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
@@ -52,7 +57,6 @@
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
             <version>1.7.20</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.spockframework</groupId>
@@ -75,7 +79,10 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Import-Package>*</Import-Package>
-                        <Export-Package>org.matonto.persistence.utils</Export-Package>
+                        <Export-Package>
+                            org.matonto.persistence.utils.api; provide:=true,
+                            org.matonto.persistence.utils
+                        </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>

@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.34-SNAPSHOT</version>
+        <version>1.8.35-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -70,7 +70,6 @@
                         <Bundle-Name>MatOnto Ontology Service - Utils</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.ontology.utils.api; provide:=true,
                             org.matonto.ontology.utils.cache
                         </Export-Package>
                         <Service-Component>*</Service-Component>

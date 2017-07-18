@@ -43,7 +43,7 @@ import org.matonto.etl.api.ontologies.delimited.MappingRecordFactory;
 import org.matonto.etl.api.pagination.MappingPaginatedSearchParams;
 import org.matonto.etl.api.pagination.MappingRecordSearchResults;
 import org.matonto.exception.MatOntoException;
-import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
