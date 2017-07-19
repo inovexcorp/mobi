@@ -43,9 +43,9 @@
          */
         .service('utilService', utilService);
 
-        utilService.$inject = ['$filter', 'prefixes', 'toastr', '$http', '$q', 'REGEX'];
+        utilService.$inject = ['$filter', 'prefixes', 'toastr', '$http', '$q', 'REGEX', 'uuid'];
 
-        function utilService($filter, prefixes, toastr, $http, $q, REGEX) {
+        function utilService($filter, prefixes, toastr, $http, $q, REGEX, uuid) {
             var self = this;
 
             /**
@@ -536,6 +536,19 @@
              */
             self.getPredicateLocalName = function(partialStatement) {
                 return $filter('splitIRI')(_.get(partialStatement, 'p', '')).end;
+            }
+            /**
+             * @ngdoc method
+             * @name getIdForBlankNode
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Generates a blank node IRI using a random V4 UUID.
+             *
+             * @return {string} A blank node IRI that should be unique.
+             */
+            self.getIdForBlankNode = function() {
+                return '_:matonto/bnode/' + uuid.v4();
             }
 
             function setValue(entity, propertyIRI, valueObj) {
