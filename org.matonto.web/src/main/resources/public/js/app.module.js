@@ -165,7 +165,7 @@
                 var ontologyHasChanges = _.some(ontologyManagerService.list, listItem => {
                     return ontologyStateService.hasChanges(_.get(listItem, 'recordId'));
                 });
-                var mappingHasChanges = mapperStateService.changedMapping;
+                var mappingHasChanges = mapperStateService.isMappingChanged();
                 if (ontologyHasChanges || mappingHasChanges) {
                     return true;
                 }

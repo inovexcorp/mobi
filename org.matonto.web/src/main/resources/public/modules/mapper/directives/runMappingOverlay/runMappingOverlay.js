@@ -96,7 +96,6 @@
                     function runMapping(id) {
                         dvm.state.mapping.record.id = id;
                         if (dvm.runMethod === 'download') {
-                            dvm.state.changedMapping = false;
                             dvm.dm.mapAndDownload(id, dvm.format, dvm.fileName);
                             reset();
                         } else {
@@ -104,7 +103,6 @@
                         }
                     }
                     function reset() {
-                        dvm.state.changedMapping = false;
                         dvm.state.step = dvm.state.selectMappingStep;
                         dvm.state.initialize();
                         dvm.state.resetEdit();

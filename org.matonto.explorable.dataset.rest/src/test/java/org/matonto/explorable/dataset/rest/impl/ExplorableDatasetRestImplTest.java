@@ -44,9 +44,10 @@ import org.matonto.dataset.ontology.dataset.DatasetRecordFactory;
 import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
+import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
-import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -99,6 +100,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     private ModelFactory mf;
     private ValueConverterRegistry vcr;
     private DatasetRecordFactory datasetRecordFactory;
+    private OntologyRecordFactory ontologyRecordFactory;
 
     private Repository repository;
     private RepositoryConnection conn;
@@ -109,6 +111,8 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     private IRI classId;
     private IRI dataPropertyId;
     private IRI objectPropertyId;
+    private IRI ontologyRecordId;
+    private IRI catalogId;
 
     private static Set<DataProperty> dataProperties = new HashSet<>();
     private static Set<ObjectProperty> objectProperties = new HashSet<>();
@@ -123,6 +127,8 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     private static final String DATA_PROPERTY_ID = "http://matonto.org/data-property";
     private static final String OBJECT_PROPERTY_ID = "http://matonto.org/object-property";
     private static final String NEW_INSTANCE_ID_STR = "http://matonto.org/new-instance";
+    private static final String ONTOLOGY_RECORD_ID_STR = "https://matonto.org/records/0";
+    private static final String CATALOG_ID_STR = "https://matonto.org/catalog-local";
 
     @Mock
     private DatasetManager datasetManager;
@@ -172,13 +178,18 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         datasetRecordFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(datasetRecordFactory);
 
+        ontologyRecordFactory = new OntologyRecordFactory();
+        ontologyRecordFactory.setModelFactory(mf);
+        ontologyRecordFactory.setValueFactory(vf);
+        ontologyRecordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(ontologyRecordFactory);
+
         recordId = vf.createIRI(RECORD_ID_STR);
         record = datasetRecordFactory.createNew(recordId);
 
-        String ontologyRecordId = "https://matonto.org/records/0";
         String branchId = "https://matonto.org/branches/0";
         commitId = "https://matonto.org/commits/0";
-        OntologyIdentifier identifier = new OntologyIdentifier(ontologyRecordId, branchId, commitId, vf, mf);
+        OntologyIdentifier identifier = new OntologyIdentifier(ONTOLOGY_RECORD_ID_STR, branchId, commitId, vf, mf);
         record.setOntology(Stream.of(identifier.getNode()).collect(Collectors.toSet()));
         record.getModel().addAll(identifier.getStatements());
 
@@ -195,6 +206,8 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         classId = vf.createIRI(CLASS_ID_STR);
         dataPropertyId = vf.createIRI(DATA_PROPERTY_ID);
         objectPropertyId = vf.createIRI(OBJECT_PROPERTY_ID);
+        ontologyRecordId = vf.createIRI(ONTOLOGY_RECORD_ID_STR);
+        catalogId = vf.createIRI(CATALOG_ID_STR);
 
         range.add(vf.createIRI(MISSING_ID));
         dataProperties.add(dataProperty);
@@ -216,6 +229,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         rest.setSesameTransformer(sesameTransformer);
         rest.setModelFactory(mf);
         rest.setOntologyManager(ontologyManager);
+        rest.setOntologyRecordFactory(ontologyRecordFactory);
 
         return new ResourceConfig().register(rest);
     }
@@ -225,7 +239,9 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         reset(datasetManager, catalogManager, sesameTransformer, datasetConnection);
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.of(record));
         when(datasetManager.getConnection(recordId)).thenReturn(datasetConnection);
+        when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogId);
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(compiledModel);
+        when(catalogManager.getRecord(catalogId, ontologyRecordId, ontologyRecordFactory)).thenReturn(Optional.empty());
         when(sesameTransformer.matontoModel(any(org.openrdf.model.Model.class))).thenAnswer(i -> Values.matontoModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
         when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
         when(datasetConnection.prepareTupleQuery(any(String.class))).thenAnswer(i -> conn.prepareTupleQuery(i.getArgumentAt(0, String.class)));
@@ -258,7 +274,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     }
 
     @Test
-    public void getClassDetailsWhenPartialClassesFound() throws Exception {
+    public void getClassDetailsWhenDeprecatedClassFound() throws Exception {
         InputStream partialData = getClass().getResourceAsStream("/partial-compiled-resource.trig");
         Model partialModel = Values.matontoModel(Rio.parse(partialData, "", RDFFormat.TRIG));
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(partialModel);
@@ -267,6 +283,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
         assertEquals(responseArray.size(), 1);
+        assertTrue(responseArray.getJSONObject(0).getBoolean("deprecated"));
     }
 
     @Test

@@ -110,7 +110,14 @@ public interface OntologyManager {
      */
     boolean ontologyIriExists(Resource ontologyIRI);
 
-    Optional<Resource> retrieveOntologyRecordId(@Nonnull Resource ontologyIRI);
+    /**
+     * Gets the Record id of the OntologyRecord with the passed ontology IRI if found in the Catalog.
+     *
+     * @param ontologyIRI An ontology IRI that should be set on an OntologyRecord in the Catalog.
+     * @return An Optional of the Record Resource id if found, otherwise Optional.empty()
+     * @throws IllegalStateException - the system Repository could not be found.
+     */
+    Optional<Resource> getOntologyRecordResource(@Nonnull Resource ontologyIRI);
 
     /**
      * Retrieves an Ontology using an ontology IRI.
@@ -296,6 +303,4 @@ public interface OntologyManager {
      * @return a Set with the query results.
      */
     TupleQueryResult getSearchResults(Ontology ontology, String searchText);
-
-    void cleanUpCache(Resource removedOntologyIRI);
 }
