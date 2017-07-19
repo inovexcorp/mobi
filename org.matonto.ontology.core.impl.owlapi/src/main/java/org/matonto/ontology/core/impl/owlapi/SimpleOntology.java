@@ -60,8 +60,6 @@ import org.openrdf.rio.helpers.StatementCollector;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
-import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
-import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
 import org.semanticweb.owlapi.io.IRIDocumentSource;
 import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
 import org.semanticweb.owlapi.io.OWLParser;
@@ -580,12 +578,26 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public OutputStream asTurtle() throws MatontoOntologyException {
-        return getOntologyDocument(new TurtleDocumentFormat());
+        OutputStream outputStream = new ByteArrayOutputStream();
+        try {
+            org.openrdf.model.Model sesameModel = asSesameModel();
+            Rio.write(sesameModel, outputStream, RDFFormat.TURTLE);
+        } catch (RDFHandlerException e) {
+            throw new MatontoOntologyException("Error while writing Ontology.");
+        }
+        return outputStream;
     }
 
     @Override
     public OutputStream asRdfXml() throws MatontoOntologyException {
-        return getOntologyDocument(new RDFXMLDocumentFormat());
+        OutputStream outputStream = new ByteArrayOutputStream();
+        try {
+            org.openrdf.model.Model sesameModel = asSesameModel();
+            Rio.write(sesameModel, outputStream, RDFFormat.RDFXML);
+        } catch (RDFHandlerException e) {
+            throw new MatontoOntologyException("Error while writing Ontology.");
+        }
+        return outputStream;
     }
 
     @Override
