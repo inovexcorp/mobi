@@ -200,6 +200,21 @@
                     }, util.rejectError);
             }
             
+            /**
+             * @ngdoc method
+             * @name updateDatasetRecord
+             * @methodOf datasetManager.service:datasetManagerService
+             *
+             * @description
+             * Calls the updateRecord method of the CatalogManager to update the dataset record provided in the JSON-LD. 
+             * If successful: it then updates the appropriate dataset record in datasetRecords. Returns a Promise
+             * indicating the success of the request.
+             * 
+             * @param {string} datasetRecordIRI The IRI of the DatasetRecord whose Dataset named graphs should be updated.
+             * @param {string} catalogIRI The IRI of the catalog to which the DatasetRecord belongs.
+             * @param {Object[]} jsonld An array containing the JSON-LD DatasetRecord with it's associated Ontology information.
+             * @return {Promise} A Promise that resolves if the update was successful; rejects with an error message otherwise
+             */
             self.updateDatasetRecord = function(datasetRecordIRI, catalogIRI, jsonld) {
                 return cm.updateRecord(datasetRecordIRI, catalogIRI, jsonld).then(() => {
                     _.remove(self.datasetRecords, {'@id': datasetRecordIRI});
