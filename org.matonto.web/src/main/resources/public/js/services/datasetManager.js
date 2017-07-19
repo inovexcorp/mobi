@@ -98,7 +98,7 @@
                     config.params.searchText = paginatedConfig.searchText;
                 }
                 return $http.get(prefix, config)
-                    .then(response => { return $q.when(response) }, util.rejectError);
+                    .then($q.when, util.rejectError);
             }
 
             /**
