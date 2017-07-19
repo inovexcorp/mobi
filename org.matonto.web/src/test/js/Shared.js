@@ -413,7 +413,7 @@ function mockHttpService() {
 function mockPrefixes() {
     module(function($provide) {
         $provide.service('prefixes', function() {
-            this.owl = this.rdf = this.delim = this.data = this.mappings = '';
+            this.owl = this.delim = this.data = this.mappings = '';
             this.rdfs = 'rdfs:';
             this.dc = 'dc:';
             this.dcterms = 'dcterms:';
@@ -910,6 +910,7 @@ function mockUtil() {
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getChangesById = jasmine.createSpy('getChangesById');
             this.getPredicateLocalName = jasmine.createSpy('getPredicateLocalName');
+            this.getIdForBlankNode = jasmine.createSpy('getIdForBlankNode').and.returnValue('');
         });
     });
 }
@@ -923,6 +924,7 @@ function mockDatasetManager() {
             this.createDatasetRecord = jasmine.createSpy('createDatasetRecord').and.returnValue($q.when(''));
             this.deleteDatasetRecord = jasmine.createSpy('deleteDatasetRecord').and.returnValue($q.when());
             this.clearDatasetRecord = jasmine.createSpy('clearDatasetRecord').and.returnValue($q.when());
+            this.updateDatasetRecord = jasmine.createSpy('updateDatasetRecord').and.returnValue($q.when());
             this.initialize = jasmine.createSpy('initialize');
         });
     });
@@ -946,6 +948,8 @@ function mockDatasetState() {
             this.setResults = jasmine.createSpy('setResults');
             this.resetPagination = jasmine.createSpy('resetPagination');
             this.setPagination = jasmine.createSpy('setPagination');
+            this.selectedDataset = '';
+            this.openedDatasetId = '';
         })
     })
 }
