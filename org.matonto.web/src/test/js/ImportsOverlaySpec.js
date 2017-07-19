@@ -33,12 +33,13 @@ describe('Imports Overlay directive', function() {
         mockPrefixes();
         mockHttpService();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _$httpBackend_, _ontologyStateService_, _utilService_, _prefixes_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _$httpBackend_, _ontologyStateService_, _ontologyManagerService_, _utilService_, _prefixes_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             $httpBackend = _$httpBackend_;
             ontologyStateSvc = _ontologyStateService_;
+            ontologyManagerSvc = _ontologyManagerService_;
             util = _utilService_;
             prefixes = _prefixes_;
         });
@@ -77,10 +78,10 @@ describe('Imports Overlay directive', function() {
             scope.$digest();
             expect(element.find('error-display').length).toBe(1);
         });
-        it('depending on whether an error has occured on the MatOnto tab', function() {
+        it('depending on whether an error has occured on the Mobi tab', function() {
             expect(element.find('error-display').length).toBe(0);
 
-            controller.matError = 'Error';
+            controller.mobiError = 'Error';
             scope.$digest();
             expect(element.find('error-display').length).toBe(1);
         });
@@ -126,7 +127,7 @@ describe('Imports Overlay directive', function() {
 
             controller.url = 'test';
             controller.tabs.url = false;
-            controller.tabs.matonto = true;
+            controller.tabs.mobi = true;
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
 
@@ -136,6 +137,53 @@ describe('Imports Overlay directive', function() {
         });
     });
     describe('controller methods', function() {
+        describe('should update the appropriate varibles if clicking the', function() {
+            beforeEach(function() {
+                controller.urls = [''];
+            });
+            describe('Mobi tab', function() {
+                beforeEach(function() {
+                    controller.tabs.url = false;
+                    controller.tabs.mobi = true;
+                    controller.ontologies = [];
+                });
+                it('unless an error occurs', function() {
+                    ontologyManagerSvc.getAllOntologyRecords.and.returnValue($q.reject('error'));
+                    controller.clickTab();
+                    scope.$apply();
+                    expect(ontologyManagerSvc.getAllOntologyRecords).toHaveBeenCalledWith(undefined, controller.spinnerId);
+                    expect(controller.urls).toEqual([]);
+                    expect(controller.ontologies).toEqual([]);
+                    expect(controller.mobiError).toEqual('error');
+                });
+                it('unless the ontologies have already been retrieved', function() {
+                    controller.ontologies = [{}];
+                    controller.clickTab();
+                    scope.$apply();
+                    expect(ontologyManagerSvc.getAllOntologyRecords).not.toHaveBeenCalled();
+                    expect(controller.urls).toEqual(['']);
+                    expect(controller.ontologies).toEqual([{}]);
+                });
+                it('successfully', function() {
+                    var currentOntologyId = 'ontology1';
+                    ontologyStateSvc.listItem.ontologyRecord = {recordId: currentOntologyId};
+                    ontologyManagerSvc.getAllOntologyRecords.and.returnValue($q.when([{'@id': currentOntologyId}, {'@id': 'ontology2'}]));
+                    controller.clickTab();
+                    scope.$apply();
+                    expect(ontologyManagerSvc.getAllOntologyRecords).toHaveBeenCalledWith(undefined, controller.spinnerId);
+                    expect(controller.urls).toEqual([]);
+                    expect(controller.ontologies.length).toEqual(1);
+                    expect(controller.mobiError).toEqual('');
+                });
+            });
+            it('URL tab', function() {
+                controller.ontologies = [{}];
+                controller.clickTab();
+                expect(ontologyManagerSvc.getAllOntologyRecords).not.toHaveBeenCalled();
+                expect(controller.urls).toEqual(['']);
+                expect(controller.ontologies).toEqual([{}]);
+            });
+        });
         describe('addImport should call the correct methods', function() {
             beforeEach(function() {
                 spyOn(controller, 'confirmed');
@@ -158,9 +206,9 @@ describe('Imports Overlay directive', function() {
                     expect(controller.urlError).toBe('The provided URL was unresolvable.');
                 });
             });
-            it('if importing MatOnto ontologies', function() {
+            it('if importing Mobi ontologies', function() {
                 controller.tabs.url = false;
-                controller.tabs.matonto = true;
+                controller.tabs.mobi = true;
                 controller.addImport();
                 $httpBackend.verifyNoOutstandingExpectation();
                 expect(controller.confirmed).toHaveBeenCalledWith(controller.urls);
@@ -206,7 +254,6 @@ describe('Imports Overlay directive', function() {
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                         expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit);
                         expect(controller.urlError).toBe('error');
-                        expect(controller.matError).toBe('error');
                     });
                 });
                 it('when after save rejects', function() {
@@ -222,7 +269,6 @@ describe('Imports Overlay directive', function() {
                     expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                     expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
                     expect(controller.urlError).toBe('error');
-                    expect(controller.matError).toBe('error');
                 });
             });
             it('when save changes rejects', function() {
@@ -237,7 +283,6 @@ describe('Imports Overlay directive', function() {
                 expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                 expect(ontologyStateSvc.afterSave).not.toHaveBeenCalled();
                 expect(controller.urlError).toBe('error');
-                expect(controller.matError).toBe('error');
             });
         });
     });

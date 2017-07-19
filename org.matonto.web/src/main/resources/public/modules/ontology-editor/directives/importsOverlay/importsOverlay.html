@@ -34,10 +34,10 @@
                     </p>
                 </div>
             </tab>
-            <tab heading="'In MatOnto'" active="dvm.tabs.matonto" on-click="dvm.clickTab()">
-                <error-display ng-if="dvm.matError">{{dvm.matError}}</error-display>
+            <tab heading="'In Mobi'" active="dvm.tabs.mobi" on-click="dvm.clickTab()">
+                <error-display ng-if="dvm.mobiError">{{dvm.mobiError}}</error-display>
                 <div class="ontologies" targeted-spinner="dvm.spinnerId">
-                    <div class="ontology" ng-repeat="record in dvm.ontologies" ng-click="dvm.toggleOntology(record)" ng-class="{'active': dvm.urls.indexOf(dvm.getOntologyIRI(record)) >= 0}">
+                    <div class="ontology" ng-repeat="record in dvm.ontologies track by record['@id']" ng-click="dvm.toggleOntology(record)" ng-class="{'active': dvm.urls.indexOf(dvm.getOntologyIRI(record)) >= 0}">
                         <h4 class="header">{{dvm.util.getDctermsValue(record, 'title')}}</h4>
                         <small class="ontology-iri text-muted">{{dvm.getOntologyIRI(record)}}</small>
                     </div>
@@ -45,7 +45,7 @@
             </tab>
         </tabset>
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid || (dvm.tabs.matonto && dvm.urls.length === 0)" ng-click="dvm.addImport()">Submit</button>
+            <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid || (dvm.tabs.mobi && dvm.urls.length === 0)" ng-click="dvm.addImport()">Submit</button>
             <button class="btn btn-default pull-right" ng-click="dvm.onClose()">Cancel</button>
         </div>
     </form>
