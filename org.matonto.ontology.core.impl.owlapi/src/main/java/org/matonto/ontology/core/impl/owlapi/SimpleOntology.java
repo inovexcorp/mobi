@@ -60,8 +60,6 @@ import org.openrdf.rio.helpers.StatementCollector;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
-import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
-import org.semanticweb.owlapi.formats.TurtleDocumentFormat;
 import org.semanticweb.owlapi.io.IRIDocumentSource;
 import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
 import org.semanticweb.owlapi.io.OWLParser;
@@ -81,6 +79,7 @@ import org.semanticweb.owlapi.model.OWLDataMaxCardinality;
 import org.semanticweb.owlapi.model.OWLDataMinCardinality;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLObjectCardinalityRestriction;
 import org.semanticweb.owlapi.model.OWLObjectExactCardinality;
 import org.semanticweb.owlapi.model.OWLObjectMaxCardinality;
@@ -89,6 +88,7 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
+import org.semanticweb.owlapi.model.OWLOntologyFactory;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
@@ -137,6 +137,7 @@ public class SimpleOntology implements Ontology {
     private Set<Annotation> annotations;
     private Set<AnnotationProperty> annotationProperties;
     private Set<IRI> missingImports = new HashSet<>();
+    private org.openrdf.model.Model sesameModel;
 
     //Owlapi variables
     private OWLOntology owlOntology;
@@ -161,6 +162,7 @@ public class SimpleOntology implements Ontology {
         this.ontologyManager = ontologyManager;
         this.ontologyId = ontologyId;
         this.transformer = transformer;
+        setUpOwlManager(ontologyManager);
 
         try {
             Optional<org.semanticweb.owlapi.model.IRI> owlOntIRI = Optional.empty();
@@ -189,6 +191,7 @@ public class SimpleOntology implements Ontology {
             throws MatontoOntologyException {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
+        setUpOwlManager(ontologyManager);
 
         try {
             owlOntology = owlManager.loadOntologyFromOntologyDocument(inputStream);
@@ -216,6 +219,7 @@ public class SimpleOntology implements Ontology {
             throws MatontoOntologyException {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
+        setUpOwlManager(ontologyManager);
 
         try {
             OWLOntologyDocumentSource documentSource = new IRIDocumentSource(SimpleOntologyValues.owlapiIRI(iri));
@@ -233,6 +237,7 @@ public class SimpleOntology implements Ontology {
             throws MatontoOntologyException {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
+        setUpOwlManager(ontologyManager);
 
         OWLParserFactory factory = new RioJsonLDParserFactory();
         OWLParser parser = factory.createParser();
@@ -253,6 +258,7 @@ public class SimpleOntology implements Ontology {
                              SesameTransformer transformer) {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
+        setUpOwlManager(ontologyManager);
 
         try {
             owlOntology = owlManager.copyOntology(ontology, OntologyCopy.DEEP);
@@ -313,6 +319,14 @@ public class SimpleOntology implements Ontology {
     public Set<Ontology> getImportsClosure() {
         return owlOntology.importsClosure()
                 .map(SimpleOntologyValues::matontoOntology)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<IRI> getImportedOntologyIRIs() {
+        return owlOntology.importsDeclarations()
+                .map(OWLImportsDeclaration::getIRI)
+                .map(SimpleOntologyValues::matontoIRI)
                 .collect(Collectors.toSet());
     }
 
@@ -556,31 +570,50 @@ public class SimpleOntology implements Ontology {
     /**
      * @return the unmodifiable sesame model that represents this Ontology.
      */
-    protected org.openrdf.model.Model asSesameModel() throws MatontoOntologyException {
-        org.openrdf.model.Model sesameModel = new org.openrdf.model.impl.LinkedHashModel();
-        RDFHandler rdfHandler = new StatementCollector(sesameModel);
-        RioRenderer renderer = new RioRenderer(this.owlOntology, rdfHandler, this.owlOntology.getFormat());
-        renderer.render();
-        return sesameModel.unmodifiable();
+    protected synchronized org.openrdf.model.Model asSesameModel() throws MatontoOntologyException {
+        if (sesameModel != null) {
+            return sesameModel.unmodifiable();
+        } else {
+            sesameModel = new org.openrdf.model.impl.LinkedHashModel();
+            RDFHandler rdfHandler = new StatementCollector(sesameModel);
+            RioRenderer renderer = new RioRenderer(this.owlOntology, rdfHandler, this.owlOntology.getFormat());
+            renderer.render();
+            return sesameModel.unmodifiable();
+        }
     }
 
     @Override
     public Model asModel(ModelFactory factory) throws MatontoOntologyException {
         Model matontoModel = factory.createModel();
 
-        asSesameModel().forEach(stmt -> matontoModel.add(transformer.matontoStatement(stmt)));
+        org.openrdf.model.Model sesameModel = asSesameModel();
+        sesameModel.forEach(stmt -> matontoModel.add(transformer.matontoStatement(stmt)));
 
         return matontoModel;
     }
 
     @Override
     public OutputStream asTurtle() throws MatontoOntologyException {
-        return getOntologyDocument(new TurtleDocumentFormat());
+        OutputStream outputStream = new ByteArrayOutputStream();
+        try {
+            org.openrdf.model.Model sesameModel = asSesameModel();
+            Rio.write(sesameModel, outputStream, RDFFormat.TURTLE);
+        } catch (RDFHandlerException e) {
+            throw new MatontoOntologyException("Error while writing Ontology.");
+        }
+        return outputStream;
     }
 
     @Override
     public OutputStream asRdfXml() throws MatontoOntologyException {
-        return getOntologyDocument(new RDFXMLDocumentFormat());
+        OutputStream outputStream = new ByteArrayOutputStream();
+        try {
+            org.openrdf.model.Model sesameModel = asSesameModel();
+            Rio.write(sesameModel, outputStream, RDFFormat.RDFXML);
+        } catch (RDFHandlerException e) {
+            throw new MatontoOntologyException("Error while writing Ontology.");
+        }
+        return outputStream;
     }
 
     @Override
@@ -594,7 +627,8 @@ public class SimpleOntology implements Ontology {
         WriterConfig config = new WriterConfig();
         config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
         try {
-            Rio.write(asSesameModel(), outputStream, RDFFormat.JSONLD, config);
+            org.openrdf.model.Model sesameModel = asSesameModel();
+            Rio.write(sesameModel, outputStream, RDFFormat.JSONLD, config);
         } catch (RDFHandlerException e) {
             throw new MatontoOntologyException("Error while parsing Ontology.");
         }
@@ -612,7 +646,9 @@ public class SimpleOntology implements Ontology {
             SimpleOntology simpleOntology = (SimpleOntology) obj;
             OntologyId ontologyId = simpleOntology.getOntologyId();
             if (this.ontologyId.equals(ontologyId)) {
-                return Models.isomorphic(this.asSesameModel(), simpleOntology.asSesameModel());
+                org.openrdf.model.Model thisSesameModel = this.asSesameModel();
+                org.openrdf.model.Model otherSesameModel = simpleOntology.asSesameModel();
+                return Models.isomorphic(thisSesameModel, otherSesameModel);
             }
         }
 
@@ -622,7 +658,8 @@ public class SimpleOntology implements Ontology {
     @Override
     public int hashCode() {
         // TODO: This looks like an expensive operation
-        return this.ontologyId.hashCode() + this.asSesameModel().hashCode();
+        org.openrdf.model.Model sesameModel = this.asSesameModel();
+        return this.ontologyId.hashCode() + sesameModel.hashCode();
     }
 
     protected OWLOntology getOwlapiOntology() {
@@ -712,5 +749,11 @@ public class SimpleOntology implements Ontology {
 
     private <T extends OWLPropertyDomainAxiom<?>> boolean hasNoDomain(Stream<T> stream) {
         return stream.map(HasDomain::getDomain).count() == 0;
+    }
+
+    private void setUpOwlManager(OntologyManager ontologyManager) {
+        owlManager.getIRIMappers().add(new MatOntoOntologyIRIMapper(ontologyManager));
+        OWLOntologyFactory originalFactory = owlManager.getOntologyFactories().iterator().next();
+        owlManager.getOntologyFactories().add(new MatOntoOntologyFactory(ontologyManager, originalFactory));
     }
 }
