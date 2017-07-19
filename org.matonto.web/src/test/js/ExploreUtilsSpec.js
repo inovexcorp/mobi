@@ -165,4 +165,16 @@ describe('Explore Utils Service', function() {
         var expected = {'@id': 'id'};
         expect(exploreUtilsSvc.removeEmptyProperties(object)).toEqual(expected);
     });
+    it('removeEmptyPropertiesFromArray should call the proper method for each item in the array', function() {
+        spyOn(exploreUtilsSvc, 'removeEmptyProperties').and.returnValue({prop: 'new'});
+        var array = [{
+            '@id': 'id'
+        }, {
+            '@id': '_:b0'
+        }];
+        expect(exploreUtilsSvc.removeEmptyPropertiesFromArray(array)).toEqual([{prop: 'new'}, {prop: 'new'}]);
+        _.forEach(array, function(item) {
+            expect(exploreUtilsSvc.removeEmptyProperties).toHaveBeenCalledWith(item);
+        });
+    });
 });

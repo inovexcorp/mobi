@@ -74,8 +74,9 @@ describe('Instance Editor directive', function() {
         describe('save should call the correct functions when updateInstance is', function() {
             var instance = {'@id': 'id'};
             beforeEach(function() {
+                discoverStateSvc.explore.instance.entity = [instance];
                 discoverStateSvc.getInstance.and.returnValue(instance);
-                exploreUtilsSvc.removeEmptyProperties.and.returnValue(instance);
+                exploreUtilsSvc.removeEmptyPropertiesFromArray.and.returnValue([{prop: 'new'}]);
             });
             describe('resolved and getClassInstanceDetails is', function() {
                 var instanceIRI;
@@ -95,7 +96,8 @@ describe('Instance Editor directive', function() {
                     controller.save();
                     scope.$apply();
                     expect(discoverStateSvc.getInstance).toHaveBeenCalled();
-                    expect(exploreUtilsSvc.removeEmptyProperties).toHaveBeenCalledWith(instance);
+                    expect(exploreUtilsSvc.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([instance]);
+                    expect(discoverStateSvc.explore.instance.entity).toEqual([{prop: 'new'}]);
                     expect(exploreSvc.updateInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, instanceIRI, discoverStateSvc.explore.instance.entity);
                     expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: discoverStateSvc.explore.instanceDetails.currentPage * discoverStateSvc.explore.instanceDetails.limit, limit: discoverStateSvc.explore.instanceDetails.limit});
                     expect(discoverStateSvc.explore.instanceDetails.data).toEqual(data);
@@ -108,7 +110,8 @@ describe('Instance Editor directive', function() {
                     controller.save();
                     scope.$apply();
                     expect(discoverStateSvc.getInstance).toHaveBeenCalled();
-                    expect(exploreUtilsSvc.removeEmptyProperties).toHaveBeenCalledWith(instance);
+                    expect(exploreUtilsSvc.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([instance]);
+                    expect(discoverStateSvc.explore.instance.entity).toEqual([{prop: 'new'}]);
                     expect(exploreSvc.updateInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, instanceIRI, discoverStateSvc.explore.instance.entity);
                     expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: discoverStateSvc.explore.instanceDetails.currentPage * discoverStateSvc.explore.instanceDetails.limit, limit: discoverStateSvc.explore.instanceDetails.limit});
                     expect(util.createErrorToast).toHaveBeenCalledWith('error');
@@ -119,7 +122,8 @@ describe('Instance Editor directive', function() {
                 controller.save();
                 scope.$apply();
                 expect(discoverStateSvc.getInstance).toHaveBeenCalled();
-                expect(exploreUtilsSvc.removeEmptyProperties).toHaveBeenCalledWith(instance);
+                expect(exploreUtilsSvc.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([instance]);
+                expect(discoverStateSvc.explore.instance.entity).toEqual([{prop: 'new'}]);
                 expect(exploreSvc.updateInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.instance.metadata.instanceIRI, discoverStateSvc.explore.instance.entity);
                 expect(exploreSvc.getClassInstanceDetails).not.toHaveBeenCalled();
                 expect(util.createErrorToast).toHaveBeenCalledWith('error');

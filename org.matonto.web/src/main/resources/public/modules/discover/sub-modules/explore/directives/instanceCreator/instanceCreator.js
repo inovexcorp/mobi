@@ -67,7 +67,8 @@
                     dvm.isValid = true;
                     
                     dvm.save = function() {
-                        var instance = eu.removeEmptyProperties(dvm.ds.getInstance());
+                        dvm.ds.explore.instance.entity = eu.removeEmptyPropertiesFromArray(dvm.ds.explore.instance.entity);
+                        var instance = dvm.ds.getInstance();
                         es.createInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.entity)
                             .then(() => es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {}), $q.reject)
                             .then(response => {

@@ -68,7 +68,8 @@
                     dvm.isValid = true;
                     
                     dvm.save = function() {
-                        var instance = eu.removeEmptyProperties(dvm.ds.getInstance());
+                        dvm.ds.explore.instance.entity = eu.removeEmptyPropertiesFromArray(dvm.ds.explore.instance.entity);
+                        var instance = dvm.ds.getInstance();
                         es.updateInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.metadata.instanceIRI, dvm.ds.explore.instance.entity)
                             .then(() => es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {offset: dvm.ds.explore.instanceDetails.currentPage * dvm.ds.explore.instanceDetails.limit, limit: dvm.ds.explore.instanceDetails.limit}), $q.reject)
                             .then(response => {

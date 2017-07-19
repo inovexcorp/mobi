@@ -23,7 +23,7 @@
 <div class="property-value-overlay overlay lg">
     <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
         <h6>Value Details</h6>
-        <div class="main">
+        <div class="main scrollable">
             <p>{{text}}</p>
             <div class="form-group" ng-repeat="(key, value) in dvm.reification track by $index" ng-if="dvm.notOmmitted(key)">
                 <custom-label ng-class="{'changed': dvm.isChanged(key)}">{{dvm.util.getBeautifulIRI(key)}} {{dvm.getRestrictionText(key)}}</custom-label>

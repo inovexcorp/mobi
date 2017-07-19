@@ -126,5 +126,9 @@
             });
             return copy;
         }
+
+        self.removeEmptyPropertiesFromArray = function(array) {
+            return _.map(array, item => self.removeEmptyProperties(item));
+        }
     }
 })();
