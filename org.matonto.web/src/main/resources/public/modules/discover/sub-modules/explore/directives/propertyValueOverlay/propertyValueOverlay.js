@@ -70,7 +70,6 @@
                         [prefixes.rdf + 'predicate']: predicate,
                         [prefixes.rdf + 'object']: object
                     };
-                    dvm.isShown = false;
                     
                     dvm.addNewProperty = function(property) {
                         dvm.reification[property] = [];

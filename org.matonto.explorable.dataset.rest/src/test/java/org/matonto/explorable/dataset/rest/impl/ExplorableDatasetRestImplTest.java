@@ -25,11 +25,13 @@ package org.matonto.explorable.dataset.rest.impl;
 
 import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import net.sf.json.JSONArray;
@@ -75,6 +77,7 @@ import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
@@ -242,6 +245,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         when(catalogManager.getRecord(catalogId, ontologyRecordId, ontologyRecordFactory)).thenReturn(Optional.empty());
         when(sesameTransformer.matontoModel(any(org.openrdf.model.Model.class))).thenAnswer(i -> Values.matontoModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
         when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
+        when(sesameTransformer.matontoIRI(any(org.openrdf.model.IRI.class))).thenAnswer(i -> Values.matontoIRI(i.getArgumentAt(0, org.openrdf.model.IRI.class)));
         when(datasetConnection.prepareTupleQuery(any(String.class))).thenAnswer(i -> conn.prepareTupleQuery(i.getArgumentAt(0, String.class)));
         when(datasetConnection.prepareGraphQuery(any(String.class))).thenAnswer(i -> conn.prepareGraphQuery(i.getArgumentAt(0, String.class)));
         when(datasetConnection.getStatements(any(Resource.class), any(IRI.class), any(Value.class))).thenAnswer(i -> conn.getStatements(i.getArgumentAt(0, Resource.class), i.getArgumentAt(1, IRI.class), i.getArgumentAt(2, Value.class)));
@@ -595,6 +599,19 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(datasetConnection).begin();
         verify(datasetConnection).remove(any(Iterable.class));
+        verify(datasetConnection).add(any(Model.class));
+        verify(datasetConnection).commit();
+    }
+
+    @Test
+    public void updateInstanceWithReifiedTriplesTest() {
+        JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR)
+                .element(_Thing.title_IRI, new JSONArray().add(new JSONObject().element("@value", "title")));
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
+                + encode(REIFIED_ID)).request().put(Entity.json(instance));
+        assertEquals(response.getStatus(), 200);
+        verify(datasetConnection).begin();
+        verify(datasetConnection, times(2)).remove(any(Iterable.class));
         verify(datasetConnection).add(any(Model.class));
         verify(datasetConnection).commit();
     }

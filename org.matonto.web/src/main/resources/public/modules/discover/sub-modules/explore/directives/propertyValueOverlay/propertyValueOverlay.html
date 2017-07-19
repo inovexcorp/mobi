@@ -25,10 +25,6 @@
         <h6>Value Details</h6>
         <div class="main">
             <p>{{text}}</p>
-        </div>
-        <a ng-if="!dvm.isShown" class="btn-link btn-show" ng-click="dvm.isShown = !dvm.isShown"><i class="fa fa-fw fa-plus"></i>Show Reification Properties</a>
-        <a ng-if="dvm.isShown" class="btn-link btn-hide" ng-click="dvm.isShown = !dvm.isShown"><i class="fa fa-fw fa-times"></i>Hide Reification Properties</a>
-        <div ng-if="dvm.isShown" class="reification-container">
             <div class="form-group" ng-repeat="(key, value) in dvm.reification track by $index" ng-if="dvm.notOmmitted(key)">
                 <custom-label ng-class="{'changed': dvm.isChanged(key)}">{{dvm.util.getBeautifulIRI(key)}} {{dvm.getRestrictionText(key)}}</custom-label>
                 <div class="boolean-property" ng-if="dvm.eu.isBoolean(key, dvm.properties)">
@@ -45,9 +41,9 @@
                     <md-chip-template>{{$chip['@id']}}</md-chip-template>
                 </md-chips>
             </div>
-            <div class="btn-container clearfix">
-                <button type="button" ng-disabled="!dvm.eu.getNewProperties(dvm.properties, dvm.reification).length" ng-click="dvm.showOverlay = true" class="btn btn-link pull-left"><i class="fa fa-plus fa-fw"></i>Add New Reification Property</button>
-            </div>
+        </div>
+        <div class="btn-container clearfix">
+            <button type="button" ng-disabled="!dvm.eu.getNewProperties(dvm.properties, dvm.reification).length" ng-click="dvm.showOverlay = true" class="btn btn-link pull-left"><i class="fa fa-plus fa-fw"></i>Add New Reification Property</button>
         </div>
         <div class="btn-container clearfix">
             <button class="btn btn-primary pull-right" ng-click="dvm.submit()">Submit</button>

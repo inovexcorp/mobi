@@ -71,6 +71,7 @@ import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
 import org.matonto.rest.util.jaxb.Links;
 import org.openrdf.model.vocabulary.OWL;
+import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.model.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -298,8 +299,14 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             if (!statements.hasNext()) {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
             } else {
+                RepositoryResult<Statement> reifiedDeclarations = conn.getStatements(null,
+                        sesameTransformer.matontoIRI(RDF.SUBJECT), instanceId);
                 conn.begin();
                 conn.remove(statements);
+                reifiedDeclarations.forEach(statement -> {
+                    RepositoryResult<Statement> reification = conn.getStatements(statement.getSubject(), null, null);
+                    conn.remove(reification);
+                });
                 conn.add(sesameTransformer.matontoModel(jsonldToModel(json)));
                 conn.commit();
                 return Response.ok().build();

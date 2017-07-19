@@ -400,5 +400,16 @@ describe('Instance Form directive', function() {
                 expect(controller.getRestrictionText('propertyId4')).toBe('');
             });
         });
+        it('cleanUpReification should remove the reification triple from the entity', function() {
+            var entity = {
+                '@id': '_:b0',
+                '@type': ['statement']
+            };
+            entity[prefixes.rdf + 'predicate'] = [{'@id': 'predicate'}];
+            entity[prefixes.rdf + 'object'] = [{'@value': 'value'}];
+            discoverStateSvc.explore.instance.entity = [{}, entity];
+            controller.cleanUpReification({'@value': 'value'}, 'predicate');
+            expect(discoverStateSvc.explore.instance.entity).toEqual([{}]);
+        });
     });
 });

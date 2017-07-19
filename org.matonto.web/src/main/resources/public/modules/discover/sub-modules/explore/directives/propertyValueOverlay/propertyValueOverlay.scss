@@ -1,7 +1,10 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
 .property-value-overlay {
-    .btn-hide,
-    .btn-show {
-        display: inline-block;
-        padding: 10px;
+    .content .main {
+        margin-bottom: 0;
+        max-height: 500px;
+        overflow-y: auto;
     }
 }

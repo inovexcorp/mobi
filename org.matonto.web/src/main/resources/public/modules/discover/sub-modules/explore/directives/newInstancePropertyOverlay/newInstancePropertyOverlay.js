@@ -48,7 +48,7 @@
                     
                     $timeout(function() {
                         document.querySelector('#auto-complete').focus();
-                    }, 0);
+                    }, 200);
                 }
             }
         }

@@ -173,6 +173,14 @@
                         return results.length ? ('[' + _.join(results, ', ') + ']') : '';
                     }
                     
+                    dvm.cleanUpReification = function($chip, propertyIRI) {
+                        var object = angular.copy($chip);
+                        _.remove(dvm.ds.explore.instance.entity, {
+                            [prefixes.rdf + 'predicate']: [{'@id': propertyIRI}],
+                            [prefixes.rdf + 'object']: [object]
+                        });
+                    }
+
                     function getProperties() {
                         $q.all(_.map(dvm.instance['@type'], type => es.getClassPropertyDetails(dvm.ds.explore.recordId, type)))
                             .then(responses => {
