@@ -74,7 +74,7 @@ describe('Datasets Tabset directive', function() {
         it('depending on whether a new dataset is being created', function() {
             expect(element.find('new-dataset-overlay').length).toBe(0);
 
-            controller.showNewOverlay = true;
+            datasetStateSvc.showNewOverlay = true;
             scope.$digest();
             expect(element.find('new-dataset-overlay').length).toBe(1);
         });
@@ -82,6 +82,6 @@ describe('Datasets Tabset directive', function() {
     it('should set the correct state when the new dataset button is clicked', function() {
         var button = angular.element(element.querySelectorAll('.actions button')[0]);
         button.triggerHandler('click');
-        expect(controller.showNewOverlay).toBe(true);
+        expect(datasetStateSvc.showNewOverlay).toBe(true);
     });
 });
