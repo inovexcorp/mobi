@@ -28,6 +28,7 @@ describe('Manchester Converter service', function() {
         mockPrefixes();
         mockOntologyManager();
         injectSplitIRIFilter();
+        injectAntlrConstant();
 
         inject(function(manchesterConverterService, _ontologyManagerService_, _prefixes_, _splitIRIFilter_) {
             manchesterConverterSvc = manchesterConverterService;

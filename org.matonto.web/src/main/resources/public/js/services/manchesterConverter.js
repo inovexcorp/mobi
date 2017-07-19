@@ -46,9 +46,9 @@
          */
         .service('manchesterConverterService', manchesterConverterService);
 
-        manchesterConverterService.$inject = ['$filter', 'ontologyManagerService', 'prefixes'];
+        manchesterConverterService.$inject = ['$filter', 'ontologyManagerService', 'prefixes', 'antlr'];
 
-        function manchesterConverterService($filter, ontologyManagerService, prefixes) {
+        function manchesterConverterService($filter, ontologyManagerService, prefixes, antlr) {
             var self = this;
             var om = ontologyManagerService;
             var expressionClassName = 'manchester-expr';
@@ -75,6 +75,17 @@
                 [prefixes.owl + 'qualifiedCardinality']: ' exactly ' // a exactly n b
             };
 
+            self.manchesterToJsonld = function(str, localNameMap) {
+                var arr = [];
+                var chars = new antlr.antlr4.InputStream(str);
+                var lexer = new antlr.MOSLexer.MOSLexer(chars);
+                var tokens  = new antlr.antlr4.CommonTokenStream(lexer);
+                var parser = new antlr.MOSParser.MOSParser(tokens);
+                parser.buildParseTrees = true;
+                var blankNodes = new antlr.BlankNodesListener(arr, localNameMap);
+                antlr.antlr4.tree.ParseTreeWalker.DEFAULT.walk(blankNodes, parser.description());
+                console.log('Result: ', arr);
+            }
             /**
              * @ngdoc method
              * @name jsonldToManchester
