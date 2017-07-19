@@ -120,7 +120,7 @@
          * @param {string} propertyIRI The IRI of the property
          * @param {string} type The desired type
          * @param {Object[]} properties The list of property details
-         * @returns {boolean} A Regular Expression identifying the acceptable values for the provided property.
+         * @returns {boolean} True if the property is of the desired type; otherwise, false.
          */
         self.isPropertyOfType = function(propertyIRI, type, properties) {
             return _.some(properties, {propertyIRI, type});
