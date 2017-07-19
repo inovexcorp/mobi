@@ -31,6 +31,7 @@ import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.matonto.etl.api.config.ExcelConfig;
+import org.matonto.etl.api.config.ExportServiceConfig;
 import org.matonto.etl.api.config.ImportServiceConfig;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
@@ -158,7 +159,8 @@ public class CLITransform implements Action {
             }
 
             if (outputFile != null) {
-                rdfExportService.exportToFile(model, outputFile);
+                ExportServiceConfig config = new ExportServiceConfig.Builder(outputFile).build();
+                rdfExportService.exportToFile(config, model);
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());

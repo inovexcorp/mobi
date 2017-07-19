@@ -27,6 +27,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.api.DatasetManager;
+import org.matonto.etl.api.config.ExportServiceConfig;
 import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.persistence.utils.RepositoryResults;
 import org.matonto.persistence.utils.api.SesameTransformer;
@@ -96,68 +97,47 @@ public class RDFExportServiceImpl implements RDFExportService {
     }
     
     @Override
-    public File exportToFile(String repositoryID, String filePath) throws IOException {
-        return exportToFile(repositoryID, filePath, null, null, null, null);
-    }
-
-    @Override
-    public File exportToFile(String repositoryID, String filePath, String subj, String pred, String objIRI,
-                             String objLit) throws IOException {
+    public File exportToFile(ExportServiceConfig config, String repositoryID) throws IOException {
         Repository repository = getRepo(repositoryID);
         try (RepositoryConnection conn = repository.getConnection()) {
-            return export(conn, filePath, subj, pred, objIRI, objLit);
+            return export(conn, config);
         }
     }
 
     @Override
-    public File exportToFile(Resource datasetRecordID, String filePath) throws IOException {
-        return exportToFile(datasetRecordID, filePath, null, null, null, null);
+    public File exportToFile(ExportServiceConfig config, Resource datasetRecordID) throws IOException {
+        try (DatasetConnection conn = datasetManager.getConnection(datasetRecordID)) {
+            return export(conn, config);
+        }
     }
 
     @Override
-    public File exportToFile(Resource datasetRecordID, String filePath, String subj, String pred, String objIRI,
-                             String objLit) throws IOException {
-        DatasetConnection conn = datasetManager.getConnection(datasetRecordID);
-        File file = export(conn, filePath, subj, pred, objIRI, objLit);
-        conn.close();
-        return file;
-    }
-
-    @Override
-    public File exportToFile(Model model, String filePath) throws IOException {
-        return export(model, getFile(filePath), getFileFormat(filePath));
-    }
-
-    @Override
-    public File exportToFile(Model model, String filePath, RDFFormat format) throws IOException {
+    public File exportToFile(ExportServiceConfig config, Model model) throws IOException {
+        String filePath = config.getFilePath().orElseThrow(() ->
+                new IllegalArgumentException("The export file path is required"));
+        RDFFormat format = config.getFormat() == null ? getFileFormat(filePath) : config.getFormat();
         return export(model, getFile(filePath), format);
     }
 
-    private File export(RepositoryConnection conn, String filePath, String subj, String pred, String objIRI,
-                        String objLit) throws IOException {
-        Resource subjResource = null;
-        IRI predicateIRI = null;
+    private File export(RepositoryConnection conn, ExportServiceConfig config) throws IOException {
+        String filePath = config.getFilePath().orElseThrow(() ->
+                new IllegalArgumentException("The export file path is required"));
+        RDFFormat format = config.getFormat() == null ? getFileFormat(filePath) : config.getFormat();
+        Resource subjResource = config.getSubj() == null ? null : vf.createIRI(config.getSubj());
+        IRI predicateIRI = config.getPred() == null ? null : vf.createIRI(config.getPred());
         Value objValue = null;
 
-        if (subj != null) {
-            subjResource = vf.createIRI(subj);
-        }
-
-        if (pred != null) {
-            predicateIRI = vf.createIRI(pred);
-        }
-
-        if (objIRI != null) {
-            objValue = vf.createIRI(objIRI);
-        } else if (objLit != null) {
-            objValue = vf.createLiteral(objLit);
+        if (config.getObjIRI() != null) {
+            objValue = vf.createIRI(config.getObjIRI());
+        } else if (config.getObjLit() != null) {
+            objValue = vf.createLiteral(config.getObjLit());
         }
 
         LOGGER.warn("Restricting to:\nSubj: " + subjResource + "\nPred: " + predicateIRI + "\n"
                 + "Obj: " + objValue);
         RepositoryResult<Statement> result = conn.getStatements(subjResource, predicateIRI, objValue);
         Model model = RepositoryResults.asModel(result, mf);
-        return exportToFile(model, filePath);
+        return export(model, getFile(filePath), format);
     }
 
     private File export(Model model, File file, RDFFormat format) throws IOException {
