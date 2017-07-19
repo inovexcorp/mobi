@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Util service', function() {
-    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, $filter, $httpBackend, $q, $timeout;
+    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, uuid, $filter, $httpBackend, $q, $timeout;
 
     beforeEach(function() {
         module('util');
@@ -31,7 +31,13 @@ describe('Util service', function() {
         mockToastr();
         injectRegexConstant();
 
-        inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_, _$filter_, _$httpBackend_, _$q_, _$timeout_) {
+        module(function($provide) {
+            $provide.service('uuid', function() {
+                this.v4 = jasmine.createSpy('v4').and.returnValue('');
+            });
+        });
+
+        inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_, _uuid_, _$filter_, _$httpBackend_, _$q_, _$timeout_) {
             utilSvc = utilService;
             prefixes = _prefixes_;
             toastr = _toastr_;
@@ -41,6 +47,7 @@ describe('Util service', function() {
             $httpBackend = _$httpBackend_;
             $q = _$q_;
             $timeout = _$timeout_;
+            uuid = _uuid_;
         });
     });
 
@@ -348,5 +355,10 @@ describe('Util service', function() {
         expect(splitIRIFilter).toHaveBeenCalledWith('predicate');
         utilSvc.getPredicateLocalName();
         expect(splitIRIFilter).toHaveBeenCalledWith('');
+    });
+    it("create a unique IRI for a blank node.", function() {
+        var result = _.startsWith(utilSvc.getIdForBlankNode(), '_:matonto/bnode/');
+        expect(result).toBe(true);
+        expect(uuid.v4).toHaveBeenCalled();
     });
 });

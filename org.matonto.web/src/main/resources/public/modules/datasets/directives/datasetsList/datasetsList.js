@@ -72,8 +72,6 @@
                     dvm.util = utilService;
                     dvm.prefixes = prefixes;
                     dvm.error = '';
-                    dvm.selectedDataset = undefined;
-                    dvm.openedDatasetId = '';
                     dvm.showDeleteConfirm = false;
                     dvm.showClearConfirm = false;
                     dvm.cachedOntologyIds = [];
@@ -85,12 +83,12 @@
                         return dvm.util.getDctermsValue(_.find(cachedOntologyRecords, {'@id': id}), 'title');
                     }
                     dvm.clickDataset = function(dataset) {
-                        if (dvm.openedDatasetId === dataset.record['@id']) {
-                            dvm.selectedDataset = undefined;
-                            dvm.openedDatasetId = '';
+                        if (dvm.state.openedDatasetId === dataset.record['@id']) {
+                            dvm.state.selectedDataset = undefined;
+                            dvm.state.openedDatasetId = '';
                         } else {
-                            dvm.selectedDataset = dataset;
-                            dvm.openedDatasetId = dataset.record['@id'];
+                            dvm.state.selectedDataset = dataset;
+                            dvm.state.openedDatasetId = dataset.record['@id'];
                             var toRetrieve = _.filter(dvm.getIdentifiedOntologyIds(dataset), id => !_.includes(dvm.cachedOntologyIds, id));
                             $q.all(_.map(toRetrieve, id => cm.getRecord(id, catalogId)))
                                 .then(responses => {
@@ -109,12 +107,12 @@
                         }
                     }
                     dvm.delete = function() {
-                        dm.deleteDatasetRecord(dvm.selectedDataset.record['@id'])
+                        dm.deleteDatasetRecord(dvm.state.selectedDataset.record['@id'])
                             .then(() => {
                                 dvm.util.createSuccessToast('Dataset successfully deleted');
                                 dvm.showDeleteConfirm = false;
                                 dvm.error = '';
-                                dvm.selectedDataset = undefined;
+                                dvm.state.selectedDataset = undefined;
                                 if (dvm.state.results.length === 1 && dvm.state.paginationConfig.pageIndex > 0) {
                                     dvm.state.paginationConfig.pageIndex -= 1;
                                 }
@@ -122,12 +120,24 @@
                             }, onError);
                     }
                     dvm.clear = function() {
-                        dm.clearDatasetRecord(dvm.selectedDataset.record['@id'])
+                        dm.clearDatasetRecord(dvm.state.selectedDataset.record['@id'])
                             .then(() => {
                                 dvm.util.createSuccessToast('Dataset successfully cleared');
                                 dvm.showClearConfirm = false;
                                 dvm.error = '';
                             }, onError);
+                    }
+                    dvm.showEdit = function(dataset) {
+                        dvm.state.selectedDataset = dataset;
+                        dvm.state.showEditOverlay = true;
+                    }
+                    dvm.showClear = function(dataset) {
+                        dvm.state.selectedDataset = dataset;
+                        dvm.showClearConfirm = true;
+                    }
+                    dvm.showDelete = function(dataset) {
+                        dvm.state.selectedDataset = dataset;
+                        dvm.showDeleteConfirm = true;
                     }
 
                     function onError(errorMessage) {

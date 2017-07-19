@@ -96,18 +96,6 @@
                     dvm.selectedOntologies = [];
                     dvm.step = 0;
 
-                    dvm.getOntologies = function() {
-                        dvm.ontologySearchConfig.pageIndex = 0;
-                        cm.getRecords(cm.localCatalog['@id'], dvm.ontologySearchConfig).then(parseOntologyResults, errorMessage => {
-                            dvm.ontologies = [];
-                            dvm.links = {
-                                next: '',
-                                prev: ''
-                            };
-                            dvm.totalSize = 0;
-                            onError(errorMessage);
-                        });
-                    }
                     dvm.create = function() {
                         dvm.recordConfig.keywords = _.map(dvm.keywords, _.trim);
                         dvm.recordConfig.ontologies = _.map(dvm.selectedOntologies, '@id');
@@ -118,29 +106,9 @@
                                 dvm.onClose();
                             }, onError);
                     }
-                    dvm.isSelected = function(ontologyId) {
-                        return _.some(dvm.selectedOntologies, {'@id': ontologyId});
-                    }
-                    dvm.selectOntology = function(ontology) {
-                        if (!dvm.isSelected(ontology['@id'])) {
-                            dvm.selectedOntologies.push(ontology);
-                        }
-                    }
-                    dvm.unselectOntology = function(ontologyId) {
-                        _.remove(dvm.selectedOntologies, {'@id': ontologyId});
-                    }
 
                     function onError(errorMessage) {
                         dvm.error = errorMessage;
-                    }
-                    function parseOntologyResults(response) {
-                        dvm.ontologies = response.data;
-                        var headers = response.headers();
-                        dvm.totalSize = _.get(headers, 'x-total-count', 0);
-                        var links = dvm.util.parseLinks(_.get(headers, 'link', ''));
-                        dvm.links.prev = _.get(links, 'prev', '');
-                        dvm.links.next = _.get(links, 'next', '');
-                        dvm.error = '';
                     }
                 }
             }
