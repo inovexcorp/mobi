@@ -24,7 +24,30 @@
     'use strict';
     
     angular
+        /**
+         * @ngdoc overview
+         * @name propertyValueOverlay
+         *
+         * @description
+         * The `propertyValueOverlay` module only provides the `propertyValueOverlay` directive which creates
+         * property value overlay.
+         */
         .module('propertyValueOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name propertyValueOverlay.directive:propertyValueOverlay
+         * @scope
+         * @restrict E
+         * @requires discoverState.service:discoverStateService
+         * @requires prefixes.service:prefixes
+         * @requires uuid.service:uuid
+         * @requires util.service:utilService
+         * @requires exploreUtilsService.service:exploreUtilsService
+         *
+         * @description
+         * HTML contents for the property value overlay which shows the full value associated with the selected chip and
+         * the reified statements associated with that value.
+         */
         .directive('propertyValueOverlay', propertyValueOverlay);
         
         propertyValueOverlay.$inject = ['discoverStateService', 'prefixes', 'uuid', 'utilService', 'exploreUtilsService'];
