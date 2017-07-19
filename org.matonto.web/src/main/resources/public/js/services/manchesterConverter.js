@@ -58,6 +58,7 @@
                 [prefixes.owl + 'unionOf']: ' or ', // A or B
                 [prefixes.owl + 'intersectionOf']: ' and ', // A and B
                 [prefixes.owl + 'complementOf']: 'not ', // not A
+                [prefixes.owl + 'oneOf']: ', ' // {a1 a2 ... an}.
             };
                 // a - the object property on which the restriction applies.
                 // b - the restriction on the property values.
@@ -104,12 +105,19 @@
                     var prop = _.intersection(_.keys(entity), _.keys(expressionKeywords));
                     if (prop.length === 1) {
                         var item = _.get(entity[prop[0]], '0');
-                        var keyword = html ? surround(expressionKeywords[prop[0]], expressionClassName) : expressionKeywords[prop[0]];
+                        var keyword = expressionKeywords[prop[0]];
+                        if (html && prop[0] !== prefixes.owl + 'oneOf') {
+                            keyword = surround(keyword, expressionClassName);
+                        }
                         if (_.has(item, '@list')) {
                             result += _.join(_.map(_.get(item, '@list'), item =>  getManchesterValue(item, jsonld, html)), keyword);
                         } else {
                             result += keyword + getManchesterValue(item, jsonld, html);
                         }
+                        if (prop[0] === prefixes.owl + 'oneOf') {
+                            result = '{' + result + '}';
+                        }
+
                     }
                 } else if (om.isRestriction(entity)) {
                     var onProperty = _.get(entity, '["' + prefixes.owl + 'onProperty"][0]["@id"]', '');

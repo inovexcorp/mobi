@@ -107,6 +107,22 @@ describe('Manchester Converter service', function() {
                     expect(result).toBe('not ClassA');
                 });
             });
+            describe('with oneOf', function() {
+                beforeEach(function() {
+                    this.blankNode[prefixes.owl + 'oneOf'] = [{'@list': [
+                        {'@id': 'ClassA'},
+                        {'@id': 'ClassB'}
+                    ]}];
+                })
+                it('and HTML', function() {
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, true);
+                    expect(result).toBe('{ClassA, ClassB}');
+                });
+                it('without HTML', function() {
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
+                    expect(result).toBe('{ClassA, ClassB}');
+                });
+            });
             it('unless it is invalid', function() {
                 var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
                 expect(result).toBe(this.blankNode['@id']);
