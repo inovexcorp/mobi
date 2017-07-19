@@ -85,7 +85,7 @@ public interface RepositoryConnection extends AutoCloseable {
      * @param stmt -  The statement to remove.
      * @param contexts - The contexts to remove the statements from. Note that this parameter is a vararg and as such
      *                 is optional. If no contexts are specified, the statement is removed from any context specified
-     *                 in each statement, or if the statement contains no context, it is added without context.
+     *                 in each statement, or if the statement contains no context, it is removed without context.
      *                 If one or more contexts are specified the statement is removed from these contexts, ignoring
      *                 any context information in the statement itself.
      * @throws RepositoryException - If the statement could not be removed from the repository, for example because
@@ -116,7 +116,7 @@ public interface RepositoryConnection extends AutoCloseable {
      * @param object - The statement's object.
      * @param contexts - The contexts to remove the data from. Note that this parameter is a vararg and as such
      *                 is optional. If no contexts are specified, the data is removed from any context specified
-     *                 in the actual data file, or if the data contains no context, it is added without context.
+     *                 in the actual data file, or if the data contains no context, it is removed without context.
      *                 If one or more contexts are specified the data is removed from these contexts, ignoring any
      *                 context information in the data itself.
      * @throws RepositoryException - If the data could not be removed from the repository, for example because

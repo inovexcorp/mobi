@@ -180,8 +180,8 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      * @param predicate - The statement's subject.
      * @param object - The statement's object.
      * @param contexts - The contexts to remove the data from. Note that this parameter is a vararg and as such
-     *                 is optional. If no contexts are specified, the data is removed from every context specified
-     *                 in the dataset.
+     *                 is optional. If no contexts are specified, the data is removed from the system default
+     *                 named graph.
      * @throws RepositoryException - If the data could not be removed from the repository, for example because
      * the repository is not writable.
      */
