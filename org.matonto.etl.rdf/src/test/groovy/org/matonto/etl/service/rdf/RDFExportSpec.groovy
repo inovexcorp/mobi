@@ -28,6 +28,7 @@ import org.matonto.etl.api.config.ExportServiceConfig
 import org.matonto.persistence.utils.api.SesameTransformer
 import org.matonto.rdf.api.ModelFactory
 import org.matonto.rdf.core.impl.sesame.LinkedHashModel
+import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.rdf.core.utils.Values
 import org.matonto.repository.api.DelegatingRepository
@@ -39,6 +40,7 @@ import spock.lang.Specification
 class RDFExportSpec extends Specification {
     def service = new RDFExportServiceImpl()
     def vf = SimpleValueFactory.getInstance()
+    def mf = LinkedHashModelFactory.getInstance()
 
     def repoId = "test"
     def datasetId = vf.createIRI("http://test.com/dataset-record")
@@ -50,7 +52,6 @@ class RDFExportSpec extends Specification {
     def invalidFile = new ClassPathResource("exporter/testFile.txt").getFile()
 
     def transformer = Mock(SesameTransformer)
-    def mf = Mock(ModelFactory)
     def datasetManager = Mock(DatasetManager)
     def repo = Mock(DelegatingRepository)
     def conn = Mock(RepositoryConnection)
@@ -61,11 +62,11 @@ class RDFExportSpec extends Specification {
         testFile.setWritable(true)
         invalidFile.setWritable(true)
 
-        transformer.sesameModel(_) >> { args -> Values.sesameModel(args[0])}
-        mf.createModel(*_) >> new LinkedHashModel()
+        transformer.sesameStatement(_) >> { args -> Values.sesameStatement(args[0])}
         repo.getRepositoryID() >> repoId
         repo.getConnection() >> conn
         conn.getStatements(*_) >> result
+        result.iterator() >> mf.createModel().iterator()
         datasetManager.getConnection(datasetId) >> datasetConn
         datasetManager.getConnection(!datasetId) >> {throw new IllegalArgumentException()}
         datasetConn.getStatements(*_) >> result

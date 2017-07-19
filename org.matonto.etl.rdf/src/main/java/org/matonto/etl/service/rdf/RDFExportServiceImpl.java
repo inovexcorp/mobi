@@ -30,6 +30,7 @@ import org.matonto.dataset.api.DatasetManager;
 import org.matonto.etl.api.config.ExportServiceConfig;
 import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.persistence.utils.RepositoryResults;
+import org.matonto.persistence.utils.StatementIterable;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -136,13 +137,12 @@ public class RDFExportServiceImpl implements RDFExportService {
         LOGGER.warn("Restricting to:\nSubj: " + subjResource + "\nPred: " + predicateIRI + "\n"
                 + "Obj: " + objValue);
         RepositoryResult<Statement> result = conn.getStatements(subjResource, predicateIRI, objValue);
-        Model model = RepositoryResults.asModel(result, mf);
-        return export(model, getFile(filePath), format);
+        return export(result, getFile(filePath), format);
     }
 
-    private File export(Model model, File file, RDFFormat format) throws IOException {
+    private File export(Iterable<Statement> statements, File file, RDFFormat format) throws IOException {
         RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, new FileWriter(file)));
-        Rio.write(transformer.sesameModel(model), rdfWriter);
+        Rio.write(new StatementIterable(statements, transformer), rdfWriter);
         return file;
     }
 
