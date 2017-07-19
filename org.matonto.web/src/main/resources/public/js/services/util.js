@@ -309,7 +309,7 @@
              * @param {string} text The text for the body of the error toast
              */
             self.createErrorToast = function(text) {
-                toastr.error(text, 'Error', {timeOut: 0});
+                toastr.error(text, 'Error', {timeOut: 3000});
             }
             /**
              * @ngdoc method
@@ -322,7 +322,7 @@
              * @param {string} text The text for the body of the success toast
              */
             self.createSuccessToast = function(text) {
-                toastr.success(text, 'Success', {timeOut: 0});
+                toastr.success(text, 'Success', {timeOut: 3000});
             }
             /**
              * @ngdoc method
