@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+/* global _ */
+
 (function() {
     'use strict';
 
@@ -89,16 +91,14 @@
              * error message
              */
             self.getDatasetRecords = function(paginatedConfig) {
-                var deferred = $q.defer(),
-                    config = {
+                var config = {
                         params: util.paginatedConfigToParams(paginatedConfig)
                     };
                 if (_.get(paginatedConfig, 'searchText')) {
                     config.params.searchText = paginatedConfig.searchText;
                 }
-                $http.get(prefix, config)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix, config)
+                    .then(response => { return $q.when(response) }, util.rejectError);
             }
 
             /**
@@ -123,8 +123,7 @@
              * error message
              */
             self.createDatasetRecord = function(recordConfig) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         headers: {
@@ -143,16 +142,15 @@
                     fd.append('keywords', _.join(recordConfig.keywords, ','));
                 }
                 _.forEach(_.get(recordConfig, 'ontologies', []), id => fd.append('ontologies', id));
-                $http.post(prefix, fd, config)
+                return $http.post(prefix, fd, config)
                     .then(response => {
                         self.datasetRecords.push({
                             '@id': response.data,
                             [prefixes.dcterms + 'title']: [{'@value': recordConfig.title}]
                         });
                         self.datasetRecords = _.orderBy(self.datasetRecords, record => util.getDctermsValue(record, 'title'));
-                        deferred.resolve(response.data);
-                    }, error => util.onError(error, deferred));
-                return deferred.promise;
+                        return $q.when(response.data);
+                    }, util.rejectError);
             }
 
             /**
@@ -171,15 +169,12 @@
              * @return {Promise} A Promise that resolves if the delete was successful; rejects with an error message otherwise
              */
             self.deleteDatasetRecord = function(datasetRecordIRI, force = false) {
-                var deferred = $q.defer(),
-                    config = {params: {force}};
-                $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI), config)
-                    .then(response => {
+                var config = {params: {force}};
+                return $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI), config)
+                    .then(() => {
                         ds.cleanUpOnDatasetDelete(datasetRecordIRI);
                         _.remove(self.datasetRecords, {'@id': datasetRecordIRI});
-                        deferred.resolve();
-                    }, error => util.onError(error, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
             }
 
             /**
@@ -198,27 +193,18 @@
              * @return {Promise} A Promise that resolves if the delete was successful; rejects with an error message otherwise
              */
             self.clearDatasetRecord = function(datasetRecordIRI, force = false) {
-                var deferred = $q.defer(),
-                    config = {params: {force}};
-                $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI) + '/data', config)
-                    .then(response => {
+                var config = {params: {force}};
+                return $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI) + '/data', config)
+                    .then(() => {
                         ds.cleanUpOnDatasetClear(datasetRecordIRI);
-                        deferred.resolve();
-                    }, error => util.onError(error, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
             }
             
-            self.updateDatasetRecord = function(datasetRecordIRI, catalogIRI, jsonld, title) {
-                var deferred = $q.defer();
-                cm.updateRecord(datasetRecordIRI, catalogIRI, jsonld).then(() => {
+            self.updateDatasetRecord = function(datasetRecordIRI, catalogIRI, jsonld) {
+                return cm.updateRecord(datasetRecordIRI, catalogIRI, jsonld).then(() => {
                     _.remove(self.datasetRecords, {'@id': datasetRecordIRI});
-                    self.datasetRecords.push({
-                        '@id': datasetRecordIRI, 
-                        [prefixes.dcterms + 'title']: [{'@value': title}]
-                    });
-                    deferred.resolve();
-                }, error => util.onError(error, deferred));
-                return deferred.promise;
+                    self.datasetRecords.push(_.find(jsonld, {'@id': datasetRecordIRI}));
+                }, $q.reject);
             }
 
             /**
