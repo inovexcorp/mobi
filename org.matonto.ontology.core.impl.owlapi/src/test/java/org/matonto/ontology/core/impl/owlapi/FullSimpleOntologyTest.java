@@ -96,9 +96,21 @@ public class FullSimpleOntologyTest {
         when(ontologyId.getVersionIRI()).thenReturn(Optional.of(versionIRI));
         when(ontologyManager.createOntologyId(any(IRI.class), any(IRI.class))).thenReturn(ontologyId);
         when(ontologyManager.createOntologyId(any(IRI.class))).thenReturn(ontologyId);
+        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
 
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");
         ontology = new SimpleOntology(stream, ontologyManager, transformer);
+    }
+
+    @Test
+    public void getImportedOntologyIRIsTest() throws Exception {
+        // Setup:
+        InputStream stream = this.getClass().getResourceAsStream("/test-imports.owl");
+        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer);
+
+        Set<IRI> iris = ont.getImportedOntologyIRIs();
+        assertEquals(1, iris.size());
+        assertTrue(iris.contains(vf.createIRI("http://xmlns.com/foaf/0.1")));
     }
 
     @Test
