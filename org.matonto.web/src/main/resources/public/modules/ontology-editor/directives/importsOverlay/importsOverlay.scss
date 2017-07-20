@@ -1,0 +1,23 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.imports-overlay {
+    .content {
+        padding: 0px;
+
+        h1 {
+            margin: 0px;
+        }
+        .ontologies {
+            max-height: 300px;
+            overflow-y: auto;
+
+            h4 {
+                margin-bottom: 0;
+            }
+        }
+        .btn-container {
+            padding: 10px;
+        }
+    }
+}

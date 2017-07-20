@@ -67,7 +67,7 @@
             editing: false,
             instance: {
                 changed: [],
-                entity: {},
+                entity: [{}],
                 metadata: {}
             },
             instanceDetails: {
@@ -169,6 +169,20 @@
             self.explore.breadcrumbs = _.take(self.explore.breadcrumbs, index + 1);
             self.explore.editing = false;
             self.explore.creating = false;
+        }
+        
+        /**
+         * @ngdoc method
+         * @name getInstance
+         * @methodOf discoverState.service:discoverStateService
+         *
+         * @description
+         * Gets the instance from the entity variable which contains the instance and reified statements.
+         *
+         * @returns {Object} An object which contains the instance's JSON-LD.
+         */
+        self.getInstance = function() {
+            return _.find(self.explore.instance.entity, {'@id': self.explore.instance.metadata.instanceIRI});
         }
         
         function resetOnClear() {

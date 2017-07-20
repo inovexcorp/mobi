@@ -24,7 +24,28 @@
     'use strict';
     
     angular
+        /**
+         * @ngdoc overview
+         * @name newInstancePropertyOverlay
+         *
+         * @description
+         * The `newInstancePropertyOverlay` module only provides the `newInstancePropertyOverlay` directive which creates
+         * new instance property overlay.
+         */
         .module('newInstancePropertyOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name newInstancePropertyOverlay.directive:newInstancePropertyOverlay
+         * @scope
+         * @restrict E
+         * @requires $timeout
+         * @requires util.service:utilService
+         * @requires discoverState.service:discoverStateService
+         *
+         * @description
+         * HTML contents for the new instance property overlay which provides the users with a dropdown list of the properties
+         * available to add to the selected instance.
+         */
         .directive('newInstancePropertyOverlay', newInstancePropertyOverlay);
         
         newInstancePropertyOverlay.$inject = ['$timeout', 'utilService', 'discoverStateService'];
@@ -48,7 +69,7 @@
                     
                     $timeout(function() {
                         document.querySelector('#auto-complete').focus();
-                    }, 0);
+                    }, 200);
                 }
             }
         }

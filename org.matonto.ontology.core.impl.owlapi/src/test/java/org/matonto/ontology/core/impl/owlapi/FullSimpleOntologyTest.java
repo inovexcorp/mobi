@@ -234,7 +234,7 @@ public class FullSimpleOntologyTest {
     }
 
     @Test
-    public void getAllClassObjectProperties() throws Exception {
+    public void getAllClassObjectPropertiesTest() throws Exception {
         // TODO: this works with imports, but we need to add a test which does not have an external dependency
         assertEquals(2, ontology.getAllClassObjectProperties(classIRI).size());
         assertEquals(1, ontology.getAllClassObjectProperties(classIRIC).size());
@@ -246,7 +246,12 @@ public class FullSimpleOntologyTest {
     }
 
     @Test
-    public void getAllClassDataProperties() throws Exception {
+    public void getAllNoDomainObjectPropertiesTest() {
+        assertEquals(1, ontology.getAllNoDomainObjectProperties().size());
+    }
+
+    @Test
+    public void getAllClassDataPropertiesTest() throws Exception {
         // TODO: this works with imports, but we need to add a test which does not have an external dependency
         assertEquals(2, ontology.getAllClassDataProperties(classIRI).size());
         assertEquals(1, ontology.getAllClassDataProperties(classIRIC).size());
@@ -255,5 +260,10 @@ public class FullSimpleOntologyTest {
     @Test(expected = IllegalArgumentException.class)
     public void getAllClassDataPropertiesWhenMissingTest() throws Exception {
         ontology.getAllClassDataProperties(errorIRI);
+    }
+
+    @Test
+    public void getAllNoDomainDataPropertiesTest() {
+        assertEquals(1, ontology.getAllNoDomainDataProperties().size());
     }
 }
