@@ -11,26 +11,6 @@
         .ontologies {
             max-height: 300px;
             overflow-y: auto;
-
-            /*.ontology {
-                padding: 10px;
-
-                &.active {
-                    color: #fff !important;
-                    background-color: $brand-primary !important;
-
-                    .text-muted {
-                        color: #fff !important;
-                    }
-                }
-                &:hover {
-                    cursor: pointer;
-                    background-color: $gray-lighter;
-                }
-                .header {
-                    margin-bottom: 0px;
-                }
-            }*/
         }
         .btn-container {
             padding: 10px;
