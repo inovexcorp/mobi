@@ -379,14 +379,14 @@
              * @returns {Promise} A promise with the ontology record ID or error message.
              */
             self.uploadThenGet = function(file, title, description, keywords, type = 'ontology') {
-                var recordId, ontologyId;
+                var recordId;
                 return om.uploadFile(file, title, description, keywords)
                     .then(data => {
                         recordId = data.recordId;
-                        ontologyId = data.ontologyId;
                         return self.getOntology(recordId);
                     }, $q.reject)
                     .then(response => {
+                        var ontologyId = om.getOntologyIRI(response.ontology);
                         if (type === 'ontology') {
                             return self.addOntologyToList(ontologyId, recordId, response.branchId, response.commitId, response.ontology, response.inProgressCommit, title);
                         } else if (type === 'vocabulary') {
