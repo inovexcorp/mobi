@@ -42,7 +42,7 @@
                         <md-list-item class="ontology" ng-repeat="ontology in dvm.ontologies track by ontology.recordId">
                             <div>
                                 <h4 class="header">{{ontology.title}}</h4>
-                                <small class="ontology-iri text-muted">{{ontology.ontologyIRI}}</small>
+                                <p><small class="ontology-iri text-muted">{{ontology.ontologyIRI}}</small></p>
                             </div>
                             <md-checkbox class="md-secondary" ng-model="ontology.selected" aria-label="Selected"></md-checkbox>
                         </md-list-item>

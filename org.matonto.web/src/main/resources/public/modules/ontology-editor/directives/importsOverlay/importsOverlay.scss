@@ -11,6 +11,10 @@
         .ontologies {
             max-height: 300px;
             overflow-y: auto;
+
+            h4 {
+                margin-bottom: 0;
+            }
         }
         .btn-container {
             padding: 10px;
