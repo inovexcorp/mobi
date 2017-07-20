@@ -35,10 +35,11 @@ import org.matonto.clustering.api.ClusteringService;
 import java.util.List;
 
 /**
+ * Command line utilities for interacting with the Federated Services.
  *
  * @author Sean Smitz <sean.smitz@inovexcorp.com>
  */
-@Command(scope = "matonto", name = "fedsvc", description = "View information about the federated services.")
+@Command(scope = "matonto", name = "fedsvc", description = "View information about or restart federated services.")
 @Service
 public class ClusteringServiceCli implements Action {
     public final static String VIEW_OPERATION = "view";
@@ -50,10 +51,13 @@ public class ClusteringServiceCli implements Action {
     @Reference
     private List<ClusteringService> clusteringServices;
 
-    @Argument(index = 0, name = "operation", description = "", required = true)
+    @Argument(index = 0, name = "operation", description = "Controls the interaction performed with the Federated "
+            + "Services.\n\tmatonto:fedsvc view - To view configuration information about connected clusters.\n"
+            + "\tmatonto:fedsvc -c/--cluster <id> view - To view nodes in a cluster. matonto:fedsvc  -c/--cluster <id> "
+            + "restart - To restart the connection to the specified cluster.\n", required = true)
     String operation = null;
 
-    @Option(name = "-c", aliases = "--cluster", description = "")
+    @Option(name = "-c", aliases = "--cluster", description = "Specify the cluster id to run the specified operation against.")
     String cluster = null;
 
     public void setClusteringServices(List<ClusteringService> clusteringServices) {
@@ -93,6 +97,7 @@ public class ClusteringServiceCli implements Action {
         clusteringServices.stream().filter(service -> service.getClusteringServiceConfig().id().equals(cluster))
                 .map(service -> service.getClusteredNodeIds())
                 .forEach(ids -> ids.forEach(id -> sb.append(String.format(clusterNodeFormatString, id))));
+        System.out.print(sb.toString());
     }
 
     private void restartCluster(final String cluster) {
