@@ -26,11 +26,13 @@ package org.matonto.itests.clustering;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.matonto.clustering.api.ClusteringService;
 import org.matonto.itests.support.KarafTestSupport;
+import org.matonto.platform.config.api.server.MatOnto;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
@@ -40,6 +42,8 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
+import java.util.UUID;
 import javax.inject.Inject;
 
 @RunWith(PaxExam.class)
@@ -96,9 +100,15 @@ public class HazelcastClusteringIT extends KarafTestSupport {
     public void hazelcastClusterStartsCorrectly() throws Exception {
         LOGGER.info("Test hazelcastClusterStartsCorrectly starting...");
 
-        for (String filter : serviceFilters) {
-            ClusteringService service = getOsgiService(ClusteringService.class, filter, 5000);
-            assertEquals("Hazelcast Service did not startup correctly.", 1, service.getMemberCount());
+        ClusteringService service = getOsgiService(ClusteringService.class, "(&(objectClass=org.matonto.clustering.api.ClusteringService)(component.name=org.matonto.clustering.hazelcast))", 5000);
+        MatOnto matonto = getOsgiService(MatOnto.class, "(&(objectClass=org.matonto.platform.config.api.server.MatOnto)(component.name=org.matonto.platform.server))", 5000);
+        assertEquals("Hazelcast Service did not startup correctly.", 1, service.getMemberCount());
+        assertNotNull("MatOnto service had no server identifier!", matonto.getServerIdentifier());
+        Optional<UUID> uuid = service.getClusteredNodeIds().stream().findFirst();
+        if (uuid.isPresent()) {
+            assertEquals("", matonto.getServerIdentifier(), uuid.get());
+        } else {
+            Assert.fail("No UUID found in set of clustered nodes in clustering service");
         }
 
         LOGGER.info("Test hazelcastClusterStartsCorrectly complete.");
