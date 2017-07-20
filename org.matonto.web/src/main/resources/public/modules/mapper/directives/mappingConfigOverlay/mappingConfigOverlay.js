@@ -78,7 +78,7 @@
                     dvm.recordsConfig = {
                         pageIndex: 0,
                         sortOption: _.find(dvm.cm.sortOptions, {field: prefixes.dcterms + 'title', ascending: true}),
-                        recordType: prefixes.catalog + 'OntologyRecord',
+                        recordType: prefixes.ontologyEditor + 'OntologyRecord',
                         limit: 10,
                         searchText: ''
                     };
@@ -88,7 +88,7 @@
                         prev: ''
                     };
                     dvm.records = [];
-                    dvm.selectedRecord = angular.copy(_.get(dvm.state.mapping, 'record'));
+                    dvm.selectedRecord = angular.copy(_.get(dvm.state.mapping, 'ontology'));
                     dvm.selectedVersion = 'latest';
                     dvm.selectedOntologyState = undefined;
                     dvm.classes = [];
@@ -100,16 +100,15 @@
                         var versionObj = {};
                         dvm.cm.getRecordMasterBranch(dvm.selectedRecord['@id'], dvm.cm.localCatalog['@id']).then(branch => {
                             stateObj.branchId = branch['@id'];
-                            return dvm.cm.getBranchHeadCommit(branch['@id'], dvm.selectedRecord['@id'], dvm.cm.localCatalog['@id']);
-                        }, $q.reject).then(commit => {
-                            versionObj.commitId = commit.commit['@id'];
                             versionObj.ontologies = dvm.state.sourceOntologies;
                             versionObj.classes = dvm.state.getClasses(versionObj.ontologies);
                             dvm.classes = versionObj.classes;
-                            if (_.get(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld), 'commitId') === versionObj.commitId) {
-                                stateObj.latest = versionObj;
+                            var latestCommitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
+                            var savedCommitId = _.get(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld), 'commitId');
+                            if (savedCommitId === latestCommitId) {
+                                stateObj.latest = _.set(versionObj, 'commitId', latestCommitId);
                             } else {
-                                stateObj.saved = versionObj;
+                                stateObj.saved = _.set(versionObj, 'commitId', savedCommitId);
                                 dvm.selectedVersion = 'saved';
                             }
                             dvm.ontologyStates.push(stateObj);
@@ -119,39 +118,37 @@
 
                     dvm.getRecords = function() {
                         dvm.recordsConfig.pageIndex = 0;
-                        dvm.cm.getRecords(dvm.cm.localCatalog['@id'], dvm.recordsConfig).then(parseRecordResults, onError);
+                        dvm.cm.getRecords(dvm.cm.localCatalog['@id'], dvm.recordsConfig).then(parseRecordResults, onRecordsError);
                     }
                     dvm.getRecordPage = function(direction) {
                         if (direction === 'prev') {
                             dvm.util.getResultsPage(dvm.links.prev).then(response => {
                                 dvm.recordsConfig.pageIndex -= 1;
                                 parseRecordResults(response);
-                            }, onError);
+                            }, onRecordsError);
                         } else {
                             dvm.util.getResultsPage(dvm.links.next).then(response => {
                                 dvm.recordsConfig.pageIndex += 1;
                                 parseRecordResults(response);
-                            }, onError);
+                            }, onRecordsError);
                         }
                     }
                     dvm.selectOntology = function(record) {
                         dvm.selectedRecord = record;
                         var ontologyState = _.find(dvm.ontologyStates, {recordId: dvm.selectedRecord['@id']});
-                        if (ontologyState) {
+                        if (ontologyState && !_.isEqual(ontologyState, dvm.selectedOntologyState)) {
                             dvm.selectedOntologyState = ontologyState;
                             dvm.selectedVersion = 'latest';
                             dvm.classes = dvm.selectedOntologyState.latest.classes;
                             dvm.errorMessage = '';
-                        } else {
+                        } else if (!ontologyState) {
                             ontologyState = {
                                 recordId: dvm.selectedRecord['@id']
                             };
                             var versionObj = {};
                             dvm.cm.getRecordMasterBranch(dvm.selectedRecord['@id'], dvm.cm.localCatalog['@id']).then(branch => {
                                 ontologyState.branchId = branch['@id'];
-                                return dvm.cm.getBranchHeadCommit(branch['@id'], dvm.selectedRecord['@id'], dvm.cm.localCatalog['@id']);
-                            }, $q.reject).then(commit => {
-                                versionObj.commitId = commit.commit['@id'];
+                                versionObj.commitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
                                 var ontologyInfo = {
                                     recordId: dvm.selectedRecord['@id'],
                                     branchId: ontologyState.branchId,
@@ -183,8 +180,8 @@
                             } else {
                                 var versionObj = {};
                                 if (dvm.selectedVersion === 'latest') {
-                                    dvm.cm.getBranchHeadCommit(dvm.selectedOntologyState.branchId, dvm.selectedOntologyState.recordId, dvm.cm.localCatalog['@id']).then(commit => {
-                                        versionObj.commitId = commit.commit['@id'];
+                                    dvm.cm.getRecordBranch(dvm.selectedOntologyState.branchId, dvm.selectedOntologyState.recordId, dvm.cm.localCatalog['@id']).then(branch => {
+                                        versionObj.commitId = dvm.util.getPropertyId(branch, prefixes.catalog + 'head');
                                         var ontologyInfo = {
                                             recordId: dvm.selectedOntologyState.recordId,
                                             branchId: dvm.selectedOntologyState.branchId,
@@ -230,28 +227,30 @@
                             branchId: dvm.selectedOntologyState.branchId,
                             commitId: dvm.selectedOntologyState[dvm.selectedVersion].commitId
                         };
-                        if (!_.isEqual(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld), selectedOntologyInfo)) {
+                        var originalOntologyInfo = dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld);
+                        if (!_.isEqual(originalOntologyInfo, selectedOntologyInfo)) {
                             dvm.state.sourceOntologies = dvm.selectedOntologyState[dvm.selectedVersion].ontologies;
                             var incompatibleEntities = dvm.mm.findIncompatibleMappings(dvm.state.mapping.jsonld, dvm.state.sourceOntologies);
                             _.forEach(incompatibleEntities, entity => {
                                 if (_.find(dvm.state.mapping.jsonld, {'@id': entity['@id']})) {
                                     if (dvm.mm.isPropertyMapping(entity)) {
                                         var parentClassMapping = dvm.mm.isDataMapping(entity) ? dvm.mm.findClassWithDataMapping(dvm.state.mapping.jsonld, entity['@id']) : dvm.mm.findClassWithObjectMapping(dvm.state.mapping.jsonld, entity['@id']);
-                                        dvm.mm.removeProp(dvm.state.mapping.jsonld, parentClassMapping['@id'], entity['@id']);
-                                        _.remove(dvm.state.invalidProps, {'@id': entity['@id']});
+                                        dvm.state.deleteProp(entity['@id'], parentClassMapping['@id']);
                                     } else if (dvm.mm.isClassMapping(entity)) {
-                                        dvm.mm.removeClass(dvm.state.mapping.jsonld, entity['@id']);
-                                        dvm.state.removeAvailableProps(entity['@id']);
+                                        dvm.state.deleteClass(entity['@id']);
                                     }
                                 }
                             });
                             dvm.mm.setSourceOntologyInfo(dvm.state.mapping.jsonld, selectedOntologyInfo.recordId, selectedOntologyInfo.branchId, selectedOntologyInfo.commitId);
-                            dvm.state.mapping.record = dvm.selectedRecord;
+                            var mappingId = dvm.mm.getMappingEntity(dvm.state.mapping.jsonld)['@id'];
+                            dvm.state.changeProp(mappingId, prefixes.delim + 'sourceRecord', selectedOntologyInfo.recordId, originalOntologyInfo.recordId);
+                            dvm.state.changeProp(mappingId, prefixes.delim + 'sourceBranch', selectedOntologyInfo.branchId, originalOntologyInfo.branchId);
+                            dvm.state.changeProp(mappingId, prefixes.delim + 'sourceCommit', selectedOntologyInfo.commitId, originalOntologyInfo.commitId);
+                            dvm.state.mapping.ontology = dvm.selectedRecord;
                             dvm.state.resetEdit();
                             var classMappings = dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld);
                             _.forEach(classMappings, classMapping => dvm.state.setAvailableProps(classMapping['@id']));
-                            dvm.state.availableClasses = _.filter(dvm.classes, clazz => !_.find(classMappings, classMapping => dvm.mm.getClassIdByMapping(classMapping) === clazz['@id']));
-                            dvm.state.changedMapping = true;
+                            dvm.state.availableClasses = _.filter(dvm.classes, clazz => !_.find(classMappings, classMapping => dvm.mm.getClassIdByMapping(classMapping) === clazz.classObj['@id']));
                         }
 
                         dvm.state.displayMappingConfigOverlay = false;
@@ -269,10 +268,16 @@
                         var links = dvm.util.parseLinks(_.get(headers, 'link', ''));
                         dvm.links.prev = _.get(links, 'prev', '');
                         dvm.links.next = _.get(links, 'next', '');
-                        dvm.errorMessage = '';
+                        dvm.recordsErrorMessage = '';
                     }
-                    function onError(errorMessage) {
-                        dvm.errorMessage = errorMessage;
+                    function onError() {
+                        dvm.errorMessage = 'Error retrieving ontology';
+                        dvm.selectedRecord = undefined;
+                        dvm.selectedOntologyState = undefined;
+                        dvm.classes = [];
+                    }
+                    function onRecordsError() {
+                        dvm.recordsErrorMessage = 'Error retrieving ontologies';
                     }
 
                     dvm.getRecords();

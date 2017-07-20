@@ -27,9 +27,9 @@
         .module('selectedDetails', [])
         .directive('selectedDetails', selectedDetails);
 
-        selectedDetails.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService'];
+        selectedDetails.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'manchesterConverterService'];
 
-        function selectedDetails($filter, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService) {
+        function selectedDetails($filter, ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, manchesterConverterService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,12 +38,21 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var mc = manchesterConverterService;
                     var ontoUtils = ontologyUtilsManagerService;
                     dvm.os = ontologyStateService;
                     dvm.om = ontologyManagerService;
 
                     dvm.getTypes = function() {
-                        return _.join(_.orderBy(_.map(_.get(dvm.os.selected, '@type', []), $filter('prefixation'))), ', ');
+                        return _.join(_.orderBy(
+                                _.map(_.get(dvm.os.listItem.selected, '@type', []), t => { 
+                                    if (dvm.om.isBlankNodeId(t)) {
+                                        return mc.jsonldToManchester(t, dvm.os.listItem.ontology);
+                                    } else {
+                                        return $filter('prefixation')(t);
+                                    }
+                                })
+                        ), ', ');
                     }
 
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {

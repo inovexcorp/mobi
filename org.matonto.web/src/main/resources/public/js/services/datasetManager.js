@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+/* global _ */
+
 (function() {
     'use strict';
 
@@ -39,18 +41,34 @@
          * @requires $http
          * @requires $q
          * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
+         * @requires discoverState.service:discoverStateService
          *
          * @description
          * `datasetManagerService` is a service that provides access to the MatOnto Dataset REST endpoints.
          */
         .service('datasetManagerService', datasetManagerService);
 
-        datasetManagerService.$inject = ['$http', '$q', 'utilService'];
+        datasetManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'discoverStateService', 'catalogManagerService'];
 
-        function datasetManagerService($http, $q, utilService) {
+        function datasetManagerService($http, $q, utilService, prefixes, discoverStateService, catalogManagerService) {
             var self = this,
                 util = utilService,
+                ds = discoverStateService,
+                cm = catalogManagerService,
                 prefix = '/matontorest/datasets';
+
+            /**
+             * @ngdoc property
+             * @name datasetRecords
+             * @propertyOf datasetManager.service:datasetManagerService
+             * @type {Object[]}
+             * 
+             * @description
+             * 'datasetRecords' holds an array of dataset record objects which contain properties for the metadata
+             * associated with that record.
+             */
+            self.datasetRecords = [];
 
             /**
              * @ngdoc method
@@ -73,16 +91,14 @@
              * error message
              */
             self.getDatasetRecords = function(paginatedConfig) {
-                var deferred = $q.defer(),
-                    config = {
+                var config = {
                         params: util.paginatedConfigToParams(paginatedConfig)
                     };
                 if (_.get(paginatedConfig, 'searchText')) {
                     config.params.searchText = paginatedConfig.searchText;
                 }
-                $http.get(prefix, config)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix, config)
+                    .then($q.when, util.rejectError);
             }
 
             /**
@@ -107,8 +123,7 @@
              * error message
              */
             self.createDatasetRecord = function(recordConfig) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         headers: {
@@ -127,9 +142,15 @@
                     fd.append('keywords', _.join(recordConfig.keywords, ','));
                 }
                 _.forEach(_.get(recordConfig, 'ontologies', []), id => fd.append('ontologies', id));
-                $http.post(prefix, fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix, fd, config)
+                    .then(response => {
+                        self.datasetRecords.push({
+                            '@id': response.data,
+                            [prefixes.dcterms + 'title']: [{'@value': recordConfig.title}]
+                        });
+                        self.datasetRecords = _.orderBy(self.datasetRecords, record => util.getDctermsValue(record, 'title'));
+                        return $q.when(response.data);
+                    }, util.rejectError);
             }
 
             /**
@@ -148,11 +169,12 @@
              * @return {Promise} A Promise that resolves if the delete was successful; rejects with an error message otherwise
              */
             self.deleteDatasetRecord = function(datasetRecordIRI, force = false) {
-                var deferred = $q.defer(),
-                    config = {params: {force}};
-                $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI), config)
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                var config = {params: {force}};
+                return $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI), config)
+                    .then(() => {
+                        ds.cleanUpOnDatasetDelete(datasetRecordIRI);
+                        _.remove(self.datasetRecords, {'@id': datasetRecordIRI});
+                    }, util.rejectError);
             }
 
             /**
@@ -171,11 +193,54 @@
              * @return {Promise} A Promise that resolves if the delete was successful; rejects with an error message otherwise
              */
             self.clearDatasetRecord = function(datasetRecordIRI, force = false) {
-                var deferred = $q.defer(),
-                    config = {params: {force}};
-                $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI) + '/data', config)
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                var config = {params: {force}};
+                return $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI) + '/data', config)
+                    .then(() => {
+                        ds.cleanUpOnDatasetClear(datasetRecordIRI);
+                    }, util.rejectError);
+            }
+            
+            /**
+             * @ngdoc method
+             * @name updateDatasetRecord
+             * @methodOf datasetManager.service:datasetManagerService
+             *
+             * @description
+             * Calls the updateRecord method of the CatalogManager to update the dataset record provided in the JSON-LD. 
+             * If successful: it then updates the appropriate dataset record in datasetRecords. Returns a Promise
+             * indicating the success of the request.
+             * 
+             * @param {string} datasetRecordIRI The IRI of the DatasetRecord whose Dataset named graphs should be updated.
+             * @param {string} catalogIRI The IRI of the catalog to which the DatasetRecord belongs.
+             * @param {Object[]} jsonld An array containing the JSON-LD DatasetRecord with it's associated Ontology information.
+             * @return {Promise} A Promise that resolves if the update was successful; rejects with an error message otherwise
+             */
+            self.updateDatasetRecord = function(datasetRecordIRI, catalogIRI, jsonld) {
+                return cm.updateRecord(datasetRecordIRI, catalogIRI, jsonld).then(() => {
+                    _.remove(self.datasetRecords, {'@id': datasetRecordIRI});
+                    self.datasetRecords.push(_.find(jsonld, {'@id': datasetRecordIRI}));
+                }, $q.reject);
+            }
+
+            /**
+             * @ngdoc method
+             * @name initialize
+             * @methodOf datasetManager.service:datasetManagerService
+             *
+             * @description
+             * Populates the 'datasetRecords' with results from the 'getDatasetRecords' method. If that method results in an error,
+             * an error toast will be displayed.
+             */
+            self.initialize = function() {
+                var paginatedConfig = {
+                    sortOption: {
+                        field: prefixes.dcterms + 'title'
+                    }
+                }
+                self.getDatasetRecords(paginatedConfig)
+                    .then(response => {
+                        self.datasetRecords = _.map(response.data, arr => _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord')));
+                    }, util.createErrorToast);
             }
         }
 })();

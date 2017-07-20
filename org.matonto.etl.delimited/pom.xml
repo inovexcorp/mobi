@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.7.1-SNAPSHOT</version>
+        <version>1.8.40-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -42,28 +42,28 @@
     <dependencies>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>persistence.utils</artifactId>
-            <version>1.6.43</version>
+            <artifactId>persistence.api</artifactId>
+            <version>1.8.14</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>persistence.api</artifactId>
-            <version>1.6.43</version>
+            <artifactId>persistence.utils</artifactId>
+            <version>1.8.34</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
-            <version>1.6.43</version>
+            <version>1.8.28</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rest.util</artifactId>
-            <version>1.6.43</version>
+            <version>1.7.20</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>api</artifactId>
-            <version>1.6.43</version>
+            <version>1.7.20</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -73,12 +73,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm.ontologies</artifactId>
-            <version>1.6.43</version>
+            <version>1.7.20</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>ontology.utils</artifactId>
-            <version>1.6.43</version>
+            <artifactId>ontology.api</artifactId>
+            <version>1.8.21</version>
         </dependency>
 
         <dependency>
@@ -106,7 +106,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.6.43</version>
+            <version>1.7.20</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -36,9 +36,6 @@ import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
-import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.api.builder.OntologyIdentifier;
@@ -48,7 +45,7 @@ import org.matonto.dataset.rest.DatasetRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
-import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
@@ -70,8 +67,6 @@ public class DatasetRestImpl implements DatasetRest {
     private DatasetManager manager;
     private EngineManager engineManager;
     private CatalogManager catalogManager;
-    private OntologyRecordFactory ontologyRecordFactory;
-    private BranchFactory branchFactory;
     private SesameTransformer transformer;
     private ValueFactory vf;
     private ModelFactory mf;
@@ -89,16 +84,6 @@ public class DatasetRestImpl implements DatasetRest {
     @Reference
     public void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
-    }
-
-    @Reference
-    public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
-        this.ontologyRecordFactory = ontologyRecordFactory;
-    }
-
-    @Reference
-    public void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
     }
 
     @Reference
@@ -148,7 +133,7 @@ public class DatasetRestImpl implements DatasetRest {
             }
             return response.build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -172,16 +157,16 @@ public class DatasetRestImpl implements DatasetRest {
         if (keywords != null && !keywords.isEmpty()) {
             builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
         }
-        if (ontologies != null) {
-            ontologies.forEach(formDataBodyPart -> builder.ontology(
-                    getOntologyIdentifer(vf.createIRI(formDataBodyPart.getValue()))));
-        }
         try {
+            if (ontologies != null) {
+                ontologies.forEach(formDataBodyPart -> builder.ontology(
+                        getOntologyIdentifer(vf.createIRI(formDataBodyPart.getValue()))));
+            }
             DatasetRecord record = manager.createDataset(builder.build());
             return Response.status(201).entity(record.getResource().stringValue()).build();
-        } catch (IllegalArgumentException | IllegalStateException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (Exception ex) {
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MatOntoException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -196,7 +181,7 @@ public class DatasetRestImpl implements DatasetRest {
                 manager.safeDeleteDataset(recordIRI);
             }
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (Exception ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -213,7 +198,7 @@ public class DatasetRestImpl implements DatasetRest {
                 manager.safeClearDataset(recordIRI);
             }
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (Exception ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -221,19 +206,11 @@ public class DatasetRestImpl implements DatasetRest {
     }
 
     private OntologyIdentifier getOntologyIdentifer(Resource recordId) {
-        OntologyRecord record = catalogManager.getRecord(catalogManager.getLocalCatalogIRI(), recordId,
-                ontologyRecordFactory).orElseThrow(() ->
-                ErrorUtils.sendError("OntologyRecord could not be retrieved", Response.Status.BAD_REQUEST));
-        Resource branchId = record.getMasterBranch_resource().orElseThrow(() ->
-                ErrorUtils.sendError("The Master Branch could not be found on this record.",
-                        Response.Status.INTERNAL_SERVER_ERROR));
-        Branch masterBranch = catalogManager.getBranch(branchId, branchFactory).orElseThrow(() ->
-                ErrorUtils.sendError("The Master Branch could not be retrieved.",
-                        Response.Status.INTERNAL_SERVER_ERROR));
+        Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
         Resource commitId = masterBranch.getHead_resource().orElseThrow(() ->
-                ErrorUtils.sendError("There is no head Commit associated with this Branch.",
+                ErrorUtils.sendError("Branch " + masterBranch.getResource() + " has no head Commit set.",
                         Response.Status.INTERNAL_SERVER_ERROR));
-        return new OntologyIdentifier(recordId, branchId, commitId, vf, mf);
+        return new OntologyIdentifier(recordId, masterBranch.getResource(), commitId, vf, mf);
     }
 
     private Model removeContext(Model model) {

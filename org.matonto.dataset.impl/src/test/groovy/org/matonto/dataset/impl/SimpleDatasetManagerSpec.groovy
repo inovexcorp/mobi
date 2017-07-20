@@ -290,33 +290,6 @@ class SimpleDatasetManagerSpec extends Specification {
         results.get().getDataset_resource().get() == datasetIri
     }
 
-    def "getDatasetRecord(dataset, repo) returns an empty Optional when no DatasetRecord points to that Dataset"() {
-        setup:
-        def repo = "system"
-        def datasetIri = vf.createIRI("http://matonto.org/dataset/test")
-        def dataset = dsFactory.createNew(datasetIri)
-        def recordIri = vf.createIRI("http://matonto.org/record/dataset/test")
-        def record = dsRecFactory.createNew(recordIri)
-        record.setDataset(dataset)
-        record.setRepository(repo)
-
-        resultsMock.hasNext() >>> [true, true, false]
-        resultsMock.next() >>> [
-                vf.createStatement(recordIri, datasetPred, datasetIri),
-                vf.createStatement(recordIri, repoPred, vf.createLiteral("someOtherRepo"))
-        ]
-        1 * catalogManagerMock.getRecord(!null, recordIri, !null) >> Optional.of(record)
-
-        when:
-        def results = service.getDatasetRecord(datasetIri, repo)
-
-        then:
-        results != Optional.empty()
-        results.get().getResource() == recordIri
-        results.get().getRepository().get() == "system"
-        results.get().getDataset_resource().get() == datasetIri
-    }
-
     def "getDatasetRecord(record) returns the correct DatasetRecord"() {
         setup:
         def repo = "system"
@@ -566,7 +539,7 @@ class SimpleDatasetManagerSpec extends Specification {
 
         then:
         0 * catalogManagerMock.addRecord(localCatalog, record)
-        thrown(IllegalStateException)
+        thrown(IllegalArgumentException)
     }
 
     def "createDataset throws an exception if the dataset repository does not exist"() {

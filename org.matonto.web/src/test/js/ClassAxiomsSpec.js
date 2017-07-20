@@ -21,14 +21,7 @@
  * #L%
  */
 describe('Class Axioms directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyStateSvc,
-        propertyManagerSvc,
-        resObj,
-        prefixes;
+    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, resObj, prefixes, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -40,16 +33,17 @@ describe('Class Axioms directive', function() {
         mockPrefixes();
         mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             propertyManagerSvc = _propertyManagerService_;
             resObj = _responseObj_;
             prefixes = _prefixes_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
 
-        ontologyStateSvc.selected = {
+        ontologyStateSvc.listItem.selected = {
             'axiom1': [{'@value': 'value1'}],
             'axiom2': [{'@value': 'value2'}]
         };
@@ -65,7 +59,7 @@ describe('Class Axioms directive', function() {
         });
         it('depending on how many axioms there are', function() {
             expect(element.find('property-values').length).toBe(2);
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(element.find('property-values').length).toBe(0);
         });
@@ -86,7 +80,12 @@ describe('Class Axioms directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            ontologyStateSvc.selected.matonto = {originalIRI: ''};
+            ontologyStateSvc.listItem.selected = {
+                '@id': 'classId',
+                matonto: {
+                    originalIRI: ''
+                }
+            };
         });
         it('should open the remove overlay', function() {
             controller.openRemoveOverlay('key', 0);
@@ -96,7 +95,7 @@ describe('Class Axioms directive', function() {
         });
         describe('should update the hierarchy', function() {
             beforeEach(function() {
-                this.values = [{}];
+                this.values = [{localName: 'local', namespace: 'namespace/'}];
                 this.axiom = {};
             });
             it('unless the axiom is not subClassOf', function() {
@@ -106,11 +105,13 @@ describe('Class Axioms directive', function() {
             });
             it('if the axiom is subClassOf', function() {
                 this.axiom.localName = 'subClassOf';
+                resObj.getItemIri.and.returnValue('iri');
                 controller.updateHierarchy(this.axiom, this.values);
-                expect(ontologyStateSvc.addEntityToHierarchy.calls.count()).toBe(this.values.length);
                 _.forEach(this.values, function(value) {
                     expect(resObj.getItemIri).toHaveBeenCalledWith(value);
                 });
+                expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('classId', ['iri']);
+                expect(ontoUtils.updateflatIndividualsHierarchy).toHaveBeenCalledWith(['iri']);
             });
         });
         describe('should remove a class from the hierarchy', function() {
@@ -126,8 +127,8 @@ describe('Class Axioms directive', function() {
                 controller.key = prefixes.rdfs + 'subClassOf';
                 ontologyStateSvc.flattenHierarchy.and.returnValue([{entityIRI: 'new'}]);
                 controller.removeFromHierarchy(this.axiomObject);
-                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.selected.matonto.originalIRI, this.axiomObject['@id'], ontologyStateSvc.listItem.classIndex);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.selected['@id'], this.axiomObject['@id'], ontologyStateSvc.listItem.classIndex);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.flatClassHierarchy).toEqual([{entityIRI: 'new'}]);
             });
         });

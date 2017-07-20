@@ -1,0 +1,78 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.class-cards {
+    .rows-container {
+        overflow-y: auto;
+        
+        .row {
+            margin: 0;
+            padding-left: 7.5px;
+            padding-right: 7.5px;
+            
+            .card-container {
+                height: auto;
+                padding: 15px 7.5px;
+                
+                .card {
+                    height: auto;
+                    margin: 0;
+                    
+                    .card-header {
+                        display: flex;
+                        
+                        .text {
+                            flex: 1;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                            width: 0;
+                        }
+                        
+                        .badge {
+                            background-color: $brand-primary;
+                            border-radius: 15px;
+                            font-size: 16px;
+                            line-height: inherit;
+                            min-width: 30px;
+                        }
+                    }
+                    
+                    .overview {
+                        display: -webkit-box;
+                        height: 60px;
+                        line-height: 20px;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        -webkit-box-orient: vertical;
+                        -webkit-line-clamp: 3;
+                    }
+                    
+                    p {
+                        margin-bottom: 5px;
+                    }
+                    
+                    em {
+                        display: block;
+                        
+                        .example {
+                            &:after {
+                                content: ', ';
+                            }
+    
+                            &:last-child:after {
+                                content: '';
+                            }
+                        }
+                    }
+                    
+                    .text-muted {
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                    }
+                }
+            }
+        }
+    }
+}

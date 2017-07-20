@@ -300,7 +300,6 @@
                     };
                 fd.append('type', recordConfig.recordType);
                 fd.append('title', recordConfig.title);
-                fd.append('identifier', recordConfig.identifier);
                 if (_.has(recordConfig, 'description')) {
                     fd.append('description', recordConfig.description);
                 }

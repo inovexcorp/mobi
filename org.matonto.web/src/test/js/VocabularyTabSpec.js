@@ -49,9 +49,9 @@ describe('Vocabulary Tab directive', function() {
             expect(element.find('tabset').length).toBe(1);
         });
         it('with tabs', function() {
-            expect(element.find('tab').length).toBe(6);
+            expect(element.find('tab').length).toBe(7);
         });
-        _.forEach(['ontology-button-stack', 'project-tab', 'concepts-tab', 'search-tab', 'saved-changes-tab', 'merge-tab', 'commits-tab'], function(tag) {
+        _.forEach(['ontology-button-stack', 'project-tab', 'concept-schemes-tab', 'concepts-tab', 'search-tab', 'saved-changes-tab', 'merge-tab', 'commits-tab'], function(tag) {
             it('with a ' + tag, function() {
                 expect(element.find(tag).length).toBe(1);
             });

@@ -46,13 +46,13 @@
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
                     dvm.concepts = [];
-                    dvm.conceptList = dvm.om.getConceptIRIs(dvm.os.getOntologiesArray());
-                    dvm.schemeList = dvm.om.getConceptSchemeIRIs(dvm.os.getOntologiesArray());
+                    dvm.conceptList = dvm.om.getConceptIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConcepts);
+                    dvm.schemeList = dvm.om.getConceptSchemeIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConceptSchemes);
 
                     dvm.addRelationship = function() {
                         var axiom = dvm.ro.getItemIri(dvm.relationship);
-                        dvm.os.selected[axiom] = _.union(_.get(dvm.os.selected, axiom, []), dvm.values);
-                        dvm.os.addToAdditions(dvm.os.listItem.recordId, {'@id': dvm.os.selected['@id'],
+                        dvm.os.listItem.selected[axiom] = _.union(_.get(dvm.os.listItem.selected, axiom, []), dvm.values);
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'],
                             [axiom]: dvm.values});
                         dvm.os.showRelationshipOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();

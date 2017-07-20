@@ -122,6 +122,15 @@ describe('Create Concept Overlay directive', function() {
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
+        it('depending on whether the concept IRI already exists in the ontology.', function() {
+            ontoUtils.checkIri.and.returnValue(true);
+            
+            scope.$digest();
+            
+            var disabled = element.querySelectorAll('[disabled]');
+            expect(disabled.length).toBe(1);
+            expect(angular.element(disabled[0]).text()).toBe('Create');
+        });
     });
     describe('controller methods', function() {
         describe('should update the concept id', function() {
@@ -159,19 +168,25 @@ describe('Create Concept Overlay directive', function() {
                 return _.get(schemes, schemeId);
             });
             controller.concept = {'@id': 'concept'};
+            var json = {};
+            json[prefixes.skos + 'hasTopConcept'] = [{'@id': 'concept'}];
 
             controller.create();
             expect(schemes.scheme1[prefixes.skos + 'hasTopConcept'].length).toBe(2);
-            expect(schemes.scheme1.matonto.unsaved).toBe(true);
             expect(schemes.scheme2[prefixes.skos + 'hasTopConcept'].length).toBe(1);
-            expect(schemes.scheme2.matonto.unsaved).toBe(true);
-            expect(controller.concept.matonto.originalIRI).toEqual(controller.concept['@id']);
+            _.forEach(controller.schemes, function(scheme) {
+                expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, 'concept', ontologyStateSvc.listItem.conceptSchemeIndex, scheme['@id']);
+                json['@id'] = scheme['@id'];
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, json);
+            });
+            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+            expect(ontologyStateSvc.listItem.flatConceptSchemeHierarchy).toEqual([{prop: 'entity'}]);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.concept, controller.language);
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.concept);
             expect(ontologyStateSvc.listItem.conceptHierarchy).toContain({entityIRI: controller.concept['@id']});
-            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, ontologyStateSvc.listItem.recordId);
+            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
             expect(ontologyStateSvc.listItem.flatConceptHierarchy).toEqual([{prop: 'entity'}]);
-            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, controller.concept);
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, controller.concept);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.concept['@id']);
             expect(ontologyStateSvc.showCreateConceptOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

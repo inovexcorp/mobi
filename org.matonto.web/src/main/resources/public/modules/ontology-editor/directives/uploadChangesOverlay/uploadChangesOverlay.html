@@ -1,0 +1,36 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="upload-changes-overlay overlay">
+    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
+        <h6>Upload Ontology Changes</h6>
+        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+        <div class="form-group">
+            <custom-label>Select a file</custom-label>
+            <file-input id="file" name="file" ng-model="dvm.file" accept=".owl,.ttl,.xml,.jsonld,.owx,.rdf" required></file-input>
+        </div>
+        <div class="btn-container clearfix">
+            <button type="button" class="btn btn-primary pull-right" ng-click="dvm.upload()" ng-disabled="dvm.form.$invalid">Upload</button>
+            <button type="button" class="btn btn-default pull-right" ng-click="dvm.closeOverlay()">Cancel</button>
+        </div>
+    </form>
+</div>

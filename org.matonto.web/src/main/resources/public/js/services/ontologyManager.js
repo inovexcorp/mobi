@@ -200,8 +200,7 @@
              * @returns {Promise} A promise indicating whether the ontology was persisted.
              */
             self.uploadFile = function(file, title, description, keywords) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         headers: {
@@ -216,10 +215,41 @@
                 if (keywords) {
                     fd.append('keywords', keywords);
                 }
-                $http.post(prefix, fd, config)
-                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
-
-                return deferred.promise;
+                return $http.post(prefix, fd, config)
+                    .then(response => response.data, util.rejectError);
+            }
+            /**
+             * @ngdoc method
+             * @name uploadFile
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the PUT /matontorest/ontologies/{recordId} endpoint which will return a new in-progress commit 
+             * object to be applied to the ontology.
+             *
+             * @param {File} file The updated ontology file.
+             * @param {string} the ontology record ID.
+             * @param {string} the ontology branch ID.
+             * @param {string} the ontology commit ID.
+             * @returns {Promise} A promise with the new in-progress commit to be applied or error message.
+             */
+            self.uploadChangesFile = function(file, recordId, branchId, commitId) {
+                    var fd = new FormData(),
+                    config = {
+                        transformRequest: angular.identity,
+                        headers: {
+                            'Content-Type': undefined,
+                            'Accept': 'application/json'
+                        },
+                        params: {
+                            branchId,
+                            commitId
+                        }
+                    };
+                fd.append('file', file);
+                
+                return $http.put(prefix + '/' + encodeURIComponent(recordId), fd, config)
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -497,13 +527,13 @@
             }
             /**
              * @ngdoc method
-             * @name getObjectPropertyHierarchies
+             * @name getConceptHierarchies
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
              * Calls the GET /matontorest/ontologies/{recordId}/concept-hierarchies endpoint and retrieves an object
-             * with the hierarchy of concept schemes and concepts in the ontology organized by the inScheme and
-             * hasTopConcept properties and with an index of each IRI and its parent IRIs.
+             * with the hierarchy of concepts in the ontology organized by the broader and narrower properties and with
+             * an index of each IRI and its parent IRIs.
              *
              * @param {string} recordId The id of the Record the Branch should be part of
              * @param {string} branchId The id of the Branch with the specified Commit
@@ -515,6 +545,29 @@
                 var deferred = $q.defer();
                 var config = { params: { branchId, commitId } };
                 $http.get(prefix + '/' + encodeURIComponent(recordId) + '/concept-hierarchies', config)
+                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
+                return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name getConceptSchemeHierarchies
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/ontologies/{recordId}/concept-scheme-hierarchies endpoint and retrieves an object
+             * with the hierarchy of concept schemes and concepts in the ontology organized by the inScheme, hasTopConcept,
+             * and topConceptOf properties and with an index of each IRI and its parent IRIs.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @return {Promise} A promise with an object containing the concept hierarchy and an index of IRIs to
+             * parent IRIs
+             */
+            self.getConceptSchemeHierarchies = function(recordId, branchId, commitId) {
+                var deferred = $q.defer();
+                var config = { params: { branchId, commitId } };
+                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/concept-scheme-hierarchies', config)
                     .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
                 return deferred.promise;
             }
@@ -610,6 +663,21 @@
             }
             /**
              * @ngdoc method
+             * @name isDeprecated
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Checks if the provided entity is deprecated by looking for the owl:deprecated annotation.
+             *
+             * @param {Object} entity The entity you want to check.
+             * @return {boolean} Returns true if the owl:deprecated value is "true" or "1", otherwise returns false.
+             */
+            self.isDeprecated = function(entity) {
+                var deprecated = util.getPropertyValue(entity, prefixes.owl + 'deprecated');
+                return deprecated === 'true' || deprecated === '1';
+            }
+            /**
+             * @ngdoc method
              * @name isOntology
              * @methodOf ontologyManager.service:ontologyManagerService
              *
@@ -664,7 +732,21 @@
              */
             self.getOntologyIRI = function(ontology) {
                 var entity = self.getOntologyEntity(ontology);
-                return _.get(entity, '@id', _.get(entity, 'matonto.originalIRI', _.get(entity, 'matonto.anonymous', '')));
+                return _.get(entity, '@id', _.get(entity, 'matonto.anonymous', ''));
+            }
+            /**
+             * @ngdoc method
+             * @name isDatatype
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             *Checks if the provided entity is an rdfs:Datatype. Returns a booelan.
+             *
+             * @param {Object} entity The entity you want to check
+             * @return {boolean} Returns true if it is an rdfs:Datatype entity, otherwise returns false.
+             */
+            self.isDatatype = function(entity) {
+                return _.includes(_.get(entity, '@type', []), prefixes.rdfs + 'Datatype');
             }
             /**
              * @ngdoc method
@@ -728,7 +810,7 @@
              * @returns {string[]} An array of all owl:Class entity IRI strings within the ontologies.
              */
             self.getClassIRIs = function(ontologies) {
-                return _.map(self.getClasses(ontologies), 'matonto.originalIRI');
+                return _.map(self.getClasses(ontologies), '@id');
             }
             /**
              * @ngdoc method
@@ -781,7 +863,7 @@
              * @returns {string[]} Returns an array of all the property IRIs associated with the provided class IRI.
              */
             self.getClassPropertyIRIs = function(ontologies, classIRI) {
-                return _.map(self.getClassProperties(ontologies, classIRI), 'matonto.originalIRI');
+                return _.map(self.getClassProperties(ontologies, classIRI), '@id');
             }
             /**
              * @ngdoc method
@@ -845,7 +927,7 @@
              * @returns {string[]} An array of all owl:ObjectProperty entity IRI strings within the ontologies.
              */
             self.getObjectPropertyIRIs = function(ontologies) {
-                return _.map(self.getObjectProperties(ontologies), 'matonto.originalIRI');
+                return _.map(self.getObjectProperties(ontologies), '@id');
             }
             /**
              * @ngdoc method
@@ -911,7 +993,7 @@
              * @returns {string[]} An array of all owl:DatatypeProperty entity IRI strings within the ontologies.
              */
             self.getDataTypePropertyIRIs = function(ontologies) {
-                return _.map(self.getDataTypeProperties(ontologies), 'matonto.originalIRI');
+                return _.map(self.getDataTypeProperties(ontologies),'@id');
             }
             /**
              * @ngdoc method
@@ -978,7 +1060,7 @@
              * @returns {string[]} Returns an array of property IRIs not associated with a class.
              */
             self.getNoDomainPropertyIRIs = function(ontologies) {
-                return _.map(self.getNoDomainProperties(ontologies), 'matonto.originalIRI');
+                return _.map(self.getNoDomainProperties(ontologies), '@id');
             }
             /**
              * @ngdoc method
@@ -1042,7 +1124,7 @@
              * @returns {string[]} An array of all owl:AnnotationProperty entity IRI strings within the ontologies.
              */
             self.getAnnotationIRIs = function(ontologies) {
-                return _.map(self.getAnnotations(ontologies), 'matonto.originalIRI');
+                return _.map(self.getAnnotations(ontologies), '@id');
             }
             /**
              * @ngdoc method
@@ -1253,7 +1335,7 @@
             self.getEntity = function(ontologies, entityIRI) {
                 var retValue;
                 _.forEach(ontologies, ont => {
-                    retValue = _.find(ont, {matonto:{originalIRI: entityIRI}}) || _.find(ont, {'@id': entityIRI});
+                    retValue = _.find(ont, {'@id': entityIRI});
                     if (retValue != null) {
                         return false; //This breaks the loop. It is NOT the entire function's return value!
                     }
@@ -1316,8 +1398,9 @@
              * @param {Object} entity The entity you want to check.
              * @returns {boolean} Returns true if it is an skos:Concept entity, otherwise returns false.
              */
-            self.isConcept = function(entity) {
-                return _.includes(_.get(entity, '@type', []), prefixes.skos + 'Concept');
+            self.isConcept = function(entity, derivedConcepts = []) {
+                    return (_.includes(_.get(entity, '@type', []), prefixes.skos + 'Concept')
+                        || _.intersection(_.get(entity, '@type', []), derivedConcepts).length > 0);
             }
             /**
              * @ngdoc method
@@ -1331,9 +1414,9 @@
              * @returns {boolean} Returns true if there are any skos:Concept entities in the ontologies, otherwise
              * returns false.
              */
-            self.hasConcepts = function(ontologies) {
+            self.hasConcepts = function(ontologies, derivedConcepts) {
                 return _.some(ontologies, ont =>
-                            _.some(ont, entity => self.isConcept(entity) && !self.isBlankNode(entity)));
+                            _.some(ont, entity => self.isConcept(entity, derivedConcepts) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -1347,11 +1430,11 @@
              * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {Object[]} An array of all skos:Concept entities within the ontologies.
              */
-            self.getConcepts = function(ontologies) {
+            self.getConcepts = function(ontologies, derivedConcepts) {
                 var concepts = [];
                 _.forEach(ontologies, ont => {
                     concepts.push.apply(concepts,
-                        _.filter(ont, entity => self.isConcept(entity) && !self.isBlankNode(entity)));
+                        _.filter(ont, entity => self.isConcept(entity, derivedConcepts) && !self.isBlankNode(entity)));
                 });
                 return concepts;
             }
@@ -1367,8 +1450,8 @@
              * @param {Object[]} ontologies The array of ontologies you want to check.
              * @returns {string[]} An array of all skos:Concept entity IRI strings within the ontologies.
              */
-            self.getConceptIRIs = function(ontologies) {
-                return _.map(self.getConcepts(ontologies), 'matonto.originalIRI');
+            self.getConceptIRIs = function(ontologies, derivedConcepts) {
+                return _.map(self.getConcepts(ontologies, derivedConcepts), '@id');
             }
             /**
              * @ngdoc method
@@ -1381,8 +1464,9 @@
              * @param {Object} entity The entity you want to check.
              * @returns {boolean} Returns true if it is an skos:ConceptScheme entity, otherwise returns false.
              */
-            self.isConceptScheme = function(entity) {
-                return _.includes(_.get(entity, '@type', []), prefixes.skos + 'ConceptScheme');
+            self.isConceptScheme = function(entity, derivedConceptSchemes = []) {
+                   return (_.includes(_.get(entity, '@type', []), prefixes.skos + 'ConceptScheme')
+                        || _.intersection(_.get(entity, '@type', []), derivedConceptSchemes).length > 0);
             }
             /**
              * @ngdoc method
@@ -1396,9 +1480,9 @@
              * @returns {boolean} Returns true if there are any skos:ConceptScheme entities in the ontologies, otherwise
              * returns false.
              */
-            self.hasConceptSchemes = function(ontologies) {
+            self.hasConceptSchemes = function(ontologies, derivedConceptSchemes) {
                 return _.some(ontologies, ont =>
-                            _.some(ont, entity => self.isConceptScheme(entity) && !self.isBlankNode(entity)));
+                            _.some(ont, entity => self.isConceptScheme(entity, derivedConceptSchemes) && !self.isBlankNode(entity)));
             }
             /**
              * @ngdoc method
@@ -1433,11 +1517,11 @@
              * @returns {string[]} An array of all skos:ConceptScheme entity IRI strings within the ontology.
              */
             self.getConceptSchemeIRIs = function(ontologies) {
-                return _.map(self.getConceptSchemes(ontologies), 'matonto.originalIRI');
+                return _.map(self.getConceptSchemes(ontologies), '@id');
             }
             /* Private helper functions */
             function getAllRecords(sortingOption = _.find(cm.sortOptions, {label: 'Title (desc)'})) {
-                var ontologyRecordType = prefixes.catalog + 'OntologyRecord';
+                var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
                 var paginatedConfig = {
                     pageIndex: 0,
                     limit: 100,

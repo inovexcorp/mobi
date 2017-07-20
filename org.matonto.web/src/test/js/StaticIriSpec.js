@@ -28,6 +28,7 @@ describe('Static IRI directive', function() {
         controller,
         isolatedScope,
         ontologyStateSvc,
+        ontoUtils,
         toastr;
 
     beforeEach(function() {
@@ -36,13 +37,15 @@ describe('Static IRI directive', function() {
         injectSplitIRIFilter();
         injectRegexConstant();
         mockOntologyState();
+        mockOntologyUtilsManager();
         mockToastr();
 
-        inject(function(_$compile_, _$rootScope_, _$filter_, _ontologyStateService_, _toastr_) {
+        inject(function(_$compile_, _$rootScope_, _$filter_, _ontologyStateService_, _ontologyUtilsManagerService_, _toastr_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $filter = _$filter_;
             ontologyStateSvc = _ontologyStateService_;
+            ontoUtils = _ontologyUtilsManagerService_;
             toastr = _toastr_;
         });
 
@@ -136,6 +139,36 @@ describe('Static IRI directive', function() {
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
+        it('depending on the IRI which already exists in the ontology.', function() {
+            ontoUtils.checkIri.and.returnValue(true);
+            controller = element.controller('staticIri');
+            controller.iriForm.$invalid = false;
+
+            scope.$digest();
+
+            var disabled = element.querySelectorAll(':disabled');
+            expect(disabled.length).toBe(1);
+            expect(angular.element(disabled[0]).text()).toBe('Submit');
+
+            var errorDisplays = element.find('error-display');
+            expect(errorDisplays.length).toBe(2);
+            expect(angular.element(errorDisplays[0]).text()).toBe('This IRI already exists');
+            expect(angular.element(errorDisplays[1]).text()).toBe('This IRI already exists');
+        });
+        it('depending on the IRI which does not exist in the ontology.', function() {
+            ontoUtils.checkIri.and.returnValue(false);
+            controller = element.controller('staticIri');
+            controller.iriForm.$invalid = false;
+
+            scope.$digest();
+
+            var disabled = element.querySelectorAll(':disabled');
+            expect(disabled.length).toBe(0);
+
+            var errorDisplays = element.find('error-display');
+            expect(errorDisplays.length).toBe(0);
+        });
+
     });
     describe('controller methods', function() {
         beforeEach(function() {

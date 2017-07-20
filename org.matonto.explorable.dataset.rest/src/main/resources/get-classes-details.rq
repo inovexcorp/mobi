@@ -1,0 +1,15 @@
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+
+SELECT ?example ?title ?label
+WHERE {
+    ?example a ?classIRI .
+    OPTIONAL {
+        ?example dcterms:title ?title .
+        FILTER(lang(?title) = "" || langMatches(lang(?title), "EN"))
+    }
+    OPTIONAL {
+        ?example rdfs:label ?label .
+        FILTER(lang(?label) = "" || langMatches(lang(?label), "EN"))
+    }
+} LIMIT 3

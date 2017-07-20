@@ -26,8 +26,8 @@ package org.matonto.etl.rest.impl;
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getRDFFormat;
+import static org.matonto.rest.util.RestUtils.groupedModelToString;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
-import static org.matonto.rest.util.RestUtils.modelToString;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
@@ -37,7 +37,9 @@ import com.opencsv.CSVReader;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -53,7 +55,7 @@ import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.etl.api.delimited.MappingWrapper;
 import org.matonto.etl.rest.DelimitedRest;
 import org.matonto.exception.MatOntoException;
-import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.ValueFactory;
@@ -97,7 +99,7 @@ import javax.ws.rs.core.StreamingOutput;
 public class DelimitedRestImpl implements DelimitedRest {
     private DelimitedConverter converter;
     private MappingManager mappingManager;
-    private ValueFactory factory;
+    private ValueFactory vf;
     private DatasetManager datasetManager;
     private RepositoryManager repositoryManager;
 
@@ -119,8 +121,8 @@ public class DelimitedRestImpl implements DelimitedRest {
     }
 
     @Reference
-    public void setFactory(ValueFactory factory) {
-        this.factory = factory;
+    public void setVf(ValueFactory vf) {
+        this.vf = vf;
     }
 
     @Reference
@@ -191,18 +193,18 @@ public class DelimitedRestImpl implements DelimitedRest {
         Model data = transformer.sesameModel(etlFile(fileName, () -> jsonldToModel(jsonld), containsHeaders, separator,
                 true));
 
-        return Response.ok(modelToString(data, format)).build();
+        return Response.ok(groupedModelToString(data, format)).build();
     }
 
     @Override
-    public Response etlFile(String fileName, String mappingIRI, String format, boolean containsHeaders,
+    public Response etlFile(String fileName, String mappingRecordIRI, String format, boolean containsHeaders,
                             String separator, String downloadFileName) {
-        checkStringParam(mappingIRI, "Must provide the IRI of an uploaded mapping");
+        checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
 
         // Convert the data
-        Model data = transformer.sesameModel(etlFile(fileName, () -> getUploadedMapping(mappingIRI), containsHeaders,
-                separator, false));
-        String result = modelToString(data, format);
+        Model data = transformer.sesameModel(etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI),
+                containsHeaders, separator, false));
+        String result = groupedModelToString(data, format);
 
         // Write data into a stream
         StreamingOutput stream = os -> {
@@ -224,17 +226,17 @@ public class DelimitedRestImpl implements DelimitedRest {
     }
 
     @Override
-    public Response etlFile(String fileName, String mappingIRI, String datasetRecordIRI, boolean containsHeaders,
+    public Response etlFile(String fileName, String mappingRecordIRI, String datasetRecordIRI, boolean containsHeaders,
                             String separator) {
-        checkStringParam(mappingIRI, "Must provide the IRI of an uploaded mapping");
+        checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
         checkStringParam(datasetRecordIRI, "Must provide the IRI of a dataset record");
 
         // Collect the DatasetRecord
-        DatasetRecord record = datasetManager.getDatasetRecord(factory.createIRI(datasetRecordIRI)).orElseThrow(() ->
+        DatasetRecord record = datasetManager.getDatasetRecord(vf.createIRI(datasetRecordIRI)).orElseThrow(() ->
                 ErrorUtils.sendError("Dataset " + datasetRecordIRI + " does not exist", Response.Status.BAD_REQUEST));
 
         // Convert the data
-        org.matonto.rdf.api.Model data = etlFile(fileName, () -> getUploadedMapping(mappingIRI), containsHeaders,
+        org.matonto.rdf.api.Model data = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
                 separator, false);
 
         // Add data to the dataset
@@ -246,7 +248,7 @@ public class DelimitedRestImpl implements DelimitedRest {
                 .orElseThrow(() -> ErrorUtils.sendError("Repository is not available.", Response.Status.BAD_REQUEST));
         try (RepositoryConnection conn = repository.getConnection()) {
             RepositoryResult<Statement> statements = conn.getStatements(datasetIri,
-                    factory.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
+                    vf.createIRI(Dataset.systemDefaultNamedGraph_IRI), null);
             if (statements.hasNext()) {
                 Resource context = (Resource) statements.next().getObject();
                 conn.add(data, context);
@@ -292,14 +294,18 @@ public class DelimitedRestImpl implements DelimitedRest {
         // Run the mapping against the delimited data
         org.matonto.rdf.api.Model result = null;
         try (InputStream data = getDocumentInputStream(delimitedFile)) {
+            org.matonto.rdf.api.Model matModel = transformer.matontoModel(mappingModel);
             if (extension.equals("xls") || extension.equals("xlsx")) {
-                ExcelConfig.ExcelConfigBuilder config = new ExcelConfig.ExcelConfigBuilder(data, transformer.matontoModel(mappingModel)).containsHeaders(containsHeaders);
+                ExcelConfig.ExcelConfigBuilder config = new ExcelConfig.ExcelConfigBuilder(data, matModel)
+                        .containsHeaders(containsHeaders);
                 if (limit) {
                     config.limit(NUM_LINE_PREVIEW);
                 }
                 result = etlFile(() -> converter.convert(config.build()));
             } else {
-                SVConfig.SVConfigBuilder config = new SVConfig.SVConfigBuilder(data, transformer.matontoModel(mappingModel)).separator(separator.charAt(0)).containsHeaders(containsHeaders);
+                SVConfig.SVConfigBuilder config = new SVConfig.SVConfigBuilder(data, matModel)
+                        .separator(separator.charAt(0))
+                        .containsHeaders(containsHeaders);
                 if (limit) {
                     config.limit(NUM_LINE_PREVIEW);
                 }
@@ -398,7 +404,8 @@ public class DelimitedRestImpl implements DelimitedRest {
      */
     private String convertCSVRows(File input, int numRows, char separator) throws IOException {
         Charset charset = getCharset(Files.readAllBytes(input.toPath()));
-        try (CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(input), charset.name()), separator)) {
+        try (CSVReader reader = new CSVReader(new InputStreamReader(new FileInputStream(input), charset.name()),
+                separator)) {
             List<String[]> csvRows = reader.readAll();
             JSONArray returnRows = new JSONArray();
             for (int i = 0; i <= numRows && i < csvRows.size(); i++) {
@@ -421,6 +428,7 @@ public class DelimitedRestImpl implements DelimitedRest {
     private String convertExcelRows(File input, int numRows) throws IOException, InvalidFormatException {
         try (Workbook wb = WorkbookFactory.create(input)) {
             // Only support single sheet files for now
+            FormulaEvaluator evaluator = wb.getCreationHelper().createFormulaEvaluator();
             Sheet sheet = wb.getSheetAt(0);
             DataFormatter df = new DataFormatter();
             JSONArray rowList = new JSONArray();
@@ -430,7 +438,7 @@ public class DelimitedRestImpl implements DelimitedRest {
                     //getLastCellNumber instead of getPhysicalNumberOfCells so that blank values don't shift cells
                     columns = new String[row.getLastCellNum()];
                     for (int i = 0; i < row.getLastCellNum(); i++ ) {
-                        columns[i] = df.formatCellValue(row.getCell(i));
+                        columns[i] = df.formatCellValue(row.getCell(i), evaluator);
                     }
                     rowList.add(columns);
                 }
@@ -487,18 +495,14 @@ public class DelimitedRestImpl implements DelimitedRest {
     /**
      * Retrieves a Sesame Model of an uploaded mapping by its IRI.
      *
-     * @param mappingIRI the IRI of a mapping
+     * @param mappingRecordIRI the IRI of a mapping
      * @return a Sesame Model with a mapping
      */
-    private Model getUploadedMapping(String mappingIRI) {
+    private Model getUploadedMapping(String mappingRecordIRI) {
         // Collect uploaded mapping model
-        Resource mappingId = mappingManager.createMappingId(factory.createIRI(mappingIRI)).getMappingIdentifier();
-        Optional<MappingWrapper> mappingOptional = mappingManager.retrieveMapping(mappingId);
-        if (mappingOptional.isPresent()) {
-            return transformer.sesameModel(mappingOptional.get().getModel());
-        } else {
-            throw ErrorUtils.sendError("Mapping " + mappingId + " does not exist", Response.Status.BAD_REQUEST);
-        }
+        MappingWrapper mapping = mappingManager.retrieveMapping(vf.createIRI(mappingRecordIRI)).orElseThrow(() ->
+                ErrorUtils.sendError("Mapping " + mappingRecordIRI + " does not exist", Response.Status.BAD_REQUEST));
+        return transformer.sesameModel(mapping.getModel());
     }
 
     private void removeTempFile(String fileName) {

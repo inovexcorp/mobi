@@ -17,7 +17,6 @@ var gulp = require('gulp'),
     uglify = require('gulp-uglify'),
     ngAnnotate = require('gulp-ng-annotate'),
     strip = require('gulp-strip-comments'),
-    ngdocs = require('gulp-ngdocs'),
     glob = require('glob-all'),
     templateCache = require('gulp-angular-templatecache'),
     Karma = require('karma').Server;
@@ -70,7 +69,9 @@ var jsFiles = function(prefix) {
             prefix + 'snapsvg/**/snap.svg-min.js',
             prefix + 'angular-vs-repeat/**/angular-vs-repeat.min.js',
             prefix + 'clipboard/**/clipboard.min.js',
-            prefix + 'ngclipboard/**/ngclipboard.min.js'
+            prefix + 'ngclipboard/**/ngclipboard.min.js',
+            prefix + 'angular-aria/angular-aria.min.js',
+            prefix + 'angular-material/angular-material.min.js'
         ]
     },
     styleFiles = function(prefix, suffix) {
@@ -82,6 +83,7 @@ var jsFiles = function(prefix) {
     },
     nodeStyleFiles = function(prefix) {
         return [
+            prefix + 'angular-material/angular-material.min.css',
             prefix + 'bootstrap/**/bootstrap.min.css',
             prefix + 'font-awesome/**/font-awesome.min.css',
             prefix + 'ui-select/**/select.min.css',
@@ -107,21 +109,6 @@ var createGroupedArray = function(arr, chunkSize) {
 }
 
 var tests = createGroupedArray(glob.sync('./src/test/js/*Spec.js'), 50);
-
-//Method to create frontend documentation
-var createDocs = function(scripts) {
-    var options = {
-        scripts: glob.sync(scripts.concat('./target/templates.js')),
-        title: "MatOnto Frontend Docs",
-        loadDefaults: {
-            angularAnimate: false,
-            angular: false
-        }
-    };
-    return gulp.src(src + '**/*.js')
-        .pipe(ngdocs.process(options))
-        .pipe(gulp.dest('./target/generated-docs'));
-}
 
 //Method to run jasmine tests
 var runKarma = function(vendorFiles, testFiles, isBuild, done) {
@@ -203,16 +190,6 @@ gulp.task('test-unminified-5', ['test-unminified-4'], function(done) {
 // Launch TDD environment for jasmine tests in Chrome
 gulp.task('tdd', ['cacheTemplates'], function(done) {
     return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(src)), './src/test/js/*Spec.js', false, done);
-});
-
-// Create ngDocs files for minified build
-gulp.task('ngdocs-minified', ['cacheTemplates'], function() {
-    return createDocs([dest + '**/*.js']);
-});
-
-// Create ngDocs files for unminified build
-gulp.task('ngdocs-unminified', ['cacheTemplates'], function() {
-    return createDocs(nodeJsFiles(dest + 'js/').concat(jsFiles(dest)));
 });
 
 // Concatenate and minifies JS Files
@@ -326,9 +303,9 @@ gulp.task('clearcache', function() {
 });
 
 // Production Task (minified)
-gulp.task('prod', ['test-minified-1', 'test-minified-2', 'test-minified-3', 'test-minified-4', 'test-minified-5', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
-// gulp.task('prod', ['test-minified', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', 'ngdocs-minified']);
+gulp.task('prod', ['test-minified-1', 'test-minified-2', 'test-minified-3', 'test-minified-4', 'test-minified-5', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified']);
+// gulp.task('prod', ['test-minified', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', ]);
 
 // Default Task (un-minified)
-gulp.task('default', ['test-unminified-1', 'test-unminified-2', 'test-unminified-3', 'test-unminified-4', 'test-unminified-5', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);
-// gulp.task('default', ['test-unminified', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified', 'ngdocs-unminified']);
+gulp.task('default', ['test-unminified-1', 'test-unminified-2', 'test-unminified-3', 'test-unminified-4', 'test-unminified-5', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified']);
+// gulp.task('default', ['test-unminified', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified']);

@@ -47,6 +47,7 @@
             });
             self.defaultAnnotations = _.concat(rdfsAnnotations, dcAnnotations);
 
+            self.owlAnnotations = [{namespace: prefixes.owl, localName: 'deprecated'}];
             self.skosAnnotations = _.map(['altLabel', 'changeNote', 'definition', 'editorialNote', 'example',
                 'hiddenLabel', 'historyNote', 'note', 'prefLabel', 'scopeNote'], item => {
                 return {

@@ -23,20 +23,44 @@ package org.matonto.ontology.utils.cache;
  * #L%
  */
 
-import javax.cache.Cache;
+import org.matonto.ontology.core.api.Ontology;
+import org.matonto.rdf.api.Resource;
 
 import java.util.Optional;
+import javax.annotation.Nonnull;
+import javax.cache.Cache;
 
-import org.matonto.cache.api.CacheManager;
-import org.matonto.ontology.core.api.Ontology;
+public interface OntologyCache {
+    /**
+     * Creates a cache key using the provided Record, Branch, and Commit IRI strings. Null values are accepted
+     * and used within the key string.
+     *
+     * @param recordIri The IRI string of a Record
+     * @param branchIri The IRI string of a Branch
+     * @param commitIri The IRI string of a Commit
+     * @return A string to use as a cache key that incorporates all three passed strings, even if they are null
+     */
+    String generateKey(String recordIri, String branchIri, String commitIri);
 
-/**
- * Created by seansmitz on 5/2/17.
- */
-public class OntologyCache {
-    public static final String CACHE_NAME = "ontologyCache";
+    /**
+     * Retrieves the ontology cache if it is found.
+     *
+     * @return An Optional with the ontology cache if found; empty Optional otherwise
+     */
+    Optional<Cache<String, Ontology>> getOntologyCache();
 
-    public static String generateKey(String recordIri, String branchIri, String commitIri) {
-        return String.format("%s&%s&%s", recordIri, branchIri, commitIri);
-    }
+    /**
+     * Removes any cached ontologies that import the provided ontology IRI.
+     *
+     * @param ontologyIRI The IRI of an imported ontology
+     */
+    void clearCacheImports(Resource ontologyIRI);
+
+    /**
+     * Removes any cached ontologies that relate to Record identified by the provided Resources.
+     *
+     * @param recordId A Resource identifying a Record
+     * @param branchId A Resource identifying a Branch of the Record
+     */
+    void clearCache(@Nonnull Resource recordId, Resource branchId);
 }

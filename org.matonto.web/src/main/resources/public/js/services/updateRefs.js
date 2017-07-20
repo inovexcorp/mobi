@@ -51,10 +51,7 @@
     function updateRefsService($filter, responseObj) {
         var self = this;
         var exclude = [
-                '$$hashKey',
-                'originalIRI',
-                'unsaved',
-                'valid'
+                '$$hashKey'
             ];
 
         /**
@@ -81,6 +78,7 @@
                 if (key === old && excluded === -1) {
                     delete obj[key];
                     obj[fresh] = value;
+                    key = fresh;
                 }
                 if (!(excluded !== -1 || !obj[key])) {
                     // checks all items in the array

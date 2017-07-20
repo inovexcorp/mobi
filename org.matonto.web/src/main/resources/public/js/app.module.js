@@ -28,7 +28,9 @@
             /* Third Party */
             'angular-uuid',
             'ngAnimate',
+            'ngAria',
             'ngCookies',
+            'ngMaterial',
             'ngclipboard',
             'ngHandsontable',
             'ngMessages',
@@ -53,11 +55,13 @@
             'uniqueKey',
 
             /* Custom Directives */
+            'aDisabled',
             'block',
             'blockContent',
             'blockFooter',
             'blockHeader',
             'blockSearch',
+            'breadcrumbs',
             'checkbox',
             'circleButton',
             'circleButtonStack',
@@ -84,6 +88,7 @@
             'spinner',
             'statementContainer',
             'statementDisplay',
+            'staticIri',
             'stepProgressBar',
             'tab',
             'tabset',
@@ -91,17 +96,18 @@
             'textArea',
             'textInput',
             'uniqueValue',
+            'valueDisplay',
 
             /* Custom Modules */
             'catalog',
             'datasets',
+            'discover',
             'home',
             'login',
             'mapper',
             'nav',
             'ontology-editor',
             'settings',
-            'sparql',
             'user-management',
             'webtop',
 
@@ -111,6 +117,7 @@
             'datasetManager',
             'datasetState',
             'delimitedManager',
+            'discoverState',
             'httpService',
             'loginManager',
             'manchesterConverter',
@@ -134,10 +141,17 @@
         .constant('REGEX', {
             'IRI': /^(?:(?:https?|ftp):\/\/)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3})(?!127(?:\.\d{1,3}){3})(?!169\.254(?:\.\d{1,3}){2})(?!192\.168(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]+-?)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:\/[^\s]*)?$/i,
             'LOCALNAME': /^[a-zA-Z0-9._\-]+$/,
-            'FILENAME': /^[\w\-. ]+$/
+            'FILENAME': /^[\w\-. ]+$/,
+            'UUID': /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
+            'DATETIME': /^\d{4}(-\d\d(-\d\d(T\d\d:\d\d(:\d\d)?(\.\d+)?(([+-]\d\d:\d\d)|Z)?)?)?)?$/i,
+            'INTEGER': /^[-+]?\d+$/,
+            'DECIMAL': /^[-+]?\d*[.]?\d*$/,
+            'ANYTHING': /^.+$/
         })
         .constant('INDENT', 1.28571429)
         .config(httpInterceptorConfig)
+        .config(ariaConfig)
+        .config(theming)
         .factory('requestInterceptor', requestInterceptor)
         .service('beforeUnload', beforeUnload)
         .run(function(beforeUnload) {
@@ -151,7 +165,7 @@
                 var ontologyHasChanges = _.some(ontologyManagerService.list, listItem => {
                     return ontologyStateService.hasChanges(_.get(listItem, 'recordId'));
                 });
-                var mappingHasChanges = mapperStateService.changedMapping;
+                var mappingHasChanges = mapperStateService.isMappingChanged();
                 if (ontologyHasChanges || mappingHasChanges) {
                     return true;
                 }
@@ -199,5 +213,20 @@
                     return $q.reject(rejection);
                 }
             };
+        }
+
+        function ariaConfig($ariaProvider) {
+            $ariaProvider.config({
+                tabindex: false
+            });
+        }
+
+        function theming($mdThemingProvider) {
+            var bootstrapBlue = $mdThemingProvider.extendPalette('blue', {
+                500: '#337ab7'
+            });
+            $mdThemingProvider.definePalette('bootstrapBlue', bootstrapBlue);
+            $mdThemingProvider.theme('default')
+                .primaryPalette('bootstrapBlue');
         }
 })();
