@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.39-SNAPSHOT</version>
+        <version>1.8.40-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -53,7 +53,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>clustering.api</artifactId>
-            <version>1.8.39-SNAPSHOT</version>
+            <version>1.8.40-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
@@ -68,10 +68,9 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-name>MatOnto Clustering Service - CLI</Bundle-name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package>
-                            org.matonto.clustering.cli
-                        </Export-Package>
+                        <Export-Package />
                         <Service-Component>*</Service-Component>
+                        <Karaf-Commands>*</Karaf-Commands>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
