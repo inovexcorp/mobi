@@ -29,7 +29,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.matonto.itests.support.KarafTestSupport;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.Thing;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
@@ -41,11 +44,11 @@ import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigInteger;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import javax.inject.Inject;
-import javax.xml.datatype.DatatypeFactory;
 
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
@@ -67,23 +70,45 @@ public class OrmIT extends KarafTestSupport {
         ValueFactory vf = getOsgiService(ValueFactory.class);
         Thing thing = getOsgiService(ThingFactory.class).createNew(vf.createIRI("urn://thing"));
         //boolean
-        //valueConverterRegistry.convertType(true, thing);
+        testConversion(true, thing, valueConverterRegistry, "Failed working with boolean converter");
         //int
-        Assert.assertEquals("", vf.createLiteral(3), valueConverterRegistry.convertType(3, thing));
+        testConversion(3, thing, valueConverterRegistry, "Integer conversion failure");
         //long
-        //Assert.assertEquals("", vf.createLiteral(2L), valueConverterRegistry.convertType(2L, thing));
+        testConversion(2L, thing, valueConverterRegistry, "Long conversion failure");
         //double
-        Assert.assertEquals("", vf.createLiteral(3.14), valueConverterRegistry.convertType(3.14, thing));
+        testConversion(3.14, thing, valueConverterRegistry, "Double conversion failure");
+        //float
+        testConversion((float) 1.2, thing, valueConverterRegistry, "Float conversion failure");
         //short
-        Assert.assertEquals("", vf.createLiteral((short) 3), valueConverterRegistry.convertType((short) 3, thing));
+        testConversion((short) 3, thing, valueConverterRegistry, "Short conversion failure");
         //string
-        Assert.assertEquals("", vf.createLiteral("testing"), valueConverterRegistry.convertType("testing", thing));
+        testConversion("testing", thing, valueConverterRegistry, "String conversion failure");
         //date
-        Date d = new Date();
-        GregorianCalendar c = new GregorianCalendar();
-        c.setTime(d);
-        Assert.assertEquals("", vf.createLiteral(DatatypeFactory.newInstance().newXMLGregorianCalendar(c).toXMLFormat(),
-                "http://www.w3.org/2001/XMLSchema#dateTime"), valueConverterRegistry.convertType(d, thing));
+        testConversion(new Date(), thing, valueConverterRegistry, "Date conversion failure");
+        //IRI
+        IRI iri = vf.createIRI("urn:test");
+        testConversion(iri, thing, valueConverterRegistry, "IRI conversion failure");
+        //Literal
+        testConversion((Literal) vf.createLiteral("blah"), thing, valueConverterRegistry, "Literal conversion failure");
+        //Resource
+        testConversion((Resource) vf.createIRI("urn:resource"), thing, valueConverterRegistry, "Resource conversion failure");
+        //Value
+        testConversion((Value) vf.createLiteral(1.32), thing, valueConverterRegistry, "Value conversion failure");
+        //Calendar
+        testConversion((Calendar) new GregorianCalendar(), thing, valueConverterRegistry, "Calendar conversion failure");
+        //BigInteger
+        BigInteger big = BigInteger.valueOf(123L);
+        testConversion(big, thing, valueConverterRegistry, "BigInteger conversion failure");
+    }
+
+    private <T> void testConversion(final T type, final Thing thing, final ValueConverterRegistry valueConverterRegistry, final String failureMessage) {
+        Value val = valueConverterRegistry.convertType(type, thing);
+        T back = (T) valueConverterRegistry.convertValue(val, thing, type.getClass());
+        if (type instanceof Calendar) {
+            Assert.assertEquals(failureMessage,((Calendar)type).getTime(), ((Calendar)back).getTime());
+        } else {
+            Assert.assertEquals(failureMessage, type, back);
+        }
     }
 
     @Test

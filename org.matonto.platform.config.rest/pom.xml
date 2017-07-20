@@ -41,17 +41,17 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>platform.config.api</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.39-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rest.util</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.39-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas.api</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.39-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
