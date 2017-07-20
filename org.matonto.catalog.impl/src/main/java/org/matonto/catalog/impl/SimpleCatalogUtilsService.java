@@ -376,6 +376,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public void updateCommit(Commit commit, Model additions, Model deletions, RepositoryConnection conn) {
+        // TODO: Update to handle quads
         Resource additionsResource = getAdditionsResource(commit);
         Resource deletionsResource = getDeletionsResource(commit);
         addChanges(additionsResource, deletionsResource, additions, conn);
@@ -384,6 +385,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public void updateCommit(Resource commitId, Model additions, Model deletions, RepositoryConnection conn) {
+        // TODO: Update to handle quads
         Resource additionsResource = getAdditionsResource(commitId, conn);
         Resource deletionsResource = getDeletionsResource(commitId, conn);
         addChanges(additionsResource, deletionsResource, additions, conn);
