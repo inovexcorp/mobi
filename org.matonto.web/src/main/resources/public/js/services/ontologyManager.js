@@ -736,6 +736,20 @@
             }
             /**
              * @ngdoc method
+             * @name isDatatype
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             *Checks if the provided entity is an rdfs:Datatype. Returns a booelan.
+             *
+             * @param {Object} entity The entity you want to check
+             * @return {boolean} Returns true if it is an rdfs:Datatype entity, otherwise returns false.
+             */
+            self.isDatatype = function(entity) {
+                return _.includes(_.get(entity, '@type', []), prefixes.rdfs + 'Datatype');
+            }
+            /**
+             * @ngdoc method
              * @name isClass
              * @methodOf ontologyManager.service:ontologyManagerService
              *
