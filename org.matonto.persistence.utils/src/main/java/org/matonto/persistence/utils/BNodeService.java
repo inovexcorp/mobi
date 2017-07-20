@@ -40,7 +40,8 @@ public class BNodeService {
     private ValueFactory vf;
     private ModelFactory mf;
 
-    public static final String BNODE_NAMESPACE = "http://matonto.org/.well-known/genid/";
+    public static final String PATH_COMPONENT = "/.well-known/genid/";
+    public static final String BNODE_NAMESPACE = "http://matonto.org" + PATH_COMPONENT;
 
     public BNodeService() {}
 
@@ -168,6 +169,6 @@ public class BNodeService {
      * @return Boolean indicating if the Value is a skolemized IRI.
      */
     private boolean isSkolemized(Value value) {
-        return value instanceof IRI && ((IRI) value).getNamespace().equals(BNODE_NAMESPACE);
+        return value instanceof IRI && ((IRI) value).getNamespace().contains(PATH_COMPONENT);
     }
 }

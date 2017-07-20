@@ -36,22 +36,35 @@
                 templateUrl: 'modules/ontology-editor/directives/ontologyEditorTabset/ontologyEditorTabset.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
-
+                    dvm.newTabActive = true;
+                            
                     dvm.onClose = function(recordId) {
-                        var ontology = dvm.os.getOntologyByRecordId(recordId);
                         if (dvm.os.hasChanges(recordId)) {
                             dvm.os.recordIdToClose = recordId;
                             dvm.os.showCloseOverlay = true;
                         } else {
-                            dvm.os.deleteState(recordId);
                             dvm.os.closeOntology(recordId);
                         }
                     }
-                }
+                    
+                    dvm.onClick = function(recordId) {
+                        if (recordId) {
+                            dvm.os.listItem = dvm.os.getListItemByRecordId(recordId);
+                        }
+                    }
+                    
+                    $scope.$watch('dvm.os.listItem', () => {
+                        if (dvm.os.listItem) {
+                            dvm.newTabActive = !(_.some(dvm.os.listItem.editorTabStates, 'active'));
+                        } else {
+                            dvm.newTabActive = true;
+                        }
+                    });
+                }]
             }
         }
 })();

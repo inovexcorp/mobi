@@ -42,7 +42,7 @@ import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.impl.owlapi.classexpression.SimpleClass;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
-import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
@@ -96,9 +96,21 @@ public class FullSimpleOntologyTest {
         when(ontologyId.getVersionIRI()).thenReturn(Optional.of(versionIRI));
         when(ontologyManager.createOntologyId(any(IRI.class), any(IRI.class))).thenReturn(ontologyId);
         when(ontologyManager.createOntologyId(any(IRI.class))).thenReturn(ontologyId);
+        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
 
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");
         ontology = new SimpleOntology(stream, ontologyManager, transformer);
+    }
+
+    @Test
+    public void getImportedOntologyIRIsTest() throws Exception {
+        // Setup:
+        InputStream stream = this.getClass().getResourceAsStream("/test-imports.owl");
+        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer);
+
+        Set<IRI> iris = ont.getImportedOntologyIRIs();
+        assertEquals(1, iris.size());
+        assertTrue(iris.contains(vf.createIRI("http://xmlns.com/foaf/0.1")));
     }
 
     @Test
@@ -209,5 +221,39 @@ public class FullSimpleOntologyTest {
 
         Set<Individual> individuals = ontology.getIndividualsOfType(clazz);
         assertEquals(1, individuals.size());
+    }
+
+    @Test
+    public void containsClassTest() {
+        assertTrue(ontology.containsClass(classIRI));
+    }
+
+    @Test
+    public void containsClassWhenMissingTest() {
+        assertFalse(ontology.containsClass(errorIRI));
+    }
+
+    @Test
+    public void getAllClassObjectProperties() throws Exception {
+        // TODO: this works with imports, but we need to add a test which does not have an external dependency
+        assertEquals(2, ontology.getAllClassObjectProperties(classIRI).size());
+        assertEquals(1, ontology.getAllClassObjectProperties(classIRIC).size());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void getAllClassObjectPropertiesWhenMissingTest() throws Exception {
+        ontology.getAllClassObjectProperties(errorIRI);
+    }
+
+    @Test
+    public void getAllClassDataProperties() throws Exception {
+        // TODO: this works with imports, but we need to add a test which does not have an external dependency
+        assertEquals(2, ontology.getAllClassDataProperties(classIRI).size());
+        assertEquals(1, ontology.getAllClassDataProperties(classIRIC).size());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void getAllClassDataPropertiesWhenMissingTest() throws Exception {
+        ontology.getAllClassDataProperties(errorIRI);
     }
 }

@@ -21,12 +21,7 @@
  * #L%
  */
 describe('Class Mapping Overlay directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        mappingManagerSvc,
-        mapperStateSvc;
+    var $compile, scope, element, controller, mappingManagerSvc, mapperStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -41,15 +36,13 @@ describe('Class Mapping Overlay directive', function() {
             mappingManagerSvc = _mappingManagerService_;
         });
 
-        mapperStateSvc.mapping = {jsonld: []};
+        mapperStateSvc.mapping = {jsonld: [], difference: {additions: []}};
         element = $compile(angular.element('<class-mapping-overlay></class-mapping-overlay>'))(scope);
         scope.$digest();
+        controller = element.controller('classMappingOverlay');
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('classMappingOverlay');
-        });
         it('should add a class mapping', function() {
             var classMapping = {'@id': 'classMapping'};
             controller.selectedClass = {ontologyId: '', classObj: {'@id': ''}};
@@ -60,7 +53,7 @@ describe('Class Mapping Overlay directive', function() {
             expect(mappingManagerSvc.addClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, jasmine.any(Array), controller.selectedClass.classObj['@id']);
             expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(classMapping['@id']);
             expect(mapperStateSvc.availableClasses).not.toContain(controller.selectedClass);
-            expect(mapperStateSvc.changedMapping).toBe(true);
+            expect(mapperStateSvc.mapping.difference.additions).toContain(classMapping);
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.selectedClassMappingId).toBe(classMapping['@id']);
             expect(mapperStateSvc.displayClassMappingOverlay).toBe(false);
@@ -89,7 +82,6 @@ describe('Class Mapping Overlay directive', function() {
             expect(button.attr('disabled')).toBeTruthy();
             expect(element.find('class-preview').length).toBe(0);
 
-            controller = element.controller('classMappingOverlay');
             controller.selectedClass = {};
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
@@ -97,17 +89,13 @@ describe('Class Mapping Overlay directive', function() {
         });
     });
     it('should call addClass when the button is clicked', function() {
-        controller = element.controller('classMappingOverlay');
         spyOn(controller, 'addClass');
-
         var continueButton = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
         continueButton.triggerHandler('click');
         expect(controller.addClass).toHaveBeenCalled();
     });
     it('should call cancel when the button is clicked', function() {
-        controller = element.controller('classMappingOverlay');
         spyOn(controller, 'cancel');
-
         var continueButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
         continueButton.triggerHandler('click');
         expect(controller.cancel).toHaveBeenCalled();

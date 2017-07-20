@@ -38,9 +38,12 @@
             'classCards',
             'exploreTab',
             'instanceBlock',
-            'instanceBlockHeader',
             'instanceCards',
+            'instanceCreator',
+            'instanceEditor',
+            'instanceForm',
             'instanceView',
+            'newInstancePropertyOverlay',
             
             /* Query tab */
             'downloadQueryOverlay',

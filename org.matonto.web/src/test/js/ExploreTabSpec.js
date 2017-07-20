@@ -68,5 +68,23 @@ describe('Explore Tab directive', function() {
             
             expect(element.querySelectorAll('instance-view.col-xs-12').length).toBe(1);
         });
+        it('with a instance-editor.col-xs-12', function() {
+            expect(element.querySelectorAll('instance-editor.col-xs-12').length).toBe(0);
+            
+            discoverStateSvc.explore.breadcrumbs = ['', '', ''];
+            discoverStateSvc.explore.editing = true;
+            scope.$apply();
+            
+            expect(element.querySelectorAll('instance-editor.col-xs-12').length).toBe(1);
+        });
+        it('with a instance-creator.col-xs-12', function() {
+            expect(element.querySelectorAll('instance-creator.col-xs-12').length).toBe(0);
+            
+            discoverStateSvc.explore.breadcrumbs = ['', '', ''];
+            discoverStateSvc.explore.creating = true;
+            scope.$apply();
+            
+            expect(element.querySelectorAll('instance-creator.col-xs-12').length).toBe(1);
+        });
     });
 });

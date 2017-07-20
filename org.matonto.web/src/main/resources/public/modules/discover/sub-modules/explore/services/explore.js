@@ -68,7 +68,7 @@
          */
         self.getClassDetails = function(recordId) {
             return $http.get(prefix + encodeURIComponent(recordId) + '/class-details')
-                .then(response => response.data, response => $q.reject(response.statusText));
+                .then(response => response.data, util.rejectError);
         }
         
         /**
@@ -80,18 +80,59 @@
          * Calls the GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/instance-details endpoint and returns the
          * array of instance details.
          *
+         * @param {string} recordId The id of the Record
+         * @param {string} classId The id of the Class
+         * @param {Object} params The params for the REST call
+         * @param {number} params.offset The offset for the query
+         * @param {number} params.limit The limit for the query
+         * @param {boolean} noSpinner Whether or not the spinner should be shown
          * @returns {Promise} A promise that resolves to an array of the instance details for the identified class of the
          * identified dataset record.
          */
-        self.getClassInstanceDetails = function(recordId, classId) {
-            var config = {
-                params: {
-                    offset: 0,
-                    limit: ds.explore.instanceDetails.limit
-                }
-            };
+        self.getClassInstanceDetails = function(recordId, classId, params, noSpinner = false) {
+            var config = {params};
+            if (noSpinner) {
+                config.timeout = undefined;
+            }
             return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/instance-details', config)
-                .then(response => response, response => $q.reject(response.statusText));
+                .then(response => response, util.rejectError);
+        }
+        
+        /**
+         * @ngdoc method
+         * @name getClassPropertyDetails
+         * @methodOf explore.service:exploreService
+         *
+         * @description
+         * Calls the GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/property-details endpoint and returns the
+         * array of class property details.
+         *
+         * @param {string} recordId The id of the Record
+         * @param {string} classId The id of the Class
+         * @returns {Promise} A promise that resolves to an array of the class property details for the identified class of the
+         * identified dataset record.
+         */
+        self.getClassPropertyDetails = function(recordId, classId) {
+            return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/property-details')
+                .then(response => response.data, util.rejectError);
+        }
+        
+        /**
+         * @ngdoc method
+         * @name createInstance
+         * @methodOf explore.service:exploreService
+         *
+         * @description
+         * Calls the POST /matontorest/explorable-datasets/{recordId}/classes/{classId}/instances endpoint
+         * and returns the instance IRI.
+         *
+         * @param {string} recordId The id of the Record
+         * @param {Object} json The JSON-LD of the instance being created
+         * @returns {Promise} A promise that resolves to the instance IRI.
+         */
+        self.createInstance = function(recordId, json) {
+            return $http.post(prefix + encodeURIComponent(recordId) + '/instances', json)
+                .then(response => response.data, util.rejectError);
         }
         
         /**
@@ -103,12 +144,33 @@
          * Calls the GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint
          * and returns the instance.
          *
+         * @param {string} recordId The id of the Record
+         * @param {string} instanceId The id of the instance
          * @returns {Promise} A promise that resolves to an instance object defined as the identified class in the
          * identified dataset record.
          */
         self.getInstance = function(recordId, instanceId) {
             return $http.get(prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId))
-                .then(response => response.data, response => $q.reject(response.statusText));
+                .then(response => response.data, util.rejectError);
+        }
+        
+        /**
+         * @ngdoc method
+         * @name updateInstance
+         * @methodOf explore.service:exploreService
+         *
+         * @description
+         * Calls the PUT /matontorest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint
+         * and identifies if the instance was updated.
+         *
+         * @param {string} recordId The id of the Record
+         * @param {string} instanceId The id of the instance
+         * @param {Object} json The JSON-LD object of the new instance
+         * @returns {Promise} A promise that indicates if the instance was updated successfully.
+         */
+        self.updateInstance = function(recordId, instanceId, json) {
+            return $http.put(prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId), angular.toJson(json))
+                .then(response => $q.when(), util.rejectError);
         }
         
         /**

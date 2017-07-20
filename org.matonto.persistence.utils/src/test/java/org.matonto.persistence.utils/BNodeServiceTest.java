@@ -56,7 +56,7 @@ public class BNodeServiceTest {
     private final Resource subject = vf.createIRI("http://matonto.org/subject");
     private final Value object = vf.createIRI("http://matonto.org/object");
     private final IRI skolemizedIRI1 = vf.createIRI(BNodeService.BNODE_NAMESPACE + "0");
-    private final IRI skolemizedIRI2 = vf.createIRI(BNodeService.BNODE_NAMESPACE + "0");
+    private final IRI skolemizedIRI2 = vf.createIRI(BNodeService.BNODE_NAMESPACE + "1");
 
     @Before
     public void setUp() throws Exception {

@@ -23,12 +23,18 @@ package org.matonto.ontology.rest;
  * #L%
  */
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import org.glassfish.jersey.media.multipart.FormDataParam;
+
+import java.io.InputStream;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -37,11 +43,6 @@ import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.InputStream;
-
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import org.glassfish.jersey.media.multipart.FormDataParam;
 
 @Path("/ontologies")
 @Api(value = "/ontologies")
@@ -198,6 +199,35 @@ public interface OntologyRest {
                                    @QueryParam("commitId") String commitIdStr,
                                    @QueryParam("entityId") String entityIdStr,
                                    String entityJson);
+
+    /**
+     * Updates the InProgressCommit associated with the User making the request for the OntologyRecord identified by the
+     * provided recordId.
+     *
+     * @param context     the context of the request.
+     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @param fileInputStream the ontology file to upload.
+     * @return OK if successful or METHOD_NOT_ALLOWED if the changes can not be applied to the commit specified.
+     */
+    @PUT
+    @Path("{recordId}")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Updates the specified ontology branch and commit with the data provided.")
+    Response uploadChangesToOntology(@Context ContainerRequestContext context,
+                                   @PathParam("recordId") String recordIdStr,
+                                   @QueryParam("branchId") String branchIdStr,
+                                   @QueryParam("commitId") String commitIdStr,
+                                   @FormDataParam("file") InputStream fileInputStream);
 
     /**
      * Returns IRIs in the ontology identified by the provided IDs.

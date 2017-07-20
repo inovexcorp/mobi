@@ -28,9 +28,11 @@ import com.google.common.base.CharMatcher;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.opencsv.CSVReader;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.DataFormatter;
+import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -175,6 +177,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
 
         try {
             Workbook wb = WorkbookFactory.create(config.getData());
+            FormulaEvaluator evaluator = wb.getCreationHelper().createFormulaEvaluator();
             Sheet sheet = wb.getSheetAt(0);
             DataFormatter df = new DataFormatter();
             boolean containsHeaders = config.getContainsHeaders();
@@ -199,7 +202,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 nextRow = new String[row.getLastCellNum()];
                 boolean rowContainsValues = false;
                 for (int i = 0; i < row.getLastCellNum(); i++) {
-                    nextRow[i] = df.formatCellValue(row.getCell(i));
+                    nextRow[i] = df.formatCellValue(row.getCell(i), evaluator);
                     if (!rowContainsValues && !nextRow[i].isEmpty()) {
                         rowContainsValues = true;
                     }
@@ -212,7 +215,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 }
                 lastRowNumber++;
             }
-        } catch (InvalidFormatException e) {
+        } catch (InvalidFormatException | NotImplementedException e) {
             throw new MatOntoException(e);
         }
 

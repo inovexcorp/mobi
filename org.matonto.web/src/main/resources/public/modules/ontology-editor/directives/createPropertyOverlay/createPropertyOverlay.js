@@ -42,7 +42,20 @@
                     var setAsDatatype = false;
                     var ro = responseObj;
 
-                    dvm.checkbox = false;
+                    dvm.characteristics = [
+                        {
+                            checked: false,
+                            typeIRI: prefixes.owl + 'FunctionalProperty',
+                            displayText: 'Functional Property',
+                            objectOnly: false
+                        },
+                        {
+                            checked: false,
+                            typeIRI: prefixes.owl + 'AsymmetricProperty',
+                            displayText: 'Asymmetric Property',
+                            objectOnly: true
+                        }
+                    ];
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.om = ontologyManagerService;
@@ -65,20 +78,20 @@
                             dvm.property['@id'] = dvm.prefix + $filter('camelCase')(dvm.property[prefixes.dcterms + 'title'][0]['@value'], 'property');
                         }
                     }
-
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.property['@id'] = iriBegin + iriThen + iriEnd;
                         dvm.os.setCommonIriParts(iriBegin, iriThen);
                     }
-
                     dvm.create = function() {
                         if (dvm.property[prefixes.dcterms + 'description'][0]['@value'] === '') {
                             _.unset(dvm.property, prefixes.dcterms + 'description');
                         }
-                        if (dvm.checkbox) {
-                            dvm.property['@type'].push(prefixes.owl + 'FunctionalProperty');
-                        }
+                        _.forEach(dvm.characteristics, (obj, key) => {
+                            if (obj.checked) {
+                                dvm.property['@type'].push(obj.typeIRI);
+                            }
+                        });
                         _.forEach(['domain', 'range'], function(axiom) {
                             if (_.isEqual(dvm.property[prefixes.rdfs + axiom], [])) {
                                 _.unset(dvm.property, prefixes.rdfs + axiom);
@@ -99,25 +112,35 @@
                             dvm.values = [];
                             commonUpdate('annotations', 'annotationPropertyHierarchy', 'flatAnnotationPropertyHierarchy', 'annotationPropertyIndex', dvm.os.setAnnotationPropertiesOpened);
                         }
-                        dvm.os.addToAdditions(dvm.os.listItem.recordId, dvm.property);
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.property);
                         // select the new property
                         dvm.os.selectItem(_.get(dvm.property, '@id'));
                         // hide the overlay
                         dvm.os.showCreatePropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                     }
-                    
                     dvm.getKey = function() {
                         if (dvm.om.isDataTypeProperty(dvm.property)) {
                             return 'subDataProperties'
                         }
                         return 'subObjectProperties';
                     }
-                    
                     dvm.typeChange = function() {
                         dvm.values = [];
+                        if (dvm.om.isAnnotation(dvm.property)) {
+                            _.forEach(dvm.characteristics, obj => {
+                                obj.checked = false;
+                            });
+                        } else if (dvm.om.isDataTypeProperty(dvm.property)) {
+                            _.forEach(_.filter(dvm.characteristics, 'objectOnly'), obj => {
+                                obj.checked = false;
+                            });
+                        }
                     }
-                    
+                    dvm.characteristicsFilter = function(obj) {
+                        return !obj.objectOnly || dvm.om.isObjectProperty(dvm.property);
+                    }
+
                     function commonUpdate(listKey, hierarchyKey, flatHierarchyKey, indexKey, setThisOpened) {
                         dvm.os.listItem[listKey].push(ro.createItemFromIri(dvm.property['@id']));
                         if (dvm.values.length) {
@@ -125,9 +148,9 @@
                             dvm.ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), hierarchyKey, indexKey, flatHierarchyKey);
                         } else {
                             dvm.os.listItem[hierarchyKey].push({'entityIRI': dvm.property['@id']});
-                            dvm.os.listItem[flatHierarchyKey] = dvm.os.flattenHierarchy(dvm.os.listItem[hierarchyKey], dvm.os.listItem.recordId);
+                            dvm.os.listItem[flatHierarchyKey] = dvm.os.flattenHierarchy(dvm.os.listItem[hierarchyKey], dvm.os.listItem.ontologyRecord.recordId);
                         }
-                        setThisOpened(dvm.os.listItem.recordId, true);
+                        setThisOpened(dvm.os.listItem.ontologyRecord.recordId, true);
                     }
                 }
             }

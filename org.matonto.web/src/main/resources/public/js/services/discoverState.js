@@ -60,8 +60,13 @@
         self.explore = {
             active: true,
             breadcrumbs: ['Classes'],
+            classDeprecated: false,
             classDetails: [],
+            classId: '',
+            creating: false,
+            editing: false,
             instance: {
+                changed: [],
                 entity: {},
                 metadata: {}
             },
@@ -150,11 +155,29 @@
             }
         }
         
+        /**
+         * @ngdoc method
+         * @name clickCrumb
+         * @methodOf discoverState.service:discoverStateService
+         *
+         * @description
+         * Removes the proper number of items from the breadcrumbs for the explore UI.
+         *
+         * @param {number} index The index of the breadcrumb clicked.
+         */
+        self.clickCrumb = function(index) {
+            self.explore.breadcrumbs = _.take(self.explore.breadcrumbs, index + 1);
+            self.explore.editing = false;
+            self.explore.creating = false;
+        }
+        
         function resetOnClear() {
             self.resetPagedInstanceDetails();
             self.explore.breadcrumbs = ['Classes'];
             self.explore.classDetails = [];
+            self.explore.classId = '';
             self.explore.instance = {
+                changed: [],
                 entity: {},
                 metadata: {}
             };

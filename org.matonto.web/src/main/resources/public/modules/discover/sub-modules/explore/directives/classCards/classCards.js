@@ -65,8 +65,10 @@
                     dvm.chunks = getChunks(ds.explore.classDetails);
                     
                     dvm.exploreData = function(item) {
-                        es.getClassInstanceDetails(ds.explore.recordId, item.classIRI)
+                        es.getClassInstanceDetails(ds.explore.recordId, item.classIRI, {offset: 0, limit: ds.explore.instanceDetails.limit})
                             .then(response => {
+                                ds.explore.classId = item.classIRI;
+                                ds.explore.classDeprecated = item.deprecated;
                                 ds.resetPagedInstanceDetails();
                                 _.merge(ds.explore.instanceDetails, es.createPagedResultsObject(response));
                                 ds.explore.breadcrumbs.push(item.classTitle);

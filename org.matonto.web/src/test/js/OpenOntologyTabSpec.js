@@ -141,9 +141,7 @@ describe('Open Ontology Tab directive', function() {
                 ontologyStateSvc.openOntology.and.returnValue($q.reject('Error message'));
                 controller.open();
                 scope.$apply();
-                expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith(controller.recordId, controller.type);
-                expect(ontologyStateSvc.addState).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.setState).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith(controller.recordId, controller.recordTitle, controller.type);
                 expect(controller.errorMessage).toBe('Error message');
             });
             it('successfully', function() {
@@ -151,9 +149,7 @@ describe('Open Ontology Tab directive', function() {
                 ontologyStateSvc.openOntology.and.returnValue($q.resolve(ontologyId));
                 controller.open();
                 scope.$apply();
-                expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith(controller.recordId, controller.type);
-                expect(ontologyStateSvc.addState).toHaveBeenCalledWith(controller.recordId, ontologyId, controller.type);
-                expect(ontologyStateSvc.setState).toHaveBeenCalledWith(controller.recordId);
+                expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith(controller.recordId, controller.recordTitle, controller.type);
                 expect(controller.errorMessage).toBeUndefined();
             });
         });
@@ -220,7 +216,7 @@ describe('Open Ontology Tab directive', function() {
             });
         });
         it('should get the list of unopened ontology records', function() {
-            ontologyStateSvc.list = [{'recordId': 'recordA'}];
+            ontologyStateSvc.list = [{ontologyRecord: {'recordId': 'recordA'}}];
             controller.getAllOntologyRecords('sort');
             scope.$apply();
             expect(ontologyManagerSvc.getAllOntologyRecords).toHaveBeenCalledWith('sort');
@@ -249,6 +245,7 @@ describe('Open Ontology Tab directive', function() {
         var ontology = angular.element(element.querySelectorAll('.ontologies .ontology')[0]);
         ontology.triggerHandler('click');
         expect(controller.recordId).toBe('recordA');
+        expect(controller.recordTitle).toBe('A');
         expect(controller.showOpenOverlay).toBe(true);
     });
     it('should call showDeleteConfirmationOverlay when a delete link is clicked', function() {

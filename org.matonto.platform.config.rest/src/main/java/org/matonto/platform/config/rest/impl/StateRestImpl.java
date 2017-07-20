@@ -32,7 +32,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.matonto.exception.MatOntoException;
-import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.platform.config.api.state.StateManager;
 import org.matonto.platform.config.rest.StateRest;
 import org.matonto.rdf.api.Model;

@@ -85,7 +85,7 @@ describe('Class Hierarchy Block directive', function() {
             var button = angular.element(element.querySelectorAll('block-footer button')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });

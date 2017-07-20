@@ -21,26 +21,18 @@
   #L%
   -->
 <div class="create-mapping-overlay overlay">
-    <form class="content" name="dvm.createMappingForm">
+    <form class="content" name="dvm.form">
         <h6>Create Mapping</h6>
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
-
-        <mapping-name-input name="dvm.newName" required="true"></mapping-name-input>
-        <radio-button ng-model="dvm.mappingType" value="'new'" display-text="'Create new'"></radio-button>
-        <radio-button ng-model="dvm.mappingType" value="'saved'" display-text="'Create from saved'" is-disabled-when="dvm.mm.mappingIds.length === 0"></radio-button>
         <div class="form-group">
-          <select class="form-control" size="5"
-              ng-model="dvm.savedMappingId"
-              ng-required="dvm.mappingType === 'saved'"
-              ng-disabled="dvm.mm.mappingIds.length === 0"
-              ng-focus="dvm.mappingType = 'saved'">
-              <option ng-if="dvm.mm.mappingIds.length === 0" class="no-values" value="" disabled hidden></option>
-              <option ng-repeat="id in dvm.mm.mappingIds" value="{{id}}">{{(id | splitIRI).end}}</option>
-          </select>
+            <custom-label>Title</custom-label>
+            <input class="form-control" type="text" name="title" ng-model="dvm.newMapping.record.title" required focus-me>
         </div>
+        <text-area ng-model="dvm.newMapping.record.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
+        <keyword-select ng-model="dvm.newMapping.record.keywords"></keyword-select>
 
         <div class="btn-container clearfix">
-            <button ng-click="dvm.continue()" class="btn btn-primary pull-right" ng-disabled="dvm.createMappingForm.$invalid">Continue</button>
+            <button ng-click="dvm.continue()" class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid">Continue</button>
             <button ng-click="dvm.cancel()" class="btn btn-default pull-right">Cancel</button>
         </div>
     </form>

@@ -80,8 +80,12 @@
                     dvm.endsWith = selectedIndex > 0 ? dvm.localNameOptions[selectedIndex] : dvm.localNameOptions[_.findIndex(dvm.localNameOptions, {'text': 'UUID'})];
 
                     dvm.set = function() {
+                        var originalClassMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.state.selectedClassMappingId});
+                        var originalPrefix = dvm.util.getPropertyValue(originalClassMapping, prefixes.delim + 'hasPrefix');
+                        var originalLocalName = dvm.util.getPropertyValue(originalClassMapping, prefixes.delim + 'localName');
                         dvm.mm.editIriTemplate(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId, dvm.beginsWith + dvm.then, dvm.endsWith.value);
-                        dvm.state.changedMapping = true;
+                        dvm.state.changeProp(dvm.state.selectedClassMappingId, prefixes.delim + 'hasPrefix', dvm.beginsWith + dvm.then, originalPrefix);
+                        dvm.state.changeProp(dvm.state.selectedClassMappingId, prefixes.delim + 'localName', dvm.endsWith.value, originalLocalName);
                     }
                 },
                 templateUrl: 'modules/mapper/directives/iriTemplateOverlay/iriTemplateOverlay.html'

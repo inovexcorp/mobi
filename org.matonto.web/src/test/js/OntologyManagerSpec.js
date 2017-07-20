@@ -276,7 +276,6 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('unless an error occurs', function(done) {
-            var params = paramSerializer({ title: title });
             $httpBackend.expectPOST('/matontorest/ontologies',
                 function(data) {
                     return data instanceof FormData;
@@ -288,9 +287,8 @@ describe('Ontology Manager service', function() {
                 .then(function() {
                     fail('Promise should have rejected');
                     done();
-                }, function(response) {
-                    expect(response).toEqual(error);
-                    expect(util.onError).toHaveBeenCalled();
+                }, function() {
+                    expect(util.rejectError).toHaveBeenCalled();
                     done();
                 });
             flushAndVerify($httpBackend);
@@ -950,6 +948,14 @@ describe('Ontology Manager service', function() {
         });
         it('"" if none are present or no ontology entity', function() {
             expect(ontologyManagerSvc.getOntologyIRI([])).toBe('');
+        });
+    });
+    describe('isDatatype should return', function() {
+        it('true if the entity contains the datatype type', function() {
+            expect(ontologyManagerSvc.isDatatype({'@type': [prefixes.rdfs + 'Datatype']})).toBe(true);
+        });
+        it('false if the entity does not contain the datatype type', function() {
+            expect(ontologyManagerSvc.isDatatype({})).toBe(false);
         });
     });
     describe('isClass should return', function() {
@@ -1766,6 +1772,65 @@ describe('Ontology Manager service', function() {
         });
         it('[] if there are no concept schemes in the ontology', function() {
             expect(ontologyManagerSvc.getConceptSchemeIRIs([[ontologyObj], [importedOntObj]])).toEqual([]);
+        });
+    });
+    describe('uploadChangesFile hits the proper endpoint', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({ branchId: branchId, commitId: commitId });
+        });
+        it('with recordId, branchId and commitId', function(done) {
+            $httpBackend.expectPUT('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+                function(data) {
+                    return data instanceof FormData;
+                }, function(headers) {
+                    return headers['Content-Type'] === undefined;
+                }).respond(200, { additions: [], deletions: [] });
+            ontologyManagerSvc.uploadChangesFile(file, recordId, branchId, commitId)
+                .then(function() {
+                    expect(true).toBe(true);
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('with no branchId', function(done) {
+            params = paramSerializer({ branchId: undefined, commitId: commitId });
+            $httpBackend.expectPUT('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+                function(data) {
+                    return data instanceof FormData;
+                }, function(headers) {
+                    return headers['Content-Type'] === undefined;
+                }).respond(200, { additions: [], deletions: [] });
+            ontologyManagerSvc.uploadChangesFile(file, recordId, undefined, commitId)
+                .then(function() {
+                    expect(true).toBe(true);
+                    done();
+                }, function() {
+                    fail('Promise should have resolved');
+                    done();
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('unless an error occurs', function(done) {
+            $httpBackend.expectPUT('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+                function(data) {
+                    return data instanceof FormData;
+                },
+                function(headers) {
+                    return headers['Content-Type'] === undefined;
+                }).respond(400, null, null, error);
+            ontologyManagerSvc.uploadChangesFile(file, recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                    done();
+                }, function() {
+                    expect(util.rejectError).toHaveBeenCalled();
+                    done();
+                });
+            flushAndVerify($httpBackend);
         });
     });
 });

@@ -22,7 +22,7 @@
   -->
 <div class="mapping-config-overlay overlay xlg">
     <form class="content" name="dvm.configForm">
-        <h6>{{(dvm.state.mapping.id | splitIRI).end}} Configuration</h6>
+        <h6>{{dvm.state.mapping.record.title}} Configuration</h6>
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
         <error-display ng-if="dvm.recordsErrorMessage">{{dvm.recordsErrorMessage}}</error-display>
         <div class="row">
@@ -60,7 +60,10 @@
                     <div class="classes-list">
                         <span class="field-name">Classes:</span>
                         <ul>
-                            <li ng-repeat="class in dvm.classes track by $index" title="{{class.classObj['@id']}}">{{dvm.om.getEntityName(class.classObj)}}</li>
+                            <li ng-repeat="class in dvm.classes track by $index" title="{{class.classObj['@id']}}">
+                                {{dvm.om.getEntityName(class.classObj)}}
+                                <span class="text-muted" ng-if="dvm.om.isDeprecated(class.classObj)">(Deprecated)</span>
+                            </li>
                         </ul>
                     </div>
                 </div>

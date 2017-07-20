@@ -21,14 +21,7 @@
  * #L%
  */
 describe('File Upload Page directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        mappingManagerSvc,
-        mapperStateSvc,
-        delimitedManagerSvc,
-        utilSvc;
+    var $compile, scope, element, controller, mappingManagerSvc, mapperStateSvc, delimitedManagerSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
@@ -47,15 +40,13 @@ describe('File Upload Page directive', function() {
             utilSvc = _utilService_;
         });
 
-        mapperStateSvc.mapping = {id: '', jsonld: []};
+        mapperStateSvc.mapping = {record: {id: ''}, jsonld: []};
         element = $compile(angular.element('<file-upload-page></file-upload-page>'))(scope);
         scope.$digest();
+        controller = element.controller('fileUploadPage');
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('fileUploadPage');
-        });
         it('should get the name of a data mapping', function() {
             expect(_.isString(controller.getDataMappingName(''))).toBe(true);
             expect(mappingManagerSvc.getPropIdByMappingId).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, '');
@@ -66,28 +57,25 @@ describe('File Upload Page directive', function() {
         });
         describe('should set the correct state for continuing to edit a mapping', function() {
             beforeEach(function() {
-                this.baseClass = {'@id': 'base'};
-                this.classMappings = [{}];
-                mappingManagerSvc.getBaseClass.and.returnValue(this.baseClass);
+                this.classMapping = {'@id': 'class'};
+                this.classMappings = [this.classMapping];
                 mappingManagerSvc.getAllClassMappings.and.returnValue(this.classMappings);
             });
             it('if a new mapping is being created', function() {
                 mapperStateSvc.newMapping = true;
                 controller.edit();
-                expect(mapperStateSvc.selectedClassMappingId).toBe(this.baseClass['@id']);
+                expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
                 expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
                 expect(mapperStateSvc.displayMappingConfigOverlay).toBe(true);
-                expect(mapperStateSvc.changedMapping).toBe(true);
             });
             it('if a saved mapping is being edited', function() {
                 mapperStateSvc.newMapping = false;
                 controller.edit();
-                expect(mapperStateSvc.selectedClassMappingId).toBe(this.baseClass['@id']);
+                expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMapping['@id']);
                 expect(mapperStateSvc.setAvailableProps.calls.count()).toBe(this.classMappings.length);
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.editMappingStep);
                 expect(mapperStateSvc.displayMappingConfigOverlay).not.toBe(true);
-                expect(mapperStateSvc.changedMapping).toBe(false);
             });
         });
         it('should set the correct state for canceling', function() {
@@ -150,17 +138,14 @@ describe('File Upload Page directive', function() {
         });
     });
     it('should call cancel when the cancel button is clicked', function() {
-        controller = element.controller('fileUploadPage');
         spyOn(controller, 'cancel');
-
         var cancelButton = angular.element(element.querySelectorAll('block-footer button.btn-default')[0]);
         cancelButton.triggerHandler('click');
         expect(controller.cancel).toHaveBeenCalled();
     });
     describe('should call the correct function when clicking the continue button ', function() {
         beforeEach(function() {
-            controller = element.controller('fileUploadPage');
-            this.continueButton = angular.element(element.querySelectorAll('block-footer button.btn-primary')[0]); 
+            this.continueButton = angular.element(element.querySelectorAll('block-footer button.btn-primary')[0]);
         });
         it('if a mapping is being edited', function() {
             spyOn(controller, 'edit');

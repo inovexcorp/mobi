@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.13-SNAPSHOT</version>
+        <version>1.8.39-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -50,7 +50,22 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
+            <version>1.8.14</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>rdf.orm</artifactId>
+            <version>${orm.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>rdf.orm.ontologies</artifactId>
             <version>1.7.20</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>catalog.api</artifactId>
+            <version>1.8.28</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
@@ -68,6 +83,31 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-all</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>rdf.impl.sesame</artifactId>
+            <version>1.8.6</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>repository.impl.sesame</artifactId>
+            <version>1.8.14</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -84,10 +124,46 @@
                         <Export-Package>
                         	org.matonto.ontology.core*
                         </Export-Package>
+                        <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.matonto.orm</groupId>
+                <artifactId>rdf-orm-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generateOrmSources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate-orm</goal>
+                        </goals>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <generates>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/ontology-editor.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.ontology.core.api.ontologies.ontologyeditor</outputPackage>
+                                    <ontologyName>OntologyEditor</ontologyName>
+                                </ontology>
+                            </generates>
+                            <references>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../org.matonto.rdf.orm.ontologies/src/main/resources/prov-o.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.ontologies.provo</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../org.matonto.catalog.api/src/main/resources/mcat.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.catalog.api.ontologies.mcat</outputPackage>
+                                    <ontologyName>MCAT</ontologyName>
+                                </ontology>
+                            </references>
+                            <outputLocation>${project.basedir}/src/main/java</outputLocation>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

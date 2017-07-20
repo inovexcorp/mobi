@@ -200,8 +200,7 @@
              * @returns {Promise} A promise indicating whether the ontology was persisted.
              */
             self.uploadFile = function(file, title, description, keywords) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         headers: {
@@ -216,10 +215,41 @@
                 if (keywords) {
                     fd.append('keywords', keywords);
                 }
-                $http.post(prefix, fd, config)
-                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
-
-                return deferred.promise;
+                return $http.post(prefix, fd, config)
+                    .then(response => response.data, util.rejectError);
+            }
+            /**
+             * @ngdoc method
+             * @name uploadFile
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the PUT /matontorest/ontologies/{recordId} endpoint which will return a new in-progress commit 
+             * object to be applied to the ontology.
+             *
+             * @param {File} file The updated ontology file.
+             * @param {string} the ontology record ID.
+             * @param {string} the ontology branch ID.
+             * @param {string} the ontology commit ID.
+             * @returns {Promise} A promise with the new in-progress commit to be applied or error message.
+             */
+            self.uploadChangesFile = function(file, recordId, branchId, commitId) {
+                    var fd = new FormData(),
+                    config = {
+                        transformRequest: angular.identity,
+                        headers: {
+                            'Content-Type': undefined,
+                            'Accept': 'application/json'
+                        },
+                        params: {
+                            branchId,
+                            commitId
+                        }
+                    };
+                fd.append('file', file);
+                
+                return $http.put(prefix + '/' + encodeURIComponent(recordId), fd, config)
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -633,6 +663,21 @@
             }
             /**
              * @ngdoc method
+             * @name isDeprecated
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Checks if the provided entity is deprecated by looking for the owl:deprecated annotation.
+             *
+             * @param {Object} entity The entity you want to check.
+             * @return {boolean} Returns true if the owl:deprecated value is "true" or "1", otherwise returns false.
+             */
+            self.isDeprecated = function(entity) {
+                var deprecated = util.getPropertyValue(entity, prefixes.owl + 'deprecated');
+                return deprecated === 'true' || deprecated === '1';
+            }
+            /**
+             * @ngdoc method
              * @name isOntology
              * @methodOf ontologyManager.service:ontologyManagerService
              *
@@ -688,6 +733,20 @@
             self.getOntologyIRI = function(ontology) {
                 var entity = self.getOntologyEntity(ontology);
                 return _.get(entity, '@id', _.get(entity, 'matonto.anonymous', ''));
+            }
+            /**
+             * @ngdoc method
+             * @name isDatatype
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             *Checks if the provided entity is an rdfs:Datatype. Returns a booelan.
+             *
+             * @param {Object} entity The entity you want to check
+             * @return {boolean} Returns true if it is an rdfs:Datatype entity, otherwise returns false.
+             */
+            self.isDatatype = function(entity) {
+                return _.includes(_.get(entity, '@type', []), prefixes.rdfs + 'Datatype');
             }
             /**
              * @ngdoc method
@@ -1462,7 +1521,7 @@
             }
             /* Private helper functions */
             function getAllRecords(sortingOption = _.find(cm.sortOptions, {label: 'Title (desc)'})) {
-                var ontologyRecordType = prefixes.catalog + 'OntologyRecord';
+                var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
                 var paginatedConfig = {
                     pageIndex: 0,
                     limit: 100,

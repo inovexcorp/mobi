@@ -56,9 +56,9 @@
          */
         .directive('editMappingPage', editMappingPage);
 
-        editMappingPage.$inject = ['mapperStateService', 'mappingManagerService', 'delimitedManagerService'];
+        editMappingPage.$inject = ['mapperStateService', 'mappingManagerService', 'delimitedManagerService', '$q'];
 
-        function editMappingPage(mapperStateService, mappingManagerService, delimitedManagerService) {
+        function editMappingPage(mapperStateService, mappingManagerService, delimitedManagerService, $q) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -75,15 +75,8 @@
                         preview: false
                     };
 
-                    dvm.configNotSet = function() {
-                        return _.isEmpty(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld));
-                    }
                     dvm.save = function() {
-                        if (_.includes(dvm.mm.mappingIds, dvm.state.mapping.id)) {
-                            dvm.mm.updateMapping(dvm.state.mapping.id, dvm.state.mapping.jsonld).then(success, onError);
-                        } else {
-                            dvm.mm.upload(dvm.state.mapping.jsonld).then(success, onError);
-                        }
+                        dvm.state.saveMapping().then(success, onError);
                     }
                     dvm.cancel = function() {
                         dvm.state.displayCancelConfirm = true;
