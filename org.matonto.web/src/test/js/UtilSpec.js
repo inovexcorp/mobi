@@ -214,7 +214,7 @@ describe('Util service', function() {
     });
     it('should create an error toast', function() {
         utilSvc.createErrorToast('Text');
-        expect(toastr.error).toHaveBeenCalledWith('Text', 'Error', {timeOut: 0});
+        expect(toastr.error).toHaveBeenCalledWith('Text', 'Error', {timeOut: 3000});
     });
     it('should get the namespace of an iri', function() {
         var result = utilSvc.getIRINamespace('iri');
@@ -357,7 +357,7 @@ describe('Util service', function() {
         expect(splitIRIFilter).toHaveBeenCalledWith('');
     });
     it("create a unique IRI for a blank node.", function() {
-        var result = _.startsWith(utilSvc.getIdForBlankNode(), '_:matonto/bnode/');
+        var result = _.startsWith(utilSvc.getIdForBlankNode(), '_:mobi/bnode/');
         expect(result).toBe(true);
         expect(uuid.v4).toHaveBeenCalled();
     });

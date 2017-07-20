@@ -87,7 +87,7 @@
                             && _.isEqual(getRdfProperty(thing, 'predicate'), predicate)
                             && _.isEqual(getRdfProperty(thing, 'object'), object);
                     }) || {
-                        '@id': '_:matonto/bnode/' + uuid.v4(),
+                        '@id': dvm.util.getIdForBlankNode(),
                         '@type': [prefixes.rdf + 'Statement'],
                         [prefixes.rdf + 'subject']: subject,
                         [prefixes.rdf + 'predicate']: predicate,

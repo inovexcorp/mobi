@@ -1,0 +1,6 @@
+[ {
+  "@id" : "_:mobi/bnode/0",
+  "http://example.com/prop1" : [ {
+    "@value" : "true"
+  } ]
+} ]

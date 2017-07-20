@@ -548,7 +548,7 @@
              * @return {string} A blank node IRI that should be unique.
              */
             self.getIdForBlankNode = function() {
-                return '_:matonto/bnode/' + uuid.v4();
+                return '_:mobi/bnode/' + uuid.v4();
             }
 
             function setValue(entity, propertyIRI, valueObj) {
