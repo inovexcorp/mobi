@@ -204,15 +204,34 @@
 
 :additions a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "additions"@en;
-    rdfs:comment "Links the IRI of a graph containing the statements that were added with the described Revision."@en;
+    rdfs:comment "Links the IRI of a graph containing the triples that were added with the described Revision."@en;
     rdfs:domain :Revision;
     rdfs:range xsd:anyURI.
 
 :deletions a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "deletions"@en;
-    rdfs:comment "Links the IRI of a graph containing the statements that were deleted with the described Revision."@en;
+    rdfs:comment "Links the IRI of a graph containing the triples that were deleted with the described Revision."@en;
     rdfs:domain :Revision;
     rdfs:range xsd:anyURI.
+
+:graphRevision a owl:ObjectProperty ;
+    rdfs:label "graph revision"@en ;
+    rdfs:comment "A Revision to track changes to a named graph."@en ;
+    rdfs:domain :Revision ;
+    rdfs:range :GraphRevision .
+
+# Graph Revision
+
+:GraphRevision a owl:Class;
+    rdfs:subClassOf :Revision;
+    rdfs:label "Graph Revision"@en;
+    rdfs:comment "An entity created by a Commit to track changes to a named graph."@en.
+
+:revisionedGraph a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "revisioned graph"@en;
+    rdfs:comment "Links the Resource of the revisioned named graph."@en;
+    rdfs:domain :GraphRevision;
+    rdfs:range <http://matonto.org/ontologies/matonto#Identifier>.
 
 # Misc.
 
