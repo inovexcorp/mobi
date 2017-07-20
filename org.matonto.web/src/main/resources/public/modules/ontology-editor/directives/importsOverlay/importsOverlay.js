@@ -50,30 +50,31 @@
                     dvm.ontologies = [];
                     dvm.iriPattern = REGEX.IRI;
                     dvm.urlError = '';
-                    dvm.mobiError = '';
+                    dvm.serverError = '';
                     dvm.tabs = {
                         url: true,
-                        mobi: false
+                        server: false
                     };
 
                     dvm.clickTab = function() {
-                        if (dvm.tabs.mobi && dvm.ontologies.length === 0) {
-                            dvm.urls = [];
+                        if (dvm.tabs.server && dvm.ontologies.length === 0) {
                             httpService.cancel(dvm.spinnerId);
                             om.getAllOntologyRecords(undefined, dvm.spinnerId)
                                 .then(ontologies => {
-                                    dvm.ontologies = _.filter(ontologies, isOntologyUnused);
-                                    dvm.mobiError = '';
+                                    dvm.ontologies = _.map(_.filter(ontologies, isOntologyUnused), record => {
+                                        return {
+                                            recordId: record['@id'],
+                                            ontologyIRI: dvm.getOntologyIRI(record),
+                                            title: dvm.util.getDctermsValue(record, 'title'),
+                                            selected: false
+                                        };
+                                    });
+                                    dvm.serverError = '';
                                 }, onError);
                         }
                     }
-                    dvm.toggleOntology = function(record) {
-                        var ontologyIRI = dvm.getOntologyIRI(record);
-                        if (_.includes(dvm.urls, ontologyIRI)) {
-                            _.pull(dvm.urls, ontologyIRI);
-                        } else {
-                            dvm.urls.push(ontologyIRI);
-                        }
+                    dvm.ontologyIsSelected = function() {
+                        return _.some(dvm.ontologies, 'selected');
                     }
                     dvm.getOntologyIRI = function(record) {
                         return dvm.util.getPropertyId(record, prefixes.ontologyEditor + 'ontologyIRI');
@@ -84,8 +85,8 @@
                                 .then(response => {
                                     dvm.confirmed([dvm.url]);
                                 }, () => onError('The provided URL was unresolvable.'));
-                        } else if (dvm.tabs.mobi) {
-                            dvm.confirmed(dvm.urls);
+                        } else if (dvm.tabs.server) {
+                            dvm.confirmed(_.map(_.filter(dvm.ontologies, 'selected'), 'ontologyIRI'));
                         }
                     }
                     dvm.confirmed = function(urls) {
@@ -109,8 +110,8 @@
                     function onError(errorMessage) {
                         if (dvm.tabs.url) {
                             dvm.urlError = errorMessage;
-                        } else if (dvm.tabs.mobi) {
-                            dvm.mobiError = errorMessage;
+                        } else if (dvm.tabs.server) {
+                            dvm.serverError = errorMessage;
                         }
                     }
                 }

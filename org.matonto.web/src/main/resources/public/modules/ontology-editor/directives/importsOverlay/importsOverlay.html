@@ -24,7 +24,7 @@
     <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
         <h1>Import Ontology</h1>
         <tabset class="in-overlay">
-            <tab heading="'By URL'" active="dvm.tabs.url" on-click="dvm.clickTab()" class="padding">
+            <tab heading="'Web URL'" active="dvm.tabs.url" on-click="dvm.clickTab()" class="padding">
                 <error-display ng-if="dvm.urlError">{{dvm.urlError}}</error-display>
                 <div ng-class="{'has-error': dvm.form.url.$error.pattern}" class="form-group">
                     <custom-label>URL</custom-label>
@@ -34,19 +34,24 @@
                     </p>
                 </div>
             </tab>
-            <tab heading="'In Mobi'" active="dvm.tabs.mobi" on-click="dvm.clickTab()">
-                <error-display ng-if="dvm.mobiError">{{dvm.mobiError}}</error-display>
+            <tab heading="'On Server'" active="dvm.tabs.server" on-click="dvm.clickTab()">
+                <error-display ng-if="dvm.serverError">{{dvm.serverError}}</error-display>
                 <div class="ontologies" targeted-spinner="dvm.spinnerId">
                     <info-message ng-if="dvm.ontologies.length === 0" class="padding">No ontologies are available to import</info-message>
-                    <div class="ontology" ng-repeat="record in dvm.ontologies track by record['@id']" ng-click="dvm.toggleOntology(record)" ng-class="{'active': dvm.urls.indexOf(dvm.getOntologyIRI(record)) >= 0}">
-                        <h4 class="header">{{dvm.util.getDctermsValue(record, 'title')}}</h4>
-                        <small class="ontology-iri text-muted">{{dvm.getOntologyIRI(record)}}</small>
-                    </div>
+                    <md-list>
+                        <md-list-item class="ontology" ng-repeat="ontology in dvm.ontologies track by ontology.recordId">
+                            <div>
+                                <h4 class="header">{{ontology.title}}</h4>
+                                <small class="ontology-iri text-muted">{{ontology.ontologyIRI}}</small>
+                            </div>
+                            <md-checkbox class="md-secondary" ng-model="ontology.selected" aria-label="Selected"></md-checkbox>
+                        </md-list-item>
+                    </md-list>
                 </div>
             </tab>
         </tabset>
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid || (dvm.tabs.mobi && dvm.urls.length === 0)" ng-click="dvm.addImport()">Submit</button>
+            <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid || (dvm.tabs.server && !dvm.ontologyIsSelected())" ng-click="dvm.addImport()">Submit</button>
             <button class="btn btn-default pull-right" ng-click="dvm.onClose()">Cancel</button>
         </div>
     </form>

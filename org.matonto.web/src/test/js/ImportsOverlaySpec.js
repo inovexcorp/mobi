@@ -78,10 +78,10 @@ describe('Imports Overlay directive', function() {
             scope.$digest();
             expect(element.find('error-display').length).toBe(1);
         });
-        it('depending on whether an error has occured on the Mobi tab', function() {
+        it('depending on whether an error has occured on the Server tab', function() {
             expect(element.find('error-display').length).toBe(0);
 
-            controller.mobiError = 'Error';
+            controller.serverError = 'Error';
             scope.$digest();
             expect(element.find('error-display').length).toBe(1);
         });
@@ -90,6 +90,9 @@ describe('Imports Overlay directive', function() {
         });
         it('with a custom-label', function() {
             expect(element.find('custom-label').length).toBe(1);
+        });
+        it('with a md-list', function() {
+            expect(element.find('md-list').length).toBe(1);
         });
         it('with buttons to submit and cancel', function() {
             var buttons = element.querySelectorAll('.btn-container button');
@@ -117,54 +120,35 @@ describe('Imports Overlay directive', function() {
             expect(element.find('info-message').length).toEqual(0);
             expect(element.querySelectorAll('.ontologies .ontology').length).toEqual(controller.ontologies.length);
         });
-        it('depending on whether an ontology has been selected', function() {
-            controller.urls = ['test'];
-            controller.ontologies = [{}];
-            spyOn(controller, 'getOntologyIRI').and.returnValue('test');
-            scope.$digest();
-            var ontology = angular.element(element.querySelectorAll('.ontologies .ontology')[0]);
-            expect(ontology.hasClass('active')).toBe(true);
-        });
         it('depending on whether the button should be disabled', function() {
             var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
             controller.url = 'test';
             controller.tabs.url = false;
-            controller.tabs.mobi = true;
+            controller.tabs.server = true;
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
 
-            controller.urls = [''];
+            spyOn(controller, 'ontologyIsSelected').and.returnValue(true);
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
     });
     describe('controller methods', function() {
-        it('should toggle whether a local ontology is selected', function() {
-            spyOn(controller, 'getOntologyIRI').and.returnValue('ontology');
-            controller.urls = [];
-            controller.toggleOntology({});
-            expect(controller.getOntologyIRI).toHaveBeenCalledWith({});
-            expect(controller.urls).toContain('ontology');
-
-            controller.toggleOntology({});
-            expect(controller.getOntologyIRI).toHaveBeenCalledWith({});
-            expect(controller.urls).not.toContain('ontology');
-        });
         it('should get the ontology IRI of an OntologyRecord', function() {
             utilSvc.getPropertyId.and.returnValue('ontology')
             expect(controller.getOntologyIRI({})).toEqual('ontology');
             expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.ontologyEditor + 'ontologyIRI');
         });
-        describe('should update the appropriate varibles if clicking the', function() {
+        /*describe('should update the appropriate varibles if clicking the', function() {
             beforeEach(function() {
                 controller.urls = [''];
             });
             describe('Mobi tab', function() {
                 beforeEach(function() {
                     controller.tabs.url = false;
-                    controller.tabs.mobi = true;
+                    controller.tabs.server = true;
                     controller.ontologies = [];
                 });
                 it('unless an error occurs', function() {
@@ -174,7 +158,7 @@ describe('Imports Overlay directive', function() {
                     expect(ontologyManagerSvc.getAllOntologyRecords).toHaveBeenCalledWith(undefined, controller.spinnerId);
                     expect(controller.urls).toEqual([]);
                     expect(controller.ontologies).toEqual([]);
-                    expect(controller.mobiError).toEqual('error');
+                    expect(controller.serverError).toEqual('error');
                 });
                 it('unless the ontologies have already been retrieved', function() {
                     controller.ontologies = [{}];
@@ -193,7 +177,7 @@ describe('Imports Overlay directive', function() {
                     expect(ontologyManagerSvc.getAllOntologyRecords).toHaveBeenCalledWith(undefined, controller.spinnerId);
                     expect(controller.urls).toEqual([]);
                     expect(controller.ontologies.length).toEqual(1);
-                    expect(controller.mobiError).toEqual('');
+                    expect(controller.serverError).toEqual('');
                 });
             });
             it('URL tab', function() {
@@ -203,7 +187,7 @@ describe('Imports Overlay directive', function() {
                 expect(controller.urls).toEqual(['']);
                 expect(controller.ontologies).toEqual([{}]);
             });
-        });
+        });*/
         describe('addImport should call the correct methods', function() {
             beforeEach(function() {
                 spyOn(controller, 'confirmed');
@@ -228,10 +212,11 @@ describe('Imports Overlay directive', function() {
             });
             it('if importing Mobi ontologies', function() {
                 controller.tabs.url = false;
-                controller.tabs.mobi = true;
+                controller.tabs.server = true;
+                controller.ontologies = [{selected: true, ontologyIRI: 'ontology1', recordId: 'record1'}, {selected: false, ontologyIRI: 'ontology2', recordId: 'record2'}]
                 controller.addImport();
                 $httpBackend.verifyNoOutstandingExpectation();
-                expect(controller.confirmed).toHaveBeenCalledWith(controller.urls);
+                expect(controller.confirmed).toHaveBeenCalledWith(['ontology1']);
             });
         });
         describe('confirmed should call the correct methods', function() {
@@ -305,15 +290,6 @@ describe('Imports Overlay directive', function() {
                 expect(controller.urlError).toBe('error');
             });
         });
-    });
-    it('should call toggleOntology when an ontology is clicked', function() {
-        var ontology = {'@id': 'ontology'};
-        controller.ontologies = [ontology];
-        scope.$digest();
-        spyOn(controller, 'toggleOntology');
-        var ontologyDiv = angular.element(element.querySelectorAll('.ontologies .ontology')[0]);
-        ontologyDiv.triggerHandler('click');
-        expect(controller.toggleOntology).toHaveBeenCalledWith(ontology);
     });
     it('should call addImport when the button is clicked', function() {
         spyOn(controller, 'addImport');
