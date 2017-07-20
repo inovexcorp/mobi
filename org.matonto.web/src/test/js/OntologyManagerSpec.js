@@ -950,6 +950,14 @@ describe('Ontology Manager service', function() {
             expect(ontologyManagerSvc.getOntologyIRI([])).toBe('');
         });
     });
+    describe('isDatatype should return', function() {
+        it('true if the entity contains the datatype type', function() {
+            expect(ontologyManagerSvc.isDatatype({'@type': [prefixes.rdfs + 'Datatype']})).toBe(true);
+        });
+        it('false if the entity does not contain the datatype type', function() {
+            expect(ontologyManagerSvc.isDatatype({})).toBe(false);
+        });
+    });
     describe('isClass should return', function() {
         it('true if the entity contains the class type', function() {
             expect(ontologyManagerSvc.isClass(classObj)).toBe(true);

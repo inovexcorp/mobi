@@ -202,6 +202,7 @@ function mockOntologyManager() {
             this.hasOntologyEntity = jasmine.createSpy('hasOntologyEntity');
             this.getOntologyEntity = jasmine.createSpy('getOntologyEntity').and.returnValue({});
             this.getOntologyIRI = jasmine.createSpy('getOntologyIRI').and.returnValue('');
+            this.isDatatype = jasmine.createSpy('isDatatype');
             this.isClass = jasmine.createSpy('isClass');
             this.hasClasses = jasmine.createSpy('hasClasses').and.returnValue(true);
             this.getClasses = jasmine.createSpy('getClasses').and.returnValue([]);
