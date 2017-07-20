@@ -23,16 +23,6 @@ package org.matonto.rest.util;
  * #L%
  */
 
-import javax.annotation.Nullable;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Response;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
@@ -40,20 +30,22 @@ import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.openrdf.model.Model;
-import org.openrdf.model.impl.LinkedHashModel;
-import org.openrdf.model.impl.SimpleValueFactory;
-import org.openrdf.rio.ParseErrorListener;
-import org.openrdf.rio.ParserConfig;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
-import org.openrdf.rio.RDFParser;
 import org.openrdf.rio.Rio;
-import org.openrdf.rio.helpers.BasicParserSettings;
 import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
-import org.openrdf.rio.helpers.ParseErrorCollector;
-import org.openrdf.rio.helpers.StatementCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import javax.annotation.Nullable;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Response;
 
 public class RestUtils {
 
@@ -165,19 +157,7 @@ public class RestUtils {
      */
     public static Model jsonldToModel(String jsonld) {
         try {
-            /*Model model = new LinkedHashModel();
-            RDFParser parser = Rio.createParser(RDFFormat.JSONLD);
-            parser.setPreserveBNodeIDs(true);
-            parser.setRDFHandler(new StatementCollector(model));
-            parser.parse(IOUtils.toInputStream(jsonld), "");
-            return model;*/
-
-            ParserConfig config = new ParserConfig();
-            config.set(BasicParserSettings.PRESERVE_BNODE_IDS, true);
-            return Rio.parse(IOUtils.toInputStream(jsonld), "", RDFFormat.JSONLD, config,
-                    SimpleValueFactory.getInstance(), new ParseErrorCollector());
-
-            // return Rio.parse(IOUtils.toInputStream(jsonld), "", RDFFormat.JSONLD, config);
+            return Rio.parse(IOUtils.toInputStream(jsonld), "", RDFFormat.JSONLD);
         } catch (Exception e) {
             throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
         }
