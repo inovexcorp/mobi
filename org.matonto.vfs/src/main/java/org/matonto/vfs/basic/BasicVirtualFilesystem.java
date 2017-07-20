@@ -29,10 +29,11 @@ import aQute.bnd.annotation.component.Deactivate;
 import org.apache.commons.vfs2.FileSystemException;
 import org.apache.commons.vfs2.FileSystemManager;
 import org.apache.commons.vfs2.VFS;
-import org.apache.log4j.Logger;
 import org.matonto.vfs.api.VirtualFile;
 import org.matonto.vfs.api.VirtualFilesystem;
 import org.matonto.vfs.api.VirtualFilesystemException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 
@@ -42,7 +43,7 @@ import java.net.URI;
 @Component(name = "Basic Virtual Filesystem")
 public class BasicVirtualFilesystem implements VirtualFilesystem {
 
-    private static final Logger LOGGER = Logger.getLogger(BasicVirtualFilesystem.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BasicVirtualFilesystem.class);
 
     private FileSystemManager fsManager;
 

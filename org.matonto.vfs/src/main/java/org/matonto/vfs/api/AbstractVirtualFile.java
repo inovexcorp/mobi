@@ -23,7 +23,9 @@ package org.matonto.vfs.api;
  * #L%
  */
 
-import org.apache.log4j.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.concurrent.ForkJoinPool;
@@ -37,8 +39,7 @@ public abstract class AbstractVirtualFile implements VirtualFile {
     /**
      * Logging utility object for this implementation.
      */
-    private static final Logger LOGGER = Logger.getLogger(AbstractVirtualFile.class);
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractVirtualFile.class);
 
     /**
      * Process all of the files in a virtual directory asynchronously.

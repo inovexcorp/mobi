@@ -35,6 +35,7 @@ import org.matonto.vfs.basic.BasicVirtualFilesystem;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.HashSet;
@@ -69,6 +70,9 @@ public class TestDefaultVirtualFilesystem extends TestCase {
             writeFile = new java.io.File(new java.io.File(targetDirectory).getAbsolutePath() + "/testFile").toURI();
             assertNotNull(writeFile);
             fs = new BasicVirtualFilesystem();
+            Method m = fs.getClass().getDeclaredMethod("activate");
+            m.setAccessible(true);
+            m.invoke(fs);
             assertNotNull(fs);
         } catch (Exception e) {
             e.printStackTrace();
@@ -130,7 +134,9 @@ public class TestDefaultVirtualFilesystem extends TestCase {
             assertTrue(targetDir.isFolder());
             assertNotNull(targetDir.getChildren());
             assertFalse(targetDir.getChildren().isEmpty());
-            assertEquals(new File(testResources).list().length, targetDir.getChildren().size());
+            final String[] data = new File(testResources).list();
+            assertNotNull(data);
+            assertEquals(data.length, targetDir.getChildren().size());
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.getMessage());
