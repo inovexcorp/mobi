@@ -65,8 +65,8 @@ describe('Ontology Download Overlay directive', function() {
         it('with a .btn-container', function() {
             expect(element.querySelectorAll('.btn-container').length).toBe(1);
         });
-        it('with a .error-msg', function() {
-            expect(element.querySelectorAll('.error-msg').length).toBe(1);
+        it('with a .error-display', function() {
+            expect(element.querySelectorAll('.error-display').length).toBe(1);
         });
         it('depending on whether the fileName is valid', function() {
             var formGroup = angular.element(element.querySelectorAll('.form-group')[0]);

@@ -62,10 +62,7 @@
                             httpService.cancel(dvm.spinnerId);
                             om.getAllOntologyRecords(undefined, dvm.spinnerId)
                                 .then(ontologies => {
-                                    dvm.ontologies = _.filter(ontologies, record => {
-                                        return record['@id'] !== os.listItem.ontologyRecord.recordId
-                                            && !_.includes(os.listItem.importedOntologyIds, dvm.util.getPropertyId(record, prefixes.ontologyEditor + 'ontologyIRI'));
-                                    });
+                                    dvm.ontologies = _.filter(ontologies, isOntologyUnused);
                                     dvm.mobiError = '';
                                 }, onError);
                         }
@@ -106,6 +103,9 @@
                             }, onError);
                     }
 
+                    function isOntologyUnused(ontologyRecord) {
+                        return ontologyRecord['@id'] !== os.listItem.ontologyRecord.recordId && !_.includes(os.listItem.importedOntologyIds, dvm.getOntologyIRI(ontologyRecord));
+                    }
                     function onError(errorMessage) {
                         if (dvm.tabs.url) {
                             dvm.urlError = errorMessage;

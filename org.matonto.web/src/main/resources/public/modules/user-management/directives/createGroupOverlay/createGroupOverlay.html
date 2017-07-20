@@ -29,7 +29,7 @@
             <custom-label>Group Title</custom-label>
             <input class="form-control" type="text" name="title" ng-model="dvm.newGroup.title" unique-value="dvm.getTitles()" required focus-me/>
         </div>
-        <p ng-messages="dvm.form.name.$error" class="error-msg">
+        <p ng-messages="dvm.form.name.$error" class="error-display">
             <ng-message when="uniqueTitle">This group title has already been taken.</ng-message>
         </p>
         <text-area ng-model="dvm.newGroup.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>

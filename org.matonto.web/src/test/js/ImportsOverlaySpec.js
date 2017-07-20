@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Imports Overlay directive', function() {
-    var $q, $compile, scope, element, controller, $httpBackend, ontologyStateSvc, ontologyManagerSvc, prefixes;
+    var $q, $compile, scope, element, controller, $httpBackend, ontologyStateSvc, ontologyManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -40,7 +40,7 @@ describe('Imports Overlay directive', function() {
             $httpBackend = _$httpBackend_;
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
-            util = _utilService_;
+            utilSvc = _utilService_;
             prefixes = _prefixes_;
         });
 
@@ -109,8 +109,12 @@ describe('Imports Overlay directive', function() {
             expect(formGroup.hasClass('has-error')).toBe(true);
         });
         it('depending on how many ontologies there are', function() {
+            expect(element.find('info-message').length).toEqual(1);
+            expect(element.querySelectorAll('.ontologies .ontology').length).toEqual(0);
+
             controller.ontologies = [{}];
             scope.$digest();
+            expect(element.find('info-message').length).toEqual(0);
             expect(element.querySelectorAll('.ontologies .ontology').length).toEqual(controller.ontologies.length);
         });
         it('depending on whether an ontology has been selected', function() {
@@ -137,6 +141,22 @@ describe('Imports Overlay directive', function() {
         });
     });
     describe('controller methods', function() {
+        it('should toggle whether a local ontology is selected', function() {
+            spyOn(controller, 'getOntologyIRI').and.returnValue('ontology');
+            controller.urls = [];
+            controller.toggleOntology({});
+            expect(controller.getOntologyIRI).toHaveBeenCalledWith({});
+            expect(controller.urls).toContain('ontology');
+
+            controller.toggleOntology({});
+            expect(controller.getOntologyIRI).toHaveBeenCalledWith({});
+            expect(controller.urls).not.toContain('ontology');
+        });
+        it('should get the ontology IRI of an OntologyRecord', function() {
+            utilSvc.getPropertyId.and.returnValue('ontology')
+            expect(controller.getOntologyIRI({})).toEqual('ontology');
+            expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.ontologyEditor + 'ontologyIRI');
+        });
         describe('should update the appropriate varibles if clicking the', function() {
             beforeEach(function() {
                 controller.urls = [''];
@@ -230,8 +250,8 @@ describe('Imports Overlay directive', function() {
                         controller.confirmed(urls);
                         scope.$apply();
                         _.forEach(urls, function(url) {
-                            expect(util.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
-                            expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': url});
+                            expect(utilSvc.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
+                            expect(utilSvc.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': url});
                         });
                         expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
@@ -246,8 +266,8 @@ describe('Imports Overlay directive', function() {
                         controller.confirmed(urls);
                         scope.$apply();
                         _.forEach(urls, function(url) {
-                            expect(util.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
-                            expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': url});
+                            expect(utilSvc.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
+                            expect(utilSvc.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': url});
                         });
                         expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
@@ -261,8 +281,8 @@ describe('Imports Overlay directive', function() {
                     controller.confirmed(urls);
                     scope.$apply();
                     _.forEach(urls, function(url) {
-                        expect(util.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
-                        expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': url});
+                        expect(utilSvc.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
+                        expect(utilSvc.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': url});
                     });
                     expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
@@ -276,8 +296,8 @@ describe('Imports Overlay directive', function() {
                 controller.confirmed(urls);
                 scope.$apply();
                 _.forEach(urls, function(url) {
-                    expect(util.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
-                    expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': url});
+                    expect(utilSvc.setPropertyId).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', url);
+                    expect(utilSvc.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': url});
                 });
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                 expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});

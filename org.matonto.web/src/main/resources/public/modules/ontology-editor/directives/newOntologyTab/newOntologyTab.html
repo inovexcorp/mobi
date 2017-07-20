@@ -33,7 +33,7 @@
                         <div ng-class="{'has-error': dvm.form.iri.$error.pattern}" class="form-group">
                             <custom-label>Ontology IRI</custom-label>
                             <input class="form-control" name="iri" ng-model="dvm.ontology['@id']" ng-pattern="dvm.iriPattern" ng-change="dvm.iriHasChanged = true" required />
-                            <p ng-messages="dvm.form.iri.$error" class="error-msg">
+                            <p ng-messages="dvm.form.iri.$error" class="error-display">
                                 <ng-message when="pattern">The value provided is not a valid IRI.</ng-message>
                             </p>
                         </div>

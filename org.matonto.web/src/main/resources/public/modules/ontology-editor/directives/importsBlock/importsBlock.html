@@ -30,9 +30,7 @@
                 <a href="{{import['@id']}}" target="_blank">{{import['@id']}}</a>
                 <a class="btn-link pull-right" ng-click="dvm.setupRemove(import['@id'])" title="Delete"><i class="fa fa-times fa-fw"></i></a>
             </p>
-            <p ng-if="!dvm.os.listItem.selected[dvm.prefixes.owl + 'imports'].length" class="padding text-info message">
-                <i class="fa fa-info fa-fw"></i><span>This ontology does not have any imports.</span>
-            </p>
+            <info-message ng-if="!dvm.os.listItem.selected[dvm.prefixes.owl + 'imports'].length" class="padding">This ontology does not have any imports.</info-message>
         </block-content>
     </block>
     <imports-overlay ng-if="dvm.showNewOverlay" on-close="dvm.showNewOverlay = false"></imports-overlay>

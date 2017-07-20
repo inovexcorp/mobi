@@ -45,10 +45,8 @@
                                 <a ng-click="dvm.showDeleteConfirmationOverlay(record); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
                             </div>
                         </div>
-                        <p ng-if="!dvm.filteredList.length" class="text-info message">
-                            <span ng-if="dvm.filterText"><i class="fa fa-info fa-fw"></i>No ontologies match your filtered text.</span>
-                            <span ng-if="!dvm.filterText"><i class="fa fa-info fa-fw"></i>Create or upload an ontology to get started.</span>
-                        </p>
+                        <info-message ng-if="!dvm.filteredList.length && dvm.filterText">No ontologies match your filtered text.</info-message>
+                        <info-message ng-if="!dvm.filteredList.length && !dvm.filterText">Create or upload an ontology to get started.</info-message>
                     </div>
                 </block-content>
                 <block-footer>

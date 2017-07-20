@@ -237,22 +237,22 @@ describe('Datasets List directive', function() {
             expect(element.find('pagination').length).toBe(1);
         });
         it('depending on how many datasets there are', function() {
-            expect(element.querySelectorAll('block-content .text-info').length).toBe(1);
+            expect(element.querySelectorAll('block-content info-message').length).toBe(1);
             expect(element.querySelectorAll('block-content .dataset').length).toBe(0);
 
             datasetStateSvc.results = [{}, {}];
             scope.$digest();
-            expect(element.querySelectorAll('block-content .text-info').length).toBe(0);
+            expect(element.querySelectorAll('block-content info-message').length).toBe(0);
             expect(element.querySelectorAll('block-content .dataset').length).toBe(datasetStateSvc.results.length);
         });
         it('depending on whether search text has been entered', function() {
-            expect(element.querySelectorAll('block-content .text-info .no-results').length).toBe(1);
-            expect(element.querySelectorAll('block-content .text-info .no-match').length).toBe(0);
+            expect(element.querySelectorAll('block-content info-message.no-results').length).toBe(1);
+            expect(element.querySelectorAll('block-content info-message.no-match').length).toBe(0);
 
             datasetStateSvc.paginationConfig.searchText = 'test';
             scope.$digest();
-            expect(element.querySelectorAll('block-content .text-info .no-results').length).toBe(0);
-            expect(element.querySelectorAll('block-content .text-info .no-match').length).toBe(1);
+            expect(element.querySelectorAll('block-content info-message.no-results').length).toBe(0);
+            expect(element.querySelectorAll('block-content info-message.no-match').length).toBe(1);
         });
         it('depending on whether a dataset is opened', function() {
             datasetStateSvc.results = [{record: {'@id': 'a'}}, {record: {'@id': 'b'}}];

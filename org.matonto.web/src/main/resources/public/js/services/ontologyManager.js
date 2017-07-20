@@ -177,7 +177,7 @@
              * @param {Object} sortOption An object describing the order for the OntologyRecords.
              * @returns {Promise} A promise with an array of the OntologyRecords.
              */
-            self.getAllOntologyRecords = function(sortOption = _.find(cm.sortOptions, {label: 'Title (desc)'}), id = '') {
+            self.getAllOntologyRecords = function(sortOption = _.find(cm.sortOptions, {label: 'Title (asc)'}), id = '') {
                 var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
                 var paginatedConfig = {
                     pageIndex: 0,

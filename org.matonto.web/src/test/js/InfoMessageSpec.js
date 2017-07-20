@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,31 +20,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Error Display directive', function() {
+describe('Info Message directive', function() {
     var $compile, element, scope;
 
     beforeEach(function() {
         module('templates');
-        module('errorDisplay');
+        module('infoMessage');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
 
-        element = $compile(angular.element('<error-display></error-display>'))(scope);
+        element = $compile(angular.element('<info-message></info-message>'))(scope);
         scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping-containers', function() {
             expect(element.prop('tagName')).toBe('P');
-            expect(element.hasClass('error-display')).toBe(true);
+            expect(element.hasClass('info-message')).toBe(true);
+            expect(element.hasClass('text-info')).toBe(true);
         });
-        it('with a i.fa-exclamation-triangle', function() {
+        it('with a i.fa-info', function() {
             var items = element.find('i');
             expect(items.length).toBe(1);
-            expect(items.hasClass('fa-exclamation-triangle')).toEqual(true);
+            expect(items.hasClass('fa-info')).toEqual(true);
         });
         it('with a span', function() {
             expect(element.find('span').length).toBe(1);

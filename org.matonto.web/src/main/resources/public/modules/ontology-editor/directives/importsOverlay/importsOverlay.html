@@ -29,7 +29,7 @@
                 <div ng-class="{'has-error': dvm.form.url.$error.pattern}" class="form-group">
                     <custom-label>URL</custom-label>
                     <input class="form-control" name="url" ng-model="dvm.url" ng-pattern="dvm.iriPattern" ng-required="dvm.tabs.url" focus-me />
-                    <p ng-messages="dvm.form.url.$error" class="error-msg">
+                    <p ng-messages="dvm.form.url.$error" class="error-display">
                         <ng-message when="pattern">The value provided is not a valid URL.</ng-message>
                     </p>
                 </div>
@@ -37,6 +37,7 @@
             <tab heading="'In Mobi'" active="dvm.tabs.mobi" on-click="dvm.clickTab()">
                 <error-display ng-if="dvm.mobiError">{{dvm.mobiError}}</error-display>
                 <div class="ontologies" targeted-spinner="dvm.spinnerId">
+                    <info-message ng-if="dvm.ontologies.length === 0" class="padding">No ontologies are available to import</info-message>
                     <div class="ontology" ng-repeat="record in dvm.ontologies track by record['@id']" ng-click="dvm.toggleOntology(record)" ng-class="{'active': dvm.urls.indexOf(dvm.getOntologyIRI(record)) >= 0}">
                         <h4 class="header">{{dvm.util.getDctermsValue(record, 'title')}}</h4>
                         <small class="ontology-iri text-muted">{{dvm.getOntologyIRI(record)}}</small>

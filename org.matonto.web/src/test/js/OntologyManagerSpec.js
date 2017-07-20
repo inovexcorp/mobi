@@ -229,7 +229,7 @@ describe('Ontology Manager service', function() {
             scope.$apply();
         });
         it('with a promise id', function() {
-            var sortOption = {label: 'Title (desc)'};
+            var sortOption = {label: 'Title (asc)'};
             var id = 'id';
             catalogManagerSvc.sortOptions = [sortOption];
             config.sortOption = sortOption;

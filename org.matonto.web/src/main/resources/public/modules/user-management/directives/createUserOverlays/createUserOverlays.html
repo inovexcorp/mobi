@@ -28,7 +28,7 @@
             <custom-label>Username</custom-label>
             <input class="form-control" type="text" name="username" ng-model="dvm.newUser.username" unique-value="dvm.getUsernames()" ng-pattern="dvm.usernamePattern" ng-trim="false" required focus-me/>
         </div>
-        <p ng-messages="dvm.infoForm.username.$error" class="error-msg">
+        <p ng-messages="dvm.infoForm.username.$error" class="error-display">
             <ng-message when="uniqueUsername">This username has already been taken</ng-message>
             <ng-message when="pattern">Invalid username</ng-message>
         </p>

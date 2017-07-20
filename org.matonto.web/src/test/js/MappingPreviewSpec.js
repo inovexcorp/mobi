@@ -111,11 +111,11 @@ describe('Mapping Preview directive', function() {
             mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
             scope.$digest();
             var propItem = angular.element(element.querySelectorAll('.props > li')[0]);
-            expect(propItem.hasClass('error-msg')).toBe(false);
+            expect(propItem.hasClass('error-display')).toBe(false);
 
             controller.isInvalid.and.returnValue(true);
             scope.$digest();
-            expect(propItem.hasClass('error-msg')).toBe(true);
+            expect(propItem.hasClass('error-display')).toBe(true);
         });
     });
 });
