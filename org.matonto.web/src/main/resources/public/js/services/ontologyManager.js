@@ -1299,7 +1299,7 @@
              * @return {boolean} Retrurns true if the id is a blank node id, otherwise returns false.
              */
             self.isBlankNodeId = function(id) {
-                return _.isString(id) && (_.includes(id, 'http://matonto.org/.well-known/genid/') || _.includes(id, '_:genid') || _.includes(id, '_:b'));
+                return _.isString(id) && (_.includes(id, '/.well-known/genid/') || _.includes(id, '_:genid') || _.includes(id, '_:b'));
             }
             /**
              * @ngdoc method

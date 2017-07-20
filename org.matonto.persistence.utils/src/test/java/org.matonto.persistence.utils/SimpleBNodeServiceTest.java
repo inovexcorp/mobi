@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.matonto.persistence.utils.impl.SimpleBNodeService;
 import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -39,9 +40,9 @@ import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 
-public class BNodeServiceTest {
+public class SimpleBNodeServiceTest {
 
-    private BNodeService service;
+    private SimpleBNodeService service;
     private ValueFactory vf = SimpleValueFactory.getInstance();
     private ModelFactory mf = LinkedHashModelFactory.getInstance();
 
@@ -50,12 +51,12 @@ public class BNodeServiceTest {
     private final IRI predicate = vf.createIRI("http://matonto.org/predicate");
     private final Resource subject = vf.createIRI("http://matonto.org/subject");
     private final Value object = vf.createIRI("http://matonto.org/object");
-    private final IRI skolemizedIRI1 = vf.createIRI(BNodeService.BNODE_NAMESPACE + "0");
-    private final IRI skolemizedIRI2 = vf.createIRI(BNodeService.BNODE_NAMESPACE + "1");
+    private final IRI skolemizedIRI1 = vf.createIRI(SimpleBNodeService.BNODE_NAMESPACE + "0");
+    private final IRI skolemizedIRI2 = vf.createIRI(SimpleBNodeService.BNODE_NAMESPACE + "1");
 
     @Before
     public void setUp() throws Exception {
-        service = new BNodeService();
+        service = new SimpleBNodeService();
         service.setModelFactory(mf);
         service.setValueFactory(vf);
     }
@@ -63,7 +64,7 @@ public class BNodeServiceTest {
     @Test
     public void testSkolemizeBNode() {
         IRI result = service.skolemize(bnode1);
-        assertEquals(BNodeService.BNODE_NAMESPACE, result.getNamespace());
+        assertEquals(SimpleBNodeService.BNODE_NAMESPACE, result.getNamespace());
         assertEquals(bnode1.getID(), result.getLocalName());
     }
 
@@ -72,7 +73,7 @@ public class BNodeServiceTest {
         Value result = service.skolemize((Value) bnode1);
         assertTrue(result instanceof IRI);
         IRI iri = (IRI) result;
-        assertEquals(BNodeService.BNODE_NAMESPACE, iri.getNamespace());
+        assertEquals(SimpleBNodeService.BNODE_NAMESPACE, iri.getNamespace());
         assertEquals(bnode1.getID(), iri.getLocalName());
     }
 
@@ -97,6 +98,16 @@ public class BNodeServiceTest {
         assertEquals(subject, result.getSubject());
         assertEquals(predicate, result.getPredicate());
         assertEquals(object, result.getObject());
+    }
+
+    @Test
+    public void testSkolemizeStatementWithContext() {
+        Statement result = service.skolemize(vf.createStatement(subject, predicate, object, bnode1));
+        assertEquals(subject, result.getSubject());
+        assertEquals(predicate, result.getPredicate());
+        assertEquals(object, result.getObject());
+        assertTrue(result.getContext().isPresent());
+        assertEquals(service.skolemize(bnode1), result.getContext().get());
     }
 
     @Test
@@ -143,6 +154,16 @@ public class BNodeServiceTest {
         assertEquals(subject, result.getSubject());
         assertEquals(predicate, result.getPredicate());
         assertEquals(object, result.getObject());
+    }
+
+    @Test
+    public void testDeskolemizeStatementWithContext() {
+        Statement result = service.deskolemize(vf.createStatement(subject, predicate, object, skolemizedIRI1));
+        assertEquals(subject, result.getSubject());
+        assertEquals(predicate, result.getPredicate());
+        assertEquals(object, result.getObject());
+        assertTrue(result.getContext().isPresent());
+        assertEquals(service.deskolemize(skolemizedIRI1), result.getContext().get());
     }
 
     @Test
