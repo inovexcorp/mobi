@@ -46,7 +46,7 @@ public interface ValueConverter<TYPE> {
      * @return The converted instance
      * @throws ValueConversionException If there is an issue converting the value
      */
-    TYPE convertValue(@Nonnull Value value, @Nonnull Thing thing, @Nonnull Class<? extends TYPE> desiredType)
+    TYPE convertValue(@Nonnull Value value, Thing thing, @Nonnull Class<? extends TYPE> desiredType)
             throws ValueConversionException;
 
     /**
@@ -58,7 +58,7 @@ public interface ValueConverter<TYPE> {
      * @return The {@link Value} form of the object passed in
      * @throws ValueConversionException If there is an issue performing the conversion
      */
-    Value convertType(@Nonnull TYPE type, @Nonnull Thing thing) throws ValueConversionException;
+    Value convertType(@Nonnull TYPE type, Thing thing) throws ValueConversionException;
 
     /**
      * @return The type of data this {@link ValueConverter} will produce
