@@ -31,7 +31,7 @@ import org.matonto.etl.api.ontologies.delimited.*
 import org.matonto.exception.MatOntoException
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory
 import org.matonto.ontologies.rdfs.Resource
-import org.matonto.ontology.utils.api.SesameTransformer
+import org.matonto.persistence.utils.api.SesameTransformer
 import org.matonto.rdf.api.Model
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory

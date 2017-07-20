@@ -86,7 +86,8 @@ import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleAnnotation
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
-import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.ontology.utils.cache.OntologyCache;
+import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -173,7 +174,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     private PaginatedSearchResults<Record> results;
 
     @Mock
-    private CacheManager cacheManager;
+    private OntologyCache ontologyCache;
 
     @Mock
     private VersioningManager versioningManager;
@@ -248,8 +249,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @Override
     protected Application configureApp() throws Exception {
         MockitoAnnotations.initMocks(this);
-
-        when(cacheManager.getCache(Mockito.anyString(), eq(String.class), eq(Ontology.class))).thenReturn(Optional.empty());
+        when(ontologyCache.getOntologyCache()).thenReturn(Optional.of(mockCache));
 
         vcr = new DefaultValueConverterRegistry();
         modelFactory = LinkedHashModelFactory.getInstance();
@@ -308,7 +308,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         rest.setCatalogManager(catalogManager);
         rest.setEngineManager(engineManager);
         rest.setSesameTransformer(sesameTransformer);
-        rest.setCacheManager(cacheManager);
+        rest.setOntologyCache(ontologyCache);
         rest.setVersioningManager(versioningManager);
 
         simpleOntologyManager = new SimpleOntologyManager();
@@ -405,7 +405,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @BeforeMethod
     public void setupMocks() {
         reset(engineManager, versioningManager, ontologyId, ontology, importedOntologyId, importedOntology, catalogManager,
-                ontologyManager, sesameTransformer, results, cacheManager, mockCache);
+                ontologyManager, sesameTransformer, results, mockCache);
 
         final IRI skosConcept = valueFactory.createIRI(SKOS.CONCEPT.stringValue());
         final IRI skosConceptScheme = valueFactory.createIRI(SKOS.CONCEPT_SCHEME.stringValue());
@@ -513,7 +513,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 Values.matontoIRI(invocationOnMock.getArgumentAt(0, org.openrdf.model.IRI.class)));
 
         entityUsagesConstruct = modelToJsonld(sesameTransformer.sesameModel(constructs));
-        when(cacheManager.getCache(anyString(), eq(String.class), eq(Ontology.class))).thenReturn(Optional.of(mockCache));
     }
 
     private JSONObject getResource(String path) throws Exception {
@@ -855,11 +854,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void testGetOntologyCacheHit() {
-        when(cacheManager.getCache(Mockito.anyString(), eq(String.class), eq(Ontology.class))).thenReturn(Optional.of(mockCache));
         when(mockCache.containsKey(Mockito.anyString())).thenReturn(true);
         when(mockCache.get(Mockito.anyString())).thenReturn(ontology);
-
-        rest.setCacheManager(cacheManager);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
@@ -875,10 +871,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void testGetOntologyCacheMiss() {
-        when(cacheManager.getCache(Mockito.anyString(), eq(String.class), eq(Ontology.class))).thenReturn(Optional.of(mockCache));
         when(mockCache.containsKey(Mockito.anyString())).thenReturn(false);
-
-        rest.setCacheManager(cacheManager);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
@@ -3927,6 +3920,99 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .queryParam("branchId", branchId.stringValue()).request().delete();
 
         assertEquals(response.getStatus(), 500);
-        verify(ontologyManager, times(0)).deleteOntology(Mockito.any());
+        verify(ontologyManager, times(0)).deleteOntology(any());
+    }
+
+    // Test upload changes
+
+    @Test
+    public void testUploadChangesToOntology() {
+        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+                .thenReturn(ontologyModel);
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
+                any(User.class))).thenReturn(Optional.empty());
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertGetUserFromContext();
+        verify(ontologyManager).createOntology(any(FileInputStream.class));
+        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
+        verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+    }
+
+    @Test
+    public void testUploadChangesToOntologyWithoutBranchId() {
+        when(catalogManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId)))
+                .thenReturn(ontologyModel);
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
+                any(User.class))).thenReturn(Optional.empty());
+        when(catalogManager.getMasterBranch(eq(catalogId), eq(recordId))).thenReturn(branch);
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+        verify(catalogManager, times(0)).getMasterBranch(eq(catalogId), eq(recordId));
+        verify(ontologyManager, times(0)).createOntology(any(FileInputStream.class));
+        verify(catalogManager, times(0)).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager, times(0)).getDiff(any(Model.class), any(Model.class));
+        verify(catalogManager, times(1)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(catalogManager, times(0)).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+    }
+
+    @Test
+    public void testUploadChangesToOntologyWithoutCommitId() {
+        when(catalogManager.getCompiledResource(eq(commitId), eq(branchId), eq(recordId)))
+                .thenReturn(ontologyModel);
+        when(catalogManager.getInProgressCommit(eq(catalogId), eq(recordId),
+                any(User.class))).thenReturn(Optional.empty());
+        when(catalogManager.getHeadCommit(eq(catalogId), eq(recordId), eq(branchId))).thenReturn(commit);
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/test-ontology.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertGetUserFromContext();
+        verify(catalogManager).getHeadCommit(eq(catalogId), eq(recordId), eq(branchId));
+        verify(ontologyManager).createOntology(any(FileInputStream.class));
+        verify(catalogManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId));
+        verify(catalogManager).getDiff(any(Model.class), any(Model.class));
+        verify(catalogManager, times(2)).getInProgressCommit(eq(catalogId), eq(recordId), any(User.class));
+        verify(catalogManager).updateInProgressCommit(eq(catalogId), eq(recordId), any(IRI.class), any(), any());
+    }
+
+    @Test
+    public void testUploadChangesToOntologyWithExistingInProgressCommit() {
+        when(catalogManager.getInProgressCommit(eq(catalogManager.getLocalCatalogIRI()), eq(recordId), any(User.class)))
+                .thenReturn(Optional.of(inProgressCommit));
+
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("file", getClass().getResourceAsStream("/search-results.json"), MediaType.APPLICATION_OCTET_STREAM_TYPE);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+
+        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
     }
 }

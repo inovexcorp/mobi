@@ -60,8 +60,10 @@
         self.explore = {
             active: true,
             breadcrumbs: ['Classes'],
+            classDeprecated: false,
             classDetails: [],
             classId: '',
+            creating: false,
             editing: false,
             instance: {
                 changed: [],
@@ -166,6 +168,7 @@
         self.clickCrumb = function(index) {
             self.explore.breadcrumbs = _.take(self.explore.breadcrumbs, index + 1);
             self.explore.editing = false;
+            self.explore.creating = false;
         }
         
         function resetOnClear() {

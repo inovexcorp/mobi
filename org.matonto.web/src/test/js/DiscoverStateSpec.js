@@ -35,8 +35,10 @@ describe('Discover State Service', function() {
         expect(discoverStateSvc.explore).toEqual({
             active: true,
             breadcrumbs: ['Classes'],
+            classDeprecated: false,
             classDetails: [],
             classId: '',
+            creating: false,
             editing: false,
             instance: {
                 changed: [],
@@ -153,8 +155,10 @@ describe('Discover State Service', function() {
     it('should navigate to the selected crumb', function() {
         discoverStateSvc.explore.breadcrumbs = ['', ''];
         discoverStateSvc.explore.editing = true;
+        discoverStateSvc.explore.creating = true;
         discoverStateSvc.clickCrumb(0);
         expect(discoverStateSvc.explore.breadcrumbs.length).toBe(1);
         expect(discoverStateSvc.explore.editing).toBe(false);
+        expect(discoverStateSvc.explore.creating).toBe(false);
     });
 });

@@ -59,7 +59,7 @@ describe('Upload Ontology Tab directive', function() {
             it('with a ' + tag, function() {
                 expect(element.find(tag).length).toBe(1);
             });
-        })
+        });
         it('with a .btn-container', function() {
             expect(element.querySelectorAll('.btn-container').length).toBe(1);
         });

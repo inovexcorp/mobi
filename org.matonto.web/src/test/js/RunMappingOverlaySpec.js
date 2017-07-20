@@ -78,14 +78,12 @@ describe('Run Mapping Overlay directive', function() {
                     saveDeferred = $q.defer();
                     mapperStateSvc.saveMapping.and.returnValue(saveDeferred.promise);
                     mapperStateSvc.editMapping = true;
-                    mapperStateSvc.changedMapping = true;
                 });
                 it('unless an error occurs', function() {
                     saveDeferred.reject('Error message');
                     controller.run();
                     scope.$apply();
                     expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
-                    expect(mapperStateSvc.changedMapping).toBe(true);
                     expect(delimitedManagerSvc.mapAndDownload).not.toHaveBeenCalled();
                     expect(delimitedManagerSvc.mapAndUpload).not.toHaveBeenCalled();
                     expect(mapperStateSvc.step).toBe(step);
@@ -105,7 +103,6 @@ describe('Run Mapping Overlay directive', function() {
                         scope.$apply();
                         expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
                         expect(mapperStateSvc.mapping.record.id).toEqual(newId);
-                        expect(mapperStateSvc.changedMapping).toBe(false);
                         expect(delimitedManagerSvc.mapAndDownload).toHaveBeenCalledWith(newId, controller.format, controller.fileName);
                         expect(delimitedManagerSvc.mapAndUpload).not.toHaveBeenCalled();
                         expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
@@ -121,7 +118,6 @@ describe('Run Mapping Overlay directive', function() {
                         scope.$apply();
                         expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
                         expect(mapperStateSvc.mapping.record.id).toEqual(newId);
-                        expect(mapperStateSvc.changedMapping).toBe(false);
                         expect(delimitedManagerSvc.mapAndDownload).not.toHaveBeenCalled();
                         expect(delimitedManagerSvc.mapAndUpload).toHaveBeenCalledWith(newId, controller.datasetRecordIRI);
                         expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
@@ -140,7 +136,6 @@ describe('Run Mapping Overlay directive', function() {
                 it('and downloads the data', function() {
                     controller.run();
                     expect(mapperStateSvc.saveMapping).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.changedMapping).toBe(false);
                     expect(delimitedManagerSvc.mapAndDownload).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, controller.format, controller.fileName);
                     expect(delimitedManagerSvc.mapAndUpload).not.toHaveBeenCalled();
                     expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
@@ -154,7 +149,6 @@ describe('Run Mapping Overlay directive', function() {
                     controller.run();
                     scope.$apply();
                     expect(mapperStateSvc.saveMapping).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.changedMapping).toBe(false);
                     expect(delimitedManagerSvc.mapAndDownload).not.toHaveBeenCalled();
                     expect(delimitedManagerSvc.mapAndUpload).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, controller.datasetRecordIRI);
                     expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);

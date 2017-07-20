@@ -255,6 +255,7 @@ function mockOntologyManager() {
             this.downloadOntology = jasmine.createSpy('downloadOntology');
             this.deleteOntology = jasmine.createSpy('deleteOntology').and.returnValue($q.when());
             this.getAnnotationPropertyHierarchies = jasmine.createSpy('getAnnotationPropertyHierarchies');
+            this.uploadChangesFile = jasmine.createSpy('uploadChangesFile').and.returnValue($q.when({}));
         });
     });
 }
@@ -374,11 +375,11 @@ function mockMapperState() {
             this.selectedPropMappingId = '';
             this.newProp = false;
             this.highlightIndexes = [];
-            this.changedMapping = false;
 
             this.initialize = jasmine.createSpy('initialize');
             this.resetEdit = jasmine.createSpy('resetEdit');
             this.createMapping = jasmine.createSpy('createMapping').and.returnValue({record: {}, ontology: undefined, jsonld: [], difference: {additions: [], deletions: []}});
+            this.isMappingChanged = jasmine.createSpy("isMappingChanged").and.returnValue(false);
             this.saveMapping = jasmine.createSpy("saveMapping").and.returnValue($q.when());
             this.setMasterBranch = jasmine.createSpy("setMasterBranch");
             this.setInvalidProps = jasmine.createSpy('setInvalidProps');
@@ -411,7 +412,7 @@ function mockHttpService() {
 function mockPrefixes() {
     module(function($provide) {
         $provide.service('prefixes', function() {
-            this.owl = this.rdf = this.delim = this.data = this.mappings = '';
+            this.owl = this.delim = this.data = this.mappings = '';
             this.rdfs = 'rdfs:';
             this.dc = 'dc:';
             this.dcterms = 'dcterms:';
@@ -576,6 +577,7 @@ function mockOntologyState() {
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue({});
             this.createOntology = jasmine.createSpy('createOntology').and.returnValue($q.resolve({}));
             this.uploadThenGet = jasmine.createSpy('uploadThenGet').and.returnValue($q.resolve(''));
+            this.uploadChanges = jasmine.createSpy('uploadChanges').and.returnValue($q.resolve(''));
             this.updateOntology = jasmine.createSpy('updateOntology');
             this.addOntologyToList = jasmine.createSpy('addOntologyToList').and.returnValue($q.when([]));
             this.addVocabularyToList = jasmine.createSpy('addVocabularyToList').and.returnValue($q.when([]));
@@ -637,6 +639,7 @@ function mockOntologyState() {
             this.updatePropertyIcon = jasmine.createSpy('updatePropertyIcon');
             this.isDerivedConcept = jasmine.createSpy('isDerivedConcept');
             this.isDerivedConceptScheme = jasmine.createSpy('isDerivedConceptScheme');
+            this.hasInProgressCommit = jasmine.createSpy('hasInProgressCommit').and.returnValue(false);
         });
     });
 }
@@ -906,6 +909,7 @@ function mockUtil() {
             this.getResultsPage = jasmine.createSpy('getResultsPage').and.returnValue($q.when({}));
             this.getChangesById = jasmine.createSpy('getChangesById');
             this.getPredicateLocalName = jasmine.createSpy('getPredicateLocalName');
+            this.getIdForBlankNode = jasmine.createSpy('getIdForBlankNode').and.returnValue('');
         });
     });
 }
@@ -919,6 +923,7 @@ function mockDatasetManager() {
             this.createDatasetRecord = jasmine.createSpy('createDatasetRecord').and.returnValue($q.when(''));
             this.deleteDatasetRecord = jasmine.createSpy('deleteDatasetRecord').and.returnValue($q.when());
             this.clearDatasetRecord = jasmine.createSpy('clearDatasetRecord').and.returnValue($q.when());
+            this.updateDatasetRecord = jasmine.createSpy('updateDatasetRecord').and.returnValue($q.when());
             this.initialize = jasmine.createSpy('initialize');
         });
     });
@@ -942,6 +947,8 @@ function mockDatasetState() {
             this.setResults = jasmine.createSpy('setResults');
             this.resetPagination = jasmine.createSpy('resetPagination');
             this.setPagination = jasmine.createSpy('setPagination');
+            this.selectedDataset = '';
+            this.openedDatasetId = '';
         })
     })
 }
@@ -972,7 +979,11 @@ function mockDiscoverState() {
                 active: true,
                 breadcrumbs: ['Classes'],
                 classDetails: [],
+                classId: '',
+                creating: false,
+                editing: false,
                 instance: {
+                    changed: [],
                     entity: {},
                     metadata: {}
                 },
@@ -986,8 +997,7 @@ function mockDiscoverState() {
                     },
                     total: 0
                 },
-                recordId: '',
-                recordTitle: ''
+                recordId: ''
             };
             this.query = {
                 active: false
@@ -1005,6 +1015,7 @@ function mockExplore() {
             this.getClassDetails = jasmine.createSpy('getClassDetails').and.returnValue($q.when([]));
             this.getClassInstanceDetails = jasmine.createSpy('getClassInstanceDetails').and.returnValue($q.when([]));
             this.getClassPropertyDetails = jasmine.createSpy('getClassPropertyDetails').and.returnValue($q.when([]));
+            this.createInstance = jasmine.createSpy('createInstance').and.returnValue($q.when(''));
             this.getInstance = jasmine.createSpy('getInstance').and.returnValue($q.when({}));
             this.updateInstance = jasmine.createSpy('updateInstance').and.returnValue($q.when({}));
             this.createPagedResultsObject = jasmine.createSpy('createPagedResultsObject').and.returnValue({});
