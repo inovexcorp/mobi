@@ -208,34 +208,49 @@ describe('Ontology Manager service', function() {
         expect(ontologyManagerSvc.ontologyRecords).toEqual([]);
     });
     describe('getAllOntologyRecords gets a list of all ontology records', function() {
-        var getDeferred;
-        beforeEach(function() {
-            getDeferred = $q.defer();
-            catalogManagerSvc.getRecords.and.returnValue(getDeferred.promise);
+        var config;
+        beforeEach(function () {
+            config = {
+                pageIndex: 0,
+                limit: 100,
+                recordType: prefixes.ontologyEditor + 'OntologyRecord'
+            };
         });
-        it('when getRecords resolves', function(done) {
-            getDeferred.resolve(records);
-            ontologyManagerSvc.getAllOntologyRecords({})
+        it('with a sorting option', function() {
+            config.sortOption = {label: 'Test'};
+            catalogManagerSvc.getRecords.and.returnValue($q.when(records));
+            ontologyManagerSvc.getAllOntologyRecords(config.sortOption)
                 .then(function(response) {
-                    expect(catalogManagerSvc.getRecords).toHaveBeenCalled();
+                    expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogId, config, '');
                     expect(response).toEqual(records.data);
-                    done();
                 }, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             scope.$apply();
         });
-        it('when getRecords rejects', function(done) {
-            getDeferred.reject(error);
-            ontologyManagerSvc.getAllOntologyRecords({})
+        it('with a promise id', function() {
+            var sortOption = {label: 'Title (asc)'};
+            var id = 'id';
+            catalogManagerSvc.sortOptions = [sortOption];
+            config.sortOption = sortOption;
+            catalogManagerSvc.getRecords.and.returnValue($q.when(records));
+            ontologyManagerSvc.getAllOntologyRecords(undefined, id)
+                .then(function(response) {
+                    expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogId, config, id);
+                    expect(response).toEqual(records.data);
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            scope.$apply();
+        });
+        it('unless an error occurs', function() {
+            catalogManagerSvc.getRecords.and.returnValue($q.reject(error));
+            ontologyManagerSvc.getAllOntologyRecords()
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
                 }, function(response) {
                     expect(catalogManagerSvc.getRecords).toHaveBeenCalled();
                     expect(response).toEqual(error);
-                    done();
                 });
             scope.$apply();
         });

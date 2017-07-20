@@ -381,6 +381,14 @@ public class SimpleOntology implements Ontology {
     }
 
     @Override
+    public Set<ObjectProperty> getAllNoDomainObjectProperties() {
+        return owlOntology.objectPropertiesInSignature(Imports.INCLUDED)
+                .filter(property -> hasNoDomain(owlOntology.objectPropertyDomainAxioms(property)))
+                .map(SimpleOntologyValues::matontoObjectProperty)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
     public Set<DataProperty> getAllClassDataProperties(IRI iri) {
         org.semanticweb.owlapi.model.IRI classIRI = SimpleOntologyValues.owlapiIRI(iri);
         if (owlOntology.containsClassInSignature(classIRI)) {
@@ -391,6 +399,14 @@ public class SimpleOntology implements Ontology {
                     .collect(Collectors.toSet());
         }
         throw new IllegalArgumentException("Class not found in ontology");
+    }
+
+    @Override
+    public Set<DataProperty> getAllNoDomainDataProperties() {
+        return owlOntology.dataPropertiesInSignature(Imports.INCLUDED)
+                .filter(property -> hasNoDomain(owlOntology.dataPropertyDomainAxioms(property)))
+                .map(SimpleOntologyValues::matontoDataProperty)
+                .collect(Collectors.toSet());
     }
 
     @Override

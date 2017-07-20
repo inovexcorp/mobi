@@ -174,14 +174,18 @@
              * Gets a list of all the OntologyRecords in the catalog by utilizing the `catalogManager`. Returns a
              * promise with an array of the OntologyRecords.
              *
-             * @param {Object} sortingOption An object describing the order for the OntologyRecords.
+             * @param {Object} sortOption An object describing the order for the OntologyRecords.
              * @returns {Promise} A promise with an array of the OntologyRecords.
              */
-            self.getAllOntologyRecords = function(sortingOption) {
-                var deferred = $q.defer();
-                getAllRecords(sortingOption)
-                    .then(response => deferred.resolve(response.data), deferred.reject);
-                return deferred.promise;
+            self.getAllOntologyRecords = function(sortOption = _.find(cm.sortOptions, {label: 'Title (asc)'}), id = '') {
+                var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
+                var paginatedConfig = {
+                    pageIndex: 0,
+                    limit: 100,
+                    recordType: ontologyRecordType,
+                    sortOption
+                };
+                return cm.getRecords(catalogId, paginatedConfig, id).then(response => response.data, $q.reject);
             }
             /**
              * @ngdoc method
@@ -1518,17 +1522,6 @@
              */
             self.getConceptSchemeIRIs = function(ontologies) {
                 return _.map(self.getConceptSchemes(ontologies), '@id');
-            }
-            /* Private helper functions */
-            function getAllRecords(sortingOption = _.find(cm.sortOptions, {label: 'Title (desc)'})) {
-                var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
-                var paginatedConfig = {
-                    pageIndex: 0,
-                    limit: 100,
-                    sortOption: sortingOption,
-                    recordType: ontologyRecordType
-                }
-                return cm.getRecords(catalogId, paginatedConfig);
             }
         }
 })();
