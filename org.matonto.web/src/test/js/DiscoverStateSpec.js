@@ -42,7 +42,7 @@ describe('Discover State Service', function() {
             editing: false,
             instance: {
                 changed: [],
-                entity: {},
+                entity: [{}],
                 metadata: {}
             },
             instanceDetails: {
@@ -152,7 +152,7 @@ describe('Discover State Service', function() {
         });
     });
     
-    it('should navigate to the selected crumb', function() {
+    it('clickCrumb should navigate to the selected crumb', function() {
         discoverStateSvc.explore.breadcrumbs = ['', ''];
         discoverStateSvc.explore.editing = true;
         discoverStateSvc.explore.creating = true;
@@ -160,5 +160,17 @@ describe('Discover State Service', function() {
         expect(discoverStateSvc.explore.breadcrumbs.length).toBe(1);
         expect(discoverStateSvc.explore.editing).toBe(false);
         expect(discoverStateSvc.explore.creating).toBe(false);
+    });
+    
+    it('getInstance should return the correct object in the entity', function() {
+        discoverStateSvc.explore.instance.metadata = {
+            instanceIRI: 'id'
+        };
+        discoverStateSvc.explore.instance.entity = [{
+            '@id': 'id'
+        }, {
+            '@id': '_:x1'
+        }];
+        expect(discoverStateSvc.getInstance()).toEqual({'@id': 'id'});
     });
 });
