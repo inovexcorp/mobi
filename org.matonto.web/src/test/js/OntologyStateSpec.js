@@ -721,10 +721,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.uploadFile.and.returnValue(uploadDeferred.promise);
         });
         describe('when uploadFile resolves', function() {
-            var resolvedResponse = {
-                recordId: recordId,
-                ontologyId: ontologyId
-            };
+            var resolvedResponse = { recordId: recordId };
             var getDeferred;
             beforeEach(function() {
                 uploadDeferred.resolve(resolvedResponse);
@@ -734,6 +731,7 @@ describe('Ontology State Service', function() {
             describe('and getOntology resolves', function() {
                 beforeEach(function() {
                     getDeferred.resolve(getResponse);
+                    ontologyManagerSvc.getOntologyIRI.and.returnValue(ontologyId);
                 });
                 describe('and type is "ontology"', function() {
                     var addDeferred;
@@ -745,6 +743,7 @@ describe('Ontology State Service', function() {
                         addDeferred.resolve(listItem);
                         ontologyStateSvc.uploadThenGet({}, title, description, keywords, ontologyType)
                             .then(function(response) {
+                                expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(ontology);
                                 expect(ontologyStateSvc.addOntologyToList).toHaveBeenCalledWith(ontologyId, recordId,
                                     branchId, commitId, ontology, inProgressCommit, title);
                                 expect(response).toEqual(recordId);
