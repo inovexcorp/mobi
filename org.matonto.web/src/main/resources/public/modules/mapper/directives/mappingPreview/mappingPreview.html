@@ -27,7 +27,7 @@
             <li ng-repeat="classMapping in dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld) track by classMapping['@id']">
                 {{dvm.getClassName(classMapping)}}
                 <ul class="props">
-                    <li ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, classMapping['@id']) track by propMapping['@id']" ng-class="{'error-msg': dvm.isInvalid(propMapping['@id'])}">
+                    <li ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, classMapping['@id']) track by propMapping['@id']" ng-class="{'error-display': dvm.isInvalid(propMapping['@id'])}">
                         {{dvm.getPropName(propMapping)}}{{dvm.mm.isDataMapping(propMapping) ? ' - ' + dvm.dm.getHeader(dvm.getColumnIndex(propMapping)) : ''}}
                     </li>
                 </ul>
