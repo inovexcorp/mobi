@@ -45,12 +45,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas.api</artifactId>
-            <version>1.8.39-SNAPSHOT</version>
+            <version>1.8.39</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas.proxy</artifactId>
-            <version>1.8.39-SNAPSHOT</version>
+            <version>1.8.39</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -60,7 +60,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm.ontologies</artifactId>
-            <version>1.8.39-SNAPSHOT</version>
+            <version>1.8.39</version>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
