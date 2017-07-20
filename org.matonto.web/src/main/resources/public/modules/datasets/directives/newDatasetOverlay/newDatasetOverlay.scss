@@ -1,34 +1,6 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.remove-ontology {
-    color: $brand-danger;
-
-    &:hover {
-        color: #C9302C;
-    }
-}
-.paging-wrapper {
-    overflow: hidden;
-    .paging-details {
-        float: left;
-    }
-    .page-nav {
-        float: right;
-
-        .pagination {
-            margin: 0;
-        }
-    }
-}
-.ontology-records-list {
-    height: 100px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    overflow-y: auto;
-
-    .list-group-item {
-        outline: 0;
-        border-radius: 0;
-    }
+.datasets-ontology-picker label:first-of-type {
+    display: none;
 }
