@@ -121,4 +121,34 @@
             }
         }
     }
+    &.in-overlay {
+        > .tabset-headings {
+            background: white;
+            display: block;
+            height: inherit;
+            text-align: center;
+            border-bottom: 1px solid $gray-light;
+
+            .heading {
+                background-color: white;
+                border-bottom: 2px solid transparent;
+                border-radius: 0;
+                color: $gray-light;
+                margin: 0;
+                padding: 15px 15px 13px;
+                font-size: 1em;
+                line-height: 1em;
+
+                &.active {
+                    border-color: $brand-primary;
+                    color: black;
+                }
+
+                .heading-text {
+                    max-width: none;
+                    width: auto;
+                }
+            }
+        }
+    }
 }

@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Instance Creator directive', function() {
-    var $compile, scope, element, discoverStateSvc, controller, exploreSvc, $q, util;
+    var $compile, scope, element, discoverStateSvc, controller, exploreSvc, $q, util, exploreUtilsSvc;
 
     beforeEach(function() {
         module('templates');
@@ -29,14 +29,16 @@ describe('Instance Creator directive', function() {
         mockDiscoverState();
         mockUtil();
         mockExplore();
+        mockExploreUtils();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _discoverStateService_, _exploreService_, _utilService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _discoverStateService_, _exploreService_, _utilService_, _exploreUtilsService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             discoverStateSvc = _discoverStateService_;
             exploreSvc = _exploreService_;
             util = _utilService_;
+            exploreUtilsSvc = _exploreUtilsService_;
         });
         
         element = $compile(angular.element('<instance-creator></instance-creator>'))(scope);
@@ -71,6 +73,13 @@ describe('Instance Creator directive', function() {
     });
     describe('controller methods', function() {
         describe('save should call the correct functions when createInstance is', function() {
+            var instance = {'@id': 'id'};
+            beforeEach(function() {
+                discoverStateSvc.explore.instance.entity = [instance];
+                discoverStateSvc.getInstance.and.returnValue(instance);
+                exploreUtilsSvc.removeEmptyProperties.and.returnValue(instance);
+                exploreUtilsSvc.removeEmptyPropertiesFromArray.and.returnValue([{prop: 'new'}]);
+            });
             describe('resolved and getClassInstanceDetails is', function() {
                 beforeEach(function() {
                     exploreSvc.createInstance.and.returnValue($q.when());
@@ -87,11 +96,13 @@ describe('Instance Creator directive', function() {
                         instanceIRI: 'id4'
                     }];
                     discoverStateSvc.explore.breadcrumbs = ['old title'];
-                    discoverStateSvc.explore.instance.entity = {'@id': 'id'};
                     exploreSvc.getClassInstanceDetails.and.returnValue($q.when({data: data}));
                     discoverStateSvc.explore.instanceDetails.limit = 1;
                     controller.save();
                     scope.$apply();
+                    expect(discoverStateSvc.getInstance).toHaveBeenCalled();
+                    expect(exploreUtilsSvc.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([instance]);
+                    expect(discoverStateSvc.explore.instance.entity).toEqual([{prop: 'new'}]);
                     expect(exploreSvc.createInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.instance.entity);
                     expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {});
                     expect(discoverStateSvc.explore.instanceDetails.data).toEqual([data[0]]);
@@ -103,6 +114,9 @@ describe('Instance Creator directive', function() {
                     exploreSvc.getClassInstanceDetails.and.returnValue($q.reject('error'));
                     controller.save();
                     scope.$apply();
+                    expect(discoverStateSvc.getInstance).toHaveBeenCalled();
+                    expect(exploreUtilsSvc.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([instance]);
+                    expect(discoverStateSvc.explore.instance.entity).toEqual([{prop: 'new'}]);
                     expect(exploreSvc.createInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.instance.entity);
                     expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {});
                     expect(util.createErrorToast).toHaveBeenCalledWith('error');
@@ -112,6 +126,9 @@ describe('Instance Creator directive', function() {
                 exploreSvc.createInstance.and.returnValue($q.reject('error'));
                 controller.save();
                 scope.$apply();
+                expect(discoverStateSvc.getInstance).toHaveBeenCalled();
+                expect(exploreUtilsSvc.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([instance]);
+                expect(discoverStateSvc.explore.instance.entity).toEqual([{prop: 'new'}]);
                 expect(exploreSvc.createInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.instance.entity);
                 expect(exploreSvc.getClassInstanceDetails).not.toHaveBeenCalled();
                 expect(util.createErrorToast).toHaveBeenCalledWith('error');

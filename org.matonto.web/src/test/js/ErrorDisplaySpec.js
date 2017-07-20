@@ -21,9 +21,7 @@
  * #L%
  */
 describe('Error Display directive', function() {
-    var $compile,
-        element,
-        scope;
+    var $compile, element, scope;
 
     beforeEach(function() {
         module('templates');
@@ -33,26 +31,23 @@ describe('Error Display directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
+
+        element = $compile(angular.element('<error-display></error-display>'))(scope);
+        scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            element = $compile(angular.element('<error-display></error-display>'))(scope);
-            scope.$digest();
-        });
-        it('for a p', function() {
+        it('for wrapping-containers', function() {
             expect(element.prop('tagName')).toBe('P');
+            expect(element.hasClass('error-display')).toBe(true);
         });
-        it('based on .error-msg', function() {
-            expect(element.hasClass('error-msg')).toBe(true);
-        });
-        it('based on i', function() {
+        it('with a i.fa-exclamation-triangle', function() {
             var items = element.find('i');
             expect(items.length).toBe(1);
+            expect(items.hasClass('fa-exclamation-triangle')).toEqual(true);
         });
-        it('based on h6', function() {
-            var items = element.find('span');
-            expect(items.length).toBe(1);
+        it('with a span', function() {
+            expect(element.find('span').length).toBe(1);
         });
     });
 });
