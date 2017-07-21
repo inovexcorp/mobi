@@ -81,6 +81,7 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -200,6 +201,9 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
     @Mock
     private Difference difference;
+
+    @Mock
+    private BNodeService bNodeService;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -332,6 +336,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         when(factoryRegistry.getFactoryOfType(Record.class)).thenReturn(Optional.of(recordFactory));
         when(factoryRegistry.getFactoryOfType(Version.class)).thenReturn(Optional.of(versionFactory));
         when(factoryRegistry.getFactoryOfType(Branch.class)).thenReturn(Optional.of(branchFactory));
+        when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
         rest = new CatalogRestImpl();
         rest.setVf(vf);
         rest.setEngineManager(engineManager);
@@ -342,6 +347,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         rest.setInProgressCommitFactory(inProgressCommitFactory);
         rest.setFactoryRegistry(factoryRegistry);
         rest.setVersioningManager(versioningManager);
+        rest.setbNodeService(bNodeService);
 
         return new ResourceConfig()
                 .register(rest)

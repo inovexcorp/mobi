@@ -87,7 +87,7 @@
                             && _.isEqual(getRdfProperty(thing, 'predicate'), predicate)
                             && _.isEqual(getRdfProperty(thing, 'object'), object);
                     }) || {
-                        '@id': dvm.util.getIdForBlankNode(),
+                        '@id': dvm.util.getSkolemizedIRI(),
                         '@type': [prefixes.rdf + 'Statement'],
                         [prefixes.rdf + 'subject']: subject,
                         [prefixes.rdf + 'predicate']: predicate,

@@ -60,6 +60,7 @@ import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontologies.provo.InstantaneousEvent;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
@@ -110,6 +111,7 @@ public class CatalogRestImpl implements CatalogRest {
     private CatalogManager catalogManager;
     private ValueFactory vf;
     private VersioningManager versioningManager;
+    private BNodeService bNodeService;
 
     protected EngineManager engineManager;
     protected DistributionFactory distributionFactory;
@@ -167,6 +169,11 @@ public class CatalogRestImpl implements CatalogRest {
     @Reference
     protected void setVersioningManager(VersioningManager versioningManager) {
         this.versioningManager = versioningManager;
+    }
+
+    @Reference
+    protected void setbNodeService(BNodeService bNodeService) {
+        this.bNodeService = bNodeService;
     }
 
     @Override
@@ -1249,7 +1256,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @return A Model containing the statements from the JSON-LD string.
      */
     private Model convertJsonld(String jsonld) {
-        return transformer.matontoModel(jsonldToModel(jsonld));
+        return bNodeService.deskolemize(transformer.matontoModel(jsonldToModel(jsonld)));
     }
 
 

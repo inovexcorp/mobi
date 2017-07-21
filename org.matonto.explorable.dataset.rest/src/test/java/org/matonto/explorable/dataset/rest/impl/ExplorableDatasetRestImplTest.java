@@ -50,6 +50,7 @@ import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
 import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -160,6 +161,9 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
     @Mock
     private ObjectProperty objectProperty;
 
+    @Mock
+    private BNodeService bNodeService;
+
     @Override
     protected Application configureApp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -231,13 +235,14 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         rest.setModelFactory(mf);
         rest.setOntologyManager(ontologyManager);
         rest.setOntologyRecordFactory(ontologyRecordFactory);
+        rest.setBNodeService(bNodeService);
 
         return new ResourceConfig().register(rest);
     }
 
     @BeforeMethod
     public void setupMocks() {
-        reset(datasetManager, catalogManager, sesameTransformer, datasetConnection, ontology);
+        reset(datasetManager, catalogManager, sesameTransformer, datasetConnection, ontology, bNodeService);
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.of(record));
         when(datasetManager.getConnection(recordId)).thenReturn(datasetConnection);
         when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogId);
@@ -258,6 +263,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         when(ontology.getObjectPropertyRange(objectProperty)).thenReturn(range);
         when(ontology.containsClass(classId)).thenReturn(true);
         when(ontology.containsClass(vf.createIRI(MISSING_ID))).thenReturn(false);
+        when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
     }
 
     @AfterTest
@@ -600,6 +606,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         verify(datasetConnection).begin();
         verify(datasetConnection).remove(any(Iterable.class));
         verify(datasetConnection).add(any(Model.class));
+        verify(bNodeService).deskolemize(any(Model.class));
         verify(datasetConnection).commit();
     }
 
@@ -613,6 +620,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         verify(datasetConnection).begin();
         verify(datasetConnection, times(2)).remove(any(Iterable.class));
         verify(datasetConnection).add(any(Model.class));
+        verify(bNodeService).deskolemize(any(Model.class));
         verify(datasetConnection).commit();
     }
 

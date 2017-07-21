@@ -550,6 +550,19 @@
             self.getIdForBlankNode = function() {
                 return '_:matonto/bnode/' + uuid.v4();
             }
+            /**
+             * @ngdoc method
+             * @name getSkolemizedIRI
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Generates a skolemized IRI using a random V4 UUID.
+             *
+             * @return {string} A skolemized IRI that should be unique.
+             */
+            self.getSkolemizedIRI = function() {
+                return 'http://matonto.org/.well-known/genid/' + uuid.v4();
+            }
 
             function setValue(entity, propertyIRI, valueObj) {
                 if (_.has(entity, "['" + propertyIRI + "']")) {

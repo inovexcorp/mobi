@@ -52,6 +52,7 @@ import org.matonto.ontology.core.api.propertyexpression.PropertyExpression;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.persistence.utils.QueryResults;
 import org.matonto.persistence.utils.Statements;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.BindingSet;
@@ -100,6 +101,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private SesameTransformer sesameTransformer;
     private OntologyManager ontologyManager;
     private OntologyRecordFactory ontologyRecordFactory;
+    private BNodeService bNodeService;
 
     private static final String GET_CLASSES_TYPES;
     private static final String GET_CLASSES_DETAILS;
@@ -186,6 +188,11 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     @Reference
     public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
         this.ontologyRecordFactory = ontologyRecordFactory;
+    }
+
+    @Reference
+    public void setBNodeService(BNodeService bNodeService) {
+        this.bNodeService = bNodeService;
     }
 
     @Override
@@ -307,7 +314,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                     RepositoryResult<Statement> reification = conn.getStatements(statement.getSubject(), null, null);
                     conn.remove(reification);
                 });
-                conn.add(sesameTransformer.matontoModel(jsonldToModel(json)));
+                conn.add(bNodeService.deskolemize(sesameTransformer.matontoModel(jsonldToModel(json))));
                 conn.commit();
                 return Response.ok().build();
             }
