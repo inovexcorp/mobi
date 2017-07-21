@@ -48,7 +48,7 @@ public class CLIExporter implements Action {
     @Reference
     private ValueFactory vf;
 
-    @Argument(index = 0, name = "file", description = "The file to be imported into the repository", required = true)
+    @Argument(index = 0, name = "file", description = "The file that will contain the exported data", required = true)
     String filepath = null;
 
     @Option(name = "-r", aliases = "--repository", description = "The id of the repository that data will be "
