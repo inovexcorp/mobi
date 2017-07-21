@@ -35,16 +35,15 @@ import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 
-import java.util.Optional;
-
-@Component(provide = SimpleBNodeService.class)
+@Component(provide = BNodeService.class)
 public class SimpleBNodeService implements BNodeService {
 
     private ValueFactory vf;
     private ModelFactory mf;
 
-    public static final String PATH_COMPONENT = "/.well-known/genid/";
-    public static final String BNODE_NAMESPACE = "http://matonto.org" + PATH_COMPONENT;
+    private static final String PATH_COMPONENT = "/.well-known/genid/";
+    public static final String SKOLEMIZED_NAMESPACE = "http://matonto.org" + PATH_COMPONENT;
+    public static final String BNODE_PREFIX = "matonto-bnode-";
 
     @Reference
     public void setValueFactory(ValueFactory valueFactory) {
@@ -58,7 +57,7 @@ public class SimpleBNodeService implements BNodeService {
 
     @Override
     public IRI skolemize(BNode bnode) {
-        return vf.createIRI(BNODE_NAMESPACE, bnode.getID());
+        return vf.createIRI(SKOLEMIZED_NAMESPACE, bnode.getID());
     }
 
     @Override
@@ -96,7 +95,7 @@ public class SimpleBNodeService implements BNodeService {
 
     @Override
     public BNode deskolemize(IRI iri) {
-        return vf.createBNode(iri.getLocalName());
+        return vf.createBNode(BNODE_PREFIX + iri.getLocalName());
     }
 
     @Override
