@@ -1,14 +1,12 @@
-@Version("0.0.1.${build}")
-
 package org.matonto.vfs.basic;
 
 /*-
  * #%L
- * org.matonto.rdf.basic.sesame
+ * org.matonto.vfs
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,18 @@ package org.matonto.vfs.basic;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import aQute.bnd.annotation.metatype.Meta;
+
+@Meta.OCD
+public interface BasicVirtualFilesystemConfig {
+
+    @Meta.AD(deflt = "60000")
+    long secondsBetweenTempCleanup();
+
+    @Meta.AD(deflt = "10000")
+    int maxNumberOfTempFiles();
+
+    @Meta.AD(required = false)
+    String defaultTemporaryDirectory();
+
+}

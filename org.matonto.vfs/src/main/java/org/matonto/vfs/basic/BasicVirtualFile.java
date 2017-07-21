@@ -45,10 +45,9 @@ public class BasicVirtualFile extends AbstractVirtualFile implements VirtualFile
 
     private final FileObject file;
 
-    public BasicVirtualFile(final FileObject file) {
+    BasicVirtualFile(final FileObject file) {
         this.file = file;
     }
-
 
     @Override
     public boolean exists() throws VirtualFilesystemException {

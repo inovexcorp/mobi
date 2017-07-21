@@ -72,6 +72,7 @@
         <bundle start-level="80">mvn:org.matonto.bundles/trove4j/3.0.3_1</bundle>
         <bundle start-level="80">mvn:com.github.ben-manes.caffeine/caffeine/2.1.0</bundle>
         <bundle start-level="80">mvn:org.apache.commons/commons-rdf-api/${commons-rdf-api.version}</bundle>
+        <bundle start-level="80">mvn:org.apache.commons/commons-vfs2/2.1</bundle>
     </feature>
     <feature name="matonto-core" description="MatOnto Core Platform Bundles" version="${project.version}">
         <feature prerequisite="true">jaas</feature>
