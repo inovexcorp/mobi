@@ -56,17 +56,25 @@
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.ds = discoverStateService;
                     dvm.util = utilService;
-                    dvm.entity = _.omit(dvm.ds.explore.instance.entity, ['@id', '@type']);
-                    
+                    dvm.entity = getEntity();
+
                     dvm.getLimit = function(array, limit) {
                         var len = array.length;
                         return len === limit ? 1 : len;
                     }
-                }
+
+                    function getEntity() {
+                        return _.omit(dvm.ds.getInstance(), ['@id', '@type']);
+                    }
+
+                    $scope.$watch('dvm.ds.explore.instance.entity', () => {
+                        dvm.entity = getEntity();
+                    });
+                }]
             }
         }
 })();

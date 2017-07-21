@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Instance Form directive', function() {
-    var $compile, scope, element, discoverStateSvc, controller, prefixes, exploreSvc, $q, util, allProperties, regex;
+    var $compile, scope, element, discoverStateSvc, controller, prefixes, exploreSvc, $q, util, allProperties, regex, exploreUtilsSvc;
 
     beforeEach(function() {
         module('templates');
@@ -31,8 +31,9 @@ describe('Instance Form directive', function() {
         mockExplore();
         mockPrefixes();
         injectRegexConstant();
+        mockExploreUtils();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _discoverStateService_, _prefixes_, _exploreService_, _utilService_, _REGEX_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _discoverStateService_, _prefixes_, _exploreService_, _utilService_, _REGEX_, _exploreUtilsService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -41,9 +42,10 @@ describe('Instance Form directive', function() {
             prefixes = _prefixes_;
             util = _utilService_;
             regex = _REGEX_;
+            exploreUtilsSvc = _exploreUtilsService_;
         });
 
-        discoverStateSvc.explore.instance.entity = {
+        discoverStateSvc.getInstance.and.returnValue({
             '@id': 'id',
             '@type': ['type'],
             'prop1': [{
@@ -54,7 +56,7 @@ describe('Instance Form directive', function() {
             }, {
                 '@value': 'value2'
             }]
-        };
+        });
         scope.header = 'header';
         scope.isValid = false;
         element = $compile(angular.element('<instance-form header="header" is-valid="isValid"></instance-form>'))(scope);
@@ -142,28 +144,31 @@ describe('Instance Form directive', function() {
             expect(element.find('custom-label').length).toBe(2);
         });
         it('with a .boolean-property', function() {
-            expect(element.querySelectorAll('.boolean-property').length).toBe(0);
+            expect(element.querySelectorAll('.boolean-property').length).toBe(2);
             
-            spyOn(controller, 'isBoolean').and.returnValue(true);
+            exploreUtilsSvc.isBoolean.and.returnValue(false);
             scope.$digest();
             
-            expect(element.querySelectorAll('.boolean-property').length).toBe(2);
+            expect(element.querySelectorAll('.boolean-property').length).toBe(0);
         });
         it('with a .data-property', function() {
-            expect(element.querySelectorAll('.data-property').length).toBe(0);
-            
-            spyOn(controller, 'isPropertyOfType').and.returnValue(true);
+            exploreUtilsSvc.isBoolean.and.returnValue(false);
             scope.$digest();
             
             expect(element.querySelectorAll('.data-property').length).toBe(2);
-        });
-        it('with a .object-property', function() {
-            expect(element.querySelectorAll('.object-property').length).toBe(0);
             
-            spyOn(controller, 'isPropertyOfType').and.returnValue(true);
+            exploreUtilsSvc.isPropertyOfType.and.returnValue(false);
             scope.$digest();
             
+            expect(element.querySelectorAll('.data-property').length).toBe(0);
+        });
+        it('with a .object-property', function() {
             expect(element.querySelectorAll('.object-property').length).toBe(2);
+            
+            exploreUtilsSvc.isPropertyOfType.and.returnValue(false);
+            scope.$digest();
+            
+            expect(element.querySelectorAll('.object-property').length).toBe(0);
         });
         it('with a .btn-container.clearfix', function() {
             expect(element.querySelectorAll('.btn-container.clearfix').length).toBe(1);
@@ -179,18 +184,21 @@ describe('Instance Form directive', function() {
             
             expect(element.find('new-instance-property-overlay').length).toBe(1);
         });
-        it('with a confirmation-overlay', function() {
-            expect(element.find('confirmation-overlay').length).toBe(0);
+        it('with a property-value-overlay', function() {
+            expect(element.find('property-value-overlay').length).toBe(0);
             
-            controller.showText = true;
+            controller.showPropertyValueOverlay = true;
             scope.$digest();
             
-            expect(element.find('confirmation-overlay').length).toBe(1);
+            expect(element.find('property-value-overlay').length).toBe(1);
         });
     });
     describe('controller methods', function() {
         describe('getOptions should result in the correct list when the propertyIRI', function() {
             describe('has a range and getClassInstanceDetails is', function() {
+                beforeEach(function() {
+                    exploreUtilsSvc.getRange.and.returnValue('string');
+                });
                 describe('resolved', function() {
                     beforeEach(function() {
                         exploreSvc.getClassInstanceDetails.and.returnValue($q.when({
@@ -214,6 +222,9 @@ describe('Instance Form directive', function() {
                         scope.$apply();
                     });
                     it('with filtering', function() {
+                        exploreUtilsSvc.contains.and.callFake(function(string, part) {
+                            return _.includes(_.toLower(string), _.toLower(part));
+                        });
                         controller.searchText.propertyId = '3';
                         controller.getOptions('propertyId')
                             .then(function(response) {
@@ -248,22 +259,6 @@ describe('Instance Form directive', function() {
                 scope.$apply();
             });
         });
-        it('isPropertyOfType should return the proper boolean based on the properties list', function() {
-            expect(controller.isPropertyOfType('propertyId', 'Data')).toBe(true);
-            expect(controller.isPropertyOfType('propertyId', 'Object')).toBe(false);
-            expect(controller.isPropertyOfType('missingId', 'Data')).toBe(false);
-        });
-        it('createIdObj should return an appropriate object', function() {
-            expect(controller.createIdObj('id')).toEqual({'@id': 'id'});
-        });
-        describe('createValueObj should create correct object for the provided string', function() {
-            it('with a type', function() {
-                expect(controller.createValueObj('value', 'propertyId')).toEqual({'@value': 'value', '@type': 'string'});
-            });
-            it('without a type', function() {
-                expect(controller.createValueObj('value', 'propertyId2')).toEqual({'@value': 'value'});
-            });
-        });
         describe('addToChanged adds the provided iri to the changed array', function() {
             beforeEach(function() {
                 spyOn(controller, 'getMissingProperties').and.returnValue(['missing property']);
@@ -287,56 +282,21 @@ describe('Instance Form directive', function() {
         });
         it('setIRI should set the proper value', function() {
             controller.setIRI('begin', '#', 'end');
-            expect(discoverStateSvc.explore.instance.entity['@id']).toBe('begin#end');
-        });
-        it('isBoolean should return the correct boolean', function() {
-            expect(controller.isBoolean('propertyId')).toBe(false);
-            expect(controller.isBoolean('propertyId3')).toBe(true);
-        });
-        it('getInputType should return the correct input type', function() {
-            controller.properties = allProperties;
-            _.forEach(['id1', 'id2'], function(id) {
-                expect(controller.getInputType(id)).toBe('date');
-            });
-            _.forEach(['id3', 'id4', 'id5', 'id6', 'id7', 'id8', 'id9'], function(id) {
-                expect(controller.getInputType(id)).toBe('number');
-            });
-            expect(controller.getInputType('id10')).toBe('text');
-        });
-        it('getPattern should return the correct pattern', function() {
-            controller.properties = allProperties;
-            _.forEach(['id1', 'id2'], function(id) {
-                expect(controller.getPattern(id)).toBe(regex.DATETIME);
-            });
-            _.forEach(['id3', 'id4', 'id5'], function(id) {
-                expect(controller.getPattern(id)).toBe(regex.DECIMAL);
-            });
-            _.forEach(['id6', 'id7', 'id8', 'id9'], function(id) {
-                expect(controller.getPattern(id)).toBe(regex.INTEGER);
-            });
-            expect(controller.getPattern('id10')).toBe(regex.ANYTHING);
-        });
-        describe('getNewProperties should return a list of properties that are not set on the entity', function() {
-            it('without filtering', function() {
-                expect(controller.getNewProperties('')).toEqual(['propertyId', 'propertyId2', 'propertyId3']);
-            });
-            it('with filtering', function() {
-                expect(controller.getNewProperties('3')).toEqual(['propertyId3']);
-            });
+            expect(controller.instance['@id']).toBe('begin#end');
         });
         it('addNewProperty should set variables correctly', function() {
             spyOn(controller, 'addToChanged');
             controller.showOverlay = true;
             controller.addNewProperty('newProperty');
-            expect(_.has(discoverStateSvc.explore.instance.entity, 'newProperty')).toBe(true);
+            expect(_.has(controller.instance, 'newProperty')).toBe(true);
             expect(controller.addToChanged).toHaveBeenCalledWith('newProperty');
             expect(controller.showOverlay).toBe(false);
         });
         it('onSelect sets the correct variables', function() {
-            controller.showText = false;
+            controller.showPropertyValueOverlay = false;
             controller.onSelect('text');
             controller.fullText = 'text';
-            controller.showText = true;
+            controller.showPropertyValueOverlay = true;
         });
         it('getMissingProperties retrieves the proper list of messages', function() {
             util.getBeautifulIRI.and.callFake(_.identity);
@@ -383,7 +343,7 @@ describe('Instance Form directive', function() {
                     classExpressionType: 'DATA_EXACT_CARDINALITY'
                 }]
             }];
-            discoverStateSvc.explore.instance.entity = {
+            controller.instance = {
                 '@id': 'id',
                 propertyId7: [{'@value': 'just the one'}],
                 propertyId3: [{'@value': 'one'}, {'@value': 'two'}],
@@ -439,6 +399,17 @@ describe('Instance Form directive', function() {
             it('no restriction', function() {
                 expect(controller.getRestrictionText('propertyId4')).toBe('');
             });
+        });
+        it('cleanUpReification should remove the reification triple from the entity', function() {
+            var entity = {
+                '@id': '_:b0',
+                '@type': ['statement']
+            };
+            entity[prefixes.rdf + 'predicate'] = [{'@id': 'predicate'}];
+            entity[prefixes.rdf + 'object'] = [{'@value': 'value'}];
+            discoverStateSvc.explore.instance.entity = [{}, entity];
+            controller.cleanUpReification({'@value': 'value'}, 'predicate');
+            expect(discoverStateSvc.explore.instance.entity).toEqual([{}]);
         });
     });
 });
