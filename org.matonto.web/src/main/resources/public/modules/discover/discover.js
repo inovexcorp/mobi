@@ -47,6 +47,9 @@
             'newInstancePropertyOverlay',
             'propertyValueOverlay',
             
+            /* Search tab */
+            'discoverSearchTab',
+            
             /* Query tab */
             'downloadQueryOverlay',
             'queryTab',

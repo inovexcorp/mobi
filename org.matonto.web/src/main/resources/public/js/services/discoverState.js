@@ -85,6 +85,20 @@
         
         /**
          * @ngdoc property
+         * @name search
+         * @propertyOf discoverState.service:discoverStateService
+         * @type {Object}
+         *
+         * @description
+         * 'search' is an object which holds properties associated with the search tab in the
+         * discover section of the application.
+         */
+        self.search = {
+            active: false
+        };
+
+        /**
+         * @ngdoc property
          * @name query
          * @propertyOf discoverState.service:discoverStateService
          * @type {Object}
@@ -96,7 +110,7 @@
         self.query = {
             active: false
         };
-        
+
         /**
          * @ngdoc method
          * @name resetPagedInstanceDetails
