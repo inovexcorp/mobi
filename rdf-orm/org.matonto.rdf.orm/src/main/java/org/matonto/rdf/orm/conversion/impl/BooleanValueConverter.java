@@ -61,6 +61,6 @@ public class BooleanValueConverter extends AbstractValueConverter<Boolean> {
      */
     @Override
     public Value convertType(final Boolean value, final Thing thing) throws ValueConversionException {
-        return this.valueFactory.createLiteral(value);
+        return this.getValueFactory(thing).createLiteral(value);
     }
 }
