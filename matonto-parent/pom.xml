@@ -272,6 +272,11 @@
                 <artifactId>cache-api</artifactId>
                 <version>${javax.cache.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-vfs2</artifactId>
+                <version>2.1</version>
+            </dependency>
 
             <!-- Test Dependencies -->
             <dependency>
