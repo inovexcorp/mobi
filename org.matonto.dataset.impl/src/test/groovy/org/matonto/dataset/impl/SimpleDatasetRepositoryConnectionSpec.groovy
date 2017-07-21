@@ -537,10 +537,7 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
     def "remove(s, p, o, c...) will remove the necessary graph data"() {
         setup:
-        def s = vf.createIRI("http://matonto.org/dataset/test2/graph1")
-        def p = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI)
-        def o = vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
-        def graphs = [ vf.createIRI("http://matonto.org/dataset/test2/graph1"), vf.createIRI("urn:c2") ] as Resource[]
+        def graphs = [ vf.createIRI("http://matonto.org/dataset/test2/graph1"), vf.createIRI("urn:c2"), vf.createIRI("http://matonto.org/dataset/test3/graph1") ] as Resource[]
         def dataset = datasetsInFile[2]
         def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
 
@@ -550,6 +547,47 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         then:
         systemConn.size(graphs[0]) == 0
         systemConn.getStatements(dataset, defNamedGraphPred, graphs[0]).hasNext()
+        systemConn.size(graphs[2]) == 1
+
+        where:
+        s | p | o
+        vf.createIRI("http://matonto.org/dataset/test2/graph1") | vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI) | vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        vf.createIRI("http://matonto.org/dataset/test2/graph1") | vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI) | null
+        vf.createIRI("http://matonto.org/dataset/test2/graph1") | null | vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        vf.createIRI("http://matonto.org/dataset/test2/graph1") | null | null
+        null | vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI) | vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        null | null | vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        null | vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI) | null
+        null | null | null
+    }
+
+    @Unroll
+    def "remove(s, p, o) will remove the necessary graph data"() {
+        setup:
+        def dataset = datasetsInFile[2]
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, dataset, "system", vf)
+
+        when:
+        conn.remove(s, p, o)
+
+        then:
+        systemConn.size(vf.createIRI("http://matonto.org/dataset/test2_system_dng")) == 0
+        systemConn.size(vf.createIRI("http://matonto.org/dataset/test2/graph1")) == 1
+        systemConn.size(vf.createIRI("http://matonto.org/dataset/test2/graph2")) == 1
+        systemConn.getStatements(dataset, sdNamedGraphPred, vf.createIRI("http://matonto.org/dataset/test2_system_dng")).hasNext()
+        systemConn.size(vf.createIRI("http://matonto.org/dataset/test3/graph1")) == 1
+        systemConn.size(vf.createIRI("http://matonto.org/dataset/test3/graph2")) == 1
+
+        where:
+        s | p | o
+        vf.createIRI("http://test.com/someThing") | vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI) | vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        vf.createIRI("http://test.com/someThing") | vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI) | null
+        vf.createIRI("http://test.com/someThing") | null | vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        vf.createIRI("http://test.com/someThing") | null | null
+        null | vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI) | vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        null | null | vf.createIRI("http://www.w3.org/2002/07/owl#Thing")
+        null | vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI) | null
+        null | null | null
     }
 
     def "remove(model, c...) will remove the necessary graph data"() {
