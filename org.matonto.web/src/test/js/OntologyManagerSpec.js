@@ -1519,6 +1519,7 @@ describe('Ontology Manager service', function() {
         it('true if the id is a blank node id', function() {
             expect(ontologyManagerSvc.isBlankNodeId('_:genid')).toBe(true);
             expect(ontologyManagerSvc.isBlankNodeId('_:b')).toBe(true);
+            expect(ontologyManagerSvc.isBlankNodeId('http://matonto.org/.well-known/genid/')).toBe(true);
         });
         it('false if the id is not a blank node id', function() {
             _.forEach(['', [], {}, true, false, undefined, null, 0, 1], function(test) {
