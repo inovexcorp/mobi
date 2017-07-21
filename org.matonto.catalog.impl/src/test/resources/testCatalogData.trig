@@ -786,7 +786,7 @@ GRAPH commits:quad-test1 {
     revisions:revision1 a mcat:Revision ;
         mcat:additions additions:quad-test1 ;
         mcat:deletions deletions:quad-test1 ;
-        mcat:revisionedGraph [
+        mcat:graphRevision [
             a mcat:GraphRevision ;
             mcat:revisionedGraph graphs:quad-graph1 ;
             mcat:additions additions:quad-test1-graph1 ;
@@ -817,7 +817,7 @@ GRAPH commits:quad-test2 {
     revisions:revision2 a mcat:Revision ;
         mcat:additions additions:quad-test2 ;
         mcat:deletions deletions:quad-test2 ;
-        mcat:revisionedGraph [
+        mcat:graphRevision [
             a mcat:GraphRevision ;
             mcat:revisionedGraph graphs:quad-graph1 ;
             mcat:additions additions:quad-test2-graph1 ;
