@@ -23,57 +23,49 @@ package org.matonto.etl.api.rdf;
  * #L%
  */
 
+import org.matonto.etl.api.config.ExportServiceConfig;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.Resource;
+
 import java.io.File;
 import java.io.IOException;
-
-import org.matonto.rdf.api.Model;
-import org.openrdf.repository.RepositoryException;
-import org.openrdf.rio.RDFFormat;
 
 public interface RDFExportService {
 
     /**
-     * This will export all triples from the specified repository to specified file.
+     * Exports triples from the specified Repository to the specified File optionally restricted based on the
+     * passed Configuration.
      *
-     * @param repositoryID The ID of the repository to export RDF data from
-     * @param filepath The path to the file to export the data to.
-     * @throws RepositoryException Thrown if there is a problem connecting to the given repository
-     * @throws IOException Thrown if there is an error writing to the file
+     * @param config The configuration for the export with the file path, RDF format, and optional restrictions
+     * @param repositoryID The ID of the source Repository
+     * @return A File with the result of the export
+     * @throws IOException Thrown if there is an error writing to the file or the RDF format could not be determined
+     *      from the file name
+     * @throws IllegalArgumentException Thrown if the Repository does not exist
      */
-    File exportToFile (String repositoryID, String filepath) throws RepositoryException, IOException;
-
-
-    /**
-     * This will export triples, restricted by subject, predicate, and object, from a repository to a file.
-     *
-     * @param repositoryID The ID of the repository to export RDF data from
-     * @param filepath The path to the file to export the data to.
-     * @param subj A subject that all exported triples will be restricted to
-     * @param pred A predicate that all exported triples will be restricted to
-     * @param objLit An object literal that all exported triples will be restricted to. Will only be used if objIRI is not passed
-     * @param objIRI An object IRI that all exported triples will be restricted to. Takes precedence over objLit
-     * @throws RepositoryException Thrown if there is a problem connecting to the given repository
-     * @throws IOException Thrown if there is an error writing to the file
-     */
-    File exportToFile(String repositoryID, String filepath, String subj, String pred, String objIRI, String objLit) throws RepositoryException, IOException;
+    File exportToFile(ExportServiceConfig config, String repositoryID) throws IOException;
 
     /**
-     * THis will export a model to a given file.
+     * Exports triples from the specified DatasetRecord's Dataset to the specified File optionally restricted
+     * based on the passed Configuration.
      *
-     * @param model The model with triples to export
-     * @param filepath The path to the file to export the data to.
-     * @throws RepositoryException if there is an error writing to the file
-     * @throws IllegalArgumentException if there is an error processing the RDF file format from the file name
+     * @param config The configuration for the export with the file path, RDF format, and optional restrictions
+     * @param datasetRecordID The ID of the DatasetRecord with the target Dataset
+     * @return A File with the result of the export
+     * @throws IOException Thrown if there is an error writing to the file or the RDF format could not be determined
+     *      from the file name
+     * @throws IllegalArgumentException Thrown if the DatasetRecord does not exist
      */
-    File exportToFile(Model model, String filepath) throws IOException;
+    File exportToFile(ExportServiceConfig config, Resource datasetRecordID) throws IOException;
 
     /**
-     * This will export a model to a given file.
+     * Exports the specified Model to the specified File based on the passed Configuration.
      *
-     * @param model The model with triples to export
-     * @param filepath The path to the file to export the data to.
-     * @param format The format of the rdf file to be exported
-     * @throws RepositoryException if there is an error writing to the file
+     * @param config The configuration for the export with the file path and RDF format
+     * @param model An RDF Model
+     * @return A File with the result of the export
+     * @throws IOException Thrown if there is an error writing to the file or the RDF format could not be determined
+     *      from the file name
      */
-    File exportToFile(Model model, String filepath, RDFFormat format) throws IOException;
+    File exportToFile(ExportServiceConfig config, Model model) throws IOException;
 }
