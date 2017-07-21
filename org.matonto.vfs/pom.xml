@@ -45,7 +45,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>api</artifactId>
-            <version>1.8.40-SNAPSHOT</version>
+            <version>1.8.40</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>
