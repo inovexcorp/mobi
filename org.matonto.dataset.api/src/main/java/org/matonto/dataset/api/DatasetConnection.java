@@ -177,7 +177,7 @@ public interface DatasetConnection extends DelegatingRepositoryConnection {
      * operation will not remove empty graphs from the dataset.
      *
      * @param subject - The statement's subject.
-     * @param predicate - The statement's subject.
+     * @param predicate - The statement's predicate.
      * @param object - The statement's object.
      * @param contexts - The contexts to remove the data from. Note that this parameter is a vararg and as such
      *                 is optional. If no contexts are specified, the data is removed from the system default
