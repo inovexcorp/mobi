@@ -194,7 +194,7 @@ gulp.task('test-unminified-5', ['test-unminified-4'], function(done) {
 
 // Launch TDD environment for jasmine tests in Chrome
 gulp.task('tdd', ['cacheTemplates'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(src)), './src/test/js/*Spec.js', false, done);
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(src)).concat(dest + 'js/manchester.js'), './src/test/js/*Spec.js', false, done);
 });
 
 // Concatenate and minifies JS Files

@@ -46,11 +46,12 @@
          */
         .service('manchesterConverterService', manchesterConverterService);
 
-        manchesterConverterService.$inject = ['$filter', 'ontologyManagerService', 'prefixes', 'antlr'];
+        manchesterConverterService.$inject = ['$filter', 'ontologyManagerService', 'prefixes', 'utilService', 'antlr'];
 
-        function manchesterConverterService($filter, ontologyManagerService, prefixes, antlr) {
+        function manchesterConverterService($filter, ontologyManagerService, prefixes, utilService, antlr) {
             var self = this;
             var om = ontologyManagerService;
+            var util = utilService;
             var expressionClassName = 'manchester-expr';
             var restrictionClassName = 'manchester-rest';
             var literalClassName = 'manchester-lit';
@@ -78,16 +79,22 @@
                 [prefixes.owl + 'oneOf']: ', ' // {a1 a2 ... an}.
             }
 
-            self.manchesterToJsonld = function(str, localNameMap) {
-                var arr = [];
+            self.getKeywords = function() {
+                return _.concat(_.filter(_.map(_.values(expressionKeywords), _.trim), _.identity), _.map(_.values(expressionKeywords), _.trim));
+            }
+            self.manchesterToJsonld = function(str, localNameMap, dataProp = false) {
+                var result = {errorMessage: '', jsonld: []};
                 var chars = new antlr.antlr4.InputStream(str);
                 var lexer = new antlr.MOSLexer.MOSLexer(chars);
                 var tokens  = new antlr.antlr4.CommonTokenStream(lexer);
                 var parser = new antlr.MOSParser.MOSParser(tokens);
                 parser.buildParseTrees = true;
-                var blankNodes = new antlr.BlankNodesListener(arr, localNameMap);
-                antlr.antlr4.tree.ParseTreeWalker.DEFAULT.walk(blankNodes, parser.description());
-                console.log('Result: ', arr);
+                parser.removeErrorListeners();
+                parser.addErrorListener(new antlr.BlankNodesErrorListener(result));
+                var blankNodes = new antlr.BlankNodesListener(result.jsonld, localNameMap, prefixes, util);
+                var start = dataProp ? parser.dataRange() : parser.description();
+                antlr.antlr4.tree.ParseTreeWalker.DEFAULT.walk(blankNodes, start);
+                return result;
             }
             /**
              * @ngdoc method

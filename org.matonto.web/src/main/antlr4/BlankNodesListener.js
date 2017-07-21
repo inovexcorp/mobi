@@ -22,12 +22,14 @@
  */
 var MOSListener = require('./generated/MOSListener');
 
-var idNum = 0;
+var prefixes, util;
 
-var BlankNodesListener = function(arr, localNames) {
+var BlankNodesListener = function(arr, localNames, prefixesService, utilService) {
     this.arr = arr;
     this.localNames = localNames;
     this.map = {};
+    prefixes = prefixesService;
+    util = utilService;
     MOSListener.MOSListener.call(this);
     return this;
 }
@@ -39,96 +41,217 @@ BlankNodesListener.prototype.constructor = BlankNodesListener;
 // override default listener behavior
 BlankNodesListener.prototype.enterDescription = function(ctx) {
     if (ctx.OR_LABEL().length > 0) {
-        var bnode = createBNode('http://www.w3.org/2002/07/owl#Class');
-        bnode['http://www.w3.org/2002/07/owl#unionOf'] = [{'@list': []}];
+        var bnode = createBNode(prefixes.owl + 'Class');
+        bnode[prefixes.owl + 'unionOf'] = [{'@list': []}];
         this.arr.push(bnode);
-        this.map[ctx.invokingState] = {bnode, prop: 'http://www.w3.org/2002/07/owl#unionOf', list: true};
-        if (ctx.parentCtx && this.map[ctx.parentCtx.invokingState]) {
+        this.map[ctx.invokingState] = {bnode, prop: prefixes.owl + 'unionOf', list: true};
+        if (hasParentNode(ctx, this)) {
             var obj = this.map[ctx.parentCtx.invokingState];
-            obj.bnode[obj.prop] = [{'@id': bnode['@id']}];
+            util.setPropertyId(obj.bnode, obj.prop, bnode['@id']);
         }
     } else {
-        if (ctx.parentCtx && this.map[ctx.parentCtx.invokingState]) {
-            this.map[ctx.invokingState] = this.map[ctx.parentCtx.invokingState];
-        }
+        pass(ctx, this);
     }
 };
 BlankNodesListener.prototype.enterConjunction = function(ctx) {
     if (ctx.AND_LABEL().length > 0) {
-        var bnode = createBNode('http://www.w3.org/2002/07/owl#Class');
-        bnode['http://www.w3.org/2002/07/owl#intersectionOf'] = [{'@list': []}];
+        var bnode = createBNode(prefixes.owl + 'Class');
+        bnode[prefixes.owl + 'intersectionOf'] = [{'@list': []}];
         this.arr.push(bnode);
-        this.map[ctx.invokingState] = {bnode, prop: 'http://www.w3.org/2002/07/owl#intersectionOf', list: true};
+        this.map[ctx.invokingState] = {bnode, prop: prefixes.owl + 'intersectionOf', list: true};
     } else {
-        if (ctx.parentCtx && this.map[ctx.parentCtx.invokingState]) {
-            this.map[ctx.invokingState] = this.map[ctx.parentCtx.invokingState];
-        }
+        pass(ctx, this);
     }
 };
 BlankNodesListener.prototype.enterPrimary = function(ctx) {
-    if (ctx.parentCtx && this.map[ctx.parentCtx.invokingState]) {
-        this.map[ctx.invokingState] = this.map[ctx.parentCtx.invokingState];
+    if (hasParentNode(ctx, this)) {
+        inheritParentNode(ctx, this);
+    } else {
+        if (ctx.NOT_LABEL()) {
+            var bnode = createBNode(prefixes.owl + 'Class');
+            this.arr.push(bnode);
+            this.map[ctx.invokingState] = {bnode, prop: prefixes.owl + 'complementOf'};
+        }
     }
 };
 BlankNodesListener.prototype.enterAtomic = function(ctx) {
-    var obj = this.map[ctx.parentCtx.invokingState];
-    if (ctx.classIRI()) {
-        if (obj.list) {
-            obj.bnode[obj.prop][0]['@list'].push({'@id': ctx.getText()});
-        } else {
-            if (obj.prop === 'http://www.w3.org/2002/07/owl#allValuesFrom' || obj.prop === 'http://www.w3.org/2002/07/owl#someValuesFrom') {
-                obj.bnode[obj.prop] = [{'@id': ctx.getText()}];
+    if (hasParentNode(ctx, this)) {
+        var obj = this.map[ctx.parentCtx.invokingState];
+        if (ctx.classIRI()) {
+            var iri = this.localNames[ctx.getText()];
+            if (obj.list) {
+                obj.bnode[obj.prop][0]['@list'].push({'@id': iri});
             } else {
-                obj.bnode['http://www.w3.org/2002/07/owl#onClass'] = [{'@id': ctx.getText()}];
+                if (obj.prop === prefixes.owl + 'allValuesFrom' || obj.prop === prefixes.owl + 'someValuesFrom' || obj.prop === prefixes.owl + 'complementOf') {
+                    util.setPropertyId(obj.bnode, obj.prop, iri);
+                } else {
+                    util.setPropertyId(obj.bnode, prefixes.owl + 'onClass', iri);
+                }
             }
+        } else if (ctx.individualList()) {
+            var bnode = createBNode(prefixes.owl + 'Class');
+            bnode[prefixes.owl + 'oneOf'] = [{'@list': []}];
+            this.arr.push(bnode);
+            util.setPropertyId(obj.bnode, obj.prop, bnode['@id']);
+            this.map[ctx.invokingState] = {bnode, prop: prefixes.owl + 'oneOf', list: true};
+        } else {
+            this.map[ctx.invokingState] = obj;
         }
     } else {
-        this.map[ctx.invokingState] = obj;
+        if (ctx.individualList()) {
+            var bnode = createBNode(prefixes.owl + 'Class');
+            bnode[prefixes.owl + 'oneOf'] = [{'@list': []}];
+            this.arr.push(bnode);
+            this.map[ctx.invokingState] = {bnode, prop: prefixes.owl + 'oneOf', list: true};
+        }
     }
 };
+BlankNodesListener.prototype.enterDataRange = function(ctx) {
+    pass(ctx, this);
+};
+BlankNodesListener.prototype.enterDataConjunction = function(ctx) {
+    pass(ctx, this);
+};
+BlankNodesListener.prototype.enterDataPrimary = function(ctx) {
+    pass(ctx, this);
+};
+BlankNodesListener.prototype.enterDataAtomic = function(ctx) {
+    if (hasParentNode(ctx, this)) {
+        var obj = this.map[ctx.parentCtx.invokingState];
+        if (ctx.literalList()) {
+            var bnode = createBNode(prefixes.rdfs + 'Datatype');
+            bnode[prefixes.owl + 'oneOf'] = [{'@list': []}];
+            this.arr.push(bnode);
+            obj.bnode[obj.prop] = [{'@id': bnode['@id']}];
+            this.map[ctx.invokingState] = {bnode, prop: prefixes.owl + 'oneOf', list: true};
+        } else {
+            this.map[ctx.invokingState] = obj;
+        }
+    } else {
+        if (ctx.literalList()) {
+            var bnode = createBNode(prefixes.rdfs + 'Datatype');
+            bnode[prefixes.owl + 'oneOf'] = [{'@list': []}];
+            this.arr.push(bnode);
+            this.map[ctx.invokingState] = {bnode, prop: prefixes.owl + 'oneOf', list: true};
+        }
+    }
+};
+BlankNodesListener.prototype.enterIndividualList = function(ctx) {
+    pass(ctx, this);
+};
+BlankNodesListener.prototype.enterLiteralList = function(ctx) {
+    pass(ctx, this);
+};
 BlankNodesListener.prototype.enterRestriction = function(ctx) {
-    var bnode = createBNode('http://www.w3.org/2002/07/owl#Restriction');
-    if (ctx.parentCtx && this.map[ctx.parentCtx.invokingState]) {
+    var bnode = createBNode(prefixes.owl + 'Restriction');
+    if (hasParentNode(ctx, this)) {
         var obj = this.map[ctx.parentCtx.invokingState];
         obj.bnode[obj.prop][0]['@list'].push({'@id': bnode['@id']});
     }
     var prop;
     if (ctx.MAX_LABEL()) {
-        prop = 'http://www.w3.org/2002/07/owl#maxCardinality';
+        prop = prefixes.owl + 'maxCardinality';
     } else if (ctx.MIN_LABEL()) {
-        prop = 'http://www.w3.org/2002/07/owl#minCardinality';
+        prop = prefixes.owl + 'minCardinality';
     } else if (ctx.EXACTLY_LABEL()) {
-        prop = 'http://www.w3.org/2002/07/owl#cardinality';
+        prop = prefixes.owl + 'cardinality';
     } else if (ctx.ONLY_LABEL()) {
-        prop = 'http://www.w3.org/2002/07/owl#allValuesFrom';
+        prop = prefixes.owl + 'allValuesFrom';
     } else if (ctx.SOME_LABEL()) {
-        prop = 'http://www.w3.org/2002/07/owl#someValuesFrom';
+        prop = prefixes.owl + 'someValuesFrom';
+    } else if (ctx.VALUE_LABEL()) {
+        prop = prefixes.owl + 'hasValue';
     }
 
     this.arr.push(bnode);
     this.map[ctx.invokingState] = {bnode, prop};
 };
-
+BlankNodesListener.prototype.enterLiteral = function(ctx) {
+    pass(ctx, this);
+};
 
 BlankNodesListener.prototype.exitObjectPropertyExpression = function(ctx) {
-    var bnode = this.map[ctx.parentCtx.invokingState].bnode;
-    var localName = ctx.getText();
-    bnode['http://www.w3.org/2002/07/owl#onProperty'] = [{'@id': this.localNames[localName]}];
+    setOnProperty(ctx, this);
 };
 BlankNodesListener.prototype.exitDataPropertyExpression = function(ctx) {
-    var bnode = this.map[ctx.parentCtx.invokingState].bnode;
-    var localName = ctx.getText();
-    bnode['http://www.w3.org/2002/07/owl#onProperty'] = [{'@id': this.localNames[localName]}];
+    setOnProperty(ctx, this);
+};
+BlankNodesListener.prototype.exitIndividual = function(ctx) {
+    var obj = this.map[ctx.parentCtx.invokingState];
+    var iriObj = {'@id': this.localNames[ctx.getText()]};
+    if (obj.list) {
+        obj.bnode[obj.prop][0]['@list'].push(iriObj);
+    } else {
+        obj.bnode[obj.prop] = [iriObj];
+    }
+};
+BlankNodesListener.prototype.exitStringLiteralNoLanguage = function(ctx) {
+    var obj = this.map[ctx.parentCtx.invokingState];
+    var valueObj = {'@value': ctx.getText().replace(/\"/g, "")};
+    if (obj.list) {
+        obj.bnode[obj.prop][0]['@list'].push(valueObj);
+    } else {
+        obj.bnode[obj.prop] = [valueObj];
+    }
+};
+BlankNodesListener.prototype.exitStringLiteralWithLanguage = function(ctx) {
+    var obj = this.map[ctx.parentCtx.invokingState];
+    var valueObj = {'@value': ctx.children[0].getText().replace(/\"/g, ""), '@language': ctx.children[1].getText().replace("@", "")};
+    if (obj.list) {
+        obj.bnode[obj.prop][0]['@list'].push(valueObj);
+    } else {
+        obj.bnode[obj.prop] = [valueObj];
+    }
+};
+BlankNodesListener.prototype.exitIntegerLiteral = function(ctx) {
+    var obj = this.map[ctx.parentCtx.invokingState];
+    var valueObj = {'@value': ctx.getText(), '@type': prefixes.xsd + 'integer'};
+    if (obj.list) {
+        obj.bnode[obj.prop][0]['@list'].push(valueObj);
+    } else {
+        obj.bnode[obj.prop] = [valueObj];
+    }
+};
+BlankNodesListener.prototype.exitDecimalLiteral = function(ctx) {
+    var obj = this.map[ctx.parentCtx.invokingState];
+    var valueObj = {'@value': ctx.getText(), '@type': prefixes.xsd + 'decimal'};
+    if (obj.list) {
+        obj.bnode[obj.prop][0]['@list'].push(valueObj);
+    } else {
+        obj.bnode[obj.prop] = [valueObj];
+    }
+};
+BlankNodesListener.prototype.exitFloatingPointLiteral = function(ctx) {
+    var obj = this.map[ctx.parentCtx.invokingState];
+    var valueObj = {'@value': ctx.getText(), '@type': prefixes.xsd + 'float'};
+    if (obj.list) {
+        obj.bnode[obj.prop][0]['@list'].push(valueObj);
+    } else {
+        obj.bnode[obj.prop] = [valueObj];
+    }
 };
 BlankNodesListener.prototype.exitNonNegativeInteger = function(ctx) {
     var obj = this.map[ctx.parentCtx.invokingState];
-    obj.bnode[obj.prop] = [{'@value': ctx.getText(), '@type': ['http://www.w3.org/2001/XMLSchema#nonNegativeInteger']}];
+    obj.bnode[obj.prop] = [{'@value': ctx.getText(), '@type': prefixes.xsd + 'nonNegativeInteger'}];
 };
 
 var createBNode = function(type) {
-    var bnode = {'@id': '_:genid' + idNum, '@type': [type]};
-    idNum++;
-    return bnode;
+    return {'@id': util.getIdForBlankNode(), '@type': [type]};
+}
+var setOnProperty = function(ctx, self) {
+    var bnode = self.map[ctx.parentCtx.invokingState].bnode;
+    util.setPropertyId(bnode, prefixes.owl + 'onProperty', self.localNames[ctx.getText()]);
+}
+var hasParentNode = function(ctx, self) {
+    return ctx.parentCtx && self.map[ctx.parentCtx.invokingState];
+}
+var inheritParentNode = function(ctx, self) {
+    self.map[ctx.invokingState] = self.map[ctx.parentCtx.invokingState];
+}
+var pass = function(ctx, self) {
+    if (hasParentNode(ctx, self)) {
+        inheritParentNode(ctx, self);
+    }
 }
 
 exports.BlankNodesListener = BlankNodesListener;

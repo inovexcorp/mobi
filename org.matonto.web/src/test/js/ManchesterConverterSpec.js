@@ -20,21 +20,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Manchester Converter service', function() {
-    var manchesterConverterSvc, ontologyManagerSvc, prefixes, splitIRIFilter;
+fdescribe('Manchester Converter service', function() {
+    var manchesterConverterSvc, ontologyManagerSvc, prefixes, splitIRIFilter, antlr;
 
     beforeEach(function() {
         module('manchesterConverter');
         mockPrefixes();
         mockOntologyManager();
+        mockUtil();
         injectSplitIRIFilter();
-        injectAntlrConstant();
+        module(function($provide) {
+            $provide.constant('antlr', {
+                antlr4: window.antlr.antlr4,
+                MOSLexer: window.antlr.MOSLexer,
+                MOSParser: window.antlr.MOSParser,
+                BlankNodesListener: window.antlr.BlankNodesListener,
+                BlankNodesErrorListener: window.antlr.BlankNodesErrorListener
+            });
+        });
 
-        inject(function(manchesterConverterService, _ontologyManagerService_, _prefixes_, _splitIRIFilter_) {
+        inject(function(manchesterConverterService, _ontologyManagerService_, _prefixes_, _utilService_, _splitIRIFilter_, _antlr_) {
             manchesterConverterSvc = manchesterConverterService;
             ontologyManagerSvc = _ontologyManagerService_;
             prefixes = _prefixes_;
+            utilSvc = _utilService_;
             splitIRIFilter = _splitIRIFilter_;
+            antlr = _antlr_;
         });
 
         ontologyManagerSvc.isBlankNodeId.and.callFake(function(id) {
@@ -54,6 +65,165 @@ describe('Manchester Converter service', function() {
         });
     });
 
+    describe('should convert a Manchester syntax string into JSON-LD', function() {
+        var str, idx, expected,
+            localNameMap = {
+                'ClassA': 'http://test.com/ClassA',
+                'ClassB': 'http://test.com/ClassB',
+                'PropA': 'http://test.com/PropA',
+                'PropB': 'http://test.com/PropB',
+            };
+        beforeEach(function() {
+            idx = 0;
+            utilSvc.getIdForBlankNode.and.callFake(function() {
+                var id = '_:genid' + idx;
+                idx++;
+                return id;
+            });
+            utilSvc.setPropertyId.and.callFake(function(obj, prop, value) {
+                obj[prop] = [{'@id': value}];
+            });
+        });
+        it('unless the string is invalid', function() {
+            str = '1 test 2';
+            var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+            expect(result.jsonld).toBeUndefined();
+            expect(result.errorMessage).toBeTruthy();
+        });
+        describe('if given a class expression', function() {
+            beforeEach(function() {
+                expected = [{'@id': '_:genid0', '@type': [prefixes.owl + 'Class']}];
+            });
+            it('with unionOf', function() {
+                expected[0][prefixes.owl + 'unionOf'] = [{'@list': [{'@id': localNameMap['ClassA']}, {'@id': localNameMap['ClassB']}]}];
+                str = 'ClassA or ClassB';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                expect(result.jsonld).toEqual(expected);
+                expect(result.errorMessage).toEqual('');
+            });
+            it('with intersectionOf', function() {
+                expected[0][prefixes.owl + 'intersectionOf'] = [{'@list': [{'@id': localNameMap['ClassA']}, {'@id': localNameMap['ClassB']}]}];
+                str = 'ClassA and ClassB';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                expect(result.jsonld).toEqual(expected);
+                expect(result.errorMessage).toEqual('');
+            });
+            it('with complementOf', function() {
+                expected[0][prefixes.owl + 'complementOf'] = [{'@id': localNameMap['ClassA']}];
+                str = 'not ClassA';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                expect(result.jsonld).toEqual(expected);
+                expect(result.errorMessage).toEqual('');
+            });
+            it('with oneOf', function() {
+                expected[0][prefixes.owl + 'oneOf'] = [{'@list': [{'@id': localNameMap['ClassA']}, {'@id': localNameMap['ClassB']}]}];
+                str = '{ClassA, ClassB}';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                expect(result.jsonld).toEqual(expected);
+                expect(result.errorMessage).toEqual('');
+            });
+        });
+        describe('if given a restriction', function() {
+            beforeEach(function() {
+                expected = [{'@id': '_:genid0', '@type': [prefixes.owl + 'Restriction']}];
+                expected[0][prefixes.owl + 'onProperty'] = [{'@id': localNameMap['PropA']}];
+            });
+            it('with someValuesFrom', function() {
+                expected[0][prefixes.owl + 'someValuesFrom'] = [{'@id': localNameMap['ClassA']}];
+                str = 'PropA some ClassA';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                expect(result.jsonld).toEqual(expected);
+                expect(result.errorMessage).toEqual('');
+            });
+            it('with someValuesFrom', function() {
+                expected[0][prefixes.owl + 'allValuesFrom'] = [{'@id': localNameMap['ClassA']}];
+                str = 'PropA only ClassA';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                expect(result.jsonld).toEqual(expected);
+                expect(result.errorMessage).toEqual('');
+            });
+            describe('with hasValue', function() {
+                describe('and a literal', function() {
+                    it('with a language', function() {
+                        expected[0][prefixes.owl + 'hasValue'] = [{'@value': 'test', '@language': 'en'}];
+                        str = 'PropA value "test"@en';
+                        var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                        expect(result.jsonld).toEqual(expected);
+                        expect(result.errorMessage).toEqual('');
+                    });
+                    it('without a language', function() {
+                        expected[0][prefixes.owl + 'hasValue'] = [{'@value': 'test'}];
+                        str = 'PropA value "test"';
+                        var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                        expect(result.jsonld).toEqual(expected);
+                        expect(result.errorMessage).toEqual('');
+                    });
+                });
+                it('and a resource', function() {
+                    expected[0][prefixes.owl + 'hasValue'] = [{'@id': localNameMap['ClassA']}];
+                    str = 'PropA value ClassA';
+                    var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                    expect(result.jsonld).toEqual(expected);
+                    expect(result.errorMessage).toEqual('');
+                });
+            });
+            it('with minCardinality', function() {
+                expected[0][prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                str = 'PropA min 1';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                expect(result.jsonld).toEqual(expected);
+                expect(result.errorMessage).toEqual('');
+            });
+            it('with maxCardinality', function() {
+                expected[0][prefixes.owl + 'maxCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                str = 'PropA max 1';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                expect(result.jsonld).toEqual(expected);
+                expect(result.errorMessage).toEqual('');
+            });
+            it('with cardinality', function() {
+                expected[0][prefixes.owl + 'cardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                str = 'PropA exactly 1';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                expect(result.jsonld).toEqual(expected);
+                expect(result.errorMessage).toEqual('');
+            });
+            it('with minCardinality', function() {
+                expected[0][prefixes.owl + 'onClass'] = [{'@id': localNameMap['ClassA']}];
+                expected[0][prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                str = 'PropA min 1 ClassA';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                expect(result.jsonld).toEqual(expected);
+                expect(result.errorMessage).toEqual('');
+            });
+            it('with maxCardinality', function() {
+                expected[0][prefixes.owl + 'onClass'] = [{'@id': localNameMap['ClassA']}];
+                expected[0][prefixes.owl + 'maxCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                str = 'PropA max 1 ClassA';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                expect(result.jsonld).toEqual(expected);
+                expect(result.errorMessage).toEqual('');
+            });
+            it('with cardinality', function() {
+                expected[0][prefixes.owl + 'onClass'] = [{'@id': localNameMap['ClassA']}];
+                expected[0][prefixes.owl + 'cardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                str = 'PropA exactly 1 ClassA';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                expect(result.jsonld).toEqual(expected);
+                expect(result.errorMessage).toEqual('');
+            });
+        });
+        describe('if given a datatype', function() {
+            beforeEach(function() {
+                expected = [{'@id': '_:genid0', '@type': [prefixes.rdfs + 'Datatype']}];
+            });
+            it('with oneOf', function() {
+                expected[0][prefixes.owl + 'oneOf'] = [{'@list': [{'@value': 'A'}, {'@value': 'B'}]}];
+                str = '{"A", "B"}';
+                expect(manchesterConverterSvc.manchesterToJsonld(str, localNameMap, true).jsonld).toEqual(expected);
+            });
+        });
+    });
     describe('should convert JSON-LD into Manchester syntax', function() {
         describe('if given a class expression', function() {
             beforeEach(function() {
@@ -289,17 +459,17 @@ describe('Manchester Converter service', function() {
             describe('with oneOf', function() {
                 beforeEach(function() {
                     this.blankNode[prefixes.owl + 'oneOf'] = [{'@list': [
-                        {'@id': 'ClassA'},
-                        {'@id': 'ClassB'}
+                        {'@value': 'A'},
+                        {'@value': 'B'}
                     ]}];
                 })
                 it('and HTML', function() {
                     var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, true);
-                    expect(result).toBe('{ClassA, ClassB}');
+                    expect(result).toBe('{<span class="manchester-lit">A</span>, <span class="manchester-lit">B</span>}');
                 });
                 it('without HTML', function() {
                     var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
-                    expect(result).toBe('{ClassA, ClassB}');
+                    expect(result).toBe('{A, B}');
                 });
             });
             it('unless it is invalid', function() {

@@ -53,17 +53,26 @@ function injectChromaConstant() {
 function injectAntlrConstant() {
     module(function($provide) {
         $provide.constant('antlr', {
-            antlr4: jasmine.createSpy('antlr4').and.returnValue({
+            antlr4: {
                 InputStream: jasmine.createSpy('InputStream').and.returnValue({}),
                 CommonTokenStream: jasmine.createSpy('CommonTokenStream').and.returnValue({}),
-                tree: jasmine.createSpy('tree').and.returnValue({
-                    ParseTreeWalker: jasmine.createSpy('ParseTreeWalker').and.returnValue({
-                        DEFAULT: jasmine.createSpy('DEFAULT').and.returnValue({
+                tree: {
+                    ParseTreeWalker: {
+                        DEFAULT: {
                             walk: jasmine.createSpy('walk')
-                        })
-                    })
+                        }
+                    }
+                }
+            },
+            MOSLexer: {
+                MOSLexer: jasmine.createSpy('MOSLexer').and.returnValue({})
+            },
+            MOSParser: {
+                MOSParser: jasmine.createSpy('MOSParser').and.returnValue({
+                    description: jasmine.createSpy('description').and.returnValue({})
                 })
-            })
+            },
+            BlankNodesListener: jasmine.createSpy('BlankNodesListener')
         });
     });
 }
