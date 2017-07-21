@@ -77,12 +77,12 @@ describe('Imports Block directive', function() {
             expect(element.find('confirmation-overlay').length).toBe(1);
         });
         it('depending on the length of the selected ontology imports', function() {
-            expect(element.querySelectorAll('.text-info.message').length).toBe(1);
+            expect(element.find('info-message').length).toBe(1);
             expect(element.querySelectorAll('.import').length).toBe(0);
 
             ontologyStateSvc.listItem.selected[prefixes.owl + 'imports'] = [{'@id': 'import'}];
             scope.$digest();
-            expect(element.querySelectorAll('.text-info.message').length).toBe(0);
+            expect(element.find('info-message').length).toBe(0);
             expect(element.querySelectorAll('.import').length).toBe(1);
         });
     });

@@ -26,33 +26,31 @@
         <div ng-repeat="missing in dvm.missingProperties track by $index">
             <error-display>{{missing}}</error-display>
         </div>
-        <static-iri iri="dvm.ds.explore.instance.entity['@id']" on-edit="dvm.setIRI(iriBegin, iriThen, iriEnd)">
+        <static-iri iri="dvm.instance['@id']" on-edit="dvm.setIRI(iriBegin, iriThen, iriEnd)">
             <info-message>Changing this IRI might break relationships within the dataset.</info-message>
         </static-iri>
-        <form name="dvm.form" autocomplete="off" name="dvm.form">
-            <div class="form-group" ng-repeat="(key, value) in dvm.ds.explore.instance.entity track by $index" ng-if="key !== '@id' && key !== '@type'">
+        <form name="dvm.form" autocomplete="off">
+            <div class="form-group" ng-repeat="(key, value) in dvm.instance track by $index" ng-if="key !== '@id' && key !== '@type'">
                 <custom-label ng-class="{'changed': dvm.isChanged(key)}">{{dvm.util.getBeautifulIRI(key)}} {{dvm.getRestrictionText(key)}}</custom-label>
-                <div class="boolean-property" ng-if="dvm.isBoolean(key)">
-                    <md-checkbox ng-model="dvm.ds.explore.instance.entity[key][0]['@value']" ng-true-value="'1'" ng-false-value="'0'" ng-change="dvm.addToChanged(key)" aria-label="{{dvm.util.getBeautifulIRI(key)}}"></md-checkbox>
+                <div class="boolean-property" ng-if="dvm.eu.isBoolean(key, dvm.properties)">
+                    <md-checkbox ng-model="dvm.instance[key][0]['@value']" ng-true-value="'1'" ng-false-value="'0'" ng-change="dvm.addToChanged(key)" aria-label="{{dvm.util.getBeautifulIRI(key)}}"></md-checkbox>
                 </div>
-                <md-chips class="data-property" ng-if="dvm.isPropertyOfType(key, 'Data') && !dvm.isBoolean(key)" ng-model="dvm.ds.explore.instance.entity[key]" md-transform-chip="dvm.createValueObj($chip, key)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key)">
-                    <input type="{{dvm.getInputType(key)}}" ng-pattern="dvm.getPattern(key)" placeholder="Enter value...">
-                    <md-chip-template ng-click="dvm.onSelect($chip['@value'])">{{$chip['@value']}}</md-chip-template>
+                <md-chips class="data-property" ng-if="dvm.eu.isPropertyOfType(key, 'Data', dvm.properties) && !dvm.eu.isBoolean(key, dvm.properties)" ng-model="dvm.instance[key]" md-transform-chip="dvm.eu.createValueObj($chip, key)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key); dvm.cleanUpReification($chip, key)">
+                    <input type="{{dvm.eu.getInputType(key, dvm.properties)}}" ng-pattern="dvm.eu.getPattern(key, dvm.properties)" placeholder="Enter value...">
+                    <md-chip-template ng-click="dvm.onSelect($chip['@value'], key, $index)">{{$chip['@value']}}</md-chip-template>
                 </md-chips>
-                <md-chips class="object-property" ng-if="dvm.isPropertyOfType(key, 'Object')" ng-model="dvm.ds.explore.instance.entity[key]" md-transform-chip="dvm.createIdObj($chip)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key)">
-                    <md-autocomplete md-items="iri in dvm.getOptions(key)" placeholder="Enter IRI..." md-search-text="dvm.searchText[key]" md-no-cache="true">
+                <md-chips class="object-property" ng-if="dvm.eu.isPropertyOfType(key, 'Object', dvm.properties)" ng-model="dvm.instance[key]" md-transform-chip="dvm.eu.createIdObj($chip)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key); dvm.cleanUpReification($chip, key)">
+                    <md-autocomplete md-items="iri in dvm.getOptions(key)" placeholder="Enter IRI..." md-search-text="dvm.searchText[key]" md-no-cache="true" md-min-length="0">
                         <span md-highlight-text="dvm.searchText[key]">{{dvm.util.getBeautifulIRI(iri)}} :: {{iri}}</span>
                     </md-autocomplete>
-                    <md-chip-template ng-click="dvm.onSelect($chip['@id'])">{{$chip['@id']}}</md-chip-template>
+                    <md-chip-template ng-click="dvm.onSelect($chip['@id'], key, $index)">{{$chip['@id']}}</md-chip-template>
                 </md-chips>
             </div>
         </form>
         <div class="btn-container clearfix">
-            <button type="button" ng-disabled="!dvm.getNewProperties().length" ng-click="dvm.showOverlay = true" class="btn btn-link pull-left"><i class="fa fa-plus fa-fw"></i>Add New Property</button>
+            <button type="button" ng-disabled="!dvm.eu.getNewProperties(dvm.properties, dvm.instance).length" ng-click="dvm.showOverlay = true" class="btn btn-link pull-left"><i class="fa fa-plus fa-fw"></i>Add New Property</button>
         </div>
     </div>
-    <new-instance-property-overlay ng-if="dvm.showOverlay" on-cancel="dvm.showOverlay = false" on-submit="dvm.addNewProperty(propertyIRI)" get-properties="dvm.getNewProperties(text)"></new-instance-property-overlay>
-    <confirmation-overlay ng-if="dvm.showText" cancel-click="dvm.showText = false" cancel-text="'Close'" header-text="'Complete Value'">
-        <p>{{dvm.fullText}}</p>
-    </confirmation-overlay>
+    <new-instance-property-overlay ng-if="dvm.showOverlay" on-cancel="dvm.showOverlay = false" on-submit="dvm.addNewProperty(propertyIRI)" get-properties="dvm.eu.getNewProperties(dvm.properties, dvm.instance, text)"></new-instance-property-overlay>
+    <property-value-overlay ng-if="dvm.showPropertyValueOverlay" close-overlay="dvm.showPropertyValueOverlay = false" on-submit="dvm.addToChanged(dvm.propertyIRI)" iri="dvm.propertyIRI" index="dvm.index" text="dvm.fullText" properties="dvm.reificationProperties"></property-value-overlay>
 </div>

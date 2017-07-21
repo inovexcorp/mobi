@@ -43,6 +43,9 @@ describe('Manchester Converter service', function() {
         ontologyManagerSvc.isClass.and.callFake(function(obj) {
             return _.includes(obj['@type'], prefixes.owl + 'Class');
         });
+        ontologyManagerSvc.isDatatype.and.callFake(function(obj) {
+            return _.includes(obj['@type'], prefixes.rdfs + 'Datatype');
+        });
         ontologyManagerSvc.isRestriction.and.callFake(function(obj) {
             return _.includes(obj['@type'], prefixes.owl + 'Restriction');
         });
@@ -114,11 +117,11 @@ describe('Manchester Converter service', function() {
                 })
                 it('and HTML', function() {
                     var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, true);
-                    expect(result).toBe('{ClassA ClassB}');
+                    expect(result).toBe('{ClassA, ClassB}');
                 });
                 it('without HTML', function() {
                     var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
-                    expect(result).toBe('{ClassA ClassB}');
+                    expect(result).toBe('{ClassA, ClassB}');
                 });
             });
             it('unless it is invalid', function() {
@@ -272,6 +275,35 @@ describe('Manchester Converter service', function() {
 
                 delete this.blankNode[prefixes.owl + 'onProperty'];
                 result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
+                expect(result).toBe(this.blankNode['@id']);
+            });
+        });
+        describe('if given a datatype', function() {
+            beforeEach(function() {
+                this.blankNode = {
+                    '@id': '_:genid0',
+                    '@type': [prefixes.rdfs + 'Datatype']
+                };
+                this.jsonld = [this.blankNode];
+            });
+            describe('with oneOf', function() {
+                beforeEach(function() {
+                    this.blankNode[prefixes.owl + 'oneOf'] = [{'@list': [
+                        {'@id': 'ClassA'},
+                        {'@id': 'ClassB'}
+                    ]}];
+                })
+                it('and HTML', function() {
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, true);
+                    expect(result).toBe('{ClassA, ClassB}');
+                });
+                it('without HTML', function() {
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
+                    expect(result).toBe('{ClassA, ClassB}');
+                });
+            });
+            it('unless it is invalid', function() {
+                var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
                 expect(result).toBe(this.blankNode['@id']);
             });
         });

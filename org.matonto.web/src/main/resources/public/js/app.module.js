@@ -228,6 +228,7 @@
             });
             $mdThemingProvider.definePalette('bootstrapBlue', bootstrapBlue);
             $mdThemingProvider.theme('default')
-                .primaryPalette('bootstrapBlue');
+                .primaryPalette('bootstrapBlue')
+                .accentPalette('light-blue');
         }
 })();

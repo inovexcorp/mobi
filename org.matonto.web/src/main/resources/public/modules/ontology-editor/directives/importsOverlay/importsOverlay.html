@@ -20,26 +20,39 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="imports-overlay">
-    <div ng-if="!dvm.openConfirmation" class="overlay">
-        <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
-            <h6>Import URL</h6>
-            <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-            <div ng-class="{'has-error': dvm.form.url.$error.pattern}" class="form-group">
-                <custom-label>URL</custom-label>
-                <input class="form-control" name="url" ng-model="dvm.url" ng-pattern="dvm.iriPattern" focus-me required />
-                <p ng-messages="dvm.form.url.$error" class="error-msg">
-                    <ng-message when="pattern">The value provided is not a valid URL.</ng-message>
-                </p>
-            </div>
-            <div class="btn-container clearfix">
-                <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid" ng-click="dvm.create()">Submit</button>
-                <button class="btn btn-default pull-right" ng-click="dvm.onClose()">Cancel</button>
-            </div>
-        </form>
-    </div>
-    <confirmation-overlay ng-if="dvm.openConfirmation" header-text="'Unsaved Changes Detected'" confirm-click="dvm.confirmed()" cancel-click="dvm.onClose()" confirm-text="'Yes'" cancel-text="'No'">
-        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <p>You have some unsaved changes. Would you like to save those changes and continue?</p>
-    </confirmation-overlay>
+<div class="imports-overlay overlay">
+    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
+        <h1>Import Ontology</h1>
+        <tabset class="in-overlay">
+            <tab heading="'Web URL'" active="dvm.tabs.url" on-click="dvm.clickTab()" class="padding">
+                <error-display ng-if="dvm.urlError">{{dvm.urlError}}</error-display>
+                <div ng-class="{'has-error': dvm.form.url.$error.pattern}" class="form-group">
+                    <custom-label>URL</custom-label>
+                    <input class="form-control" name="url" ng-model="dvm.url" ng-pattern="dvm.iriPattern" ng-required="dvm.tabs.url" focus-me />
+                    <p ng-messages="dvm.form.url.$error" class="error-display">
+                        <ng-message when="pattern">The value provided is not a valid URL.</ng-message>
+                    </p>
+                </div>
+            </tab>
+            <tab heading="'On Server'" active="dvm.tabs.server" on-click="dvm.clickTab()">
+                <error-display ng-if="dvm.serverError">{{dvm.serverError}}</error-display>
+                <div class="ontologies" targeted-spinner="dvm.spinnerId">
+                    <info-message ng-if="dvm.ontologies.length === 0" class="padding">No ontologies are available to import</info-message>
+                    <md-list>
+                        <md-list-item class="ontology" ng-repeat="ontology in dvm.ontologies track by ontology.recordId">
+                            <div>
+                                <h4 class="header">{{ontology.title}}</h4>
+                                <p><small class="ontology-iri text-muted">{{ontology.ontologyIRI}}</small></p>
+                            </div>
+                            <md-checkbox class="md-secondary" ng-model="ontology.selected" aria-label="Selected"></md-checkbox>
+                        </md-list-item>
+                    </md-list>
+                </div>
+            </tab>
+        </tabset>
+        <div class="btn-container clearfix">
+            <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid || (dvm.tabs.server && !dvm.ontologyIsSelected())" ng-click="dvm.addImport()">Submit</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.onClose()">Cancel</button>
+        </div>
+    </form>
 </div>
