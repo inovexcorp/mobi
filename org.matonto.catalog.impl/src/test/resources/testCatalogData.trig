@@ -832,3 +832,39 @@ GRAPH additions:quad-test2-graph1 {
 GRAPH deletions:quad-test2-graph1 {
     <http://matonto.org/test/object2> dc:title "Test 1 Title" .
 }
+
+# Quad Revisioning - InProgressCommit
+
+GRAPH commits:quad-in-progress-commit {
+    commits:quad-in-progress-commit a mcat:Commit, mcat:InProgressCommit ;
+        dc:title "In Progress Commit" ;
+        prov:generated revisions:in-progress-commit ;
+        prov:wasAssociatedWith users:taken ;
+        mcat:onVersionedRDFRecord records:versioned-rdf-record .
+
+    revisions:in-progress-commit a mcat:Revision ;
+        mcat:additions additions:quad-in-progress-commit ;
+        mcat:deletions deletions:quad-in-progress-commit ;
+        mcat:graphRevision [
+            a mcat:GraphRevision ;
+            mcat:revisionedGraph graphs:quad-graph1 ;
+            mcat:additions additions:quad-in-progress-commit-graph1 ;
+            mcat:deletions deletions:quad-in-progress-commit-graph1 .
+        ] .
+}
+
+GRAPH additions:quad-in-progress-commit {
+    <http://matonto.org/test/add> dc:title "Add" ;
+}
+
+GRAPH deletions:quad-in-progress-commit {
+    <http://matonto.org/test/delete> dc:title "Delete" ;
+}
+
+GRAPH additions:quad-in-progress-commit-graph1 {
+    <http://matonto.org/test/add> dc:title "Add" ;
+}
+
+GRAPH deletions:quad-in-progress-commit-graph1 {
+    <http://matonto.org/test/delete> dc:title "Delete" ;
+}
