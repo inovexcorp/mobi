@@ -363,6 +363,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public void removeInProgressCommit(InProgressCommit commit, RepositoryConnection conn) {
+        // TODO: Update to handle quads
         removeObject(commit, conn);
         Resource additionsResource = getAdditionsResource(commit);
         if (!conn.getStatements(null, null, additionsResource).hasNext()) {
@@ -424,6 +425,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Stream<Statement> getAdditions(Resource commitId, RepositoryConnection conn) {
+        // TODO: Update to handle quads
         Resource additionsId = getAdditionsResource(commitId, conn);
         RepositoryResult<Statement> statements = conn.getStatements(null, null, null, additionsId);
         return StreamSupport.stream(statements.spliterator(), false);
@@ -431,6 +433,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Stream<Statement> getAdditions(Commit commit, RepositoryConnection conn) {
+        // TODO: Update to handle quads
         Resource additionsId = getAdditionsResource(commit);
         RepositoryResult<Statement> statements = conn.getStatements(null, null, null, additionsId);
         return StreamSupport.stream(statements.spliterator(), false);
@@ -458,6 +461,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Stream<Statement> getDeletions(Resource commitId, RepositoryConnection conn) {
+        // TODO: Update to handle quads
         Resource deletionsId = getDeletionsResource(commitId, conn);
         RepositoryResult<Statement> statements = conn.getStatements(null, null, null, deletionsId);
         return StreamSupport.stream(statements.spliterator(), false);
@@ -465,6 +469,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Stream<Statement> getDeletions(Commit commit, RepositoryConnection conn) {
+        // TODO: Update to handle quads
         Resource deletionsId = getDeletionsResource(commit);
         RepositoryResult<Statement> statements = conn.getStatements(null, null, null, deletionsId);
         return StreamSupport.stream(statements.spliterator(), false);

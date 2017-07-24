@@ -1212,6 +1212,24 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
+//    @Test
+//    public void removeInProgressCommitWithQuadsTest() {
+//        IRI quadInProgressCommit = vf.createIRI("http://matonto.org/test/commits#quad-in-progress-commit");
+//        try (RepositoryConnection conn = repo.getConnection()) {
+//            // Setup:
+//            InProgressCommit commit = getThing(quadInProgressCommit, inProgressCommitFactory, conn);
+//            Resource additionsResource = getAdditionsResource(quadInProgressCommit);
+//            Resource deletionsResource = getDeletionsResource(quadInProgressCommit);
+//            assertTrue(conn.containsContext(additionsResource));
+//            assertTrue(conn.containsContext(deletionsResource));
+//
+//            service.removeInProgressCommit(commit, conn);
+//            assertFalse(conn.getStatements(null, null, null, IN_PROGRESS_COMMIT_IRI).hasNext());
+//            assertTrue(conn.size(additionsResource) == 0);
+//            assertTrue(conn.size(deletionsResource) == 0);
+//        }
+//    }
+
     @Test
     public void removeInProgressCommitWithReferencedChangesTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
