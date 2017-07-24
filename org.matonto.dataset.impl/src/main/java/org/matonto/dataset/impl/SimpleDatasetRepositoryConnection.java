@@ -181,7 +181,24 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public void remove(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
-        remove(valueFactory.createStatement(subject, predicate, object), contexts);
+        // Start a transaction if not currently in one
+        boolean startedTransaction = startTransaction();
+
+        Set<Resource> graphs = new HashSet<>();
+        graphs.add(getSystemDefaultNG());
+        getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
+        getGraphs(graphs, Dataset.namedGraph_IRI);
+
+        if (varargsPresent(contexts)) {
+            graphs.retainAll(Arrays.asList(contexts));
+            getDelegate().remove(subject, predicate, object, graphs.toArray(new Resource[graphs.size()]));
+        } else {
+            getDelegate().remove(subject, predicate, object, getSystemDefaultNamedGraph());
+        }
+
+        if (startedTransaction) {
+            commit();
+        }
     }
 
     @Override
