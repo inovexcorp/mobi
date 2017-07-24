@@ -163,13 +163,6 @@ public class HazelcastClusteringService implements ClusteringService {
     public void restart() {
         LOGGER.warn("Restarting the service...");
         BundleContext context = FrameworkUtil.getBundle(HazelcastClusteringService.class).getBundleContext();
-        // XXX: Not sure if this is necessary.
-//        this.hazelcastInstance.getLifecycleService().addLifecycleListener(event -> {
-//            if (event.getState() == LifecycleState.SHUTDOWN) {
-//                this.hazelcastInstance = null;
-//                activate(context, this.configuration);
-//            }
-//        });
         deactivate();
         activate(context, this.configuration);
     }

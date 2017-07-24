@@ -28,17 +28,13 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.42-SNAPSHOT</version>
+        <version>1.8.44-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <name>${project.groupId}.${project.artifactId}</name>
     <artifactId>clustering.cli</artifactId>
     <packaging>bundle</packaging>
-
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
 
     <dependencies>
         <dependency>
@@ -48,12 +44,11 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.4</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>clustering.api</artifactId>
-            <version>1.8.42-SNAPSHOT</version>
+            <version>1.8.44-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

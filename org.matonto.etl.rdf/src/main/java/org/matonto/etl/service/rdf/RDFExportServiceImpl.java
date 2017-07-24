@@ -25,19 +25,24 @@ package org.matonto.etl.service.rdf;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import org.matonto.dataset.api.DatasetConnection;
+import org.matonto.dataset.api.DatasetManager;
+import org.matonto.etl.api.config.ExportServiceConfig;
 import org.matonto.etl.api.rdf.RDFExportService;
+import org.matonto.persistence.utils.RepositoryResults;
+import org.matonto.persistence.utils.StatementIterable;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.DelegatingRepository;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
-import org.openrdf.repository.RepositoryException;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
@@ -50,19 +55,18 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
-
-@Component(provide = RDFExportService.class)
+@Component
 public class RDFExportServiceImpl implements RDFExportService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RDFExportServiceImpl.class);
 
     private Map<String, Repository> initializedRepositories = new HashMap<>();
 
-    private ValueFactory valueFactory;
-    private ModelFactory modelFactory;
+    private ValueFactory vf;
+    private ModelFactory mf;
     private SesameTransformer transformer;
+    private DatasetManager datasetManager;
 
     @Reference(type = '*', dynamic = true)
     public void addRepository(DelegatingRepository repository) {
@@ -74,13 +78,13 @@ public class RDFExportServiceImpl implements RDFExportService {
     }
 
     @Reference
-    public void setValueFactory(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
+    public void setVf(ValueFactory vf) {
+        this.vf = vf;
     }
 
     @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
-        this.modelFactory = modelFactory;
+    public void setMf(ModelFactory mf) {
+        this.mf = mf;
     }
 
     @Reference
@@ -88,75 +92,78 @@ public class RDFExportServiceImpl implements RDFExportService {
         this.transformer = transformer;
     }
 
+    @Reference
+    public void setDatasetManager(DatasetManager datasetManager) {
+        this.datasetManager = datasetManager;
+    }
+    
     @Override
-    public File exportToFile(String repositoryID, String filepath) throws RepositoryException, IOException {
-        return exportToFile(repositoryID, filepath, null, null, null, null);
+    public File exportToFile(ExportServiceConfig config, String repositoryID) throws IOException {
+        Repository repository = getRepo(repositoryID);
+        try (RepositoryConnection conn = repository.getConnection()) {
+            return export(conn, config);
+        }
     }
 
     @Override
-    public File exportToFile(String repositoryID, String filepath, String subj, String pred, String objIRI,
-                             String objLit) throws RepositoryException, IOException {
-        Resource subjResource = null;
-        IRI predicateIRI = null;
+    public File exportToFile(ExportServiceConfig config, Resource datasetRecordID) throws IOException {
+        try (DatasetConnection conn = datasetManager.getConnection(datasetRecordID)) {
+            return export(conn, config);
+        }
+    }
+
+    @Override
+    public File exportToFile(ExportServiceConfig config, Model model) throws IOException {
+        String filePath = config.getFilePath().orElseThrow(() ->
+                new IllegalArgumentException("The export file path is required"));
+        RDFFormat format = config.getFormat() == null ? getFileFormat(filePath) : config.getFormat();
+        return export(model, getFile(filePath), format);
+    }
+
+    private File export(RepositoryConnection conn, ExportServiceConfig config) throws IOException {
+        String filePath = config.getFilePath().orElseThrow(() ->
+                new IllegalArgumentException("The export file path is required"));
+        RDFFormat format = config.getFormat() == null ? getFileFormat(filePath) : config.getFormat();
+        Resource subjResource = config.getSubj() == null ? null : vf.createIRI(config.getSubj());
+        IRI predicateIRI = config.getPred() == null ? null : vf.createIRI(config.getPred());
         Value objValue = null;
 
-        if (subj != null) {
-            subjResource = valueFactory.createIRI(subj);
-        }
-
-        if (pred != null) {
-            predicateIRI = valueFactory.createIRI(pred);
-        }
-
-        if (objIRI != null) {
-            objValue = valueFactory.createIRI(objIRI);
-        } else if (objLit != null) {
-            objValue = valueFactory.createLiteral(objLit);
+        if (config.getObjIRI() != null) {
+            objValue = vf.createIRI(config.getObjIRI());
+        } else if (config.getObjLit() != null) {
+            objValue = vf.createLiteral(config.getObjLit());
         }
 
         LOGGER.warn("Restricting to:\nSubj: " + subjResource + "\nPred: " + predicateIRI + "\n"
-                    + "Obj: " + objValue);
+                + "Obj: " + objValue);
+        RepositoryResult<Statement> result = conn.getStatements(subjResource, predicateIRI, objValue);
+        return export(result, getFile(filePath), format);
+    }
 
-        File file = new File(filepath);
+    private File export(Iterable<Statement> statements, File file, RDFFormat format) throws IOException {
+        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, new FileWriter(file)));
+        Rio.write(new StatementIterable(statements, transformer), rdfWriter);
+        return file;
+    }
+
+    private File getFile(String filePath) throws IOException {
+        File file = new File(filePath);
         if (file.exists() && !file.canWrite()) {
             throw new IOException("Unable to write to file");
         }
+        return file;
+    }
 
-        RDFFormat format = Rio.getParserFormatForFileName(file.getName()).orElseThrow(() ->
-                new IOException("Unsupported file type"));
-
+    private Repository getRepo(String repositoryID) {
         Repository repository = initializedRepositories.get(repositoryID);
-
-        if (repository != null) {
-            RepositoryConnection conn = repository.getConnection();
-            RepositoryResult<org.matonto.rdf.api.Statement> result =
-                    conn.getStatements(subjResource, predicateIRI, objValue);
-
-            Model model = modelFactory.createModel();
-            result.forEach(model::add);
-
-            return exportToFile(model, filepath, format);
-        } else {
+        if (repository == null) {
             throw new IllegalArgumentException("Repository does not exist");
         }
+        return repository;
     }
 
-    @Override
-    public File exportToFile(Model model, String filepath) throws IOException {
-        Optional<RDFFormat> optFormat = Rio.getWriterFormatForFileName(filepath);
-        if (optFormat.isPresent()) {
-            return exportToFile(model, filepath, optFormat.get());
-        } else {
-            throw new IllegalArgumentException("File format not supported");
-        }
-    }
-
-    @Override
-    public File exportToFile(Model model, String filepath, RDFFormat format) throws IOException {
-        File file = new File(filepath);
-
-        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, new FileWriter(file)));
-        Rio.write(transformer.sesameModel(model), rdfWriter);
-        return file;
+    private RDFFormat getFileFormat(String filePath) throws IOException {
+        // Get the rdf format based on the file name. If the format returns null, it is an unsupported file type.
+        return Rio.getParserFormatForFileName(filePath).orElseThrow(() -> new IOException("Unsupported file type"));
     }
 }
