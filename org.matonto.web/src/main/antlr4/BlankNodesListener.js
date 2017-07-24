@@ -41,13 +41,11 @@ BlankNodesListener.prototype.constructor = BlankNodesListener;
 // override default listener behavior
 BlankNodesListener.prototype.enterDescription = function(ctx) {
     if (ctx.OR_LABEL().length > 0) {
-        var bnode = createBNode(prefixes.owl + 'Class');
-        bnode[prefixes.owl + 'unionOf'] = [{'@list': []}];
-        this.arr.push(bnode);
+        var bnode = addBNodeWithList(prefixes.owl + 'Class', prefixes.owl + 'unionOf', this);
         this.map[ctx.invokingState] = {bnode, prop: prefixes.owl + 'unionOf', list: true};
         if (hasParentNode(ctx, this)) {
-            var obj = this.map[ctx.parentCtx.invokingState];
-            util.setPropertyId(obj.bnode, obj.prop, bnode['@id']);
+            var obj = getParentNode(ctx, this);
+            addValueToBNode(obj, {'@id': bnode['@id']});
         }
     } else {
         pass(ctx, this);
@@ -55,53 +53,59 @@ BlankNodesListener.prototype.enterDescription = function(ctx) {
 };
 BlankNodesListener.prototype.enterConjunction = function(ctx) {
     if (ctx.AND_LABEL().length > 0) {
-        var bnode = createBNode(prefixes.owl + 'Class');
-        bnode[prefixes.owl + 'intersectionOf'] = [{'@list': []}];
-        this.arr.push(bnode);
+        var bnode = addBNodeWithList(prefixes.owl + 'Class', prefixes.owl + 'intersectionOf', this);
         this.map[ctx.invokingState] = {bnode, prop: prefixes.owl + 'intersectionOf', list: true};
+        if (hasParentNode(ctx, this)) {
+            var obj = getParentNode(ctx, this);
+            addValueToBNode(obj, {'@id': bnode['@id']});
+        }
     } else {
         pass(ctx, this);
     }
 };
 BlankNodesListener.prototype.enterPrimary = function(ctx) {
     if (hasParentNode(ctx, this)) {
-        inheritParentNode(ctx, this);
+        if (ctx.NOT_LABEL()) {
+            var bnode = addBNode(prefixes.owl + 'Class', this);
+            this.map[ctx.invokingState] = {bnode, prop: prefixes.owl + 'complementOf'};
+            var parent = getParentNode(ctx, this);
+            if (parent.list) {
+                addIdToList(parent.bnode, parent.prop, bnode['@id']);
+            }
+        } else {
+            inheritParentNode(ctx, this);
+        }
     } else {
         if (ctx.NOT_LABEL()) {
-            var bnode = createBNode(prefixes.owl + 'Class');
-            this.arr.push(bnode);
+            var bnode = addBNode(prefixes.owl + 'Class', this);
             this.map[ctx.invokingState] = {bnode, prop: prefixes.owl + 'complementOf'};
         }
     }
 };
 BlankNodesListener.prototype.enterAtomic = function(ctx) {
     if (hasParentNode(ctx, this)) {
-        var obj = this.map[ctx.parentCtx.invokingState];
+        var parent = getParentNode(ctx, this);
         if (ctx.classIRI()) {
             var iri = this.localNames[ctx.getText()];
-            if (obj.list) {
-                obj.bnode[obj.prop][0]['@list'].push({'@id': iri});
+            if (parent.list) {
+                addIdToList(parent.bnode, parent.prop, iri);
             } else {
-                if (obj.prop === prefixes.owl + 'allValuesFrom' || obj.prop === prefixes.owl + 'someValuesFrom' || obj.prop === prefixes.owl + 'complementOf') {
-                    util.setPropertyId(obj.bnode, obj.prop, iri);
+                if (parent.prop === prefixes.owl + 'allValuesFrom' || parent.prop === prefixes.owl + 'someValuesFrom' || parent.prop === prefixes.owl + 'complementOf') {
+                    util.setPropertyId(parent.bnode, parent.prop, iri);
                 } else {
-                    util.setPropertyId(obj.bnode, prefixes.owl + 'onClass', iri);
+                    util.setPropertyId(parent.bnode, prefixes.owl + 'onClass', iri);
                 }
             }
         } else if (ctx.individualList()) {
-            var bnode = createBNode(prefixes.owl + 'Class');
-            bnode[prefixes.owl + 'oneOf'] = [{'@list': []}];
-            this.arr.push(bnode);
-            util.setPropertyId(obj.bnode, obj.prop, bnode['@id']);
+            var bnode = addBNodeWithList(prefixes.owl + 'Class', prefixes.owl + 'oneOf', this);
+            util.setPropertyId(parent.bnode, parent.prop, bnode['@id']);
             this.map[ctx.invokingState] = {bnode, prop: prefixes.owl + 'oneOf', list: true};
         } else {
-            this.map[ctx.invokingState] = obj;
+            this.map[ctx.invokingState] = parent;
         }
     } else {
         if (ctx.individualList()) {
-            var bnode = createBNode(prefixes.owl + 'Class');
-            bnode[prefixes.owl + 'oneOf'] = [{'@list': []}];
-            this.arr.push(bnode);
+            var bnode = addBNodeWithList(prefixes.owl + 'Class', prefixes.owl + 'oneOf', this);
             this.map[ctx.invokingState] = {bnode, prop: prefixes.owl + 'oneOf', list: true};
         }
     }
@@ -117,21 +121,17 @@ BlankNodesListener.prototype.enterDataPrimary = function(ctx) {
 };
 BlankNodesListener.prototype.enterDataAtomic = function(ctx) {
     if (hasParentNode(ctx, this)) {
-        var obj = this.map[ctx.parentCtx.invokingState];
+        var parent = getParentNode(ctx, this);
         if (ctx.literalList()) {
-            var bnode = createBNode(prefixes.rdfs + 'Datatype');
-            bnode[prefixes.owl + 'oneOf'] = [{'@list': []}];
-            this.arr.push(bnode);
-            obj.bnode[obj.prop] = [{'@id': bnode['@id']}];
+            var bnode = addBNodeWithList(prefixes.rdfs + 'Datatype', prefixes.owl + 'oneOf', this);
+            util.setPropertyId(parent.bnode, parent.prop, bnode['@id']);
             this.map[ctx.invokingState] = {bnode, prop: prefixes.owl + 'oneOf', list: true};
         } else {
-            this.map[ctx.invokingState] = obj;
+            this.map[ctx.invokingState] = parent;
         }
     } else {
         if (ctx.literalList()) {
-            var bnode = createBNode(prefixes.rdfs + 'Datatype');
-            bnode[prefixes.owl + 'oneOf'] = [{'@list': []}];
-            this.arr.push(bnode);
+            var bnode = addBNodeWithList(prefixes.rdfs + 'Datatype', prefixes.owl + 'oneOf', this);
             this.map[ctx.invokingState] = {bnode, prop: prefixes.owl + 'oneOf', list: true};
         }
     }
@@ -143,10 +143,10 @@ BlankNodesListener.prototype.enterLiteralList = function(ctx) {
     pass(ctx, this);
 };
 BlankNodesListener.prototype.enterRestriction = function(ctx) {
-    var bnode = createBNode(prefixes.owl + 'Restriction');
+    var bnode = addBNode(prefixes.owl + 'Restriction', this);
     if (hasParentNode(ctx, this)) {
-        var obj = this.map[ctx.parentCtx.invokingState];
-        obj.bnode[obj.prop][0]['@list'].push({'@id': bnode['@id']});
+        var parent = getParentNode(ctx, this);
+        addIdToList(parent.bnode, parent.prop, bnode['@id']);
     }
     var prop;
     if (ctx.MAX_LABEL()) {
@@ -163,7 +163,6 @@ BlankNodesListener.prototype.enterRestriction = function(ctx) {
         prop = prefixes.owl + 'hasValue';
     }
 
-    this.arr.push(bnode);
     this.map[ctx.invokingState] = {bnode, prop};
 };
 BlankNodesListener.prototype.enterLiteral = function(ctx) {
@@ -177,62 +176,38 @@ BlankNodesListener.prototype.exitDataPropertyExpression = function(ctx) {
     setOnProperty(ctx, this);
 };
 BlankNodesListener.prototype.exitIndividual = function(ctx) {
-    var obj = this.map[ctx.parentCtx.invokingState];
+    var parent = getParentNode(ctx, this);
     var iriObj = {'@id': this.localNames[ctx.getText()]};
-    if (obj.list) {
-        obj.bnode[obj.prop][0]['@list'].push(iriObj);
-    } else {
-        obj.bnode[obj.prop] = [iriObj];
-    }
+    addValueToBNode(parent, iriObj);
 };
 BlankNodesListener.prototype.exitStringLiteralNoLanguage = function(ctx) {
-    var obj = this.map[ctx.parentCtx.invokingState];
-    var valueObj = {'@value': ctx.getText().replace(/\"/g, "")};
-    if (obj.list) {
-        obj.bnode[obj.prop][0]['@list'].push(valueObj);
-    } else {
-        obj.bnode[obj.prop] = [valueObj];
-    }
+    var parent = getParentNode(ctx, this);
+    var valueObj = {'@value': ctx.getText().replace(/\"/g, '')};
+    addValueToBNode(parent, valueObj);
 };
 BlankNodesListener.prototype.exitStringLiteralWithLanguage = function(ctx) {
-    var obj = this.map[ctx.parentCtx.invokingState];
-    var valueObj = {'@value': ctx.children[0].getText().replace(/\"/g, ""), '@language': ctx.children[1].getText().replace("@", "")};
-    if (obj.list) {
-        obj.bnode[obj.prop][0]['@list'].push(valueObj);
-    } else {
-        obj.bnode[obj.prop] = [valueObj];
-    }
+    var parent = getParentNode(ctx, this);
+    var valueObj = {'@value': ctx.children[0].getText().replace(/\"/g, ''), '@language': ctx.children[1].getText().replace('@', '')};
+    addValueToBNode(parent, valueObj);
 };
 BlankNodesListener.prototype.exitIntegerLiteral = function(ctx) {
-    var obj = this.map[ctx.parentCtx.invokingState];
+    var parent = getParentNode(ctx, this);
     var valueObj = {'@value': ctx.getText(), '@type': prefixes.xsd + 'integer'};
-    if (obj.list) {
-        obj.bnode[obj.prop][0]['@list'].push(valueObj);
-    } else {
-        obj.bnode[obj.prop] = [valueObj];
-    }
+    addValueToBNode(parent, valueObj);
 };
 BlankNodesListener.prototype.exitDecimalLiteral = function(ctx) {
-    var obj = this.map[ctx.parentCtx.invokingState];
+    var parent = getParentNode(ctx, this);
     var valueObj = {'@value': ctx.getText(), '@type': prefixes.xsd + 'decimal'};
-    if (obj.list) {
-        obj.bnode[obj.prop][0]['@list'].push(valueObj);
-    } else {
-        obj.bnode[obj.prop] = [valueObj];
-    }
+    addValueToBNode(parent, valueObj);
 };
 BlankNodesListener.prototype.exitFloatingPointLiteral = function(ctx) {
-    var obj = this.map[ctx.parentCtx.invokingState];
+    var parent = getParentNode(ctx, this);
     var valueObj = {'@value': ctx.getText(), '@type': prefixes.xsd + 'float'};
-    if (obj.list) {
-        obj.bnode[obj.prop][0]['@list'].push(valueObj);
-    } else {
-        obj.bnode[obj.prop] = [valueObj];
-    }
+    addValueToBNode(parent, valueObj);
 };
 BlankNodesListener.prototype.exitNonNegativeInteger = function(ctx) {
-    var obj = this.map[ctx.parentCtx.invokingState];
-    obj.bnode[obj.prop] = [{'@value': ctx.getText(), '@type': prefixes.xsd + 'nonNegativeInteger'}];
+    var parent = getParentNode(ctx, this);
+    parent.bnode[parent.prop] = [{'@value': ctx.getText(), '@type': prefixes.xsd + 'nonNegativeInteger'}];
 };
 
 var createBNode = function(type) {
@@ -242,15 +217,44 @@ var setOnProperty = function(ctx, self) {
     var bnode = self.map[ctx.parentCtx.invokingState].bnode;
     util.setPropertyId(bnode, prefixes.owl + 'onProperty', self.localNames[ctx.getText()]);
 }
+var getParentNode = function(ctx, self) {
+    return self.map[ctx.parentCtx.invokingState];
+}
 var hasParentNode = function(ctx, self) {
-    return ctx.parentCtx && self.map[ctx.parentCtx.invokingState];
+    return ctx.parentCtx && getParentNode(ctx, self);
 }
 var inheritParentNode = function(ctx, self) {
-    self.map[ctx.invokingState] = self.map[ctx.parentCtx.invokingState];
+    self.map[ctx.invokingState] = getParentNode(ctx, self);
 }
 var pass = function(ctx, self) {
     if (hasParentNode(ctx, self)) {
         inheritParentNode(ctx, self);
+    }
+}
+var addBNode = function(type, self) {
+    var bnode = createBNode(type);
+    self.arr.push(bnode);
+    return bnode;
+}
+var addBNodeWithList = function(type, listProp, self) {
+    var bnode = addBNode(type, self);
+    bnode[listProp] = [{'@list': []}];
+    return bnode;
+}
+var addIdToList = function(obj, prop, id) {
+    addObjToList(obj, prop, {'@id': id});
+}
+var addValueToList = function(obj, prop, value) {
+    addObjToList(obj, prop, {'@value': value});
+}
+var addObjToList = function(obj, prop, valueObj) {
+    obj[prop][0]['@list'].push(valueObj);
+}
+var addValueToBNode = function(mapItem, valueObj) {
+    if (mapItem.list) {
+        addObjToList(mapItem.bnode, mapItem.prop, valueObj);
+    } else {
+        mapItem.bnode[mapItem.prop] = [valueObj];
     }
 }
 

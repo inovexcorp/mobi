@@ -72,6 +72,10 @@ fdescribe('Manchester Converter service', function() {
                 'ClassB': 'http://test.com/ClassB',
                 'PropA': 'http://test.com/PropA',
                 'PropB': 'http://test.com/PropB',
+                'PropC': 'http://test.com/PropC',
+                'PropD': 'http://test.com/PropD',
+                'PropE': 'http://test.com/PropE',
+                'IndvA': 'http://test.com/IndvA',
             };
         beforeEach(function() {
             idx = 0;
@@ -220,8 +224,81 @@ fdescribe('Manchester Converter service', function() {
             it('with oneOf', function() {
                 expected[0][prefixes.owl + 'oneOf'] = [{'@list': [{'@value': 'A'}, {'@value': 'B'}]}];
                 str = '{"A", "B"}';
-                expect(manchesterConverterSvc.manchesterToJsonld(str, localNameMap, true).jsonld).toEqual(expected);
+                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap, true);
+                expect(result.jsonld).toEqual(expected);
+                expect(result.errorMessage).toBe('');
             });
+        });
+        it('with nested blank nodes', function() {
+            str = '(not ClassA) or ((PropD min 1) and (PropE exactly 10)) or (PropA some ClassB) or (PropC value IndvA) or (PropB only {"A", "B"})';
+            expected = [
+                {
+                    '@id': '_:genid0',
+                    '@type': [prefixes.owl + 'Class']
+                },
+                {
+                    '@id': '_:genid1',
+                    '@type': [prefixes.owl + 'Class']
+                },
+                {
+                    '@id': '_:genid2',
+                    '@type': [prefixes.owl + 'Class']
+                },
+                {
+                    '@id': '_:genid3',
+                    '@type': [prefixes.owl + 'Restriction']
+                },
+                {
+                    '@id': '_:genid4',
+                    '@type': [prefixes.owl + 'Restriction']
+                },
+                {
+                    '@id': '_:genid5',
+                    '@type': [prefixes.owl + 'Restriction']
+                },
+                {
+                    '@id': '_:genid6',
+                    '@type': [prefixes.owl + 'Restriction']
+                },
+                {
+                    '@id': '_:genid7',
+                    '@type': [prefixes.owl + 'Restriction']
+                },
+                {
+                    '@id': '_:genid8',
+                    '@type': [prefixes.rdfs + 'Datatype']
+                }
+            ];
+            expected[0][prefixes.owl + 'unionOf'] = [{'@list': [
+                { '@id': '_:genid1' },
+                { '@id': '_:genid2' },
+                { '@id': '_:genid5' },
+                { '@id': '_:genid6' },
+                { '@id': '_:genid7' }
+            ]}];
+            expected[1][prefixes.owl + 'complementOf'] = [{'@id': localNameMap['ClassA']}];
+            expected[2][prefixes.owl + 'intersectionOf'] = [{'@list': [
+                { '@id': '_:genid3' },
+                { '@id': '_:genid4' }
+            ]}];
+            expected[3][prefixes.owl + 'onProperty'] = [{'@id': localNameMap['PropD']}];
+            expected[3][prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+            expected[4][prefixes.owl + 'onProperty'] = [{'@id': localNameMap['PropE']}];
+            expected[4][prefixes.owl + 'cardinality'] = [{'@value': '10', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+            expected[5][prefixes.owl + 'onProperty'] = [{'@id': localNameMap['PropA']}];
+            expected[5][prefixes.owl + 'someValuesFrom'] = [{'@id': localNameMap['ClassB']}];
+            expected[6][prefixes.owl + 'onProperty'] = [{'@id': localNameMap['PropC']}];
+            expected[6][prefixes.owl + 'hasValue'] = [{'@id': localNameMap['IndvA']}];
+            expected[7][prefixes.owl + 'onProperty'] = [{'@id': localNameMap['PropB']}];
+            expected[7][prefixes.owl + 'allValuesFrom'] = [{'@id': '_:genid8'}];
+            expected[8][prefixes.owl + 'oneOf'] = [{'@list': [
+                { '@value': 'A' },
+                { '@value': 'B' },
+            ]}];
+            var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+            console.log(angular.toJson(result.jsonld));
+            expect(result.jsonld).toEqual(expected);
+            expect(result.errorMessage).toBe('');
         });
     });
     describe('should convert JSON-LD into Manchester syntax', function() {
