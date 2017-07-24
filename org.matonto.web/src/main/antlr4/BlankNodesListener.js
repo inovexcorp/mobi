@@ -180,6 +180,17 @@ BlankNodesListener.prototype.exitIndividual = function(ctx) {
     var iriObj = {'@id': this.localNames[ctx.getText()]};
     addValueToBNode(parent, iriObj);
 };
+BlankNodesListener.prototype.exitTypedLiteral = function(ctx) {
+    var parent = getParentNode(ctx, this);
+    var type = ctx.dataType().getText();
+    if (type.substr(0, 'xsd:'.length) === 'xsd:') {
+        type = type.replace('xsd:', prefixes.xsd);
+    } else {
+        type = type.replace('<', '').replace('>', '');
+    }
+    var valueObj = {'@value': ctx.lexicalValue().getText().replace(/\"/g, ''), '@type': type};
+    addValueToBNode(parent, valueObj);
+};
 BlankNodesListener.prototype.exitStringLiteralNoLanguage = function(ctx) {
     var parent = getParentNode(ctx, this);
     var valueObj = {'@value': ctx.getText().replace(/\"/g, '')};

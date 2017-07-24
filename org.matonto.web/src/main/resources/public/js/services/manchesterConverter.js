@@ -79,9 +79,36 @@
                 [prefixes.owl + 'oneOf']: ', ' // {a1 a2 ... an}.
             }
 
+            /**
+             * @ngdoc method
+             * @name getKeywords
+             * @methodOf manchesterConverter.service:manchesterConverterService
+             *
+             * @description
+             * Returns the full list of supported Manchester Syntax keywords.
+             *
+             * @return {string[]} An array of strings contains the Manchester Syntax keywords that are supported.
+             */
             self.getKeywords = function() {
                 return _.concat(_.filter(_.map(_.values(expressionKeywords), _.trim), _.identity), _.map(_.values(expressionKeywords), _.trim));
             }
+            /**
+             * @ngdoc method
+             * @name manchesterToJsonld
+             * @methodOf manchesterConverter.service:manchesterConverterService
+             *
+             * @description
+             * Converts a Manchester Syntax string into an array of blank nodes using an ANTLR4 grammer parser and
+             * the provided map of local names to full IRIs. If the subject of the axiom for the represented blank
+             * node is a data property, it must be indicated by the last argument. Currently supports class
+             * expressions with "unionOf", "intersectionOf", and "complementOf", restrictions with "someValuesFrom",
+             * "allValuesFrom", "hasValue", "minCardinality", "maxCardinality", "cardinality",
+             * "minQualifiedCardinality", "maxQualifiedCardinality", and "qualifiedCardinality", and datatypes with
+             * "oneOf".
+             *
+             * @return {Object} An object with a key containing any error message thrown and a key for the resuling
+             * array of blank nodes.
+             */
             self.manchesterToJsonld = function(str, localNameMap, dataProp = false) {
                 var result = {errorMessage: '', jsonld: []};
                 var chars = new antlr.antlr4.InputStream(str);
@@ -171,7 +198,30 @@
                         literal = '"' + item['@value'] + '"';
                         lang = '@' + item['@language'];
                     } else {
-                        var literal = _.get(item, '@type') === prefixes.xsd + 'string' ? '"' + item['@value'] + '"' : item['@value'];
+                        switch (_.get(item, '@type', prefixes.xsd + 'string')) {
+                            case prefixes.xsd + 'decimal':
+                            case prefixes.xsd + 'double':
+                            case prefixes.xsd + 'float':
+                            case prefixes.xsd + 'int':
+                            case prefixes.xsd + 'integer':
+                            case prefixes.xsd + 'long':
+                            case prefixes.xsd + 'nonNegativeInteger':
+                                literal = item['@value'];
+                                break;
+                            case prefixes.xsd + 'string':
+                                literal = '"' + item['@value'] + '"';
+                                break;
+                            case prefixes.xsd + 'language':
+                            case prefixes.xsd + 'anyURI':
+                            case prefixes.xsd + 'dateTime':
+                            case prefixes.rdfs + 'Literal':
+                            case prefixes.xsd + 'boolean':
+                            case prefixes.xsd + 'byte':
+                                literal = '"' + item['@value'] + '"^^xsd:' + _.get(item, '@type').replace(prefixes.xsd, '');
+                                break;
+                            default:
+                                literal = '"' + item['@value'] + '"^^<' + _.get(item, '@type') + '>';
+                        }
                     }
                     return (html ? surround(literal, literalClassName) : literal) + lang;
                 } else {

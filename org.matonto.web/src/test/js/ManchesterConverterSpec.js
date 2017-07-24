@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Manchester Converter service', function() {
+describe('Manchester Converter service', function() {
     var manchesterConverterSvc, ontologyManagerSvc, prefixes, splitIRIFilter, antlr;
 
     beforeEach(function() {
@@ -94,6 +94,107 @@ fdescribe('Manchester Converter service', function() {
             expect(result.jsonld).toBeUndefined();
             expect(result.errorMessage).toBeTruthy();
         });
+        /*it('with a really large number of options', function() {
+            str = '{"ARTY|ARTY", "Accident|Accident", "Ambush|Ambush", "Appointments|Appointments", "Arrest|Arrest", "Arson|Arson", "Assassination Threat| Assassination Threat", "Assassination| Assassination", "Assault|Assault", "Attack Threat|Attack Threat", "Attack|Attack", "Blue-Blue|Blue-Blue", "Blue-Green|Blue-Green", "Blue-White|Blue-White", "CAS|CAS", "Cache Found/Cleared|Cache Found/Cleared", "Corruption|Corruption", "Counterfeiting|Counterfeiting", "Defecting| Defecting", "Demonstration|Demonstration", "Detainee Release| Detainee Release", "Detain| Detain", "Direct Fire Threat|Direct Fire Threat", "Direct Fire|Direct Fire", "ERW| ERW", "Election|Election", "Escalation of Force|Escalation of Force", "Exploitation| Exploitation", "Finance|Finance", "Green-Blue|Green-Blue", "Green-Green|Green- Green", "Green-White|Green-White", "Hoax RCIED| Hoax RCIED", "Hoax VOIED|Hoax VOIED", "IDF Interdiction|IDF Interdiction", "IED Ambush|IED Ambush", "IED Components|IED Components", "IED Explosion| IED Explosion", "IED False|IED False", "IED Found/Cleared|IED Found/Cleared", "IED Hoax|IED Hoax", "IED Interdiction|IED Interdiction", "IED Suspected|IED Suspected", "IED Threat|IED Threat", "IED Turn In|IED Turn In", "INS Predetonation|INS Predetonation", "Illegal Checkpoint|Illegal Checkpoint", "Indirect Fire Threat|Indirect Fire Threat", "Indirect Fire|Indirect Fire", "Intimidation Threat|Intimidation Threat", "Kidnapping Threat|Kidnapping Threat", "Kidnapping|Kidnapping", "Medevac|Medevac", "Meeting| Meeting", "Mine Found and Cleared|Mine Found and Cleared", "Mine Strike|Mine Strike", "Murder Threat|Murder Threat", "Murder|Murder", "NBC|NBC", "Narcotics|Narcotics", "Natural Disaster|Natural Disaster", "Opportunity|Opportunity", "Other|Other", "Police Actions|Police Actions", "Premature IED Detonation|Premature IED Detonation", "Reintegration| Reintegration", "Reversal|Reversal", "SAFIRE Threat|SAFIRE Threat", "SAFIRE| SAFIRE", "Sectarian Violence|Sectarian Violence", "Security Breach|Security Breach", "Smuggling Threat|Smuggling Threat", "Smuggling|Smuggling", "Sniper Ops|Sniper Ops", "Supporting CF|Supporting CF", "Surveillance|Surveillance", "Terrorist Recruitment|Terrorist Recruitment", "Terrorist Tactics and Procedures|Terrorist Tactics and Procedures", "Terrorist Training| Terrorist Training", "Theft Threat|Theft Threat", "Theft|Theft", "Threats|Threats", "Tribal Feud|Tribal Feud", "Turn In|Turn In", "Unexploded Ordinance|Unexploded Ordinance", "Unknown Explosion|Unknown Explosion", "Violent Insurgent Intimidation|Violent Insurgent Intimidation", "Weapons Sells|Weapons Sells", "Weapons Transport|Weapons Transport", "White-Blue|White-Blue", "White-Green|White-Green", "White-White|White-White"}';
+            expected = [{'@id': '_:genid0', '@type': [prefixes.rdfs + 'Datatype']}];
+            expected[0][prefixes.owl + 'oneOf'] = [{'@list': [
+                {'@value': 'ARTY|ARTY'},
+                {'@value': 'Accident|Accident'},
+                {'@value': 'Ambush|Ambush'},
+                {'@value': 'Appointments|Appointments'},
+                {'@value': 'Arrest|Arrest'},
+                {'@value': 'Arson|Arson'},
+                {'@value': 'Assassination Threat| Assassination Threat'},
+                {'@value': 'Assassination| Assassination'},
+                {'@value': 'Assault|Assault'},
+                {'@value': 'Attack Threat|Attack Threat'},
+                {'@value': 'Attack|Attack'},
+                {'@value': 'Blue-Blue|Blue-Blue'},
+                {'@value': 'Blue-Green|Blue-Green'},
+                {'@value': 'Blue-White|Blue-White'},
+                {'@value': 'CAS|CAS'},
+                {'@value': 'Cache Found/Cleared|Cache Found/Cleared'},
+                {'@value': 'Corruption|Corruption'},
+                {'@value': 'Counterfeiting|Counterfeiting'},
+                {'@value': 'Defecting| Defecting'},
+                {'@value': 'Demonstration|Demonstration'},
+                {'@value': 'Detainee Release| Detainee Release'},
+                {'@value': 'Detain| Detain'},
+                {'@value': 'Direct Fire Threat|Direct Fire Threat'},
+                {'@value': 'Direct Fire|Direct Fire'},
+                {'@value': 'ERW| ERW'},
+                {'@value': 'Election|Election'},
+                {'@value': 'Escalation of Force|Escalation of Force'},
+                {'@value': 'Exploitation| Exploitation'},
+                {'@value': 'Finance|Finance'},
+                {'@value': 'Green-Blue|Green-Blue'},
+                {'@value': 'Green-Green|Green- Green'},
+                {'@value': 'Green-White|Green-White'},
+                {'@value': 'Hoax RCIED| Hoax RCIED'},
+                {'@value': 'Hoax VOIED|Hoax VOIED'},
+                {'@value': 'IDF Interdiction|IDF Interdiction'},
+                {'@value': 'IED Ambush|IED Ambush'},
+                {'@value': 'IED Components|IED Components'},
+                {'@value': 'IED Explosion| IED Explosion'},
+                {'@value': 'IED False|IED False'},
+                {'@value': 'IED Found/Cleared|IED Found/Cleared'},
+                {'@value': 'IED Hoax|IED Hoax'},
+                {'@value': 'IED Interdiction|IED Interdiction'},
+                {'@value': 'IED Suspected|IED Suspected'},
+                {'@value': 'IED Threat|IED Threat'},
+                {'@value': 'IED Turn In|IED Turn In'},
+                {'@value': 'INS Predetonation|INS Predetonation'},
+                {'@value': 'Illegal Checkpoint|Illegal Checkpoint'},
+                {'@value': 'Indirect Fire Threat|Indirect Fire Threat'},
+                {'@value': 'Indirect Fire|Indirect Fire'},
+                {'@value': 'Intimidation Threat|Intimidation Threat'},
+                {'@value': 'Kidnapping Threat|Kidnapping Threat'},
+                {'@value': 'Kidnapping|Kidnapping'},
+                {'@value': 'Medevac|Medevac'},
+                {'@value': 'Meeting| Meeting'},
+                {'@value': 'Mine Found and Cleared|Mine Found and Cleared'},
+                {'@value': 'Mine Strike|Mine Strike'},
+                {'@value': 'Murder Threat|Murder Threat'},
+                {'@value': 'Murder|Murder'},
+                {'@value': 'NBC|NBC'},
+                {'@value': 'Narcotics|Narcotics'},
+                {'@value': 'Natural Disaster|Natural Disaster'},
+                {'@value': 'Opportunity|Opportunity'},
+                {'@value': 'Other|Other'},
+                {'@value': 'Police Actions|Police Actions'},
+                {'@value': 'Premature IED Detonation|Premature IED Detonation'},
+                {'@value': 'Reintegration| Reintegration'},
+                {'@value': 'Reversal|Reversal'},
+                {'@value': 'SAFIRE Threat|SAFIRE Threat'},
+                {'@value': 'SAFIRE| SAFIRE'},
+                {'@value': 'Sectarian Violence|Sectarian Violence'},
+                {'@value': 'Security Breach|Security Breach'},
+                {'@value': 'Smuggling Threat|Smuggling Threat'},
+                {'@value': 'Smuggling|Smuggling'},
+                {'@value': 'Sniper Ops|Sniper Ops'},
+                {'@value': 'Supporting CF|Supporting CF'},
+                {'@value': 'Surveillance|Surveillance'},
+                {'@value': 'Terrorist Recruitment|Terrorist Recruitment'},
+                {'@value': 'Terrorist Tactics and Procedures|Terrorist Tactics and Procedures'},
+                {'@value': 'Terrorist Training| Terrorist Training'},
+                {'@value': 'Theft Threat|Theft Threat'},
+                {'@value': 'Theft|Theft'},
+                {'@value': 'Threats|Threats'},
+                {'@value': 'Tribal Feud|Tribal Feud'},
+                {'@value': 'Turn In|Turn In'},
+                {'@value': 'Unexploded Ordinance|Unexploded Ordinance'},
+                {'@value': 'Unknown Explosion|Unknown Explosion'},
+                {'@value': 'Violent Insurgent Intimidation|Violent Insurgent Intimidation'},
+                {'@value': 'Weapons Sells|Weapons Sells'},
+                {'@value': 'Weapons Transport|Weapons Transport'},
+                {'@value': 'White-Blue|White-Blue'},
+                {'@value': 'White-Green|White-Green'},
+                {'@value': 'White-White|White-White'}
+            ]}];
+            var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap, true);
+            expect(result.jsonld).toEqual(expected);
+            expect(result.errorMessage).toBe('');
+        });*/
         describe('if given a class expression', function() {
             beforeEach(function() {
                 expected = [{'@id': '_:genid0', '@type': [prefixes.owl + 'Class']}];
@@ -155,9 +256,23 @@ fdescribe('Manchester Converter service', function() {
                         expect(result.jsonld).toEqual(expected);
                         expect(result.errorMessage).toEqual('');
                     });
-                    it('without a language', function() {
+                    it('without a language or type', function() {
                         expected[0][prefixes.owl + 'hasValue'] = [{'@value': 'test'}];
                         str = 'PropA value "test"';
+                        var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                        expect(result.jsonld).toEqual(expected);
+                        expect(result.errorMessage).toEqual('');
+                    });
+                    it('with a prefixed type', function() {
+                        expected[0][prefixes.owl + 'hasValue'] = [{'@value': 'true', '@type': prefixes.xsd + 'boolean'}];
+                        str = 'PropA value "true"^^xsd:boolean';
+                        var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+                        expect(result.jsonld).toEqual(expected);
+                        expect(result.errorMessage).toEqual('');
+                    });
+                    it('with a unprefixed type', function() {
+                        expected[0][prefixes.owl + 'hasValue'] = [{'@value': 'true', '@type': 'http://test.com/datatype'}];
+                        str = 'PropA value "true"^^<http://test.com/datatype>';
                         var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
                         expect(result.jsonld).toEqual(expected);
                         expect(result.errorMessage).toEqual('');
@@ -296,7 +411,6 @@ fdescribe('Manchester Converter service', function() {
                 { '@value': 'B' },
             ]}];
             var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-            console.log(angular.toJson(result.jsonld));
             expect(result.jsonld).toEqual(expected);
             expect(result.errorMessage).toBe('');
         });
@@ -419,14 +533,15 @@ fdescribe('Manchester Converter service', function() {
                         var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
                         expect(result).toBe('PropA value "test"@en');
                     });
-                    it('without a language', function() {
+                    it('without a language or type', function() {
                         this.blankNode[prefixes.owl + 'hasValue'] = [{'@value': 'test', '@type': prefixes.xsd + 'string'}];
                         var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
                         expect(result).toBe('PropA value "test"');
-
-                        this.blankNode[prefixes.owl + 'hasValue'] = [{'@value': 'true'}];
+                    });
+                    it('with a type', function() {
+                        this.blankNode[prefixes.owl + 'hasValue'] = [{'@value': 'true', '@type': prefixes.xsd + 'boolean'}];
                         var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
-                        expect(result).toBe('PropA value true');
+                        expect(result).toBe('PropA value "true"^^xsd:boolean');
                     });
                 });
                 it('and a resource', function() {
@@ -437,7 +552,7 @@ fdescribe('Manchester Converter service', function() {
             });
             describe('with minCardinality', function() {
                 beforeEach(function() {
-                    this.blankNode[prefixes.owl + 'minCardinality'] = [{'@value': '1'}];
+                    this.blankNode[prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
                 });
                 it('with HTML', function() {
                     var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, true);
@@ -450,7 +565,7 @@ fdescribe('Manchester Converter service', function() {
             });
             describe('with maxCardinality', function() {
                 beforeEach(function() {
-                    this.blankNode[prefixes.owl + 'maxCardinality'] = [{'@value': '1'}];
+                    this.blankNode[prefixes.owl + 'maxCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
                 });
                 it('with HTML', function() {
                     var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, true);
@@ -463,7 +578,7 @@ fdescribe('Manchester Converter service', function() {
             });
             describe('with cardinality', function() {
                 beforeEach(function() {
-                    this.blankNode[prefixes.owl + 'cardinality'] = [{'@value': '1'}];
+                    this.blankNode[prefixes.owl + 'cardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
                 });
                 it('with HTML', function() {
                     var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, true);
@@ -476,7 +591,7 @@ fdescribe('Manchester Converter service', function() {
             });
             describe('with minQualifiedCardinality', function() {
                 beforeEach(function() {
-                    this.blankNode[prefixes.owl + 'minCardinality'] = [{'@value': '1'}];
+                    this.blankNode[prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
                     this.blankNode[prefixes.owl + 'onClass'] = [{'@id': 'ClassA'}];
                 });
                 it('with HTML', function() {
@@ -490,7 +605,7 @@ fdescribe('Manchester Converter service', function() {
             });
             describe('with maxQualifiedCardinality', function() {
                 beforeEach(function() {
-                    this.blankNode[prefixes.owl + 'maxCardinality'] = [{'@value': '1'}];
+                    this.blankNode[prefixes.owl + 'maxCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
                     this.blankNode[prefixes.owl + 'onClass'] = [{'@id': 'ClassA'}];
                 });
                 it('with HTML', function() {
@@ -504,7 +619,7 @@ fdescribe('Manchester Converter service', function() {
             });
             describe('with qualifiedCardinality', function() {
                 beforeEach(function() {
-                    this.blankNode[prefixes.owl + 'cardinality'] = [{'@value': '1'}];
+                    this.blankNode[prefixes.owl + 'cardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
                     this.blankNode[prefixes.owl + 'onClass'] = [{'@id': 'ClassA'}];
                 });
                 it('with HTML', function() {
@@ -542,11 +657,11 @@ fdescribe('Manchester Converter service', function() {
                 })
                 it('and HTML', function() {
                     var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, true);
-                    expect(result).toBe('{<span class="manchester-lit">A</span>, <span class="manchester-lit">B</span>}');
+                    expect(result).toBe('{<span class="manchester-lit">"A"</span>, <span class="manchester-lit">"B"</span>}');
                 });
                 it('without HTML', function() {
                     var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld);
-                    expect(result).toBe('{A, B}');
+                    expect(result).toBe('{"A", "B"}');
                 });
             });
             it('unless it is invalid', function() {
@@ -620,9 +735,9 @@ fdescribe('Manchester Converter service', function() {
                 this.jsonld[5][prefixes.owl + 'onProperty'] = [{'@id': 'PropC'}];
                 this.jsonld[5][prefixes.owl + 'hasValue'] = [{'@id': 'ClassC'}];
                 this.jsonld[6][prefixes.owl + 'onProperty'] = [{'@id': 'PropD'}];
-                this.jsonld[6][prefixes.owl + 'minCardinality'] = [{'@value': '1'}];
+                this.jsonld[6][prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
                 this.jsonld[7][prefixes.owl + 'onProperty'] = [{'@id': 'PropE'}];
-                this.jsonld[7][prefixes.owl + 'cardinality'] = [{'@value': '10'}];
+                this.jsonld[7][prefixes.owl + 'cardinality'] = [{'@value': '10', '@type': prefixes.xsd + 'nonNegativeInteger'}];
             });
             it('and HTML', function() {
                 var result = manchesterConverterSvc.jsonldToManchester(this.jsonld[0]['@id'], this.jsonld, true);
