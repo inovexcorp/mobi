@@ -283,7 +283,7 @@ public class OntologyRestImpl implements OntologyRest {
                             + branchIdStr + " has no head Commit set"));
                 }
             }
-            
+
             Model changedOnt = ontologyManager.createOntology(fileInputStream).asModel(modelFactory);
             Model currentOnt = catalogManager.getCompiledResource(recordId, branchId, commitId);
 
