@@ -90,7 +90,7 @@ OBJECT_PROPERTY_LABEL: 'ObjectProperty:';
 
 DATA_PROPERTY_LABEL: 'DataProperty:';
 
-ANNOTATION_PROPERTY_LABEL: 'AnnotaionProperty:';
+ANNOTATION_PROPERTY_LABEL: 'AnnotationProperty:';
 
 NAMED_INDIVIDUAL_LABEL: 'NamedIndividual';
 
@@ -128,7 +128,7 @@ SUBCLASS_OF_LABEL: 'SubClassOf:';
 
 DISJOINT_WITH_LABEL: 'DisjointWith:';
 
-DISJOINT_UNION_OF_LABEL: 'DisjointUnioniOf:';
+DISJOINT_UNION_OF_LABEL: 'DisjointUnionOf:';
 
 HAS_KEY_LABEL: 'HasKey:';
 
