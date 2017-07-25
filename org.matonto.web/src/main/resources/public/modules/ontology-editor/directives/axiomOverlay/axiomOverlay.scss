@@ -1,0 +1,10 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.axiom-overlay {
+    .CodeMirror {
+        border: 1px solid #ccc;
+        margin-bottom: 10px;
+        font-family: inherit;
+    }
+}

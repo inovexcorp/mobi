@@ -27,9 +27,9 @@
         .module('axiomOverlay', [])
         .directive('axiomOverlay', axiomOverlay);
 
-        axiomOverlay.$inject = ['responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes'];
+        axiomOverlay.$inject = ['responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes', 'manchesterConverterService', '$filter'];
 
-        function axiomOverlay(responseObj, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes) {
+        function axiomOverlay(responseObj, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes, manchesterConverterService, $filter) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,15 +41,46 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var mc = manchesterConverterService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
+                    dvm.errorMessage = '';
+                    dvm.axiom = undefined;
+                    dvm.values = [];
+                    dvm.expression = '';
+                    dvm.tabs = {
+                        list: true,
+                        editor: false
+                    };
+                    dvm.editorOptions = {
+                        mode: 'text/omn',
+                        indentUnit: 4,
+                        lineWrapping: true,
+                        matchBrackets: true
+                    };
 
                     dvm.addAxiom = function() {
-                        var values = [];
-                        _.forEach(dvm.values, value => values.push({'@id': dvm.ro.getItemIri(value)}));
                         var axiom = dvm.ro.getItemIri(dvm.axiom);
+                        var values;
+                        // Collect values depending on current tab
+                        if (dvm.tabs.editor) {
+                            var localNameMap = createLocalNameMap();
+                            var result = mc.manchesterToJsonld(dvm.expression, localNameMap);
+                            if (result.errorMessage) {
+                                dvm.errorMessage = result.errorMessage;
+                                return;
+                            } else if (result.jsonld.length === 0) {
+                                dvm.errorMessage = 'Expression resulted in no values. Please try again.';
+                                return;
+                            } else {
+                                values = [{'@id': result.jsonld[0]['@id']}];
+                                _.forEach(result.jsonld, obj => dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, obj));
+                            }
+                        } else if (dvm.tabs.list) {
+                            values = _.map(dvm.values, value => ({'@id': dvm.ro.getItemIri(value)}));
+                        }
                         if (_.has(dvm.os.listItem.selected, axiom)) {
                             dvm.os.listItem.selected[axiom] = _.union(dvm.os.listItem.selected[axiom], values);
                         } else {
@@ -61,6 +92,13 @@
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [axiom]: values});
                         dvm.os.showAxiomOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
+                    }
+                    function createLocalNameMap() {
+                        var map = {};
+                        _.forEach(dvm.os.listItem.iriList, iri => {
+                            map[($filter('splitIRI')(iri)).end] = iri;
+                        });
+                        return map;
                     }
                 }
             }

@@ -21,8 +21,9 @@
   #L%
   -->
 <div class="axiom-overlay overlay">
-    <form name="dvm.axiomForm" class="content clearfix" novalidate autocomplete="off">
-        <h6>Add Axiom</h6>
+    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
+        <h1>Add Axiom</h1>
+        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
         <div class="form-group">
             <custom-label>Axiom</custom-label>
             <ui-select ng-model="dvm.axiom" on-select="dvm.values = []" autofocus>
@@ -32,20 +33,30 @@
                 </ui-select-choices>
             </ui-select>
         </div>
-        <div class="form-group">
-            <custom-label>Values</custom-label>
-            <ui-select multiple ng-model="dvm.values" ng-disabled="!dvm.axiom">
-                <ui-select-match placeholder="Select values">
-                    <span title="{{dvm.ro.getItemIri($item)}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
-                </ui-select-match>
-                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="value in dvm.os.listItem[dvm.axiom.valuesKey] | removeIriFromArray:dvm.os.listItem.selected['@id'] | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
-                    <div title="{{dvm.ro.getItemIri(value)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(value) | highlight: $select.search | trusted"></div>
-                </ui-select-choices>
-            </ui-select>
-        </div>
+        <tabset class="in-overlay">
+            <tab heading="'List'" active="dvm.tabs.list">
+                <div class="form-group">
+                    <custom-label>Values</custom-label>
+                    <ui-select multiple ng-model="dvm.values" ng-disabled="!dvm.axiom">
+                        <ui-select-match placeholder="Select values">
+                            <span title="{{dvm.ro.getItemIri($item)}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
+                        </ui-select-match>
+                        <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="value in dvm.os.listItem[dvm.axiom.valuesKey] | removeIriFromArray:dvm.os.listItem.selected['@id'] | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
+                            <div title="{{dvm.ro.getItemIri(value)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(value) | highlight: $select.search | trusted"></div>
+                        </ui-select-choices>
+                    </ui-select>
+                </div>
+            </tab>
+            <tab heading="'Editor'" active="dvm.tabs.editor">
+                <custom-label>Expression</custom-label>
+                <div class="codemirror-wrapper">
+                    <ui-codemirror ng-model="dvm.expression" ui-codemirror-opts="dvm.editorOptions"></ui-codemirror>
+                </div>
+            </tab>
+        </tabset>
         <div class="btn-container clearfix">
             <button class="btn btn-primary pull-right" ng-click="dvm.addAxiom(); onSubmit({axiom: dvm.axiom, values: dvm.values})"
-                    ng-disabled="dvm.axiomForm.$invalid || dvm.axiom === undefined || !dvm.values.length">Add</button>
+                    ng-disabled="dvm.form.$invalid || dvm.axiom === undefined || (dvm.tabs.list && !dvm.values.length) || (dvm.tabs.editor && !dvm.expression)">Add</button>
             <button class="btn btn-default pull-right" ng-click="dvm.os.showAxiomOverlay = false">Cancel</button>
         </div>
     </form>
