@@ -120,7 +120,12 @@
                 parser.addErrorListener(new antlr.BlankNodesErrorListener(result));
                 var blankNodes = new antlr.BlankNodesListener(result.jsonld, localNameMap, prefixes, util);
                 var start = dataProp ? parser.dataRange() : parser.description();
-                antlr.antlr4.tree.ParseTreeWalker.DEFAULT.walk(blankNodes, start);
+                try {
+                    antlr.antlr4.tree.ParseTreeWalker.DEFAULT.walk(blankNodes, start);
+                } catch (ex) {
+                    result.errorMessage = _.get(ex, 'message', ex);
+                    result.jsonld = undefined;
+                }
                 return result;
             }
             /**

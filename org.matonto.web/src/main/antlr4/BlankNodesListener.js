@@ -86,7 +86,7 @@ BlankNodesListener.prototype.enterAtomic = function(ctx) {
     if (hasParentNode(ctx, this)) {
         var parent = getParentNode(ctx, this);
         if (ctx.classIRI()) {
-            var iri = this.localNames[ctx.getText()];
+            var iri = getFullIRI(ctx, this);
             if (parent.list) {
                 addIdToList(parent.bnode, parent.prop, iri);
             } else {
@@ -177,7 +177,7 @@ BlankNodesListener.prototype.exitDataPropertyExpression = function(ctx) {
 };
 BlankNodesListener.prototype.exitIndividual = function(ctx) {
     var parent = getParentNode(ctx, this);
-    var iriObj = {'@id': this.localNames[ctx.getText()]};
+    var iriObj = {'@id': getFullIRI(ctx, this)};
     addValueToBNode(parent, iriObj);
 };
 BlankNodesListener.prototype.exitTypedLiteral = function(ctx) {
@@ -226,7 +226,7 @@ var createBNode = function(type) {
 }
 var setOnProperty = function(ctx, self) {
     var bnode = self.map[ctx.parentCtx.invokingState].bnode;
-    util.setPropertyId(bnode, prefixes.owl + 'onProperty', self.localNames[ctx.getText()]);
+    util.setPropertyId(bnode, prefixes.owl + 'onProperty', getFullIRI(ctx, self));
 }
 var getParentNode = function(ctx, self) {
     return self.map[ctx.parentCtx.invokingState];
@@ -267,6 +267,14 @@ var addValueToBNode = function(mapItem, valueObj) {
     } else {
         mapItem.bnode[mapItem.prop] = [valueObj];
     }
+}
+var getFullIRI = function(ctx, self) {
+    var localName = ctx.getText();
+    var iri = self.localNames[localName];
+    if (!iri) {
+        throw 'line ' + ctx.start.line + ':' + ctx.start.column + ' - "' + localName + '" does not correspond to a known IRI';
+    }
+    return iri;
 }
 
 exports.BlankNodesListener = BlankNodesListener;

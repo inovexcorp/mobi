@@ -94,6 +94,12 @@ describe('Manchester Converter service', function() {
             expect(result.jsonld).toBeUndefined();
             expect(result.errorMessage).toBeTruthy();
         });
+        it('unless an invalid local name is used', function() {
+            str = 'test min 0';
+            var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+            expect(result.jsonld).toBeUndefined();
+            expect(result.errorMessage).toContain('"test" does not correspond to a known IRI');
+        });
         describe('if given a class expression', function() {
             beforeEach(function() {
                 expected = [{'@id': '_:genid0', '@type': [prefixes.owl + 'Class']}];
