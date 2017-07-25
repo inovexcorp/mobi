@@ -28,7 +28,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>matonto-parent</artifactId>
-    <version>1.8.44</version>
+    <version>1.8.45</version>
 
     <packaging>pom</packaging>
 
@@ -49,6 +49,7 @@
 
         <skipITs>true</skipITs>
 
+        <antlr.version>4.6</antlr.version>
         <maven-bundle-plugin.version>3.0.1</maven-bundle-plugin.version>
         <bndlib.version>3.1.0</bndlib.version>
         <commons-lang3.version>3.4</commons-lang3.version>
