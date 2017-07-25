@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  org.matonto.sparql.query
+  clustering.cli
   $Id:$
   $HeadURL:$
   %%
@@ -22,8 +22,8 @@
   #L%
   -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" 
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>matonto-parent</artifactId>
@@ -32,58 +32,28 @@
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-
-    <artifactId>sparql.utils</artifactId>
-    <packaging>bundle</packaging>
-
     <name>${project.groupId}.${project.artifactId}</name>
-
-    <properties>
-        <antlr.version>4.6</antlr.version>
-    </properties>
+    <artifactId>clustering.cli</artifactId>
+    <packaging>bundle</packaging>
 
     <dependencies>
         <dependency>
+            <groupId>org.apache.karaf.shell</groupId>
+            <artifactId>org.apache.karaf.shell.console</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>persistence.api</artifactId>
-            <version>1.8.14</version>
-        </dependency>
-        <dependency>
-            <groupId>org.antlr</groupId>
-            <artifactId>antlr4-runtime</artifactId>
-            <version>${antlr.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
-        </dependency>
-
-        <!-- Test Dependencies -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <scope>test</scope>
+            <artifactId>clustering.api</artifactId>
+            <version>1.8.44</version>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.antlr</groupId>
-                <artifactId>antlr4-maven-plugin</artifactId>
-                <version>${antlr.version}</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>antlr4</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
@@ -91,11 +61,11 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>MatOnto SPARQL Utils</Bundle-Name>
+                        <Bundle-name>MatOnto Clustering Service - CLI</Bundle-name>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Export-Package>
-                            org.matonto.sparql.utils
-                        </Export-Package>
+                        <Export-Package />
+                        <Service-Component>*</Service-Component>
+                        <Karaf-Commands>*</Karaf-Commands>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
