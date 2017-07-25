@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var MOSListener = require('./generated/MOSListener');
+var MOSListener = require('./../../../target/generated-sources/antlr4/MOSListener');
 
 var prefixes, util;
 

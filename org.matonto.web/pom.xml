@@ -118,7 +118,6 @@
                     <options>
                         <language>JavaScript</language>
                     </options>
-                    <outputDirectory>${basedir}/src/main/antlr4/generated</outputDirectory>
                 </configuration>
                 <executions>
                     <execution>
