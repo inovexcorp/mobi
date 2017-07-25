@@ -118,8 +118,6 @@
                     <options>
                         <language>JavaScript</language>
                     </options>
-                    <!--<sourceDirectory>${basedir}/src/main/antlr4/grammar</sourceDirectory>-->
-                    <!--<libDirectory>${basedir}/src/main/antlr4/grammar/imports</libDirectory>-->
                     <outputDirectory>${basedir}/src/main/antlr4/generated</outputDirectory>
                 </configuration>
                 <executions>
