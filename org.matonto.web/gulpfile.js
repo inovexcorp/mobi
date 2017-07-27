@@ -1,5 +1,9 @@
 // Include gulp requirements
 var gulp = require('gulp'),
+    browerify = require('browserify'),
+    babelify = require('babelify'),
+    strictify = require('strictify'),
+    source = require('vinyl-source-stream'),
     babel = require('gulp-babel'),
     cache = require('gulp-cache'),
     concat = require('gulp-concat'),
@@ -30,6 +34,7 @@ var src = './src/main/resources/public/',
 // NOTE: This is where we determine the order in which JS files are loaded
 var jsFiles = function(prefix) {
         return [
+            prefix + 'js/manchester.js',
             prefix + 'js/services/responseObj.js',
             prefix + 'js/services/prefixes.js',
             prefix + 'js/filters/*.js',
@@ -189,7 +194,7 @@ gulp.task('test-unminified-5', ['test-unminified-4'], function(done) {
 
 // Launch TDD environment for jasmine tests in Chrome
 gulp.task('tdd', ['cacheTemplates'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(src)), './src/test/js/*Spec.js', false, done);
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(src)).concat(dest + 'js/manchester.js'), './src/test/js/*Spec.js', false, done);
 });
 
 // Concatenate and minifies JS Files
@@ -245,6 +250,20 @@ gulp.task('html', function() {
         .pipe(gulp.dest(dest));
 });
 
+// Creates Antlr4 bundle file
+gulp.task('antlr4', function() {
+    return browerify({
+            entries: './src/main/antlr4/manchester.js',
+            debug: true,
+            standalone: 'antlr'
+        })
+        .transform(babelify, {presets: ['es2015']})
+        .transform(strictify)
+        .bundle()
+        .pipe(source('manchester.js'))
+        .pipe(gulp.dest(dest + 'js'));
+});
+
 // Moves all node_modules js files to build folder
 gulp.task('move-node-js', function() {
     return gulp.src(nodeJsFiles(nodeDir), {base: './'})
@@ -262,7 +281,7 @@ gulp.task('move-node-css', function() {
 });
 
 // Moves all custom js files to build folder
-gulp.task('move-custom-js', function() {
+gulp.task('move-custom-js', ['antlr4'], function() {
     return gulp.src(src + '**/*.js')
         .pipe(babel({
             presets: ['es2015']
