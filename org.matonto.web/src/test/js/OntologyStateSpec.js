@@ -1555,6 +1555,7 @@ describe('Ontology State Service', function() {
             spyOn(ontologyStateSvc, 'flattenHierarchy').and.returnValue([{prop: 'flatten'}]);
             spyOn(ontologyStateSvc, 'createFlatEverythingTree').and.returnValue([{prop: 'everything'}]);
             spyOn(ontologyStateSvc, 'createFlatIndividualTree').and.returnValue([{prop: 'individual'}]);
+            ontologyManagerSvc.getFailedImports.and.returnValue(['failedId']);
         });
         it('when all promises resolve', function() {
             ontologyManagerSvc.getIris.and.returnValue($q.when(irisResponse));
@@ -1631,6 +1632,7 @@ describe('Ontology State Service', function() {
                     expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                     expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
                     expect(_.get(response, 'flatIndividualsHierarchy')).toEqual([{prop: 'individual'}]);
+                    expect(_.get(response, 'failedImports')).toEqual(['failedId']);
                 }, function() {
                     fail('Promise should have resolved');
                 });
@@ -1720,6 +1722,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.getConceptSchemeHierarchies.and.returnValue($q.when(conceptSchemeHierarchiesResponse));
             catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: branches}));
             spyOn(ontologyStateSvc, 'flattenHierarchy').and.returnValue([{prop: 'flatten'}]);
+            ontologyManagerSvc.getFailedImports.and.returnValue(['failedId']);
         });
         it('when all promises resolve', function() {
             ontologyManagerSvc.getIris.and.returnValue($q.when(irisResponse));
@@ -1752,6 +1755,7 @@ describe('Ontology State Service', function() {
                     expect(_.get(response, 'branches')).toEqual(branches);
                     expect(_.get(_.get(response, 'ontologyState'), 'upToDate')).toBe(true);
                     expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
+                    expect(_.get(response, 'failedImports')).toEqual(['failedId']);
                 }, function() {
                     fail('Promise should have resolved');
                 });
