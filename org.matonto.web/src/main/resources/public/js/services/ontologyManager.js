@@ -667,6 +667,24 @@
             }
             /**
              * @ngdoc method
+             * @name getFailedImports
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets a list of imported ontology IRIs that failed to resolve.
+             *
+             * @param {string} recordId The record ID of the ontology you want to get from the repository.
+             * @param {string} branchId The branch ID of the ontology you want to get from the repository.
+             * @param {string} commitId The commit ID of the ontology you want to get from the repository.
+             * @return {Promise} A promise containing the list of imported ontology IRIs that failed to resolve.
+             */
+            self.getFailedImports = function(recordId, branchId, commitId) {
+                var config = { params: { branchId, commitId } };
+                return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/failed-imports', config)
+                    .then(response => response.data, response => $q.reject(util.getErrorMessage(response)));
+            }
+            /**
+             * @ngdoc method
              * @name isDeprecated
              * @methodOf ontologyManager.service:ontologyManagerService
              *

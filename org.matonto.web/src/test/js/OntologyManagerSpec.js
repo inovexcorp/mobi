@@ -924,6 +924,37 @@ describe('Ontology Manager service', function() {
             scope.$apply();
         });
     });
+    describe('getFailedImports calls the correct functions when GET /matontorest/ontologies/{recordId}/failed-imports', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({
+                branchId: branchId,
+                commitId: commitId
+            });
+        });
+        it('succeeds', function() {
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/failed-imports?' + params).respond(200, ['failedId']);
+            ontologyManagerSvc.getFailedImports(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual(['failedId']);
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('fails', function() {
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/failed-imports?' + params).respond(400, null, null, 'error');
+            util.getErrorMessage.and.returnValue('util-error');
+            ontologyManagerSvc.getFailedImports(recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('util-error');
+                    expect(util.getErrorMessage).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'error', status: 400}));
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
     describe('isOntology should return', function() {
         it('true if the entity contains the ontology type', function() {
             expect(ontologyManagerSvc.isOntology(ontologyObj)).toBe(true);

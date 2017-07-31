@@ -162,7 +162,8 @@
                 classesWithIndividuals: [],
                 individualsParentPath: [],
                 iriList: [],
-                selected: {}
+                selected: {},
+                failedImports: []
             };
             var vocabularyListItemTemplate = {
                 ontologyState: {
@@ -199,7 +200,8 @@
                 },
                 branches: [],
                 iriList: [],
-                selected: {}
+                selected: {},
+                failedImports: []
             };
             
             var emptyInProgressCommit = {
@@ -495,7 +497,8 @@
                     om.getObjectPropertyHierarchies(recordId, branchId, commitId),
                     cm.getRecordBranches(recordId, catalogId),
                     om.getAnnotationPropertyHierarchies(recordId, branchId, commitId),
-                    om.getImportedOntologies(recordId, branchId, commitId)
+                    om.getImportedOntologies(recordId, branchId, commitId),
+                    om.getFailedImports(recordId, branchId, commitId)
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
                     listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri))
@@ -575,6 +578,7 @@
                         _.concat(om.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties),
                         compareListItems
                     );
+                    listItem.failedImports = response[9];
                     deferred.resolve(listItem);
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
                 return deferred.promise;
@@ -595,7 +599,8 @@
                     om.getConceptHierarchies(recordId, branchId, commitId),
                     om.getConceptSchemeHierarchies(recordId, branchId, commitId),
                     cm.getRecordBranches(recordId, catalogId),
-                    om.getImportedOntologies(recordId, branchId, commitId)
+                    om.getImportedOntologies(recordId, branchId, commitId),
+                    om.getFailedImports(recordId, branchId, commitId)
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
                     listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri));
@@ -650,6 +655,7 @@
                             angular.copy(om.conceptRelationshipList), angular.copy(om.schemeRelationshipList)),
                         compareListItems
                     );
+                    listItem.failedImports = response[6];
                     deferred.resolve(listItem);
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
                 return deferred.promise;
