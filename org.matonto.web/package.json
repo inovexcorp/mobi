@@ -70,6 +70,7 @@
     "ng-handsontable": "^0.13.0",
     "ngclipboard": "^1.1.1",
     "snapsvg": "^0.5.1",
+    "sparqljs": "^1.5.1",
     "ui-select": "^0.19.8"
   }
 }

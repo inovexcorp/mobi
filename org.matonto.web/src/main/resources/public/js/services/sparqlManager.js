@@ -200,6 +200,24 @@
                 self.infoMessage = '';
                 self.currentPage = 0;
             }
+
+            /**
+             * @ngdoc method
+             * @name query
+             * @methodOf sparqlManager.service:sparqlManagerService
+             *
+             * @description
+             * Calls the GET /sparql/page REST endpoint to conduct a SPARQL query using the provided query
+             * and optionally using the provided DatasetRecord IRI to limit the query to a dataset.
+             *
+             * @param {string} query The SPARQL query string to submit
+             * @return {Promise} A Promise that resolves to the data from the response or rejects with an\
+             * error message.
+             */
+            self.query = function(query, datasetRecordIRI = '') {
+                var config = { params: { query } };
+                return $http.get(prefix, config).then(response => response.data, util.rejectError);
+            }
             /**
              * @ngdoc method
              * @name downloadResults

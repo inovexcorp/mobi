@@ -1,0 +1,12 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.search-form {
+    .keyword-operator {
+        float: right;
+
+        md-radio-group md-radio-button {
+            display: inline-block;
+        }
+    }
+}

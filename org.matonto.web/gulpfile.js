@@ -35,6 +35,7 @@ var src = './src/main/resources/public/',
 var jsFiles = function(prefix) {
         return [
             prefix + 'js/manchester.js',
+            prefix + 'js/sparql.js',
             prefix + 'js/services/responseObj.js',
             prefix + 'js/services/prefixes.js',
             prefix + 'js/filters/*.js',
@@ -194,7 +195,7 @@ gulp.task('test-unminified-5', ['test-unminified-4'], function(done) {
 
 // Launch TDD environment for jasmine tests in Chrome
 gulp.task('tdd', ['cacheTemplates'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(src)).concat(dest + 'js/manchester.js'), './src/test/js/*Spec.js', false, done);
+    return runKarma(nodeJsFiles(nodeDir).concat(jsFiles(src)).concat([dest + 'js/manchester.js', dest + 'js/sparql.js']), './src/test/js/*Spec.js', false, done);
 });
 
 // Concatenate and minifies JS Files
@@ -264,6 +265,17 @@ gulp.task('antlr4', function() {
         .pipe(gulp.dest(dest + 'js'));
 });
 
+gulp.task('sparqljs', function() {
+    return browerify({
+            entries: nodeDir + 'sparqljs/sparql.js',
+            debug: true,
+            standalone: 'sparqljs'
+        })
+        .bundle()
+        .pipe(source('sparql.js'))
+        .pipe(gulp.dest(dest + 'js'));
+});
+
 // Moves all node_modules js files to build folder
 gulp.task('move-node-js', function() {
     return gulp.src(nodeJsFiles(nodeDir), {base: './'})
@@ -322,9 +334,9 @@ gulp.task('clearcache', function() {
 });
 
 // Production Task (minified)
-gulp.task('prod', ['test-minified-1', 'test-minified-2', 'test-minified-3', 'test-minified-4', 'test-minified-5', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified']);
-// gulp.task('prod', ['test-minified', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', ]);
+gulp.task('prod', ['sparqljs', 'antlr4', 'test-minified-1', 'test-minified-2', 'test-minified-3', 'test-minified-4', 'test-minified-5', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified']);
+// gulp.task('prod', ['antlr4', 'test-minified', 'minify-scripts', 'minify-css', 'html', 'images', 'inject-minified', 'icons-minified', ]);
 
 // Default Task (un-minified)
-gulp.task('default', ['test-unminified-1', 'test-unminified-2', 'test-unminified-3', 'test-unminified-4', 'test-unminified-5', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified']);
-// gulp.task('default', ['test-unminified', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified']);
+gulp.task('default', ['sparqljs', 'antlr4', 'test-unminified-1', 'test-unminified-2', 'test-unminified-3', 'test-unminified-4', 'test-unminified-5', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified']);
+// gulp.task('default', ['antlr4', 'test-unminified', 'move-custom-js', 'move-node-js', 'move-node-css', 'images', 'html', 'change-to-css', 'inject-unminified', 'icons-unminified']);

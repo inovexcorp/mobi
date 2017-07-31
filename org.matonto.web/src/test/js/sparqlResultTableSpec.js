@@ -21,23 +21,18 @@
  * #L%
  */
 describe('SPARQL Result Table directive', function() {
-    var $compile,
-        scope,
-        element,
-        sparqlManagerSvc;
+    var $compile, scope, element, isolatedScope;
 
     beforeEach(function() {
         module('templates');
         module('sparqlResultTable');
-        mockSparqlManager();
 
-        inject(function(_$compile_, _$rootScope_, _sparqlManagerService_) {
+        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            sparqlManagerSvc = _sparqlManagerService_;
         });
 
-        sparqlManagerSvc.data = [
+        scope.data = [
             {
                 var1: {type: 'a-type1', value: 'a-value1'},
                 var2: {type: 'a-type2', value: 'a-value2'}
@@ -47,63 +42,52 @@ describe('SPARQL Result Table directive', function() {
                 var2: {type: 'b-type2', value: 'b-value2'}
             }
         ];
-        sparqlManagerSvc.bindings = ['var1', 'var2'];
-        element = $compile(angular.element('<sparql-result-table></sparql-result-table>'))(scope);
+        scope.bindings = ['var1', 'var2'];
+        element = $compile(angular.element('<sparql-result-table bindings="bindings" data="data"></sparql-result-table>'))(scope);
         scope.$digest();
+        isolatedScope = element.isolateScope();
     });
 
+    describe('in isolated scope', function() {
+        it('data is one way bound', function() {
+            isolatedScope.data = [];
+            scope.$digest();
+            expect(scope.data).toEqual([
+                {
+                    var1: {type: 'a-type1', value: 'a-value1'},
+                    var2: {type: 'a-type2', value: 'a-value2'}
+                },
+                {
+                    var1: {type: 'b-type1', value: 'b-value1'},
+                    var2: {type: 'b-type2', value: 'b-value2'}
+                }
+            ]);
+        });
+        it('bindings is one way bound', function() {
+            isolatedScope.bindings = [];
+            scope.$digest();
+            expect(scope.bindings).toEqual(['var1', 'var2']);
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
+            expect(element.prop('tagName')).toBe('TABLE');
             expect(element.hasClass('sparql-result-table')).toBe(true);
-        });
-        it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
-        });
-        it('with a block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
-        });
-        it('with a block-footer', function() {
-            expect(element.find('block-footer').length).toBe(1);
-        });
-        it('with a table', function() {
-            expect(element.querySelectorAll('table.table').length).toBe(1);
-        });
-        it('with a pagination', function() {
-            expect(element.find('pagination').length).toBe(1);
-        });
-        it('with a download button', function() {
-            expect(element.querySelectorAll('button.download-button').length).toBe(1);
+            expect(element.hasClass('table')).toBe(true);
         });
         it('depending on how many binding names there are', function() {
             var theadList = element.querySelectorAll('thead');
             expect(element.html()).not.toContain('None');
             expect(theadList.length).toBe(1);
             var thead = theadList[0];
-            expect(thead.querySelectorAll('th').length).toBe(sparqlManagerSvc.bindings.length);
+            expect(thead.querySelectorAll('th').length).toBe(scope.bindings.length);
         });
         it('depending on how many results there are', function() {
             var tbodyList = element.querySelectorAll('tbody');
             expect(element.html()).not.toContain('None');
             expect(tbodyList.length).toBe(1);
             var tbody = tbodyList[0];
-            expect(tbody.querySelectorAll('tr').length).toBe(sparqlManagerSvc.data.length);
-        });
-        it('depending on whether an error occurred error message', function() {
-            expect(element.find('error-display').length).toBe(0);
-            expect(element.find('pre').length).toBe(0);
-
-            sparqlManagerSvc.errorMessage = 'Error message';
-            scope.$digest();
-            expect(element.find('error-display').length).toBe(1);
-            expect(element.find('pre').length).toBe(1);
-        });
-        it('depending on whether there is an info message', function() {
-            expect(element.find('info-message').length).toBe(0);
-
-            sparqlManagerSvc.infoMessage = 'Info message';
-            scope.$digest();
-            expect(element.find('info-message').length).toBe(1);
+            expect(tbody.querySelectorAll('tr').length).toBe(scope.data.length);
         });
     });
 });

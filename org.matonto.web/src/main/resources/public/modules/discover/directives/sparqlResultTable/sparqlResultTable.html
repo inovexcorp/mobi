@@ -20,14 +20,15 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="discover-search-tab row">
-    <search-form></search-form>
-    <div class="col-xs-9">
-        <block>
-            <block-content>
-                <info-message ng-if="!dvm.ds.search.results" class="padding">Submit a search using the form to the right</info-message>
-                <sparql-result-table bindings="dvm.ds.search.results.head.vars" data="dvm.ds.search.results.results.bindings"></sparql-result-table>
-            </block-content>
-        </block>
-    </div>
-</div>
+<table class="sparql-result-table table table-hover">
+    <thead>
+        <tr>
+            <th ng-repeat="binding in bindings track by binding">{{binding}}</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr ng-repeat="result in data track by $index">
+            <td ng-repeat="binding in bindings">{{result[binding].value}}</td>
+        </tr>
+    </tbody>
+</table>

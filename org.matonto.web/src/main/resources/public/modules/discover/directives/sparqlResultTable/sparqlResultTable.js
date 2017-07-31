@@ -26,38 +26,37 @@
     angular
         /**
          * @ngdoc overview
-         * @name discoverSearchTab
+         * @name sparqlResultTable
          *
          * @description
-         * The `discoverSearchTab` module only provides the `discoverSearchTab` directive which creates
-         * the search tab within the discover page.
+         * The `sparqlResultTable` module only provides the `sparqlResultTable` directive which
+         * creates a table using the provided SPARQL spec JSON results.
          */
-        .module('discoverSearchTab', [])
+        .module('sparqlResultTable', [])
         /**
          * @ngdoc directive
-         * @name discoverSearchTab.directive:discoverSearchTab
+         * @name sparqlResultTable.directive:sparqlResultTable
          * @scope
          * @restrict E
          *
          * @description
-         * HTML contents in the search tab within the discover page which gives the users the option to
-         * create a SPARQL query using the provided inputs.
+         * HTML contents in the `sparqlResultTable` which create a table with a header row of binding names
+         * and rows of the SPARQL query results provided in the SPARQL spec JSON format.
+         *
+         * @param {string[]} bindings The array of binding names for the SPARQl results
+         * @param {Object[]} data The actual SPARQL query results
          */
-        .directive('discoverSearchTab', discoverSearchTab);
+        .directive('sparqlResultTable', sparqlResultTable);
 
-        discoverSearchTab.$inject = ['discoverStateService'];
-
-        function discoverSearchTab(discoverStateService) {
+        function sparqlResultTable() {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/search/directives/discoverSearchTab/discoverSearchTab.html',
+                templateUrl: 'modules/discover/directives/sparqlResultTable/sparqlResultTable.html',
                 replace: true,
-                scope: {},
-                controllerAs: 'dvm',
-                controller: function() {
-                    var dvm = this;
-                    dvm.ds = discoverStateService;
-                }
+                scope: {
+                    bindings: '<',
+                    data: '<'
+                },
             }
         }
 })();

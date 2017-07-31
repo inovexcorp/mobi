@@ -45,39 +45,67 @@ describe('SPARQL Manager service', function() {
     });
 
     describe('should query the repository', function() {
+        var query = 'query', url;
+        beforeEach(function() {
+            url = '/matontorest/sparql?' + $httpParamSerializer({query: query});
+        });
+        it('unless an error occurs', function() {
+            $httpBackend.expectGET(url).respond(400, null, null, 'Error Message');
+            sparqlManagerSvc.query(query).then(function(response) {
+                fail('Promise should have rejected');
+            }, function(error) {
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+            });
+            flushAndVerify($httpBackend);
+        });
+        it('successfully', function() {
+            var data = {head: {}};
+            $httpBackend.expectGET(url).respond(200, data);
+            sparqlManagerSvc.query(query).then(function(response) {
+                expect(response).toEqual(data);
+            }, function(error) {
+                fail('Promise should have resolved');
+            });
+            flushAndVerify($httpBackend);
+        });
+    });
+    describe('should retrieve a page of a query against the repository', function() {
+        var url;
         beforeEach(function() {
             params.limit = sparqlManagerSvc.limit;
             params.offset = sparqlManagerSvc.currentPage * sparqlManagerSvc.limit;
-            this.url = '/matontorest/sparql/page?';
+            url = '/matontorest/sparql/page?';
         });
-        it('with a dataset', function() {
+        it('with a dataset', function(done) {
             sparqlManagerSvc.datasetRecordIRI = 'dataset';
             params.dataset = sparqlManagerSvc.datasetRecordIRI;
-            this.url += $httpParamSerializer(params);
-            $httpBackend.expectGET(this.url).respond(200);
+            url += $httpParamSerializer(params);
+            $httpBackend.expectGET(url).respond(200);
             sparqlManagerSvc.queryRdf();
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
             expect(true).toBe(true);
+            done();
         });
-        it('unless an error occurs', function() {
-            this.url += $httpParamSerializer(params);
+        it('unless an error occurs', function(done) {
+            url += $httpParamSerializer(params);
             var statusMessage = 'Error message';
             var details = 'Details';
             utilSvc.getErrorMessage.and.returnValue(statusMessage);
-            $httpBackend.expectGET(this.url).respond(400, {details: details}, undefined, statusMessage);
+            $httpBackend.expectGET(url).respond(400, {details: details}, undefined, statusMessage);
             sparqlManagerSvc.queryRdf();
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
 
             expect(sparqlManagerSvc.errorMessage).toEqual(statusMessage);
             expect(sparqlManagerSvc.errorDetails).toEqual(details);
             expect(sparqlManagerSvc.currentPage).toBe(0);
             expect(sparqlManagerSvc.data).toBeUndefined();
+            done();
         });
         it('when returning no bindings', function(done) {
-            this.url += $httpParamSerializer(params);
-            $httpBackend.expectGET(this.url).respond(200, {bindings: [], data: []});
+            url += $httpParamSerializer(params);
+            $httpBackend.expectGET(url).respond(200, {bindings: [], data: []});
             sparqlManagerSvc.queryRdf();
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
 
             expect(sparqlManagerSvc.infoMessage).toEqual('There were no results for the submitted query.');
             expect(sparqlManagerSvc.currentPage).toBe(0);
@@ -85,16 +113,16 @@ describe('SPARQL Manager service', function() {
             done();
         });
         it('when returning bindings', function(done) {
-            this.url += $httpParamSerializer(params);
+            url += $httpParamSerializer(params);
             var nextLink = 'http://example.com/next';
             var prevLink = 'http://example.com/prev';
             var headers = {
                 'X-Total-Count': '10'
             };
             utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
-            $httpBackend.expectGET(this.url).respond(200, {bindings: [''], data: []}, headers);
+            $httpBackend.expectGET(url).respond(200, {bindings: [''], data: []}, headers);
             sparqlManagerSvc.queryRdf();
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
 
             expect(sparqlManagerSvc.data).toEqual([]);
             expect(sparqlManagerSvc.bindings).toEqual(['']);
