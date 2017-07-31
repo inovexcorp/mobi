@@ -284,6 +284,7 @@ function mockOntologyManager() {
             this.deleteOntology = jasmine.createSpy('deleteOntology').and.returnValue($q.when());
             this.getAnnotationPropertyHierarchies = jasmine.createSpy('getAnnotationPropertyHierarchies');
             this.uploadChangesFile = jasmine.createSpy('uploadChangesFile').and.returnValue($q.when({}));
+            this.getFailedImports = jasmine.createSpy('getFailedImports').and.returnValue($q.when([]));
         });
     });
 }
@@ -597,7 +598,8 @@ function mockOntologyState() {
                 conceptSchemeHierarchy: [],
                 conceptSchemeIndex: {},
                 flatConceptSchemeHierarchy: [],
-                iriList: []
+                iriList: [],
+                failedImports: []
             };
             this.states = [];
             this.list = [];

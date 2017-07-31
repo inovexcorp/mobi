@@ -41,7 +41,7 @@ describe('Imports Block directive', function() {
             util = _utilService_;
         });
 
-        ontologyStateSvc.listItem.selected[prefixes.owl + 'imports'] = [];
+        ontologyStateSvc.listItem.selected[prefixes.owl + 'imports'] = [{}];
         element = $compile(angular.element('<imports-block></imports-block>'))(scope);
         scope.$digest();
         controller = element.controller('importsBlock');
@@ -58,32 +58,73 @@ describe('Imports Block directive', function() {
         it('with a block-header', function() {
             expect(element.find('block-header').length).toBe(1);
         });
+        it('with a block-header a', function() {
+            expect(element.querySelectorAll('block-header a.pull-right').length).toBe(1);
+        });
         it('with a block-content', function() {
             expect(element.find('block-content').length).toBe(1);
         });
-        it('with an a', function() {
-            expect(element.querySelectorAll('a.pull-right').length).toBe(1);
+        it('with a p a.import-iri', function() {
+            expect(element.querySelectorAll('p a.import-iri').length).toBe(1);
+            spyOn(controller, 'failed').and.returnValue(true);
+            scope.$apply();
+            expect(element.querySelectorAll('p a.import-iri').length).toBe(0);
+        });
+        it('with a .error-display', function() {
+            expect(element.querySelectorAll('.error-display').length).toBe(0);
+            spyOn(controller, 'failed').and.returnValue(true);
+            scope.$apply();
+            expect(element.querySelectorAll('.error-display').length).toBe(1);
+        });
+        it('with a p a.pull-right', function() {
+            expect(element.querySelectorAll('p a.pull-right').length).toBe(1);
         });
         it('with a imports-overlay', function() {
             expect(element.find('imports-overlay').length).toBe(0);
-            element.controller('importsBlock').showNewOverlay = true;
+            controller.showNewOverlay = true;
             scope.$apply();
             expect(element.find('imports-overlay').length).toBe(1);
         });
+        it('with a confirmation-overlay', function() {
+            expect(element.find('confirmation-overlay').length).toBe(0);
+            controller.showRemoveOverlay = true;
+            scope.$apply();
+            expect(element.find('confirmation-overlay').length).toBe(1);
+        });
+        it('with a error-display', function() {
+            expect(element.find('error-display').length).toBe(0);
+            controller.showRemoveOverlay = true;
+            controller.error = 'error';
+            scope.$apply();
+            expect(element.find('error-display').length).toBe(1);
+        });
+        it('with a confirmation-overlay div', function() {
+            expect(element.querySelectorAll('confirmation-overlay div').length).toBe(0);
+            controller.showRemoveOverlay = true;
+            ontologyStateSvc.hasChanges.and.returnValue(true);
+            scope.$apply();
+            expect(element.querySelectorAll('confirmation-overlay div').length).toBe(1);
+        });
+        it('with a confirmation-overlay p', function() {
+            expect(element.querySelectorAll('confirmation-overlay p').length).toBe(0);
+            controller.showRemoveOverlay = true;
+            ontologyStateSvc.hasChanges.and.returnValue(false);
+            scope.$apply();
+            expect(element.querySelectorAll('confirmation-overlay p').length).toBe(1);
+        });
         it('depending on whether confirmation is open', function() {
             expect(element.find('confirmation-overlay').length).toBe(0);
-            element.controller('importsBlock').showRemoveOverlay = true;
+            controller.showRemoveOverlay = true;
             scope.$apply();
             expect(element.find('confirmation-overlay').length).toBe(1);
         });
         it('depending on the length of the selected ontology imports', function() {
-            expect(element.find('info-message').length).toBe(1);
-            expect(element.querySelectorAll('.import').length).toBe(0);
-
-            ontologyStateSvc.listItem.selected[prefixes.owl + 'imports'] = [{'@id': 'import'}];
-            scope.$digest();
             expect(element.find('info-message').length).toBe(0);
             expect(element.querySelectorAll('.import').length).toBe(1);
+            ontologyStateSvc.listItem.selected[prefixes.owl + 'imports'] = [];
+            scope.$digest();
+            expect(element.find('info-message').length).toBe(1);
+            expect(element.querySelectorAll('.import').length).toBe(0);
         });
     });
     describe('controller methods', function() {
@@ -165,6 +206,17 @@ describe('Imports Block directive', function() {
         it('get should return the correct variable', function() {
             expect(controller.get({'@id': 'id'})).toBe('id');
             expect(controller.get()).toBeUndefined();
+        });
+        describe('failed should return the correct value when failedImports', function() {
+            beforeEach(function() {
+                ontologyStateSvc.listItem.failedImports = ['failedId'];
+            });
+            it('includes the iri', function() {
+                expect(controller.failed('failedId')).toBe(true);
+            });
+            it('does not include the iri', function() {
+                expect(controller.failed('missingId')).toBe(false);
+            });
         });
     });
 });

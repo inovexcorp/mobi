@@ -66,6 +66,10 @@
                     dvm.get = function(obj) {
                         return _.get(obj, '@id');
                     }
+
+                    dvm.failed = function(iri) {
+                        return _.includes(dvm.os.listItem.failedImports, iri);
+                    }
                 }
             }
         }
