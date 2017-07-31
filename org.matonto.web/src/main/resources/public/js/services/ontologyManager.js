@@ -681,7 +681,7 @@
             self.getFailedImports = function(recordId, branchId, commitId) {
                 var config = { params: { branchId, commitId } };
                 return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/failed-imports', config)
-                    .then(response => response.data, response => $q.reject(util.getErrorMessage(response)));
+                    .then(response => response.data, response => util.rejectError(response));
             }
             /**
              * @ngdoc method

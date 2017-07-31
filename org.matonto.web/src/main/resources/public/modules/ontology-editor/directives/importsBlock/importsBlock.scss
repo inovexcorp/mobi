@@ -9,5 +9,9 @@
         &:hover {
             background: $gray-lighter;
         }
+
+        .error-display {
+            font-weight: normal;
+        }
     }
 }

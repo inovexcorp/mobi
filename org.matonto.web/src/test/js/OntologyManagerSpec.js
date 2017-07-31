@@ -944,13 +944,13 @@ describe('Ontology Manager service', function() {
         });
         it('fails', function() {
             $httpBackend.expectGET('/matontorest/ontologies/recordId/failed-imports?' + params).respond(400, null, null, 'error');
-            util.getErrorMessage.and.returnValue('util-error');
+            util.rejectError.and.returnValue($q.reject('util-error'));
             ontologyManagerSvc.getFailedImports(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
                     expect(response).toBe('util-error');
-                    expect(util.getErrorMessage).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'error', status: 400}));
+                    expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'error', status: 400}));
                 });
             flushAndVerify($httpBackend);
         });
