@@ -8,7 +8,10 @@
 
         &:hover {
             background: $gray-lighter;
-            cursor: pointer;
+        }
+
+        .error-display {
+            font-weight: normal;
         }
     }
 }
