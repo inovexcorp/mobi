@@ -24,7 +24,7 @@
     <search-form></search-form>
     <div class="col-xs-9">
         <block>
-            <block-content>
+            <block-content targeted-spinner="dvm.ds.search.targetedId">
                 <info-message ng-if="!dvm.ds.search.results" class="padding">Submit a search using the form to the right</info-message>
                 <sparql-result-table bindings="dvm.ds.search.results.head.vars" data="dvm.ds.search.results.results.bindings"></sparql-result-table>
             </block-content>

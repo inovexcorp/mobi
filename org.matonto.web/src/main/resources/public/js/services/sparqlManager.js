@@ -27,8 +27,6 @@
         /**
          * @ngdoc overview
          * @name sparqlManager
-         * @requires ontologyManager
-         * @requires prefixes
          *
          * @description
          * The `sparqlManager` module only provides the `sparqlManagerService` service which
@@ -40,6 +38,11 @@
          * @ngdoc service
          * @name sparqlManager.service:sparqlManagerService
          * @requires $http
+         * @requires $q
+         * @requires $window
+         * @requires $httpParamSerializer
+         * @requires util.service:utilService
+         * @requires httpService.service:httpService
          *
          * @description
          * `sparqlManagerService` is a service that provides access to the MatOnto SPARQL query
@@ -47,9 +50,9 @@
          */
         .service('sparqlManagerService', sparqlManagerService);
 
-        sparqlManagerService.$inject = ['$http', '$q', '$window', '$httpParamSerializer', 'utilService'];
+        sparqlManagerService.$inject = ['$http', '$q', '$window', '$httpParamSerializer', 'utilService', 'httpService'];
 
-        function sparqlManagerService($http, $q, $window, $httpParamSerializer, utilService) {
+        function sparqlManagerService($http, $q, $window, $httpParamSerializer, utilService, httpService) {
             var prefix = '/matontorest/sparql';
             var self = this;
             var util = utilService;
@@ -211,12 +214,18 @@
              * and optionally using the provided DatasetRecord IRI to limit the query to a dataset.
              *
              * @param {string} query The SPARQL query string to submit
+             * @param {string} datasetRecordIRI The IRI of the DatasetRecord to restrict the query to
+             * @param {string} id The identifier for this call
              * @return {Promise} A Promise that resolves to the data from the response or rejects with an\
              * error message.
              */
-            self.query = function(query, datasetRecordIRI = '') {
+            self.query = function(query, datasetRecordIRI = '', id = '') {
                 var config = { params: { query } };
-                return $http.get(prefix, config).then(response => response.data, util.rejectError);
+                if (datasetRecordIRI) {
+                    config.params.dataset = datasetRecordIRI;
+                }
+                var promise = id ? httpService.get(prefix, config, id) : $http.get(prefix, config);
+                return promise.then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method

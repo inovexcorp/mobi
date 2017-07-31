@@ -94,6 +94,7 @@
          * discover section of the application.
          */
         self.search = {
+            targetedId: 'discover-search-results',
             active: false,
             results: undefined,
             keywords: {

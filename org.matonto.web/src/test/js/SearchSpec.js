@@ -21,23 +21,56 @@
  * #L%
  */
 describe('Search Service', function() {
-    var searchSvc;
+    var searchSvc, scope, $q, httpSvc, sparqlManagerSvc, discoverStateSvc;
 
     beforeEach(function() {
         module('search');
-        mockUtil();
-        mockDiscoverState();
+        mockHttpService();
         mockSparqlManager();
+        mockDiscoverState();
 
         module(function($provide) {
             $provide.constant('sparqljs', window.sparqljs);
         });
 
-        inject(function(searchService) {
+        inject(function(searchService, _$rootScope_, _$q_, _httpService_, _sparqlManagerService_, _discoverStateService_) {
             searchSvc = searchService;
+            scope = _$rootScope_;
+            $q = _$q_;
+            httpSvc = _httpService_;
+            sparqlManagerSvc = _sparqlManagerService_;
+            discoverStateSvc = _discoverStateService_;
         });
     });
 
+    describe('should submit a search query', function() {
+        var query = 'query';
+        beforeEach(function() {
+            spyOn(searchSvc, 'createQueryString').and.returnValue(query);
+        });
+        it('unless an error occurs', function() {
+            sparqlManagerSvc.query.and.returnValue($q.reject('Error Message'));
+            searchSvc.submitSearch([]).then(function() {
+                fail('Promise should have rejected');
+            }, function(response) {
+                expect(response).toEqual('Error Message');
+                expect(searchSvc.createQueryString).toHaveBeenCalledWith([], false);
+                expect(httpSvc.cancel).toHaveBeenCalledWith(discoverStateSvc.search.targetedId);
+            });
+            scope.$apply();
+        });
+        it('successfully', function() {
+            sparqlManagerSvc.query.and.returnValue($q.when({}));
+            searchSvc.submitSearch([]).then(function(response) {
+                expect(response).toEqual({});
+                expect(searchSvc.createQueryString).toHaveBeenCalledWith([], false);
+                expect(httpSvc.cancel).toHaveBeenCalledWith(discoverStateSvc.search.targetedId);
+            }, function() {
+                fail('Promise should have rejected');
+            });
+            scope.$apply();
+        });
+    });
     describe('should create a keyword query', function() {
         it('with and', function() {
             var result = searchSvc.createQueryString(['test1', 'test2']);

@@ -482,6 +482,7 @@ function mockSparqlManager() {
             this.errorMessage = '';
             this.infoMessage = '';
             this.reset = jasmine.createSpy('reset');
+            this.query = jasmine.createSpy('query').and.returnValue($q.when({}));
             this.queryRdf = jasmine.createSpy('queryRdf');
             this.downloadResults = jasmine.createSpy('downloadResults');
             this.setResults = jasmine.createSpy('setResults');
@@ -1031,6 +1032,7 @@ function mockDiscoverState() {
                 active: false
             };
             this.search = {
+                targetedId: '',
                 active: false,
                 results: undefined,
                 keywords: {

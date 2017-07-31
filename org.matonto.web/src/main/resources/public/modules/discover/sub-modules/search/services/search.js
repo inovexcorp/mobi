@@ -36,6 +36,8 @@
         /**
          * @ngdoc service
          * @name search.service:searchService
+         * @requires discoverState.service:discoverStateService
+         * @requires httpService.service:httpService
          * @requires sparqlManager.service:sparqlManager
          *
          * @description
@@ -44,10 +46,11 @@
          */
         .service('searchService', searchService);
 
-    searchService.$inject = ['sparqlManagerService', 'sparqljs'];
+    searchService.$inject = ['discoverStateService', 'httpService', 'sparqlManagerService', 'sparqljs'];
 
-    function searchService(sparqlManagerService, sparqljs) {
+    function searchService(discoverStateService, httpService, sparqlManagerService, sparqljs) {
         var self = this;
+        var ds = discoverStateService;
         var sm = sparqlManagerService;
 
         var simplePattern = {
@@ -75,9 +78,9 @@
          * @return {Promise} A Promise that resolves with the query results or rejects with an error message.
          */
         self.submitSearch = function(keywords, isOr = false) {
-            return sm.query(self.createQueryString(keywords, isOr));
+            httpService.cancel(ds.search.targetedId);
+            return sm.query(self.createQueryString(keywords, isOr), '', ds.search.targetedId);
         }
-
         /**
          * @ngdoc method
          * @name createQueryString
