@@ -65,8 +65,8 @@ public interface OntologyCache {
     void clearCache(@Nonnull Resource recordId, Resource branchId);
 
     /**
-     * Removes the cached ontology which matches key that would be generated using the provided Record, Branch, and
-     * Commit IRI strings. Null values are accepted and used within the key string.
+     * Remove the cached ontology which matches the key generated using the provided Record, Branch, and Commit IRI
+     * strings. Null values are accepted and used within the key string.
      *
      * @param recordIdStr The IRI string of a Record
      * @param branchIdStr The IRI string of a Branch
