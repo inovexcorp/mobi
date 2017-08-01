@@ -183,8 +183,9 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
-                                String commitIdStr, String rdfFormat) {
+                                String commitIdStr, String rdfFormat, boolean clearCache) {
         try {
+            removeFromCache(clearCache, recordIdStr, branchIdStr, commitIdStr);
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             String ontologyAsRdf = getOntologyAsRdf(ontology, rdfFormat);
@@ -1371,5 +1372,24 @@ public class OntologyRestImpl implements OntologyRest {
             }
         });
         return classIndividuals;
+    }
+
+    /**
+     * Removes the identified ontology from the cache.
+     *
+     * @param clearCache  the boolean value identifying whether the cache should be cleared on not.
+     * @param recordIdStr the record ID String to process.
+     * @param branchIdStr the branch ID String to process.
+     * @param commitIdStr the commit ID String to process.
+     */
+    private void removeFromCache(boolean clearCache, String recordIdStr, String branchIdStr, String commitIdStr) {
+        if (clearCache) {
+            Cache<String, Ontology> cache;
+            Optional<Cache<String, Ontology>> optCache = ontologyCache.getOntologyCache();
+            String key = ontologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
+            if (optCache.isPresent() && (cache = optCache.get()).containsKey(key)) {
+                cache.remove(key);
+            }
+        }
     }
 }
