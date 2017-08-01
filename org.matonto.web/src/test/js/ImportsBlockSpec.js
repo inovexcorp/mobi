@@ -227,7 +227,7 @@ describe('Imports Block directive', function() {
                 expect(util.createSuccessToast).toHaveBeenCalledWith('');
             });
             it('rejected', function() {
-                ontologyStateSvc.updateOntology.and.returnValue($q.reject({statusText: 'error'}));
+                ontologyStateSvc.updateOntology.and.returnValue($q.reject('error'));
                 controller.refresh();
                 scope.$apply();
                 expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit, true);

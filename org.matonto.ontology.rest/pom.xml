@@ -91,7 +91,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.8.35</version>
+            <version>1.8.48-SNAPSHOT</version>
         </dependency>
 
         <!-- Test dependencies -->

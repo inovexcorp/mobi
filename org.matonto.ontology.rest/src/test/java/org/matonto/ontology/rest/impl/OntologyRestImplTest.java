@@ -249,7 +249,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @Override
     protected Application configureApp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        when(ontologyCache.getOntologyCache()).thenReturn(Optional.of(mockCache));
 
         vcr = new DefaultValueConverterRegistry();
         modelFactory = LinkedHashModelFactory.getInstance();
@@ -406,7 +405,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @BeforeMethod
     public void setupMocks() {
         reset(engineManager, versioningManager, ontologyId, ontology, importedOntologyId, importedOntology, catalogManager,
-                ontologyManager, sesameTransformer, results, mockCache);
+                ontologyManager, sesameTransformer, results, mockCache, ontologyCache);
 
         final IRI skosConcept = valueFactory.createIRI(SKOS.CONCEPT.stringValue());
         final IRI skosConceptScheme = valueFactory.createIRI(SKOS.CONCEPT_SCHEME.stringValue());
@@ -515,6 +514,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 Values.matontoIRI(invocationOnMock.getArgumentAt(0, org.openrdf.model.IRI.class)));
 
         entityUsagesConstruct = modelToJsonld(sesameTransformer.sesameModel(constructs));
+
+        when(ontologyCache.getOntologyCache()).thenReturn(Optional.of(mockCache));
     }
 
     private JSONObject getResource(String path) throws Exception {
@@ -866,6 +867,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         assertGetOntology(true);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString(), anyString());
         verify(mockCache).containsKey(anyString());
         verify(mockCache).get(anyString());
         verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
@@ -882,6 +884,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         assertGetOntology(true);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString(), anyString());
         verify(mockCache).containsKey(anyString());
         verify(mockCache, times(0)).get(anyString());
         // OntologyManger will handle caching the ontology
@@ -890,8 +893,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void testGetOntologyClearCache() {
-        when(mockCache.containsKey(anyString())).thenReturn(true).thenReturn(false);
-        when(mockCache.remove(anyString())).thenReturn(true);
+        when(mockCache.containsKey(anyString())).thenReturn(false);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
@@ -900,8 +902,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         assertGetOntology(true);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
-        verify(mockCache, times(2)).containsKey(anyString());
-        verify(mockCache).remove(anyString());
+        verify(ontologyCache).removeFromCache(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
+        verify(mockCache).containsKey(anyString());
         verify(mockCache, times(0)).get(anyString());
         // OntologyManger will handle caching the ontology
         verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
@@ -918,6 +920,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         assertGetOntology(false);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -937,6 +940,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         assertGetOntology(true);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString(), anyString());
     }
 
     @Test
