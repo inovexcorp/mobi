@@ -218,9 +218,21 @@ describe('Imports Block directive', function() {
                 expect(controller.failed('missingId')).toBe(false);
             });
         });
-        it('refresh should call the correct function', function() {
-            controller.refresh();
-            expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit, true);
+        describe('refresh should call the correct function when updateOntology is', function() {
+            it('resolved', function() {
+                ontologyStateSvc.updateOntology.and.returnValue($q.resolve());
+                controller.refresh();
+                scope.$apply();
+                expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit, true);
+                expect(util.createSuccessToast).toHaveBeenCalledWith('');
+            });
+            it('rejected', function() {
+                ontologyStateSvc.updateOntology.and.returnValue($q.reject({statusText: 'error'}));
+                controller.refresh();
+                scope.$apply();
+                expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit, true);
+                expect(util.createErrorToast).toHaveBeenCalledWith('error');
+            });
         });
     });
 });

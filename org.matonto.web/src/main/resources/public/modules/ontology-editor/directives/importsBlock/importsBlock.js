@@ -72,7 +72,8 @@
                     }
 
                     dvm.refresh = function() {
-                        dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyRecord.type, dvm.os.listItem.ontologyState.upToDate, dvm.os.listItem.inProgressCommit, true);
+                        dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyRecord.type, dvm.os.listItem.ontologyState.upToDate, dvm.os.listItem.inProgressCommit, true)
+                            .then(response => util.createSuccessToast(''), response => util.createErrorToast(response.statusText));
                     }
                 }
             }
