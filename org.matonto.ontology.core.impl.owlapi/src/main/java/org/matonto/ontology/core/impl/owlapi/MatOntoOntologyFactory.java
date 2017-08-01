@@ -28,6 +28,7 @@ import org.matonto.ontology.core.api.OntologyManager;
 import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
 import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyFactory;
@@ -74,7 +75,9 @@ public class MatOntoOntologyFactory implements OWLOntologyFactory {
         OWLOntology ont = SimpleOntologyValues.owlapiOntology(matOnt);
         handler.ontologyCreated(ont);
         ont.importsDeclarations().forEach(manager::makeLoadImportRequest);
-        handler.setOntologyFormat(ont, new RDFXMLDocumentFormat());
+        OWLDocumentFormat format = new RDFXMLDocumentFormat();
+        format.setAddMissingTypes(false);
+        handler.setOntologyFormat(ont, format);
         return ont;
     }
 }
