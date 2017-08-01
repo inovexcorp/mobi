@@ -11,5 +11,6 @@
         <rdfs:label>Test Ontology</rdfs:label>
         <owl:versionIRI>http://test.com/ontology2/1.0.0</owl:versionIRI>
         <owl:imports rdf:resource="http://xmlns.com/foaf/0.1" />
+        <owl:imports rdf:resource="http://protege.stanford.edu/plugins/owl/dc/terms.owl" />
     </owl:Ontology>
 </rdf:RDF>
