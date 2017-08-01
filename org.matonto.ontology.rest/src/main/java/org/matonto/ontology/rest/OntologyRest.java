@@ -120,7 +120,8 @@ public interface OntologyRest {
                          @PathParam("recordId") String recordIdStr,
                          @QueryParam("branchId") String branchIdStr,
                          @QueryParam("commitId") String commitIdStr,
-                         @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat);
+                         @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+                         @DefaultValue("false") @QueryParam("clearCache") boolean clearCache);
 
     /**
      * Deletes the ontology associated with the requested record ID in the requested format. Unless a branch is

@@ -438,13 +438,14 @@
              * @param {string} [type='ontology'] The type of listItem that needs to be updated.
              * @param {boolean} [upToDate=true] The flag indicating whether the ontology is upToDate or not.
              * @param {boolean} [inProgressCommit=emptyInProgressCommit] The Object containing the saved changes to apply.
+             * @param {boolean} [clearCache=false] Boolean indicating whether or not you should clear the cache.
              * @returns {Promise} A promise indicating the success or failure of the update.
              */
-            self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, inProgressCommit = emptyInProgressCommit) {
+            self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, inProgressCommit = emptyInProgressCommit, clearCache = false) {
                 var listItem;
                 var oldListItem = self.getListItemByRecordId(recordId);
                 
-                return om.getOntology(recordId, branchId, commitId)
+                return om.getOntology(recordId, branchId, commitId, 'jsonld', clearCache)
                     .then(ontology => {
                         var ontologyId = om.getOntologyIRI(ontology);
                         if (type === 'ontology') {

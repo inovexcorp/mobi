@@ -183,8 +183,11 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
-                                String commitIdStr, String rdfFormat) {
+                                String commitIdStr, String rdfFormat, boolean clearCache) {
         try {
+            if (clearCache) {
+                ontologyCache.removeFromCache(recordIdStr, branchIdStr, commitIdStr);
+            }
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             String ontologyAsRdf = getOntologyAsRdf(ontology, rdfFormat);
