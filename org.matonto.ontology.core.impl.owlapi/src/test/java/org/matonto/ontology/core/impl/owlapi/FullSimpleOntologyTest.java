@@ -50,6 +50,17 @@ import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.vocabularies.xsd.XSD;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openrdf.model.Model;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.Rio;
+import org.semanticweb.owlapi.apibinding.OWLManager;
+import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
+import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
+import org.semanticweb.owlapi.model.OWLOntology;
+import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
+import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
+import org.semanticweb.owlapi.rio.RioParserImpl;
 
 import java.io.InputStream;
 import java.util.Optional;
@@ -100,6 +111,9 @@ public class FullSimpleOntologyTest {
 
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");
         ontology = new SimpleOntology(stream, ontologyManager, transformer);
+
+        values.setOntologyManager(ontologyManager);
+        values.setTransformer(transformer);
     }
 
     @Test
@@ -109,9 +123,41 @@ public class FullSimpleOntologyTest {
         Ontology ont = new SimpleOntology(stream, ontologyManager, transformer);
 
         Set<IRI> iris = ont.getImportedOntologyIRIs();
-        assertEquals(1, iris.size());
+        assertEquals(2, iris.size());
         assertTrue(iris.contains(vf.createIRI("http://xmlns.com/foaf/0.1")));
     }
+
+    @Test
+    public void getImportsClosureFromStreamTest() throws Exception {
+        // Setup:
+        InputStream stream = this.getClass().getResourceAsStream("/test-imports.owl");
+        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer);
+
+        Set<Ontology> ontologies = ont.getImportsClosure();
+        assertEquals(5, ontologies.size());
+    }
+
+    @Test
+    public void getImportsClosureFromModelTest() throws Exception {
+        // Setup:
+        InputStream stream = this.getClass().getResourceAsStream("/test-imports.owl");
+
+        OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
+        OWLOntology ontology = manager.createOntology();
+
+        Model sesameModel = Rio.parse(stream, "", RDFFormat.RDFXML);
+
+        OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration()
+                .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
+        RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
+        parser.parse(new RioMemoryTripleSource(sesameModel), ontology, config);
+        Ontology ont = new SimpleOntology(ontology, null, ontologyManager, transformer);
+
+        Set<Ontology> ontologies = ont.getImportsClosure();
+        assertEquals(5, ontologies.size());
+    }
+
+
 
     @Test
     public void getDataPropertyTest() throws Exception {
