@@ -27,7 +27,8 @@
         </block-header>
         <block-content>
             <p ng-if="dvm.os.listItem.selected[dvm.prefixes.owl + 'imports'].length" ng-repeat="import in dvm.os.listItem.selected[dvm.prefixes.owl + 'imports'] | orderBy:dvm.get track by import['@id']" class="import">
-                <a href="{{import['@id']}}" target="_blank">{{import['@id']}}</a>
+                <a ng-if="!dvm.failed(import['@id'])" href="{{import['@id']}}" target="_blank" class="import-iri">{{import['@id']}}</a>
+                <span ng-if="dvm.failed(import['@id'])" class="error-display">{{import['@id']}} <strong>(failed)</strong></span>
                 <a class="btn-link pull-right" ng-click="dvm.setupRemove(import['@id'])" title="Delete"><i class="fa fa-times fa-fw"></i></a>
             </p>
             <info-message ng-if="!dvm.os.listItem.selected[dvm.prefixes.owl + 'imports'].length" class="padding">This ontology does not have any imports.</info-message>
@@ -36,7 +37,10 @@
     <imports-overlay ng-if="dvm.showNewOverlay" on-close="dvm.showNewOverlay = false"></imports-overlay>
     <confirmation-overlay ng-if="dvm.showRemoveOverlay" header-text="'Remove Import'" confirm-click="dvm.remove()" cancel-click="dvm.showRemoveOverlay = false" confirm-text="'Yes'" cancel-text="'No'">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <div ng-if="dvm.os.hasChanges(dvm.os.listItem.ontologyRecord.recordId)"><p><strong>NOTE: You have some unsaved changes.</strong></p><p>Would you like to save those changes and remove the import: <strong>{{dvm.url}}</strong>?</p></div>
+        <div ng-if="dvm.os.hasChanges(dvm.os.listItem.ontologyRecord.recordId)">
+            <p><strong>NOTE: You have some unsaved changes.</strong></p>
+            <p>Would you like to save those changes and remove the import: <strong>{{dvm.url}}</strong>?</p>
+        </div>
         <p ng-if="!dvm.os.hasChanges(dvm.os.listItem.ontologyRecord.recordId)">Are you sure you want to remove the import: <strong>{{dvm.url}}</strong>?</p>
     </confirmation-overlay>
 </div>

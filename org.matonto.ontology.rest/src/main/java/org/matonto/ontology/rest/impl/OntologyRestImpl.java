@@ -754,6 +754,21 @@ public class OntologyRestImpl implements OntologyRest {
         }
     }
 
+    @Override
+    public Response getFailedImports(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                     String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Set<String> iris = ontology.getUnloadableImportIRIs().stream()
+                    .map(Value::stringValue)
+                    .collect(Collectors.toSet());
+            return Response.ok(iris).build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     /**
      * Uses the provided Set to construct a hierarchy of the entities provided. Each BindingSet in the Set must have the
      * parent set as the first binding and the child set as the second binding.
@@ -1086,30 +1101,12 @@ public class OntologyRestImpl implements OntologyRest {
         return new JSONObject().element("namedIndividuals", iriListToJsonArray(iris));
     }
 
-    private JSONObject getConceptArray(Ontology ontology) {
-        List<IRI> iris = ontology.getIndividualsOfType(sesameTransformer.matontoIRI(SKOS.CONCEPT))
-                .stream()
-                .filter(ind -> ind instanceof NamedIndividual)
-                .map(ind -> ((NamedIndividual) ind).getIRI())
-                .collect(Collectors.toList());
-        return new JSONObject().element("concepts", iriListToJsonArray(iris));
-    }
-
     private JSONObject getDerivedConceptTypeArray(Ontology ontology) {
         List<IRI> iris = new ArrayList<>();
         ontologyManager.getSubClassesFor(ontology, sesameTransformer.matontoIRI(SKOS.CONCEPT))
                 .forEach(r -> iris.add(valueFactory.createIRI(Bindings.requiredResource(r, "s").stringValue())));
         return new JSONObject().element("derivedConcepts", iriListToJsonArray(iris));
 
-    }
-
-    private JSONObject getConceptSchemeArray(Ontology ontology) {
-        List<IRI> iris = ontology.getIndividualsOfType(sesameTransformer.matontoIRI(SKOS.CONCEPT_SCHEME))
-                .stream()
-                .filter(ind -> ind instanceof NamedIndividual)
-                .map(ind -> ((NamedIndividual) ind).getIRI())
-                .collect(Collectors.toList());
-        return new JSONObject().element("conceptSchemes", iriListToJsonArray(iris));
     }
 
     private JSONObject getDerivedConceptSchemeTypeArray(Ontology ontology) {

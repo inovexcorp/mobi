@@ -1079,6 +1079,31 @@ public interface OntologyRest {
                                        @QueryParam("commitId") String commitIdStr);
 
     /**
+     * Returns a list of ontology IRIs that were not imported by OWLAPI.
+     *
+     * @param context     the context of the request.
+     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @return JSON list of ontology IRIs that were not imported.
+     */
+    @GET
+    @Path("{recordId}/failed-imports")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets a list of ontology IRIs that were not imported by OWLAPI.")
+    Response getFailedImports(@Context ContainerRequestContext context,
+                              @PathParam("recordId") String recordIdStr,
+                              @QueryParam("branchId") String branchIdStr,
+                              @QueryParam("commitId") String commitIdStr);
+
+    /**
      * Returns JSON SPARQL query results containing results with the requested entity IRI as the predicate or object
      * of each result when the queryType is "select". Returns JSON-LD containing statements with the requested entity
      * IRI as the predicate or object of each statement when the queryType is "construct".

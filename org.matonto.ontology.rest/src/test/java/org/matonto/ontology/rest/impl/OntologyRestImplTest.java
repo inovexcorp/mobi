@@ -45,7 +45,6 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
@@ -219,6 +218,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     private Set<Individual> individuals;
     private Set<IRI> derivedConcepts;
     private Set<IRI> derivedConceptSchemes;
+    private Set<IRI> failedImports;
     private IRI derivedConceptIri;
     private IRI derivedConceptSchemeIri;
     private IRI classIRI;
@@ -390,6 +390,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         IRI type = valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
         constructs = modelFactory.createModel(Stream.of(valueFactory.createStatement(class1b, subClassOf, class1a),
                 valueFactory.createStatement(individual1a, type, class1a)).collect(Collectors.toSet()));
+        failedImports = Collections.singleton(importedOntologyIRI);
 
         return new ResourceConfig()
                 .register(rest)
@@ -433,6 +434,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(ontology.getAllIndividuals()).thenReturn(individuals);
         when(ontology.getImportsClosure()).thenReturn(importedOntologies);
         when(ontology.asJsonLD()).thenReturn(ontologyJsonLd);
+        when(ontology.getUnloadableImportIRIs()).thenReturn(failedImports);
 
         when(importedOntologyId.getOntologyIdentifier()).thenReturn(importedOntologyIRI);
 
@@ -4014,5 +4016,77 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+    }
+
+    @Test
+    public void testGetFailedImports() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/failed-imports")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+        assertEquals(array.size(), 1);
+        assertEquals(array.get(0), importedOntologyIRI.stringValue());
+        assertGetOntology(true);
+    }
+
+    @Test
+    public void testGetFailedImportsWhenNoInProgressCommit() {
+        setNoInProgressCommit();
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/failed-imports")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+        assertEquals(array.size(), 1);
+        assertEquals(array.get(0), importedOntologyIRI.stringValue());
+        assertGetOntology(false);
+    }
+
+    @Test
+    public void testGetFailedImportsMissingBranchId() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/failed-imports")
+                .queryParam("commitId", commitId.stringValue()).request().get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testGetFailedImportsMissingCommitId() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/failed-imports")
+                .queryParam("branchId", branchId.stringValue()).request().get();
+
+        assertEquals(response.getStatus(), 200);
+        JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+        assertEquals(array.size(), 1);
+        assertEquals(array.get(0), importedOntologyIRI.stringValue());
+        assertGetOntology(true);
+    }
+
+    @Test
+    public void testGetFailedImportsMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/failed-imports")
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+        assertEquals(array.size(), 1);
+        assertEquals(array.get(0), importedOntologyIRI.stringValue());
+        assertGetOntology(true);
+    }
+
+    @Test
+    public void testGetFailedImportsWhenRetrieveOntologyIsEmpty() {
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/failed-imports")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .request().get();
+
+        assertEquals(response.getStatus(), 400);
     }
 }
