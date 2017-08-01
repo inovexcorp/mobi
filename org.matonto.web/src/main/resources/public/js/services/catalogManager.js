@@ -1276,7 +1276,7 @@
              * @return {string} A name to represent the passed entity
              */
             self.getEntityName = function(entity) {
-                return util.getDctermsValue(entity, 'title') || '(Anonymous)';
+                return util.getDctermsValue(entity, 'title');
             }
 
             /**

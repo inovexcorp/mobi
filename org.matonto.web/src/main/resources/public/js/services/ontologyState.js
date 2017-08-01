@@ -201,7 +201,7 @@
                 iriList: [],
                 selected: {}
             };
-            
+
             var emptyInProgressCommit = {
                 additions: [],
                 deletions: []
@@ -393,10 +393,10 @@
                             return self.addVocabularyToList(ontologyId, recordId, response.branchId, response.commitId, response.ontology, response.inProgressCommit, title);
                         }
                     }, $q.reject)
-                    .then(response => { 
+                    .then(response => {
                         self.listItem = response;
                         self.setSelected(self.getActiveEntityIRI(), false);
-                        return recordId; 
+                        return recordId;
                     }, $q.reject);
             }
             /**
@@ -441,7 +441,7 @@
             self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, inProgressCommit = emptyInProgressCommit) {
                 var listItem;
                 var oldListItem = self.getListItemByRecordId(recordId);
-                
+
                 return om.getOntology(recordId, branchId, commitId)
                     .then(ontology => {
                         var ontologyId = om.getOntologyIRI(ontology);
@@ -470,16 +470,16 @@
             }
             self.addOntologyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, title, upToDate = true) {
                 return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title)
-                    .then(listItem => { 
-                        self.list.push(listItem); 
-                        return listItem; 
+                    .then(listItem => {
+                        self.list.push(listItem);
+                        return listItem;
                     }, $q.reject);
             }
             self.addVocabularyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, title, upToDate = true) {
                 return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title)
-                    .then(listItem => { 
-                        self.list.push(listItem); 
-                        return listItem; 
+                    .then(listItem => {
+                        self.list.push(listItem);
+                        return listItem;
                     }, $q.reject);
             }
             self.createOntologyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
@@ -936,10 +936,10 @@
                             return self.addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, recordTitle, upToDate);
                         }
                     }, $q.reject)
-                    .then(response => { 
+                    .then(response => {
                         self.listItem = response;
                         self.setSelected(self.getActiveEntityIRI(), false);
-                        return ontologyId; 
+                        return ontologyId;
                     }, $q.reject);
             }
             /**
@@ -1248,7 +1248,7 @@
             self.getOntologiesArray = function() {
                 return getOntologiesArrayByListItem(self.listItem);
             }
-            
+
             self.updatePropertyIcon = function(entity) {
                 if (om.isProperty(entity)) {
                     setPropertyIcon(entity);
@@ -1256,8 +1256,8 @@
             }
 
             self.hasInProgressCommit = function(listItem = self.listItem) {
-                return listItem.inProgressCommit !== undefined 
-                        && ((listItem.inProgressCommit.additions !== undefined && listItem.inProgressCommit.additions.length > 0) 
+                return listItem.inProgressCommit !== undefined
+                        && ((listItem.inProgressCommit.additions !== undefined && listItem.inProgressCommit.additions.length > 0)
                         || (listItem.inProgressCommit.deletions !== undefined && listItem.inProgressCommit.deletions.length > 0));
             }
 
@@ -1295,15 +1295,12 @@
                 var blankNodes = {};
                 var index = {};
                 _.forEach(ontology, (entity, i) => {
-                    if (_.has(entity, '@id')) {
-                        index[entity['@id']] = {
-                            position: i,
-                            label: om.getEntityName(entity, type),
-                            ontologyIri: ontologyId
-                        }
-                    } else {
-                        _.set(entity, 'matonto.anonymous', ontologyId + ' (Anonymous Ontology)');
+                    index[entity['@id']] = {
+                        position: i,
+                        label: om.getEntityName(entity, type),
+                        ontologyIri: ontologyId
                     }
+
                     if (om.isProperty(entity)) {
                         setPropertyIcon(entity);
                     } else if (om.isBlankNode(entity)) {

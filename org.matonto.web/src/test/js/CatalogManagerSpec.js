@@ -1592,9 +1592,6 @@ describe('Catalog Manager service', function() {
             utilSvc.getDctermsValue.and.returnValue(title);
             expect(catalogManagerSvc.getEntityName({})).toBe(title);
         });
-        it('if it does not have a title', function() {
-            expect(catalogManagerSvc.getEntityName({})).toBe('(Anonymous)');
-        });
     });
     it('should test whether an entity is a Record', function() {
         var entity = {'@type': []};

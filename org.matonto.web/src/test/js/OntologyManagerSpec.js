@@ -1444,13 +1444,13 @@ describe('Ontology Manager service', function() {
     describe('hasClassIndividuals should return', function() {
         it('true if there are any entities with a type of the provided class in the ontology', function() {
             expect(ontologyManagerSvc
-                .hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], 
+                .hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj],
                     [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], classId))
                 .toBe(true);
         });
         it('true if there are any entities with a type of the provided class in the imported ontology', function() {
             expect(ontologyManagerSvc
-                .hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], 
+                .hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj],
                     [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], importedClassId))
                 .toBe(true);
         });
@@ -1463,13 +1463,13 @@ describe('Ontology Manager service', function() {
     describe('getClassIndividuals should return', function() {
         it('correct object if there are any entities with a type of the provided class in the ontology', function() {
             expect(ontologyManagerSvc
-                .getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], 
+                .getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj],
                     [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], classId))
                 .toEqual([individualObj]);
         });
         it('correct object if there are any entities with a type of the provided class in the imported ontology', function() {
             expect(ontologyManagerSvc
-                .getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], 
+                .getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj],
                     [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], importedClassId))
                 .toEqual([importedIndividualObj]);
         });
@@ -1578,24 +1578,6 @@ describe('Ontology Manager service', function() {
             expect(util.getDctermsValue).toHaveBeenCalledWith(entity, 'title');
             expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.dc + 'title');
             expect(util.getBeautifulIRI).toHaveBeenCalledWith(ontologyId);
-        });
-        it('returns matonto.anonymous if present and no rdfs:label, dcterms:title, dc:title, or @id', function() {
-            util.getPropertyValue.and.returnValue('');
-            util.getDctermsValue.and.returnValue('');
-            var entity = {matonto: {anonymous: anonymous}};
-            expect(ontologyManagerSvc.getEntityName(entity)).toEqual(anonymous);
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).toHaveBeenCalledWith(entity, 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.dc + 'title');
-        });
-        it('returns "" if no rdfs:label, dcterms:title, dc:title, @id, or matonto.anonymous', function() {
-            util.getPropertyValue.and.returnValue('');
-            util.getDctermsValue.and.returnValue('');
-            var entity = {};
-            expect(ontologyManagerSvc.getEntityName(entity)).toEqual('');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).toHaveBeenCalledWith(entity, 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.dc + 'title');
         });
         it('when type is vocabulary, returns skos:prefLabel if present', function() {
             util.getPropertyValue.and.callFake(function(entity, property) {
