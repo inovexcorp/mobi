@@ -23,7 +23,7 @@
 <div class="imports-block">
     <block>
         <block-header>
-            <span>Imports</span><a class="pull-right" ng-click="dvm.showNewOverlay = true"><i class="fa fa-fw fa-plus"></i>Add Import</a>
+            <span>Imports</span><a class="pull-right" ng-click="dvm.showNewOverlay = true"><i class="fa fa-fw fa-plus"></i>Add Import</a><a class="pull-right" ng-click="dvm.refresh()"><i class="fa fa-fw fa-refresh"></i>Refresh</a>
         </block-header>
         <block-content>
             <p ng-if="dvm.os.listItem.selected[dvm.prefixes.owl + 'imports'].length" ng-repeat="import in dvm.os.listItem.selected[dvm.prefixes.owl + 'imports'] | orderBy:dvm.get track by import['@id']" class="import">

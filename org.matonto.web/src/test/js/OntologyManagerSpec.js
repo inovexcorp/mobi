@@ -385,36 +385,36 @@ describe('Ontology Manager service', function() {
     describe('getOntology hits the proper endpoint', function() {
         var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId, rdfFormat: format });
+            params = paramSerializer({ branchId: branchId, commitId: commitId, rdfFormat: format, clearCache: false });
         });
-        it('unless an error occurs', function(done) {
+        it('unless an error occurs', function() {
+            util.rejectError.and.returnValue($q.reject(error));
             $httpBackend.expectGET('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
                 function(headers) {
                     return headers['Accept'] === 'text/plain';
                 }).respond(400, null, null, error);
-            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format)
+            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format, false)
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
                 }, function(response) {
                     expect(response).toEqual(error);
-                    expect(util.onError).toHaveBeenCalled();
-                    done();
+                    expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: error
+                    }));
                 });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
+        it('successfully', function() {
             $httpBackend.expectGET('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
                 function(headers) {
                     return headers['Accept'] === 'text/plain';
                 }).respond(200, ontology);
-            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format)
+            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format, false)
                 .then(function(data) {
                     expect(data).toEqual(ontology);
-                    done();
                 }, function(response) {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });

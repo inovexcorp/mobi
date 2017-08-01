@@ -59,7 +59,7 @@ describe('Imports Block directive', function() {
             expect(element.find('block-header').length).toBe(1);
         });
         it('with a block-header a', function() {
-            expect(element.querySelectorAll('block-header a.pull-right').length).toBe(1);
+            expect(element.querySelectorAll('block-header a.pull-right').length).toBe(2);
         });
         it('with a block-content', function() {
             expect(element.find('block-content').length).toBe(1);
@@ -217,6 +217,10 @@ describe('Imports Block directive', function() {
             it('does not include the iri', function() {
                 expect(controller.failed('missingId')).toBe(false);
             });
+        });
+        it('refresh should call the correct function', function() {
+            controller.refresh();
+            expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit, true);
         });
     });
 });

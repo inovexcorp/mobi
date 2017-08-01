@@ -70,6 +70,10 @@
                     dvm.failed = function(iri) {
                         return _.includes(dvm.os.listItem.failedImports, iri);
                     }
+
+                    dvm.refresh = function() {
+                        dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyRecord.type, dvm.os.listItem.ontologyState.upToDate, dvm.os.listItem.inProgressCommit, true);
+                    }
                 }
             }
         }
