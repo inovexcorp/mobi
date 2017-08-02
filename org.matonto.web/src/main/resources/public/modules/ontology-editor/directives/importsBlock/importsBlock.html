@@ -34,7 +34,8 @@
             <div ng-if="dvm.indirectImports.length" class="indirect-import-container">
                 <span class="indirect-header">Indirect Imports</span>
                 <p ng-repeat="iri in dvm.indirectImports track by $index" class="indirect import">
-                    <a href="{{iri}}" target="_blank" class="import-iri">{{iri}}</a>
+                    <a ng-if="!dvm.failed(iri)" href="{{iri}}" target="_blank" class="import-iri">{{iri}}</a>
+                    <span ng-if="dvm.failed(iri)" class="error-display">{{iri}} <strong>(failed)</strong></span>
                 </p>
             </div>
             <info-message ng-if="!dvm.os.listItem.selected[dvm.prefixes.owl + 'imports'].length" class="padding">This ontology does not have any imports.</info-message>

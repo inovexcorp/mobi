@@ -20,10 +20,10 @@
     }
 
     .indirect-import-container {
-        border-top: 1px solid #E8E8E8;
+        border-top: 1px solid $gray-custom;
 
         .indirect-header {
-            border-bottom: 1px solid #E8E8E8;
+            border-bottom: 1px solid $gray-custom;
             display: inline-block;
             padding: 10px;
             width: 100%;

@@ -75,16 +75,21 @@
 
                     dvm.refresh = function() {
                         dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyRecord.type, dvm.os.listItem.ontologyState.upToDate, dvm.os.listItem.inProgressCommit, true)
-                            .then(response => util.createSuccessToast(''), util.createErrorToast);
+                            .then(response => {
+                                dvm.setIndirectImports();
+                                util.createSuccessToast('');
+                            }, util.createErrorToast);
                     }
 
                     dvm.setIndirectImports = function() {
                         var directImports = _.map(_.get(dvm.os.listItem.selected, prefixes.owl + 'imports'), '@id');
-                        var allImports = _.map(dvm.os.listItem.importedOntologies, 'id');
+                        var allImports = _.concat(_.map(dvm.os.listItem.importedOntologies, 'id'), dvm.os.listItem.failedImports);
                         dvm.indirectImports = _.sortBy(_.difference(allImports, directImports));
                     }
 
                     dvm.setIndirectImports();
+
+                    $scope.$watch('dvm.os.listItem', dvm.setIndirectImports);
                 }]
             }
         }

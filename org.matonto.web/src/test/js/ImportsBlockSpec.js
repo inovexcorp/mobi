@@ -138,7 +138,7 @@ describe('Imports Block directive', function() {
             scope.$digest();
             expect(element.querySelectorAll('.indirect.import').length).toBe(1);
         });
-        it('with an .indirect.import', function() {
+        it('with an .indirect-header', function() {
             expect(element.querySelectorAll('.indirect-header').length).toBe(0);
             controller.indirectImports = ['iri'];
             scope.$digest();
@@ -240,11 +240,13 @@ describe('Imports Block directive', function() {
         });
         describe('refresh should call the correct function when updateOntology is', function() {
             it('resolved', function() {
+                spyOn(controller, 'setIndirectImports');
                 ontologyStateSvc.updateOntology.and.returnValue($q.resolve());
                 controller.refresh();
                 scope.$apply();
                 expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit, true);
                 expect(util.createSuccessToast).toHaveBeenCalledWith('');
+                expect(controller.setIndirectImports).toHaveBeenCalled();
             });
             it('rejected', function() {
                 ontologyStateSvc.updateOntology.and.returnValue($q.reject('error'));
