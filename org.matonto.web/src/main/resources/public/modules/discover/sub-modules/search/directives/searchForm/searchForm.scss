@@ -1,0 +1,12 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.search-form {
+    .boolean-operator {
+        md-radio-group md-radio-button {
+            display: inline-block;
+            margin-bottom: 0;
+            margin-left: 10px;
+        }
+    }
+}

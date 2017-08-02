@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,43 +20,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Discover Tabset directive', function() {
-    var $compile, scope, element, discoverStateSvc;
+describe('Discover Search Tab directive', function() {
+    var $compile, scope, element;
 
     beforeEach(function() {
         module('templates');
-        module('discoverTabset');
+        module('discoverSearchTab');
         mockDiscoverState();
 
-        inject(function(_$compile_, _$rootScope_, _discoverStateService_) {
+        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            discoverStateSvc = _discoverStateService_;
         });
-        
-        element = $compile(angular.element('<discover-tabset></discover-tabset>'))(scope);
+
+        element = $compile(angular.element('<discover-search-tab></discover-search-tab>'))(scope);
         scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('discover-tabset')).toBe(true);
+            expect(element.hasClass('discover-search-tab')).toBe(true);
+            expect(element.hasClass('row')).toBe(true);
         });
-        it('with a tabset', function() {
-            expect(element.find('tabset').length).toBe(1);
+        it('with a search-form', function() {
+            expect(element.find('search-form').length).toEqual(1);
         });
-        it('with tabs', function() {
-            expect(element.find('tab').length).toBe(3);
+        it('with a block', function() {
+            expect(element.find('block').length).toEqual(1);
         });
-        it('with explore-tab', function() {
-            expect(element.find('explore-tab').length).toBe(1);
+        it('with a block-content', function() {
+            expect(element.find('block-content').length).toEqual(1);
         });
-        it('with query-tab', function() {
-            expect(element.find('query-tab').length).toBe(1);
-        });
-        it('with search-tab', function() {
-            expect(element.find('discover-search-tab').length).toBe(1);
+        it('with a sparql-result-table', function() {
+            expect(element.find('sparql-result-table').length).toEqual(1);
         });
     });
 });
