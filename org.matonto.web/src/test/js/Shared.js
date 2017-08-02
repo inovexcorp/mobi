@@ -483,6 +483,7 @@ function mockSparqlManager() {
             this.errorMessage = '';
             this.infoMessage = '';
             this.reset = jasmine.createSpy('reset');
+            this.query = jasmine.createSpy('query').and.returnValue($q.when({}));
             this.queryRdf = jasmine.createSpy('queryRdf');
             this.downloadResults = jasmine.createSpy('downloadResults');
             this.setResults = jasmine.createSpy('setResults');
@@ -1032,6 +1033,15 @@ function mockDiscoverState() {
             this.query = {
                 active: false
             };
+            this.search = {
+                targetedId: '',
+                active: false,
+                results: undefined,
+                keywords: {
+                    arr: [],
+                    isOr: false
+                }
+            };
             this.resetPagedInstanceDetails = jasmine.createSpy('resetPagedInstanceDetails');
             this.cleanUpOnDatasetDelete = jasmine.createSpy('cleanUpOnDatasetDelete');
             this.cleanUpOnDatasetClear = jasmine.createSpy('cleanUpOnDatasetClear');
@@ -1069,6 +1079,15 @@ function mockExploreUtils() {
             this.getNewProperties = jasmine.createSpy('getNewProperties').and.returnValue([]);
             this.removeEmptyProperties = jasmine.createSpy('removeEmptyProperties').and.returnValue({});
             this.removeEmptyPropertiesFromArray = jasmine.createSpy('removeEmptyPropertiesFromArray').and.returnValue([]);
+        });
+    });
+}
+
+function mockSearch() {
+    module(function($provide) {
+        $provide.service('searchService', function($q) {
+            this.createQueryString = jasmine.createSpy("createQueryString").and.returnValue('');
+            this.submitSearch = jasmine.createSpy('submitSearch').and.returnValue($q.when({}));
         });
     });
 }
