@@ -27,9 +27,9 @@
         .module('importsBlock', [])
         .directive('importsBlock', importsBlock);
 
-        importsBlock.$inject = ['$q', 'ontologyStateService', 'prefixes', 'utilService', 'propertyManagerService'];
+        importsBlock.$inject = ['$q', '$timeout', 'ontologyStateService', 'prefixes', 'utilService', 'propertyManagerService'];
 
-        function importsBlock($q, ontologyStateService, prefixes, utilService, propertyManagerService) {
+        function importsBlock($q, $timeout, ontologyStateService, prefixes, utilService, propertyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -83,12 +83,14 @@
 
                     dvm.setIndirectImports = function() {
                         var directImports = _.map(_.get(dvm.os.listItem.selected, prefixes.owl + 'imports'), '@id');
-                        var allImports = _.concat(_.pull(dvm.os.listItem.importedOntologies, 'id', 'ontologyId'), _.map(dvm.os.listItem.failedImports, iri => ({ id: iri, ontologyId: iri })));
+                        var goodImports = _.map(dvm.os.listItem.importedOntologies, item => ({ id: item.id, ontologyId: item.ontologyId }));
+                        var failedImports = _.map(dvm.os.listItem.failedImports, iri => ({ id: iri, ontologyId: iri }));
+                        var allImports = _.concat(goodImports, failedImports);
                         var filtered = _.reject(allImports, item => _.includes(directImports, item.id) || _.includes(directImports, item.ontologyId));
                         dvm.indirectImports = _.sortBy(_.map(filtered, 'ontologyId'));
                     }
 
-                    dvm.setIndirectImports();
+                    $timeout(dvm.setIndirectImports);
 
                     $scope.$watch('dvm.os.listItem', dvm.setIndirectImports);
                 }]
