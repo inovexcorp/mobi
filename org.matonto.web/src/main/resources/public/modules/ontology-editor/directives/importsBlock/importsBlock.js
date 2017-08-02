@@ -83,7 +83,7 @@
 
                     dvm.setIndirectImports = function() {
                         var directImports = _.map(_.get(dvm.os.listItem.selected, prefixes.owl + 'imports'), '@id');
-                        var goodImports = _.map(dvm.os.listItem.importedOntologies, item => ({ id: item.id, ontologyId: item.ontologyId }));
+                        var goodImports = _.map(dvm.os.listItem.importedOntologies, item => _.pick(item, 'id', 'ontologyId'));
                         var failedImports = _.map(dvm.os.listItem.failedImports, iri => ({ id: iri, ontologyId: iri }));
                         var allImports = _.concat(goodImports, failedImports);
                         var filtered = _.reject(allImports, item => _.includes(directImports, item.id) || _.includes(directImports, item.ontologyId));
