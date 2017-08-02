@@ -36,7 +36,7 @@
                 templateUrl: 'modules/ontology-editor/directives/importsBlock/importsBlock.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var util = utilService;
                     var pm = propertyManagerService;
@@ -44,6 +44,7 @@
                     dvm.os = ontologyStateService;
                     dvm.showNewOverlay = false;
                     dvm.showRemoveOverlay = false;
+                    dvm.indirectImports = [];
 
                     dvm.setupRemove = function(url) {
                         dvm.url = url;
@@ -59,6 +60,7 @@
                             .then(() => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyRecord.type, dvm.os.listItem.ontologyState.upToDate, dvm.os.listItem.inProgressCommit), $q.reject)
                             .then(() => {
                                 dvm.os.listItem.isSaved = dvm.os.isCommittable(dvm.os.listItem.ontologyRecord.recordId);
+                                dvm.setIndirectImports();
                                 dvm.showRemoveOverlay = false;
                             }, errorMessage => dvm.error = errorMessage);
                     }
@@ -75,7 +77,15 @@
                         dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyRecord.type, dvm.os.listItem.ontologyState.upToDate, dvm.os.listItem.inProgressCommit, true)
                             .then(response => util.createSuccessToast(''), util.createErrorToast);
                     }
-                }
+
+                    dvm.setIndirectImports = function() {
+                        var directImports = _.map(_.get(dvm.os.listItem.selected, prefixes.owl + 'imports'), '@id');
+                        var allImports = _.map(dvm.os.listItem.importedOntologies, 'id');
+                        dvm.indirectImports = _.sortBy(_.difference(allImports, directImports));
+                    }
+
+                    dvm.setIndirectImports();
+                }]
             }
         }
 })();

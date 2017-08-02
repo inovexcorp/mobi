@@ -18,4 +18,15 @@
             font-weight: normal;
         }
     }
+
+    .indirect-import-container {
+        border-top: 1px solid #E8E8E8;
+
+        .indirect-header {
+            border-bottom: 1px solid #E8E8E8;
+            display: inline-block;
+            padding: 10px;
+            width: 100%;
+        }
+    }
 }

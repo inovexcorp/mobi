@@ -739,7 +739,7 @@ public interface OntologyRest {
     @Path("{recordId}/imported-ontologies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the JSON-LD of all directly imported ontologies.")
+    @ApiOperation("Retrieves the JSON-LD of all imported ontologies.")
     Response getImportsClosure(@Context ContainerRequestContext context,
                                @PathParam("recordId") String recordIdStr,
                                @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,

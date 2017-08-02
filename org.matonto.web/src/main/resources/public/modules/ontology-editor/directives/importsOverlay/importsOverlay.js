@@ -36,7 +36,8 @@
                 templateUrl: 'modules/ontology-editor/directives/importsOverlay/importsOverlay.html',
                 scope: {},
                 bindToController: {
-                    onClose: '&'
+                    onClose: '&',
+                    onSubmit: '&'
                 },
                 controllerAs: 'dvm',
                 controller: function() {
@@ -100,6 +101,7 @@
                             .then(() => os.updateOntology(os.listItem.ontologyRecord.recordId, os.listItem.ontologyRecord.branchId, os.listItem.ontologyRecord.commitId, os.listItem.ontologyRecord.type, os.listItem.ontologyState.upToDate, os.listItem.inProgressCommit), $q.reject)
                             .then(() => {
                                 os.listItem.isSaved = os.isCommittable(os.listItem.ontologyRecord.recordId);
+                                dvm.onSubmit();
                                 dvm.onClose();
                             }, onError);
                     }
