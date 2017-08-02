@@ -436,6 +436,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(ontology.getUnloadableImportIRIs()).thenReturn(failedImports);
 
         when(importedOntologyId.getOntologyIdentifier()).thenReturn(importedOntologyIRI);
+        when(importedOntologyId.getOntologyIRI()).thenReturn(Optional.of(importedOntologyIRI));
 
         when(importedOntology.getOntologyId()).thenReturn(importedOntologyId);
         when(importedOntology.asModel(modelFactory)).thenReturn(importedOntologyModel);

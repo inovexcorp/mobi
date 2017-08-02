@@ -45,11 +45,22 @@ describe('Imports Overlay directive', function() {
         });
 
         scope.onClose = jasmine.createSpy('onClose');
-        element = $compile(angular.element('<imports-overlay on-close="onClose()"></imports-overlay>'))(scope);
+        scope.onSubmit = jasmine.createSpy('onSubmit');
+        element = $compile(angular.element('<imports-overlay on-close="onClose()" on-submit="onSubmit()"></imports-overlay>'))(scope);
         scope.$digest();
         controller = element.controller('importsOverlay');
     });
 
+    describe('controller bound variables', function() {
+        it('onClose to be called in parent scope', function() {
+            controller.onClose();
+            expect(scope.onClose).toHaveBeenCalled();
+        });
+        it('onSubmit to be called in parent scope', function() {
+            controller.onSubmit();
+            expect(scope.onSubmit).toHaveBeenCalled();
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
@@ -244,6 +255,7 @@ describe('Imports Overlay directive', function() {
                         expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit);
                         expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                         expect(ontologyStateSvc.listItem.isSaved).toBe(true);
+                        expect(scope.onSubmit).toHaveBeenCalled();
                         expect(scope.onClose).toHaveBeenCalled();
                     });
                     it('when update ontology rejects', function() {
