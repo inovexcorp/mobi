@@ -49,6 +49,7 @@ import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Entity;
 import org.matonto.ontology.core.api.NamedIndividual;
 import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.builder.OntologyRecordConfig;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
@@ -1172,9 +1173,12 @@ public class OntologyRestImpl implements OntologyRest {
      * @return a JSONObject with the document format and the ontology in that format
      */
     private JSONObject getOntologyAsJsonObject(Ontology ontology, String rdfFormat) {
+        OntologyId ontologyId = ontology.getOntologyId();
+        Optional<IRI> optIri = ontologyId.getOntologyIRI();
         return new JSONObject()
                 .element("documentFormat", rdfFormat)
-                .element("id", ontology.getOntologyId().getOntologyIdentifier().stringValue())
+                .element("id", ontologyId.getOntologyIdentifier().stringValue())
+                .element("ontologyId", optIri.isPresent() ? optIri.get().stringValue() : "")
                 .element("ontology", getOntologyAsRdf(ontology, rdfFormat));
     }
 

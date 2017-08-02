@@ -258,7 +258,16 @@ describe('Imports Block directive', function() {
         });
         it('setIndirectImports should set the value correctly', function() {
             ontologyStateSvc.listItem.selected[prefixes.owl + 'imports'] = [{'@id': 'direct'}];
-            ontologyStateSvc.listItem.importedOntologies = [{id: 'direct'}, {id: 'indirect-b'}, {id: 'indirect-a'}];
+            ontologyStateSvc.listItem.importedOntologies = [{
+                id: 'direct-version',
+                ontologyId: 'direct'
+            }, {
+                id: 'indirect-b-version',
+                ontologyId: 'indirect-b'
+            }, {
+                id: 'indirect-a',
+                ontologyId: 'indirect-a'
+            }];
             controller.setIndirectImports();
             expect(controller.indirectImports).toEqual(['indirect-a', 'indirect-b']);
         });
