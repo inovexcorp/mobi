@@ -249,7 +249,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @Override
     protected Application configureApp() throws Exception {
         MockitoAnnotations.initMocks(this);
-        when(ontologyCache.getOntologyCache()).thenReturn(Optional.of(mockCache));
 
         vcr = new DefaultValueConverterRegistry();
         modelFactory = LinkedHashModelFactory.getInstance();
@@ -406,7 +405,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @BeforeMethod
     public void setupMocks() {
         reset(engineManager, versioningManager, ontologyId, ontology, importedOntologyId, importedOntology, catalogManager,
-                ontologyManager, sesameTransformer, results, mockCache);
+                ontologyManager, sesameTransformer, results, mockCache, ontologyCache);
 
         final IRI skosConcept = valueFactory.createIRI(SKOS.CONCEPT.stringValue());
         final IRI skosConceptScheme = valueFactory.createIRI(SKOS.CONCEPT_SCHEME.stringValue());
@@ -515,6 +514,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 Values.matontoIRI(invocationOnMock.getArgumentAt(0, org.openrdf.model.IRI.class)));
 
         entityUsagesConstruct = modelToJsonld(sesameTransformer.sesameModel(constructs));
+
+        when(ontologyCache.getOntologyCache()).thenReturn(Optional.of(mockCache));
     }
 
     private JSONObject getResource(String path) throws Exception {
@@ -672,7 +673,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(ontologyManager).createOntologyRecord(any(OntologyRecordConfig.class));
         verify(catalogManager).addRecord(catalogId, record);
         verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
-        verify(mockCache).put(Mockito.anyString(), Mockito.any(Ontology.class));
+        verify(mockCache).put(anyString(), any(Ontology.class));
     }
 
     @Test
@@ -755,7 +756,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(ontologyManager).createOntologyRecord(any(OntologyRecordConfig.class));
         verify(catalogManager).addRecord(catalogId, record);
         verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
-        verify(mockCache).put(Mockito.anyString(), Mockito.any(Ontology.class));
+        verify(mockCache).put(anyString(), any(Ontology.class));
     }
 
     @Test
@@ -856,36 +857,56 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void testGetOntologyCacheHit() {
-        when(mockCache.containsKey(Mockito.anyString())).thenReturn(true);
-        when(mockCache.get(Mockito.anyString())).thenReturn(ontology);
+        when(mockCache.containsKey(anyString())).thenReturn(true);
+        when(mockCache.get(anyString())).thenReturn(ontology);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
-                .request().get();
+                .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
 
         assertEquals(response.getStatus(), 200);
         assertGetOntology(true);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
-        verify(mockCache).containsKey(Mockito.anyString());
-        verify(mockCache).get(Mockito.anyString());
-        verify(mockCache, times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString(), anyString());
+        verify(mockCache).containsKey(anyString());
+        verify(mockCache).get(anyString());
+        verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
     }
 
     @Test
     public void testGetOntologyCacheMiss() {
-        when(mockCache.containsKey(Mockito.anyString())).thenReturn(false);
+        when(mockCache.containsKey(anyString())).thenReturn(false);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
-                .request().get();
+                .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
 
         assertEquals(response.getStatus(), 200);
         assertGetOntology(true);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
-        verify(mockCache).containsKey(Mockito.anyString());
-        verify(mockCache, times(0)).get(Mockito.anyString());
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString(), anyString());
+        verify(mockCache).containsKey(anyString());
+        verify(mockCache, times(0)).get(anyString());
         // OntologyManger will handle caching the ontology
-        verify(mockCache, times(0)).put(Mockito.anyString(), Mockito.any(Ontology.class));
+        verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
+    }
+
+    @Test
+    public void testGetOntologyClearCache() {
+        when(mockCache.containsKey(anyString())).thenReturn(false);
+
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()))
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
+                .queryParam("clearCache", true).request().accept(MediaType.APPLICATION_JSON_TYPE).get();
+
+        assertEquals(response.getStatus(), 200);
+        assertGetOntology(true);
+        assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+        verify(ontologyCache).removeFromCache(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
+        verify(mockCache).containsKey(anyString());
+        verify(mockCache, times(0)).get(anyString());
+        // OntologyManger will handle caching the ontology
+        verify(mockCache, times(0)).put(anyString(), any(Ontology.class));
     }
 
     @Test
@@ -894,18 +915,19 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
-                .request().get();
+                .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
 
         assertEquals(response.getStatus(), 200);
         assertGetOntology(false);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString(), anyString());
     }
 
     @Test
     public void testGetOntologyWithCommitIdAndMissingBranchId() {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("commitId", commitId.stringValue()).queryParam("entityId", catalogId.stringValue())
-                .request().get();
+                .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
 
         assertEquals(response.getStatus(), 400);
     }
@@ -913,11 +935,12 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @Test
     public void testGetOntologyMissingCommitId() {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
-                .queryParam("branchId", branchId.stringValue()).request().get();
+                .queryParam("branchId", branchId.stringValue()).request().accept(MediaType.APPLICATION_JSON_TYPE).get();
 
         assertEquals(response.getStatus(), 200);
         assertGetOntology(true);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString(), anyString());
     }
 
     @Test
@@ -927,7 +950,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
-                .request().get();
+                .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
 
         assertEquals(response.getStatus(), 400);
     }
@@ -3903,7 +3926,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
 
         assertEquals(response.getStatus(), 500);
-        verify(ontologyManager, times(0)).deleteOntologyBranch(Mockito.any(), Mockito.any());
+        verify(ontologyManager, times(0)).deleteOntologyBranch(any(), any());
     }
 
     @Test
