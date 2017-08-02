@@ -2,11 +2,10 @@
 @import "./src/main/resources/public/css/variables";
 
 .search-form {
-    .keyword-operator {
-        float: right;
-
+    .boolean-operator {
         md-radio-group md-radio-button {
             display: inline-block;
+            margin-bottom: 0
         }
     }
 }

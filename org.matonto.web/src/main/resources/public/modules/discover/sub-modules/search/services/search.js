@@ -29,7 +29,7 @@
          * @name search
          *
          * @description
-         * The `search` module only provides the `exploreService` service which provides utility
+         * The `search` module only provides the `searchService` service which provides utility
          * methods for the creating and submitting search queries.
          */
         .module('search', [])
@@ -128,30 +128,20 @@
         }
 
         function createKeywordQuery(keyword) {
+            var keywordFilter = {
+                type: 'filter',
+                expression: {
+                    type: 'operation',
+                    operator: 'contains',
+                    args: [
+                        { type: 'operation', operator: 'lcase', args: ['?o'] },
+                        { type: 'operation', operator: 'lcase', args: ['\"' + keyword + '\"'] }
+                    ]
+                }
+            };
             return {
                 type: 'group',
-                patterns: [
-                    angular.copy(simplePattern),
-                    {
-                        type: 'filter',
-                        expression: {
-                            type: 'operation',
-                            operator: 'contains',
-                            args: [
-                                {
-                                    type: 'operation',
-                                    operator: 'lcase',
-                                    args: ['?o']
-                                },
-                                {
-                                    type: 'operation',
-                                    operator: 'lcase',
-                                    args: ['\"' + keyword + '\"']
-                                }
-                            ]
-                        }
-                    }
-                ]
+                patterns: [angular.copy(simplePattern), keywordFilter]
             };
         }
     }
