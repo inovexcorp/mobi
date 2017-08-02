@@ -29,7 +29,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.8.50</version>
+    <version>1.8.51-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
