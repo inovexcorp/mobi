@@ -126,6 +126,24 @@ describe('Imports Block directive', function() {
             expect(element.find('info-message').length).toBe(1);
             expect(element.querySelectorAll('.import').length).toBe(0);
         });
+        it('with an .indirect-import-container', function() {
+            expect(element.querySelectorAll('.indirect-import-container').length).toBe(0);
+            controller.indirectImports = ['iri'];
+            scope.$digest();
+            expect(element.querySelectorAll('.indirect-import-container').length).toBe(1);
+        });
+        it('with an .indirect.import', function() {
+            expect(element.querySelectorAll('.indirect.import').length).toBe(0);
+            controller.indirectImports = ['iri'];
+            scope.$digest();
+            expect(element.querySelectorAll('.indirect.import').length).toBe(1);
+        });
+        it('with an .indirect-header', function() {
+            expect(element.querySelectorAll('.indirect-header').length).toBe(0);
+            controller.indirectImports = ['iri'];
+            scope.$digest();
+            expect(element.querySelectorAll('.indirect-header').length).toBe(1);
+        });
     });
     describe('controller methods', function() {
         it('setupRemove should set the correct variables', function() {
@@ -157,6 +175,7 @@ describe('Imports Block directive', function() {
                         ontologyStateSvc.updateOntology.and.returnValue(updateDeferred.promise);
                     });
                     it('when update ontology resolves', function() {
+                        spyOn(controller, 'setIndirectImports');
                         ontologyStateSvc.isCommittable.and.returnValue(true);
                         updateDeferred.resolve();
                         scope.$apply();
@@ -168,6 +187,7 @@ describe('Imports Block directive', function() {
                         expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit);
                         expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                         expect(ontologyStateSvc.listItem.isSaved).toBe(true);
+                        expect(controller.setIndirectImports).toHaveBeenCalled();
                         expect(controller.showRemoveOverlay).toBe(false);
                     });
                     it('when update ontology rejects', function() {
@@ -220,11 +240,13 @@ describe('Imports Block directive', function() {
         });
         describe('refresh should call the correct function when updateOntology is', function() {
             it('resolved', function() {
+                spyOn(controller, 'setIndirectImports');
                 ontologyStateSvc.updateOntology.and.returnValue($q.resolve());
                 controller.refresh();
                 scope.$apply();
                 expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit, true);
                 expect(util.createSuccessToast).toHaveBeenCalledWith('');
+                expect(controller.setIndirectImports).toHaveBeenCalled();
             });
             it('rejected', function() {
                 ontologyStateSvc.updateOntology.and.returnValue($q.reject('error'));
@@ -233,6 +255,21 @@ describe('Imports Block directive', function() {
                 expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit, true);
                 expect(util.createErrorToast).toHaveBeenCalledWith('error');
             });
+        });
+        it('setIndirectImports should set the value correctly', function() {
+            ontologyStateSvc.listItem.selected[prefixes.owl + 'imports'] = [{'@id': 'direct'}];
+            ontologyStateSvc.listItem.importedOntologies = [{
+                id: 'direct-version',
+                ontologyId: 'direct'
+            }, {
+                id: 'indirect-b-version',
+                ontologyId: 'indirect-b'
+            }, {
+                id: 'indirect-a',
+                ontologyId: 'indirect-a'
+            }];
+            controller.setIndirectImports();
+            expect(controller.indirectImports).toEqual(['indirect-a', 'indirect-b']);
         });
     });
 });

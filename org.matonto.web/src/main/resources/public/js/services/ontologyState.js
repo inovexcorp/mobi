@@ -1475,6 +1475,7 @@
                 });
                 var importedOntologyListItem = {
                     id: importedOntObj.id,
+                    ontologyId: importedOntObj.ontologyId,
                     index: index,
                     ontology: importedOntObj.ontology
                 };
