@@ -62,17 +62,13 @@ describe('SPARQL Editor directive', function() {
             expect(element.prop('tagName')).toBe('FORM');
         });
         it('based on form-group', function() {
-            expect(element.querySelectorAll('.form-group').length).toBe(2);
+            expect(element.querySelectorAll('.form-group').length).toBe(1);
+        });
+        it('with a dataset-form-group', function() {
+            expect(element.find('dataset-form-group').length).toBe(1);
         });
         it('with a ui-codemirror', function() {
             expect(element.find('ui-codemirror').length).toBe(1);
-        });
-    });
-    describe('controller methods', function() {
-        it('should clear the selected dataset record', function() {
-            sparqlManagerSvc.datasetRecordIRI = 'test';
-            controller.clear();
-            expect(sparqlManagerSvc.datasetRecordIRI).toBe('');
         });
     });
 });

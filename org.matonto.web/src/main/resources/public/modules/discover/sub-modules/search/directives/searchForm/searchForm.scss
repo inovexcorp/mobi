@@ -9,4 +9,27 @@
             margin-left: 10px;
         }
     }
+
+    .and-strike {
+        color: $gray-light;
+        margin-bottom: 15px;
+        overflow:hidden;
+        position: relative;
+        white-space: nowrap;
+
+        &:before {
+            content: 'AND';
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        &:after {
+            background: $gray-light;
+            content: '';
+            height: 1px;
+            position: absolute;
+            top: 50%;
+            width: 9999px;
+        }
+    }
 }

@@ -51,7 +51,7 @@ describe('Search Form directive', function() {
                 searchSvc.submitSearch.and.returnValue($q.reject('Error Message'));
                 controller.submit();
                 scope.$apply();
-                expect(searchSvc.submitSearch).toHaveBeenCalledWith(discoverStateSvc.search.keywords.arr, discoverStateSvc.search.keywords.isOr);
+                expect(searchSvc.submitSearch).toHaveBeenCalledWith(discoverStateSvc.search.keywords.arr, discoverStateSvc.search.keywords.isOr, discoverStateSvc.search.recordId);
                 expect(controller.errorMessage).toEqual('Error Message');
                 expect(discoverStateSvc.search.results).toBeUndefined();
             });
@@ -59,7 +59,7 @@ describe('Search Form directive', function() {
                 searchSvc.submitSearch.and.returnValue($q.when({head: {}}));
                 controller.submit();
                 scope.$apply();
-                expect(searchSvc.submitSearch).toHaveBeenCalledWith(discoverStateSvc.search.keywords.arr, discoverStateSvc.search.keywords.isOr);
+                expect(searchSvc.submitSearch).toHaveBeenCalledWith(discoverStateSvc.search.keywords.arr, discoverStateSvc.search.keywords.isOr, discoverStateSvc.search.recordId);
                 expect(controller.errorMessage).toEqual('');
                 expect(discoverStateSvc.search.results).toEqual({head: {}});
             });
@@ -75,6 +75,12 @@ describe('Search Form directive', function() {
         });
         it('with a block-content', function() {
             expect(element.find('block-content').length).toEqual(1);
+        });
+        it('with a .and-strike', function() {
+            expect(element.querySelectorAll('.and-strike').length).toEqual(1);
+        });
+        it('with a dataset-form-group', function() {
+            expect(element.find('dataset-form-group').length).toEqual(1);
         });
         it('with a block-footer', function() {
             expect(element.find('block-footer').length).toEqual(1);
