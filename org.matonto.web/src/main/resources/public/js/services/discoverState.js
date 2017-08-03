@@ -101,7 +101,7 @@
                 arr: [],
                 isOr: false
             },
-            recordId: ''
+            datasetRecordId: ''
         };
 
         /**

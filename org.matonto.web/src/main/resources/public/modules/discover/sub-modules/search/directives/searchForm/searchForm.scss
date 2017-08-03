@@ -10,18 +10,14 @@
         }
     }
 
-    .and-strike {
+    .strike {
         color: $gray-light;
+        font-weight: bold;
         margin-bottom: 15px;
+        margin-right: 10px;
         overflow:hidden;
         position: relative;
         white-space: nowrap;
-
-        &:before {
-            content: 'AND';
-            font-weight: bold;
-            margin-right: 10px;
-        }
 
         &:after {
             background: $gray-light;

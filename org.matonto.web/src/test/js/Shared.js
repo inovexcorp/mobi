@@ -1041,7 +1041,7 @@ function mockDiscoverState() {
                     arr: [],
                     isOr: false
                 },
-                recordId: ''
+                datasetRecordId: ''
             };
             this.resetPagedInstanceDetails = jasmine.createSpy('resetPagedInstanceDetails');
             this.cleanUpOnDatasetDelete = jasmine.createSpy('cleanUpOnDatasetDelete');
