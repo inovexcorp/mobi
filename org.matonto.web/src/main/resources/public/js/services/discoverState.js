@@ -100,7 +100,8 @@
             keywords: {
                 arr: [],
                 isOr: false
-            }
+            },
+            datasetRecordId: ''
         };
 
         /**

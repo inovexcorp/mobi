@@ -55,6 +55,7 @@ describe('Search Service', function() {
             }, function(response) {
                 expect(response).toEqual('Error Message');
                 expect(searchSvc.createQueryString).toHaveBeenCalledWith([], false);
+                expect(sparqlManagerSvc.query).toHaveBeenCalledWith(query, '', discoverStateSvc.search.targetedId);
                 expect(httpSvc.cancel).toHaveBeenCalledWith(discoverStateSvc.search.targetedId);
             });
             scope.$apply();
@@ -64,6 +65,7 @@ describe('Search Service', function() {
             searchSvc.submitSearch([]).then(function(response) {
                 expect(response).toEqual({});
                 expect(searchSvc.createQueryString).toHaveBeenCalledWith([], false);
+                expect(sparqlManagerSvc.query).toHaveBeenCalledWith(query, '', discoverStateSvc.search.targetedId);
                 expect(httpSvc.cancel).toHaveBeenCalledWith(discoverStateSvc.search.targetedId);
             }, function() {
                 fail('Promise should have rejected');
@@ -74,11 +76,11 @@ describe('Search Service', function() {
     describe('should create a keyword query', function() {
         it('with and', function() {
             var result = searchSvc.createQueryString(['test1', 'test2']);
-            expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = ", ") AS ?Values) WHERE {\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test1")))\n  }\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test2")))\n  }\n}\nGROUP BY ?Subject ?Predicate');
+            expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test1")))\n  }\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test2")))\n  }\n}\nGROUP BY ?Subject ?Predicate');
         })
         it('with or', function() {
             var result = searchSvc.createQueryString(['test1', 'test2'], true);
-            expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = ", ") AS ?Values) WHERE {\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test1")))\n  }\n  UNION\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test2")))\n  }\n}\nGROUP BY ?Subject ?Predicate');
+            expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test1")))\n  }\n  UNION\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test2")))\n  }\n}\nGROUP BY ?Subject ?Predicate');
         });
     });
 });

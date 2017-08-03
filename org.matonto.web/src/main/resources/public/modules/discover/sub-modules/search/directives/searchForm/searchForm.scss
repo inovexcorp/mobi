@@ -9,4 +9,23 @@
             margin-left: 10px;
         }
     }
+
+    .strike {
+        color: $gray-light;
+        font-weight: bold;
+        margin-bottom: 15px;
+        overflow:hidden;
+        position: relative;
+        white-space: nowrap;
+
+        &:after {
+            background: $gray-light;
+            content: '';
+            height: 1px;
+            margin-left: 10px;
+            position: absolute;
+            top: 50%;
+            width: 9999px;
+        }
+    }
 }
