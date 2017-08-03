@@ -75,11 +75,12 @@
          *
          * @param {string[]} keywords An array of keywords to search for
          * @param {boolean} [isOr=false] Whether or not the kwyrod search results should be combined with OR or not
+         * @param {string} [datasetRecordIRI=''] The IRI of the DatasetRecord to restrict the query to
          * @return {Promise} A Promise that resolves with the query results or rejects with an error message.
          */
-        self.submitSearch = function(keywords, isOr = false) {
+        self.submitSearch = function(keywords, isOr = false, datasetRecordIRI = '') {
             httpService.cancel(ds.search.targetedId);
-            return sm.query(self.createQueryString(keywords, isOr), '', ds.search.targetedId);
+            return sm.query(self.createQueryString(keywords, isOr), datasetRecordIRI, ds.search.targetedId);
         }
         /**
          * @ngdoc method
@@ -108,9 +109,9 @@
                             type: 'aggregate',
                             aggregation: 'group_concat',
                             distinct: true,
-                            separator: ', '
+                            separator: '<br>'
                         },
-                        variable: '?Values'
+                        variable: '?Objects'
                     }
                 ],
                 group: [{ expression: '?Subject' }, { expression: '?Predicate' }],

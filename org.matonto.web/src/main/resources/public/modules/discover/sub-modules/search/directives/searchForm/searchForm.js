@@ -63,7 +63,7 @@
                     dvm.errorMessage = '';
 
                     dvm.submit = function() {
-                        s.submitSearch(dvm.ds.search.keywords.arr, dvm.ds.search.keywords.isOr)
+                        s.submitSearch(dvm.ds.search.keywords.arr, dvm.ds.search.keywords.isOr, dvm.ds.search.datasetRecordId)
                             .then(data => {
                                 dvm.ds.search.results = data;
                                 dvm.errorMessage = '';

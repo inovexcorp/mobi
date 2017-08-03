@@ -31,6 +31,7 @@
             'search',
 
             /* Common */
+            'datasetFormGroup',
             'datasetSelect',
             'discoverTabset',
             'sparqlResultTable',
