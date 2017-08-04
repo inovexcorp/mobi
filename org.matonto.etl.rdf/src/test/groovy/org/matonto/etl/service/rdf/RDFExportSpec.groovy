@@ -70,6 +70,9 @@ class RDFExportSpec extends Specification {
         datasetManager.getConnection(datasetId) >> datasetConn
         datasetManager.getConnection(!datasetId) >> {throw new IllegalArgumentException()}
         datasetConn.getStatements(*_) >> result
+        datasetConn.getDefaultNamedGraphs() >> result
+        datasetConn.getNamedGraphs() >> result
+        datasetConn.getSystemDefaultNamedGraph() >> vf.createIRI("http://test.com/system-default")
 
         service.setDatasetManager(datasetManager)
         service.setTransformer(transformer)
@@ -181,7 +184,7 @@ class RDFExportSpec extends Specification {
 
         then:
         result != null
-        1 * datasetConn.getStatements(null, null, null) >> result
+        2 * datasetConn.getStatements(null, null, null, _) >> result
     }
 
     def "Export File from Dataset with restrictions and both object IRI and Lit"() {
@@ -193,7 +196,7 @@ class RDFExportSpec extends Specification {
 
         then:
         result != null
-        1 * datasetConn.getStatements(vf.createIRI(s), vf.createIRI(p), vf.createIRI(oIRI)) >> result
+        2 * datasetConn.getStatements(vf.createIRI(s), vf.createIRI(p), vf.createIRI(oIRI), _) >> result
     }
 
     def "Export File from Dataset with restrictions and object Lit"() {
@@ -205,7 +208,7 @@ class RDFExportSpec extends Specification {
 
         then:
         result != null
-        1 * datasetConn.getStatements(vf.createIRI(s), vf.createIRI(p), vf.createLiteral(oLit)) >> result
+        2 * datasetConn.getStatements(vf.createIRI(s), vf.createIRI(p), vf.createLiteral(oLit), _) >> result
     }
 
     def "Throws exception if dataset does not exist"() {
