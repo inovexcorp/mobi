@@ -12,8 +12,8 @@
 @prefix commits: <http://matonto.org/test/commits#> .
 @prefix revisions: <http://matonto.org/test/revisions#> .
 @prefix users: <http://matonto.org/test/users#> .
-@prefix additions: <http://matonto.org/test/additions#> .
-@prefix deletions: <http://matonto.org/test/deletions#> .
+@prefix additions: <https://matonto.org/additions#> .
+@prefix deletions: <https://matonto.org/deletions#> .
 @prefix graphs: <http://matonto.org/test/graphs#> .
 
 GRAPH <http://matonto.org/test#empty> { }

@@ -38,6 +38,8 @@ import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.Distribution;
 import org.matonto.catalog.api.ontologies.mcat.DistributionFactory;
+import org.matonto.catalog.api.ontologies.mcat.GraphRevision;
+import org.matonto.catalog.api.ontologies.mcat.GraphRevisionFactory;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.Record;
@@ -70,10 +72,14 @@ import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -97,6 +103,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private BranchFactory branchFactory;
     private CommitFactory commitFactory;
     private RevisionFactory revisionFactory;
+    private GraphRevisionFactory graphRevisionFactory;
     private InProgressCommitFactory inProgressCommitFactory;
 
     private static final String GET_IN_PROGRESS_COMMIT;
@@ -184,6 +191,11 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     @Reference
     protected void setRevisionFactory(RevisionFactory revisionFactory) {
         this.revisionFactory = revisionFactory;
+    }
+
+    @Reference
+    protected void setGraphRevisionFactory(GraphRevisionFactory graphRevisionFactory) {
+        this.graphRevisionFactory = graphRevisionFactory;
     }
 
     @Override
@@ -385,30 +397,64 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public void updateCommit(Commit commit, Model additions, Model deletions, RepositoryConnection conn) {
-//        Resource resource = commit.getGenerated_resource().stream().findFirst()
-//                .orElseThrow(() -> new IllegalArgumentException("Commit does not have a Revision."));
-//        Revision revision = revisionFactory.getExisting(resource, commit.getModel())
-//                .orElseThrow(() -> new IllegalStateException("Could not retrieve expected Revision."));
-//
-//        Optional<IRI> additionsGraph = revision.getAdditions();
-//        Optional<IRI> deletionsGraph = revision.getDeletions();
-//
-//        // TODO: What if only one exists?
-//        if (additionsGraph.isPresent() && deletionsGraph.isPresent()) {
-//            addChanges(additionsGraph.get(), deletionsGraph.get(), additions.filter(null, null, null, (Resource)null), conn);
-//            addChanges(deletionsGraph.get(), additionsGraph.get(), deletions.filter(null, null, null, (Resource)null), conn);
-//        }
-//
-//        revision.getGraphRevision().forEach(graphRevision -> {
-//            Optional<Resource> graph = graphRevision.getRevisionedGraph();
-//            Optional<IRI> adds = graphRevision.getAdditions();
-//            Optional<IRI> dels = graphRevision.getDeletions();
-//
-//            if (graph.isPresent() && adds.isPresent() && dels.isPresent()) {
-//                addChanges(adds.get(), dels.get(), additions.filter(null, null, null, graph.get()), conn);
-//                addChanges(dels.get(), adds.get(), deletions.filter(null, null, null, graph.get()), conn);
-//            }
-//        });
+        Resource resource = commit.getGenerated_resource().stream().findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Commit does not have a Revision."));
+        Revision revision = revisionFactory.getExisting(resource, commit.getModel())
+                .orElseThrow(() -> new IllegalStateException("Could not retrieve expected Revision."));
+
+        // Map of revisionedGraph -> GraphRevision resources
+        Map<Resource, Resource> knownGraphs = new HashMap<>();
+        revision.getGraphRevision().forEach(graphRevision -> {
+            Resource graph = graphRevision.getRevisionedGraph()
+                    .orElseThrow(() -> new IllegalStateException("Could not retrieve expected RevisionedGraph."));
+            knownGraphs.put(graph, graphRevision.getResource());
+        });
+
+        IRI additionsGraph = revision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commit.getResource().stringValue()));
+        IRI deletionsGraph = revision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commit.getResource().stringValue()));
+
+        addChanges(additionsGraph, deletionsGraph, additions.filter(null, null, null, (Resource)null), conn);
+        addChanges(deletionsGraph, additionsGraph, deletions.filter(null, null, null, (Resource)null), conn);
+
+        Set<Resource> graphs = additions.contexts();
+        graphs.addAll(deletions.contexts());
+        graphs.forEach(modifiedGraph -> {
+            if (knownGraphs.containsKey(modifiedGraph)) {
+                GraphRevision graphRevision = graphRevisionFactory
+                        .getExisting(knownGraphs.get(modifiedGraph), revision.getModel())
+                        .orElseThrow(() -> new IllegalStateException("Could not retrieve expected GraphRevision."));
+
+                IRI adds = graphRevision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commit.getResource().stringValue() + " for graph " + modifiedGraph.stringValue()));
+                IRI dels = graphRevision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commit.getResource().stringValue() + " for graph " + modifiedGraph.stringValue()));
+
+                addChanges(adds, dels, additions.filter(null, null, null, modifiedGraph), conn);
+                addChanges(dels, adds, deletions.filter(null, null, null, modifiedGraph), conn);
+            } else {
+                Resource graphRevisionResource = vf.createBNode();
+                GraphRevision graphRevision = graphRevisionFactory.createNew(graphRevisionResource);
+                graphRevision.setRevisionedGraph(modifiedGraph);
+
+                String commitHash = vf.createIRI(commit.getResource().stringValue()).getLocalName();
+                String changesContextLocalName;
+                try {
+                    changesContextLocalName = commitHash + "%00" +  URLEncoder.encode(modifiedGraph.stringValue(), "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    throw new MatOntoException(e);
+                }
+
+                IRI additionsIRI = vf.createIRI(Catalogs.ADDITIONS_NAMESPACE + changesContextLocalName);
+                IRI deletionsIRI = vf.createIRI(Catalogs.DELETIONS_NAMESPACE + changesContextLocalName);
+
+                graphRevision.setAdditions(additionsIRI);
+                graphRevision.setDeletions(deletionsIRI);
+
+                conn.add(revision.getResource(), vf.createIRI(Revision.graphRevision_IRI), graphRevisionResource, commit.getResource());
+                conn.add(graphRevision.getModel(), commit.getResource());
+
+                addChanges(additionsIRI, deletionsIRI, additions.filter(null, null, null, modifiedGraph), conn);
+                addChanges(deletionsIRI, additionsIRI, deletions.filter(null, null, null, modifiedGraph), conn);
+            }
+        });
 
         // TODO: Update to handle quads
 //        Resource additionsResource = getAdditionsResource(commit);

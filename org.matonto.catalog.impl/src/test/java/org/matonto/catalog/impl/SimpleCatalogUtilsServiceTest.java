@@ -246,6 +246,7 @@ public class SimpleCatalogUtilsServiceTest {
         service.setBranchFactory(branchFactory);
         service.setCommitFactory(commitFactory);
         service.setRevisionFactory(revisionFactory);
+        service.setGraphRevisionFactory(graphRevisionFactory);
         service.setInProgressCommitFactory(inProgressCommitFactory);
     }
 
@@ -1332,25 +1333,25 @@ public class SimpleCatalogUtilsServiceTest {
             Resource graphTest = vf.createIRI(GRAPHS + "quad-graph-test");
 
             Statement addQuad = vf.createStatement(vf.createIRI("https://matonto.org/test"), titleIRI, vf.createLiteral("Title"), graphTest);
-            Statement addAndDeleteQuad = vf.createStatement(vf.createIRI("https://matonto.org/test"), descriptionIRI, vf.createLiteral("Description"));
+            Statement addAndDeleteQuad = vf.createStatement(vf.createIRI("https://matonto.org/test"), descriptionIRI, vf.createLiteral("Description"), graph1);
             Statement deleteQuad = vf.createStatement(vf.createIRI("https://matonto.org/test/object2"), labelIRI, vf.createLiteral("Label"), graph1);
             Statement existingAddQuad = vf.createStatement(vf.createIRI("http://matonto.org/test/object2"), titleIRI, vf.createLiteral("Test 1 Title"), graph1);
             Model additions = mf.createModel(Stream.of(addQuad, addAndDeleteQuad).collect(Collectors.toSet()));
             Model deletions = mf.createModel(Stream.of(addAndDeleteQuad, deleteQuad, existingAddQuad).collect(Collectors.toSet()));
 
-            Resource additionsGraph = vf.createIRI(ADDITIONS + "quad-test1");
-            Resource deletionsGraph = vf.createIRI(DELETIONS + "quad-test1");
-            Statement expAdd1 = vf.createStatement(vf.createIRI("http://matonto.org/test/object1"), titleIRI, vf.createLiteral("Test 1 Title"));
-            Statement expDel1 = vf.createStatement(vf.createIRI("http://matonto.org/test/object1"), titleIRI, vf.createLiteral("Test 0 Title"));
+            Resource additionsGraph = vf.createIRI(Catalogs.ADDITIONS_NAMESPACE + "quad-test1");
+            Resource deletionsGraph = vf.createIRI(Catalogs.DELETIONS_NAMESPACE + "quad-test1");
+            Statement expAdd1 = vf.createStatement(vf.createIRI("http://matonto.org/test/object1"), titleIRI, vf.createLiteral("Test 1 Title"), additionsGraph);
+            Statement expDel1 = vf.createStatement(vf.createIRI("http://matonto.org/test/object1"), titleIRI, vf.createLiteral("Test 0 Title"), deletionsGraph);
 
-            Resource additionsGraph1 = vf.createIRI(ADDITIONS + "quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1");
-            Resource deletionsGraph1 = vf.createIRI(DELETIONS + "quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1");
-            Statement expAddGraph1 = vf.createStatement(vf.createIRI("http://matonto.org/test/object2"), typeIRI, OWL_THING);
-            Statement expDelGraph1 = vf.createStatement(vf.createIRI("https://matonto.org/test/object2"), labelIRI, vf.createLiteral("Label"));
+            Resource additionsGraph1 = vf.createIRI(Catalogs.ADDITIONS_NAMESPACE + "quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1");
+            Resource deletionsGraph1 = vf.createIRI(Catalogs.DELETIONS_NAMESPACE + "quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1");
+            Statement expAddGraph1 = vf.createStatement(vf.createIRI("http://matonto.org/test/object2"), typeIRI, OWL_THING, additionsGraph1);
+            Statement expDelGraph1 = vf.createStatement(vf.createIRI("https://matonto.org/test/object2"), labelIRI, vf.createLiteral("Label"), deletionsGraph1);
 
-            Resource additionsGraphTest = vf.createIRI(ADDITIONS + "quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph-test");
-            Resource deletionsGraphTest = vf.createIRI(DELETIONS + "quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph-test");
-            Statement expAddGraphTest = vf.createStatement(vf.createIRI("https://matonto.org/test"), titleIRI, vf.createLiteral("Title"));
+            Resource additionsGraphTest = vf.createIRI(Catalogs.ADDITIONS_NAMESPACE + "quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph-test");
+            Resource deletionsGraphTest = vf.createIRI(Catalogs.DELETIONS_NAMESPACE + "quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph-test");
+            Statement expAddGraphTest = vf.createStatement(vf.createIRI("https://matonto.org/test"), titleIRI, vf.createLiteral("Title"), additionsGraphTest);
 
             service.updateCommit(commit, additions, deletions, conn);
 
