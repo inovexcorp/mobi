@@ -856,12 +856,19 @@ public class SimpleCatalogManager implements CatalogManager {
             Set<Resource> deltaIRIs = new HashSet<>();
             for (Resource commitId : chain) {
                 if (!commitIsReferenced(commitId, conn)) {
-                    deltaIRIs.add(utils.getAdditionsResource(commitId, conn));
-                    deltaIRIs.add(utils.getDeletionsResource(commitId, conn));
+                    // Get Additions/Deletions Graphs
+                    Revision revision = utils.getRevision(commitId, conn);
+                    revision.getAdditions().ifPresent(deltaIRIs::add);
+                    revision.getDeletions().ifPresent(deltaIRIs::add);
+                    revision.getGraphRevision().forEach(graphRevision ->
+                            graphRevision.getRevisionedGraph().ifPresent(deltaIRIs::add));
+
+                    // Remove Commit
                     utils.remove(commitId, conn);
-                    RepositoryResults.asModel(conn.getStatements(null, commitIRI, commitId), mf).subjects()
-                            .forEach(tagId -> removeObjectWithRelationship(tagId, recordId, VersionedRecord.version_IRI,
-                                    conn));
+
+                    // Remove Tags Referencing this Commit
+                    Set<Resource> tags = RepositoryResults.asModel(conn.getStatements(null, commitIRI, commitId), mf).subjects();
+                    tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId, VersionedRecord.version_IRI, conn));
                 } else {
                     break;
                 }
