@@ -401,7 +401,16 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 .orElseThrow(() -> new IllegalArgumentException("Commit does not have a Revision."));
         Revision revision = revisionFactory.getExisting(resource, commit.getModel())
                 .orElseThrow(() -> new IllegalStateException("Could not retrieve expected Revision."));
+        updateCommit(commit.getResource(), revision, additions, deletions, conn);
+    }
 
+    @Override
+    public void updateCommit(Resource commitId, Model additions, Model deletions, RepositoryConnection conn) {
+        Revision revision = getRevision(commitId, conn);
+        updateCommit(commitId, revision, additions, deletions, conn);
+    }
+
+    private void updateCommit(Resource commitId, Revision revision, Model additions, Model deletions, RepositoryConnection conn) {
         // Map of revisionedGraph -> GraphRevision resources
         Map<Resource, Resource> knownGraphs = new HashMap<>();
         revision.getGraphRevision().forEach(graphRevision -> {
@@ -410,8 +419,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             knownGraphs.put(graph, graphRevision.getResource());
         });
 
-        IRI additionsGraph = revision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commit.getResource().stringValue()));
-        IRI deletionsGraph = revision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commit.getResource().stringValue()));
+        IRI additionsGraph = revision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commitId.stringValue()));
+        IRI deletionsGraph = revision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commitId.stringValue()));
 
         addChanges(additionsGraph, deletionsGraph, additions.filter(null, null, null, (Resource)null), conn);
         addChanges(deletionsGraph, additionsGraph, deletions.filter(null, null, null, (Resource)null), conn);
@@ -424,8 +433,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                         .getExisting(knownGraphs.get(modifiedGraph), revision.getModel())
                         .orElseThrow(() -> new IllegalStateException("Could not retrieve expected GraphRevision."));
 
-                IRI adds = graphRevision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commit.getResource().stringValue() + " for graph " + modifiedGraph.stringValue()));
-                IRI dels = graphRevision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commit.getResource().stringValue() + " for graph " + modifiedGraph.stringValue()));
+                IRI adds = graphRevision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commitId.stringValue() + " for graph " + modifiedGraph.stringValue()));
+                IRI dels = graphRevision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commitId.stringValue() + " for graph " + modifiedGraph.stringValue()));
 
                 addChanges(adds, dels, additions.filter(null, null, null, modifiedGraph), conn);
                 addChanges(dels, adds, deletions.filter(null, null, null, modifiedGraph), conn);
@@ -434,10 +443,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 GraphRevision graphRevision = graphRevisionFactory.createNew(graphRevisionResource);
                 graphRevision.setRevisionedGraph(modifiedGraph);
 
-                String commitHash = vf.createIRI(commit.getResource().stringValue()).getLocalName();
+                String commitHash = vf.createIRI(commitId.stringValue()).getLocalName();
                 String changesContextLocalName;
                 try {
-                    changesContextLocalName = commitHash + "%00" +  URLEncoder.encode(modifiedGraph.stringValue(), "UTF-8");
+                    changesContextLocalName = commitHash + "%00" + URLEncoder.encode(modifiedGraph.stringValue(), "UTF-8");
                 } catch (UnsupportedEncodingException e) {
                     throw new MatOntoException(e);
                 }
@@ -448,28 +457,13 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 graphRevision.setAdditions(additionsIRI);
                 graphRevision.setDeletions(deletionsIRI);
 
-                conn.add(revision.getResource(), vf.createIRI(Revision.graphRevision_IRI), graphRevisionResource, commit.getResource());
-                conn.add(graphRevision.getModel(), commit.getResource());
+                conn.add(revision.getResource(), vf.createIRI(Revision.graphRevision_IRI), graphRevisionResource, commitId);
+                conn.add(graphRevision.getModel(), commitId);
 
                 addChanges(additionsIRI, deletionsIRI, additions.filter(null, null, null, modifiedGraph), conn);
                 addChanges(deletionsIRI, additionsIRI, deletions.filter(null, null, null, modifiedGraph), conn);
             }
         });
-
-        // TODO: Update to handle quads
-//        Resource additionsResource = getAdditionsResource(commit);
-//        Resource deletionsResource = getDeletionsResource(commit);
-//        addChanges(additionsResource, deletionsResource, additions, conn);
-//        addChanges(deletionsResource, additionsResource, deletions, conn);
-    }
-
-    @Override
-    public void updateCommit(Resource commitId, Model additions, Model deletions, RepositoryConnection conn) {
-        // TODO: Update to handle quads
-//        Resource additionsResource = getAdditionsResource(commitId, conn);
-//        Resource deletionsResource = getDeletionsResource(commitId, conn);
-//        addChanges(additionsResource, deletionsResource, additions, conn);
-//        addChanges(deletionsResource, additionsResource, deletions, conn);
     }
 
     @Override
