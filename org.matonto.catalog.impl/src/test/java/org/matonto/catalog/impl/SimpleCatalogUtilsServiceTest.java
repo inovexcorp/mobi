@@ -39,11 +39,13 @@ import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.Distribution;
 import org.matonto.catalog.api.ontologies.mcat.DistributionFactory;
+import org.matonto.catalog.api.ontologies.mcat.GraphRevisionFactory;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.catalog.api.ontologies.mcat.RecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.Revision;
+import org.matonto.catalog.api.ontologies.mcat.RevisionFactory;
 import org.matonto.catalog.api.ontologies.mcat.UnversionedRecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.Version;
 import org.matonto.catalog.api.ontologies.mcat.VersionFactory;
@@ -84,6 +86,7 @@ import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -104,6 +107,8 @@ public class SimpleCatalogUtilsServiceTest {
     private VersionFactory versionFactory = new VersionFactory();
     private BranchFactory branchFactory = new BranchFactory();
     private CommitFactory commitFactory = new CommitFactory();
+    private RevisionFactory revisionFactory = new RevisionFactory();
+    private GraphRevisionFactory graphRevisionFactory = new GraphRevisionFactory();
     private InProgressCommitFactory inProgressCommitFactory = new InProgressCommitFactory();
 
     private final IRI typeIRI = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI);
@@ -139,6 +144,11 @@ public class SimpleCatalogUtilsServiceTest {
     private final IRI COMMIT_NO_DELETIONS_IRI = vf.createIRI("http://matonto.org/test/commits#commit-no-deletions");
     private final IRI IN_PROGRESS_COMMIT_IRI = vf.createIRI("http://matonto.org/test/commits#in-progress-commit");
     private final IRI IN_PROGRESS_COMMIT_NO_RECORD_IRI = vf.createIRI("http://matonto.org/test/commits#in-progress-commit-no-record");
+    private final IRI OWL_THING = vf.createIRI("http://www.w3.org/2002/07/owl#Thing");
+    private final String COMMITS = "http://matonto.org/test/commits#";
+    private final String GRAPHS = "http://matonto.org/test/graphs#";
+    private final String ADDITIONS = "http://matonto.org/test/additions#";
+    private final String DELETIONS = "http://matonto.org/test/deletions#";
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -198,6 +208,16 @@ public class SimpleCatalogUtilsServiceTest {
         commitFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(commitFactory);
 
+        revisionFactory.setModelFactory(mf);
+        revisionFactory.setValueFactory(vf);
+        revisionFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(revisionFactory);
+
+        graphRevisionFactory.setModelFactory(mf);
+        graphRevisionFactory.setValueFactory(vf);
+        graphRevisionFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(graphRevisionFactory);
+
         inProgressCommitFactory.setModelFactory(mf);
         inProgressCommitFactory.setValueFactory(vf);
         inProgressCommitFactory.setValueConverterRegistry(vcr);
@@ -225,6 +245,7 @@ public class SimpleCatalogUtilsServiceTest {
         service.setVersionFactory(versionFactory);
         service.setBranchFactory(branchFactory);
         service.setCommitFactory(commitFactory);
+        service.setRevisionFactory(revisionFactory);
         service.setInProgressCommitFactory(inProgressCommitFactory);
     }
 
@@ -1301,6 +1322,63 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
+    @Test
+    public void updateCommitWithCommitAndQuadsTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Commit commit = getThing(vf.createIRI(COMMITS + "quad-test1"), commitFactory, conn);
+
+            Resource graph1 = vf.createIRI(GRAPHS + "quad-graph1");
+            Resource graphTest = vf.createIRI(GRAPHS + "quad-graph-test");
+
+            Statement addQuad = vf.createStatement(vf.createIRI("https://matonto.org/test"), titleIRI, vf.createLiteral("Title"), graphTest);
+            Statement addAndDeleteQuad = vf.createStatement(vf.createIRI("https://matonto.org/test"), descriptionIRI, vf.createLiteral("Description"));
+            Statement deleteQuad = vf.createStatement(vf.createIRI("https://matonto.org/test/object2"), labelIRI, vf.createLiteral("Label"), graph1);
+            Statement existingAddQuad = vf.createStatement(vf.createIRI("http://matonto.org/test/object2"), titleIRI, vf.createLiteral("Test 1 Title"), graph1);
+            Model additions = mf.createModel(Stream.of(addQuad, addAndDeleteQuad).collect(Collectors.toSet()));
+            Model deletions = mf.createModel(Stream.of(addAndDeleteQuad, deleteQuad, existingAddQuad).collect(Collectors.toSet()));
+
+            Resource additionsGraph = vf.createIRI(ADDITIONS + "quad-test1");
+            Resource deletionsGraph = vf.createIRI(DELETIONS + "quad-test1");
+            Statement expAdd1 = vf.createStatement(vf.createIRI("http://matonto.org/test/object1"), titleIRI, vf.createLiteral("Test 1 Title"));
+            Statement expDel1 = vf.createStatement(vf.createIRI("http://matonto.org/test/object1"), titleIRI, vf.createLiteral("Test 0 Title"));
+
+            Resource additionsGraph1 = vf.createIRI(ADDITIONS + "quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1");
+            Resource deletionsGraph1 = vf.createIRI(DELETIONS + "quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1");
+            Statement expAddGraph1 = vf.createStatement(vf.createIRI("http://matonto.org/test/object2"), typeIRI, OWL_THING);
+            Statement expDelGraph1 = vf.createStatement(vf.createIRI("https://matonto.org/test/object2"), labelIRI, vf.createLiteral("Label"));
+
+            Resource additionsGraphTest = vf.createIRI(ADDITIONS + "quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph-test");
+            Resource deletionsGraphTest = vf.createIRI(DELETIONS + "quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph-test");
+            Statement expAddGraphTest = vf.createStatement(vf.createIRI("https://matonto.org/test"), titleIRI, vf.createLiteral("Title"));
+
+            service.updateCommit(commit, additions, deletions, conn);
+
+            List<Statement> adds = RepositoryResults.asList(conn.getStatements(null, null, null, additionsGraph));
+            assertEquals(1, adds.size());
+            assertTrue(adds.contains(expAdd1));
+
+            List<Statement> dels = RepositoryResults.asList(conn.getStatements(null, null, null, deletionsGraph));
+            assertEquals(1, dels.size());
+            assertTrue(dels.contains(expDel1));
+
+            List<Statement> addsGraph1 = RepositoryResults.asList(conn.getStatements(null, null, null, additionsGraph1));
+            assertEquals(1, addsGraph1.size());
+            assertTrue(addsGraph1.contains(expAddGraph1));
+
+            List<Statement> delsGraph1 = RepositoryResults.asList(conn.getStatements(null, null, null, deletionsGraph1));
+            assertEquals(1, delsGraph1.size());
+            assertTrue(delsGraph1.contains(expDelGraph1));
+
+            List<Statement> addsGraphTest = RepositoryResults.asList(conn.getStatements(null, null, null, additionsGraphTest));
+            assertEquals(1, addsGraphTest.size());
+            assertTrue(addsGraphTest.contains(expAddGraphTest));
+
+            List<Statement> delsGraphTest = RepositoryResults.asList(conn.getStatements(null, null, null, deletionsGraphTest));
+            assertEquals(0, delsGraphTest.size());
+        }
+    }
+
     /* updateCommit(Resource, Model, Model, RepositoryConnection) */
 
     @Test
@@ -1386,23 +1464,41 @@ public class SimpleCatalogUtilsServiceTest {
 
     /* getAdditionsResource(Resource, RepositoryConnection) */
 
-    @Test
-    public void getAdditionsResourceWithResourceTest() {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            Resource result = service.getAdditionsResource(COMMIT_IRI, conn);
-            assertEquals(getAdditionsResource(COMMIT_IRI), result);
-        }
-    }
+//    @Test
+//    public void getAdditionsResourceWithResourceTest() {
+//        try (RepositoryConnection conn = repo.getConnection()) {
+//            Resource result = service.getAdditionsResource(COMMIT_IRI, conn);
+//            assertEquals(getAdditionsResource(COMMIT_IRI), result);
+//        }
+//    }
+//
+//    @Test
+//    public void getAdditionsResourceWithResourceAndAdditionsNotSetTest() {
+//        // Setup:
+//        thrown.expect(IllegalStateException.class);
+//        thrown.expectMessage("Additions not set on Commit " + COMMIT_NO_ADDITIONS_IRI);
+//
+//        try (RepositoryConnection conn = repo.getConnection()) {
+//            service.getAdditionsResource(COMMIT_NO_ADDITIONS_IRI, conn);
+//        }
+//    }
+
+    /* getRevision() */
 
     @Test
-    public void getAdditionsResourceWithResourceAndAdditionsNotSetTest() {
-        // Setup:
-        thrown.expect(IllegalStateException.class);
-        thrown.expectMessage("Additions not set on Commit " + COMMIT_NO_ADDITIONS_IRI);
+    public void testGetRevisionWithQuads() {
+        Revision actual;
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.getAdditionsResource(COMMIT_NO_ADDITIONS_IRI, conn);
+            actual = service.getRevision(vf.createIRI(COMMITS + "quad-test1"), conn);
         }
+
+        assertEquals(vf.createIRI(ADDITIONS + "quad-test1"), actual.getAdditions().get());
+        assertEquals(vf.createIRI(DELETIONS + "quad-test1"), actual.getDeletions().get());
+        assertEquals(1, actual.getGraphRevision().size());
+        assertEquals(vf.createIRI(GRAPHS + "quad-graph1"), actual.getGraphRevision().stream().findFirst().get().getRevisionedGraph().get());
+        assertEquals(vf.createIRI(ADDITIONS + "quad-test1-graph1"), actual.getGraphRevision().stream().findFirst().get().getAdditions().get());
+        assertEquals(vf.createIRI(DELETIONS + "quad-test1-graph1"), actual.getGraphRevision().stream().findFirst().get().getDeletions().get());
     }
 
     /* getAdditions(Resource, RepositoryConnection) */
@@ -1418,37 +1514,52 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
+//    @Test
+//    public void getAdditionsWithResourceAndAdditionsNotSetTest() {
+//        // Setup:
+//        thrown.expect(IllegalStateException.class);
+//        thrown.expectMessage("Additions not set on Commit " + COMMIT_NO_ADDITIONS_IRI);
+//
+//        try (RepositoryConnection conn = repo.getConnection()) {
+//            service.getAdditions(COMMIT_NO_ADDITIONS_IRI, conn);
+//        }
+//    }
+
     @Test
-    public void getAdditionsWithResourceAndAdditionsNotSetTest() {
-        // Setup:
-        thrown.expect(IllegalStateException.class);
-        thrown.expectMessage("Additions not set on Commit " + COMMIT_NO_ADDITIONS_IRI);
+    public void getAdditionsUsingResourceWithQuads() {
+        Model expected = mf.createModel(Stream.of(
+                vf.createStatement(vf.createIRI("http://matonto.org/test/object1"), titleIRI, vf.createLiteral("Test 1 Title")),
+                vf.createStatement(vf.createIRI("http://matonto.org/test/object2"), titleIRI, vf.createLiteral("Test 1 Title"), vf.createIRI(GRAPHS + "quad-graph1")),
+                vf.createStatement(vf.createIRI("http://matonto.org/test/object2"), typeIRI, OWL_THING, vf.createIRI(GRAPHS + "quad-graph1"))
+        ).collect(Collectors.toList()));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.getAdditions(COMMIT_NO_ADDITIONS_IRI, conn);
+            IRI commit = vf.createIRI(COMMITS + "quad-test1");
+            Stream<Statement> result = service.getAdditions(commit, conn);
+            assertEquals(new HashSet<>(expected), result.collect(Collectors.toSet()));
         }
     }
 
     /* getDeletionsResource(Resource, RepositoryConnection) */
 
-    @Test
-    public void getDeletionsResourceWithResourceTest() {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            Resource result = service.getDeletionsResource(COMMIT_IRI, conn);
-            assertEquals(getDeletionsResource(COMMIT_IRI), result);
-        }
-    }
-
-    @Test
-    public void getDeletionsResourceWithResourceAndDeletionsNotSetTest() {
-        // Setup:
-        thrown.expect(IllegalStateException.class);
-        thrown.expectMessage("Deletions not set on Commit " + COMMIT_NO_DELETIONS_IRI);
-
-        try (RepositoryConnection conn = repo.getConnection()) {
-            service.getDeletionsResource(COMMIT_NO_DELETIONS_IRI, conn);
-        }
-    }
+//    @Test
+//    public void getDeletionsResourceWithResourceTest() {
+//        try (RepositoryConnection conn = repo.getConnection()) {
+//            Resource result = service.getDeletionsResource(COMMIT_IRI, conn);
+//            assertEquals(getDeletionsResource(COMMIT_IRI), result);
+//        }
+//    }
+//
+//    @Test
+//    public void getDeletionsResourceWithResourceAndDeletionsNotSetTest() {
+//        // Setup:
+//        thrown.expect(IllegalStateException.class);
+//        thrown.expectMessage("Deletions not set on Commit " + COMMIT_NO_DELETIONS_IRI);
+//
+//        try (RepositoryConnection conn = repo.getConnection()) {
+//            service.getDeletionsResource(COMMIT_NO_DELETIONS_IRI, conn);
+//        }
+//    }
 
     /* getAdditions(Resource, RepositoryConnection) */
 
@@ -1463,41 +1574,55 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
+//    @Test
+//    public void getDeletionsWithResourceAndDeletionsNotSetTest() {
+//        // Setup:
+//        thrown.expect(IllegalStateException.class);
+//        thrown.expectMessage("Deletions not set on Commit " + COMMIT_NO_DELETIONS_IRI);
+//
+//        try (RepositoryConnection conn = repo.getConnection()) {
+//            service.getDeletions(COMMIT_NO_DELETIONS_IRI, conn);
+//        }
+//    }
+
     @Test
-    public void getDeletionsWithResourceAndDeletionsNotSetTest() {
-        // Setup:
-        thrown.expect(IllegalStateException.class);
-        thrown.expectMessage("Deletions not set on Commit " + COMMIT_NO_DELETIONS_IRI);
+    public void getDeletionsUsingResourceWithQuads() {
+        Model expected = mf.createModel(Stream.of(
+                vf.createStatement(vf.createIRI("http://matonto.org/test/object1"), titleIRI, vf.createLiteral("Test 1 Title")),
+                vf.createStatement(vf.createIRI("http://matonto.org/test/object2"), titleIRI, vf.createLiteral("Test 1 Title"), vf.createIRI(GRAPHS + "quad-graph1"))
+        ).collect(Collectors.toList()));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.getDeletions(COMMIT_NO_DELETIONS_IRI, conn);
+            IRI commit = vf.createIRI(COMMITS + "quad-test2");
+            Stream<Statement> result = service.getDeletions(commit, conn);
+            assertEquals(new HashSet<>(expected), result.collect(Collectors.toSet()));
         }
     }
 
     /* getAdditionsResource(Commit, RepositoryConnection) */
 
-    @Test
-    public void getAdditionsResourceWithCommitTest() {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Commit commit = getThing(COMMIT_IRI, commitFactory, conn);
-
-            Resource result = service.getAdditionsResource(commit);
-            assertEquals(getAdditionsResource(COMMIT_IRI), result);
-        }
-    }
-
-    @Test
-    public void getAdditionsResourceWithCommitAndAdditionsNotSetTest() {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Commit commit = getThing(COMMIT_NO_ADDITIONS_IRI, commitFactory, conn);
-            thrown.expect(IllegalStateException.class);
-            thrown.expectMessage("Additions not set on Commit " + COMMIT_NO_ADDITIONS_IRI);
-
-            service.getAdditionsResource(commit);
-        }
-    }
+//    @Test
+//    public void getAdditionsResourceWithCommitTest() {
+//        try (RepositoryConnection conn = repo.getConnection()) {
+//            // Setup:
+//            Commit commit = getThing(COMMIT_IRI, commitFactory, conn);
+//
+//            Resource result = service.getAdditionsResource(commit);
+//            assertEquals(getAdditionsResource(COMMIT_IRI), result);
+//        }
+//    }
+//
+//    @Test
+//    public void getAdditionsResourceWithCommitAndAdditionsNotSetTest() {
+//        try (RepositoryConnection conn = repo.getConnection()) {
+//            // Setup:
+//            Commit commit = getThing(COMMIT_NO_ADDITIONS_IRI, commitFactory, conn);
+//            thrown.expect(IllegalStateException.class);
+//            thrown.expectMessage("Additions not set on Commit " + COMMIT_NO_ADDITIONS_IRI);
+//
+//            service.getAdditionsResource(commit);
+//        }
+//    }
 
     /* getAdditions(Commit, RepositoryConnection) */
 
@@ -1527,28 +1652,28 @@ public class SimpleCatalogUtilsServiceTest {
 
     /* getDeletionsResource(Commit, RepositoryConnection) */
 
-    @Test
-    public void getDeletionsResourceWithCommitTest() {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Commit commit = getThing(COMMIT_IRI, commitFactory, conn);
-
-            Resource result = service.getDeletionsResource(commit);
-            assertEquals(getDeletionsResource(COMMIT_IRI), result);
-        }
-    }
-
-    @Test
-    public void getDeletionsResourceWithCommitAndDeletionsNotSetTest() {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Commit commit = getThing(COMMIT_NO_DELETIONS_IRI, commitFactory, conn);
-            thrown.expect(IllegalStateException.class);
-            thrown.expectMessage("Deletions not set on Commit " + COMMIT_NO_DELETIONS_IRI);
-
-            service.getDeletionsResource(commit);
-        }
-    }
+//    @Test
+//    public void getDeletionsResourceWithCommitTest() {
+//        try (RepositoryConnection conn = repo.getConnection()) {
+//            // Setup:
+//            Commit commit = getThing(COMMIT_IRI, commitFactory, conn);
+//
+//            Resource result = service.getDeletionsResource(commit);
+//            assertEquals(getDeletionsResource(COMMIT_IRI), result);
+//        }
+//    }
+//
+//    @Test
+//    public void getDeletionsResourceWithCommitAndDeletionsNotSetTest() {
+//        try (RepositoryConnection conn = repo.getConnection()) {
+//            // Setup:
+//            Commit commit = getThing(COMMIT_NO_DELETIONS_IRI, commitFactory, conn);
+//            thrown.expect(IllegalStateException.class);
+//            thrown.expectMessage("Deletions not set on Commit " + COMMIT_NO_DELETIONS_IRI);
+//
+//            service.getDeletionsResource(commit);
+//        }
+//    }
 
     /* getAdditions(Commit, RepositoryConnection) */
 

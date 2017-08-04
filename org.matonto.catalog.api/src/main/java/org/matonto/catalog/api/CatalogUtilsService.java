@@ -29,6 +29,7 @@ import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.Distribution;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.Record;
+import org.matonto.catalog.api.ontologies.mcat.Revision;
 import org.matonto.catalog.api.ontologies.mcat.Version;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.rdf.api.IRI;
@@ -394,24 +395,12 @@ public interface CatalogUtilsService {
     void addCommit(Branch branch, Commit commit, RepositoryConnection conn);
 
     /**
-     * Gets the Resource identifying the graph that contains the additions statements of the Commit identified by the
-     * provided Resource.
      *
-     * @param commitId The Resource identifying the Commit that has the additions.
-     * @param conn A RepositoryConnection to use for lookup.
-     * @return The Resource for the additions graph.
-     * @throws IllegalStateException Thrown if the Commit has no additions graph.
+     * @param commitId
+     * @param conn
+     * @return
      */
-    Resource getAdditionsResource(Resource commitId, RepositoryConnection conn);
-
-    /**
-     * Gets the Resource identifying the graph that contains the additions statements of the provided Commit.
-     *
-     * @param commit The Commit with the additions.
-     * @return The Resource for the additions graph.
-     * @throws IllegalStateException Thrown if the Commit has no additions graph.
-     */
-    Resource getAdditionsResource(Commit commit);
+    Revision getRevision(Resource commitId, RepositoryConnection conn);
 
     /**
      * Gets the Stream of addition statements from the Commit identified by the provided Resource.
@@ -430,26 +419,6 @@ public interface CatalogUtilsService {
      * @return The Stream of addition statements
      */
     Stream<Statement> getAdditions(Commit commit, RepositoryConnection conn);
-
-    /**
-     * Gets the Resource identifying the graph that contains the deletions statements of the Commit identified by the
-     * provided Resource.
-     *
-     * @param commitId The Resource identifying the Commit that has the deletions.
-     * @param conn A RepositoryConnection to use for lookup.
-     * @return The Resource for the deletions graph.
-     * @throws IllegalStateException Thrown if the Commit has no deletions graph.
-     */
-    Resource getDeletionsResource(Resource commitId, RepositoryConnection conn);
-
-    /**
-     * Gets the Resource identifying the graph that contains the additions statements of the provided Commit.
-     *
-     * @param commit The Commit with the deletions.
-     * @return The Resource for the deletions graph.
-     * @throws IllegalStateException Thrown if the Commit has no deletions graph.
-     */
-    Resource getDeletionsResource(Commit commit);
 
     /**
      * Gets the Stream of deletion statements from the Commit identified by the provided Resource.
