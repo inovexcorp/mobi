@@ -789,8 +789,8 @@ GRAPH commits:quad-test1 {
         mcat:graphRevision [
             a mcat:GraphRevision ;
             mcat:revisionedGraph graphs:quad-graph1 ;
-            mcat:additions additions:quad-test1-graph1 ;
-            mcat:deletions deletions:quad-test1-graph1 .
+            mcat:additions additions:quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1 ;
+            mcat:deletions deletions:quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1
         ] .
 }
 
@@ -802,7 +802,7 @@ GRAPH deletions:quad-test1 {
     <http://matonto.org/test/object1> dc:title "Test 0 Title" .
 }
 
-GRAPH additions:quad-test1-graph1 {
+GRAPH additions:quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1 {
     <http://matonto.org/test/object2> a owl:Thing ;
         dc:title "Test 1 Title" .
 }
@@ -820,16 +820,24 @@ GRAPH commits:quad-test2 {
         mcat:graphRevision [
             a mcat:GraphRevision ;
             mcat:revisionedGraph graphs:quad-graph1 ;
-            mcat:additions additions:quad-test2-graph1 ;
-            mcat:deletions deletions:quad-test2-graph1 .
+            mcat:additions additions:quad-test2%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1 ;
+            mcat:deletions deletions:quad-test2%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1
         ] .
 }
 
-GRAPH additions:quad-test2-graph1 {
+GRAPH additions:quad-test2 {
+    <http://matonto.org/test/object1> dc:title "Test 2 Title" .
+}
+
+GRAPH deletions:quad-test2 {
+    <http://matonto.org/test/object1> dc:title "Test 1 Title" .
+}
+
+GRAPH additions:quad-test2%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1 {
     <http://matonto.org/test/object2> dc:title "Test 2 Title" .
 }
 
-GRAPH deletions:quad-test2-graph1 {
+GRAPH deletions:quad-test2%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1 {
     <http://matonto.org/test/object2> dc:title "Test 1 Title" .
 }
 
@@ -848,8 +856,8 @@ GRAPH commits:quad-in-progress-commit {
         mcat:graphRevision [
             a mcat:GraphRevision ;
             mcat:revisionedGraph graphs:quad-graph1 ;
-            mcat:additions additions:quad-in-progress-commit-graph1 ;
-            mcat:deletions deletions:quad-in-progress-commit-graph1 .
+            mcat:additions additions:quad-in-progress-commit%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1 ;
+            mcat:deletions deletions:quad-in-progress-commit%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1
         ] .
 }
 
@@ -861,10 +869,10 @@ GRAPH deletions:quad-in-progress-commit {
     <http://matonto.org/test/delete> dc:title "Delete" ;
 }
 
-GRAPH additions:quad-in-progress-commit-graph1 {
+GRAPH additions:quad-in-progress-commit%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1 {
     <http://matonto.org/test/add> dc:title "Add" ;
 }
 
-GRAPH deletions:quad-in-progress-commit-graph1 {
+GRAPH deletions:quad-in-progress-commit%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1 {
     <http://matonto.org/test/delete> dc:title "Delete" ;
 }
