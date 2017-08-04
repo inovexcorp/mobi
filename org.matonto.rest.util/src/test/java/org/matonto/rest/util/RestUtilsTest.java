@@ -24,6 +24,7 @@ package org.matonto.rest.util;
  */
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
@@ -44,8 +45,8 @@ import org.mockito.MockitoAnnotations;
 import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
 
-import javax.ws.rs.container.ContainerRequestContext;
 import java.util.Optional;
+import javax.ws.rs.container.ContainerRequestContext;
 
 public class RestUtilsTest {
     private Model model;
@@ -128,14 +129,14 @@ public class RestUtilsTest {
     public void modelToStringWithRDFFormatTest() throws Exception {
         assertEquals(expectedJsonld, RestUtils.modelToString(model, RDFFormat.JSONLD));
         assertEquals(expectedTurtle, RestUtils.modelToString(model, RDFFormat.TURTLE));
-        assertEquals(expectedRdfxml, RestUtils.modelToString(model, RDFFormat.RDFXML));
+        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, RDFFormat.RDFXML)));
     }
 
     @Test
     public void modelToStringTest() throws Exception {
         assertEquals(expectedJsonld, RestUtils.modelToString(model, "jsonld"));
         assertEquals(expectedTurtle, RestUtils.modelToString(model, "turtle"));
-        assertEquals(expectedRdfxml, RestUtils.modelToString(model, "rdf/xml"));
+        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, "rdf/xml")));
         assertEquals(expectedJsonld, RestUtils.modelToString(model, "something"));
     }
 
@@ -143,14 +144,14 @@ public class RestUtilsTest {
     public void groupedModelToStringWithRDFFormatTest() throws Exception {
         assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, RDFFormat.JSONLD));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, RDFFormat.TURTLE));
-        assertEquals(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, RDFFormat.RDFXML));
+        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, RDFFormat.RDFXML)));
     }
 
     @Test
     public void groupedModelToStringTest() throws Exception {
         assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, "jsonld"));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, "turtle"));
-        assertEquals(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, "rdf/xml"));
+        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, "rdf/xml")));
         assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, "something"));
     }
 
@@ -259,5 +260,13 @@ public class RestUtilsTest {
         temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("true"));
         temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("false"));
         model = Values.sesameModel(temp);
+    }
+
+    private boolean equalsIgnoreNewline(String s1, String s2) {
+        return s1 != null && s2 != null && normalizeLineEnds(s1).equals(normalizeLineEnds(s2));
+    }
+
+    private String normalizeLineEnds(String s) {
+        return s.replace("\r\n", "\n").replace('\r', '\n');
     }
 }

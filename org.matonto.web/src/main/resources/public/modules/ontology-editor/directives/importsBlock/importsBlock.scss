@@ -2,13 +2,31 @@
 @import "./src/main/resources/public/css/variables";
 
 .imports-block {
+    .block-header .pull-right {
+        margin-left: 10px;
+    }
+
     .import {
         margin: 0;
         padding: 10px;
 
         &:hover {
             background: $gray-lighter;
-            cursor: pointer;
+        }
+
+        .error-display {
+            font-weight: normal;
+        }
+    }
+
+    .indirect-import-container {
+        border-top: 1px solid $gray-custom;
+
+        .indirect-header {
+            border-bottom: 1px solid $gray-custom;
+            display: inline-block;
+            padding: 10px;
+            width: 100%;
         }
     }
 }
