@@ -62,7 +62,6 @@
                     var s = searchService;
                     var es = exploreService;
                     dvm.ds = discoverStateService;
-                    dvm.types = [];
                     dvm.typeObject = {};
                     dvm.typeSearch = '';
                     dvm.errorMessage = '';
@@ -79,9 +78,9 @@
                     }
 
                     dvm.getTypes = function() {
+                        dvm.ds.search.queryConfig.types = [];
                         es.getClassDetails(dvm.ds.search.datasetRecordId)
                             .then(details => {
-                                dvm.types = details;
                                 var ontologyNames = _.uniq(_.map(details, 'ontologyRecordTitle'));
                                 dvm.typeObject = {};
                                 _.forEach(ontologyNames, name => {
@@ -89,7 +88,6 @@
                                 });
                                 dvm.errorMessage = '';
                             }, errorMessage => {
-                                dvm.types = [];
                                 dvm.typeObject = {};
                                 dvm.errorMessage = errorMessage;
                             });

@@ -69,22 +69,24 @@ describe('Search Form directive', function() {
         describe('getTypes calls the proper method when getClassDetails', function() {
             beforeEach(function() {
                 discoverStateSvc.search.datasetRecordId = 'id';
-                controller.types = [{}];
+                controller.typeObject = {key: []};
             });
             it('resolves', function() {
-                exploreSvc.getClassDetails.and.returnValue($q.when([{prop: 'details'}]));
+                exploreSvc.getClassDetails.and.returnValue($q.when([{ontologyRecordTitle: 'title', prop: 'details'}]));
                 controller.getTypes();
                 scope.$apply();
+                expect(discoverStateSvc.search.queryConfig.types).toEqual([]);
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('id');
-                expect(controller.types).toEqual([{prop: 'details'}]);
+                expect(angular.copy(controller.typeObject)).toEqual({title: [{ontologyRecordTitle: 'title', prop: 'details'}]});
                 expect(controller.errorMessage).toBe('');
             });
             it('rejects', function() {
                 exploreSvc.getClassDetails.and.returnValue($q.reject('error'));
                 controller.getTypes();
                 scope.$apply();
+                expect(discoverStateSvc.search.queryConfig.types).toEqual([]);
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('id');
-                expect(controller.types).toEqual([]);
+                expect(controller.typeObject).toEqual({});
                 expect(controller.errorMessage).toBe('error');
             });
         });
