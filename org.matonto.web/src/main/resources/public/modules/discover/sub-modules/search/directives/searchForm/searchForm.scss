@@ -28,4 +28,25 @@
             width: 9999px;
         }
     }
+
+    .md-chips .md-chip-input-container {
+        width: 100%;
+
+        input {
+            width: 100%;
+        }
+
+        md-autocomplete md-autocomplete-wrap {
+            width: 100%;
+        }
+    }
+
+    .searchbox {
+        border: none;
+        border-bottom: 1px solid $gray-light;
+        outline: none;
+        height: 100%;
+        width: 100%;
+        padding: 10px;
+    }
 }

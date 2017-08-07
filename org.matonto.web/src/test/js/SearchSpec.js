@@ -28,6 +28,7 @@ describe('Search Service', function() {
         mockHttpService();
         mockSparqlManager();
         mockDiscoverState();
+        mockPrefixes();
 
         module(function($provide) {
             $provide.constant('sparqljs', window.sparqljs);
@@ -50,11 +51,11 @@ describe('Search Service', function() {
         });
         it('unless an error occurs', function() {
             sparqlManagerSvc.query.and.returnValue($q.reject('Error Message'));
-            searchSvc.submitSearch([]).then(function() {
+            searchSvc.submitSearch('', {}).then(function() {
                 fail('Promise should have rejected');
             }, function(response) {
                 expect(response).toEqual('Error Message');
-                expect(searchSvc.createQueryString).toHaveBeenCalledWith([], false);
+                expect(searchSvc.createQueryString).toHaveBeenCalledWith({});
                 expect(sparqlManagerSvc.query).toHaveBeenCalledWith(query, '', discoverStateSvc.search.targetedId);
                 expect(httpSvc.cancel).toHaveBeenCalledWith(discoverStateSvc.search.targetedId);
             });
@@ -62,9 +63,9 @@ describe('Search Service', function() {
         });
         it('successfully', function() {
             sparqlManagerSvc.query.and.returnValue($q.when({}));
-            searchSvc.submitSearch([]).then(function(response) {
+            searchSvc.submitSearch('', {}).then(function(response) {
                 expect(response).toEqual({});
-                expect(searchSvc.createQueryString).toHaveBeenCalledWith([], false);
+                expect(searchSvc.createQueryString).toHaveBeenCalledWith({});
                 expect(sparqlManagerSvc.query).toHaveBeenCalledWith(query, '', discoverStateSvc.search.targetedId);
                 expect(httpSvc.cancel).toHaveBeenCalledWith(discoverStateSvc.search.targetedId);
             }, function() {
@@ -75,11 +76,11 @@ describe('Search Service', function() {
     });
     describe('should create a keyword query', function() {
         it('with and', function() {
-            var result = searchSvc.createQueryString(['test1', 'test2']);
+            var result = searchSvc.createQueryString({keywords: ['test1', 'test2']});
             expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test1")))\n  }\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test2")))\n  }\n}\nGROUP BY ?Subject ?Predicate');
         })
         it('with or', function() {
-            var result = searchSvc.createQueryString(['test1', 'test2'], true);
+            var result = searchSvc.createQueryString({keywords: ['test1', 'test2'], isOrKeywords: true});
             expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test1")))\n  }\n  UNION\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test2")))\n  }\n}\nGROUP BY ?Subject ?Predicate');
         });
     });

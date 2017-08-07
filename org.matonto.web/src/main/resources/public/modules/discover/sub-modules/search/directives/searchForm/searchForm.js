@@ -40,6 +40,7 @@
          * @restrict E
          * @requires search.service:searchService
          * @requires discoverState.service:discoverStateService
+         * @requires explore.service:exploreService
          *
          * @description
          * HTML contents in the search form within the Search page for entering a keyword search combined
@@ -47,9 +48,9 @@
          */
         .directive('searchForm', searchForm);
 
-        searchForm.$inject = ['searchService', 'discoverStateService'];
+        searchForm.$inject = ['searchService', 'discoverStateService', 'exploreService'];
 
-        function searchForm(searchService, discoverStateService) {
+        function searchForm(searchService, discoverStateService, exploreService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/search/directives/searchForm/searchForm.html',
@@ -59,16 +60,37 @@
                 controller: function() {
                     var dvm = this;
                     var s = searchService;
+                    var es = exploreService;
                     dvm.ds = discoverStateService;
+                    dvm.types = [];
+                    dvm.typeObject = {};
+                    dvm.typeSearch = '';
                     dvm.errorMessage = '';
 
                     dvm.submit = function() {
-                        s.submitSearch(dvm.ds.search.keywords.arr, dvm.ds.search.keywords.isOr, dvm.ds.search.datasetRecordId)
+                        s.submitSearch(dvm.ds.search.datasetRecordId, dvm.ds.search.queryConfig)
                             .then(data => {
                                 dvm.ds.search.results = data;
                                 dvm.errorMessage = '';
                             }, errorMessage => {
                                 dvm.ds.search.results = undefined;
+                                dvm.errorMessage = errorMessage;
+                            });
+                    }
+
+                    dvm.getTypes = function() {
+                        es.getClassDetails(dvm.ds.search.datasetRecordId)
+                            .then(details => {
+                                dvm.types = details;
+                                var ontologyNames = _.uniq(_.map(details, 'ontologyRecordTitle'));
+                                dvm.typeObject = {};
+                                _.forEach(ontologyNames, name => {
+                                    _.set(dvm.typeObject, name, _.filter(details, {ontologyRecordTitle: name}));
+                                });
+                                dvm.errorMessage = '';
+                            }, errorMessage => {
+                                dvm.types = [];
+                                dvm.typeObject = {};
                                 dvm.errorMessage = errorMessage;
                             });
                     }
