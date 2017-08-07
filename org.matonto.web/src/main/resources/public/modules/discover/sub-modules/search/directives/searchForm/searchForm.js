@@ -48,16 +48,16 @@
          */
         .directive('searchForm', searchForm);
 
-        searchForm.$inject = ['$sce', 'searchService', 'discoverStateService', 'exploreService'];
+        searchForm.$inject = ['searchService', 'discoverStateService', 'exploreService'];
 
-        function searchForm($sce, searchService, discoverStateService, exploreService) {
+        function searchForm(searchService, discoverStateService, exploreService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/search/directives/searchForm/searchForm.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function($scope) {
+                controller: function() {
                     var dvm = this;
                     var s = searchService;
                     var es = exploreService;
@@ -81,11 +81,7 @@
                         dvm.ds.search.queryConfig.types = [];
                         es.getClassDetails(dvm.ds.search.datasetRecordId)
                             .then(details => {
-                                var ontologyNames = _.uniq(_.map(details, 'ontologyRecordTitle'));
-                                dvm.typeObject = {};
-                                _.forEach(ontologyNames, name => {
-                                    _.set(dvm.typeObject, name, _.filter(details, {ontologyRecordTitle: name}));
-                                });
+                                dvm.typeObject = _.groupBy(details, 'ontologyRecordTitle');
                                 dvm.errorMessage = '';
                             }, errorMessage => {
                                 dvm.typeObject = {};
@@ -94,10 +90,7 @@
                     }
 
                     dvm.getSelectedText = function() {
-                        if (dvm.ds.search.queryConfig.types.length) {
-                            return _.join(_.map(dvm.ds.search.queryConfig.types, 'classTitle'), ', ');
-                        }
-                        return '';
+                        return _.join(_.map(dvm.ds.search.queryConfig.types, 'classTitle'), ', ');
                     }
                 }
             }

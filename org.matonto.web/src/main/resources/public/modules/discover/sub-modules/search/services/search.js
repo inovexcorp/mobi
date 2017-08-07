@@ -69,7 +69,7 @@
          * @methodOf search.service:searchService
          *
          * @description
-         * Runs a SPARQL query made using the provided keywords and boolean operator against the
+         * Runs a SPARQL query made using the provided keywords, types, and boolean operators against the
          * repository and returns the SPARQL spec JSON results.
          *
          * @param {string} datasetRecordIRI The IRI of the DatasetRecord to restrict the query to
@@ -91,7 +91,8 @@
          *
          * @description
          * Creates a SPARQL query that selects all subjects, predicates, and objects that match
-         * multiple keywords searches combined either using boolean operator AND or OR.
+         * multiple keywords searches and/or multiple type declarations combined either using
+         * boolean operator AND or OR.
          *
          * @param {Object} queryConfig A configuration object for the query string
          * @param {string[]} [queryConfig.keywords=[]] An array of keywords to search for
