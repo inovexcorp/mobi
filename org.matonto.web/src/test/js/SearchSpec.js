@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Search Service', function() {
-    var searchSvc, scope, $q, httpSvc, sparqlManagerSvc, discoverStateSvc;
+    var searchSvc, scope, $q, httpSvc, sparqlManagerSvc, discoverStateSvc, prefixes;
 
     beforeEach(function() {
         module('search');
@@ -34,13 +34,14 @@ describe('Search Service', function() {
             $provide.constant('sparqljs', window.sparqljs);
         });
 
-        inject(function(searchService, _$rootScope_, _$q_, _httpService_, _sparqlManagerService_, _discoverStateService_) {
+        inject(function(searchService, _$rootScope_, _$q_, _httpService_, _sparqlManagerService_, _discoverStateService_, _prefixes_) {
             searchSvc = searchService;
             scope = _$rootScope_;
             $q = _$q_;
             httpSvc = _httpService_;
             sparqlManagerSvc = _sparqlManagerService_;
             discoverStateSvc = _discoverStateService_;
+            prefixes = _prefixes_;
         });
     });
 
@@ -78,10 +79,20 @@ describe('Search Service', function() {
         it('with and', function() {
             var result = searchSvc.createQueryString({keywords: ['test1', 'test2']});
             expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test1")))\n  }\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test2")))\n  }\n}\nGROUP BY ?Subject ?Predicate');
-        })
+        });
         it('with or', function() {
             var result = searchSvc.createQueryString({keywords: ['test1', 'test2'], isOrKeywords: true});
             expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test1")))\n  }\n  UNION\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test2")))\n  }\n}\nGROUP BY ?Subject ?Predicate');
+        });
+    });
+    describe('should create a type query', function() {
+        it('with and', function() {
+            var result = searchSvc.createQueryString({types: [{classIRI: 'http://matonto.org/1'}, {classIRI: 'http://matonto.org/2'}]});
+            expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject <' + prefixes.rdf + 'type> <http://matonto.org/1>.\n    ?Subject ?Predicate ?o.\n  }\n  {\n    ?Subject <' + prefixes.rdf + 'type> <http://matonto.org/2>.\n    ?Subject ?Predicate ?o.\n  }\n}\nGROUP BY ?Subject ?Predicate');
+        });
+        it('with or', function() {
+            var result = searchSvc.createQueryString({types: [{classIRI: 'http://matonto.org/1'}, {classIRI: 'http://matonto.org/2'}], isOrTypes: true});
+            expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject <' + prefixes.rdf + 'type> <http://matonto.org/1>.\n    ?Subject ?Predicate ?o.\n  }\n  UNION\n  {\n    ?Subject <' + prefixes.rdf + 'type> <http://matonto.org/2>.\n    ?Subject ?Predicate ?o.\n  }\n}\nGROUP BY ?Subject ?Predicate');
         });
     });
 });

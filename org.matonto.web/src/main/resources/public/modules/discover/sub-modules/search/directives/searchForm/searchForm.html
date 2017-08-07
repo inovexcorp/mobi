@@ -48,12 +48,12 @@
                           <md-radio-button ng-value="true" name="is-or-type">OR</md-radio-button>
                       </md-radio-group>
                   </div>
-                  <md-select ng-model="dvm.ds.search.queryConfig.types" md-on-close="dvm.typeSearch = ''" multiple ng-disabled="dvm.ds.search.datasetRecordId === ''">
+                  <md-select ng-model="dvm.ds.search.queryConfig.types" md-on-close="dvm.typeSearch = ''" md-selected-text="dvm.getSelectedText()" multiple ng-disabled="dvm.ds.search.datasetRecordId === ''">
                       <md-select-header>
-                          <input ng-model="dvm.typeSearch" type="search" class="searchbox" ng-keydown="$event.stopPropagation()">
+                          <input ng-model="dvm.typeSearch" type="search" class="search-form-searchbox" ng-keydown="$event.stopPropagation()">
                       </md-select-header>
                       <md-optgroup ng-repeat="(key, value) in dvm.typeObject" label="{{key}}">
-                          <md-option ng-value="item.classIRI" ng-repeat="item in value | filter:dvm.typeSearch">{{item.classTitle}} :: {{item.classIRI}}</md-option>
+                          <md-option ng-value="item" ng-repeat="item in value | filter:dvm.typeSearch">{{item.classTitle}} :: {{item.classIRI}}</md-option>
                       </md-optgroup>
                   </md-select>
               </div>

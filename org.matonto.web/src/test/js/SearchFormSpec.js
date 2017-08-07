@@ -88,6 +88,15 @@ describe('Search Form directive', function() {
                 expect(controller.errorMessage).toBe('error');
             });
         });
+        describe('getSelectedText returns the correct text when queryConfig.types', function() {
+            it('is empty', function() {
+                expect(controller.getSelectedText()).toBe('');
+            });
+            it('has values', function() {
+                discoverStateSvc.search.queryConfig.types = [{classTitle: 'title1'}, {classTitle: 'title2'}];
+                expect(controller.getSelectedText()).toBe('title1, title2');
+            });
+        });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {

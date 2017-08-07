@@ -48,16 +48,16 @@
          */
         .directive('searchForm', searchForm);
 
-        searchForm.$inject = ['searchService', 'discoverStateService', 'exploreService'];
+        searchForm.$inject = ['$sce', 'searchService', 'discoverStateService', 'exploreService'];
 
-        function searchForm(searchService, discoverStateService, exploreService) {
+        function searchForm($sce, searchService, discoverStateService, exploreService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/search/directives/searchForm/searchForm.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: function($scope) {
                     var dvm = this;
                     var s = searchService;
                     var es = exploreService;
@@ -93,6 +93,13 @@
                                 dvm.typeObject = {};
                                 dvm.errorMessage = errorMessage;
                             });
+                    }
+
+                    dvm.getSelectedText = function() {
+                        if (dvm.ds.search.queryConfig.types.length) {
+                            return _.join(_.map(dvm.ds.search.queryConfig.types, 'classTitle'), ', ');
+                        }
+                        return '';
                     }
                 }
             }

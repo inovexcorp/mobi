@@ -164,13 +164,13 @@
             };
         }
 
-        function createTypeQuery(iri) {
+        function createTypeQuery(item) {
             var typePattern = {
                 type: 'bgp',
                 triples: [{
                     subject: '?Subject',
                     predicate: prefixes.rdf + 'type',
-                    object: iri
+                    object: item.classIRI
                 }]
             };
             return {

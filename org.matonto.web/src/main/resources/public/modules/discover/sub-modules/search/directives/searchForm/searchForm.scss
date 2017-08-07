@@ -40,13 +40,13 @@
             width: 100%;
         }
     }
+}
 
-    .searchbox {
-        border: none;
-        border-bottom: 1px solid $gray-light;
-        outline: none;
-        height: 100%;
-        width: 100%;
-        padding: 10px;
-    }
+.search-form-searchbox {
+    border: none;
+    border-bottom: 1px solid $gray-light;
+    outline: none;
+    height: 100%;
+    width: 100%;
+    padding: 10px;
 }
