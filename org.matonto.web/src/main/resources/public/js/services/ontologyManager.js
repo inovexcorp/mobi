@@ -228,7 +228,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the PUT /matontorest/ontologies/{recordId} endpoint which will return a new in-progress commit 
+             * Calls the PUT /matontorest/ontologies/{recordId} endpoint which will return a new in-progress commit
              * object to be applied to the ontology.
              *
              * @param {File} file The updated ontology file.
@@ -251,7 +251,7 @@
                         }
                     };
                 fd.append('file', file);
-                
+
                 return $http.put(prefix + '/' + encodeURIComponent(recordId), fd, config)
                     .then(response => response.data, util.rejectError);
             }
@@ -1384,11 +1384,7 @@
                     || utilService.getPropertyValue(entity, prefixes.skos + 'prefLabel')
                     || utilService.getPropertyValue(entity, prefixes.skos + 'altLabel');
                 if (!result) {
-                    if (_.has(entity, '@id')) {
-                        result = utilService.getBeautifulIRI(entity['@id']);
-                    } else {
-                        result = _.get(entity, 'matonto.anonymous', '');
-                    }
+                    result = utilService.getBeautifulIRI(entity['@id']);
                 }
                 return result;
             }
