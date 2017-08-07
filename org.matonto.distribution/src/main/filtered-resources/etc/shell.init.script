@@ -4,7 +4,7 @@
 
 #wait -t 5000 obr
 
-matonto-deploy-bundles = {
+mobi-deploy-bundles = {
     obr:url-refresh
     obr:start -d \
         org.matonto.persistence.api${deploy.bundles.version} \
