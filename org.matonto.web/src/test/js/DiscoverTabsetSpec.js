@@ -47,13 +47,16 @@ describe('Discover Tabset directive', function() {
             expect(element.find('tabset').length).toBe(1);
         });
         it('with tabs', function() {
-            expect(element.find('tab').length).toBe(2);
+            expect(element.find('tab').length).toBe(3);
         });
         it('with explore-tab', function() {
             expect(element.find('explore-tab').length).toBe(1);
         });
         it('with query-tab', function() {
             expect(element.find('query-tab').length).toBe(1);
+        });
+        it('with search-tab', function() {
+            expect(element.find('discover-search-tab').length).toBe(1);
         });
     });
 });

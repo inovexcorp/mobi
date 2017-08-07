@@ -36,7 +36,7 @@ import org.matonto.rdf.api.ValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Command(scope = "matonto", name = "export", description = "Exports objects from a repository or dataset")
+@Command(scope = "mobi", name = "export", description = "Exports objects from a repository or dataset")
 @Service
 public class CLIExporter implements Action {
 

@@ -28,7 +28,7 @@
 	<parent>
 		<artifactId>rdf-orm</artifactId>
 		<groupId>org.matonto</groupId>
-		<version>1.8.43-SNAPSHOT</version>
+		<version>1.8.53-SNAPSHOT</version>
 	</parent>
 	<name>RDF ORM Maven Plugin</name>
 	<packaging>maven-plugin</packaging>

@@ -50,6 +50,33 @@ function injectChromaConstant() {
     });
 }
 
+function injectAntlrConstant() {
+    module(function($provide) {
+        $provide.constant('antlr', {
+            antlr4: {
+                InputStream: jasmine.createSpy('InputStream').and.returnValue({}),
+                CommonTokenStream: jasmine.createSpy('CommonTokenStream').and.returnValue({}),
+                tree: {
+                    ParseTreeWalker: {
+                        DEFAULT: {
+                            walk: jasmine.createSpy('walk')
+                        }
+                    }
+                }
+            },
+            MOSLexer: {
+                MOSLexer: jasmine.createSpy('MOSLexer').and.returnValue({})
+            },
+            MOSParser: {
+                MOSParser: jasmine.createSpy('MOSParser').and.returnValue({
+                    description: jasmine.createSpy('description').and.returnValue({})
+                })
+            },
+            BlankNodesListener: jasmine.createSpy('BlankNodesListener')
+        });
+    });
+}
+
 function injectRegexConstant() {
     module(function($provide) {
         $provide.constant('REGEX', {
@@ -257,6 +284,7 @@ function mockOntologyManager() {
             this.deleteOntology = jasmine.createSpy('deleteOntology').and.returnValue($q.when());
             this.getAnnotationPropertyHierarchies = jasmine.createSpy('getAnnotationPropertyHierarchies');
             this.uploadChangesFile = jasmine.createSpy('uploadChangesFile').and.returnValue($q.when({}));
+            this.getFailedImports = jasmine.createSpy('getFailedImports').and.returnValue($q.when([]));
         });
     });
 }
@@ -455,6 +483,7 @@ function mockSparqlManager() {
             this.errorMessage = '';
             this.infoMessage = '';
             this.reset = jasmine.createSpy('reset');
+            this.query = jasmine.createSpy('query').and.returnValue($q.when({}));
             this.queryRdf = jasmine.createSpy('queryRdf');
             this.downloadResults = jasmine.createSpy('downloadResults');
             this.setResults = jasmine.createSpy('setResults');
@@ -569,7 +598,8 @@ function mockOntologyState() {
                 conceptSchemeHierarchy: [],
                 conceptSchemeIndex: {},
                 flatConceptSchemeHierarchy: [],
-                iriList: []
+                iriList: [],
+                failedImports: []
             };
             this.states = [];
             this.list = [];
@@ -1004,6 +1034,16 @@ function mockDiscoverState() {
             this.query = {
                 active: false
             };
+            this.search = {
+                targetedId: '',
+                active: false,
+                results: undefined,
+                keywords: {
+                    arr: [],
+                    isOr: false
+                },
+                datasetRecordId: ''
+            };
             this.resetPagedInstanceDetails = jasmine.createSpy('resetPagedInstanceDetails');
             this.cleanUpOnDatasetDelete = jasmine.createSpy('cleanUpOnDatasetDelete');
             this.cleanUpOnDatasetClear = jasmine.createSpy('cleanUpOnDatasetClear');
@@ -1041,6 +1081,15 @@ function mockExploreUtils() {
             this.getNewProperties = jasmine.createSpy('getNewProperties').and.returnValue([]);
             this.removeEmptyProperties = jasmine.createSpy('removeEmptyProperties').and.returnValue({});
             this.removeEmptyPropertiesFromArray = jasmine.createSpy('removeEmptyPropertiesFromArray').and.returnValue([]);
+        });
+    });
+}
+
+function mockSearch() {
+    module(function($provide) {
+        $provide.service('searchService', function($q) {
+            this.createQueryString = jasmine.createSpy("createQueryString").and.returnValue('');
+            this.submitSearch = jasmine.createSpy('submitSearch').and.returnValue($q.when({}));
         });
     });
 }

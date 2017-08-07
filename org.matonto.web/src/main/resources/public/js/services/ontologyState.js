@@ -162,7 +162,8 @@
                 classesWithIndividuals: [],
                 individualsParentPath: [],
                 iriList: [],
-                selected: {}
+                selected: {},
+                failedImports: []
             };
             var vocabularyListItemTemplate = {
                 ontologyState: {
@@ -199,7 +200,8 @@
                 },
                 branches: [],
                 iriList: [],
-                selected: {}
+                selected: {},
+                failedImports: []
             };
             
             var emptyInProgressCommit = {
@@ -436,13 +438,14 @@
              * @param {string} [type='ontology'] The type of listItem that needs to be updated.
              * @param {boolean} [upToDate=true] The flag indicating whether the ontology is upToDate or not.
              * @param {boolean} [inProgressCommit=emptyInProgressCommit] The Object containing the saved changes to apply.
+             * @param {boolean} [clearCache=false] Boolean indicating whether or not you should clear the cache.
              * @returns {Promise} A promise indicating the success or failure of the update.
              */
-            self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, inProgressCommit = emptyInProgressCommit) {
+            self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, inProgressCommit = emptyInProgressCommit, clearCache = false) {
                 var listItem;
                 var oldListItem = self.getListItemByRecordId(recordId);
                 
-                return om.getOntology(recordId, branchId, commitId)
+                return om.getOntology(recordId, branchId, commitId, 'jsonld', clearCache)
                     .then(ontology => {
                         var ontologyId = om.getOntologyIRI(ontology);
                         if (type === 'ontology') {
@@ -495,7 +498,8 @@
                     om.getObjectPropertyHierarchies(recordId, branchId, commitId),
                     cm.getRecordBranches(recordId, catalogId),
                     om.getAnnotationPropertyHierarchies(recordId, branchId, commitId),
-                    om.getImportedOntologies(recordId, branchId, commitId)
+                    om.getImportedOntologies(recordId, branchId, commitId),
+                    om.getFailedImports(recordId, branchId, commitId)
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
                     listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri))
@@ -575,6 +579,7 @@
                         _.concat(om.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties),
                         compareListItems
                     );
+                    listItem.failedImports = response[9];
                     deferred.resolve(listItem);
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
                 return deferred.promise;
@@ -595,7 +600,8 @@
                     om.getConceptHierarchies(recordId, branchId, commitId),
                     om.getConceptSchemeHierarchies(recordId, branchId, commitId),
                     cm.getRecordBranches(recordId, catalogId),
-                    om.getImportedOntologies(recordId, branchId, commitId)
+                    om.getImportedOntologies(recordId, branchId, commitId),
+                    om.getFailedImports(recordId, branchId, commitId)
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
                     listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri));
@@ -650,6 +656,7 @@
                             angular.copy(om.conceptRelationshipList), angular.copy(om.schemeRelationshipList)),
                         compareListItems
                     );
+                    listItem.failedImports = response[6];
                     deferred.resolve(listItem);
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
                 return deferred.promise;
@@ -1468,6 +1475,7 @@
                 });
                 var importedOntologyListItem = {
                     id: importedOntObj.id,
+                    ontologyId: importedOntObj.ontologyId,
                     index: index,
                     ontology: importedOntObj.ontology
                 };

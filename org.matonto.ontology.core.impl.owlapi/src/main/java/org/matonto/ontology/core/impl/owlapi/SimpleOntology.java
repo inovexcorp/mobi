@@ -79,6 +79,7 @@ import org.semanticweb.owlapi.model.OWLDataMaxCardinality;
 import org.semanticweb.owlapi.model.OWLDataMinCardinality;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
+import org.semanticweb.owlapi.model.OWLDocumentFormatImpl;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLObjectCardinalityRestriction;
 import org.semanticweb.owlapi.model.OWLObjectExactCardinality;
@@ -576,7 +577,9 @@ public class SimpleOntology implements Ontology {
         } else {
             sesameModel = new org.openrdf.model.impl.LinkedHashModel();
             RDFHandler rdfHandler = new StatementCollector(sesameModel);
-            RioRenderer renderer = new RioRenderer(this.owlOntology, rdfHandler, this.owlOntology.getFormat());
+            OWLDocumentFormat format = this.owlOntology.getFormat();
+            format.setAddMissingTypes(false);
+            RioRenderer renderer = new RioRenderer(this.owlOntology, rdfHandler, format);
             renderer.render();
             return sesameModel.unmodifiable();
         }
