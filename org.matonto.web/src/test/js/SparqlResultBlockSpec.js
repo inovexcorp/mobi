@@ -20,15 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('SPARQL Result Table directive', function() {
-    var $compile,
-        scope,
-        element,
-        sparqlManagerSvc;
+describe('SPARQL Result Block directive', function() {
+    var $compile, scope, element, sparqlManagerSvc;
 
     beforeEach(function() {
         module('templates');
-        module('sparqlResultTable');
+        module('sparqlResultBlock');
         mockSparqlManager();
 
         inject(function(_$compile_, _$rootScope_, _sparqlManagerService_) {
@@ -48,14 +45,14 @@ describe('SPARQL Result Table directive', function() {
             }
         ];
         sparqlManagerSvc.bindings = ['var1', 'var2'];
-        element = $compile(angular.element('<sparql-result-table></sparql-result-table>'))(scope);
+        element = $compile(angular.element('<sparql-result-block></sparql-result-block>'))(scope);
         scope.$digest();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('sparql-result-table')).toBe(true);
+            expect(element.hasClass('sparql-result-block')).toBe(true);
         });
         it('with a block', function() {
             expect(element.find('block').length).toBe(1);
@@ -66,28 +63,14 @@ describe('SPARQL Result Table directive', function() {
         it('with a block-footer', function() {
             expect(element.find('block-footer').length).toBe(1);
         });
-        it('with a table', function() {
-            expect(element.querySelectorAll('table.table').length).toBe(1);
+        it('with a sparql-result-table', function() {
+            expect(element.find('sparql-result-table').length).toBe(1);
         });
         it('with a pagination', function() {
             expect(element.find('pagination').length).toBe(1);
         });
         it('with a download button', function() {
             expect(element.querySelectorAll('button.download-button').length).toBe(1);
-        });
-        it('depending on how many binding names there are', function() {
-            var theadList = element.querySelectorAll('thead');
-            expect(element.html()).not.toContain('None');
-            expect(theadList.length).toBe(1);
-            var thead = theadList[0];
-            expect(thead.querySelectorAll('th').length).toBe(sparqlManagerSvc.bindings.length);
-        });
-        it('depending on how many results there are', function() {
-            var tbodyList = element.querySelectorAll('tbody');
-            expect(element.html()).not.toContain('None');
-            expect(tbodyList.length).toBe(1);
-            var tbody = tbodyList[0];
-            expect(tbody.querySelectorAll('tr').length).toBe(sparqlManagerSvc.data.length);
         });
         it('depending on whether an error occurred error message', function() {
             expect(element.find('error-display').length).toBe(0);

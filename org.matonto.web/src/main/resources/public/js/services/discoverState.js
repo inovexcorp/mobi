@@ -29,7 +29,7 @@
          * @name discoverState
          *
          * @description
-         * The `discoverState` module only provides the `discoverStateService` service which 
+         * The `discoverState` module only provides the `discoverStateService` service which
          * contains various variables to hold the state of the discover module along with some
          * utility functions for those variables.
          */
@@ -43,10 +43,10 @@
          * state of the discover module along with some utility functions for those variables.
          */
         .service('discoverStateService', discoverStateService);
-    
+
     function discoverStateService() {
         var self = this;
-        
+
         /**
          * @ngdoc property
          * @name explore
@@ -82,7 +82,28 @@
             },
             recordId: ''
         };
-        
+
+        /**
+         * @ngdoc property
+         * @name search
+         * @propertyOf discoverState.service:discoverStateService
+         * @type {Object}
+         *
+         * @description
+         * 'search' is an object which holds properties associated with the search tab in the
+         * discover section of the application.
+         */
+        self.search = {
+            targetedId: 'discover-search-results',
+            active: false,
+            results: undefined,
+            keywords: {
+                arr: [],
+                isOr: false
+            },
+            datasetRecordId: ''
+        };
+
         /**
          * @ngdoc property
          * @name query
@@ -96,7 +117,7 @@
         self.query = {
             active: false
         };
-        
+
         /**
          * @ngdoc method
          * @name resetPagedInstanceDetails
@@ -117,7 +138,7 @@
                 total: 0
             };
         }
-        
+
         /**
          * @ngdoc method
          * @name cleanUpOnDatasetDelete
@@ -136,7 +157,7 @@
                 self.explore.recordId = '';
             }
         }
-        
+
         /**
          * @ngdoc method
          * @name cleanUpOnDatasetDelete
@@ -154,7 +175,7 @@
                 resetOnClear();
             }
         }
-        
+
         /**
          * @ngdoc method
          * @name clickCrumb
@@ -170,7 +191,7 @@
             self.explore.editing = false;
             self.explore.creating = false;
         }
-        
+
         /**
          * @ngdoc method
          * @name getInstance
@@ -184,7 +205,7 @@
         self.getInstance = function() {
             return _.find(self.explore.instance.entity, {'@id': self.explore.instance.metadata.instanceIRI});
         }
-        
+
         function resetOnClear() {
             self.resetPagedInstanceDetails();
             self.explore.breadcrumbs = ['Classes'];

@@ -140,4 +140,20 @@ public class OntologyCacheImplTest {
         service.clearCacheImports(vf.createIRI("http://test.com/missing"));
         verify(cache).removeAll(Collections.emptySet());
     }
+
+    @Test
+    public void removeFromCacheTest() throws Exception {
+        when(cache.containsKey(anyString())).thenReturn(true);
+        service.removeFromCache("test", "test", "test");
+        verify(cache).containsKey("test&test&test");
+        verify(cache).remove("test&test&test");
+    }
+
+    @Test
+    public void removeFromCacheWhenNotContained() throws Exception {
+        when(cache.containsKey(anyString())).thenReturn(false);
+        service.removeFromCache("test", "test", "test");
+        verify(cache).containsKey("test&test&test");
+        verify(cache, times(0)).remove("test&test&test");
+    }
 }

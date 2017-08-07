@@ -304,10 +304,10 @@
              * @param {string} branchId The id of the Branch with the specified Commit
              * @param {string} commitId The id of the Commit to retrieve the ontology from
              * @param {string} [rdfFormat='jsonld'] The RDF format to return the ontology in
-             * @return {Promise} A promise with the ontology at the specified commit in the specified RDF format`
+             * @param {boolean} [clearCache=false] Boolean indicating whether or not you should clear the cache
+             * @return {Promise} A promise with the ontology at the specified commit in the specified RDF format
              */
-            self.getOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld') {
-                var deferred = $q.defer();
+            self.getOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld', clearCache = false) {
                 var config = {
                     headers: {
                         'Accept': 'text/plain'
@@ -315,12 +315,12 @@
                     params: {
                         branchId,
                         commitId,
-                        rdfFormat
+                        rdfFormat,
+                        clearCache
                     }
                 };
-                $http.get(prefix + '/' + encodeURIComponent(recordId), config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(recordId), config)
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -664,6 +664,24 @@
                         }
                     }, response => util.onError(response, deferred, defaultErrorMessage));
                 return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name getFailedImports
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets a list of imported ontology IRIs that failed to resolve.
+             *
+             * @param {string} recordId The record ID of the ontology you want to get from the repository.
+             * @param {string} branchId The branch ID of the ontology you want to get from the repository.
+             * @param {string} commitId The commit ID of the ontology you want to get from the repository.
+             * @return {Promise} A promise containing the list of imported ontology IRIs that failed to resolve.
+             */
+            self.getFailedImports = function(recordId, branchId, commitId) {
+                var config = { params: { branchId, commitId } };
+                return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/failed-imports', config)
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method

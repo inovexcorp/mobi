@@ -162,7 +162,8 @@
                 classesWithIndividuals: [],
                 individualsParentPath: [],
                 iriList: [],
-                selected: {}
+                selected: {},
+                failedImports: []
             };
             var vocabularyListItemTemplate = {
                 ontologyState: {
@@ -199,9 +200,10 @@
                 },
                 branches: [],
                 iriList: [],
-                selected: {}
+                selected: {},
+                failedImports: []
             };
-
+            
             var emptyInProgressCommit = {
                 additions: [],
                 deletions: []
@@ -393,10 +395,10 @@
                             return self.addVocabularyToList(ontologyId, recordId, response.branchId, response.commitId, response.ontology, response.inProgressCommit, title);
                         }
                     }, $q.reject)
-                    .then(response => {
+                    .then(response => { 
                         self.listItem = response;
                         self.setSelected(self.getActiveEntityIRI(), false);
-                        return recordId;
+                        return recordId; 
                     }, $q.reject);
             }
             /**
@@ -436,13 +438,14 @@
              * @param {string} [type='ontology'] The type of listItem that needs to be updated.
              * @param {boolean} [upToDate=true] The flag indicating whether the ontology is upToDate or not.
              * @param {boolean} [inProgressCommit=emptyInProgressCommit] The Object containing the saved changes to apply.
+             * @param {boolean} [clearCache=false] Boolean indicating whether or not you should clear the cache.
              * @returns {Promise} A promise indicating the success or failure of the update.
              */
-            self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, inProgressCommit = emptyInProgressCommit) {
+            self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, inProgressCommit = emptyInProgressCommit, clearCache = false) {
                 var listItem;
                 var oldListItem = self.getListItemByRecordId(recordId);
-
-                return om.getOntology(recordId, branchId, commitId)
+                
+                return om.getOntology(recordId, branchId, commitId, 'jsonld', clearCache)
                     .then(ontology => {
                         var ontologyId = om.getOntologyIRI(ontology);
                         if (type === 'ontology') {
@@ -470,16 +473,16 @@
             }
             self.addOntologyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, title, upToDate = true) {
                 return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title)
-                    .then(listItem => {
-                        self.list.push(listItem);
-                        return listItem;
+                    .then(listItem => { 
+                        self.list.push(listItem); 
+                        return listItem; 
                     }, $q.reject);
             }
             self.addVocabularyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, title, upToDate = true) {
                 return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title)
-                    .then(listItem => {
-                        self.list.push(listItem);
-                        return listItem;
+                    .then(listItem => { 
+                        self.list.push(listItem); 
+                        return listItem; 
                     }, $q.reject);
             }
             self.createOntologyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
@@ -495,7 +498,8 @@
                     om.getObjectPropertyHierarchies(recordId, branchId, commitId),
                     cm.getRecordBranches(recordId, catalogId),
                     om.getAnnotationPropertyHierarchies(recordId, branchId, commitId),
-                    om.getImportedOntologies(recordId, branchId, commitId)
+                    om.getImportedOntologies(recordId, branchId, commitId),
+                    om.getFailedImports(recordId, branchId, commitId)
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
                     listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri))
@@ -575,6 +579,7 @@
                         _.concat(om.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties),
                         compareListItems
                     );
+                    listItem.failedImports = response[9];
                     deferred.resolve(listItem);
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
                 return deferred.promise;
@@ -595,7 +600,8 @@
                     om.getConceptHierarchies(recordId, branchId, commitId),
                     om.getConceptSchemeHierarchies(recordId, branchId, commitId),
                     cm.getRecordBranches(recordId, catalogId),
-                    om.getImportedOntologies(recordId, branchId, commitId)
+                    om.getImportedOntologies(recordId, branchId, commitId),
+                    om.getFailedImports(recordId, branchId, commitId)
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
                     listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri));
@@ -650,6 +656,7 @@
                             angular.copy(om.conceptRelationshipList), angular.copy(om.schemeRelationshipList)),
                         compareListItems
                     );
+                    listItem.failedImports = response[6];
                     deferred.resolve(listItem);
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
                 return deferred.promise;
@@ -936,10 +943,10 @@
                             return self.addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, recordTitle, upToDate);
                         }
                     }, $q.reject)
-                    .then(response => {
+                    .then(response => { 
                         self.listItem = response;
                         self.setSelected(self.getActiveEntityIRI(), false);
-                        return ontologyId;
+                        return ontologyId; 
                     }, $q.reject);
             }
             /**
@@ -1248,7 +1255,7 @@
             self.getOntologiesArray = function() {
                 return getOntologiesArrayByListItem(self.listItem);
             }
-
+            
             self.updatePropertyIcon = function(entity) {
                 if (om.isProperty(entity)) {
                     setPropertyIcon(entity);
@@ -1256,8 +1263,8 @@
             }
 
             self.hasInProgressCommit = function(listItem = self.listItem) {
-                return listItem.inProgressCommit !== undefined
-                        && ((listItem.inProgressCommit.additions !== undefined && listItem.inProgressCommit.additions.length > 0)
+                return listItem.inProgressCommit !== undefined 
+                        && ((listItem.inProgressCommit.additions !== undefined && listItem.inProgressCommit.additions.length > 0) 
                         || (listItem.inProgressCommit.deletions !== undefined && listItem.inProgressCommit.deletions.length > 0));
             }
 
@@ -1295,12 +1302,15 @@
                 var blankNodes = {};
                 var index = {};
                 _.forEach(ontology, (entity, i) => {
-                    index[entity['@id']] = {
-                        position: i,
-                        label: om.getEntityName(entity, type),
-                        ontologyIri: ontologyId
+                    if (_.has(entity, '@id')) {
+                        index[entity['@id']] = {
+                            position: i,
+                            label: om.getEntityName(entity, type),
+                            ontologyIri: ontologyId
+                        }
+                    } else {
+                        _.set(entity, 'matonto.anonymous', ontologyId + ' (Anonymous Ontology)');
                     }
-
                     if (om.isProperty(entity)) {
                         setPropertyIcon(entity);
                     } else if (om.isBlankNode(entity)) {
@@ -1465,6 +1475,7 @@
                 });
                 var importedOntologyListItem = {
                     id: importedOntObj.id,
+                    ontologyId: importedOntObj.ontologyId,
                     index: index,
                     ontology: importedOntObj.ontology
                 };
