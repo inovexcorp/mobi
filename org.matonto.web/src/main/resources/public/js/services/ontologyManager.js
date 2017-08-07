@@ -1384,8 +1384,7 @@
                     || utilService.getPropertyValue(entity, prefixes.skos + 'prefLabel')
                     || utilService.getPropertyValue(entity, prefixes.skos + 'altLabel');
                 if (!result) {
-                      result = utilService.getBeautifulIRI(entity['@id']);
-
+                    result = utilService.getBeautifulIRI(entity['@id']);
                 }
                 return result;
             }
