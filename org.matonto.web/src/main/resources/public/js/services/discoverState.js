@@ -97,9 +97,11 @@
             targetedId: 'discover-search-results',
             active: false,
             results: undefined,
-            keywords: {
-                arr: [],
-                isOr: false
+            queryConfig: {
+                isOrKeywords: false,
+                isOrTypes: false,
+                keywords: [],
+                types: []
             },
             datasetRecordId: ''
         };
