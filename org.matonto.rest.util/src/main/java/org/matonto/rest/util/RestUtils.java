@@ -114,6 +114,18 @@ public class RestUtils {
     }
 
     /**
+     * Converts a {@link Model} into a string containing RDF in the format specified by the passed string.
+     *
+     * @param model  A {@link Model} of RDF to convert.
+     * @param format The abbreviated name of a RDFFormat.
+     * @param transformer The SesameTransformer for model conversions.
+     * @return A String of the serialized RDF from the Model.
+     */
+    public static String modelToString(Model model, String format, SesameTransformer transformer) {
+        return modelToString(model, getRDFFormat(format), transformer);
+    }
+
+    /**
      * Converts a {@link Model} into a skolemized string containing RDF in the specified RDFFormat.
      *
      * @param model  A {@link Model} of RDF to convert.
@@ -130,8 +142,22 @@ public class RestUtils {
             Rio.write(new SkolemizedStatementIterable(model, transformer, service), sw, format);
             return sw.toString();
         } finally {
-            LOG.trace("modelToString took {}ms", System.currentTimeMillis() - start);
+            LOG.trace("modelToSkolemizedString took {}ms", System.currentTimeMillis() - start);
         }
+    }
+
+    /**
+     * Converts a {@link Model} into a skolemized string containing RDF in the format specified by the passed string.
+     *
+     * @param model  A {@link Model} of RDF to convert.
+     * @param format The abbreviated name of a RDFFormat.
+     * @param transformer The SesameTransformer for model conversions.
+     * @param service The BNodeService for skolemization.
+     * @return A skolemized String of the serialized RDF from the Model.
+     */
+    public static String modelToSkolemizedString(Model model, String format, SesameTransformer transformer,
+                                                 BNodeService service) {
+        return modelToSkolemizedString(model, getRDFFormat(format), transformer, service);
     }
 
     /**
@@ -150,8 +176,20 @@ public class RestUtils {
             Rio.write(new StatementIterable(model, transformer), rdfWriter);
             return sw.toString();
         } finally {
-            LOG.trace("modelToString took {}ms", System.currentTimeMillis() - start);
+            LOG.trace("groupedModelToString took {}ms", System.currentTimeMillis() - start);
         }
+    }
+
+    /**
+     * Converts a {@link Model} into a string containing grouped RDF in the format specified by the passed string.
+     *
+     * @param model  A {@link Model} of RDF to convert.
+     * @param format The abbreviated name of a RDFFormat.
+     * @param transformer The SesameTransformer for model conversions.
+     * @return A String of the serialized grouped RDF from the Model.
+     */
+    public static String groupedModelToString(Model model, String format, SesameTransformer transformer) {
+        return groupedModelToString(model, getRDFFormat(format), transformer);
     }
 
     /**
@@ -172,46 +210,8 @@ public class RestUtils {
             Rio.write(new SkolemizedStatementIterable(model, transformer, service), rdfWriter);
             return sw.toString();
         } finally {
-            LOG.trace("modelToString took {}ms", System.currentTimeMillis() - start);
+            LOG.trace("groupedModelToSkolemizedString took {}ms", System.currentTimeMillis() - start);
         }
-    }
-
-    /**
-     * Converts a {@link Model} into a string containing RDF in the format specified by the passed string.
-     *
-     * @param model  A {@link Model} of RDF to convert.
-     * @param format The abbreviated name of a RDFFormat.
-     * @param transformer The SesameTransformer for model conversions.
-     * @return A String of the serialized RDF from the Model.
-     */
-    public static String modelToString(Model model, String format, SesameTransformer transformer) {
-        return modelToString(model, getRDFFormat(format), transformer);
-    }
-
-    /**
-     * Converts a {@link Model} into a skolemized string containing RDF in the format specified by the passed string.
-     *
-     * @param model  A {@link Model} of RDF to convert.
-     * @param format The abbreviated name of a RDFFormat.
-     * @param transformer The SesameTransformer for model conversions.
-     * @param service The BNodeService for skolemization.
-     * @return A skolemized String of the serialized RDF from the Model.
-     */
-    public static String modelToSkolemizedString(Model model, String format, SesameTransformer transformer,
-                                                 BNodeService service) {
-        return modelToSkolemizedString(model, getRDFFormat(format), transformer, service);
-    }
-
-    /**
-     * Converts a {@link Model} into a string containing grouped RDF in the format specified by the passed string.
-     *
-     * @param model  A {@link Model} of RDF to convert.
-     * @param format The abbreviated name of a RDFFormat.
-     * @param transformer The SesameTransformer for model conversions.
-     * @return A String of the serialized grouped RDF from the Model.
-     */
-    public static String groupedModelToString(Model model, String format, SesameTransformer transformer) {
-        return groupedModelToString(model, getRDFFormat(format), transformer);
     }
 
     /**
