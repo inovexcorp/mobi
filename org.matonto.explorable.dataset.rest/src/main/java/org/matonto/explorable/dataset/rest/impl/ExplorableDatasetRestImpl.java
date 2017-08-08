@@ -27,6 +27,7 @@ import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.jsonldToDeskolemizedModel;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
+import static org.matonto.rest.util.RestUtils.modelToSkolemizedJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -287,7 +288,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             if (instanceModel.size() == 0) {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
             } else {
-                String json = modelToJsonld(instanceModel, sesameTransformer);
+                String json = modelToSkolemizedJsonld(instanceModel, sesameTransformer, bNodeService);
                 return Response.ok(JSONArray.fromObject(json)).build();
             }
         } catch (IllegalArgumentException e) {

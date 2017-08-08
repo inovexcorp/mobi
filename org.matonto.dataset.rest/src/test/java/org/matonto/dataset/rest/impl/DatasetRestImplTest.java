@@ -55,6 +55,7 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -133,6 +134,9 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
     @Mock
     private PaginatedSearchResults<DatasetRecord> results;
 
+    @Mock
+    private BNodeService service;
+
     @Override
     protected Application configureApp() throws Exception {
         vf = SimpleValueFactory.getInstance();
@@ -197,6 +201,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         rest.setTransformer(transformer);
         rest.setEngineManager(engineManager);
         rest.setCatalogManager(catalogManager);
+        rest.setBNodeService(service);
 
         return new ResourceConfig()
                 .register(rest)
@@ -217,6 +222,8 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
         when(transformer.sesameStatement(any(Statement.class)))
                 .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
+
+        when(service.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgumentAt(0, Statement.class));
 
         when(datasetManager.getDatasetRecords(any(DatasetPaginatedSearchParams.class))).thenReturn(results);
         when(datasetManager.createDataset(any(DatasetRecordConfig.class))).thenReturn(record1);

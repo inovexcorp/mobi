@@ -269,6 +269,7 @@ public class ExplorableDatasetRestImplTest extends MatontoRestTestNg {
         when(ontology.containsClass(vf.createIRI(MISSING_ID))).thenReturn(false);
 
         when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
+        when(bNodeService.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgumentAt(0, Statement.class));
     }
 
     @AfterTest

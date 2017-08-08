@@ -28,6 +28,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -213,6 +214,13 @@ public class RestUtilsTest {
         assertEquals(model, result);
         verify(transformer).matontoModel(any(org.openrdf.model.Model.class));
         verify(service).deskolemize(model);
+    }
+
+    @Test
+    public void modelToSkolemizedJsonldTest() throws Exception {
+        String result = RestUtils.modelToSkolemizedJsonld(model, transformer, service);
+        assertEquals(expectedJsonld, result);
+        verify(service, atLeastOnce()).skolemize(any(Statement.class));
     }
 
     @Test

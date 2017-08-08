@@ -268,6 +268,17 @@ public class RestUtils {
     }
 
     /**
+     * Converts a {@link Model} into a skolemized JSON-LD string.
+     *
+     * @param model A {@link Model} containing RDF.
+     * @param transformer The SesameTransformer for model conversions.
+     * @return A skolemized JSON-LD string containing the converted RDF from the Model.
+     */
+    public static String modelToSkolemizedJsonld(Model model, SesameTransformer transformer, BNodeService service) {
+        return modelToSkolemizedString(model, "jsonld", transformer, service);
+    }
+
+    /**
      * Returns the file extension for the specified RDFFormat. Currently supports Turtle, RDF/XML, OWL/XML, and JSON-LD.
      *
      * @param format The abbreviated name of a RDFFormat.

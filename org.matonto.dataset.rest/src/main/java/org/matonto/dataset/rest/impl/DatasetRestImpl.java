@@ -27,6 +27,7 @@ package org.matonto.dataset.rest.impl;
 import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
+import static org.matonto.rest.util.RestUtils.modelToSkolemizedJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -45,6 +46,7 @@ import org.matonto.dataset.rest.DatasetRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -68,6 +70,7 @@ public class DatasetRestImpl implements DatasetRest {
     private EngineManager engineManager;
     private CatalogManager catalogManager;
     private SesameTransformer transformer;
+    private BNodeService bNodeService;
     private ValueFactory vf;
     private ModelFactory mf;
 
@@ -89,6 +92,11 @@ public class DatasetRestImpl implements DatasetRest {
     @Reference
     public void setTransformer(SesameTransformer transformer) {
         this.transformer = transformer;
+    }
+
+    @Reference
+    public void setBNodeService(BNodeService bNodeService) {
+        this.bNodeService = bNodeService;
     }
 
     @Reference
@@ -120,7 +128,7 @@ public class DatasetRestImpl implements DatasetRest {
             PaginatedSearchResults<DatasetRecord> results = manager.getDatasetRecords(params);
             JSONArray array = JSONArray.fromObject(results.getPage().stream()
                     .map(datasetRecord -> removeContext(datasetRecord.getModel()))
-                    .map(model -> modelToJsonld(model, transformer))
+                    .map(model -> modelToSkolemizedJsonld(model, transformer, bNodeService))
                     .collect(Collectors.toList()));
 
             Links links = LinksUtils.buildLinks(uriInfo, array.size(), results.getTotalSize(), limit, offset);
