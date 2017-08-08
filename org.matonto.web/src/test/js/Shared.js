@@ -1037,9 +1037,11 @@ function mockDiscoverState() {
                 targetedId: '',
                 active: false,
                 results: undefined,
-                keywords: {
-                    arr: [],
-                    isOr: false
+                queryConfig: {
+                    isOrKeywords: false,
+                    isOrTypes: false,
+                    keywords: [],
+                    types: []
                 },
                 datasetRecordId: ''
             };

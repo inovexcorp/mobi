@@ -39,6 +39,7 @@
          * @requires discoverState.service:discoverStateService
          * @requires httpService.service:httpService
          * @requires sparqlManager.service:sparqlManager
+         * @requires prefixes.service:prefixes
          *
          * @description
          * `searchService` is a service that provides methods to create search query strings
@@ -46,22 +47,20 @@
          */
         .service('searchService', searchService);
 
-    searchService.$inject = ['discoverStateService', 'httpService', 'sparqlManagerService', 'sparqljs'];
+    searchService.$inject = ['discoverStateService', 'httpService', 'sparqlManagerService', 'sparqljs', 'prefixes'];
 
-    function searchService(discoverStateService, httpService, sparqlManagerService, sparqljs) {
+    function searchService(discoverStateService, httpService, sparqlManagerService, sparqljs, prefixes) {
         var self = this;
         var ds = discoverStateService;
         var sm = sparqlManagerService;
 
         var simplePattern = {
             type: 'bgp',
-            triples: [
-                {
-                    subject: '?Subject',
-                    predicate: '?Predicate',
-                    object: '?o'
-                }
-            ]
+            triples: [{
+                subject: '?Subject',
+                predicate: '?Predicate',
+                object: '?o'
+            }]
         };
 
         /**
@@ -70,17 +69,20 @@
          * @methodOf search.service:searchService
          *
          * @description
-         * Runs a SPARQL query made using the provided keywords and boolean operator against the
+         * Runs a SPARQL query made using the provided keywords, types, and boolean operators against the
          * repository and returns the SPARQL spec JSON results.
          *
-         * @param {string[]} keywords An array of keywords to search for
-         * @param {boolean} [isOr=false] Whether or not the kwyrod search results should be combined with OR or not
-         * @param {string} [datasetRecordIRI=''] The IRI of the DatasetRecord to restrict the query to
+         * @param {string} datasetRecordIRI The IRI of the DatasetRecord to restrict the query to
+         * @param {Object} queryConfig A configuration object for the query string
+         * @param {string[]} queryConfig.keywords An array of keywords to search for
+         * @param {boolean} queryConfig.isOrKeywords Whether or not the keyword search results should be combined with OR or not
+         * @param {string[]} queryConfig.types An array of types to search for
+         * @param {boolean} queryConfig.isOrTypes Whether or not the type search results should be combined with OR or not
          * @return {Promise} A Promise that resolves with the query results or rejects with an error message.
          */
-        self.submitSearch = function(keywords, isOr = false, datasetRecordIRI = '') {
+        self.submitSearch = function(datasetRecordIRI, queryConfig) {
             httpService.cancel(ds.search.targetedId);
-            return sm.query(self.createQueryString(keywords, isOr), datasetRecordIRI, ds.search.targetedId);
+            return sm.query(self.createQueryString(queryConfig), datasetRecordIRI, ds.search.targetedId);
         }
         /**
          * @ngdoc method
@@ -89,13 +91,17 @@
          *
          * @description
          * Creates a SPARQL query that selects all subjects, predicates, and objects that match
-         * multiple keywords searches combined either using boolean operator AND or OR.
+         * multiple keywords searches and/or multiple type declarations combined either using
+         * boolean operator AND or OR.
          *
-         * @param {string[]} keywords An array of keywords to search for
-         * @param {boolean} [isOr=false] Whether or not the kwyrod search results should be combined with OR or not
+         * @param {Object} queryConfig A configuration object for the query string
+         * @param {string[]} [queryConfig.keywords=[]] An array of keywords to search for
+         * @param {boolean} [queryConfig.isOrKeywords=false] Whether or not the keyword search results should be combined with OR or not
+         * @param {string[]} [queryConfig.types=[]] An array of types to search for
+         * @param {boolean} [queryConfig.isOrTypes=false] Whether or not the type search results should be combined with OR or not
          * @return {string} A SPARQL query string
          */
-        self.createQueryString = function(keywords, isOr = false) {
+        self.createQueryString = function(queryConfig) {
             var query = {
                 type: 'query',
                 prefixes: {},
@@ -118,11 +124,24 @@
                 distinct: true,
                 where: []
             };
-            if (isOr) {
-                var obj = {type: 'union', patterns: _.map(keywords, createKeywordQuery)};
-                query.where.push(obj);
-            } else {
-                query.where = _.map(keywords, createKeywordQuery);
+            if (_.get(queryConfig, 'keywords', []).length) {
+                if (_.get(queryConfig, 'isOrKeywords', false)) {
+                    var obj = {type: 'union', patterns: _.map(queryConfig.keywords, createKeywordQuery)};
+                    query.where.push(obj);
+                } else {
+                    query.where = _.map(queryConfig.keywords, createKeywordQuery);
+                }
+            }
+            if (_.get(queryConfig, 'types', []).length) {
+                if (_.get(queryConfig, 'isOrTypes', false)) {
+                    var obj = {type: 'union', patterns: _.map(queryConfig.types, createTypeQuery)};
+                    query.where.push(obj);
+                } else {
+                    query.where = _.concat(query.where, _.map(queryConfig.types, createTypeQuery));
+                }
+            }
+            if (!query.where.length) {
+                query.where.push(angular.copy(simplePattern));
             }
             var generator = new sparqljs.Generator();
             return generator.stringify(query);
@@ -143,6 +162,21 @@
             return {
                 type: 'group',
                 patterns: [angular.copy(simplePattern), keywordFilter]
+            };
+        }
+
+        function createTypeQuery(item) {
+            var typePattern = {
+                type: 'bgp',
+                triples: [{
+                    subject: '?Subject',
+                    predicate: prefixes.rdf + 'type',
+                    object: item.classIRI
+                }]
+            };
+            return {
+                type: 'group',
+                patterns: [typePattern, angular.copy(simplePattern)]
             };
         }
     }
