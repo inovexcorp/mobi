@@ -120,7 +120,7 @@ public class DatasetRestImpl implements DatasetRest {
             PaginatedSearchResults<DatasetRecord> results = manager.getDatasetRecords(params);
             JSONArray array = JSONArray.fromObject(results.getPage().stream()
                     .map(datasetRecord -> removeContext(datasetRecord.getModel()))
-                    .map(model -> modelToJsonld(transformer.sesameModel(model)))
+                    .map(model -> modelToJsonld(model, transformer))
                     .collect(Collectors.toList()));
 
             Links links = LinksUtils.buildLinks(uriInfo, array.size(), results.getTotalSize(), limit, offset);

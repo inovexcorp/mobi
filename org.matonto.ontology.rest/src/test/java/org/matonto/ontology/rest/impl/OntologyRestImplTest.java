@@ -92,6 +92,7 @@ import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
@@ -509,12 +510,14 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         when(sesameTransformer.matontoModel(any(org.openrdf.model.Model.class))).thenAnswer(invocationOnMock ->
                 Values.matontoModel(invocationOnMock.getArgumentAt(0, org.openrdf.model.Model.class)));
-        when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(invocationOnMock ->
-                Values.sesameModel(invocationOnMock.getArgumentAt(0, Model.class)));
         when(sesameTransformer.matontoIRI(any(org.openrdf.model.IRI.class))).thenAnswer(invocationOnMock ->
                 Values.matontoIRI(invocationOnMock.getArgumentAt(0, org.openrdf.model.IRI.class)));
+        when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(invocationOnMock ->
+                Values.sesameModel(invocationOnMock.getArgumentAt(0, Model.class)));
+        when(sesameTransformer.sesameStatement(any(Statement.class))).thenAnswer(invocationOnMock ->
+                Values.sesameStatement(invocationOnMock.getArgumentAt(0, Statement.class)));
 
-        entityUsagesConstruct = modelToJsonld(sesameTransformer.sesameModel(constructs));
+        entityUsagesConstruct = modelToJsonld(constructs, sesameTransformer);
 
         when(ontologyCache.getOntologyCache()).thenReturn(Optional.of(mockCache));
     }

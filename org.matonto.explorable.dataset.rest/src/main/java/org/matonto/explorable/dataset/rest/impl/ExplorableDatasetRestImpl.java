@@ -24,6 +24,7 @@ package org.matonto.explorable.dataset.rest.impl;
  */
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
+import static org.matonto.rest.util.RestUtils.jsonldToDeskolemizedModel;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
@@ -247,7 +248,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(newInstanceJson, "The Instance's JSON-LD is required.");
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
-            Model instanceModel = sesameTransformer.matontoModel(jsonldToModel(newInstanceJson));
+            Model instanceModel = jsonldToModel(newInstanceJson, sesameTransformer);
             Resource instanceId = instanceModel.stream()
                     .filter(statement -> !(statement.getSubject() instanceof BNode))
                     .findAny().orElseThrow(() ->
@@ -286,7 +287,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             if (instanceModel.size() == 0) {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
             } else {
-                String json = modelToJsonld(sesameTransformer.sesameModel(instanceModel));
+                String json = modelToJsonld(instanceModel, sesameTransformer);
                 return Response.ok(JSONArray.fromObject(json)).build();
             }
         } catch (IllegalArgumentException e) {
@@ -314,7 +315,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                     RepositoryResult<Statement> reification = conn.getStatements(statement.getSubject(), null, null);
                     conn.remove(reification);
                 });
-                conn.add(bNodeService.deskolemize(sesameTransformer.matontoModel(jsonldToModel(json))));
+                conn.add(jsonldToDeskolemizedModel(json, sesameTransformer, bNodeService));
                 conn.commit();
                 return Response.ok().build();
             }
