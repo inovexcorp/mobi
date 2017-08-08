@@ -153,29 +153,29 @@ describe('Property Value Overlay directive', function() {
         });
         it('with a .boolean-property', function() {
             expect(element.querySelectorAll('.boolean-property').length).toBe(1);
-            
+
             exploreUtilsSvc.isBoolean.and.returnValue(false);
             scope.$digest();
-            
+
             expect(element.querySelectorAll('.boolean-property').length).toBe(0);
         });
         it('with a .data-property', function() {
             exploreUtilsSvc.isBoolean.and.returnValue(false);
             scope.$digest();
-            
+
             expect(element.querySelectorAll('.data-property').length).toBe(1);
-            
+
             exploreUtilsSvc.isPropertyOfType.and.returnValue(false);
             scope.$digest();
-            
+
             expect(element.querySelectorAll('.data-property').length).toBe(0);
         });
         it('with a .object-property', function() {
             expect(element.querySelectorAll('.object-property').length).toBe(1);
-            
+
             exploreUtilsSvc.isPropertyOfType.and.returnValue(false);
             scope.$digest();
-            
+
             expect(element.querySelectorAll('.object-property').length).toBe(0);
         });
         it('with a .btn-container.clearfix', function() {
@@ -186,10 +186,10 @@ describe('Property Value Overlay directive', function() {
         });
         it('with a new-instance-property-overlay', function() {
             expect(element.find('new-instance-property-overlay').length).toBe(0);
-            
+
             controller.showOverlay = true;
             scope.$digest();
-            
+
             expect(element.find('new-instance-property-overlay').length).toBe(1);
         });
     });
