@@ -27,7 +27,9 @@ import static org.matonto.rest.util.RestUtils.getActiveUser;
 import static org.matonto.rest.util.RestUtils.getRDFFormatFileExtension;
 import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
 import static org.matonto.rest.util.RestUtils.getTypedObjectFromJsonld;
+import static org.matonto.rest.util.RestUtils.jsonldToDeskolemizedModel;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
+import static org.matonto.rest.util.RestUtils.modelToSkolemizedString;
 import static org.matonto.rest.util.RestUtils.modelToString;
 
 import aQute.bnd.annotation.component.Component;
@@ -1194,7 +1196,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @return The new Thing if the JSON-LD contains the correct ID Resource; throws a 400 otherwise.
      */
     private <T extends Thing> T getNewThing(String newThingJson, Resource thingId, OrmFactory<T> factory) {
-        Model newThingModel = convertJsonld(newThingJson);
+        Model newThingModel = jsonldToDeskolemizedModel(newThingJson, transformer, bNodeService);
         return factory.getExisting(thingId, newThingModel).orElseThrow(() ->
                 ErrorUtils.sendError(factory.getTypeIRI().getLocalName() + " IDs must match",
                         Response.Status.BAD_REQUEST));
@@ -1246,7 +1248,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @return A String of the converted Model in the requested RDF format.
      */
     private String getModelInFormat(Model model, String format) {
-        return modelToString(transformer.sesameModel(model), format);
+        return modelToSkolemizedString(model, format, transformer, bNodeService);
     }
 
     /**
@@ -1256,7 +1258,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @return A Model containing the statements from the JSON-LD string.
      */
     private Model convertJsonld(String jsonld) {
-        return bNodeService.deskolemize(transformer.matontoModel(jsonldToModel(jsonld)));
+        return jsonldToModel(jsonld, transformer);
     }
 
 
