@@ -81,7 +81,7 @@
                 _.remove(os.listItem.subDataProperties, {namespace:split.begin + split.then, localName: split.end});
                 os.deleteEntityFromHierarchy(os.listItem.dataPropertyHierarchy, entityIRI, os.listItem.dataPropertyIndex);
                 os.listItem.flatDataPropertyHierarchy = os.flattenHierarchy(os.listItem.dataPropertyHierarchy, os.listItem.ontologyRecord.recordId);
-                self.commonDelete(entityIRI);
+                self.commonDelete(entityIRI, true);
             }
 
             self.deleteAnnotationProperty = function() {
@@ -111,7 +111,7 @@
                         }
                     }
                 });
-                
+
                 os.listItem.classesWithIndividuals = _.keys(os.listItem.classesAndIndividuals);
                 os.listItem.individualsParentPath = os.getIndividualsParentPath(os.listItem);
                 os.listItem.flatIndividualsHierarchy = os.createFlatIndividualTree(os.listItem);
@@ -205,7 +205,7 @@
             self.getDropDownText = function(item) {
                 return os.getEntityNameByIndex(ro.getItemIri(item), os.listItem);
             }
-            
+
             self.checkIri = function(iri) {
                 return _.includes(os.listItem.iriList, iri) && iri !== _.get(os.listItem.selected, '@id');
             }
@@ -228,7 +228,7 @@
                     os.listItem.flatIndividualsHierarchy = os.createFlatIndividualTree(os.listItem);
                 }
             }
-            
+
             self.setSuperProperties = function(iri, propertyIRIs, hierarchyKey, indexKey, flatHierarchyKey) {
                 _.forEach(propertyIRIs, propertyIRI => {
                     os.addEntityToHierarchy(os.listItem[hierarchyKey], iri, os.listItem[indexKey], propertyIRI);
