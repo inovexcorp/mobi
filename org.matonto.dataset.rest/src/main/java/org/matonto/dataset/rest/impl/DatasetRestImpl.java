@@ -26,7 +26,6 @@ package org.matonto.dataset.rest.impl;
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
-import static org.matonto.rest.util.RestUtils.modelToJsonld;
 import static org.matonto.rest.util.RestUtils.modelToSkolemizedJsonld;
 
 import aQute.bnd.annotation.component.Component;

@@ -357,7 +357,7 @@ describe('Util service', function() {
         expect(splitIRIFilter).toHaveBeenCalledWith('');
     });
     it('create a unique IRI for a blank node.', function() {
-        var result = _.startsWith(utilSvc.getIdForBlankNode(), '_:matonto/bnode/');
+        var result = _.startsWith(utilSvc.getIdForBlankNode(), '_:matonto-bnode-');
         expect(result).toBe(true);
         expect(uuid.v4).toHaveBeenCalled();
     });

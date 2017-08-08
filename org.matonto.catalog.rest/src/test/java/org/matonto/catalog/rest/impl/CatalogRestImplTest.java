@@ -363,7 +363,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(catalogManager, versioningManager, engineManager, transformer, conflict, difference, results);
+        reset(catalogManager, versioningManager, engineManager, transformer, conflict, difference, results, bNodeService);
 
         when(transformer.sesameModel(any(Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
@@ -373,6 +373,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .thenAnswer(i -> Values.matontoModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
 
         when(bNodeService.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgumentAt(0, Statement.class));
+        when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgumentAt(0, Model.class));
 
         when(results.getPage()).thenReturn(Collections.singletonList(testRecord));
         when(results.getPageNumber()).thenReturn(0);
@@ -842,6 +843,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .request().put(Entity.json(record.toString()));
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).updateRecord(eq(vf.createIRI(LOCAL_IRI)), any(Record.class));
+        verify(bNodeService).deskolemize(any(Model.class));
     }
 
     @Test
@@ -1133,6 +1135,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .request().put(Entity.json(distribution.toString()));
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).updateUnversionedDistribution(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Distribution.class));
+        verify(bNodeService).deskolemize(any(Model.class));
     }
 
     @Test
@@ -1476,6 +1479,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .request().put(Entity.json(version.toString()));
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).updateVersion(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Version.class));
+        verify(bNodeService).deskolemize(any(Model.class));
     }
 
     @Test
@@ -1782,6 +1786,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .request().put(Entity.json(distribution.toString()));
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).updateVersionedDistribution(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(VERSION_IRI)), any(Distribution.class));
+        verify(bNodeService).deskolemize(any(Model.class));
     }
 
     @Test
@@ -2188,6 +2193,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .request().put(Entity.json(branch.toString()));
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).updateBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Branch.class));
+        verify(bNodeService).deskolemize(any(Model.class));
     }
 
     @Test

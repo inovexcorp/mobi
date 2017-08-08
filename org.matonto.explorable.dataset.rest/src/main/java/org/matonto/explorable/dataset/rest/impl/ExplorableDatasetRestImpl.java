@@ -26,7 +26,6 @@ package org.matonto.explorable.dataset.rest.impl;
 import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.jsonldToDeskolemizedModel;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
-import static org.matonto.rest.util.RestUtils.modelToJsonld;
 import static org.matonto.rest.util.RestUtils.modelToSkolemizedJsonld;
 
 import aQute.bnd.annotation.component.Component;

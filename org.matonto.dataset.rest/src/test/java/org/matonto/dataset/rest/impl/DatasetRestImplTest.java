@@ -26,6 +26,7 @@ package org.matonto.dataset.rest.impl;
 import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -216,7 +217,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(datasetManager, catalogManager, transformer, results);
+        reset(datasetManager, catalogManager, transformer, results, service);
 
         when(transformer.sesameModel(any(Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
@@ -246,6 +247,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         Response response = target().path("datasets").request().get();
         assertEquals(response.getStatus(), 200);
         verify(datasetManager).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
+        verify(service, atLeastOnce()).skolemize(any(Statement.class));
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), 3);
@@ -264,6 +266,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         Response response = target().path("datasets").queryParam("offset", 1).queryParam("limit", 1).request().get();
         assertEquals(response.getStatus(), 200);
         verify(datasetManager).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
+        verify(service, atLeastOnce()).skolemize(any(Statement.class));
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "3");
         Set<Link> links = response.getLinks();
