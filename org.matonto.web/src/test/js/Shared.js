@@ -1082,6 +1082,7 @@ function mockExploreUtils() {
             this.getNewProperties = jasmine.createSpy('getNewProperties').and.returnValue([]);
             this.removeEmptyProperties = jasmine.createSpy('removeEmptyProperties').and.returnValue({});
             this.removeEmptyPropertiesFromArray = jasmine.createSpy('removeEmptyPropertiesFromArray').and.returnValue([]);
+            this.getReification = jasmine.createSpy('getReification');
         });
     });
 }

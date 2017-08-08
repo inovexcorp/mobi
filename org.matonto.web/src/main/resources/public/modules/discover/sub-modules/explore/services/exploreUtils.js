@@ -42,9 +42,9 @@
          * `exploreUtilsService` is a service that provides utility functions for the explore sub module.
          */
         .service('exploreUtilsService', exploreUtilsService);
-        
+
     exploreUtilsService.$inject = ['REGEX', 'prefixes'];
-    
+
     function exploreUtilsService(REGEX, prefixes) {
         var self = this;
 
@@ -77,7 +77,6 @@
                     return 'text';
             }
         }
-
         /**
          * @ngdoc method
          * @name getPattern
@@ -108,7 +107,6 @@
                     return REGEX.ANYTHING;
             }
         }
-
         /**
          * @ngdoc method
          * @name isPropertyOfType
@@ -125,7 +123,6 @@
         self.isPropertyOfType = function(propertyIRI, type, properties) {
             return _.some(properties, {propertyIRI, type});
         }
-
         /**
          * @ngdoc method
          * @name isBoolean
@@ -141,7 +138,6 @@
         self.isBoolean = function(propertyIRI, properties) {
             return self.getRange(propertyIRI, properties) === prefixes.xsd + 'boolean';
         }
-
         /**
          * @ngdoc method
          * @name createIdObj
@@ -156,7 +152,6 @@
         self.createIdObj = function(string) {
             return {'@id': string};
         }
-
         /**
          * @ngdoc method
          * @name createValueObj
@@ -175,7 +170,6 @@
             var range = self.getRange(propertyIRI, properties);
             return range ? _.set(obj, '@type', range) : obj;
         }
-
         /**
          * @ngdoc method
          * @name getRange
@@ -192,7 +186,6 @@
             var range = _.get(_.find(properties, {propertyIRI}), 'range', []);
             return range.length ? range[0] : '';
         }
-
         /**
          * @ngdoc method
          * @name contains
@@ -208,7 +201,6 @@
         self.contains = function(string, part) {
             return _.includes(_.toLower(string), _.toLower(part));
         }
-
         /**
          * @ngdoc method
          * @name getNewProperties
@@ -226,7 +218,6 @@
             var properties = _.difference(_.map(properties, 'propertyIRI'), _.keys(entity));
             return text ? _.filter(properties, iri => self.contains(iri, text)) : properties;
         }
-
         /**
          * @ngdoc method
          * @name removeEmptyProperties
@@ -247,7 +238,6 @@
             });
             return copy;
         }
-
         /**
          * @ngdoc method
          * @name removeEmptyPropertiesFromArray
@@ -261,6 +251,33 @@
          */
         self.removeEmptyPropertiesFromArray = function(array) {
             return _.map(array, item => self.removeEmptyProperties(item));
+        }
+        /**
+         * @ngdoc method
+         * @name getReification
+         * @methodOf exploreUtils.service:exploreUtilsService
+         *
+         * @description
+         * Retrieves the reified Statement object for the statement matching the provided subject, predicate, and object
+         * from the provided JSON-LD array.
+         *
+         * @param {Object[]} arr A JSON-LD array
+         * @param {string} subIRI The subject of the reified statement
+         * @param {string} propIRI The predicate of the reified statement
+         * @param {Object} valueObj The JSON-LD object representing the object value of the refified statement
+         * @return {Object} The refified Statement matching the provided subject, predicate, and object
+         */
+        self.getReification = function(arr, subIRI, propIRI, valueObj) {
+            return _.find(arr, thing => {
+                return _.includes(_.get(thing, '@type', []), prefixes.rdf + 'Statement')
+                    && _.isEqual(getRdfProperty(thing, 'subject'), [{'@id': subIRI}])
+                    && _.isEqual(getRdfProperty(thing, 'predicate'), [{'@id': propIRI}])
+                    && _.isEqual(getRdfProperty(thing, 'object'), [valueObj]);
+            });
+        }
+
+        function getRdfProperty(thing, localName) {
+            return _.get(thing, prefixes.rdf + localName, {});
         }
     }
 })();
