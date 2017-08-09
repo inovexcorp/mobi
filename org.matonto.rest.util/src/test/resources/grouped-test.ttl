@@ -4,12 +4,12 @@
 	<http://example.com/prop3> "true" ;
 	<http://example.com/prop4> "true" , "false" .
 
-<http://example.com/test/1> <http://example.com/prop3> "true" ;
+<http://example.com/test/1> <http://example.com/prop1> "true" ;
 	<http://example.com/prop2> "true" ;
-	<http://example.com/prop1> "true" ;
+	<http://example.com/prop3> "true" ;
 	<http://example.com/prop4> "true" , "false" .
 
-<http://example.com/test/2> <http://example.com/prop4> "true" , "false" ;
-	<http://example.com/prop3> "true" ;
+<http://example.com/test/2> <http://example.com/prop1> "true" ;
 	<http://example.com/prop2> "true" ;
-	<http://example.com/prop1> "true" .
+	<http://example.com/prop3> "true" ;
+	<http://example.com/prop4> "true" , "false" .

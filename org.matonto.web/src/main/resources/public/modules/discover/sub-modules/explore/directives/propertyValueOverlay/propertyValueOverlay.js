@@ -78,6 +78,7 @@
                     var instance = ds.getInstance();
                     var object = [angular.copy(_.get(_.get(instance, dvm.iri, []), dvm.index))];
                     var ommitted = ['@id', '@type', prefixes.rdf + 'subject', prefixes.rdf + 'predicate', prefixes.rdf + 'object'];
+<<<<<<< HEAD
 
                     dvm.reification = dvm.eu.getReification(ds.explore.instance.entity, instance['@id'], dvm.iri, object)
                         || {
@@ -88,6 +89,22 @@
                             [prefixes.rdf + 'object']: object
                         };
 
+=======
+                    
+                    dvm.reification = _.find(ds.explore.instance.entity, thing => {
+                        return _.includes(_.get(thing, '@type', []), prefixes.rdf + 'Statement')
+                            && _.isEqual(getRdfProperty(thing, 'subject'), subject)
+                            && _.isEqual(getRdfProperty(thing, 'predicate'), predicate)
+                            && _.isEqual(getRdfProperty(thing, 'object'), object);
+                    }) || {
+                        '@id': dvm.util.getSkolemizedIRI(),
+                        '@type': [prefixes.rdf + 'Statement'],
+                        [prefixes.rdf + 'subject']: subject,
+                        [prefixes.rdf + 'predicate']: predicate,
+                        [prefixes.rdf + 'object']: object
+                    };
+                    
+>>>>>>> develop
                     dvm.addNewProperty = function(property) {
                         dvm.reification[property] = [];
                         dvm.addToChanged(property);

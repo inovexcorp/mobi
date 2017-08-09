@@ -44,7 +44,7 @@ describe('Edit Dataset Overlay directive', function() {
             $q = _$q_;
         });
 
-        utilSvc.getIdForBlankNode.and.returnValue('_:matonto/bnode/1234');
+        utilSvc.getSkolemizedIRI.and.returnValue('http://matonto.org/.well-known/genid/1234');
         utilSvc.getPropertyId.and.callFake(function(entity, propertyIRI) {
             switch (propertyIRI) {
                 case prefixes.dataset + 'dataset':
@@ -143,7 +143,7 @@ describe('Edit Dataset Overlay directive', function() {
                     controller.update();
                     scope.$apply();
                     expect(catalogManagerSvc.getRecordMasterBranch).toHaveBeenCalledWith('ontology', catalogManagerSvc.localCatalog['@id']);
-                    expect(utilSvc.getIdForBlankNode).toHaveBeenCalled();
+                    expect(utilSvc.getSkolemizedIRI).toHaveBeenCalled();
                     expect(utilSvc.getPropertyId).toHaveBeenCalledWith(branch, prefixes.catalog + 'head');
                     expect(utilSvc.setPropertyId).toHaveBeenCalledWith(expectedRecord, prefixes.dataset + 'ontology', jasmine.any(String));
                     expect(datasetManagerSvc.updateDatasetRecord).toHaveBeenCalledWith(datasetStateSvc.selectedDataset.record['@id'], catalogManagerSvc.localCatalog['@id'], [jasmine.objectContaining(expectedBlankNode), expectedRecord], 'title');

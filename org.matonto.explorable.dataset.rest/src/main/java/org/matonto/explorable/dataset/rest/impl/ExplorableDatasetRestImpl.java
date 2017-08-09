@@ -24,8 +24,9 @@ package org.matonto.explorable.dataset.rest.impl;
  */
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
+import static org.matonto.rest.util.RestUtils.jsonldToDeskolemizedModel;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
-import static org.matonto.rest.util.RestUtils.modelToJsonld;
+import static org.matonto.rest.util.RestUtils.modelToSkolemizedJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -52,6 +53,7 @@ import org.matonto.ontology.core.api.propertyexpression.PropertyExpression;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.persistence.utils.QueryResults;
 import org.matonto.persistence.utils.Statements;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.BindingSet;
@@ -100,6 +102,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private SesameTransformer sesameTransformer;
     private OntologyManager ontologyManager;
     private OntologyRecordFactory ontologyRecordFactory;
+    private BNodeService bNodeService;
 
     private static final String GET_CLASSES_TYPES;
     private static final String GET_CLASSES_DETAILS;
@@ -188,6 +191,11 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         this.ontologyRecordFactory = ontologyRecordFactory;
     }
 
+    @Reference
+    public void setBNodeService(BNodeService bNodeService) {
+        this.bNodeService = bNodeService;
+    }
+
     @Override
     public Response getClassDetails(String recordIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
@@ -240,7 +248,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(newInstanceJson, "The Instance's JSON-LD is required.");
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
-            Model instanceModel = sesameTransformer.matontoModel(jsonldToModel(newInstanceJson));
+            Model instanceModel = jsonldToModel(newInstanceJson, sesameTransformer);
             Resource instanceId = instanceModel.stream()
                     .filter(statement -> !(statement.getSubject() instanceof BNode))
                     .findAny().orElseThrow(() ->
@@ -279,7 +287,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             if (instanceModel.size() == 0) {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
             } else {
-                String json = modelToJsonld(sesameTransformer.sesameModel(instanceModel));
+                String json = modelToSkolemizedJsonld(instanceModel, sesameTransformer, bNodeService);
                 return Response.ok(JSONArray.fromObject(json)).build();
             }
         } catch (IllegalArgumentException e) {
@@ -307,7 +315,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                     RepositoryResult<Statement> reification = conn.getStatements(statement.getSubject(), null, null);
                     conn.remove(reification);
                 });
-                conn.add(sesameTransformer.matontoModel(jsonldToModel(json)));
+                conn.add(jsonldToDeskolemizedModel(json, sesameTransformer, bNodeService));
                 conn.commit();
                 return Response.ok().build();
             }
