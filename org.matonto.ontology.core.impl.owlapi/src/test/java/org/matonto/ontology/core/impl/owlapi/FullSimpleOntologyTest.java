@@ -70,6 +70,8 @@ public class FullSimpleOntologyTest {
     private ValueFactory vf;
     private IRI classIRI;
     private IRI classIRIC;
+    private IRI classIRID;
+    private IRI classIRIE;
     private IRI dataProp1IRI;
     private IRI dataProp2IRI;
     private IRI objectProp1IRI;
@@ -93,6 +95,8 @@ public class FullSimpleOntologyTest {
         IRI versionIRI = vf.createIRI("http://test.com/ontology1/1.0.0");
         classIRI = vf.createIRI("http://test.com/ontology1#TestClassA");
         classIRIC = vf.createIRI("http://test.com/ontology1#TestClassC");
+        classIRID = vf.createIRI("http://test.com/ontology1#TestClassD");
+        classIRIE = vf.createIRI("http://test.com/ontology1#TestClassE");
         dataProp1IRI = vf.createIRI("http://test.com/ontology1#testDataProperty1");
         dataProp2IRI = vf.createIRI("http://test.com/ontology1#testDataProperty2");
         objectProp1IRI = vf.createIRI("http://test.com/ontology1#testObjectProperty1");
@@ -306,6 +310,8 @@ public class FullSimpleOntologyTest {
         // TODO: this works with imports, but we need to add a test which does not have an external dependency
         assertEquals(2, ontology.getAllClassObjectProperties(classIRI).size());
         assertEquals(1, ontology.getAllClassObjectProperties(classIRIC).size());
+        assertEquals(1, ontology.getAllClassObjectProperties(classIRID).size());
+        assertEquals(1, ontology.getAllClassObjectProperties(classIRIE).size());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -323,6 +329,8 @@ public class FullSimpleOntologyTest {
         // TODO: this works with imports, but we need to add a test which does not have an external dependency
         assertEquals(2, ontology.getAllClassDataProperties(classIRI).size());
         assertEquals(1, ontology.getAllClassDataProperties(classIRIC).size());
+        assertEquals(1, ontology.getAllClassDataProperties(classIRID).size());
+        assertEquals(1, ontology.getAllClassDataProperties(classIRIE).size());
     }
 
     @Test(expected = IllegalArgumentException.class)
