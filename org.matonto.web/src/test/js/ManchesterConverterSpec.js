@@ -79,7 +79,7 @@ describe('Manchester Converter service', function() {
             };
         beforeEach(function() {
             idx = 0;
-            utilSvc.getIdForBlankNode.and.callFake(function() {
+            utilSvc.getSkolemizedIRI.and.callFake(function() {
                 var id = '_:genid' + idx;
                 idx++;
                 return id;

@@ -222,7 +222,7 @@ BlankNodesListener.prototype.exitNonNegativeInteger = function(ctx) {
 };
 
 var createBNode = function(type) {
-    return {'@id': util.getIdForBlankNode(), '@type': [type]};
+    return {'@id': util.getSkolemizedIRI(), '@type': [type]};
 }
 var setOnProperty = function(ctx, self) {
     var bnode = self.map[ctx.parentCtx.invokingState].bnode;
