@@ -714,7 +714,7 @@ public class OntologyRestImpl implements OntologyRest {
             Resource entityIRI = valueFactory.createIRI(entityIRIStr);
             if (queryType.equals("construct")) {
                 Model results = ontologyManager.constructEntityUsages(ontology, entityIRI);
-                return Response.ok(modelToJsonld(sesameTransformer.sesameModel(results))).build();
+                return Response.ok(modelToJsonld(results, sesameTransformer)).build();
             } else if (queryType.equals("select")) {
                 TupleQueryResult results = ontologyManager.getEntityUsages(ontology, entityIRI);
                 return Response.ok(JSONQueryResults.getResponse(results)).build();
@@ -1219,7 +1219,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @return a Model created using the JSON-LD.
      */
     private Model getModelFromJson(String json) {
-        return sesameTransformer.matontoModel(jsonldToModel(json));
+        return jsonldToModel(json, sesameTransformer);
     }
 
     /**

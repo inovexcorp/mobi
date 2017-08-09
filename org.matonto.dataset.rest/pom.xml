@@ -50,7 +50,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rest.util</artifactId>
-            <version>1.8.14</version>
+            <version>1.8.56-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -60,7 +60,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.8.34</version>
+            <version>1.8.56-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>

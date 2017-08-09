@@ -26,7 +26,10 @@ package org.matonto.rest.util;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import net.sf.json.JSONObject;
@@ -35,6 +38,11 @@ import org.junit.Before;
 import org.junit.Test;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.persistence.utils.api.BNodeService;
+import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
@@ -42,21 +50,20 @@ import org.matonto.rdf.core.utils.Values;
 import org.matonto.web.security.util.AuthenticationProps;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
 
 import java.util.Optional;
 import javax.ws.rs.container.ContainerRequestContext;
 
 public class RestUtilsTest {
-    private Model model;
     private String expectedJsonld;
     private String expectedTurtle;
     private String expectedGroupedTurtle;
     private String expectedGroupedRdfxml;
     private String expectedRdfxml;
     private ValueFactory vf = SimpleValueFactory.getInstance();
-    private org.matonto.rdf.api.ModelFactory mf = LinkedHashModelFactory.getInstance();
+    private ModelFactory mf = LinkedHashModelFactory.getInstance();
+    private Model model = mf.createModel();
 
     @Mock
     private ContainerRequestContext context;
@@ -66,6 +73,12 @@ public class RestUtilsTest {
 
     @Mock
     private User user;
+
+    @Mock
+    private SesameTransformer transformer;
+
+    @Mock
+    private BNodeService service;
 
     @Before
     public void setUp() throws Exception {
@@ -80,6 +93,10 @@ public class RestUtilsTest {
         MockitoAnnotations.initMocks(this);
         when(context.getProperty(AuthenticationProps.USERNAME)).thenReturn("tester");
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
+        when(transformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
+        when(transformer.matontoModel(any(org.openrdf.model.Model.class))).thenReturn(model);
+        when(service.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgumentAt(0, Statement.class));
+        when(service.deskolemize(model)).thenReturn(model);
     }
 
     @Test
@@ -127,43 +144,89 @@ public class RestUtilsTest {
 
     @Test
     public void modelToStringWithRDFFormatTest() throws Exception {
-        assertEquals(expectedJsonld, RestUtils.modelToString(model, RDFFormat.JSONLD));
-        assertEquals(expectedTurtle, RestUtils.modelToString(model, RDFFormat.TURTLE));
-        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, RDFFormat.RDFXML)));
+        assertEquals(expectedJsonld, RestUtils.modelToString(model, RDFFormat.JSONLD, transformer));
+        assertEquals(expectedTurtle, RestUtils.modelToString(model, RDFFormat.TURTLE, transformer));
+        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, RDFFormat.RDFXML, transformer)));
     }
 
     @Test
     public void modelToStringTest() throws Exception {
-        assertEquals(expectedJsonld, RestUtils.modelToString(model, "jsonld"));
-        assertEquals(expectedTurtle, RestUtils.modelToString(model, "turtle"));
-        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, "rdf/xml")));
-        assertEquals(expectedJsonld, RestUtils.modelToString(model, "something"));
+        assertEquals(expectedJsonld, RestUtils.modelToString(model, "jsonld", transformer));
+        assertEquals(expectedTurtle, RestUtils.modelToString(model, "turtle", transformer));
+        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, "rdf/xml", transformer)));
+        assertEquals(expectedJsonld, RestUtils.modelToString(model, "something", transformer));
+    }
+
+    @Test
+    public void modelToSkolemizedStringWithRDFFormatTest() throws Exception {
+        assertEquals(expectedJsonld, RestUtils.modelToSkolemizedString(model, RDFFormat.JSONLD, transformer, service));
+        assertEquals(expectedTurtle, RestUtils.modelToSkolemizedString(model, RDFFormat.TURTLE, transformer, service));
+        assertEquals(expectedRdfxml, RestUtils.modelToSkolemizedString(model, RDFFormat.RDFXML, transformer, service));
+    }
+
+    @Test
+    public void modelToSkolemizedStringTest() throws Exception {
+        assertEquals(expectedJsonld, RestUtils.modelToSkolemizedString(model, "jsonld", transformer, service));
+        assertEquals(expectedTurtle, RestUtils.modelToSkolemizedString(model, "turtle", transformer, service));
+        assertEquals(expectedRdfxml, RestUtils.modelToSkolemizedString(model, "rdf/xml", transformer, service));
+        assertEquals(expectedJsonld, RestUtils.modelToSkolemizedString(model, "something", transformer, service));
     }
 
     @Test
     public void groupedModelToStringWithRDFFormatTest() throws Exception {
-        assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, RDFFormat.JSONLD));
-        assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, RDFFormat.TURTLE));
-        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, RDFFormat.RDFXML)));
+        assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, RDFFormat.JSONLD, transformer));
+        assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, RDFFormat.TURTLE, transformer));
+        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, RDFFormat.RDFXML, transformer)));
     }
 
     @Test
     public void groupedModelToStringTest() throws Exception {
-        assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, "jsonld"));
-        assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, "turtle"));
-        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, "rdf/xml")));
-        assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, "something"));
+        assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, "jsonld", transformer));
+        assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, "turtle", transformer));
+        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, "rdf/xml", transformer)));
+        assertEquals(expectedJsonld, RestUtils.groupedModelToString(model, "something", transformer));
+    }
+
+    @Test
+    public void groupedModelToSkolemizedStringWithRDFFormatTest() throws Exception {
+        assertEquals(expectedJsonld, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.JSONLD, transformer, service));
+        assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.TURTLE, transformer, service));
+        assertEquals(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.RDFXML, transformer, service));
+    }
+
+    @Test
+    public void groupedModelToSkolemizedStringTest() throws Exception {
+        assertEquals(expectedJsonld, RestUtils.groupedModelToSkolemizedString(model, "jsonld", transformer, service));
+        assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToSkolemizedString(model, "turtle", transformer, service));
+        assertEquals(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, "rdf/xml", transformer, service));
+        assertEquals(expectedJsonld, RestUtils.groupedModelToSkolemizedString(model, "something", transformer, service));
     }
 
     @Test
     public void jsonldToModelTest() throws Exception {
-        Model result = RestUtils.jsonldToModel(expectedJsonld);
+        Model result = RestUtils.jsonldToModel(expectedJsonld, transformer);
         assertEquals(model, result);
+        verify(transformer).matontoModel(any(org.openrdf.model.Model.class));
+    }
+
+    @Test
+    public void jsonldToDeskolemizedModelTest() throws Exception {
+        Model result = RestUtils.jsonldToDeskolemizedModel(expectedJsonld, transformer, service);
+        assertEquals(model, result);
+        verify(transformer).matontoModel(any(org.openrdf.model.Model.class));
+        verify(service).deskolemize(model);
+    }
+
+    @Test
+    public void modelToSkolemizedJsonldTest() throws Exception {
+        String result = RestUtils.modelToSkolemizedJsonld(model, transformer, service);
+        assertEquals(expectedJsonld, result);
+        verify(service, atLeastOnce()).skolemize(any(Statement.class));
     }
 
     @Test
     public void modelToJsonldTest() throws Exception {
-        String result = RestUtils.modelToJsonld(model);
+        String result = RestUtils.modelToJsonld(model, transformer);
         assertEquals(expectedJsonld, result);
     }
 
@@ -243,23 +306,21 @@ public class RestUtilsTest {
     }
 
     private void setUpModel() {
-        org.matonto.rdf.api.Model temp = mf.createModel();
-        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
-        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop2"), vf.createLiteral("true"));
-        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop3"), vf.createLiteral("true"));
-        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("true"));
-        temp.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("false"));
-        temp.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
-        temp.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop2"), vf.createLiteral("true"));
-        temp.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop3"), vf.createLiteral("true"));
-        temp.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("true"));
-        temp.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("false"));
-        temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
-        temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop2"), vf.createLiteral("true"));
-        temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop3"), vf.createLiteral("true"));
-        temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("true"));
-        temp.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("false"));
-        model = Values.sesameModel(temp);
+        model.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
+        model.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop2"), vf.createLiteral("true"));
+        model.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop3"), vf.createLiteral("true"));
+        model.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("true"));
+        model.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("false"));
+        model.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
+        model.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop2"), vf.createLiteral("true"));
+        model.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop3"), vf.createLiteral("true"));
+        model.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("true"));
+        model.add(vf.createIRI("http://example.com/test/1"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("false"));
+        model.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
+        model.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop2"), vf.createLiteral("true"));
+        model.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop3"), vf.createLiteral("true"));
+        model.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("true"));
+        model.add(vf.createIRI("http://example.com/test/2"), vf.createIRI("http://example.com/prop4"), vf.createLiteral("false"));
     }
 
     private boolean equalsIgnoreNewline(String s1, String s2) {
