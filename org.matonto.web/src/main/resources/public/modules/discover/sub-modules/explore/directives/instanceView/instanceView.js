@@ -72,9 +72,8 @@
                         var reification = dvm.eu.getReification(dvm.ds.explore.instance.entity, dvm.ds.explore.instance.metadata.instanceIRI, propIRI, valueObj);
                         if (reification) {
                             return _.omit(reification, ['@id', '@type', prefixes.rdf + 'subject', prefixes.rdf + 'predicate', prefixes.rdf + 'object']);
-                        } else {
-                            return reification;
                         }
+                        return reification;
                     }
 
                     function getEntity() {
