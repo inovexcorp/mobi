@@ -77,6 +77,7 @@ public class FullSimpleOntologyTest {
     private IRI objectProp1IRI;
     private IRI objectProp2IRI;
     private IRI errorIRI;
+    private IRI importedIRI0;
     private IRI importedIRI;
     private Ontology ontology;
 
@@ -103,6 +104,7 @@ public class FullSimpleOntologyTest {
         objectProp1IRI = vf.createIRI("http://test.com/ontology1#testObjectProperty1");
         objectProp2IRI = vf.createIRI("http://test.com/ontology1#testObjectProperty2");
         errorIRI = vf.createIRI("http://test.com/ontology1#error");
+        importedIRI0 = vf.createIRI("http://matonto.org/ontology/test-local-imports-1#Class0");
         importedIRI = vf.createIRI("http://matonto.org/ontology/test-local-imports-1#Class1");
         SimpleOntologyValues values = new SimpleOntologyValues();
         values.setValueFactory(vf);
@@ -328,6 +330,7 @@ public class FullSimpleOntologyTest {
         InputStream stream1 = this.getClass().getResourceAsStream("/test-local-imports-1.ttl");
         Ontology ont1 = new SimpleOntology(stream1, ontologyManager, transformer);
 
+        assertEquals(1, ont1.getAllClassObjectProperties(importedIRI0).size());
         assertEquals(1, ont1.getAllClassObjectProperties(importedIRI).size());
     }
 
@@ -364,6 +367,7 @@ public class FullSimpleOntologyTest {
         InputStream stream1 = this.getClass().getResourceAsStream("/test-local-imports-1.ttl");
         Ontology ont1 = new SimpleOntology(stream1, ontologyManager, transformer);
 
+        assertEquals(1, ont1.getAllClassDataProperties(importedIRI0).size());
         assertEquals(1, ont1.getAllClassDataProperties(importedIRI).size());
     }
 
