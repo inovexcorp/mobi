@@ -25,6 +25,8 @@ package org.matonto.persistence.utils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.matonto.persistence.utils.impl.SimpleBNodeService.BNODE_PREFIX;
+import static org.matonto.persistence.utils.impl.SimpleBNodeService.SKOLEMIZED_NAMESPACE;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -48,15 +50,15 @@ public class SimpleBNodeServiceTest {
 
     private final BNode bnode1 = vf.createBNode();
     private final BNode bnode2 = vf.createBNode();
-    private final IRI skolemizedBnode1 = vf.createIRI(SimpleBNodeService.SKOLEMIZED_NAMESPACE + bnode1.getID());
-    private final IRI skolemizedBnode2 = vf.createIRI(SimpleBNodeService.SKOLEMIZED_NAMESPACE + bnode2.getID());
+    private final IRI skolemizedBnode1 = vf.createIRI(SKOLEMIZED_NAMESPACE + bnode1.getID().replace(BNODE_PREFIX, ""));
+    private final IRI skolemizedBnode2 = vf.createIRI(SKOLEMIZED_NAMESPACE + bnode2.getID().replace(BNODE_PREFIX, ""));
     private final IRI predicate = vf.createIRI("http://matonto.org/predicate");
     private final Resource subject = vf.createIRI("http://matonto.org/subject");
     private final Value object = vf.createIRI("http://matonto.org/object");
-    private final IRI skolemizedIRI1 = vf.createIRI(SimpleBNodeService.SKOLEMIZED_NAMESPACE + "0");
-    private final IRI skolemizedIRI2 = vf.createIRI(SimpleBNodeService.SKOLEMIZED_NAMESPACE + "1");
-    private final BNode deskolemizedIRI1 = vf.createBNode(SimpleBNodeService.BNODE_PREFIX + skolemizedIRI1.getLocalName());
-    private final BNode deskolemizedIRI2 = vf.createBNode(SimpleBNodeService.BNODE_PREFIX + skolemizedIRI2.getLocalName());
+    private final IRI skolemizedIRI1 = vf.createIRI(SKOLEMIZED_NAMESPACE + "0");
+    private final IRI skolemizedIRI2 = vf.createIRI(SKOLEMIZED_NAMESPACE + "1");
+    private final BNode deskolemizedIRI1 = vf.createBNode(BNODE_PREFIX + skolemizedIRI1.getLocalName());
+    private final BNode deskolemizedIRI2 = vf.createBNode(BNODE_PREFIX + skolemizedIRI2.getLocalName());
 
     @Before
     public void setUp() throws Exception {
@@ -68,8 +70,8 @@ public class SimpleBNodeServiceTest {
     @Test
     public void testSkolemizeBNode() {
         IRI result = service.skolemize(bnode1);
-        assertEquals(SimpleBNodeService.SKOLEMIZED_NAMESPACE, result.getNamespace());
-        assertEquals(bnode1.getID(), result.getLocalName());
+        assertEquals(SKOLEMIZED_NAMESPACE, result.getNamespace());
+        assertEquals(bnode1.getID().replace(BNODE_PREFIX, ""), result.getLocalName());
     }
 
     @Test
@@ -77,8 +79,8 @@ public class SimpleBNodeServiceTest {
         Value result = service.skolemize((Value) bnode1);
         assertTrue(result instanceof IRI);
         IRI iri = (IRI) result;
-        assertEquals(SimpleBNodeService.SKOLEMIZED_NAMESPACE, iri.getNamespace());
-        assertEquals(bnode1.getID(), iri.getLocalName());
+        assertEquals(SKOLEMIZED_NAMESPACE, iri.getNamespace());
+        assertEquals(bnode1.getID().replace(BNODE_PREFIX, ""), iri.getLocalName());
     }
 
     @Test
@@ -128,14 +130,14 @@ public class SimpleBNodeServiceTest {
     @Test
     public void testDeskolemizeIRI() {
         BNode result = service.deskolemize(skolemizedIRI1);
-        assertEquals(SimpleBNodeService.BNODE_PREFIX + skolemizedIRI1.getLocalName(), result.getID());
+        assertEquals(BNODE_PREFIX + skolemizedIRI1.getLocalName(), result.getID());
     }
 
     @Test
     public void testDeskolemizeValueThatIsSkolemizedIRI() {
         Value result = service.deskolemize((Value) skolemizedIRI1);
         assertTrue(result instanceof BNode);
-        assertEquals(SimpleBNodeService.BNODE_PREFIX + skolemizedIRI1.getLocalName(), ((BNode) result).getID());
+        assertEquals(BNODE_PREFIX + skolemizedIRI1.getLocalName(), ((BNode) result).getID());
     }
 
     @Test
