@@ -33,7 +33,7 @@ describe('Explore Utils Service', function() {
             prefixes = _prefixes_;
             regex = _REGEX_;
         });
-        
+
         fewProperties = [{
             propertyIRI: 'propertyId',
             type: 'Data',
@@ -46,7 +46,7 @@ describe('Explore Utils Service', function() {
             type: 'Data',
             range: [prefixes.xsd + 'boolean']
         }];
-        
+
         allProperties = [{
             propertyIRI: 'id1',
             range: [prefixes.xsd + 'dateTime']
@@ -79,7 +79,7 @@ describe('Explore Utils Service', function() {
             range: [prefixes.xsd + 'other']
         }];
     });
-    
+
     it('getInputType should return the correct input type', function() {
         _.forEach(['id1', 'id2'], function(id) {
             expect(exploreUtilsSvc.getInputType(id, allProperties)).toBe('date');
@@ -176,5 +176,27 @@ describe('Explore Utils Service', function() {
         _.forEach(array, function(item) {
             expect(exploreUtilsSvc.removeEmptyProperties).toHaveBeenCalledWith(item);
         });
+    });
+    it('getReification should find a Statement object for the identified statement', function() {
+        var sub = 'subject', pred = 'predicate', value = {'@value': 'value'};
+        var array = [
+            {'@type': [prefixes.rdf + 'Statement']},
+            {'@type': [prefixes.rdf + 'Statement']},
+            {'@type': [prefixes.rdf + 'Statement']},
+            {'@type': [prefixes.rdf + 'Statement']}
+        ];
+        array[0][prefixes.rdf + 'subject'] = [{'@id': sub}];
+        array[2][prefixes.rdf + 'subject'] = [{'@id': sub}];
+        array[3][prefixes.rdf + 'subject'] = [{'@id': sub}];
+        array[0][prefixes.rdf + 'predicate'] = [{'@id': pred}];
+        array[1][prefixes.rdf + 'predicate'] = [{'@id': pred}];
+        array[3][prefixes.rdf + 'predicate'] = [{'@id': pred}];
+        array[0][prefixes.rdf + 'object'] = [value];
+        array[1][prefixes.rdf + 'object'] = [value];
+        array[2][prefixes.rdf + 'object'] = [value];
+        expect(exploreUtilsSvc.getReification(array, sub, pred, value)).toEqual(array[0]);
+        expect(exploreUtilsSvc.getReification(array, '', pred, value)).toBeUndefined();
+        expect(exploreUtilsSvc.getReification(array, sub, '', value)).toBeUndefined();
+        expect(exploreUtilsSvc.getReification(array, sub, pred, {})).toBeUndefined();
     });
 });
