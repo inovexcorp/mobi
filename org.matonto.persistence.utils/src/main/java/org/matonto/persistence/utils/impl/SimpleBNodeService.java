@@ -57,7 +57,7 @@ public class SimpleBNodeService implements BNodeService {
 
     @Override
     public IRI skolemize(BNode bnode) {
-        return vf.createIRI(SKOLEMIZED_NAMESPACE, bnode.getID());
+        return vf.createIRI(SKOLEMIZED_NAMESPACE, bnode.getID().replace(BNODE_PREFIX, ""));
     }
 
     @Override

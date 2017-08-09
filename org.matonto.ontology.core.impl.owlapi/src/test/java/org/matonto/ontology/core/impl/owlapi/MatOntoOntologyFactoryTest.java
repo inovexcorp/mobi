@@ -46,6 +46,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.semanticweb.owlapi.io.IRIDocumentSource;
 import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
 import org.semanticweb.owlapi.model.IRI;
+import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyFactory;
 import org.semanticweb.owlapi.model.OWLOntologyID;
@@ -53,6 +54,7 @@ import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SimpleOntologyValues.class)
@@ -86,6 +88,9 @@ public class MatOntoOntologyFactoryTest {
     @Mock
     private OWLOntologyLoaderConfiguration configuration;
 
+    @Mock
+    private OWLImportsDeclaration importsDeclaration;
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -96,6 +101,7 @@ public class MatOntoOntologyFactoryTest {
         when(ontologyFactory.createOWLOntology(any(OWLOntologyManager.class), any(OWLOntologyID.class), any(IRI.class), any(OWLOntologyFactory.OWLOntologyCreationHandler.class))).thenReturn(owlOntology);
         when(ontologyManager.retrieveOntology(any(Resource.class))).thenReturn(Optional.of(ontology));
         when(owlOntologyManager.getOntology(any(IRI.class))).thenReturn(owlOntology);
+        when(owlOntology.importsDeclarations()).thenReturn(Stream.of(importsDeclaration));
 
         factory = new MatOntoOntologyFactory(ontologyManager, ontologyFactory);
     }
@@ -123,6 +129,7 @@ public class MatOntoOntologyFactoryTest {
     public void loadOWLOntologyTest() throws Exception {
         assertEquals(owlOntology, factory.loadOWLOntology(owlOntologyManager, protocolSource, handler, configuration));
         verify(ontologyManager).retrieveOntology(matIRI);
+        verify(owlOntologyManager).makeLoadImportRequest(importsDeclaration);
         verify(handler).ontologyCreated(owlOntology);
     }
 }

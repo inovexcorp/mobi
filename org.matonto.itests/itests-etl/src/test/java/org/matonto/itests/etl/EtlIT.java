@@ -69,7 +69,7 @@ public class EtlIT extends KarafTestSupport {
         waitForService("(&(objectClass=org.matonto.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
 
         String outputFilename = "test.ttl";
-        executeCommand(String.format("matonto:transform -h=true -o=%s %s %s", outputFilename, delimitedFile, mappingFile));
+        executeCommand(String.format("mobi:transform -h=true -o=%s %s %s", outputFilename, delimitedFile, mappingFile));
 
         outputFile = new File(outputFilename);
 

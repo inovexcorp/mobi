@@ -26,36 +26,37 @@
     angular
         /**
          * @ngdoc overview
-         * @name sparqlResultTable
+         * @name sparqlResultBlock
          *
          * @description
-         * The `sparqlResultTable` module only provides the `sparqlResultTable` directive which creates
+         * The `sparqlResultBlock` module only provides the `sparqlResultBlock` directive which creates
          * a tabular view of the SPARQL query {@link sparqlManager.service:sparqlManagerService#data results}.
          */
-        .module('sparqlResultTable', [])
+        .module('sparqlResultBlock', [])
         /**
          * @ngdoc directive
-         * @name sparqlResultTable.directive:sparqlResultTable
+         * @name sparqlResultBlock.directive:sparqlResultBlock
          * @scope
          * @restrict E
          * @requires sparqlManager.service:sparqlManagerService
          *
          * @description
-         * `sparqlResultTable` is a directive that creates a {@link block.directive:block block} with a table of
-         * the {@link sparqlManager.service:sparqlManagerService#data results} of the latest SPARQL query,
+         * `sparqlResultBlock` is a directive that creates a {@link block.directive:block block} with a
+         * {@link sparqlResultTable.directive:sparqlResultTable table} the
+         * {@link sparqlManager.service:sparqlManagerService#data results} of the latest SPARQL query,
          * {@link pagination.directive:pagination pagination} buttons for the results,
          * {@link pagingDetails.directive:pagingDetails details} about the current page of results, and a button
          * to {@link downloadQueryOverlay.directive:downloadQueryOverlay download} the full results. The directive
          * is replaced by the contents of its template.
          */
-        .directive('sparqlResultTable', sparqlResultTable);
+        .directive('sparqlResultBlock', sparqlResultBlock);
 
-        sparqlResultTable.$inject = ['sparqlManagerService'];
+        sparqlResultBlock.$inject = ['sparqlManagerService'];
 
-        function sparqlResultTable(sparqlManagerService) {
+        function sparqlResultBlock(sparqlManagerService) {
             return {
                 restrict: 'E',
-                templateUrl: 'modules/discover/sub-modules/query/directives/sparqlResultTable/sparqlResultTable.html',
+                templateUrl: 'modules/discover/sub-modules/query/directives/sparqlResultBlock/sparqlResultBlock.html',
                 replace: true,
                 scope: {},
                 controllerAs: 'dvm',

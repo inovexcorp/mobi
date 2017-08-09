@@ -39,7 +39,7 @@ import java.util.List;
  *
  * @author Sean Smitz <sean.smitz@inovexcorp.com>
  */
-@Command(scope = "matonto", name = "fedsvc", description = "View information about or restart federation services.")
+@Command(scope = "mobi", name = "fedsvc", description = "View information about or restart federation services.")
 @Service
 public class ClusteringServiceCli implements Action {
     public final static String VIEW_OPERATION = "view";
@@ -53,7 +53,7 @@ public class ClusteringServiceCli implements Action {
 
     @Argument(index = 0, name = "operation", description = "Controls the interaction performed with the Federation "
             + "Services.\n\tmatonto:fedsvc view - To view configuration information about connected clusters.\n"
-            + "\tmatonto:fedsvc -c/--cluster <id> view - To view nodes in a cluster. matonto:fedsvc  -c/--cluster <id> "
+            + "\tmobi:fedsvc -c/--cluster <id> view - To view nodes in a cluster. mobi:fedsvc  -c/--cluster <id> "
             + "restart - To restart the connection to the specified cluster.\n", required = true)
     String operation = null;
 

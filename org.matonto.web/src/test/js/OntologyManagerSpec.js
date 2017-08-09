@@ -385,36 +385,36 @@ describe('Ontology Manager service', function() {
     describe('getOntology hits the proper endpoint', function() {
         var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId, rdfFormat: format });
+            params = paramSerializer({ branchId: branchId, commitId: commitId, rdfFormat: format, clearCache: false });
         });
-        it('unless an error occurs', function(done) {
+        it('unless an error occurs', function() {
+            util.rejectError.and.returnValue($q.reject(error));
             $httpBackend.expectGET('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
                 function(headers) {
                     return headers['Accept'] === 'text/plain';
                 }).respond(400, null, null, error);
-            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format)
+            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format, false)
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
                 }, function(response) {
                     expect(response).toEqual(error);
-                    expect(util.onError).toHaveBeenCalled();
-                    done();
+                    expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: error
+                    }));
                 });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
+        it('successfully', function() {
             $httpBackend.expectGET('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
                 function(headers) {
                     return headers['Accept'] === 'text/plain';
                 }).respond(200, ontology);
-            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format)
+            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format, false)
                 .then(function(data) {
                     expect(data).toEqual(ontology);
-                    done();
                 }, function(response) {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
@@ -922,6 +922,37 @@ describe('Ontology Manager service', function() {
                     done();
                 });
             scope.$apply();
+        });
+    });
+    describe('getFailedImports calls the correct functions when GET /matontorest/ontologies/{recordId}/failed-imports', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({
+                branchId: branchId,
+                commitId: commitId
+            });
+        });
+        it('succeeds', function() {
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/failed-imports?' + params).respond(200, ['failedId']);
+            ontologyManagerSvc.getFailedImports(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual(['failedId']);
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('fails', function() {
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/failed-imports?' + params).respond(400, null, null, 'error');
+            util.rejectError.and.returnValue($q.reject('util-error'));
+            ontologyManagerSvc.getFailedImports(recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('util-error');
+                    expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'error', status: 400}));
+                });
+            flushAndVerify($httpBackend);
         });
     });
     describe('isOntology should return', function() {
@@ -1444,13 +1475,13 @@ describe('Ontology Manager service', function() {
     describe('hasClassIndividuals should return', function() {
         it('true if there are any entities with a type of the provided class in the ontology', function() {
             expect(ontologyManagerSvc
-                .hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], 
+                .hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj],
                     [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], classId))
                 .toBe(true);
         });
         it('true if there are any entities with a type of the provided class in the imported ontology', function() {
             expect(ontologyManagerSvc
-                .hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], 
+                .hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj],
                     [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], importedClassId))
                 .toBe(true);
         });
@@ -1463,13 +1494,13 @@ describe('Ontology Manager service', function() {
     describe('getClassIndividuals should return', function() {
         it('correct object if there are any entities with a type of the provided class in the ontology', function() {
             expect(ontologyManagerSvc
-                .getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], 
+                .getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj],
                     [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], classId))
                 .toEqual([individualObj]);
         });
         it('correct object if there are any entities with a type of the provided class in the imported ontology', function() {
             expect(ontologyManagerSvc
-                .getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], 
+                .getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj],
                     [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], importedClassId))
                 .toEqual([importedIndividualObj]);
         });
@@ -1578,24 +1609,6 @@ describe('Ontology Manager service', function() {
             expect(util.getDctermsValue).toHaveBeenCalledWith(entity, 'title');
             expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.dc + 'title');
             expect(util.getBeautifulIRI).toHaveBeenCalledWith(ontologyId);
-        });
-        it('returns matonto.anonymous if present and no rdfs:label, dcterms:title, dc:title, or @id', function() {
-            util.getPropertyValue.and.returnValue('');
-            util.getDctermsValue.and.returnValue('');
-            var entity = {matonto: {anonymous: anonymous}};
-            expect(ontologyManagerSvc.getEntityName(entity)).toEqual(anonymous);
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).toHaveBeenCalledWith(entity, 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.dc + 'title');
-        });
-        it('returns "" if no rdfs:label, dcterms:title, dc:title, @id, or matonto.anonymous', function() {
-            util.getPropertyValue.and.returnValue('');
-            util.getDctermsValue.and.returnValue('');
-            var entity = {};
-            expect(ontologyManagerSvc.getEntityName(entity)).toEqual('');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).toHaveBeenCalledWith(entity, 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.dc + 'title');
         });
         it('when type is vocabulary, returns skos:prefLabel if present', function() {
             util.getPropertyValue.and.callFake(function(entity, property) {

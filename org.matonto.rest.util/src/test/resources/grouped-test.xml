@@ -11,19 +11,19 @@
 </rdf:Description>
 
 <rdf:Description rdf:about="http://example.com/test/1">
-	<prop3 xmlns="http://example.com/" rdf:datatype="http://www.w3.org/2001/XMLSchema#string">true</prop3>
-	<prop2 xmlns="http://example.com/" rdf:datatype="http://www.w3.org/2001/XMLSchema#string">true</prop2>
 	<prop1 xmlns="http://example.com/" rdf:datatype="http://www.w3.org/2001/XMLSchema#string">true</prop1>
+	<prop2 xmlns="http://example.com/" rdf:datatype="http://www.w3.org/2001/XMLSchema#string">true</prop2>
+	<prop3 xmlns="http://example.com/" rdf:datatype="http://www.w3.org/2001/XMLSchema#string">true</prop3>
 	<prop4 xmlns="http://example.com/" rdf:datatype="http://www.w3.org/2001/XMLSchema#string">true</prop4>
 	<prop4 xmlns="http://example.com/" rdf:datatype="http://www.w3.org/2001/XMLSchema#string">false</prop4>
 </rdf:Description>
 
 <rdf:Description rdf:about="http://example.com/test/2">
+	<prop1 xmlns="http://example.com/" rdf:datatype="http://www.w3.org/2001/XMLSchema#string">true</prop1>
+	<prop2 xmlns="http://example.com/" rdf:datatype="http://www.w3.org/2001/XMLSchema#string">true</prop2>
+	<prop3 xmlns="http://example.com/" rdf:datatype="http://www.w3.org/2001/XMLSchema#string">true</prop3>
 	<prop4 xmlns="http://example.com/" rdf:datatype="http://www.w3.org/2001/XMLSchema#string">true</prop4>
 	<prop4 xmlns="http://example.com/" rdf:datatype="http://www.w3.org/2001/XMLSchema#string">false</prop4>
-	<prop3 xmlns="http://example.com/" rdf:datatype="http://www.w3.org/2001/XMLSchema#string">true</prop3>
-	<prop2 xmlns="http://example.com/" rdf:datatype="http://www.w3.org/2001/XMLSchema#string">true</prop2>
-	<prop1 xmlns="http://example.com/" rdf:datatype="http://www.w3.org/2001/XMLSchema#string">true</prop1>
 </rdf:Description>
 
 </rdf:RDF>
