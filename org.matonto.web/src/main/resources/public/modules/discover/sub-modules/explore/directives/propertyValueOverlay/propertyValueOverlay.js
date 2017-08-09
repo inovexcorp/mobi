@@ -76,7 +76,7 @@
                     dvm.propertyText = '';
 
                     var instance = ds.getInstance();
-                    var object = [angular.copy(_.get(_.get(instance, dvm.iri, []), dvm.index))];
+                    var object = angular.copy(_.get(_.get(instance, dvm.iri, []), dvm.index));
                     var ommitted = ['@id', '@type', prefixes.rdf + 'subject', prefixes.rdf + 'predicate', prefixes.rdf + 'object'];
 
                     dvm.reification = dvm.eu.getReification(ds.explore.instance.entity, instance['@id'], dvm.iri, object)
@@ -85,7 +85,7 @@
                             '@type': [prefixes.rdf + 'Statement'],
                             [prefixes.rdf + 'subject']: [{'@id': instance['@id']}],
                             [prefixes.rdf + 'predicate']: [{'@id': dvm.iri}],
-                            [prefixes.rdf + 'object']: object
+                            [prefixes.rdf + 'object']: [object]
                         };
 
                     dvm.addNewProperty = function(property) {

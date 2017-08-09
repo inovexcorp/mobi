@@ -22,6 +22,18 @@
  */
 describe('Property Value Overlay directive', function() {
     var $compile, scope, element, discoverStateSvc, controller, prefixes, exploreUtilsSvc;
+    var instance = {
+        '@id': 'id',
+        '@type': ['type'],
+        prop1: [{
+            '@id': 'http://matonto.org/id'
+        }],
+        prop2: [{
+            '@value': 'value1'
+        }, {
+            '@value': 'value2'
+        }]
+    };
 
     beforeEach(function() {
         module('templates');
@@ -45,22 +57,10 @@ describe('Property Value Overlay directive', function() {
             exploreUtilsSvc = _exploreUtilsService_;
         });
 
-        discoverStateSvc.getInstance.and.returnValue({
-            '@id': 'id',
-            '@type': ['type'],
-            'prop1': [{
-                '@id': 'http://matonto.org/id'
-            }],
-            'prop2': [{
-                '@value': 'value1'
-            }, {
-                '@value': 'value2'
-            }]
-        });
         scope.text = 'text';
         scope.closeOverlay = jasmine.createSpy('closeOverlay');
         scope.index = 0;
-        scope.iri = 'https://matonto.org/iri';
+        scope.iri = 'prop1';
         scope.onSubmit = jasmine.createSpy('onSubmit');
         scope.properties = [{
             propertyIRI: 'propertyId',
@@ -74,6 +74,7 @@ describe('Property Value Overlay directive', function() {
             type: 'Data',
             range: [prefixes.xsd + 'boolean']
         }];
+        discoverStateSvc.getInstance.and.returnValue(instance);
         element = $compile(angular.element('<property-value-overlay text="text" close-overlay="closeOverlay()" index="index" iri="iri" on-submit="onSubmit()" properties="properties"></property-value-overlay>'))(scope);
         scope.$digest();
         controller = element.controller('propertyValueOverlay');
@@ -86,6 +87,9 @@ describe('Property Value Overlay directive', function() {
         scope.$apply();
     });
 
+    it('should initialize with the correct values', function() {
+        expect(exploreUtilsSvc.getReification).toHaveBeenCalledWith(discoverStateSvc.explore.instance.entity, 'id', scope.iri, jasmine.any(Object));
+    });
     describe('in isolated scope', function() {
         it('text should be one way bound', function() {
             element.isolateScope().text = 'new';
@@ -106,7 +110,7 @@ describe('Property Value Overlay directive', function() {
         it('iri should be one way bound', function() {
             controller.iri = 'other';
             scope.$digest();
-            expect(scope.iri).toEqual('https://matonto.org/iri');
+            expect(scope.iri).toEqual('prop1');
         });
         it('onSubmit should be called in the parent scope', function() {
             controller.onSubmit();
