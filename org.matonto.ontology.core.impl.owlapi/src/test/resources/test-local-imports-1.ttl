@@ -9,4 +9,5 @@
 <http://matonto.org/ontology/test-local-imports-1> a owl:Ontology ;
     owl:imports <http://matonto.org/ontology/test-local-imports-2> .
 
-:Class1 a owl:Class .
+:Class1 a owl:Class ;
+    rdfs:subClassOf <http://matonto.org/ontology/test-local-imports-2Class2> .
