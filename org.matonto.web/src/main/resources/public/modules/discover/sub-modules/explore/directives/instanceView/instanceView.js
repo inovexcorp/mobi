@@ -43,13 +43,14 @@
          *
          * @description
          * HTML contents in the instance view page which shows the complete list of properites
-         * associated with the selected instance.
+         * associated with the selected instance. If a property value is reified, a toggleable
+         * dropdown display is included.
          */
         .directive('instanceView', instanceView);
-        
-        instanceView.$inject = ['discoverStateService', 'utilService'];
 
-        function instanceView(discoverStateService, utilService) {
+        instanceView.$inject = ['discoverStateService', 'utilService', 'exploreUtilsService', 'prefixes'];
+
+        function instanceView(discoverStateService, utilService, exploreUtilsService, prefixes) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceView/instanceView.html',
@@ -60,11 +61,19 @@
                     var dvm = this;
                     dvm.ds = discoverStateService;
                     dvm.util = utilService;
+                    dvm.eu = exploreUtilsService;
                     dvm.entity = getEntity();
 
                     dvm.getLimit = function(array, limit) {
                         var len = array.length;
                         return len === limit ? 1 : len;
+                    }
+                    dvm.getReification = function(propIRI, valueObj) {
+                        var reification = dvm.eu.getReification(dvm.ds.explore.instance.entity, dvm.ds.explore.instance.metadata.instanceIRI, propIRI, valueObj);
+                        if (reification) {
+                            return _.omit(reification, ['@id', '@type', prefixes.rdf + 'subject', prefixes.rdf + 'predicate', prefixes.rdf + 'object']);
+                        }
+                        return reification;
                     }
 
                     function getEntity() {
