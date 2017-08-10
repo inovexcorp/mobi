@@ -79,6 +79,7 @@ import org.semanticweb.owlapi.model.OWLDataMaxCardinality;
 import org.semanticweb.owlapi.model.OWLDataMinCardinality;
 import org.semanticweb.owlapi.model.OWLDataProperty;
 import org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom;
+import org.semanticweb.owlapi.model.OWLDataPropertyExpression;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLObjectCardinalityRestriction;
@@ -388,9 +389,9 @@ public class SimpleOntology implements Ontology {
             NodeSet<OWLClass> superClasses = owlReasoner.getSuperClasses(owlClass);
             return owlOntology.objectPropertiesInSignature(Imports.INCLUDED)
                     .filter(property -> {
-                        Set<OWLObjectPropertyDomainAxiom> domains = owlOntology.axioms(OWLObjectPropertyDomainAxiom
-                                .class, OWLObjectPropertyExpression.class, property, Imports.INCLUDED,
-                                Navigation.IN_SUB_POSITION).collect(Collectors.toSet());
+                        Set<OWLObjectPropertyDomainAxiom> domains = owlOntology.axioms(
+                                OWLObjectPropertyDomainAxiom.class, OWLObjectPropertyExpression.class, property,
+                                Imports.INCLUDED, Navigation.IN_SUB_POSITION).collect(Collectors.toSet());
                         return hasClassAsDomain(domains.stream(), classIRI, equivalentClasses, superClasses)
                                 || hasNoDomain(domains.stream());
                     })
@@ -417,8 +418,8 @@ public class SimpleOntology implements Ontology {
             NodeSet<OWLClass> superClasses = owlReasoner.getSuperClasses(owlClass);
             return owlOntology.dataPropertiesInSignature(Imports.INCLUDED)
                     .filter(property -> {
-                        Set<OWLDataPropertyDomainAxiom> domains = owlOntology.axioms(OWLDataPropertyDomainAxiom
-                                        .class, OWLObjectPropertyExpression.class, property, Imports.INCLUDED,
+                        Set<OWLDataPropertyDomainAxiom> domains = owlOntology.axioms(OWLDataPropertyDomainAxiom.class,
+                                OWLDataPropertyExpression.class, property, Imports.INCLUDED,
                                 Navigation.IN_SUB_POSITION).collect(Collectors.toSet());
                         return hasClassAsDomain(domains.stream(), classIRI, equivalentClasses, superClasses)
                                 || hasNoDomain(domains.stream());
