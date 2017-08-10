@@ -330,8 +330,8 @@ public class FullSimpleOntologyTest {
         InputStream stream1 = this.getClass().getResourceAsStream("/test-local-imports-1.ttl");
         Ontology ont1 = new SimpleOntology(stream1, ontologyManager, transformer);
 
-        assertEquals(1, ont1.getAllClassObjectProperties(importedIRI0).size());
-        assertEquals(1, ont1.getAllClassObjectProperties(importedIRI).size());
+        assertEquals(2, ont1.getAllClassObjectProperties(importedIRI0).size());
+        assertEquals(2, ont1.getAllClassObjectProperties(importedIRI).size());
     }
 
 
@@ -344,6 +344,22 @@ public class FullSimpleOntologyTest {
     @Test
     public void getAllNoDomainObjectPropertiesTest() {
         assertEquals(1, ontology.getAllNoDomainObjectProperties().size());
+    }
+
+    @Test
+    public void getAllNoDomainObjectPropertiesWithImportsTest() {
+        // Setup:
+        Resource ont2IRI = vf.createIRI("http://matonto.org/ontology/test-local-imports-2");
+        Resource ont2RecordIRI = vf.createIRI("https://matonto.org/record/test-local-imports-2");
+        InputStream stream2 = this.getClass().getResourceAsStream("/test-local-imports-2.ttl");
+        Ontology ont2 = new SimpleOntology(stream2, ontologyManager, transformer);
+        when(ontologyManager.getOntologyRecordResource(ont2IRI)).thenReturn(Optional.of(ont2RecordIRI));
+        when(ontologyManager.retrieveOntology(ont2RecordIRI)).thenReturn(Optional.of(ont2));
+
+        InputStream stream1 = this.getClass().getResourceAsStream("/test-local-imports-1.ttl");
+        Ontology ont1 = new SimpleOntology(stream1, ontologyManager, transformer);
+
+        assertEquals(1, ont1.getAllNoDomainObjectProperties().size());
     }
 
     @Test
@@ -367,8 +383,8 @@ public class FullSimpleOntologyTest {
         InputStream stream1 = this.getClass().getResourceAsStream("/test-local-imports-1.ttl");
         Ontology ont1 = new SimpleOntology(stream1, ontologyManager, transformer);
 
-        assertEquals(1, ont1.getAllClassDataProperties(importedIRI0).size());
-        assertEquals(1, ont1.getAllClassDataProperties(importedIRI).size());
+        assertEquals(2, ont1.getAllClassDataProperties(importedIRI0).size());
+        assertEquals(2, ont1.getAllClassDataProperties(importedIRI).size());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -379,5 +395,21 @@ public class FullSimpleOntologyTest {
     @Test
     public void getAllNoDomainDataPropertiesTest() {
         assertEquals(1, ontology.getAllNoDomainDataProperties().size());
+    }
+
+    @Test
+    public void getAllNoDomainDataPropertiesWithImportsTest() {
+        // Setup:
+        Resource ont2IRI = vf.createIRI("http://matonto.org/ontology/test-local-imports-2");
+        Resource ont2RecordIRI = vf.createIRI("https://matonto.org/record/test-local-imports-2");
+        InputStream stream2 = this.getClass().getResourceAsStream("/test-local-imports-2.ttl");
+        Ontology ont2 = new SimpleOntology(stream2, ontologyManager, transformer);
+        when(ontologyManager.getOntologyRecordResource(ont2IRI)).thenReturn(Optional.of(ont2RecordIRI));
+        when(ontologyManager.retrieveOntology(ont2RecordIRI)).thenReturn(Optional.of(ont2));
+
+        InputStream stream1 = this.getClass().getResourceAsStream("/test-local-imports-1.ttl");
+        Ontology ont1 = new SimpleOntology(stream1, ontologyManager, transformer);
+
+        assertEquals(1, ont1.getAllNoDomainDataProperties().size());
     }
 }

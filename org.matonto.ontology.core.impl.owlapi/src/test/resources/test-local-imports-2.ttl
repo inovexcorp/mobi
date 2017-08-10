@@ -9,11 +9,15 @@
 <http://matonto.org/ontology/test-local-imports-2> a owl:Ontology ;
     owl:imports <http://matonto.org/ontology/test-local-imports-3> .
 
+:ObjectProperty0 a owl:ObjectProperty .
+
 :ObjectProperty1 a owl:ObjectProperty ;
     rdfs:domain :Class2 .
 
 :ObjectProperty2 a owl:ObjectProperty ;
     rdfs:domain :OtherClass .
+
+:DataProperty0 a owl:DatatypeProperty .
 
 :DataProperty1 a owl:DatatypeProperty ;
     rdfs:domain :Class2 .

@@ -404,7 +404,8 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<ObjectProperty> getAllNoDomainObjectProperties() {
         return owlOntology.objectPropertiesInSignature(Imports.INCLUDED)
-                .filter(property -> hasNoDomain(owlOntology.objectPropertyDomainAxioms(property)))
+                .filter(property -> hasNoDomain(owlOntology.axioms(OWLObjectPropertyDomainAxiom.class,
+                        OWLObjectPropertyExpression.class, property, Imports.INCLUDED, Navigation.IN_SUB_POSITION)))
                 .map(SimpleOntologyValues::matontoObjectProperty)
                 .collect(Collectors.toSet());
     }
@@ -433,7 +434,9 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<DataProperty> getAllNoDomainDataProperties() {
         return owlOntology.dataPropertiesInSignature(Imports.INCLUDED)
-                .filter(property -> hasNoDomain(owlOntology.dataPropertyDomainAxioms(property)))
+                .filter(property -> hasNoDomain(owlOntology.axioms(OWLDataPropertyDomainAxiom.class,
+                        OWLDataPropertyExpression.class, property, Imports.INCLUDED,
+                        Navigation.IN_SUB_POSITION)))
                 .map(SimpleOntologyValues::matontoDataProperty)
                 .collect(Collectors.toSet());
     }
