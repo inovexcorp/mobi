@@ -78,6 +78,7 @@ import org.semanticweb.owlapi.model.OWLDataExactCardinality;
 import org.semanticweb.owlapi.model.OWLDataMaxCardinality;
 import org.semanticweb.owlapi.model.OWLDataMinCardinality;
 import org.semanticweb.owlapi.model.OWLDataProperty;
+import org.semanticweb.owlapi.model.OWLDataPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
 import org.semanticweb.owlapi.model.OWLImportsDeclaration;
 import org.semanticweb.owlapi.model.OWLObjectCardinalityRestriction;
@@ -85,6 +86,8 @@ import org.semanticweb.owlapi.model.OWLObjectExactCardinality;
 import org.semanticweb.owlapi.model.OWLObjectMaxCardinality;
 import org.semanticweb.owlapi.model.OWLObjectMinCardinality;
 import org.semanticweb.owlapi.model.OWLObjectProperty;
+import org.semanticweb.owlapi.model.OWLObjectPropertyDomainAxiom;
+import org.semanticweb.owlapi.model.OWLObjectPropertyExpression;
 import org.semanticweb.owlapi.model.OWLObjectSomeValuesFrom;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
@@ -95,6 +98,7 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
 import org.semanticweb.owlapi.model.OWLPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.parameters.Imports;
+import org.semanticweb.owlapi.model.parameters.Navigation;
 import org.semanticweb.owlapi.model.parameters.OntologyCopy;
 import org.semanticweb.owlapi.reasoner.Node;
 import org.semanticweb.owlapi.reasoner.NodeSet;
@@ -126,7 +130,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
-
 
 public class SimpleOntology implements Ontology {
 
@@ -384,9 +387,13 @@ public class SimpleOntology implements Ontology {
             Node<OWLClass> equivalentClasses = owlReasoner.getEquivalentClasses(owlClass);
             NodeSet<OWLClass> superClasses = owlReasoner.getSuperClasses(owlClass);
             return owlOntology.objectPropertiesInSignature(Imports.INCLUDED)
-                    .filter(property -> hasClassAsDomain(owlOntology.objectPropertyDomainAxioms(property), classIRI,
-                            equivalentClasses, superClasses)
-                                || hasNoDomain(owlOntology.objectPropertyDomainAxioms(property)))
+                    .filter(property -> {
+                        Set<OWLObjectPropertyDomainAxiom> domains = owlOntology.axioms(OWLObjectPropertyDomainAxiom
+                                .class, OWLObjectPropertyExpression.class, property, Imports.INCLUDED,
+                                Navigation.IN_SUB_POSITION).collect(Collectors.toSet());
+                        return hasClassAsDomain(domains.stream(), classIRI, equivalentClasses, superClasses)
+                                || hasNoDomain(domains.stream());
+                    })
                     .map(SimpleOntologyValues::matontoObjectProperty)
                     .collect(Collectors.toSet());
         }
@@ -409,9 +416,13 @@ public class SimpleOntology implements Ontology {
             Node<OWLClass> equivalentClasses = owlReasoner.getEquivalentClasses(owlClass);
             NodeSet<OWLClass> superClasses = owlReasoner.getSuperClasses(owlClass);
             return owlOntology.dataPropertiesInSignature(Imports.INCLUDED)
-                    .filter(property -> hasClassAsDomain(owlOntology.dataPropertyDomainAxioms(property), classIRI,
-                            equivalentClasses, superClasses)
-                                || hasNoDomain(owlOntology.dataPropertyDomainAxioms(property)))
+                    .filter(property -> {
+                        Set<OWLDataPropertyDomainAxiom> domains = owlOntology.axioms(OWLDataPropertyDomainAxiom
+                                        .class, OWLObjectPropertyExpression.class, property, Imports.INCLUDED,
+                                Navigation.IN_SUB_POSITION).collect(Collectors.toSet());
+                        return hasClassAsDomain(domains.stream(), classIRI, equivalentClasses, superClasses)
+                                || hasNoDomain(domains.stream());
+                    })
                     .map(SimpleOntologyValues::matontoDataProperty)
                     .collect(Collectors.toSet());
         }
@@ -744,13 +755,13 @@ public class SimpleOntology implements Ontology {
     }
 
     private Optional<OWLObjectProperty> getOwlObjectProperty(IRI iri) {
-        return owlOntology.objectPropertiesInSignature()
+        return owlOntology.objectPropertiesInSignature(Imports.INCLUDED)
                 .filter(objectProperty -> objectProperty.getIRI().equals(SimpleOntologyValues.owlapiIRI(iri)))
                 .findFirst();
     }
 
     private Optional<OWLDataProperty> getOwlDataProperty(IRI iri) {
-        return owlOntology.dataPropertiesInSignature()
+        return owlOntology.dataPropertiesInSignature(Imports.INCLUDED)
                 .filter(dataProperty -> dataProperty.getIRI().equals(SimpleOntologyValues.owlapiIRI(iri)))
                 .findFirst();
     }

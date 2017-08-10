@@ -12,7 +12,15 @@
 :ObjectProperty1 a owl:ObjectProperty ;
     rdfs:domain :Class2 .
 
+:ObjectProperty2 a owl:ObjectProperty ;
+    rdfs:domain :OtherClass .
+
 :DataProperty1 a owl:DatatypeProperty ;
     rdfs:domain :Class2 .
 
+:DataProperty2 a owl:DatatypeProperty ;
+    rdfs:domain :OtherClass .
+
 :Class2 a owl:Class .
+
+:OtherClass a owl:Class .
