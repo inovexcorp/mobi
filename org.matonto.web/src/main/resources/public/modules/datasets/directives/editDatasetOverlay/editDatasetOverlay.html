@@ -1,0 +1,43 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="edit-dataset-overlay overlay">
+    <form name="dvm.infoForm" class="clearfix content" novalidate autocomplete="off">
+        <h1>Edit Dataset</h1>
+        <div class="dataset-info">
+            <p><small><custom-label>Dataset IRI:</custom-label> {{dvm.recordConfig.datasetIRI}}</small></p>
+            <p><small><custom-label>Repository ID:</custom-label> {{dvm.recordConfig.repositoryId}}</small></p>
+        </div>
+        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+        <div class="form-group">
+            <custom-label>Title</custom-label>
+            <input class="form-control" type="text" name="title" value="dvm.recordConfig.title" ng-model="dvm.recordConfig.title" required focus-me>
+        </div>
+        <text-area ng-model="dvm.recordConfig.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
+        <keyword-select ng-model="dvm.keywords"></keyword-select>
+        <datasets-ontology-picker ontologies="dvm.ontologies" selected-ontologies="dvm.selectedOntologies" error="dvm.error"></datasets-ontology-picker>
+        <div class="btn-container clearfix">
+            <button class="btn btn-primary pull-right" ng-disabled="dvm.infoForm.$invalid" ng-click="dvm.update()">Update</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.onClose()">Cancel</button>
+        </div>
+    </form>
+</div>

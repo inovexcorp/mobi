@@ -81,7 +81,7 @@ public class ImportIT extends KarafTestSupport {
         DatasetRecordConfig config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset", Collections.EMPTY_SET, "system").build();
         record = manager.createDataset(config);
 
-        executeCommand(String.format("matonto:import -d=%s %s", record.getResource().stringValue(), dataFile));
+        executeCommand(String.format("mobi:import -d=%s %s", record.getResource().stringValue(), dataFile));
 
         setupComplete = true;
     }

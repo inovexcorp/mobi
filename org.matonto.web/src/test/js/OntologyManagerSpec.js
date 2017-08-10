@@ -208,34 +208,49 @@ describe('Ontology Manager service', function() {
         expect(ontologyManagerSvc.ontologyRecords).toEqual([]);
     });
     describe('getAllOntologyRecords gets a list of all ontology records', function() {
-        var getDeferred;
-        beforeEach(function() {
-            getDeferred = $q.defer();
-            catalogManagerSvc.getRecords.and.returnValue(getDeferred.promise);
+        var config;
+        beforeEach(function () {
+            config = {
+                pageIndex: 0,
+                limit: 100,
+                recordType: prefixes.ontologyEditor + 'OntologyRecord'
+            };
         });
-        it('when getRecords resolves', function(done) {
-            getDeferred.resolve(records);
-            ontologyManagerSvc.getAllOntologyRecords({})
+        it('with a sorting option', function() {
+            config.sortOption = {label: 'Test'};
+            catalogManagerSvc.getRecords.and.returnValue($q.when(records));
+            ontologyManagerSvc.getAllOntologyRecords(config.sortOption)
                 .then(function(response) {
-                    expect(catalogManagerSvc.getRecords).toHaveBeenCalled();
+                    expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogId, config, '');
                     expect(response).toEqual(records.data);
-                    done();
                 }, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             scope.$apply();
         });
-        it('when getRecords rejects', function(done) {
-            getDeferred.reject(error);
-            ontologyManagerSvc.getAllOntologyRecords({})
+        it('with a promise id', function() {
+            var sortOption = {label: 'Title (asc)'};
+            var id = 'id';
+            catalogManagerSvc.sortOptions = [sortOption];
+            config.sortOption = sortOption;
+            catalogManagerSvc.getRecords.and.returnValue($q.when(records));
+            ontologyManagerSvc.getAllOntologyRecords(undefined, id)
+                .then(function(response) {
+                    expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogId, config, id);
+                    expect(response).toEqual(records.data);
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            scope.$apply();
+        });
+        it('unless an error occurs', function() {
+            catalogManagerSvc.getRecords.and.returnValue($q.reject(error));
+            ontologyManagerSvc.getAllOntologyRecords()
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
                 }, function(response) {
                     expect(catalogManagerSvc.getRecords).toHaveBeenCalled();
                     expect(response).toEqual(error);
-                    done();
                 });
             scope.$apply();
         });
@@ -370,36 +385,36 @@ describe('Ontology Manager service', function() {
     describe('getOntology hits the proper endpoint', function() {
         var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId, rdfFormat: format });
+            params = paramSerializer({ branchId: branchId, commitId: commitId, rdfFormat: format, clearCache: false });
         });
-        it('unless an error occurs', function(done) {
+        it('unless an error occurs', function() {
+            util.rejectError.and.returnValue($q.reject(error));
             $httpBackend.expectGET('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
                 function(headers) {
                     return headers['Accept'] === 'text/plain';
                 }).respond(400, null, null, error);
-            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format)
+            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format, false)
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
                 }, function(response) {
                     expect(response).toEqual(error);
-                    expect(util.onError).toHaveBeenCalled();
-                    done();
+                    expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: error
+                    }));
                 });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
+        it('successfully', function() {
             $httpBackend.expectGET('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
                 function(headers) {
                     return headers['Accept'] === 'text/plain';
                 }).respond(200, ontology);
-            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format)
+            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format, false)
                 .then(function(data) {
                     expect(data).toEqual(ontology);
-                    done();
                 }, function(response) {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
@@ -909,6 +924,37 @@ describe('Ontology Manager service', function() {
             scope.$apply();
         });
     });
+    describe('getFailedImports calls the correct functions when GET /matontorest/ontologies/{recordId}/failed-imports', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({
+                branchId: branchId,
+                commitId: commitId
+            });
+        });
+        it('succeeds', function() {
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/failed-imports?' + params).respond(200, ['failedId']);
+            ontologyManagerSvc.getFailedImports(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual(['failedId']);
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('fails', function() {
+            $httpBackend.expectGET('/matontorest/ontologies/recordId/failed-imports?' + params).respond(400, null, null, 'error');
+            util.rejectError.and.returnValue($q.reject('util-error'));
+            ontologyManagerSvc.getFailedImports(recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('util-error');
+                    expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'error', status: 400}));
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
     describe('isOntology should return', function() {
         it('true if the entity contains the ontology type', function() {
             expect(ontologyManagerSvc.isOntology(ontologyObj)).toBe(true);
@@ -948,6 +994,14 @@ describe('Ontology Manager service', function() {
         });
         it('"" if none are present or no ontology entity', function() {
             expect(ontologyManagerSvc.getOntologyIRI([])).toBe('');
+        });
+    });
+    describe('isDatatype should return', function() {
+        it('true if the entity contains the datatype type', function() {
+            expect(ontologyManagerSvc.isDatatype({'@type': [prefixes.rdfs + 'Datatype']})).toBe(true);
+        });
+        it('false if the entity does not contain the datatype type', function() {
+            expect(ontologyManagerSvc.isDatatype({})).toBe(false);
         });
     });
     describe('isClass should return', function() {
@@ -1421,13 +1475,13 @@ describe('Ontology Manager service', function() {
     describe('hasClassIndividuals should return', function() {
         it('true if there are any entities with a type of the provided class in the ontology', function() {
             expect(ontologyManagerSvc
-                .hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], 
+                .hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj],
                     [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], classId))
                 .toBe(true);
         });
         it('true if there are any entities with a type of the provided class in the imported ontology', function() {
             expect(ontologyManagerSvc
-                .hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], 
+                .hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj],
                     [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], importedClassId))
                 .toBe(true);
         });
@@ -1440,13 +1494,13 @@ describe('Ontology Manager service', function() {
     describe('getClassIndividuals should return', function() {
         it('correct object if there are any entities with a type of the provided class in the ontology', function() {
             expect(ontologyManagerSvc
-                .getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], 
+                .getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj],
                     [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], classId))
                 .toEqual([individualObj]);
         });
         it('correct object if there are any entities with a type of the provided class in the imported ontology', function() {
             expect(ontologyManagerSvc
-                .getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], 
+                .getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj],
                     [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], importedClassId))
                 .toEqual([importedIndividualObj]);
         });
@@ -1496,6 +1550,7 @@ describe('Ontology Manager service', function() {
         it('true if the id is a blank node id', function() {
             expect(ontologyManagerSvc.isBlankNodeId('_:genid')).toBe(true);
             expect(ontologyManagerSvc.isBlankNodeId('_:b')).toBe(true);
+            expect(ontologyManagerSvc.isBlankNodeId('http://matonto.org/.well-known/genid/')).toBe(true);
         });
         it('false if the id is not a blank node id', function() {
             _.forEach(['', [], {}, true, false, undefined, null, 0, 1], function(test) {
@@ -1554,24 +1609,6 @@ describe('Ontology Manager service', function() {
             expect(util.getDctermsValue).toHaveBeenCalledWith(entity, 'title');
             expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.dc + 'title');
             expect(util.getBeautifulIRI).toHaveBeenCalledWith(ontologyId);
-        });
-        it('returns matonto.anonymous if present and no rdfs:label, dcterms:title, dc:title, or @id', function() {
-            util.getPropertyValue.and.returnValue('');
-            util.getDctermsValue.and.returnValue('');
-            var entity = {matonto: {anonymous: anonymous}};
-            expect(ontologyManagerSvc.getEntityName(entity)).toEqual(anonymous);
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).toHaveBeenCalledWith(entity, 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.dc + 'title');
-        });
-        it('returns "" if no rdfs:label, dcterms:title, dc:title, @id, or matonto.anonymous', function() {
-            util.getPropertyValue.and.returnValue('');
-            util.getDctermsValue.and.returnValue('');
-            var entity = {};
-            expect(ontologyManagerSvc.getEntityName(entity)).toEqual('');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).toHaveBeenCalledWith(entity, 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.dc + 'title');
         });
         it('when type is vocabulary, returns skos:prefLabel if present', function() {
             util.getPropertyValue.and.callFake(function(entity, property) {

@@ -46,11 +46,12 @@
          */
         .service('manchesterConverterService', manchesterConverterService);
 
-        manchesterConverterService.$inject = ['$filter', 'ontologyManagerService', 'prefixes'];
+        manchesterConverterService.$inject = ['$filter', 'ontologyManagerService', 'prefixes', 'utilService', 'antlr'];
 
-        function manchesterConverterService($filter, ontologyManagerService, prefixes) {
+        function manchesterConverterService($filter, ontologyManagerService, prefixes, utilService, antlr) {
             var self = this;
             var om = ontologyManagerService;
+            var util = utilService;
             var expressionClassName = 'manchester-expr';
             var restrictionClassName = 'manchester-rest';
             var literalClassName = 'manchester-lit';
@@ -58,7 +59,7 @@
                 [prefixes.owl + 'unionOf']: ' or ', // A or B
                 [prefixes.owl + 'intersectionOf']: ' and ', // A and B
                 [prefixes.owl + 'complementOf']: 'not ', // not A
-                [prefixes.owl + 'oneOf']: ' ' // {a1 a2 ... an}.
+                [prefixes.owl + 'oneOf']: ', ' // {a1 a2 ... an}.
             };
                 // a - the object property on which the restriction applies.
                 // b - the restriction on the property values.
@@ -74,7 +75,59 @@
                 [prefixes.owl + 'maxQualifiedCardinality']: ' max ', // a max n b
                 [prefixes.owl + 'qualifiedCardinality']: ' exactly ' // a exactly n b
             };
+            var datatypeKeywords = {
+                [prefixes.owl + 'oneOf']: ', ' // {a1 a2 ... an}.
+            }
 
+            /**
+             * @ngdoc method
+             * @name getKeywords
+             * @methodOf manchesterConverter.service:manchesterConverterService
+             *
+             * @description
+             * Returns the full list of supported Manchester Syntax keywords.
+             *
+             * @return {string[]} An array of strings contains the Manchester Syntax keywords that are supported.
+             */
+            self.getKeywords = function() {
+                return _.concat(_.filter(_.map(_.values(expressionKeywords), _.trim), _.identity), _.map(_.values(expressionKeywords), _.trim));
+            }
+            /**
+             * @ngdoc method
+             * @name manchesterToJsonld
+             * @methodOf manchesterConverter.service:manchesterConverterService
+             *
+             * @description
+             * Converts a Manchester Syntax string into an array of blank nodes using an ANTLR4 grammer parser and
+             * the provided map of local names to full IRIs. If the subject of the axiom for the represented blank
+             * node is a data property, it must be indicated by the last argument. Currently supports class
+             * expressions with "unionOf", "intersectionOf", and "complementOf", restrictions with "someValuesFrom",
+             * "allValuesFrom", "hasValue", "minCardinality", "maxCardinality", "cardinality",
+             * "minQualifiedCardinality", "maxQualifiedCardinality", and "qualifiedCardinality", and datatypes with
+             * "oneOf".
+             *
+             * @return {Object} An object with a key containing any error message thrown and a key for the resuling
+             * array of blank nodes.
+             */
+            self.manchesterToJsonld = function(str, localNameMap, dataProp = false) {
+                var result = {errorMessage: '', jsonld: []};
+                var chars = new antlr.antlr4.InputStream(str);
+                var lexer = new antlr.MOSLexer.MOSLexer(chars);
+                var tokens  = new antlr.antlr4.CommonTokenStream(lexer);
+                var parser = new antlr.MOSParser.MOSParser(tokens);
+                parser.buildParseTrees = true;
+                parser.removeErrorListeners();
+                parser.addErrorListener(new antlr.BlankNodesErrorListener(result));
+                var blankNodes = new antlr.BlankNodesListener(result.jsonld, localNameMap, prefixes, util);
+                var start = dataProp ? parser.dataRange() : parser.description();
+                try {
+                    antlr.antlr4.tree.ParseTreeWalker.DEFAULT.walk(blankNodes, start);
+                } catch (ex) {
+                    result.errorMessage = _.get(ex, 'message', ex);
+                    result.jsonld = undefined;
+                }
+                return result;
+            }
             /**
              * @ngdoc method
              * @name jsonldToManchester
@@ -83,9 +136,11 @@
              * @description
              * Converts a blank node identified by the passed id and included in the passed JSON-LD array into a
              * Manchester Syntax string. Includes the Manchester Syntax string for nested blank nodes as well.
-             * Currently supports class expressions with "unionOf", "intersectionOf", and "complementOf" and
+             * Currently supports class expressions with "unionOf", "intersectionOf", and "complementOf",
              * restrictions with "someValuesFrom", "allValuesFrom", "hasValue", "minCardinality", "maxCardinality",
-             * and "cardinality". Can optionally surround keywords and literals with HTML tags for formatting displays.
+             * "cardinality", "minQualifiedCardinality", "maxQualifiedCardinality", and "qualifiedCardinality", and
+             * datatypes with "oneOf". Can optionally surround keywords and literals with HTML tags for formatting
+             * displays.
              *
              * @param {string} id The IRI of the blank node to begin with
              * @param {Object[]} jsonld A JSON-LD array of all blank node in question and any supporting blanks
@@ -100,7 +155,10 @@
                     var prop = _.intersection(_.keys(entity), _.keys(expressionKeywords));
                     if (prop.length === 1) {
                         var item = _.get(entity[prop[0]], '0');
-                        var keyword = html ? surround(expressionKeywords[prop[0]], expressionClassName) : expressionKeywords[prop[0]];
+                        var keyword = expressionKeywords[prop[0]];
+                        if (html && prop[0] !== prefixes.owl + 'oneOf') {
+                            keyword = surround(keyword, expressionClassName);
+                        }
                         if (_.has(item, '@list')) {
                             result += _.join(_.map(_.get(item, '@list'), item =>  getManchesterValue(item, jsonld, html)), keyword);
                         } else {
@@ -109,6 +167,7 @@
                         if (prop[0] === prefixes.owl + 'oneOf') {
                             result = '{' + result + '}';
                         }
+
                     }
                 } else if (om.isRestriction(entity)) {
                     var onProperty = _.get(entity, '["' + prefixes.owl + 'onProperty"][0]["@id"]', '');
@@ -124,6 +183,15 @@
                             result += propertyRestriction + keyword + getManchesterValue(item, jsonld, html) + (classRestriction ? ' ' + classRestriction : '');
                         }
                     }
+                } else if (om.isDatatype(entity)) {
+                    var prop = _.intersection(_.keys(entity), _.keys(datatypeKeywords));
+                    if (prop.length === 1 && prop[0] === prefixes.owl + 'oneOf') {
+                        var item = _.get(entity[prop[0]], '0');
+                        var separator = datatypeKeywords[prop[0]];
+                        if (_.has(item, '@list')) {
+                            result += '{' + _.join(_.map(_.get(item, '@list'), item =>  getManchesterValue(item, jsonld, html)), separator) + '}';
+                        }
+                    }
                 }
                 return result === '' ? id : result;
             }
@@ -135,7 +203,30 @@
                         literal = '"' + item['@value'] + '"';
                         lang = '@' + item['@language'];
                     } else {
-                        var literal = _.get(item, '@type') === prefixes.xsd + 'string' ? '"' + item['@value'] + '"' : item['@value'];
+                        switch (_.get(item, '@type', prefixes.xsd + 'string')) {
+                            case prefixes.xsd + 'decimal':
+                            case prefixes.xsd + 'double':
+                            case prefixes.xsd + 'float':
+                            case prefixes.xsd + 'int':
+                            case prefixes.xsd + 'integer':
+                            case prefixes.xsd + 'long':
+                            case prefixes.xsd + 'nonNegativeInteger':
+                                literal = item['@value'];
+                                break;
+                            case prefixes.xsd + 'string':
+                                literal = '"' + item['@value'] + '"';
+                                break;
+                            case prefixes.xsd + 'language':
+                            case prefixes.xsd + 'anyURI':
+                            case prefixes.xsd + 'dateTime':
+                            case prefixes.rdfs + 'Literal':
+                            case prefixes.xsd + 'boolean':
+                            case prefixes.xsd + 'byte':
+                                literal = '"' + item['@value'] + '"^^xsd:' + _.get(item, '@type').replace(prefixes.xsd, '');
+                                break;
+                            default:
+                                literal = '"' + item['@value'] + '"^^<' + _.get(item, '@type') + '>';
+                        }
                     }
                     return (html ? surround(literal, literalClassName) : literal) + lang;
                 } else {

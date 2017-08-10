@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.34-SNAPSHOT</version>
+        <version>1.8.59-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -41,12 +41,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.8.31</version>
+            <version>1.8.58</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.8.34-SNAPSHOT</version>
+            <version>1.8.34</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -66,7 +66,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.8.34-SNAPSHOT</version>
+            <version>1.8.35</version>
         </dependency>
 
         <dependency>
@@ -101,8 +101,7 @@
             <artifactId>jackson-core</artifactId>
         </dependency>
 
-
-        <!--  Test dependencies -->  
+        <!--  Test dependencies -->
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
@@ -166,7 +165,6 @@
                             org.matonto.ontology.core.api.datarange; provide:=true,
                             org.matonto.ontology.core.api.propertyexpression; provide:=true,
                             org.matonto.ontology.core.api.types; provide:=true,
-                            org.matonto.cache.config; provide:=true
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>

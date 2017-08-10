@@ -152,6 +152,14 @@
     <owl:Class rdf:about="http://test.com/ontology1#TestClassD">
         <rdfs:subClassOf rdf:resource="http://test.com/ontology1#TestClassC"/>
     </owl:Class>
+
+
+
+    <!-- http://test.com/ontology1#TestClassE -->
+
+    <owl:Class rdf:about="http://test.com/ontology1#TestClassE">
+        <owl:equivalentClass rdf:resource="http://test.com/ontology1#TestClassC"/>
+    </owl:Class>
     
 
 

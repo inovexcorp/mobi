@@ -94,6 +94,13 @@ public interface Ontology {
     Set<Ontology> getImportsClosure();
 
     /**
+     * Gets the set of IRIs for directly imported ontologies of this ontology.
+     *
+     * @return set of ontology IRIs
+     */
+    Set<IRI> getImportedOntologyIRIs();
+
+    /**
      * Gets the ontology annotations, excluding annotations for other objects such as classes and entities.
      *
      * @return ontology annotations
@@ -126,7 +133,8 @@ public interface Ontology {
     Set<OClass> getAllClasses();
 
     /**
-     * Attempts to get all of the object properties that can be set on the class with the specified IRI in the ontology.
+     * Attempts to get all of the object properties (including imports) that can be set on the class with the specified
+     * IRI in the ontology.
      *
      * @param iri the IRI of the class
      * @return a Set of all class object properties
@@ -134,12 +142,27 @@ public interface Ontology {
     Set<ObjectProperty> getAllClassObjectProperties(IRI iri);
 
     /**
-     * Attempts to get all of the data properties that can be set on the class with the specified IRI in the ontology.
+     * Attempts to get all of the object properties that have no domain set.
+     *
+     * @return a Set of all object properties without a domain
+     */
+    Set<ObjectProperty> getAllNoDomainObjectProperties();
+
+    /**
+     * Attempts to get all of the data properties (including imports) that can be set on the class with the specified
+     * IRI in the ontology.
      *
      * @param iri the IRI of the class
      * @return a Set of all class data properties
      */
     Set<DataProperty> getAllClassDataProperties(IRI iri);
+
+    /**
+     * Attempts to get all of the data properties that have no domain set.
+     *
+     * @return a Set of all data properties without a domain
+     */
+    Set<DataProperty> getAllNoDomainDataProperties();
 
     Set<Axiom> getAxioms();
 

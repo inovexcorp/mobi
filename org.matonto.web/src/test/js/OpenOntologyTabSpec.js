@@ -119,12 +119,12 @@ describe('Open Ontology Tab directive', function() {
             controller.begin = 0;
             scope.$digest();
             expect(element.querySelectorAll('.ontologies .ontology').length).toBe(10);
-            expect(element.querySelectorAll('.ontologies .text-info.message').length).toBe(0);
+            expect(element.querySelectorAll('.ontologies info-message').length).toBe(0);
 
             controller.begin = 10;
             scope.$digest();
             expect(element.querySelectorAll('.ontologies .ontology').length).toBe(1);
-            expect(element.querySelectorAll('.ontologies .text-info.message').length).toBe(0);
+            expect(element.querySelectorAll('.ontologies info-message').length).toBe(0);
         });
         it('depending on if the ontology being deleted is currently being used in the mapping tool', function() {
             controller.showDeleteConfirmation = true;

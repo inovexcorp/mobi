@@ -33,6 +33,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.matonto.foaf.Agent;
 import org.matonto.foaf.AgentFactory;
+import org.matonto.foaf.OnlineAccountFactory;
 import org.matonto.foaf.OnlineChatAccount;
 import org.matonto.foaf.OnlineChatAccountFactory;
 import org.matonto.inherit.Entity;
@@ -172,7 +173,13 @@ public class SourceGeneratorTest {
         assertEquals(Optional.empty(), a.getBirthday());
 
         // account
+        final OnlineAccountFactory f = new OnlineAccountFactory();
+        f.setModelFactory(modelFactory);
+        f.setValueConverterRegistry(valueConverterRegistry);
+        f.setValueFactory(valueFactory);
+        valueConverterRegistry.registerValueConverter(f);
         final OnlineChatAccountFactory acctFactory = new OnlineChatAccountFactory();
+        valueConverterRegistry.registerValueConverter(acctFactory);
         acctFactory.setModelFactory(modelFactory);
         acctFactory.setValueConverterRegistry(valueConverterRegistry);
         acctFactory.setValueFactory(valueFactory);
@@ -181,6 +188,10 @@ public class SourceGeneratorTest {
         assertNotNull(a.getAccount());
         assertFalse(a.getAccount().isEmpty());
         a.setAccount(new HashSet<>());
+        assertTrue(a.getAccount().isEmpty());
+        a.addAccount(account);
+        assertEquals("Account not equal to expected added value", account.getResource(), a.getAccount().iterator().next().getResource());
+        a.removeAccount(account);
         assertTrue(a.getAccount().isEmpty());
 
         // mbox

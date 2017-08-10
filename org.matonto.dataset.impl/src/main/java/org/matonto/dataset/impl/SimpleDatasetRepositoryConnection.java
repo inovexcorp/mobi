@@ -181,7 +181,24 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public void remove(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
-        remove(valueFactory.createStatement(subject, predicate, object), contexts);
+        // Start a transaction if not currently in one
+        boolean startedTransaction = startTransaction();
+
+        Set<Resource> graphs = new HashSet<>();
+        graphs.add(getSystemDefaultNG());
+        getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
+        getGraphs(graphs, Dataset.namedGraph_IRI);
+
+        if (varargsPresent(contexts)) {
+            graphs.retainAll(Arrays.asList(contexts));
+            getDelegate().remove(subject, predicate, object, graphs.toArray(new Resource[graphs.size()]));
+        } else {
+            getDelegate().remove(subject, predicate, object, getSystemDefaultNamedGraph());
+        }
+
+        if (startedTransaction) {
+            commit();
+        }
     }
 
     @Override
@@ -320,12 +337,12 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public GraphQuery prepareGraphQuery(String query) throws RepositoryException, MalformedQueryException {
-        throw new NotImplementedException("Not yet implemented.");
+        return getDelegate().prepareGraphQuery(rewriteQuery(query));
     }
 
     @Override
     public GraphQuery prepareGraphQuery(String query, String baseURI) throws RepositoryException, MalformedQueryException {
-        throw new NotImplementedException("Not yet implemented.");
+        return getDelegate().prepareGraphQuery(rewriteQuery(query), baseURI);
     }
 
     @Override
@@ -583,7 +600,8 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         @Override
         public void enterWhereClause(Sparql11Parser.WhereClauseContext ctx) {
             // Only add a dataset clause to the root select query, not a subselect
-            if (ctx.getParent() instanceof Sparql11Parser.SelectQueryContext) {
+            if (ctx.getParent() instanceof Sparql11Parser.SelectQueryContext ||
+                    ctx.getParent() instanceof Sparql11Parser.ConstructQueryContext) {
                 rewriter.insertBefore(ctx.getStart(), getDatasetClause());
             }
         }

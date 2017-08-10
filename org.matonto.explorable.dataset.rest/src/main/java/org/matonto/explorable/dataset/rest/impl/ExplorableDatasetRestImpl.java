@@ -24,8 +24,9 @@ package org.matonto.explorable.dataset.rest.impl;
  */
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
+import static org.matonto.rest.util.RestUtils.jsonldToDeskolemizedModel;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
-import static org.matonto.rest.util.RestUtils.modelToJsonld;
+import static org.matonto.rest.util.RestUtils.modelToSkolemizedJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -50,10 +51,13 @@ import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFac
 import org.matonto.ontology.core.api.propertyexpression.Property;
 import org.matonto.ontology.core.api.propertyexpression.PropertyExpression;
 import org.matonto.persistence.utils.Bindings;
+import org.matonto.persistence.utils.QueryResults;
 import org.matonto.persistence.utils.Statements;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.BindingSet;
+import org.matonto.query.api.GraphQuery;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.BNode;
 import org.matonto.rdf.api.IRI;
@@ -69,6 +73,7 @@ import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
 import org.matonto.rest.util.jaxb.Links;
 import org.openrdf.model.vocabulary.OWL;
+import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.model.vocabulary.RDFS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,10 +102,12 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private SesameTransformer sesameTransformer;
     private OntologyManager ontologyManager;
     private OntologyRecordFactory ontologyRecordFactory;
+    private BNodeService bNodeService;
 
     private static final String GET_CLASSES_TYPES;
     private static final String GET_CLASSES_DETAILS;
     private static final String GET_CLASSES_INSTANCES;
+    private static final String GET_REIFIED_STATEMENTS;
     private static final String COUNT_BINDING = "c";
     private static final String TYPE_BINDING = "type";
     private static final String INSTANCE_BINDING = "inst";
@@ -110,6 +117,9 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private static final String DESCRIPTION_BINDING = "description";
     private static final String CLASS_BINDING = "classIRI";
     private static final String EXAMPLE_BINDING = "example";
+    private static final String SUBJECT_BINDING = "subject";
+    private static final String PREDICATE_BINDING = "predicate";
+    private static final String OBJECT_BINDING = "object";
 
     static {
         try {
@@ -131,6 +141,14 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         try {
             GET_CLASSES_INSTANCES = IOUtils.toString(
                     ExplorableDatasetRestImpl.class.getResourceAsStream("/get-classes-instances.rq"),
+                    "UTF-8"
+            );
+        } catch (IOException e) {
+            throw new MatOntoException(e);
+        }
+        try {
+            GET_REIFIED_STATEMENTS = IOUtils.toString(
+                    ExplorableDatasetRestImpl.class.getResourceAsStream("/get-reified-statements.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -171,6 +189,11 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     @Reference
     public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
         this.ontologyRecordFactory = ontologyRecordFactory;
+    }
+
+    @Reference
+    public void setBNodeService(BNodeService bNodeService) {
+        this.bNodeService = bNodeService;
     }
 
     @Override
@@ -225,7 +248,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(newInstanceJson, "The Instance's JSON-LD is required.");
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
-            Model instanceModel = sesameTransformer.matontoModel(jsonldToModel(newInstanceJson));
+            Model instanceModel = jsonldToModel(newInstanceJson, sesameTransformer);
             Resource instanceId = instanceModel.stream()
                     .filter(statement -> !(statement.getSubject() instanceof BNode))
                     .findAny().orElseThrow(() ->
@@ -255,14 +278,17 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             int count = 100;
             while (statements.hasNext() && count > 0) {
                 Statement statement = statements.next();
-                instanceModel.add(instanceId, statement.getPredicate(), statement.getObject());
+                IRI predicate = statement.getPredicate();
+                Value object = statement.getObject();
+                instanceModel.add(instanceId, predicate, object);
+                instanceModel.addAll(getReifiedStatements(conn, instanceId, predicate, object));
                 count--;
             }
             if (instanceModel.size() == 0) {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
             } else {
-                String json = modelToJsonld(sesameTransformer.sesameModel(instanceModel));
-                return Response.ok(JSONArray.fromObject(json).get(0)).build();
+                String json = modelToSkolemizedJsonld(instanceModel, sesameTransformer, bNodeService);
+                return Response.ok(JSONArray.fromObject(json)).build();
             }
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
@@ -281,9 +307,15 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             if (!statements.hasNext()) {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
             } else {
+                RepositoryResult<Statement> reifiedDeclarations = conn.getStatements(null,
+                        sesameTransformer.matontoIRI(RDF.SUBJECT), instanceId);
                 conn.begin();
                 conn.remove(statements);
-                conn.add(sesameTransformer.matontoModel(jsonldToModel(json)));
+                reifiedDeclarations.forEach(statement -> {
+                    RepositoryResult<Statement> reification = conn.getStatements(statement.getSubject(), null, null);
+                    conn.remove(reification);
+                });
+                conn.add(jsonldToDeskolemizedModel(json, sesameTransformer, bNodeService));
                 conn.commit();
                 return Response.ok().build();
             }
@@ -592,6 +624,15 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                         .map(objectProperty -> createPropertyDetails(objectProperty.getIRI(),
                                 ontology.getObjectPropertyRange(objectProperty), "Object", restrictions))
                         .collect(Collectors.toSet()));
+            } else {
+                details.addAll(ontology.getAllNoDomainDataProperties().stream()
+                        .map(dataProperty -> createPropertyDetails(dataProperty.getIRI(),
+                                ontology.getDataPropertyRange(dataProperty), "Data"))
+                        .collect(Collectors.toSet()));
+                details.addAll(ontology.getAllNoDomainObjectProperties().stream()
+                        .map(objectProperty -> createPropertyDetails(objectProperty.getIRI(),
+                                ontology.getObjectPropertyRange(objectProperty), "Object"))
+                        .collect(Collectors.toSet()));
             }
         }));
         return details;
@@ -640,10 +681,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
      */
     private PropertyDetails createPropertyDetails(IRI propertyIRI, Set<Resource> range, String type,
                                                   Set<CardinalityRestriction> allRestrictions) {
-        PropertyDetails details = new PropertyDetails();
-        details.setPropertyIRI(propertyIRI.toString());
-        details.setRange(range.stream().map(Value::stringValue).collect(Collectors.toSet()));
-        details.setType(type);
+        PropertyDetails details = createPropertyDetails(propertyIRI, range, type);
         Set<RestrictionDetails> allRestrictionDetails = allRestrictions.stream()
             .filter(restriction -> {
                 PropertyExpression pe = restriction.getProperty();
@@ -660,6 +698,39 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             details.setRestrictions(allRestrictionDetails);
         }
         return details;
+    }
+
+    /**
+     * Creates a PropertDetails object using the IRI, range, and type.
+     *
+     * @param propertyIRI  the IRI of the property
+     * @param range        the range of the property
+     * @param type         the type of the property
+     * @return a new PropertyDetails object constructed from the parameters
+     */
+    private PropertyDetails createPropertyDetails(IRI propertyIRI, Set<Resource> range, String type) {
+        PropertyDetails details = new PropertyDetails();
+        details.setPropertyIRI(propertyIRI.toString());
+        details.setRange(range.stream().map(Value::stringValue).collect(Collectors.toSet()));
+        details.setType(type);
+        return details;
+    }
+
+    /**
+     * Gets the model for the reified statements associated with the provided subject, predicate, and object.
+     *
+     * @param conn      the DatasetConnection to use for the query
+     * @param subject   the reified statement's subject
+     * @param predicate the reified statement's predicate
+     * @param object    the reified statement's object
+     * @return a Model containing all reified statements associated with the provided subject, predicate, and object
+     */
+    private Model getReifiedStatements(DatasetConnection conn, Resource subject, IRI predicate, Value object) {
+        GraphQuery query = conn.prepareGraphQuery(GET_REIFIED_STATEMENTS);
+        query.setBinding(SUBJECT_BINDING, subject);
+        query.setBinding(PREDICATE_BINDING, predicate);
+        query.setBinding(OBJECT_BINDING, object);
+        return QueryResults.asModel(query.evaluate(), modelFactory);
     }
 
     /**

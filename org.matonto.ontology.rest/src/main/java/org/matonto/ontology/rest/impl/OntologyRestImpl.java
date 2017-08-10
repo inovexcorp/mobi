@@ -28,16 +28,14 @@ import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
-import com.google.common.collect.Iterables;
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.google.common.collect.Iterables;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.matonto.cache.api.CacheManager;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
@@ -51,6 +49,7 @@ import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Entity;
 import org.matonto.ontology.core.api.NamedIndividual;
 import org.matonto.ontology.core.api.Ontology;
+import org.matonto.ontology.core.api.OntologyId;
 import org.matonto.ontology.core.api.OntologyManager;
 import org.matonto.ontology.core.api.builder.OntologyRecordConfig;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
@@ -79,6 +78,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -107,7 +107,7 @@ public class OntologyRestImpl implements OntologyRest {
     private CatalogManager catalogManager;
     private EngineManager engineManager;
     private SesameTransformer sesameTransformer;
-    private CacheManager cacheManager;
+    private OntologyCache ontologyCache;
     private VersioningManager versioningManager;
 
     private final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
@@ -143,8 +143,8 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Reference
-    public void setCacheManager(CacheManager cacheManager) {
-        this.cacheManager = cacheManager;
+    public void setOntologyCache(OntologyCache ontologyCache) {
+        this.ontologyCache = ontologyCache;
     }
 
     @Reference
@@ -184,11 +184,16 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
-                                String commitIdStr, String rdfFormat) {
+                                String commitIdStr, String rdfFormat, boolean clearCache) {
         try {
+            if (clearCache) {
+                ontologyCache.removeFromCache(recordIdStr, branchIdStr, commitIdStr);
+            }
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            return Response.ok(getOntologyAsRdf(ontology, rdfFormat)).build();
+            String ontologyAsRdf = getOntologyAsRdf(ontology, rdfFormat);
+            Response.ResponseBuilder ok = Response.ok(ontologyAsRdf);
+            return ok.build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -282,7 +287,7 @@ public class OntologyRestImpl implements OntologyRest {
                             + branchIdStr + " has no head Commit set"));
                 }
             }
-            
+
             Model changedOnt = ontologyManager.createOntology(fileInputStream).asModel(modelFactory);
             Model currentOnt = catalogManager.getCompiledResource(recordId, branchId, commitId);
 
@@ -709,7 +714,7 @@ public class OntologyRestImpl implements OntologyRest {
             Resource entityIRI = valueFactory.createIRI(entityIRIStr);
             if (queryType.equals("construct")) {
                 Model results = ontologyManager.constructEntityUsages(ontology, entityIRI);
-                return Response.ok(modelToJsonld(sesameTransformer.sesameModel(results))).build();
+                return Response.ok(modelToJsonld(results, sesameTransformer)).build();
             } else if (queryType.equals("select")) {
                 TupleQueryResult results = ontologyManager.getEntityUsages(ontology, entityIRI);
                 return Response.ok(JSONQueryResults.getResponse(results)).build();
@@ -748,6 +753,21 @@ public class OntologyRestImpl implements OntologyRest {
             });
             return response.size() == 0 ? Response.noContent().build() : Response.ok(JSONObject.fromObject(response))
                     .build();
+        } catch (MatOntoException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public Response getFailedImports(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                     String commitIdStr) {
+        try {
+            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
+                    ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+            Set<String> iris = ontology.getUnloadableImportIRIs().stream()
+                    .map(Value::stringValue)
+                    .collect(Collectors.toSet());
+            return Response.ok(iris).build();
         } catch (MatOntoException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -878,8 +898,8 @@ public class OntologyRestImpl implements OntologyRest {
                                            String commitIdStr) {
         throwErrorIfMissingStringParam(recordIdStr, "The recordIdStr is missing.");
         Optional<Ontology> optionalOntology;
-        Optional<Cache<String, Ontology>> cache = getOntologyCache();
-        String key = OntologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
+        Optional<Cache<String, Ontology>> cache = ontologyCache.getOntologyCache();
+        String key = ontologyCache.generateKey(recordIdStr, branchIdStr, commitIdStr);
 
         try {
             if (cache.isPresent() && cache.get().containsKey(key)) {
@@ -1085,30 +1105,12 @@ public class OntologyRestImpl implements OntologyRest {
         return new JSONObject().element("namedIndividuals", iriListToJsonArray(iris));
     }
 
-    private JSONObject getConceptArray(Ontology ontology) {
-        List<IRI> iris = ontology.getIndividualsOfType(sesameTransformer.matontoIRI(SKOS.CONCEPT))
-                .stream()
-                .filter(ind -> ind instanceof NamedIndividual)
-                .map(ind -> ((NamedIndividual) ind).getIRI())
-                .collect(Collectors.toList());
-        return new JSONObject().element("concepts", iriListToJsonArray(iris));
-    }
-
     private JSONObject getDerivedConceptTypeArray(Ontology ontology) {
         List<IRI> iris = new ArrayList<>();
         ontologyManager.getSubClassesFor(ontology, sesameTransformer.matontoIRI(SKOS.CONCEPT))
                 .forEach(r -> iris.add(valueFactory.createIRI(Bindings.requiredResource(r, "s").stringValue())));
         return new JSONObject().element("derivedConcepts", iriListToJsonArray(iris));
 
-    }
-
-    private JSONObject getConceptSchemeArray(Ontology ontology) {
-        List<IRI> iris = ontology.getIndividualsOfType(sesameTransformer.matontoIRI(SKOS.CONCEPT_SCHEME))
-                .stream()
-                .filter(ind -> ind instanceof NamedIndividual)
-                .map(ind -> ((NamedIndividual) ind).getIRI())
-                .collect(Collectors.toList());
-        return new JSONObject().element("conceptSchemes", iriListToJsonArray(iris));
     }
 
     private JSONObject getDerivedConceptSchemeTypeArray(Ontology ontology) {
@@ -1158,7 +1160,8 @@ public class OntologyRestImpl implements OntologyRest {
             case "turtle":
                 return ontology.asTurtle().toString();
             default:
-                return ontology.asJsonLD().toString();
+                OutputStream outputStream = ontology.asJsonLD();
+                return outputStream.toString();
         }
     }
 
@@ -1170,9 +1173,12 @@ public class OntologyRestImpl implements OntologyRest {
      * @return a JSONObject with the document format and the ontology in that format
      */
     private JSONObject getOntologyAsJsonObject(Ontology ontology, String rdfFormat) {
+        OntologyId ontologyId = ontology.getOntologyId();
+        Optional<IRI> optIri = ontologyId.getOntologyIRI();
         return new JSONObject()
                 .element("documentFormat", rdfFormat)
-                .element("id", ontology.getOntologyId().getOntologyIdentifier().stringValue())
+                .element("id", ontologyId.getOntologyIdentifier().stringValue())
+                .element("ontologyId", optIri.isPresent() ? optIri.get().stringValue() : "")
                 .element("ontology", getOntologyAsRdf(ontology, rdfFormat));
     }
 
@@ -1213,7 +1219,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @return a Model created using the JSON-LD.
      */
     private Model getModelFromJson(String json) {
-        return sesameTransformer.matontoModel(jsonldToModel(json));
+        return jsonldToModel(json, sesameTransformer);
     }
 
     /**
@@ -1321,12 +1327,13 @@ public class OntologyRestImpl implements OntologyRest {
         record.getOntologyIRI().ifPresent(this::testOntologyIRIUniqueness);
         catalogManager.addRecord(catalogId, record);
         Resource masterBranchId = record.getMasterBranch_resource().get();
+        Model model = ontology.asModel(modelFactory);
         Resource commitId = versioningManager.commit(catalogId, record.getResource(), masterBranchId, user,
-                "The initial commit.", ontology.asModel(modelFactory), null);
+                "The initial commit.", model, null);
 
         // Cache
-        getOntologyCache().ifPresent(cache -> {
-            String key = OntologyCache.generateKey(record.getResource().stringValue(),
+        ontologyCache.getOntologyCache().ifPresent(cache -> {
+            String key = ontologyCache.generateKey(record.getResource().stringValue(),
                     masterBranchId.stringValue(), commitId.stringValue());
             log.trace("caching " + key);
             cache.put(key, ontology);
@@ -1371,13 +1378,5 @@ public class OntologyRestImpl implements OntologyRest {
             }
         });
         return classIndividuals;
-    }
-
-    private Optional<Cache<String, Ontology>> getOntologyCache() {
-        Optional<Cache<String, Ontology>> cache = Optional.empty();
-        if (cacheManager != null) {
-            cache = cacheManager.getCache(OntologyCache.CACHE_NAME, String.class, Ontology.class);
-        }
-        return cache;
     }
 }

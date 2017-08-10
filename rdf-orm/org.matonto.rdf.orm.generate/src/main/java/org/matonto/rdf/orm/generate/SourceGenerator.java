@@ -376,6 +376,7 @@ public class SourceGenerator {
                             + "' entity will allow developers to work in native java POJOs.");
                     // Constructors - call super from Thing.
                     generateImplConstructors(impl, interfaceClass);
+                    // Build methods for impl based on interfaces.
                     recurseImplementations(impl, interfaceClass);
 
                     // Generate default impl.
@@ -406,6 +407,14 @@ public class SourceGenerator {
                 // Generate setter.
                 else if (interfaceMethod.name().startsWith("set")) {
                     generateFieldSetterForImpl(impl, interfaceMethod, interfaceClass);
+                }
+                //Else it's an adder for a non-functional field.
+                else if (interfaceMethod.name().startsWith("add")) {
+                    generateFieldAdderRemoverForImpl(impl, interfaceMethod, interfaceClass, true);
+                }
+                // Else it's a remover for a non functional field.
+                else if (interfaceMethod.name().startsWith("remove")) {
+                    generateFieldAdderRemoverForImpl(impl, interfaceMethod, interfaceClass, false);
                 }
                 // Else it's a property IRI getter.
                 else if (interfaceMethod.name().startsWith(PROPERTY_IRI_GETTER_PREFIX)) {
@@ -453,6 +462,22 @@ public class SourceGenerator {
             }
         }
         return overlap;
+    }
+
+    private void generateFieldAdderRemoverForImpl(final JDefinedClass impl, final JMethod interfaceMethod,
+                                                  final JDefinedClass interfaceClass, final boolean add) {
+        if (impl.getMethod(interfaceMethod.name(), interfaceMethod.listParamTypes()) == null) {
+            final JMethod method = impl.method(JMod.PUBLIC, interfaceMethod.type(), interfaceMethod.name());
+            method.param(interfaceMethod.params().get(0).type(), "arg");
+            method._throws(OrmException.class);
+            method.annotate(Override.class);
+            method.body()._return(JExpr.ref("this").invoke(add ? "addProperty" : "removeProperty").arg(JExpr.ref("valueConverterRegistry").invoke("convertType")
+                    .arg(interfaceMethod.params().get(0)).arg(JExpr._this()))
+                    .arg(JExpr.ref("valueFactory").invoke("createIRI")
+                            .arg(interfaceClass.staticRef(classMethodIriMap.get(interfaceClass).get(interfaceMethod)))));
+        } else {
+            LOG.warn("Avoided duplicate adder method: " + interfaceMethod.name() + " on class: " + impl.name());
+        }
     }
 
     private void generateFieldSetterForImpl(final JDefinedClass impl, final JMethod interfaceMethod,
@@ -540,23 +565,24 @@ public class SourceGenerator {
                     final String fieldName = name.substring(0, name.length() - 4);
 
                     final JClass type = identifyType(propertyIri);
-
-                    JClass getterType;
-                    JClass setterType;
-
-                    JClass resourceGetterType;
-
-                    if (isPropertyFunctional(propertyIri)) {
-                        getterType = codeModel.ref(Optional.class).narrow(type);
-                        setterType = type;
-                        resourceGetterType = codeModel.ref(Optional.class).narrow(org.matonto.rdf.api.Resource.class);
-                    } else {
-                        getterType = codeModel.ref(Set.class).narrow(type);
-                        setterType = codeModel.ref(Set.class).narrow(type);
-                        resourceGetterType = codeModel.ref(Set.class).narrow(org.matonto.rdf.api.Resource.class);
-                    }
-
                     if (type != null) {
+                        JClass getterType;
+                        JClass setterType;
+
+                        JClass resourceGetterType;
+
+                        if (isPropertyFunctional(propertyIri)) {
+                            getterType = codeModel.ref(Optional.class).narrow(type);
+                            setterType = type;
+                            resourceGetterType = codeModel.ref(Optional.class).narrow(org.matonto.rdf.api.Resource.class);
+                        } else {
+                            getterType = codeModel.ref(Set.class).narrow(type);
+                            setterType = codeModel.ref(Set.class).narrow(type);
+                            resourceGetterType = codeModel.ref(Set.class).narrow(org.matonto.rdf.api.Resource.class);
+                            methodIriMap.put(generateAddMethodForInterface(clazz, iri, name, fieldName, propertyIri, type), clazz.fields().get(fieldName + "_IRI"));
+                            methodIriMap.put(generateRemoveMethodForInterface(clazz, iri, name, fieldName, propertyIri, type), clazz.fields().get(fieldName + "_IRI"));
+                        }
+
                         methodIriMap.put(
                                 generateGetterMethodForInterface(clazz, iri, name, fieldName, propertyIri, getterType, false),
                                 clazz.fields().get(fieldName + "_IRI"));
@@ -606,6 +632,23 @@ public class SourceGenerator {
         // + "' type.<br><br>" + getFieldComment(propertyIri));
         // comment.addReturn().add("The " + fieldName + " {@link " +
         // type.binaryName() + "} value for this instance");
+        return method;
+    }
+
+
+    private JMethod generateAddMethodForInterface(final JDefinedClass clazz, final IRI interfaceIri,
+                                                  final String name, final String fieldName, final IRI propertyIri, final JClass type) {
+        final JMethod method = clazz.method(JMod.PUBLIC, boolean.class, generateMethodName("add", name));
+        method._throws(OrmException.class);
+        method.param(type, "arg");
+        return method;
+    }
+
+    private JMethod generateRemoveMethodForInterface(final JDefinedClass clazz, final IRI interfaceIri,
+                                                     final String name, final String fieldName, final IRI propertyIri, final JClass type) {
+        final JMethod method = clazz.method(JMod.PUBLIC, boolean.class, generateMethodName("remove", name));
+        method._throws(OrmException.class);
+        method.param(type, "arg");
         return method;
     }
 

@@ -110,6 +110,16 @@
              * current paginated results list.
              */
             self.results = [];
+            /**
+             * @ngdoc property
+             * @name openedDatasetId
+             * @propertyOf datasetState.service:datasetStateService
+             * @type {string}
+             *
+             * @description
+             * `openedDatasetId` holds the id of the dataset which is currently open.
+             */
+            self.openedDatasetId = '';
 
             /**
              * @ngdoc method
@@ -166,6 +176,7 @@
                 var links = util.parseLinks(_.get(headers, 'link', ''));
                 self.links.prev = _.get(links, 'prev', '');
                 self.links.next = _.get(links, 'next', '');
+                self.openedDatasetId = '';
             }
         }
 })();

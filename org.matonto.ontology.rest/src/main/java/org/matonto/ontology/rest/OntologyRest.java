@@ -120,7 +120,8 @@ public interface OntologyRest {
                          @PathParam("recordId") String recordIdStr,
                          @QueryParam("branchId") String branchIdStr,
                          @QueryParam("commitId") String commitIdStr,
-                         @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat);
+                         @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+                         @DefaultValue("false") @QueryParam("clearCache") boolean clearCache);
 
     /**
      * Deletes the ontology associated with the requested record ID in the requested format. Unless a branch is
@@ -738,7 +739,7 @@ public interface OntologyRest {
     @Path("{recordId}/imported-ontologies")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves the JSON-LD of all directly imported ontologies.")
+    @ApiOperation("Retrieves the JSON-LD of all imported ontologies.")
     Response getImportsClosure(@Context ContainerRequestContext context,
                                @PathParam("recordId") String recordIdStr,
                                @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
@@ -1077,6 +1078,31 @@ public interface OntologyRest {
                                        @PathParam("recordId") String recordIdStr,
                                        @QueryParam("branchId") String branchIdStr,
                                        @QueryParam("commitId") String commitIdStr);
+
+    /**
+     * Returns a list of ontology IRIs that were not imported by OWLAPI.
+     *
+     * @param context     the context of the request.
+     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @return JSON list of ontology IRIs that were not imported.
+     */
+    @GET
+    @Path("{recordId}/failed-imports")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Gets a list of ontology IRIs that were not imported by OWLAPI.")
+    Response getFailedImports(@Context ContainerRequestContext context,
+                              @PathParam("recordId") String recordIdStr,
+                              @QueryParam("branchId") String branchIdStr,
+                              @QueryParam("commitId") String commitIdStr);
 
     /**
      * Returns JSON SPARQL query results containing results with the requested entity IRI as the predicate or object

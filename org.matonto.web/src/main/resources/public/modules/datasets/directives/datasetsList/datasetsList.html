@@ -24,16 +24,24 @@
     <div class="col-xs-8 col-xs-offset-2 full-height">
         <block>
             <block-content class="padding">
-                <div class="dataset padding" ng-click="dvm.clickDataset(dataset)" ng-repeat="dataset in dvm.state.results" ng-class="{'open': dataset.record['@id'] === dvm.openedDatasetId}">
-                    <div class="action-container">
-                        <a ng-click="dvm.selectedDataset = dataset; dvm.showClearConfirm = true; $event.stopPropagation()" class="action clear-dataset"><i class="fa fa-fw fa-eraser"></i> Clear</a>
-                        <a ng-click="dvm.selectedDataset = dataset; dvm.showDeleteConfirm = true; $event.stopPropagation()" class="action delete-dataset"><i class="fa fa-fw fa-trash-o"></i> Delete</a>
+                <div class="dataset padding" ng-repeat="dataset in dvm.state.results" ng-class="{'open': dataset.record['@id'] === dvm.state.openedDatasetId}">
+                    <div uib-dropdown class='action-container'>
+                        <button uib-dropdown-toggle title="Dataset Actions" class="btn btn-xs btn-default">
+                            <i class="fa fa-ellipsis-h fa-fw"></i>
+                        </button>
+                        <ul uib-dropdown-menu>
+                            <li><a ng-click="dvm.showEdit(dataset)" class="action update-dataset"><i class="fa fa-fw fa-pencil"></i> Edit</a></li>
+                            <li><a ng-click="dvm.showClear(dataset)" class="action clear-dataset" ><i class="fa fa-fw fa-eraser"></i> Clear</a></li>
+                            <li><a ng-click="dvm.showDelete(dataset)" class="action delete-dataset"><i class="fa fa-fw fa-trash-o"></i> Delete</a></li>
+                        </ul>
                     </div>
-                    <div class="details">
-                        <h3 class="header"><i class="fa" ng-class="{'fa-caret-right': dataset.record['@id'] !== dvm.openedDatasetId, 'fa-caret-down': dataset.record['@id'] === dvm.openedDatasetId}"></i>{{dvm.util.getDctermsValue(dataset.record, 'title')}}</h3>
+                    <div class="details" ng-click="dvm.clickDataset(dataset)">
+                        <div class="header dataset-title">
+                            <i class="fa" ng-class="{'fa-caret-right': dataset.record['@id'] !== dvm.state.openedDatasetId, 'fa-caret-down': dataset.record['@id'] === dvm.state.openedDatasetId}"></i>{{dvm.util.getDctermsValue(dataset.record, 'title')}}
+                        </div>
                         <p class="text-muted"><small>{{dvm.util.getPropertyId(dataset.record, dvm.prefixes.dataset + 'dataset')}}</small></p>
                         <p class="description">{{dvm.util.getDctermsValue(dataset.record, 'description') || '(None Specified)'}}</p>
-                        <div class="full-details" ng-if="dataset.record['@id'] === dvm.openedDatasetId">
+                        <div class="full-details" ng-if="dataset.record['@id'] === dvm.state.openedDatasetId">
                             <entity-dates entity="dataset.record"></entity-dates>
                             <record-keywords record="dataset.record"></record-keywords>
                             <p><span class="field-name">Repository: </span>{{dvm.util.getPropertyValue(dataset.record, dvm.prefixes.dataset + 'repository')}}</p>
@@ -47,10 +55,8 @@
                         </div>
                     </div>
                 </div>
-                <p ng-if="!dvm.state.results.length" class="text-info message">
-                    <span ng-if="dvm.state.paginationConfig.searchText" class="no-match"><i class="fa fa-info fa-fw"></i>No datasets match your search text.</span>
-                    <span ng-if="!dvm.state.paginationConfig.searchText" class="no-results"><i class="fa fa-info fa-fw"></i>No datasets are available.</span>
-                </p>
+                <info-message ng-if="!dvm.state.results.length && dvm.state.paginationConfig.searchText" class="no-match">No datasets match your search text.</info-message>
+                <info-message ng-if="!dvm.state.results.length && !dvm.state.paginationConfig.searchText" class="no-results">No datasets are available.</info-message>
             </block-content>
             <block-footer>
                 <div class="paging-container clearfix">
@@ -60,12 +66,12 @@
             </block-footer>
         </block>
     </div>
-    <confirmation-overlay class="delete-dataset" ng-if="dvm.showDeleteConfirm" header-text="'Delete ' + dvm.util.getDctermsValue(dvm.selectedDataset.record, 'title')" confirm-click="dvm.delete()" cancel-click="dvm.showDeleteConfirm = false; dvm.error = ''" confirm-text="'Yes'" cancel-text="'No'">
+    <confirmation-overlay class="delete-dataset" ng-if="dvm.showDeleteConfirm" header-text="'Delete ' + dvm.util.getDctermsValue(dvm.state.selectedDataset.record, 'title')" confirm-click="dvm.delete()" cancel-click="dvm.showDeleteConfirm = false; dvm.error = ''" confirm-text="'Yes'" cancel-text="'No'">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <p>Are you sure that you want to delete <strong>{{dvm.util.getDctermsValue(dvm.selectedDataset.record, 'title')}}</strong>?</p>
+        <p>Are you sure that you want to delete <strong>{{dvm.util.getDctermsValue(dvm.state.selectedDataset.record, 'title')}}</strong>?</p>
     </confirmation-overlay>
-    <confirmation-overlay class="clear-dataset" ng-if="dvm.showClearConfirm" header-text="'Clear ' + dvm.util.getDctermsValue(dvm.selectedDataset.record, 'title')" confirm-click="dvm.clear()" cancel-click="dvm.showClearConfirm = false; dvm.error = ''" confirm-text="'Yes'" cancel-text="'No'">
+    <confirmation-overlay class="clear-dataset" ng-if="dvm.showClearConfirm" header-text="'Clear ' + dvm.util.getDctermsValue(dvm.state.selectedDataset.record, 'title')" confirm-click="dvm.clear()" cancel-click="dvm.showClearConfirm = false; dvm.error = ''" confirm-text="'Yes'" cancel-text="'No'">
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-        <p>Are you sure that you want to clear <strong>{{dvm.util.getDctermsValue(dvm.selectedDataset.record, 'title')}}</strong>?</p>
+        <p>Are you sure that you want to clear <strong>{{dvm.util.getDctermsValue(dvm.state.selectedDataset.record, 'title')}}</strong>?</p>
     </confirmation-overlay>
 </div>

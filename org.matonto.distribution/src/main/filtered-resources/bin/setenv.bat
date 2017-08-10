@@ -49,7 +49,8 @@ rem SET JAVA_PERM_MEM
 rem Maximum perm memory for the JVM
 rem SET JAVA_MAX_PERM_MEM
 rem Additional JVM options
-rem SET EXTRA_JAVA_OPTS 
+rem SET EXTRA_JAVA_OPTS
+SET EXTRA_JAVA_OPTS=-Xss4m
 rem Karaf home folder
 rem SET KARAF_HOME
 rem Karaf data folder
