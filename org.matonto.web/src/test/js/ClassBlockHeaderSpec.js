@@ -67,19 +67,19 @@ describe('Class Block Header directive', function() {
     });
     
     describe('controller methods', function() {
-        describe('onSelect calls the proper methods', function() {
+        describe('onSelect calls the proper methods when getClassDetails', function() {
             beforeEach(function() {
                 discoverStateSvc.explore.recordId = 'recordId';
                 discoverStateSvc.explore.classDetails = [{}];
             });
-            it('when getInstancesDetails resolves', function() {
+            it('resolves', function() {
                 exploreSvc.getClassDetails.and.returnValue($q.when([{prop: 'details'}]));
                 controller.onSelect();
                 scope.$apply();
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('recordId');
                 expect(discoverStateSvc.explore.classDetails).toEqual([{prop: 'details'}]);
             });
-            it('when getInstancesDetails rejects', function() {
+            it('rejects', function() {
                 exploreSvc.getClassDetails.and.returnValue($q.reject('error'));
                 controller.onSelect();
                 scope.$apply();

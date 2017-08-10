@@ -138,7 +138,7 @@ public class MappingRestImpl implements MappingRest {
         PaginatedSearchResults<MappingRecord> results = manager.getMappingRecords(params);
         JSONArray array = JSONArray.fromObject(results.getPage().stream()
                 .map(record -> removeContext(record.getModel()))
-                .map(model -> modelToJsonld(transformer.sesameModel(model)))
+                .map(model -> modelToJsonld(model, transformer))
                 .map(RestUtils::getObjectFromJsonld)
                 .collect(Collectors.toList()));
         Links links = LinksUtils.buildLinks(uriInfo, array.size(), results.getTotalSize(), limit, offset);
@@ -203,8 +203,7 @@ public class MappingRestImpl implements MappingRest {
             logger.info("Getting mapping " + recordId);
             MappingWrapper mapping = manager.retrieveMapping(vf.createIRI(recordId)).orElseThrow(() ->
                     ErrorUtils.sendError("Mapping not found", Response.Status.NOT_FOUND));
-            String mappingJsonld = groupedModelToString(transformer.sesameModel(mapping.getModel()),
-                    getRDFFormat("jsonld"));
+            String mappingJsonld = groupedModelToString(mapping.getModel(), getRDFFormat("jsonld"), transformer);
             return Response.ok(mappingJsonld).build();
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
@@ -220,7 +219,7 @@ public class MappingRestImpl implements MappingRest {
             MappingWrapper mapping = manager.retrieveMapping(vf.createIRI(recordId)).orElseThrow(() ->
                     ErrorUtils.sendError("Mapping not found", Response.Status.NOT_FOUND));
             RDFFormat rdfFormat = getRDFFormat(format);
-            String mappingJsonld = groupedModelToString(transformer.sesameModel(mapping.getModel()), rdfFormat);
+            String mappingJsonld = groupedModelToString(mapping.getModel(), rdfFormat, transformer);
             StreamingOutput stream = os -> {
                 Writer writer = new BufferedWriter(new OutputStreamWriter(os));
                 writer.write(format.equalsIgnoreCase("jsonld") ? getJsonObject(mappingJsonld).toString() :
