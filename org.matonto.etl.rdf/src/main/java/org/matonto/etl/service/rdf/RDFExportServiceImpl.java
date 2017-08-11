@@ -126,7 +126,8 @@ public class RDFExportServiceImpl implements RDFExportService {
             LOGGER.warn("Restricting to:\nSubj: " + subjResource + "\nPred: " + predicateIRI + "\nObj: " + objValue);
 
             if (!quadFormats.contains(format)) {
-                LOGGER.warn("RDF format does not support quads.");
+                LOGGER.warn("RDF format does not support quads so they will not be exported.");
+                System.out.println("WARN: RDF format does not support quads so they will not be exported.");
             }
             File file = getFile(filePath);
             RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, new FileWriter(file)));
@@ -140,8 +141,10 @@ public class RDFExportServiceImpl implements RDFExportService {
                 Statement noContext = vf.createStatement(st.getSubject(), st.getPredicate(), st.getObject());
                 rdfWriter.handleStatement(transformer.sesameStatement(noContext));
             }
-            for (Statement st: conn.getStatements(subjResource, predicateIRI, objValue, graphs)) {
-                rdfWriter.handleStatement(transformer.sesameStatement(st));
+            if (quadFormats.contains(format)) {
+                for (Statement st: conn.getStatements(subjResource, predicateIRI, objValue, graphs)) {
+                    rdfWriter.handleStatement(transformer.sesameStatement(st));
+                }
             }
             rdfWriter.endRDF();
             return file;
