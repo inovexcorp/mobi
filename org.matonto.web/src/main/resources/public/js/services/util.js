@@ -309,7 +309,7 @@
              * @param {string} text The text for the body of the error toast
              */
             self.createErrorToast = function(text) {
-                toastr.error(text, 'Error', {timeOut: 0});
+                toastr.error(text, 'Error', {timeOut: 3000});
             }
             /**
              * @ngdoc method
@@ -322,7 +322,7 @@
              * @param {string} text The text for the body of the success toast
              */
             self.createSuccessToast = function(text) {
-                toastr.success(text, 'Success', {timeOut: 0});
+                toastr.success(text, 'Success', {timeOut: 3000});
             }
             /**
              * @ngdoc method
@@ -548,7 +548,20 @@
              * @return {string} A blank node IRI that should be unique.
              */
             self.getIdForBlankNode = function() {
-                return '_:matonto/bnode/' + uuid.v4();
+                return '_:matonto-bnode-' + uuid.v4();
+            }
+            /**
+             * @ngdoc method
+             * @name getSkolemizedIRI
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Generates a skolemized IRI using a random V4 UUID.
+             *
+             * @return {string} A skolemized IRI that should be unique.
+             */
+            self.getSkolemizedIRI = function() {
+                return 'http://matonto.org/.well-known/genid/' + uuid.v4();
             }
 
             function setValue(entity, propertyIRI, valueObj) {

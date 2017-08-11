@@ -138,9 +138,10 @@ describe('Instance Block directive', function() {
             expect(discoverStateSvc.explore.creating).toBe(true);
             expect(splitIRI).toHaveBeenCalledWith('instanceIRI');
             expect(uuid.v4).toHaveBeenCalled();
-            expect(discoverStateSvc.explore.instance.entity['@id']).toContain('begin/');
-            expect(discoverStateSvc.explore.instance.entity['@type']).toEqual(['classId']);
+            expect(discoverStateSvc.explore.instance.entity[0]['@id']).toContain('begin/');
+            expect(discoverStateSvc.explore.instance.entity[0]['@type']).toEqual(['classId']);
             expect(_.last(discoverStateSvc.explore.breadcrumbs)).toBe('New Instance');
+            expect(discoverStateSvc.explore.instance.metadata.instanceIRI).toEqual('begin/');
         });
         it('getClassName should return the correct value', function() {
             discoverStateSvc.explore.breadcrumbs = ['not-this', 'class'];

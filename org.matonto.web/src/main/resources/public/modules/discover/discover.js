@@ -27,11 +27,15 @@
         .module('discover', [
             /* Services */
             'explore',
-            
+            'exploreUtils',
+            'search',
+
             /* Common */
+            'datasetFormGroup',
             'datasetSelect',
             'discoverTabset',
-            
+            'sparqlResultTable',
+
             /* Explore tab */
             'classBlock',
             'classBlockHeader',
@@ -44,11 +48,16 @@
             'instanceForm',
             'instanceView',
             'newInstancePropertyOverlay',
-            
+            'propertyValueOverlay',
+
+            /* Search tab */
+            'discoverSearchTab',
+            'searchForm',
+
             /* Query tab */
             'downloadQueryOverlay',
             'queryTab',
             'sparqlEditor',
-            'sparqlResultTable'
+            'sparqlResultBlock'
         ]);
 })();

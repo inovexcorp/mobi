@@ -24,6 +24,7 @@
   {
     "documentFormat": "jsonld",
     "id": "http://matonto.org/imported-ontology-id",
+    "ontologyId": "http://matonto.org/imported-ontology-id",
     "ontology": [{
       "@id": "https://matonto.org/vocabulary",
       "@type": ["http://www.w3.org/2002/07/owl#Ontology"],

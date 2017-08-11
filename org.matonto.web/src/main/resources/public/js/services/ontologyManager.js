@@ -174,14 +174,18 @@
              * Gets a list of all the OntologyRecords in the catalog by utilizing the `catalogManager`. Returns a
              * promise with an array of the OntologyRecords.
              *
-             * @param {Object} sortingOption An object describing the order for the OntologyRecords.
+             * @param {Object} sortOption An object describing the order for the OntologyRecords.
              * @returns {Promise} A promise with an array of the OntologyRecords.
              */
-            self.getAllOntologyRecords = function(sortingOption) {
-                var deferred = $q.defer();
-                getAllRecords(sortingOption)
-                    .then(response => deferred.resolve(response.data), deferred.reject);
-                return deferred.promise;
+            self.getAllOntologyRecords = function(sortOption = _.find(cm.sortOptions, {label: 'Title (asc)'}), id = '') {
+                var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
+                var paginatedConfig = {
+                    pageIndex: 0,
+                    limit: 100,
+                    recordType: ontologyRecordType,
+                    sortOption
+                };
+                return cm.getRecords(catalogId, paginatedConfig, id).then(response => response.data, $q.reject);
             }
             /**
              * @ngdoc method
@@ -224,7 +228,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the PUT /matontorest/ontologies/{recordId} endpoint which will return a new in-progress commit 
+             * Calls the PUT /matontorest/ontologies/{recordId} endpoint which will return a new in-progress commit
              * object to be applied to the ontology.
              *
              * @param {File} file The updated ontology file.
@@ -247,7 +251,7 @@
                         }
                     };
                 fd.append('file', file);
-                
+
                 return $http.put(prefix + '/' + encodeURIComponent(recordId), fd, config)
                     .then(response => response.data, util.rejectError);
             }
@@ -300,10 +304,10 @@
              * @param {string} branchId The id of the Branch with the specified Commit
              * @param {string} commitId The id of the Commit to retrieve the ontology from
              * @param {string} [rdfFormat='jsonld'] The RDF format to return the ontology in
-             * @return {Promise} A promise with the ontology at the specified commit in the specified RDF format`
+             * @param {boolean} [clearCache=false] Boolean indicating whether or not you should clear the cache
+             * @return {Promise} A promise with the ontology at the specified commit in the specified RDF format
              */
-            self.getOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld') {
-                var deferred = $q.defer();
+            self.getOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld', clearCache = false) {
                 var config = {
                     headers: {
                         'Accept': 'text/plain'
@@ -311,12 +315,12 @@
                     params: {
                         branchId,
                         commitId,
-                        rdfFormat
+                        rdfFormat,
+                        clearCache
                     }
                 };
-                $http.get(prefix + '/' + encodeURIComponent(recordId), config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(recordId), config)
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -660,6 +664,24 @@
                         }
                     }, response => util.onError(response, deferred, defaultErrorMessage));
                 return deferred.promise;
+            }
+            /**
+             * @ngdoc method
+             * @name getFailedImports
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Gets a list of imported ontology IRIs that failed to resolve.
+             *
+             * @param {string} recordId The record ID of the ontology you want to get from the repository.
+             * @param {string} branchId The branch ID of the ontology you want to get from the repository.
+             * @param {string} commitId The commit ID of the ontology you want to get from the repository.
+             * @return {Promise} A promise containing the list of imported ontology IRIs that failed to resolve.
+             */
+            self.getFailedImports = function(recordId, branchId, commitId) {
+                var config = { params: { branchId, commitId } };
+                return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/failed-imports', config)
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -1299,7 +1321,7 @@
              * @return {boolean} Retrurns true if the id is a blank node id, otherwise returns false.
              */
             self.isBlankNodeId = function(id) {
-                return _.isString(id) && (_.includes(id, '_:genid') || _.includes(id, '_:b'));
+                return _.isString(id) && (_.includes(id, '/.well-known/genid/') || _.includes(id, '_:genid') || _.includes(id, '_:b'));
             }
             /**
              * @ngdoc method
@@ -1362,11 +1384,7 @@
                     || utilService.getPropertyValue(entity, prefixes.skos + 'prefLabel')
                     || utilService.getPropertyValue(entity, prefixes.skos + 'altLabel');
                 if (!result) {
-                    if (_.has(entity, '@id')) {
-                        result = utilService.getBeautifulIRI(entity['@id']);
-                    } else {
-                        result = _.get(entity, 'matonto.anonymous', '');
-                    }
+                    result = utilService.getBeautifulIRI(entity['@id']);
                 }
                 return result;
             }
@@ -1518,17 +1536,6 @@
              */
             self.getConceptSchemeIRIs = function(ontologies) {
                 return _.map(self.getConceptSchemes(ontologies), '@id');
-            }
-            /* Private helper functions */
-            function getAllRecords(sortingOption = _.find(cm.sortOptions, {label: 'Title (desc)'})) {
-                var ontologyRecordType = prefixes.ontologyEditor + 'OntologyRecord';
-                var paginatedConfig = {
-                    pageIndex: 0,
-                    limit: 100,
-                    sortOption: sortingOption,
-                    recordType: ontologyRecordType
-                }
-                return cm.getRecords(catalogId, paginatedConfig);
             }
         }
 })();

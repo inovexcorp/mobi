@@ -45,7 +45,7 @@ describe('Ontology Utils Manager service', function() {
             $q = _$q_;
             responseObj = _responseObj_;
         });
-        
+
         ontologyStateSvc.flattenHierarchy.and.returnValue([{entityIRI: 'iri'}]);
     });
 
@@ -148,7 +148,7 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, 'begin/end', ontologyStateSvc.listItem.dataPropertyIndex);
         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
         expect(ontologyStateSvc.listItem.flatDataPropertyHierarchy).toEqual([{entityIRI: 'iri'}]);
-        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
+        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end', true);
     });
     it('deleteAnnotationProperty should call the proper methods', function() {
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
@@ -416,7 +416,7 @@ describe('Ontology Utils Manager service', function() {
                         originalIRI: ''
                     }
                 };
-            });            
+            });
             it('and listItem.ontologyRecord.type is vocabulary', function() {
                 ontologyStateSvc.listItem.ontologyRecord.type = 'vocabulary';
                 ontologyUtilsManagerSvc.updateLabel();
@@ -473,7 +473,7 @@ describe('Ontology Utils Manager service', function() {
         expect(responseObj.getItemIri).toHaveBeenCalledWith({});
         expect(ontologyStateSvc.getEntityNameByIndex).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
     });
-    
+
     it('setSuperClasses should call the correct methods', function() {
         ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'flattened'}]);
         var classIRIs = ['classId1', 'classId2'];
@@ -506,7 +506,7 @@ describe('Ontology Utils Manager service', function() {
             expect(ontologyStateSvc.createFlatIndividualTree).not.toHaveBeenCalled();
         });
     });
-    
+
     it('setSuperProperties should call the correct methods', function() {
         ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'flattened'}]);
         var propertyIRIs = ['classId1', 'classId2'];
@@ -517,7 +517,7 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
         expect(ontologyStateSvc.listItem.flatHierarchy).toEqual([{prop: 'flattened'}]);
     });
-    
+
     describe('checkIri should return correct values when', function() {
         beforeEach(function() {
             ontologyStateSvc.listItem.iriList.push('id');

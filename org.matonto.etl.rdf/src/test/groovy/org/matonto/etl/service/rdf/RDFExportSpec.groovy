@@ -22,82 +22,264 @@
  */
 package org.matonto.etl.service.rdf
 
+import org.matonto.dataset.api.DatasetConnection
+import org.matonto.dataset.api.DatasetManager
+import org.matonto.etl.api.config.ExportServiceConfig
 import org.matonto.persistence.utils.api.SesameTransformer
 import org.matonto.rdf.api.ModelFactory
 import org.matonto.rdf.core.impl.sesame.LinkedHashModel
+import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.rdf.core.utils.Values
 import org.matonto.repository.api.DelegatingRepository
-import org.springframework.core.io.ClassPathResource
-import spock.lang.Specification
 import org.matonto.repository.api.RepositoryConnection
 import org.matonto.repository.base.RepositoryResult
-
+import org.springframework.core.io.ClassPathResource
+import spock.lang.Specification
 
 class RDFExportSpec extends Specification {
+    def service = new RDFExportServiceImpl()
+    def vf = SimpleValueFactory.getInstance()
+    def mf = LinkedHashModelFactory.getInstance()
+
+    def repoId = "test"
+    def datasetId = vf.createIRI("http://test.com/dataset-record")
+    def s = "http://test.com/s"
+    def p = "http://test.com/p"
+    def oIRI = "http://test.com/o"
+    def oLit = "o"
+    def testFile = new ClassPathResource("exporter/testFile.trig").getFile()
+    def testFileWithoutQuads = new ClassPathResource("exporter/testFile.ttl").getFile()
+    def invalidFile = new ClassPathResource("exporter/testFile.txt").getFile()
 
     def transformer = Mock(SesameTransformer)
+    def datasetManager = Mock(DatasetManager)
+    def repo = Mock(DelegatingRepository)
+    def conn = Mock(RepositoryConnection)
+    def result = Mock(RepositoryResult)
+    def datasetConn = Mock(DatasetConnection)
 
     def setup() {
-        transformer.sesameModel(_) >> { args -> Values.sesameModel(args[0])}
+        testFile.setWritable(true)
+        testFileWithoutQuads.setWritable(true)
+        invalidFile.setWritable(true)
+
+        transformer.sesameStatement(_) >> { args -> Values.sesameStatement(args[0])}
+        repo.getRepositoryID() >> repoId
+        repo.getConnection() >> conn
+        conn.getStatements(*_) >> result
+        result.iterator() >> mf.createModel().iterator()
+        datasetManager.getConnection(datasetId) >> datasetConn
+        datasetManager.getConnection(!datasetId) >> {throw new IllegalArgumentException()}
+        datasetConn.getStatements(*_) >> result
+        datasetConn.getDefaultNamedGraphs() >> result
+        datasetConn.getNamedGraphs() >> result
+        datasetConn.getSystemDefaultNamedGraph() >> vf.createIRI("http://test.com/system-default")
+
+        service.setDatasetManager(datasetManager)
+        service.setTransformer(transformer)
+        service.setMf(mf)
+        service.setVf(vf)
+        service.addRepository(repo)
     }
 
-    def "Nonexistant repository causes exception" (){
+    def "Export File from Repository without restrictions"() {
         setup:
-        RDFExportServiceImpl ex = new RDFExportServiceImpl()
+        def config = new ExportServiceConfig.Builder(testFile.absolutePath).build()
 
         when:
-        ex.exportToFile("cli-rdf-service", "exporter/testFile.nq")
+        def result = service.exportToFile(config, repoId)
+
+        then:
+        result != null
+        1 * conn.getStatements(null, null, null) >> result
+    }
+
+    def "Export File from Repository with restrictions and only subj"() {
+        setup:
+        def config = new ExportServiceConfig.Builder(testFile.absolutePath).subj(s).build()
+
+        when:
+        def result = service.exportToFile(config, repoId)
+
+        then:
+        result != null
+        1 * conn.getStatements(vf.createIRI(s), null, null) >> result
+    }
+
+    def "Export File from Repository with restrictions and only pred"() {
+        setup:
+        def config = new ExportServiceConfig.Builder(testFile.absolutePath).pred(p).build()
+
+        when:
+        def result = service.exportToFile(config, repoId)
+
+        then:
+        result != null
+        1 * conn.getStatements(null, vf.createIRI(p), null) >> result
+    }
+
+    def "Export File from Repository with restrictions and both object IRI and Lit"() {
+        setup:
+        def config = new ExportServiceConfig.Builder(testFile.absolutePath).objIRI(oIRI).objLit(oLit).build()
+
+        when:
+        def result = service.exportToFile(config, repoId)
+
+        then:
+        result != null
+        1 * conn.getStatements(null, null, vf.createIRI(oIRI)) >> result
+    }
+
+    def "Export File from Repository with restrictions and only object Lit"() {
+        setup:
+        def config = new ExportServiceConfig.Builder(testFile.absolutePath).objLit(oLit).build()
+
+        when:
+        def result = service.exportToFile(config, repoId)
+
+        then:
+        result != null
+        1 * conn.getStatements(null, null, vf.createLiteral(oLit)) >> result
+    }
+
+    def "Throws exception if repository does not exist"() {
+        setup:
+        def config = new ExportServiceConfig.Builder(testFile.absolutePath).build()
+
+        when:
+        service.exportToFile(config, "missing")
 
         then:
         thrown IllegalArgumentException
     }
 
-    def "Unwritable file causes exception" (){
+    def "Throws exception for repository if file is unwritable"() {
         setup:
-        RDFExportServiceImpl exportService = new RDFExportServiceImpl()
-        File textFile = new ClassPathResource("exporter/testFile.txt").getFile()
-        textFile.setReadOnly()
+        def config = new ExportServiceConfig.Builder(testFile.absolutePath).build()
+        testFile.setReadOnly()
 
         when:
-        exportService.exportToFile("test", "exporter/testFile.txt")
+        service.exportToFile(config, repoId)
 
         then:
         thrown IOException
     }
 
-    def "Invalid RDF Type causes exception" (){
+    def "Throws exception for repository if file is invalid RDF Type"() {
         setup:
-        RDFExportServiceImpl exportService = new RDFExportServiceImpl()
-        File textFile = new ClassPathResource("exporter/testFile.txt").getFile()
-        textFile.setWritable(true)
+        def config = new ExportServiceConfig.Builder(invalidFile.absolutePath).build()
 
         when:
-        exportService.exportToFile("test", "exporter/testFile.txt")
+        service.exportToFile(config, repoId)
 
         then:
         thrown IOException
     }
 
-    def "Export File from Repository" (){
+    def "Export File from Dataset without restrictions with quads"() {
         setup:
-        RDFExportServiceImpl exportService = new RDFExportServiceImpl()
-        File testFile = new ClassPathResource("exporter/testFile.nt").getFile()
-        def repo = Mock(DelegatingRepository.class)
-        RepositoryConnection connection = Mock()
-        RepositoryResult result = Mock()
-        ModelFactory mf = Mock()
-        exportService.setModelFactory(mf)
-        exportService.setTransformer(transformer)
+        def config = new ExportServiceConfig.Builder(testFile.absolutePath).build()
 
         when:
-        exportService.addRepository(repo)
-        exportService.exportToFile("test", testFile.absolutePath)
+        def result = service.exportToFile(config, datasetId)
 
         then:
-        1 * repo.getRepositoryID() >> "test"
-        1 * repo.getConnection() >> connection
-        1 * connection.getStatements(null, null, null) >> result
-        1 * mf.createModel() >> new LinkedHashModel()
+        result != null
+        2 * datasetConn.getStatements(null, null, null, _) >> result
     }
 
+    def "Export File from Dataset without restrictions without quads"() {
+        setup:
+        def config = new ExportServiceConfig.Builder(testFileWithoutQuads.absolutePath).build()
+
+        when:
+        def result = service.exportToFile(config, datasetId)
+
+        then:
+        result != null
+        1 * datasetConn.getStatements(null, null, null, _) >> result
+    }
+
+    def "Export File from Dataset with restrictions and both object IRI and Lit with quads"() {
+        setup:
+        def config = new ExportServiceConfig.Builder(testFile.absolutePath).subj(s).pred(p).objIRI(oIRI).objLit(oLit).build()
+
+        when:
+        def result = service.exportToFile(config, datasetId)
+
+        then:
+        result != null
+        2 * datasetConn.getStatements(vf.createIRI(s), vf.createIRI(p), vf.createIRI(oIRI), _) >> result
+    }
+
+    def "Export File from Dataset with restrictions and both object IRI and Lit without quads"() {
+        setup:
+        def config = new ExportServiceConfig.Builder(testFileWithoutQuads.absolutePath).subj(s).pred(p).objIRI(oIRI).objLit(oLit).build()
+
+        when:
+        def result = service.exportToFile(config, datasetId)
+
+        then:
+        result != null
+        1 * datasetConn.getStatements(vf.createIRI(s), vf.createIRI(p), vf.createIRI(oIRI), _) >> result
+    }
+
+    def "Export File from Dataset with restrictions and object Lit with quads"() {
+        setup:
+        def config = new ExportServiceConfig.Builder(testFile.absolutePath).subj(s).pred(p).objLit(oLit).build()
+
+        when:
+        def result = service.exportToFile(config, datasetId)
+
+        then:
+        result != null
+        2 * datasetConn.getStatements(vf.createIRI(s), vf.createIRI(p), vf.createLiteral(oLit), _) >> result
+    }
+
+    def "Export File from Dataset with restrictions and object Lit without quads"() {
+        setup:
+        def config = new ExportServiceConfig.Builder(testFileWithoutQuads.absolutePath).subj(s).pred(p).objLit(oLit).build()
+
+        when:
+        def result = service.exportToFile(config, datasetId)
+
+        then:
+        result != null
+        1 * datasetConn.getStatements(vf.createIRI(s), vf.createIRI(p), vf.createLiteral(oLit), _) >> result
+    }
+
+    def "Throws exception if dataset does not exist"() {
+        setup:
+        def config = new ExportServiceConfig.Builder(testFile.absolutePath).build()
+
+        when:
+        service.exportToFile(config, vf.createIRI("http://test.com/missing"))
+
+        then:
+        thrown IllegalArgumentException
+    }
+
+    def "Throws exception for dataset if file is unwritable"() {
+        setup:
+        def config = new ExportServiceConfig.Builder(testFile.absolutePath).build()
+        testFile.setReadOnly()
+
+        when:
+        service.exportToFile(config, datasetId)
+
+        then:
+        thrown IOException
+    }
+
+    def "Throws exception for dataset if file is invalid RDF Type"() {
+        setup:
+        def config = new ExportServiceConfig.Builder(invalidFile.absolutePath).build()
+
+        when:
+        service.exportToFile(config, datasetId)
+
+        then:
+        thrown IOException
+    }
 }

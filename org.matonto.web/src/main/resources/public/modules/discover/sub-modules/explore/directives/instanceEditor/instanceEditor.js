@@ -49,9 +49,9 @@
          */
         .directive('instanceEditor', instanceEditor);
         
-        instanceEditor.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService'];
+        instanceEditor.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'exploreUtilsService'];
 
-        function instanceEditor($q, discoverStateService, utilService, exploreService) {
+        function instanceEditor($q, discoverStateService, utilService, exploreService, exploreUtilsService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceEditor/instanceEditor.html',
@@ -61,22 +61,20 @@
                 controller: function() {
                     var dvm = this;
                     var es = exploreService;
+                    var eu = exploreUtilsService;
                     dvm.ds = discoverStateService;
                     dvm.util = utilService;
                     dvm.original = angular.copy(dvm.ds.explore.instance.entity);
                     dvm.isValid = true;
                     
                     dvm.save = function() {
-                        _.forOwn(dvm.ds.explore.instance.entity, (value, key) => {
-                            if (_.isArray(value) && value.length === 0) {
-                                delete dvm.ds.explore.instance.entity[key];
-                            }
-                        });
+                        dvm.ds.explore.instance.entity = eu.removeEmptyPropertiesFromArray(dvm.ds.explore.instance.entity);
+                        var instance = dvm.ds.getInstance();
                         es.updateInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.metadata.instanceIRI, dvm.ds.explore.instance.entity)
                             .then(() => es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {offset: dvm.ds.explore.instanceDetails.currentPage * dvm.ds.explore.instanceDetails.limit, limit: dvm.ds.explore.instanceDetails.limit}), $q.reject)
                             .then(response => {
                                 dvm.ds.explore.instanceDetails.data = response.data;
-                                dvm.ds.explore.instance.metadata = _.find(response.data, {instanceIRI: dvm.ds.explore.instance.entity['@id']});
+                                dvm.ds.explore.instance.metadata = _.find(response.data, {instanceIRI: instance['@id']});
                                 dvm.ds.explore.breadcrumbs[dvm.ds.explore.breadcrumbs.length - 1] = dvm.ds.explore.instance.metadata.title;
                                 dvm.ds.explore.editing = false;
                             }, dvm.util.createErrorToast);
