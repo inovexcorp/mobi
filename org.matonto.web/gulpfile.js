@@ -150,7 +150,7 @@ gulp.task('test-minified', ['cacheTemplates', 'minify-scripts'], function(done) 
     return runKarma([dest + '**/*.js'], './src/test/js/*Spec.js', true, done);
 });
 
-gulp.task('test-minified-1', ['cacheTemplates', 'minify-scripts'], function(done) {
+gulp.task('test-minified-1', ['cacheTemplates'], function(done) {
     return runKarma([dest + '**/*.js'], tests[0], true, done);
 });
 
@@ -175,7 +175,7 @@ gulp.task('test-unminified', ['cacheTemplates', 'move-custom-js'], function(done
     return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), './src/test/js/*Spec.js', true, done);
 });
 
-gulp.task('test-unminified-1', ['cacheTemplates', 'move-custom-js'], function(done) {
+gulp.task('test-unminified-1', ['cacheTemplates'], function(done) {
     return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), tests[0], true, done);
 });
 
