@@ -29,7 +29,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.8.44-SNAPSHOT</version>
+    <version>1.8.62-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -61,7 +61,6 @@
         <module>org.matonto.vfs</module>
         <module>org.matonto.repository.impl.sesame</module>
         <module>org.matonto.semantic.service</module>
-        <module>org.matonto.itests</module>
         <module>org.matonto.distribution</module>
         <module>org.matonto.repository.impl.core</module>
         <module>org.matonto.persistence.cli</module>
@@ -80,6 +79,7 @@
         <module>org.matonto.jaas.rest</module>
         <module>org.matonto.clustering.api</module>
         <module>org.matonto.clustering.hazelcast</module>
+        <module>org.matonto.clustering.cli</module>
         <module>org.matonto.karaf.feature</module>
         <module>org.matonto.rdf.orm.ontologies</module>
         <module>rdf-orm</module>
@@ -95,6 +95,7 @@
         <module>org.matonto.cache</module>
         <module>org.matonto.cache.impl.ehcache</module>
         <module>org.matonto.explorable.dataset.rest</module>
+        <module>org.matonto.itests</module>
     </modules>
 
     <properties>

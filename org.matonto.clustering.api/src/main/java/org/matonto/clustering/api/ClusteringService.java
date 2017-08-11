@@ -32,6 +32,16 @@ import java.util.UUID;
 public interface ClusteringService {
 
     /**
+     * @return The {@link ClusteringServiceConfig} associated with this cluster.
+     */
+    ClusteringServiceConfig getClusteringServiceConfig();
+
+    /**
+     * Restart the clustering service.
+     */
+    void restart();
+
+    /**
      * @return The set of UUIDs representing servers that are part of this cluster.
      */
     Set<UUID> getClusteredNodeIds();

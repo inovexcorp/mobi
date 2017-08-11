@@ -1,13 +1,10 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.sparql-result-table {
+.sparql-result-block {
     height: 100%;
     position: relative;
 
-    .table {
-        margin: 0;
-    }
     .message {
         margin: 10px;
     }

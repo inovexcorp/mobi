@@ -117,6 +117,7 @@
         <feature prerequisite="true">matonto-core</feature>
         <bundle start-level="80">mvn:org.matonto/etl.cli/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/persistence.cli/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/clustering.cli/${project.version}</bundle>
     </feature>
     <feature name="matonto-web" description="MatOnto Web Bundles" version="${project.version}">
         <feature prerequisite="true">matonto-core</feature>

@@ -34,11 +34,13 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ReplicatedMap;
 import org.matonto.clustering.api.ClusteringService;
+import org.matonto.clustering.api.ClusteringServiceConfig;
 import org.matonto.clustering.hazelcast.config.HazelcastClusteringServiceConfig;
 import org.matonto.clustering.hazelcast.config.HazelcastConfigurationFactory;
 import org.matonto.clustering.hazelcast.listener.ClusterServiceLifecycleListener;
 import org.matonto.platform.config.api.server.MatOnto;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,6 +90,11 @@ public class HazelcastClusteringService implements ClusteringService {
     private HazelcastInstance hazelcastInstance;
 
     /**
+     * Configuration for the Hazelcast instance.
+     */
+    private Map<String, Object> configuration;
+
+    /**
      * Map of MatOnto nodes currently on the cluster to some metadata about the node.
      */
     private ReplicatedMap<UUID, String> clusterNodes;
@@ -102,6 +109,7 @@ public class HazelcastClusteringService implements ClusteringService {
      */
     @Activate
     public void activate(BundleContext context, Map<String, Object> configuration) {
+        this.configuration = configuration;
         final HazelcastClusteringServiceConfig serviceConfig = Configurable.createConfigurable(HazelcastClusteringServiceConfig.class, configuration);
         if (serviceConfig.enabled()) {
             ForkJoinPool.commonPool().submit(() -> {
@@ -146,6 +154,25 @@ public class HazelcastClusteringService implements ClusteringService {
         } else {
             LOGGER.debug("Already disabled, so deactivation is a noop");
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void restart() {
+        LOGGER.warn("Restarting the service...");
+        BundleContext context = FrameworkUtil.getBundle(HazelcastClusteringService.class).getBundleContext();
+        deactivate();
+        activate(context, this.configuration);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ClusteringServiceConfig getClusteringServiceConfig() {
+        return Configurable.createConfigurable(HazelcastClusteringServiceConfig.class, configuration);
     }
 
     /**

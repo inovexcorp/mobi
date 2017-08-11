@@ -27,8 +27,9 @@ import static org.matonto.rest.util.RestUtils.getActiveUser;
 import static org.matonto.rest.util.RestUtils.getRDFFormatFileExtension;
 import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
 import static org.matonto.rest.util.RestUtils.getTypedObjectFromJsonld;
+import static org.matonto.rest.util.RestUtils.jsonldToDeskolemizedModel;
 import static org.matonto.rest.util.RestUtils.jsonldToModel;
-import static org.matonto.rest.util.RestUtils.modelToString;
+import static org.matonto.rest.util.RestUtils.modelToSkolemizedString;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -60,6 +61,7 @@ import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontologies.provo.InstantaneousEvent;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
@@ -110,6 +112,7 @@ public class CatalogRestImpl implements CatalogRest {
     private CatalogManager catalogManager;
     private ValueFactory vf;
     private VersioningManager versioningManager;
+    private BNodeService bNodeService;
 
     protected EngineManager engineManager;
     protected DistributionFactory distributionFactory;
@@ -167,6 +170,11 @@ public class CatalogRestImpl implements CatalogRest {
     @Reference
     protected void setVersioningManager(VersioningManager versioningManager) {
         this.versioningManager = versioningManager;
+    }
+
+    @Reference
+    protected void setbNodeService(BNodeService bNodeService) {
+        this.bNodeService = bNodeService;
     }
 
     @Override
@@ -1187,7 +1195,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @return The new Thing if the JSON-LD contains the correct ID Resource; throws a 400 otherwise.
      */
     private <T extends Thing> T getNewThing(String newThingJson, Resource thingId, OrmFactory<T> factory) {
-        Model newThingModel = convertJsonld(newThingJson);
+        Model newThingModel = jsonldToDeskolemizedModel(newThingJson, transformer, bNodeService);
         return factory.getExisting(thingId, newThingModel).orElseThrow(() ->
                 ErrorUtils.sendError(factory.getTypeIRI().getLocalName() + " IDs must match",
                         Response.Status.BAD_REQUEST));
@@ -1239,7 +1247,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @return A String of the converted Model in the requested RDF format.
      */
     private String getModelInFormat(Model model, String format) {
-        return modelToString(transformer.sesameModel(model), format);
+        return modelToSkolemizedString(model, format, transformer, bNodeService);
     }
 
     /**
@@ -1249,7 +1257,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @return A Model containing the statements from the JSON-LD string.
      */
     private Model convertJsonld(String jsonld) {
-        return transformer.matontoModel(jsonldToModel(jsonld));
+        return jsonldToModel(jsonld, transformer);
     }
 
 

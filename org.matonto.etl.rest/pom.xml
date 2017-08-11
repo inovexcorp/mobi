@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.44-SNAPSHOT</version>
+        <version>1.8.62-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
 
     </parent>
@@ -47,22 +47,22 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rest.util</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.56</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
-            <version>1.8.28</version>
+            <version>1.8.59</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.8.34</version>
+            <version>1.8.56</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>dataset.api</artifactId>
-            <version>1.8.21</version>
+            <version>1.8.59</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
