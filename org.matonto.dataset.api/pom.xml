@@ -42,7 +42,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>1.8.28</version>
+            <version>1.8.59-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -52,7 +52,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas.api</artifactId>
-            <version>1.8.14</version>
+            <version>1.8.59-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
