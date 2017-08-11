@@ -31,36 +31,26 @@ import org.matonto.rdf.orm.conversion.AbstractValueConverter;
 import org.matonto.rdf.orm.conversion.ValueConversionException;
 import org.matonto.rdf.orm.conversion.ValueConverter;
 
-/**
- * {@link ValueConverter} implementation for converting {@link Boolean} values from statements.
- */
-@Component(provide = ValueConverter.class)
-public class BooleanValueConverter extends AbstractValueConverter<Boolean> {
+import javax.annotation.Nonnull;
 
-    /**
-     * Create a new instance of a {@link BooleanValueConverter}.
-     */
-    public BooleanValueConverter() {
-        super(Boolean.class);
+@Component(provide = ValueConverter.class)
+public class LongValueConverter extends AbstractValueConverter<Long> {
+
+    public LongValueConverter() {
+        super(Long.class);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public Boolean convertValue(final Value value, final Thing thing, final Class<? extends Boolean> desiredType) throws ValueConversionException {
+    public Long convertValue(@Nonnull Value value, Thing thing, @Nonnull Class<? extends Long> desiredType) throws ValueConversionException {
         try {
-            return ((Literal) value).booleanValue();
+            return ((Literal) value).longValue();
         } catch (Exception e) {
-            throw new ValueConversionException("Issue converting '" + value.stringValue() + "' to boolean", e);
+            throw new ValueConversionException("Issue convertinthg value to long", e);
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public Value convertType(final Boolean value, final Thing thing) throws ValueConversionException {
-        return this.getValueFactory(thing).createLiteral(value);
+    public Value convertType(@Nonnull Long type, Thing thing) throws ValueConversionException {
+        return getValueFactory(thing).createLiteral(type);
     }
 }
