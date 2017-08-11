@@ -126,7 +126,7 @@ public interface OrmFactoryRegistry {
      * @param type The {@link Class} of the {@link Thing} you want to create
      * @param <T> A {@link Class} that extends {@link Thing}.
      * @return The new instance of your thing
-     * @throws {@link OrmException} If the factory for your thing isn't found, or there is an issue creating it
+     * @throws OrmException If the factory for your thing isn't found, or there is an issue creating it
      */
     <T extends Thing> T createNew(final Resource resource, final Model model, Class<T> type) throws OrmException;
 
@@ -138,7 +138,7 @@ public interface OrmFactoryRegistry {
      * @param type The {@link Class} of the {@link Thing} you want to find
      * @param <T> A {@link Class} that extends {@link Thing}.
      * @return The existing instance of your thing (or {@link Optional#EMPTY} if it doesn't exist)
-     * @throws {@link OrmException} If the factory for your thing isn't found, or there is an issue building it
+     * @throws OrmException If the factory for your thing isn't found, or there is an issue building it
      */
     <T extends Thing> Optional<T> getExisting(Resource resource, Model model, Class<T> type) throws OrmException;
 
@@ -149,7 +149,7 @@ public interface OrmFactoryRegistry {
      * @param type The {@link Class} of the {@link Thing} you want to find
      * @param <T> A {@link Class} that extends {@link Thing}.
      * @return All the instances in the given model
-     * @throws {@link OrmException} If the factory for your thing isn't found, or there is an issue building instances
+     * @throws OrmException If the factory for your thing isn't found, or there is an issue building instances
      */
     <T extends Thing> Collection<T> getAllExisting(final Model model, Class<T> type) throws OrmException;
 
