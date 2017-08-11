@@ -1,0 +1,52 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.search-form {
+    .boolean-operator {
+        md-radio-group md-radio-button {
+            display: inline-block;
+            margin-bottom: 0;
+            margin-left: 10px;
+        }
+    }
+
+    .strike {
+        color: $gray-light;
+        font-weight: bold;
+        margin-bottom: 15px;
+        overflow:hidden;
+        position: relative;
+        white-space: nowrap;
+
+        &:after {
+            background: $gray-light;
+            content: '';
+            height: 1px;
+            margin-left: 10px;
+            position: absolute;
+            top: 50%;
+            width: 9999px;
+        }
+    }
+
+    .md-chips .md-chip-input-container {
+        width: 100%;
+
+        input {
+            width: 100%;
+        }
+
+        md-autocomplete md-autocomplete-wrap {
+            width: 100%;
+        }
+    }
+}
+
+.search-form-searchbox {
+    border: none;
+    border-bottom: 1px solid $gray-light;
+    outline: none;
+    height: 100%;
+    width: 100%;
+    padding: 10px;
+}

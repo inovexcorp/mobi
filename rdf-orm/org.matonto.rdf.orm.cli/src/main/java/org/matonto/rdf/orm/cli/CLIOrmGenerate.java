@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 
-@Command(scope = "matonto", name = "orm-generate", description = "Generates Java POJOs based upon provided ontology information")
+@Command(scope = "mobi", name = "orm-generate", description = "Generates Java POJOs based upon provided ontology information")
 @Service
 public class CLIOrmGenerate implements Action {
 

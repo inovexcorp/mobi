@@ -26,6 +26,7 @@ package org.matonto.dataset.rest.impl;
 import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -55,11 +56,13 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
@@ -132,6 +135,9 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
     @Mock
     private PaginatedSearchResults<DatasetRecord> results;
 
+    @Mock
+    private BNodeService service;
+
     @Override
     protected Application configureApp() throws Exception {
         vf = SimpleValueFactory.getInstance();
@@ -196,6 +202,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         rest.setTransformer(transformer);
         rest.setEngineManager(engineManager);
         rest.setCatalogManager(catalogManager);
+        rest.setBNodeService(service);
 
         return new ResourceConfig()
                 .register(rest)
@@ -210,15 +217,23 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(datasetManager, catalogManager, transformer, results);
+        reset(datasetManager, catalogManager, transformer, results, service);
 
         when(transformer.sesameModel(any(Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
+        when(transformer.sesameStatement(any(Statement.class)))
+                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
+
+        when(service.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgumentAt(0, Statement.class));
+
         when(datasetManager.getDatasetRecords(any(DatasetPaginatedSearchParams.class))).thenReturn(results);
         when(datasetManager.createDataset(any(DatasetRecordConfig.class))).thenReturn(record1);
+
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
+
         when(catalogManager.getLocalCatalogIRI()).thenReturn(localIRI);
         when(catalogManager.getMasterBranch(localIRI, ontologyRecordIRI)).thenReturn(branch);
+
         when(results.getPage()).thenReturn(Stream.of(record1, record2, record3).collect(Collectors.toList()));
         when(results.getPageNumber()).thenReturn(1);
         when(results.getPageSize()).thenReturn(10);
@@ -232,6 +247,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         Response response = target().path("datasets").request().get();
         assertEquals(response.getStatus(), 200);
         verify(datasetManager).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
+        verify(service, atLeastOnce()).skolemize(any(Statement.class));
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), 3);
@@ -250,6 +266,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         Response response = target().path("datasets").queryParam("offset", 1).queryParam("limit", 1).request().get();
         assertEquals(response.getStatus(), 200);
         verify(datasetManager).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
+        verify(service, atLeastOnce()).skolemize(any(Statement.class));
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "3");
         Set<Link> links = response.getLinks();

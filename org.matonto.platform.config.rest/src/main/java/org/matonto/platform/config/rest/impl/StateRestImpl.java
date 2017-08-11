@@ -176,6 +176,6 @@ public class StateRestImpl implements StateRest {
     }
 
     private String convertModel(Model model) {
-        return modelToJsonld(transformer.sesameModel(model));
+        return modelToJsonld(model, transformer);
     }
 }

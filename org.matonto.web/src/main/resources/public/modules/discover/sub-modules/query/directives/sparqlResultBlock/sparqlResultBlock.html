@@ -20,22 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="sparql-result-table">
+<div class="sparql-result-block">
     <download-query-overlay ng-if="dvm.sparql.displayDownloadOverlay"></download-query-overlay>
     <block>
         <block-content>
-            <table class="table table-hover" ng-if="dvm.sparql.data">
-                <thead>
-                    <tr>
-                        <th ng-repeat="binding in dvm.sparql.bindings">{{binding}}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr ng-repeat="result in dvm.sparql.data">
-                        <td ng-repeat="binding in dvm.sparql.bindings">{{result[binding].value}}</td>
-                    </tr>
-                </tbody>
-            </table>
+            <sparql-result-table ng-if="dvm.sparql.data" bindings="dvm.sparql.bindings" data="dvm.sparql.data"></sparql-result-table>
             <error-display ng-if="dvm.sparql.errorMessage" class="message">{{dvm.sparql.errorMessage}}</error-display>
             <pre ng-if="dvm.sparql.errorMessage">{{dvm.sparql.errorDetails}}</pre>
             <info-message ng-if="dvm.sparql.infoMessage" class="message">{{dvm.sparql.infoMessage}}</info-message>

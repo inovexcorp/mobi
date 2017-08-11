@@ -22,7 +22,7 @@
  */
 (function() {
     'use strict';
-    
+
     angular
         /**
          * @ngdoc overview
@@ -49,9 +49,9 @@
          * the reified statements associated with that value.
          */
         .directive('propertyValueOverlay', propertyValueOverlay);
-        
+
         propertyValueOverlay.$inject = ['discoverStateService', 'prefixes', 'uuid', 'utilService', 'exploreUtilsService'];
-        
+
         function propertyValueOverlay(discoverStateService, prefixes, uuid, utilService, exploreUtilsService) {
             return {
                 restrict: 'E',
@@ -74,36 +74,28 @@
                     dvm.eu = exploreUtilsService;
                     dvm.util = utilService;
                     dvm.propertyText = '';
-                    
+
                     var instance = ds.getInstance();
-                    var subject = [{'@id': instance['@id']}];
-                    var predicate = [{'@id': dvm.iri}];
-                    var object = [angular.copy(_.get(_.get(instance, dvm.iri, []), dvm.index))];
+                    var object = angular.copy(_.get(_.get(instance, dvm.iri, []), dvm.index));
                     var ommitted = ['@id', '@type', prefixes.rdf + 'subject', prefixes.rdf + 'predicate', prefixes.rdf + 'object'];
-                    
-                    dvm.reification = _.find(ds.explore.instance.entity, thing => {
-                        return _.includes(_.get(thing, '@type', []), prefixes.rdf + 'Statement')
-                            && _.isEqual(getRdfProperty(thing, 'subject'), subject)
-                            && _.isEqual(getRdfProperty(thing, 'predicate'), predicate)
-                            && _.isEqual(getRdfProperty(thing, 'object'), object);
-                    }) || {
-                        '@id': dvm.util.getIdForBlankNode(),
-                        '@type': [prefixes.rdf + 'Statement'],
-                        [prefixes.rdf + 'subject']: subject,
-                        [prefixes.rdf + 'predicate']: predicate,
-                        [prefixes.rdf + 'object']: object
-                    };
-                    
+
+                    dvm.reification = dvm.eu.getReification(ds.explore.instance.entity, instance['@id'], dvm.iri, object)
+                        || {
+                            '@id': dvm.util.getSkolemizedIRI(),
+                            '@type': [prefixes.rdf + 'Statement'],
+                            [prefixes.rdf + 'subject']: [{'@id': instance['@id']}],
+                            [prefixes.rdf + 'predicate']: [{'@id': dvm.iri}],
+                            [prefixes.rdf + 'object']: [object]
+                        };
+
                     dvm.addNewProperty = function(property) {
                         dvm.reification[property] = [];
                         dvm.addToChanged(property);
                         dvm.showOverlay = false;
                     }
-                    
                     dvm.notOmmitted = function(propertyIRI) {
                         return !_.includes(ommitted, propertyIRI);
                     }
-                    
                     dvm.submit = function() {
                         _.forOwn(dvm.reification, (value, key) => {
                             if (_.isArray(value) && value.length === 0) {
@@ -116,17 +108,11 @@
                         dvm.onSubmit();
                         dvm.closeOverlay();
                     }
-                    
                     dvm.addToChanged = function(propertyIRI) {
                         dvm.changed = _.uniq(_.concat(dvm.changed, [propertyIRI]));
                     }
-                    
                     dvm.isChanged = function(propertyIRI) {
                         return _.includes(dvm.changed, propertyIRI);
-                    }
-                    
-                    function getRdfProperty(thing, localName) {
-                        return _.get(thing, prefixes.rdf + localName, {});
                     }
                 }
             }
