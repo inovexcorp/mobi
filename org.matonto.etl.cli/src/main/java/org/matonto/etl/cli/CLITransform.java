@@ -48,7 +48,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.Optional;
 
-@Command(scope = "matonto", name = "transform", description = "Transforms CSV Files to RDF using a mapping file")
+@Command(scope = "mobi", name = "transform", description = "Transforms CSV Files to RDF using a mapping file")
 @Service
 public class CLITransform implements Action {
 

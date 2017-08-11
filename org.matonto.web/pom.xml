@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.52-SNAPSHOT</version>
+        <version>1.8.61-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -87,7 +87,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas.api</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.59</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -158,6 +158,21 @@
                                 <argument>run</argument>
                                 <argument>${build.env}</argument>
                             </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>npm run tests</id>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <phase>test</phase>
+                        <configuration>
+                            <executable>npm</executable>
+                            <arguments>
+                                <argument>run</argument>
+                                <argument>test-${build.env}</argument>
+                            </arguments>
+                            <skip>${skipTests}</skip>
                         </configuration>
                     </execution>
                 </executions>

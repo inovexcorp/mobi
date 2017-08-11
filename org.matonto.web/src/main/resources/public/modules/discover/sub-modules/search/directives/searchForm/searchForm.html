@@ -25,22 +25,42 @@
       <block-content class="padding">
           <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
           <form name="dvm.searchForm">
-              <dataset-form-group ng-model="dvm.ds.search.datasetRecordId"></dataset-form-group>
+              <dataset-form-group ng-model="dvm.ds.search.datasetRecordId" on-select="dvm.getTypes()"></dataset-form-group>
               <div class="strike">AND</div>
               <div class="form-group">
                   <custom-label>Keywords</custom-label>
                   <div class="boolean-operator pull-right">
-                      <md-radio-group ng-model="dvm.ds.search.keywords.isOr">
-                          <md-radio-button ng-value="false" name="is-or">AND</md-radio-button>
-                          <md-radio-button ng-value="true" name="is-or">OR</md-radio-button>
+                      <md-radio-group ng-model="dvm.ds.search.queryConfig.isOrKeywords" ng-disabled="!dvm.ds.search.datasetRecordId">
+                          <md-radio-button ng-value="false" name="is-or-keyword">AND</md-radio-button>
+                          <md-radio-button ng-value="true" name="is-or-keyword">OR</md-radio-button>
                       </md-radio-group>
                   </div>
-                  <md-chips ng-model="dvm.ds.search.keywords.arr" placeholder="Enter keywords..." name="keywords"></md-chips>
+                  <md-chips ng-model="dvm.ds.search.queryConfig.keywords" placeholder="Enter keywords..." name="keywords">
+                      <input type="text" ng-disabled="!dvm.ds.search.datasetRecordId">
+                  </md-chips>
+              </div>
+              <div class="strike">AND</div>
+              <div class="form-group">
+                  <custom-label>Types</custom-label>
+                  <div class="boolean-operator pull-right">
+                      <md-radio-group ng-model="dvm.ds.search.queryConfig.isOrTypes" ng-disabled="!dvm.ds.search.datasetRecordId">
+                          <md-radio-button ng-value="false" name="is-or-type">AND</md-radio-button>
+                          <md-radio-button ng-value="true" name="is-or-type">OR</md-radio-button>
+                      </md-radio-group>
+                  </div>
+                  <md-select ng-model="dvm.ds.search.queryConfig.types" md-on-close="dvm.typeSearch = ''" md-selected-text="dvm.getSelectedText()" multiple ng-disabled="!dvm.ds.search.datasetRecordId">
+                      <md-select-header>
+                          <input ng-model="dvm.typeSearch" type="search" class="search-form-searchbox" ng-keydown="$event.stopPropagation()">
+                      </md-select-header>
+                      <md-optgroup ng-repeat="(key, value) in dvm.typeObject" label="{{key}}">
+                          <md-option ng-value="item" ng-repeat="item in value | filter:dvm.typeSearch">{{item.classTitle}} :: {{item.classIRI}}</md-option>
+                      </md-optgroup>
+                  </md-select>
               </div>
           </form>
       </block-content>
       <block-footer>
-          <button class="btn btn-primary" ng-disabled="dvm.ds.search.keywords.arr.length === 0" ng-click="dvm.submit()">Submit</button>
+          <button class="btn btn-primary" ng-disabled="!dvm.ds.search.datasetRecordId" ng-click="dvm.submit()">Submit</button>
       </block-footer>
   </block>
 </div>
