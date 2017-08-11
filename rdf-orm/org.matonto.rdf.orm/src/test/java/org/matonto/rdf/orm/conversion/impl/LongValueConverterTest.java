@@ -46,6 +46,4 @@ public class LongValueConverterTest extends ValueConverterTestCase<Long> {
     public void badTest() {
         valueConverter.convertValue(valueFactory.createLiteral("3.141592"), null, Long.class);
     }
-
-
 }
