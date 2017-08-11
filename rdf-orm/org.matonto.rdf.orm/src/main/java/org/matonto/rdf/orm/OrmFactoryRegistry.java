@@ -56,7 +56,7 @@ public interface OrmFactoryRegistry {
      *
      * @param typeIRI An {@link IRI} of a class
      * @return A registered {@link OrmFactory} for the type identified by the passed IRI (or {@link Optional#EMPTY} if
-     * it doesn't exist).
+     *         it doesn't exist).
      */
     Optional<OrmFactory<? extends Thing>> getFactoryOfType(IRI typeIRI);
 
