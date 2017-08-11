@@ -43,7 +43,7 @@ public interface OrmFactoryRegistry {
     <T extends Thing> Optional<OrmFactory<T>> getFactoryOfType(Class<T> type);
 
     /**
-     * Attempts retrieve a registered {@link OrmFactory} of the type identified by the passed     * class IRI string.
+     * Attempts retrieve a registered {@link OrmFactory} of the type identified by the passed class IRI string.
      *
      * @param typeIRI An IRI string of a class
      * @return A registered {@link OrmFactory} for the type identified by the passed IRI string (or
@@ -61,7 +61,8 @@ public interface OrmFactoryRegistry {
     Optional<OrmFactory<? extends Thing>> getFactoryOfType(IRI typeIRI);
 
     /**
-     * A {@link List} of OrmFactories of types that extend the passed type including the {@link OrmFactory} of the     * type itself.
+     * A {@link List} of OrmFactories of types that extend the passed type including the {@link OrmFactory} of the type
+     * itself.
      *
      * @param type The {@link Class} of the {@link Thing} whose factories you want to find.
      * @param <T> A {@link Class} that extends {@link Thing}.
@@ -74,7 +75,7 @@ public interface OrmFactoryRegistry {
      * the {@link OrmFactory} of the type itself.
      *
      * @param typeIRI An IRI string of a class
-     * @return A {@link List} of OrmFactories of types that extend the type identified by the passed IRI     * string
+     * @return A {@link List} of OrmFactories of types that extend the type identified by the passed IRI string
      */
     List<OrmFactory<? extends Thing>> getFactoriesOfType(String typeIRI);
 
@@ -99,16 +100,18 @@ public interface OrmFactoryRegistry {
 
     /**
      * A sorted {@link List} of OrmFactories of types that extend the type identified by the passed class IRI string
-     * including the {@link OrmFactory} of the type itself. The list is sorted so that factories of subclass     * types are first.
+     * including the {@link OrmFactory} of the type itself. The list is sorted so that factories of subclass types are
+     * first.
      *
      * @param typeIRI An IRI string of a class
-     * @return A sorted {@link List} of OrmFactories of types that extend the type identified by the passed IRI     * string
+     * @return A sorted {@link List} of OrmFactories of types that extend the type identified by the passed IRI string
      */
     List<OrmFactory<? extends Thing>> getSortedFactoriesOfType(String typeIRI);
 
     /**
      * A sorted {@link List} of OrmFactories of types that extend the type identified by the passed class {@link IRI}
-     * including the {@link OrmFactory} of the type itself. The list is sorted so that factories of subclass     * types are first.
+     * including the {@link OrmFactory} of the type itself. The list is sorted so that factories of subclass types are
+     * first.
      *
      * @param typeIRI An {@link IRI} of a class
      * @return A sorted {@link List} of OrmFactories of types that extend the type identified by the passed {@link IRI}
