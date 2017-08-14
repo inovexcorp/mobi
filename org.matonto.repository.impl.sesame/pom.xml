@@ -47,12 +47,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.56</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.42</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>

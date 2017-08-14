@@ -67,7 +67,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.8.34</version>
+            <version>1.8.48</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
@@ -85,7 +85,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.42</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

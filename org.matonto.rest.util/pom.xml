@@ -54,7 +54,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.42</version>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
