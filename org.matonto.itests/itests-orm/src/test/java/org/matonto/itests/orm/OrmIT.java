@@ -29,7 +29,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.matonto.itests.support.KarafTestSupport;
 import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
@@ -89,13 +88,13 @@ public class OrmIT extends KarafTestSupport {
         IRI iri = vf.createIRI("urn:test");
         testConversion(iri, thing, valueConverterRegistry, "IRI conversion failure");
         //Literal
-        testConversion((Literal) vf.createLiteral("blah"), thing, valueConverterRegistry, "Literal conversion failure");
+        testConversion(vf.createLiteral("blah"), thing, valueConverterRegistry, "Literal conversion failure");
         //Resource
         testConversion((Resource) vf.createIRI("urn:resource"), thing, valueConverterRegistry, "Resource conversion failure");
         //Value
         testConversion((Value) vf.createLiteral(1.32), thing, valueConverterRegistry, "Value conversion failure");
         //Calendar
-        testConversion((Calendar) new GregorianCalendar(), thing, valueConverterRegistry, "Calendar conversion failure");
+        testConversion(new GregorianCalendar(), thing, valueConverterRegistry, "Calendar conversion failure");
         //BigInteger
         BigInteger big = BigInteger.valueOf(123L);
         testConversion(big, thing, valueConverterRegistry, "BigInteger conversion failure");
