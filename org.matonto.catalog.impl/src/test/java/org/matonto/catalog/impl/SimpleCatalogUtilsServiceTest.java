@@ -85,6 +85,7 @@ import org.openrdf.rio.Rio;
 import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.InputStream;
+import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -147,8 +148,8 @@ public class SimpleCatalogUtilsServiceTest {
     private final IRI OWL_THING = vf.createIRI("http://www.w3.org/2002/07/owl#Thing");
     private final String COMMITS = "http://matonto.org/test/commits#";
     private final String GRAPHS = "http://matonto.org/test/graphs#";
-    private final String ADDITIONS = "http://matonto.org/test/additions#";
-    private final String DELETIONS = "http://matonto.org/test/deletions#";
+    private final String ADDITIONS = "https://matonto.org/additions#";
+    private final String DELETIONS = "https://matonto.org/deletions#";
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -1234,23 +1235,29 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-//    @Test
-//    public void removeInProgressCommitWithQuadsTest() {
-//        IRI quadInProgressCommit = vf.createIRI("http://matonto.org/test/commits#quad-in-progress-commit");
-//        try (RepositoryConnection conn = repo.getConnection()) {
-//            // Setup:
-//            InProgressCommit commit = getThing(quadInProgressCommit, inProgressCommitFactory, conn);
-//            Resource additionsResource = getAdditionsResource(quadInProgressCommit);
-//            Resource deletionsResource = getDeletionsResource(quadInProgressCommit);
-//            assertTrue(conn.containsContext(additionsResource));
-//            assertTrue(conn.containsContext(deletionsResource));
-//
-//            service.removeInProgressCommit(commit, conn);
-//            assertFalse(conn.getStatements(null, null, null, IN_PROGRESS_COMMIT_IRI).hasNext());
-//            assertTrue(conn.size(additionsResource) == 0);
-//            assertTrue(conn.size(deletionsResource) == 0);
-//        }
-//    }
+    @Test
+    public void removeInProgressCommitWithQuadsTest() throws Exception {
+        IRI quadInProgressCommit = vf.createIRI(COMMITS + "quad-in-progress-commit");
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            InProgressCommit commit = getThing(quadInProgressCommit, inProgressCommitFactory, conn);
+
+            Resource additionsResource = getAdditionsResource(quadInProgressCommit);
+            Resource deletionsResource = getDeletionsResource(quadInProgressCommit);
+            assertTrue(conn.containsContext(additionsResource));
+            assertTrue(conn.containsContext(deletionsResource));
+
+            IRI graph1AdditionsResource = getQuadAdditionsResource(quadInProgressCommit, GRAPHS + "quad-graph1");
+            IRI graph1DeletionsResource = getQuadDeletionsResource(quadInProgressCommit, GRAPHS + "quad-graph1");
+
+            service.removeInProgressCommit(commit, conn);
+            assertFalse(conn.containsContext(quadInProgressCommit));
+            assertFalse(conn.containsContext(additionsResource));
+            assertFalse(conn.containsContext(deletionsResource));
+            assertFalse(conn.containsContext(graph1AdditionsResource));
+            assertFalse(conn.containsContext(graph1DeletionsResource));
+        }
+    }
 
     @Test
     public void removeInProgressCommitWithReferencedChangesTest() {
@@ -1962,11 +1969,19 @@ public class SimpleCatalogUtilsServiceTest {
     }
 
     private IRI getAdditionsResource(IRI commitId) {
-        return vf.createIRI("http://matonto.org/test/additions#" + commitId.getLocalName());
+        return vf.createIRI(ADDITIONS + commitId.getLocalName());
+    }
+
+    private IRI getQuadAdditionsResource(IRI commitId, String graph) throws Exception {
+        return vf.createIRI(ADDITIONS + commitId.getLocalName() + URLEncoder.encode(graph, "UTF-8"));
     }
 
     private IRI getDeletionsResource(IRI commitId) {
-        return vf.createIRI("http://matonto.org/test/deletions#" + commitId.getLocalName());
+        return vf.createIRI(DELETIONS + commitId.getLocalName());
+    }
+
+    private IRI getQuadDeletionsResource(IRI commitId, String graph) throws Exception {
+        return vf.createIRI(DELETIONS + commitId.getLocalName() + URLEncoder.encode(graph, "UTF-8"));
     }
 
     private <T extends Thing> T getThing(Resource thingId, OrmFactory<T> factory, RepositoryConnection conn) {

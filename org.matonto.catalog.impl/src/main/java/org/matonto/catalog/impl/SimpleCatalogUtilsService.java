@@ -76,6 +76,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -383,16 +384,22 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public void removeInProgressCommit(InProgressCommit commit, RepositoryConnection conn) {
-        // TODO: Update to handle quads
-//        removeObject(commit, conn);
-//        Resource additionsResource = getAdditionsResource(commit);
-//        if (!conn.getStatements(null, null, additionsResource).hasNext()) {
-//            remove(additionsResource, conn);
-//        }
-//        Resource deletionsResource = getDeletionsResource(commit);
-//        if (!conn.getStatements(null, null, deletionsResource).hasNext()) {
-//            remove(deletionsResource, conn);
-//        }
+        Revision revision = getRevision(commit.getResource(), conn);
+        removeObject(commit, conn);
+
+        Set<Resource> graphs = new HashSet<>();
+        revision.getAdditions().ifPresent(graphs::add);
+        revision.getDeletions().ifPresent(graphs::add);
+        revision.getGraphRevision().forEach(graphRevision -> {
+            graphRevision.getAdditions().ifPresent(graphs::add);
+            graphRevision.getDeletions().ifPresent(graphs::add);
+        });
+
+        graphs.forEach(resource -> {
+            if (!conn.contains(null, null, resource)) {
+                remove(resource, conn);
+            }
+        });
     }
 
     @Override
