@@ -99,7 +99,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>repository.impl.sesame</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.14</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

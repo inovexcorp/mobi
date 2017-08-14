@@ -61,12 +61,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>cache</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.35</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.8.35</version>
+            <version>1.8.48</version>
         </dependency>
 
         <dependency>
@@ -105,7 +105,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.42</version>
 		    <scope>test</scope>
 	    </dependency>
         <dependency>
