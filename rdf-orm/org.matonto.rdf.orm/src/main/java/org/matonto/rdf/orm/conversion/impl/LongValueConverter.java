@@ -41,16 +41,16 @@ public class LongValueConverter extends AbstractValueConverter<Long> {
     }
 
     @Override
-    public Long convertValue(@Nonnull Value value, Thing thing, @Nonnull Class<? extends Long> desiredType) throws ValueConversionException {
+    public Long convertValue(@Nonnull Value value, @Nonnull Thing thing, @Nonnull Class<? extends Long> desiredType) throws ValueConversionException {
         try {
             return ((Literal) value).longValue();
         } catch (Exception e) {
-            throw new ValueConversionException("Issue convertinthg value to long", e);
+            throw new ValueConversionException("Issue converting value '" + value + "' into a long", e);
         }
     }
 
     @Override
-    public Value convertType(@Nonnull Long type, Thing thing) throws ValueConversionException {
+    public Value convertType(@Nonnull Long type, @Nonnull Thing thing) throws ValueConversionException {
         return getValueFactory(thing).createLiteral(type);
     }
 }

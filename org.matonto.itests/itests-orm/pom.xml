@@ -15,47 +15,42 @@
 	<parent>
 		<artifactId>itests</artifactId>
 		<groupId>org.matonto</groupId>
-		<version>1.8.62</version>
+		<version>1.8.63</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
     <artifactId>itests-orm</artifactId>
 
-	<dependencies>
-        <dependency>
-            <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
-        </dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-            <version>4.12</version>
-        </dependency>
-		<dependency>
-			<groupId>org.matonto</groupId>
-			<artifactId>rdf.impl.sesame</artifactId>
-			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.matonto</groupId>
-			<artifactId>rdf.orm</artifactId>
-			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.matonto</groupId>
-			<artifactId>rdf.orm.generate</artifactId>
-			<version>${project.version}</version>
-			<scope>test</scope>
-		</dependency>
+    <dependencies>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>rdf.orm.ontologies</artifactId>
+            <artifactId>itests-support</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
-	</dependencies>
+
+        <!-- Pax Exam Dependencies -->
+        <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-junit4</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Karaf Dependencies -->
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>distribution</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+            <type>tar.gz</type>
+            <exclusions>
+                <exclusion>
+                    <artifactId>org.apache.karaf.client</artifactId>
+                    <groupId>org.apache.karaf</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>
@@ -74,17 +69,17 @@
                         <configuration>
                             <generates>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/test/resources/crazy.trig</ontologyFile>
+                                    <ontologyFile>${project.basedir}/src/test/resources/ontologies/crazy.trig</ontologyFile>
                                     <outputPackage>org.matonto.delimited</outputPackage>
                                     <ontologyName>Delimited</ontologyName>
                                 </ontology>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/test/resources/crazy2.trig</ontologyFile>
+                                    <ontologyFile>${project.basedir}/src/test/resources/ontologies/crazy2.trig</ontologyFile>
                                     <outputPackage>org.matonto.inherit</outputPackage>
                                     <ontologyName>InheritTest</ontologyName>
                                 </ontology>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/test/resources/provo.owl</ontologyFile>
+                                    <ontologyFile>${project.basedir}/src/test/resources/ontologies/provo.owl</ontologyFile>
                                     <outputPackage>org.provo</outputPackage>
                                     <ontologyName>ProvO</ontologyName>
                                 </ontology>
@@ -94,7 +89,7 @@
                                     <ontologyName>FOAF</ontologyName>
                                 </ontology>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/test/resources/test-ont.trig</ontologyFile>
+                                    <ontologyFile>${project.basedir}/src/test/resources/ontologies/test-ont.trig</ontologyFile>
                                     <outputPackage>org.matonto.test</outputPackage>
                                 </ontology>
                                 <ontology>
