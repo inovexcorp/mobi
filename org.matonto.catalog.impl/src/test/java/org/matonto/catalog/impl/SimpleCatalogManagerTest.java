@@ -325,10 +325,6 @@ public class SimpleCatalogManagerTest {
                 distributionFactory.createNew(i.getArgumentAt(3, Resource.class)));
         when(utilsService.getInProgressCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenAnswer(i ->
                 inProgressCommitFactory.createNew(i.getArgumentAt(2, Resource.class)));
-//        when(utilsService.getAdditionsResource(any(Resource.class), any(RepositoryConnection.class))).thenAnswer(i ->
-//                vf.createIRI("http://matonto.org/test/additions#" + vf.createIRI(i.getArgumentAt(0, Resource.class).stringValue()).getLocalName()));
-//        when(utilsService.getDeletionsResource(any(Resource.class), any(RepositoryConnection.class))).thenAnswer(i ->
-//                vf.createIRI("http://matonto.org/test/deletions#" + vf.createIRI(i.getArgumentAt(0, Resource.class).stringValue()).getLocalName()));
         when(utilsService.throwAlreadyExists(any(Resource.class), any(OrmFactory.class))).thenReturn(new IllegalArgumentException());
         when(utilsService.throwThingNotFound(any(Resource.class), any(OrmFactory.class))).thenReturn(new IllegalStateException());
     }
