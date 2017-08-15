@@ -25,21 +25,28 @@ package org.matonto.etl.service.rdf;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import org.matonto.dataset.api.DatasetConnection;
+import org.matonto.dataset.api.DatasetManager;
+import org.matonto.etl.api.config.ExportServiceConfig;
 import org.matonto.etl.api.rdf.RDFExportService;
+import org.matonto.exception.MatOntoException;
+import org.matonto.persistence.utils.RepositoryResults;
+import org.matonto.persistence.utils.StatementIterable;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.DelegatingRepository;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
-import org.openrdf.repository.RepositoryException;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
+import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
@@ -48,21 +55,27 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
 
-
-@Component(provide = RDFExportService.class)
+@Component
 public class RDFExportServiceImpl implements RDFExportService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RDFExportServiceImpl.class);
 
     private Map<String, Repository> initializedRepositories = new HashMap<>();
 
-    private ValueFactory valueFactory;
-    private ModelFactory modelFactory;
+    private ValueFactory vf;
+    private ModelFactory mf;
     private SesameTransformer transformer;
+    private DatasetManager datasetManager;
+
+    private List<RDFFormat> quadFormats = Arrays.asList(RDFFormat.JSONLD, RDFFormat.NQUADS, RDFFormat.TRIG,
+            RDFFormat.TRIX);
 
     @Reference(type = '*', dynamic = true)
     public void addRepository(DelegatingRepository repository) {
@@ -74,13 +87,13 @@ public class RDFExportServiceImpl implements RDFExportService {
     }
 
     @Reference
-    public void setValueFactory(ValueFactory valueFactory) {
-        this.valueFactory = valueFactory;
+    public void setVf(ValueFactory vf) {
+        this.vf = vf;
     }
 
     @Reference
-    public void setModelFactory(ModelFactory modelFactory) {
-        this.modelFactory = modelFactory;
+    public void setMf(ModelFactory mf) {
+        this.mf = mf;
     }
 
     @Reference
@@ -88,75 +101,132 @@ public class RDFExportServiceImpl implements RDFExportService {
         this.transformer = transformer;
     }
 
+    @Reference
+    public void setDatasetManager(DatasetManager datasetManager) {
+        this.datasetManager = datasetManager;
+    }
+    
     @Override
-    public File exportToFile(String repositoryID, String filepath) throws RepositoryException, IOException {
-        return exportToFile(repositoryID, filepath, null, null, null, null);
+    public File exportToFile(ExportServiceConfig config, String repositoryID) throws IOException {
+        Repository repository = getRepo(repositoryID);
+        try (RepositoryConnection conn = repository.getConnection()) {
+            return export(conn, config);
+        }
     }
 
     @Override
-    public File exportToFile(String repositoryID, String filepath, String subj, String pred, String objIRI,
-                             String objLit) throws RepositoryException, IOException {
-        Resource subjResource = null;
-        IRI predicateIRI = null;
-        Value objValue = null;
+    public File exportToFile(ExportServiceConfig config, Resource datasetRecordID) throws IOException {
+        try (DatasetConnection conn = datasetManager.getConnection(datasetRecordID)) {
+            String filePath = getFilePath(config);
+            RDFFormat format = getRDFFormat(config, filePath);
 
-        if (subj != null) {
-            subjResource = valueFactory.createIRI(subj);
+            Resource subjResource = getSubject(config);
+            IRI predicateIRI = getPredicate(config);
+            Value objValue = getObject(config);
+            LOGGER.warn("Restricting to:\nSubj: " + subjResource + "\nPred: " + predicateIRI + "\nObj: " + objValue);
+
+            if (!quadFormats.contains(format)) {
+                LOGGER.warn("RDF format does not support quads so they will not be exported.");
+                System.out.println("WARN: RDF format does not support quads so they will not be exported.");
+            }
+            File file = getFile(filePath);
+            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, new FileWriter(file)));
+            List<Resource> defaultsList = RepositoryResults.asList(conn.getDefaultNamedGraphs());
+            defaultsList.add(conn.getSystemDefaultNamedGraph());
+            Resource[] defaults = defaultsList.toArray(new Resource[defaultsList.size()]);
+            List<Resource> graphsList = RepositoryResults.asList(conn.getNamedGraphs());
+            Resource[] graphs = graphsList.toArray(new Resource[graphsList.size()]);
+            rdfWriter.startRDF();
+            for (Statement st: conn.getStatements(subjResource, predicateIRI, objValue, defaults)) {
+                Statement noContext = vf.createStatement(st.getSubject(), st.getPredicate(), st.getObject());
+                rdfWriter.handleStatement(transformer.sesameStatement(noContext));
+            }
+            if (quadFormats.contains(format)) {
+                for (Statement st: conn.getStatements(subjResource, predicateIRI, objValue, graphs)) {
+                    rdfWriter.handleStatement(transformer.sesameStatement(st));
+                }
+            }
+            rdfWriter.endRDF();
+            return file;
+        } catch (RDFHandlerException e) {
+            throw new MatOntoException(e);
         }
+    }
 
-        if (pred != null) {
-            predicateIRI = valueFactory.createIRI(pred);
+    @Override
+    public File exportToFile(ExportServiceConfig config, Model model) throws IOException {
+        String filePath = getFilePath(config);
+        RDFFormat format = getRDFFormat(config, filePath);
+        return export(model, getFile(filePath), format);
+    }
+
+    private File export(RepositoryConnection conn, ExportServiceConfig config) throws IOException {
+        String filePath = getFilePath(config);
+        RDFFormat format = getRDFFormat(config, filePath);
+
+        Resource subjResource = getSubject(config);
+        IRI predicateIRI = getPredicate(config);
+        Value objValue = getObject(config);
+        LOGGER.warn("Restricting to:\nSubj: " + subjResource + "\nPred: " + predicateIRI + "\nObj: " + objValue);
+
+        RepositoryResult<Statement> result = conn.getStatements(subjResource, predicateIRI, objValue);
+        return export(result, getFile(filePath), format);
+    }
+
+    private File export(Iterable<Statement> statements, File file, RDFFormat format) throws IOException {
+        if (!quadFormats.contains(format)) {
+            LOGGER.warn("RDF format does not support quads.");
         }
+        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, new FileWriter(file)));
+        Rio.write(new StatementIterable(statements, transformer), rdfWriter);
+        return file;
+    }
 
-        if (objIRI != null) {
-            objValue = valueFactory.createIRI(objIRI);
-        } else if (objLit != null) {
-            objValue = valueFactory.createLiteral(objLit);
-        }
+    private String getFilePath(ExportServiceConfig config) {
+        return config.getFilePath().orElseThrow(() -> new IllegalArgumentException("The export file path is required"));
+    }
 
-        LOGGER.warn("Restricting to:\nSubj: " + subjResource + "\nPred: " + predicateIRI + "\n"
-                    + "Obj: " + objValue);
-
-        File file = new File(filepath);
+    private File getFile(String filePath) throws IOException {
+        File file = new File(filePath);
         if (file.exists() && !file.canWrite()) {
             throw new IOException("Unable to write to file");
         }
+        return file;
+    }
 
-        RDFFormat format = Rio.getParserFormatForFileName(file.getName()).orElseThrow(() ->
-                new IOException("Unsupported file type"));
+    private RDFFormat getFileFormat(String filePath) throws IOException {
+        // Get the rdf format based on the file name. If the format returns null, it is an unsupported file type.
+        return Rio.getParserFormatForFileName(filePath).orElseThrow(() -> new IOException("Unsupported file type"));
+    }
 
+    private RDFFormat getRDFFormat(ExportServiceConfig config, String filePath) throws IOException {
+        return config.getFormat() == null ? getFileFormat(filePath) : config.getFormat();
+    }
+
+    private Repository getRepo(String repositoryID) {
         Repository repository = initializedRepositories.get(repositoryID);
-
-        if (repository != null) {
-            RepositoryConnection conn = repository.getConnection();
-            RepositoryResult<org.matonto.rdf.api.Statement> result =
-                    conn.getStatements(subjResource, predicateIRI, objValue);
-
-            Model model = modelFactory.createModel();
-            result.forEach(model::add);
-
-            return exportToFile(model, filepath, format);
-        } else {
+        if (repository == null) {
             throw new IllegalArgumentException("Repository does not exist");
         }
+        return repository;
     }
 
-    @Override
-    public File exportToFile(Model model, String filepath) throws IOException {
-        Optional<RDFFormat> optFormat = Rio.getWriterFormatForFileName(filepath);
-        if (optFormat.isPresent()) {
-            return exportToFile(model, filepath, optFormat.get());
-        } else {
-            throw new IllegalArgumentException("File format not supported");
+    private Resource getSubject(ExportServiceConfig config) {
+        return config.getSubj() == null ? null : vf.createIRI(config.getSubj());
+    }
+
+    private IRI getPredicate(ExportServiceConfig config) {
+        return config.getPred() == null ? null : vf.createIRI(config.getPred());
+    }
+
+    private Value getObject(ExportServiceConfig config) {
+        Value objValue = null;
+        if (config.getObjIRI() != null) {
+            objValue = vf.createIRI(config.getObjIRI());
+        } else if (config.getObjLit() != null) {
+            objValue = vf.createLiteral(config.getObjLit());
         }
-    }
 
-    @Override
-    public File exportToFile(Model model, String filepath, RDFFormat format) throws IOException {
-        File file = new File(filepath);
-
-        RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, new FileWriter(file)));
-        Rio.write(transformer.sesameModel(model), rdfWriter);
-        return file;
+        return objValue;
     }
 }

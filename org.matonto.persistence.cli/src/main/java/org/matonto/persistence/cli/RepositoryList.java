@@ -31,7 +31,7 @@ import org.apache.karaf.shell.support.table.ShellTable;
 import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.config.RepositoryConfig;
 
-@Command(scope = "matonto", name = "repository-list", description = "Lists the currently managed repositories.")
+@Command(scope = "mobi", name = "repository-list", description = "Lists the currently managed repositories.")
 @Service
 public class RepositoryList implements Action {
 

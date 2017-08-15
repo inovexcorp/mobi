@@ -159,7 +159,7 @@ public abstract class AbstractValueFactory implements ValueFactory {
     protected void initBNodeParams() {
         // BNode prefix is based on currentTimeMillis(). Combined with a
         // sequential number per session, this gives a unique identifier.
-        bnodePrefix = "_:matonto/bnode/" + Long.toString(getNextBNodePrefixUid(), 32) + "x";
+        bnodePrefix = "matonto-bnode-" + Long.toString(getNextBNodePrefixUid(), 32) + "x";
         nextBNodeID = 1;
     }
 

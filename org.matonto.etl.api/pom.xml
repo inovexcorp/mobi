@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.39-SNAPSHOT</version>
+        <version>1.8.65-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -57,17 +57,17 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>1.8.28</version>
+            <version>1.8.59</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.8.21</version>
+            <version>1.8.59</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.utils</artifactId>
-            <version>1.8.34</version>
+            <version>1.8.48</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
@@ -85,7 +85,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.7.20</version>
+            <version>1.8.42</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

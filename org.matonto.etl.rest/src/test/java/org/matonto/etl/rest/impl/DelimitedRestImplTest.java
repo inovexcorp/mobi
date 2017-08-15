@@ -151,14 +151,20 @@ public class DelimitedRestImplTest extends MatontoRestTestNg {
         rest.start();
 
         when(transformer.matontoModel(any(Model.class)))
-                .thenAnswer(i -> Values.matontoModel((Model) i.getArguments()[0]));
+                .thenAnswer(i -> Values.matontoModel(i.getArgumentAt(0, Model.class)));
         when(transformer.sesameModel(any(org.matonto.rdf.api.Model.class)))
-                .thenAnswer(i -> Values.sesameModel((org.matonto.rdf.api.Model) i.getArguments()[0]));
+                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, org.matonto.rdf.api.Model.class)));
+        when(transformer.sesameStatement(any(org.matonto.rdf.api.Statement.class)))
+                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, org.matonto.rdf.api.Statement.class)));
+
         when(mappingWrapper.getModel()).thenReturn(mf.createModel());
+
         when(datasetManager.getDatasetRecord(any(Resource.class))).thenReturn(Optional.empty());
         when(datasetManager.getDatasetRecord(vf.createIRI(DATASET_RECORD_IRI))).thenReturn(Optional.of(datasetRecord));
+
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
         when(repositoryManager.getRepository(REPOSITORY_ID)).thenReturn(Optional.of(repo));
+
         when(mappingManager.retrieveMapping(any(Resource.class))).thenReturn(Optional.empty());
         when(mappingManager.retrieveMapping(vf.createIRI(MAPPING_RECORD_IRI))).thenReturn(Optional.of(mappingWrapper));
         when(mappingManager.createMappingId(any(IRI.class))).thenAnswer(i -> new MappingId() {

@@ -332,11 +332,17 @@ public class SimpleCatalogManager implements CatalogManager {
 
             StringBuilder querySuffix = new StringBuilder("\nORDER BY ");
             Resource sortByParam = searchParams.getSortBy().orElse(vf.createIRI(_Thing.modified_IRI));
+            StringBuilder binding = new StringBuilder("");
+            if (sortByParam.equals(vf.createIRI(_Thing.title_IRI))) {
+                binding.append("lcase(?").append(sortingOptions.getOrDefault(sortByParam, "modified")).append(")");
+            } else {
+                binding.append("?").append(sortingOptions.getOrDefault(sortByParam, "modified"));
+            }
             Optional<Boolean> ascendingParam = searchParams.getAscending();
             if (ascendingParam.isPresent() && ascendingParam.get()) {
-                querySuffix.append("?").append(sortingOptions.getOrDefault(sortByParam, "modified"));
+                querySuffix.append(binding);
             } else {
-                querySuffix.append("DESC(?").append(sortingOptions.getOrDefault(sortByParam, "modified")).append(")");
+                querySuffix.append("DESC(").append(binding).append(")");
             }
             querySuffix.append("\nLIMIT ").append(limit).append("\nOFFSET ").append(offset);
 
