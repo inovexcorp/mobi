@@ -120,6 +120,15 @@ public class BasicVfsIT extends KarafTestSupport {
         // File should be gone
         Assert.assertFalse("Temp file should not exist anymore", tvf.exists());
         LOGGER.debug("Temporary file created and deleted as expected");
+    }
 
+    @Test
+    public void testTmpUri() throws Exception {
+        final String uri = "tmp://what/someFile" + UUID.randomUUID() + ".txt";
+        LOGGER.debug("Testing tmp file creation for {}", uri);
+        final VirtualFilesystem service = getOsgiService(VirtualFilesystem.class);
+        VirtualFile file = service.resolveVirtualFile(uri);
+        file.create();
+        LOGGER.debug("Created file '{}' successfully");
     }
 }
