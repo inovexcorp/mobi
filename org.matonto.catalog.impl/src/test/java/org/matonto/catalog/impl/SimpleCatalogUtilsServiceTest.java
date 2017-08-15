@@ -1470,27 +1470,6 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    /* getAdditionsResource(Resource, RepositoryConnection) */
-
-//    @Test
-//    public void getAdditionsResourceWithResourceTest() {
-//        try (RepositoryConnection conn = repo.getConnection()) {
-//            Resource result = service.getAdditionsResource(COMMIT_IRI, conn);
-//            assertEquals(getAdditionsResource(COMMIT_IRI), result);
-//        }
-//    }
-//
-//    @Test
-//    public void getAdditionsResourceWithResourceAndAdditionsNotSetTest() {
-//        // Setup:
-//        thrown.expect(IllegalStateException.class);
-//        thrown.expectMessage("Additions not set on Commit " + COMMIT_NO_ADDITIONS_IRI);
-//
-//        try (RepositoryConnection conn = repo.getConnection()) {
-//            service.getAdditionsResource(COMMIT_NO_ADDITIONS_IRI, conn);
-//        }
-//    }
-
     /* getRevision() */
 
     @Test
@@ -1523,17 +1502,6 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-//    @Test
-//    public void getAdditionsWithResourceAndAdditionsNotSetTest() {
-//        // Setup:
-//        thrown.expect(IllegalStateException.class);
-//        thrown.expectMessage("Additions not set on Commit " + COMMIT_NO_ADDITIONS_IRI);
-//
-//        try (RepositoryConnection conn = repo.getConnection()) {
-//            service.getAdditions(COMMIT_NO_ADDITIONS_IRI, conn);
-//        }
-//    }
-
     @Test
     public void getAdditionsUsingResourceWithQuads() {
         Model expected = mf.createModel(Stream.of(
@@ -1549,27 +1517,6 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    /* getDeletionsResource(Resource, RepositoryConnection) */
-
-//    @Test
-//    public void getDeletionsResourceWithResourceTest() {
-//        try (RepositoryConnection conn = repo.getConnection()) {
-//            Resource result = service.getDeletionsResource(COMMIT_IRI, conn);
-//            assertEquals(getDeletionsResource(COMMIT_IRI), result);
-//        }
-//    }
-//
-//    @Test
-//    public void getDeletionsResourceWithResourceAndDeletionsNotSetTest() {
-//        // Setup:
-//        thrown.expect(IllegalStateException.class);
-//        thrown.expectMessage("Deletions not set on Commit " + COMMIT_NO_DELETIONS_IRI);
-//
-//        try (RepositoryConnection conn = repo.getConnection()) {
-//            service.getDeletionsResource(COMMIT_NO_DELETIONS_IRI, conn);
-//        }
-//    }
-
     /* getAdditions(Resource, RepositoryConnection) */
 
     @Test
@@ -1582,17 +1529,6 @@ public class SimpleCatalogUtilsServiceTest {
             result.forEach(statement -> assertTrue(expected.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
         }
     }
-
-//    @Test
-//    public void getDeletionsWithResourceAndDeletionsNotSetTest() {
-//        // Setup:
-//        thrown.expect(IllegalStateException.class);
-//        thrown.expectMessage("Deletions not set on Commit " + COMMIT_NO_DELETIONS_IRI);
-//
-//        try (RepositoryConnection conn = repo.getConnection()) {
-//            service.getDeletions(COMMIT_NO_DELETIONS_IRI, conn);
-//        }
-//    }
 
     @Test
     public void getDeletionsUsingResourceWithQuads() {
@@ -1608,31 +1544,6 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    /* getAdditionsResource(Commit, RepositoryConnection) */
-
-//    @Test
-//    public void getAdditionsResourceWithCommitTest() {
-//        try (RepositoryConnection conn = repo.getConnection()) {
-//            // Setup:
-//            Commit commit = getThing(COMMIT_IRI, commitFactory, conn);
-//
-//            Resource result = service.getAdditionsResource(commit);
-//            assertEquals(getAdditionsResource(COMMIT_IRI), result);
-//        }
-//    }
-//
-//    @Test
-//    public void getAdditionsResourceWithCommitAndAdditionsNotSetTest() {
-//        try (RepositoryConnection conn = repo.getConnection()) {
-//            // Setup:
-//            Commit commit = getThing(COMMIT_NO_ADDITIONS_IRI, commitFactory, conn);
-//            thrown.expect(IllegalStateException.class);
-//            thrown.expectMessage("Additions not set on Commit " + COMMIT_NO_ADDITIONS_IRI);
-//
-//            service.getAdditionsResource(commit);
-//        }
-//    }
-
     /* getAdditions(Commit, RepositoryConnection) */
 
     @Test
@@ -1646,31 +1557,6 @@ public class SimpleCatalogUtilsServiceTest {
             result.forEach(statement -> assertTrue(expected.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
         }
     }
-
-    /* getDeletionsResource(Commit, RepositoryConnection) */
-
-//    @Test
-//    public void getDeletionsResourceWithCommitTest() {
-//        try (RepositoryConnection conn = repo.getConnection()) {
-//            // Setup:
-//            Commit commit = getThing(COMMIT_IRI, commitFactory, conn);
-//
-//            Resource result = service.getDeletionsResource(commit);
-//            assertEquals(getDeletionsResource(COMMIT_IRI), result);
-//        }
-//    }
-//
-//    @Test
-//    public void getDeletionsResourceWithCommitAndDeletionsNotSetTest() {
-//        try (RepositoryConnection conn = repo.getConnection()) {
-//            // Setup:
-//            Commit commit = getThing(COMMIT_NO_DELETIONS_IRI, commitFactory, conn);
-//            thrown.expect(IllegalStateException.class);
-//            thrown.expectMessage("Deletions not set on Commit " + COMMIT_NO_DELETIONS_IRI);
-//
-//            service.getDeletionsResource(commit);
-//        }
-//    }
 
     /* getAdditions(Commit, RepositoryConnection) */
 
