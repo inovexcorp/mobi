@@ -1494,19 +1494,20 @@ public class SimpleCatalogUtilsServiceTest {
     /* getRevision() */
 
     @Test
-    public void testGetRevisionWithQuads() {
+    public void testGetRevisionWithQuads() throws Exception {
         Revision actual;
+        IRI commitId = vf.createIRI(COMMITS + "quad-test1");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            actual = service.getRevision(vf.createIRI(COMMITS + "quad-test1"), conn);
+            actual = service.getRevision(commitId, conn);
         }
 
         assertEquals(vf.createIRI(ADDITIONS + "quad-test1"), actual.getAdditions().get());
         assertEquals(vf.createIRI(DELETIONS + "quad-test1"), actual.getDeletions().get());
         assertEquals(1, actual.getGraphRevision().size());
         assertEquals(vf.createIRI(GRAPHS + "quad-graph1"), actual.getGraphRevision().stream().findFirst().get().getRevisionedGraph().get());
-        assertEquals(vf.createIRI(ADDITIONS + "quad-test1-graph1"), actual.getGraphRevision().stream().findFirst().get().getAdditions().get());
-        assertEquals(vf.createIRI(DELETIONS + "quad-test1-graph1"), actual.getGraphRevision().stream().findFirst().get().getDeletions().get());
+        assertEquals(getQuadAdditionsResource(commitId, GRAPHS + "quad-graph1"), actual.getGraphRevision().stream().findFirst().get().getAdditions().get());
+        assertEquals(getQuadDeletionsResource(commitId, GRAPHS + "quad-graph1"), actual.getGraphRevision().stream().findFirst().get().getDeletions().get());
     }
 
     /* getAdditions(Resource, RepositoryConnection) */
@@ -1646,18 +1647,6 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
-    @Test
-    public void getAdditionsWithCommitAndAdditionsNotSetTest() {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Commit commit = getThing(COMMIT_NO_ADDITIONS_IRI, commitFactory, conn);
-            thrown.expect(IllegalStateException.class);
-            thrown.expectMessage("Additions not set on Commit " + COMMIT_NO_ADDITIONS_IRI);
-
-            service.getAdditions(commit, conn);
-        }
-    }
-
     /* getDeletionsResource(Commit, RepositoryConnection) */
 
 //    @Test
@@ -1694,18 +1683,6 @@ public class SimpleCatalogUtilsServiceTest {
 
             Stream<Statement> result = service.getDeletions(commit, conn);
             result.forEach(statement -> assertTrue(expected.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
-        }
-    }
-
-    @Test
-    public void getDeletionsWithCommitAndDeletionsNotSetTest() {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Commit commit = getThing(COMMIT_NO_DELETIONS_IRI, commitFactory, conn);
-            thrown.expect(IllegalStateException.class);
-            thrown.expectMessage("Deletions not set on Commit " + COMMIT_NO_DELETIONS_IRI);
-
-            service.getDeletions(commit, conn);
         }
     }
 
@@ -1799,14 +1776,28 @@ public class SimpleCatalogUtilsServiceTest {
     }
 
     @Test
-    public void getRevisionChangesWithListAndMissingCommitTest() {
+    public void getRevisionChangesWithListWithQuadsTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
-            Resource commitId = vf.createIRI("http://matonto.org/test/commits#error");
-            thrown.expect(IllegalStateException.class);
-            thrown.expectMessage("Additions not set on Commit " + commitId);
+            Resource object1 = vf.createIRI("http://matonto.org/test/object1");
+            Resource object2 = vf.createIRI("http://matonto.org/test/object2");
+            List<Resource> commits = Stream.of(
+                    vf.createIRI(COMMITS + "quad-test0"),
+                    vf.createIRI(COMMITS + "quad-test1"),
+                    vf.createIRI(COMMITS + "quad-test2"))
+                    .collect(Collectors.toList());
 
-            service.getRevisionChanges(Collections.singletonList(commitId), conn);
+            Model expectAdd = mf.createModel();
+            expectAdd.add(vf.createStatement(object1, typeIRI, OWL_THING));
+            expectAdd.add(vf.createStatement(object1, titleIRI, vf.createLiteral("Test 2 Title")));
+            expectAdd.add(vf.createStatement(object2, typeIRI, OWL_THING, vf.createIRI(GRAPHS + "quad-graph1")));
+            expectAdd.add(vf.createStatement(object2, titleIRI, vf.createLiteral("Test 2 Title"), vf.createIRI(GRAPHS + "quad-graph1")));
+            Model expectDel = mf.createModel();
+
+            Difference result = service.getRevisionChanges(commits, conn);
+            assertEquals(expectAdd.size(), result.getAdditions().size());
+            result.getAdditions().forEach(statement -> assertTrue(expectAdd.contains(statement)));
+            assertEquals(expectDel.size(), result.getDeletions().size());
         }
     }
 
@@ -1857,6 +1848,28 @@ public class SimpleCatalogUtilsServiceTest {
             Difference diff = service.getCommitDifference(commitId, conn);
             assertTrue(diff.getAdditions().contains(addStatement));
             assertTrue(diff.getDeletions().contains(delStatement));
+        }
+    }
+
+    @Test
+    public void getCommitDifferenceTestWithQuads() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Resource commitId = vf.createIRI(COMMITS + "quad-test1");
+            IRI object1 = vf.createIRI("http://matonto.org/test/object1");
+            IRI object2 = vf.createIRI("http://matonto.org/test/object2");
+
+            Statement add1 = vf.createStatement(object1, titleIRI, vf.createLiteral("Test 1 Title"));
+            Statement add2 = vf.createStatement(object2, typeIRI, OWL_THING, vf.createIRI(GRAPHS + "quad-graph1"));
+            Statement add3 = vf.createStatement(object2, titleIRI, vf.createLiteral("Test 1 Title"), vf.createIRI(GRAPHS + "quad-graph1"));
+            Model adds = mf.createModel(Stream.of(add1, add2, add3).collect(Collectors.toSet()));
+
+            Statement del1 = vf.createStatement(object1, titleIRI, vf.createLiteral("Test 0 Title"));
+            Model dels = mf.createModel(Stream.of(del1).collect(Collectors.toSet()));
+
+            Difference diff = service.getCommitDifference(commitId, conn);
+            assertEquals(adds, diff.getAdditions());
+            assertTrue(diff.getDeletions().equals(dels));
         }
     }
 
@@ -1973,7 +1986,7 @@ public class SimpleCatalogUtilsServiceTest {
     }
 
     private IRI getQuadAdditionsResource(IRI commitId, String graph) throws Exception {
-        return vf.createIRI(ADDITIONS + commitId.getLocalName() + URLEncoder.encode(graph, "UTF-8"));
+        return vf.createIRI(ADDITIONS + commitId.getLocalName() + "%00" + URLEncoder.encode(graph, "UTF-8"));
     }
 
     private IRI getDeletionsResource(IRI commitId) {
@@ -1981,7 +1994,7 @@ public class SimpleCatalogUtilsServiceTest {
     }
 
     private IRI getQuadDeletionsResource(IRI commitId, String graph) throws Exception {
-        return vf.createIRI(DELETIONS + commitId.getLocalName() + URLEncoder.encode(graph, "UTF-8"));
+        return vf.createIRI(DELETIONS + commitId.getLocalName() + "%00" + URLEncoder.encode(graph, "UTF-8"));
     }
 
     private <T extends Thing> T getThing(Resource thingId, OrmFactory<T> factory, RepositoryConnection conn) {

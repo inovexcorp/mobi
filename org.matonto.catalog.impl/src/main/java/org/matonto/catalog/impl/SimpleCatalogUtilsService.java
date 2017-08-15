@@ -64,7 +64,6 @@ import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
-import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
@@ -648,20 +647,34 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Difference getCommitDifference(Resource commitId, RepositoryConnection conn) {
-        // TODO: Update
-//        Resource additionsIRI = getAdditionsResource(commitId, conn);
-//        Resource deletionsIRI = getDeletionsResource(commitId, conn);
-//        Model addModel = mf.createModel();
-//        Model deleteModel = mf.createModel();
-//        conn.getStatements(null, null, null, additionsIRI).forEach(statement ->
-//                addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
-//        conn.getStatements(null, null, null, deletionsIRI).forEach(statement ->
-//                deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
-//        return new Difference.Builder()
-//                .additions(addModel)
-//                .deletions(deleteModel)
-//                .build();
-        return null;
+        Revision revision = getRevision(commitId, conn);
+
+        Model addModel = mf.createModel();
+        Model deleteModel = mf.createModel();
+
+        IRI additionsGraph = revision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commitId.stringValue()));
+        IRI deletionsGraph = revision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commitId.stringValue()));
+
+        conn.getStatements(null, null, null, additionsGraph).forEach(statement ->
+                addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+        conn.getStatements(null, null, null, deletionsGraph).forEach(statement ->
+                deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+
+        revision.getGraphRevision().forEach(graphRevision -> {
+            Resource graph = graphRevision.getRevisionedGraph().orElseThrow(() -> new IllegalStateException("GraphRevision missing Revisioned Graph."));
+            IRI adds = graphRevision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commitId.stringValue()));
+            IRI dels = graphRevision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commitId.stringValue()));
+
+            conn.getStatements(null, null, null, adds).forEach(statement ->
+                    addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
+            conn.getStatements(null, null, null, dels).forEach(statement ->
+                    deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
+        });
+
+        return new Difference.Builder()
+                .additions(addModel)
+                .deletions(deleteModel)
+                .build();
     }
 
     @Override
@@ -737,13 +750,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
      * @param modelToRemove The Model to remove the statement from if it exists
      */
     private void updateModels(Statement statement, Model modelToAdd, Model modelToRemove) {
-        Resource subject = statement.getSubject();
-        IRI predicate = statement.getPredicate();
-        Value object = statement.getObject();
-        if (modelToRemove.contains(subject, predicate, object)) {
-            modelToRemove.remove(subject, predicate, object);
+        if (modelToRemove.contains(statement)) {
+            modelToRemove.remove(statement);
         } else {
-            modelToAdd.add(subject, predicate, object);
+            modelToAdd.add(statement);
         }
     }
 
