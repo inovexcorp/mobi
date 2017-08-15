@@ -1307,6 +1307,58 @@ public class SimpleCatalogUtilsServiceTest {
     }
 
     @Test
+    public void updateCommitWithCommitNullAdditionsTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Commit commit = getThing(COMMIT_IRI, commitFactory, conn);
+            Resource additionId = getAdditionsResource(COMMIT_IRI);
+            Resource deletionId = getDeletionsResource(COMMIT_IRI);
+            Statement statement3 = vf.createStatement(vf.createIRI("https://matonto.org/test"), labelIRI, vf.createLiteral("Label"));
+            Statement existingAddStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/add"), titleIRI, vf.createLiteral("Add"));
+            Statement existingDelStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/delete"), titleIRI, vf.createLiteral("Delete"));
+            Model deletions = mf.createModel(Stream.of(statement3, existingAddStatement).collect(Collectors.toSet()));
+            Model expectedAdditions = mf.createModel();
+            Model expectedDeletions = mf.createModel(Stream.of(statement3, existingDelStatement).collect(Collectors.toSet()));
+
+            service.updateCommit(commit, null, deletions, conn);
+
+            List<Statement> actualAdds = RepositoryResults.asList(conn.getStatements(null, null, null, additionId));
+            assertEquals(expectedAdditions.size(), actualAdds.size());
+            actualAdds.forEach(statement -> assertTrue(expectedAdditions.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+
+            List<Statement> actualDels = RepositoryResults.asList(conn.getStatements(null, null, null, deletionId));
+            assertEquals(expectedDeletions.size(), actualDels.size());
+            actualDels.forEach(statement -> assertTrue(expectedDeletions.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+    }
+
+    @Test
+    public void updateCommitWithCommitNullDeletionsTest() {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Setup:
+            Commit commit = getThing(COMMIT_IRI, commitFactory, conn);
+            Resource additionId = getAdditionsResource(COMMIT_IRI);
+            Resource deletionId = getDeletionsResource(COMMIT_IRI);
+            Statement statement1 = vf.createStatement(vf.createIRI("https://matonto.org/test"), labelIRI, vf.createLiteral("Label"));
+            Statement existingAddStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/add"), titleIRI, vf.createLiteral("Add"));
+            Statement existingDelStatement = vf.createStatement(vf.createIRI("http://matonto.org/test/delete"), titleIRI, vf.createLiteral("Delete"));
+            Model additions = mf.createModel(Stream.of(statement1, existingDelStatement).collect(Collectors.toSet()));
+            Model expectedAdditions = mf.createModel(Stream.of(statement1, existingAddStatement).collect(Collectors.toSet()));
+            Model expectedDeletions = mf.createModel();
+
+            service.updateCommit(commit, additions, null, conn);
+
+            List<Statement> actualAdds = RepositoryResults.asList(conn.getStatements(null, null, null, additionId));
+            assertEquals(expectedAdditions.size(), actualAdds.size());
+            actualAdds.forEach(statement -> assertTrue(expectedAdditions.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+
+            List<Statement> actualDels = RepositoryResults.asList(conn.getStatements(null, null, null, deletionId));
+            assertEquals(expectedDeletions.size(), actualDels.size());
+            actualDels.forEach(statement -> assertTrue(expectedDeletions.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
+    }
+
+    @Test
     public void updateCommitWithCommitWithoutAdditionsSetTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:

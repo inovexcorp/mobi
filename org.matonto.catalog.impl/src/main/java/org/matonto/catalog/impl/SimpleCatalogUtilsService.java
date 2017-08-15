@@ -27,7 +27,6 @@ package org.matonto.catalog.impl;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.commons.io.IOUtils;
-import org.jetbrains.annotations.NotNull;
 import org.matonto.catalog.api.CatalogUtilsService;
 import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
@@ -84,6 +83,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 
 @Component(
         immediate = true,
@@ -416,7 +416,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         updateCommit(commitId, revision, additions, deletions, conn);
     }
 
-    private void updateCommit(Resource commitId, Revision revision, Model additions, Model deletions, RepositoryConnection conn) {
+    private void updateCommit(Resource commitId, Revision revision, @Nullable Model additions, @Nullable Model deletions, RepositoryConnection conn) {
         // Map of revisionedGraph -> GraphRevision resources
         Map<Resource, Resource> knownGraphs = new HashMap<>();
         revision.getGraphRevision().forEach(graphRevision -> {
@@ -428,11 +428,14 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         IRI additionsGraph = revision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commitId.stringValue()));
         IRI deletionsGraph = revision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commitId.stringValue()));
 
-        addChanges(additionsGraph, deletionsGraph, additions.filter(null, null, null, (Resource)null), conn);
-        addChanges(deletionsGraph, additionsGraph, deletions.filter(null, null, null, (Resource)null), conn);
+        Model filteredAdditions = additions == null ? null : additions.filter(null, null, null, (Resource)null);
+        Model filteredDeletions = deletions == null ? null : deletions.filter(null, null, null, (Resource)null);
+        addChanges(additionsGraph, deletionsGraph, filteredAdditions, conn);
+        addChanges(deletionsGraph, additionsGraph, filteredDeletions, conn);
 
-        Set<Resource> graphs = additions.contexts();
-        graphs.addAll(deletions.contexts());
+        Set<Resource> graphs = new HashSet<>();
+        if (additions != null) graphs.addAll(additions.contexts());
+        if (deletions != null) graphs.addAll(deletions.contexts());
         graphs.forEach(modifiedGraph -> {
             if (knownGraphs.containsKey(modifiedGraph)) {
                 GraphRevision graphRevision = graphRevisionFactory
@@ -442,8 +445,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 IRI adds = graphRevision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commitId.stringValue() + " for graph " + modifiedGraph.stringValue()));
                 IRI dels = graphRevision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commitId.stringValue() + " for graph " + modifiedGraph.stringValue()));
 
-                addChanges(adds, dels, additions.filter(null, null, null, modifiedGraph), conn);
-                addChanges(dels, adds, deletions.filter(null, null, null, modifiedGraph), conn);
+                Model filteredGraphAdditions = additions == null ? null : additions.filter(null, null, null, modifiedGraph);
+                Model filteredGraphDeletions = deletions == null ? null : deletions.filter(null, null, null, modifiedGraph);
+                addChanges(adds, dels, filteredGraphAdditions, conn);
+                addChanges(dels, adds, filteredGraphDeletions, conn);
             } else {
                 Resource graphRevisionResource = vf.createBNode();
                 GraphRevision graphRevision = graphRevisionFactory.createNew(graphRevisionResource);
@@ -466,8 +471,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
                 conn.add(revision.getResource(), vf.createIRI(Revision.graphRevision_IRI), graphRevisionResource, commitId);
                 conn.add(graphRevision.getModel(), commitId);
 
-                addChanges(additionsIRI, deletionsIRI, additions.filter(null, null, null, modifiedGraph), conn);
-                addChanges(deletionsIRI, additionsIRI, deletions.filter(null, null, null, modifiedGraph), conn);
+                Model filteredGraphAdditions = additions == null ? null : additions.filter(null, null, null, modifiedGraph);
+                Model filteredGraphDeletions = deletions == null ? null : deletions.filter(null, null, null, modifiedGraph);
+                addChanges(additionsIRI, deletionsIRI, filteredGraphAdditions, conn);
+                addChanges(deletionsIRI, additionsIRI, filteredGraphDeletions, conn);
             }
         });
     }
@@ -777,7 +784,6 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
             return vf.createStatement(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph);
         }
 
-        @NotNull
         @Override
         public Iterator<Statement> iterator() {
             return this;

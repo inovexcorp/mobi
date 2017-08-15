@@ -43,6 +43,7 @@ import org.matonto.repository.api.RepositoryConnection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 public interface CatalogUtilsService {
     /**
@@ -371,7 +372,7 @@ public interface CatalogUtilsService {
      * @param conn A RepositoryConnection to use for lookup.
      * @throws IllegalStateException Thrown if the Commit has no addition or deletion graph.
      */
-    void updateCommit(Resource commitId, Model additions, Model deletions, RepositoryConnection conn);
+    void updateCommit(Resource commitId, @Nullable Model additions, @Nullable Model deletions, RepositoryConnection conn);
 
     /**
      * Adds the provided addition and deletion Models to the provided Commit.
