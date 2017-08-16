@@ -1528,12 +1528,11 @@ public class SimpleCatalogUtilsServiceTest {
 
     @Test
     public void testGetRevisionWithQuads() throws Exception {
-        Revision actual;
         IRI commitId = vf.createIRI(COMMITS + "quad-test1");
 
-        try (RepositoryConnection conn = repo.getConnection()) {
-            actual = service.getRevision(commitId, conn);
-        }
+        RepositoryConnection conn = repo.getConnection();
+        Revision actual = service.getRevision(commitId, conn);
+        conn.close();
 
         assertEquals(vf.createIRI(ADDITIONS + "quad-test1"), actual.getAdditions().get());
         assertEquals(vf.createIRI(DELETIONS + "quad-test1"), actual.getDeletions().get());
