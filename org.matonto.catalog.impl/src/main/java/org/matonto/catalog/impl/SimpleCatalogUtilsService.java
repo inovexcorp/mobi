@@ -492,9 +492,10 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     @Override
     public Revision getRevision(Resource commitId, RepositoryConnection conn) {
         Commit commit = getObject(commitId, commitFactory, conn);
-        Resource revisionResource = commit.getGenerated_resource().stream().findFirst().orElseThrow(() -> new IllegalStateException("Commit does not have a Revision"));
-        Model model = RepositoryResults.asModel(conn.getStatements(null, null, null, commitId), mf);
-        return revisionFactory.getExisting(revisionResource, model).orElseThrow(() -> new IllegalStateException("Could not retrieve revision from Commit."));
+        Resource revisionResource = commit.getGenerated_resource().stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException("Commit does not have a Revision"));
+        return revisionFactory.getExisting(revisionResource, commit.getModel())
+                .orElseThrow(() -> new IllegalStateException("Could not retrieve revision from Commit."));
     }
 
     @Override
