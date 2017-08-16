@@ -514,32 +514,21 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     /**
      * Gets the addition statements for the provided Revision. Assumes additions are stored in the Repository.
      *
-     * @param revision
-     * @param conn
-     * @return
+     * @param revision The Revision containing change statements.
+     * @param conn The RepositoryConnection used to query the Repository.
+     * @return A Stream of change Statements.
      */
     private Stream<Statement> getAdditions(Revision revision, RepositoryConnection conn) {
         List<Stream<Statement>> streams =  new ArrayList<>();
 
         // Get Triples
-        revision.getAdditions().ifPresent(iri -> {
-            RepositoryResult<Statement> statements = conn.getStatements(null, null, null, iri);
-            GraphRevisionIterator iterator = new GraphRevisionIterator(statements, null);
-            streams.add(StreamSupport.stream(iterator.spliterator(), false));
-        });
+        revision.getAdditions().ifPresent(changesGraph -> collectChanges(streams, changesGraph, null, conn));
 
         // Get Versioned Graphs
-        revision.getGraphRevision().forEach(graphRevision -> {
-            Resource graph = graphRevision.getRevisionedGraph()
-                    .orElseThrow(() -> new IllegalStateException("GraphRevision missing Revisioned Graph."));
-            graphRevision.getAdditions().ifPresent(iri -> {
-                RepositoryResult<Statement> statements = conn.getStatements(null, null, null, iri);
-                GraphRevisionIterator iterator = new GraphRevisionIterator(statements, graph);
-                streams.add(StreamSupport.stream(iterator.spliterator(), false));
-            });
-        });
+        revision.getGraphRevision().forEach(graphRevision -> graphRevision.getAdditions()
+                .ifPresent(changesGraph -> collectRevisionedGraphChanges(streams, graphRevision, changesGraph, conn)));
 
-        // TODO: Potential stack overflow with large number of streams
+        // NOTE: Potential stack overflow with large number of streams
         return streams.stream()
                 .reduce(Stream::concat)
                 .orElseGet(Stream::empty);
@@ -560,37 +549,55 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     /**
-     * Gets the addition statements for the provided Revision. Assumes additions are stored in the Repository.
+     * Gets the deletion statements for the provided Revision. Assumes additions are stored in the Repository.
      *
-     * @param revision
-     * @param conn
-     * @return
+     * @param revision The Revision containing change statements.
+     * @param conn The RepositoryConnection used to query the Repository.
+     * @return A Stream of change Statements.
      */
     private Stream<Statement> getDeletions(Revision revision, RepositoryConnection conn) {
         List<Stream<Statement>> streams =  new ArrayList<>();
 
         // Get Triples
-        revision.getDeletions().ifPresent(iri -> {
-            RepositoryResult<Statement> statements = conn.getStatements(null, null, null, iri);
-            GraphRevisionIterator iterator = new GraphRevisionIterator(statements, null);
-            streams.add(StreamSupport.stream(iterator.spliterator(), false));
-        });
+        revision.getDeletions().ifPresent(changesGraph -> collectChanges(streams, changesGraph, null, conn));
 
         // Get Versioned Graphs
-        revision.getGraphRevision().forEach(graphRevision -> {
-            Resource graph = graphRevision.getRevisionedGraph()
-                    .orElseThrow(() -> new IllegalStateException("GraphRevision missing Revisioned Graph."));
-            graphRevision.getDeletions().ifPresent(iri -> {
-                RepositoryResult<Statement> statements = conn.getStatements(null, null, null, iri);
-                GraphRevisionIterator iterator = new GraphRevisionIterator(statements, graph);
-                streams.add(StreamSupport.stream(iterator.spliterator(), false));
-            });
-        });
+        revision.getGraphRevision().forEach(graphRevision -> graphRevision.getDeletions()
+                .ifPresent(changesGraph -> collectRevisionedGraphChanges(streams, graphRevision, changesGraph, conn)));
 
-        // TODO: Potential stack overflow with large number of streams
+        // NOTE: Potential stack overflow with large number of streams
         return streams.stream()
                 .reduce(Stream::concat)
                 .orElseGet(Stream::empty);
+    }
+
+    /**
+     * Collects the change statements from the provided GraphRevision and adds them to the provided List of Streams.
+     *
+     * @param streams The List of Streams that collects the change statements.
+     * @param graphRevision The GraphRevision from which to collect change statements.
+     * @param changesGraph The context that contains the change statements.
+     * @param conn The RepositoryConnection used to query the Repository.
+     */
+    private void collectRevisionedGraphChanges(List<Stream<Statement>> streams, GraphRevision graphRevision, IRI changesGraph, RepositoryConnection conn) {
+        Resource versionedGraph = graphRevision.getRevisionedGraph()
+                .orElseThrow(() -> new IllegalStateException("GraphRevision missing Revisioned Graph."));
+        collectChanges(streams, changesGraph, versionedGraph, conn);
+    }
+
+    /**
+     * Collects the change statements from the provided context and adds them to the provided List of Streams using the
+     * provided context. Note, the versionedGraph is optional with null representing a changed triple instead of quad.
+     *
+     * @param streams The List of Streams that collects the change statements.
+     * @param changesGraph The context that contains the change statements.
+     * @param versionedGraph The context to use for the collected statements.
+     * @param conn The RepositoryConnection used to query the Repository.
+     */
+    private void collectChanges(List<Stream<Statement>> streams, IRI changesGraph, Resource versionedGraph, RepositoryConnection conn) {
+        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, changesGraph);
+        GraphRevisionIterator iterator = new GraphRevisionIterator(statements, versionedGraph);
+        streams.add(StreamSupport.stream(iterator.spliterator(), false));
     }
 
     @Override
