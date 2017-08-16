@@ -66,19 +66,13 @@ import org.semanticweb.owlapi.io.IRIDocumentSource;
 import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
 import org.semanticweb.owlapi.io.OWLParser;
 import org.semanticweb.owlapi.io.OWLParserFactory;
-import org.semanticweb.owlapi.io.OWLRendererException;
-import org.semanticweb.owlapi.manchestersyntax.renderer.ManchesterOWLSyntaxFrameRenderer;
-import org.semanticweb.owlapi.manchestersyntax.renderer.ManchesterOWLSyntaxOWLObjectRendererImpl;
-import org.semanticweb.owlapi.manchestersyntax.renderer.ManchesterOWLSyntaxRenderer;
 import org.semanticweb.owlapi.model.AddImport;
 import org.semanticweb.owlapi.model.AsOWLClass;
 import org.semanticweb.owlapi.model.AsOWLDatatype;
 import org.semanticweb.owlapi.model.HasDomain;
 import org.semanticweb.owlapi.model.HasRange;
-import org.semanticweb.owlapi.model.IsAnonymous;
 import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
 import org.semanticweb.owlapi.model.MissingImportListener;
-import org.semanticweb.owlapi.model.OWLAnonymousIndividual;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLClassExpressionVisitor;
 import org.semanticweb.owlapi.model.OWLDataCardinalityRestriction;
@@ -133,11 +127,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -182,12 +174,13 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     *.
-     * @param ontologyId
-     * @param ontologyManager
-     * @param transformer
-     * @param bNodeService
-     * @throws MatontoOntologyException
+     * Creates a brand new SimpleOntology using an OntologyId.
+     *
+     * @param ontologyId The ID for the new ontology
+     * @param ontologyManager An OntologyManager
+     * @param transformer A SesameTransformer
+     * @param bNodeService A BNodeService
+     * @throws MatontoOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(OntologyId ontologyId, OntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService) throws MatontoOntologyException {
@@ -219,12 +212,13 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     *.
-     * @param inputStream
-     * @param ontologyManager
-     * @param transformer
-     * @param bNodeService
-     * @throws MatontoOntologyException
+     * Creates a SimpleOntology using the ontology data in an InputStream.
+     *
+     * @param inputStream An InputStream containing a serialized ontology
+     * @param ontologyManager An OntologyManager
+     * @param transformer A SesameTransformer
+     * @param bNodeService A BNodeService
+     * @throws MatontoOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(InputStream inputStream, OntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService) throws MatontoOntologyException {
@@ -245,13 +239,14 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     *.
-     * @param file
-     * @param ontologyManager
-     * @param transformer
-     * @param bNodeService
-     * @throws MatontoOntologyException
-     * @throws FileNotFoundException
+     * Creates a SimpleOntology using the ontology data in a File.
+     *
+     * @param file A File containing a serialized ontology
+     * @param ontologyManager An OntologyManager
+     * @param transformer A SesameTransformer
+     * @param bNodeService A BNodeService
+     * @throws MatontoOntologyException If an error occurs during ontology creation
+     * @throws FileNotFoundException If the provided File cannot be found
      */
     public SimpleOntology(File file, OntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService) throws MatontoOntologyException, FileNotFoundException {
@@ -259,12 +254,13 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     *.
-     * @param model
-     * @param ontologyManager
-     * @param transformer
-     * @param bNodeService
-     * @throws MatontoOntologyException
+     * Creates a SimpleOntology using the ontology data in a File.
+     *
+     * @param model A model containing statements that make up an ontology
+     * @param ontologyManager An OntologyManager
+     * @param transformer A SesameTransformer
+     * @param bNodeService A BNodeService
+     * @throws MatontoOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(Model model, OntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService) throws MatontoOntologyException {
@@ -286,12 +282,13 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     *.
-     * @param iri
-     * @param ontologyManager
-     * @param transformer
-     * @param bNodeService
-     * @throws MatontoOntologyException
+     * Creates a SimpleOntology using an IRI to collect the document.
+     *
+     * @param iri An IRI of an existing ontology
+     * @param ontologyManager An OntologyManager
+     * @param transformer A SesameTransformer
+     * @param bNodeService A BNodeService
+     * @throws MatontoOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(IRI iri, SimpleOntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService) throws MatontoOntologyException {
@@ -311,12 +308,13 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     *.
-     * @param json
-     * @param ontologyManager
-     * @param transformer
-     * @param bNodeService
-     * @throws MatontoOntologyException
+     * Creates a SimpleOntology using the ontology data in a JSON-LD string.
+     *
+     * @param json A JSON-LD string with a serialized ontology
+     * @param ontologyManager An OntologyManager
+     * @param transformer A SesameTransformer
+     * @param bNodeService A BNodeService
+     * @throws MatontoOntologyException If an error occurs during ontology creation
      */
     public SimpleOntology(String json, OntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService) throws MatontoOntologyException {
