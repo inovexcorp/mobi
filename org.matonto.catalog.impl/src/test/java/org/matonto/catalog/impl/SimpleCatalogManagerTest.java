@@ -40,6 +40,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.matonto.catalog.api.ontologies.mcat.GraphRevision;
+import org.matonto.catalog.api.ontologies.mcat.GraphRevisionFactory;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.repository.sail.SailRepository;
@@ -113,6 +115,7 @@ import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -142,6 +145,7 @@ public class SimpleCatalogManagerTest {
     private TagFactory tagFactory = new TagFactory();
     private UserBranchFactory userBranchFactory = new UserBranchFactory();
     private UserFactory userFactory = new UserFactory();
+    private GraphRevisionFactory graphRevisionFactory = new GraphRevisionFactory();
 
     private IRI distributedCatalogId;
     private IRI localCatalogId;
@@ -172,6 +176,9 @@ public class SimpleCatalogManagerTest {
     private static final String ADDITIONS = "https://matonto.org/additions#";
     private static final String DELETIONS = "https://matonto.org/deletions#";
     private static final String REVISIONS = "http://matonto.org/test/revisions#";
+    private static final String BRANCHES = "http://matonto.org/test/branches#";
+    private static final String RECORDS = "http://matonto.org/test/records#";
+    private static final String GRAPHS = "http://matonto.org/test/graphs#";
 
     private static final int TOTAL_SIZE = 7;
 
@@ -250,6 +257,10 @@ public class SimpleCatalogManagerTest {
         thingFactory.setValueFactory(vf);
         thingFactory.setValueConverterRegistry(vcr);
 
+        graphRevisionFactory.setModelFactory(mf);
+        graphRevisionFactory.setValueFactory(vf);
+        graphRevisionFactory.setValueConverterRegistry(vcr);
+
         vcr.registerValueConverter(catalogFactory);
         vcr.registerValueConverter(recordFactory);
         vcr.registerValueConverter(unversionedRecordFactory);
@@ -266,6 +277,7 @@ public class SimpleCatalogManagerTest {
         vcr.registerValueConverter(userFactory);
         vcr.registerValueConverter(versionedRDFRecordFactory);
         vcr.registerValueConverter(userBranchFactory);
+        vcr.registerValueConverter(graphRevisionFactory);
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -1369,6 +1381,63 @@ public class SimpleCatalogManagerTest {
             verify(utilsService).remove(eq(LATEST_TAG_IRI), any(RepositoryConnection.class));
             assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, branchIRI, BRANCH_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
             assertFalse(conn.getStatements(VERSIONED_RDF_RECORD_IRI, versionIRI, LATEST_TAG_IRI, VERSIONED_RDF_RECORD_IRI).hasNext());
+        }
+    }
+
+    @Test
+    public void testRemoveBranchWithQuads() throws Exception {
+        // TODO: This does not test if a chain of commits is properly removed. Requires real utilsService.
+        // Setup:
+        IRI record = vf.createIRI(RECORDS + "quad-versioned-rdf-record");
+        IRI branchToRemove = vf.createIRI(BRANCHES + "quad-branch");
+        Resource commit0 = vf.createIRI(COMMITS + "quad-test0");
+        Resource commit1 = vf.createIRI(COMMITS + "quad-test1");
+        Resource commit2 = vf.createIRI(COMMITS + "quad-test2");
+        IRI additionsToRemove = vf.createIRI(ADDITIONS + "quad-test2");
+        IRI deletionsToRemove = vf.createIRI(DELETIONS + "quad-test2");
+        IRI graphAdditionsToRemove = vf.createIRI(ADDITIONS + "quad-test2%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1");
+        IRI graphDeletionsToRemove = vf.createIRI(DELETIONS + "quad-test2%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1");
+        Resource revisionToRemove = vf.createIRI(REVISIONS + "quad-test2");
+
+        Branch branch = branchFactory.createNew(branchToRemove);
+        branch.setHead(commitFactory.createNew(commit2));
+        doReturn(branch).when(utilsService).getBranch(eq(distributedCatalogId), eq(record), eq(branchToRemove), eq(branchFactory), any(RepositoryConnection.class));
+
+        doReturn(Stream.of(commit2, commit1, commit0).collect(Collectors.toList()))
+                .when(utilsService).getCommitChain(eq(commit2), eq(false), any(RepositoryConnection.class));
+
+        GraphRevision graphRevision = graphRevisionFactory.createNew(vf.createBNode());
+        graphRevision.setRevisionedGraph(vf.createIRI(GRAPHS + "quad-graph1"));
+        graphRevision.setAdditions(graphAdditionsToRemove);
+        graphRevision.setDeletions(graphDeletionsToRemove);
+
+        Set<GraphRevision> graphRevisions = new HashSet<>();
+        graphRevisions.add(graphRevision);
+
+        Revision revision = revisionFactory.createNew(revisionToRemove, graphRevision.getModel());
+        revision.setAdditions(additionsToRemove);
+        revision.setDeletions(deletionsToRemove);
+        revision.setGraphRevision(graphRevisions);
+
+        doReturn(revision).when(utilsService).getRevision(eq(commit2), any(RepositoryConnection.class));
+
+        IRI headIRI = vf.createIRI(Branch.head_IRI);
+        IRI branchIRI = vf.createIRI(VersionedRDFRecord.branch_IRI);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            assertTrue(conn.getStatements(record, branchIRI, branchToRemove, record).hasNext());
+            // Remove the head statement so that commit logic works
+            conn.remove(branchToRemove, headIRI, null);
+
+            manager.removeBranch(distributedCatalogId, record, branchToRemove);
+            verify(utilsService).getBranch(eq(distributedCatalogId), eq(record), eq(branchToRemove), eq(branchFactory), any(RepositoryConnection.class));
+            verify(utilsService).getCommitChain(eq(commit2), eq(false), any(RepositoryConnection.class));
+            verify(utilsService).remove(eq(branchToRemove), any(RepositoryConnection.class));
+            verify(utilsService).remove(eq(commit2), any(RepositoryConnection.class));
+            verify(utilsService).remove(eq(additionsToRemove), any(RepositoryConnection.class));
+            verify(utilsService).remove(eq(deletionsToRemove), any(RepositoryConnection.class));
+            verify(utilsService).remove(eq(graphAdditionsToRemove), any(RepositoryConnection.class));
+            verify(utilsService).remove(eq(graphDeletionsToRemove), any(RepositoryConnection.class));
+            assertFalse(conn.getStatements(record, branchIRI, branchToRemove, record).hasNext());
         }
     }
 

@@ -760,6 +760,24 @@ GRAPH <http://matonto.org/test/diff/deletions> {
 
 # Basic Quad Revisioning
 
+GRAPH records:quad-versioned-rdf-record {
+    records:quad-versioned-rdf-record a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
+        mcat:catalog catalogs:catalog-distributed ;
+        dc:title "Quad Versioned RDF Record" ;
+        dc:description "Description" ;
+        dc:issued "2017-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2017-05-01T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        mcat:branch branches:quad-branch ;
+        mcat:branch branches:master ;
+        mcat:masterBranch branches:master .
+}
+
+GRAPH branches:quad-branch {
+    branches:quad-branch a mcat:Branch ;
+        mcat:head commits:quad-test2 .
+}
+
 GRAPH commits:quad-test0 {
     commits:quad-test0 a mcat:Commit ;
         dc:title "Quad Test 0" ;

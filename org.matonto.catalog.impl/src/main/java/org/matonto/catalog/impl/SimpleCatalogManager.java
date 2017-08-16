@@ -856,8 +856,10 @@ public class SimpleCatalogManager implements CatalogManager {
                     Revision revision = utils.getRevision(commitId, conn);
                     revision.getAdditions().ifPresent(deltaIRIs::add);
                     revision.getDeletions().ifPresent(deltaIRIs::add);
-                    revision.getGraphRevision().forEach(graphRevision ->
-                            graphRevision.getRevisionedGraph().ifPresent(deltaIRIs::add));
+                    revision.getGraphRevision().forEach(graphRevision -> {
+                        graphRevision.getAdditions().ifPresent(deltaIRIs::add);
+                        graphRevision.getDeletions().ifPresent(deltaIRIs::add);
+                    });
 
                     // Remove Commit
                     utils.remove(commitId, conn);
