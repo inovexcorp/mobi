@@ -1249,6 +1249,8 @@ public class SimpleCatalogUtilsServiceTest {
 
             IRI graph1AdditionsResource = getQuadAdditionsResource(quadInProgressCommit, GRAPHS + "quad-graph1");
             IRI graph1DeletionsResource = getQuadDeletionsResource(quadInProgressCommit, GRAPHS + "quad-graph1");
+            assertTrue(conn.containsContext(graph1AdditionsResource));
+            assertTrue(conn.containsContext(graph1DeletionsResource));
 
             service.removeInProgressCommit(commit, conn);
             assertFalse(conn.containsContext(quadInProgressCommit));
