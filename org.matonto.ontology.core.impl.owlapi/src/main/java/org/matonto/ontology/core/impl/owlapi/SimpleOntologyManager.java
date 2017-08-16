@@ -40,6 +40,7 @@ import org.matonto.ontology.core.utils.MatontoOntologyCreationException;
 import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.persistence.utils.QueryResults;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.GraphQuery;
@@ -52,6 +53,9 @@ import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
+import org.openrdf.rio.RDFParser;
+import org.openrdf.rio.Rio;
+import org.openrdf.rio.helpers.BasicParserSettings;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
 import org.semanticweb.owlapi.model.MissingImportHandlingStrategy;
@@ -59,8 +63,11 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.rdf.rdfxml.parser.RDFXMLParser;
+import org.semanticweb.owlapi.rio.RioManchesterSyntaxParserFactory;
 import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
 import org.semanticweb.owlapi.rio.RioParserImpl;
+import org.semanticweb.owlapi.rio.RioRDFXMLParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,6 +96,7 @@ public class SimpleOntologyManager implements OntologyManager {
     private RepositoryManager repositoryManager;
     private BranchFactory branchFactory;
     private OntologyCache ontologyCache;
+    private BNodeService bNodeService;
 
     private final Logger log = LoggerFactory.getLogger(SimpleOntologyManager.class);
 
@@ -208,6 +216,11 @@ public class SimpleOntologyManager implements OntologyManager {
         this.ontologyCache = ontologyCache;
     }
 
+    @Reference
+    public void setbNodeService(BNodeService bNodeService) {
+        this.bNodeService = bNodeService;
+    }
+
     @Override
     public OntologyRecord createOntologyRecord(OntologyRecordConfig config) {
         OntologyRecord record = catalogManager.createRecord(config, ontologyRecordFactory);
@@ -217,43 +230,32 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Ontology createOntology(OntologyId ontologyId) {
-        return new SimpleOntology(ontologyId, this, sesameTransformer);
+        return new SimpleOntology(ontologyId, this, sesameTransformer, bNodeService);
     }
 
     @Override
     public Ontology createOntology(File file) throws FileNotFoundException {
-        return new SimpleOntology(file, this, sesameTransformer);
+        return new SimpleOntology(file, this, sesameTransformer, bNodeService);
     }
 
     @Override
     public Ontology createOntology(IRI iri) {
-        return new SimpleOntology(iri, this, sesameTransformer);
+        return new SimpleOntology(iri, this, sesameTransformer, bNodeService);
     }
 
     @Override
     public Ontology createOntology(InputStream inputStream) {
-        return new SimpleOntology(inputStream, this, sesameTransformer);
+        return new SimpleOntology(inputStream, this, sesameTransformer, bNodeService);
     }
 
     @Override
     public Ontology createOntology(String json) {
-        return new SimpleOntology(json, this, sesameTransformer);
+        return new SimpleOntology(json, this, sesameTransformer, bNodeService);
     }
 
     @Override
     public Ontology createOntology(Model model) {
-        try {
-            OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
-            OWLOntology ontology = manager.createOntology();
-            org.openrdf.model.Model sesameModel = sesameTransformer.sesameModel(model);
-            OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration()
-                    .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
-            RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
-            parser.parse(new RioMemoryTripleSource(sesameModel), ontology, config);
-            return SimpleOntologyValues.matontoOntology(ontology);
-        } catch (OWLOntologyCreationException e) {
-            throw new MatontoOntologyCreationException("Unable to create an ontology object.", e);
-        }
+        return new SimpleOntology(model, this, sesameTransformer, bNodeService);
     }
 
     @Override
@@ -504,7 +506,6 @@ public class SimpleOntologyManager implements OntologyManager {
         try (RepositoryConnection conn = repo.getConnection()) {
             Set<Ontology> importedOntologies = ontology.getImportsClosure();
             conn.begin();
-            conn.add(ontology.asModel(modelFactory));
             importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
             conn.commit();
             TupleQuery query = conn.prepareTupleQuery(queryString);

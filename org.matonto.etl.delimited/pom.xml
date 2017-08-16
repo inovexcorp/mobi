@@ -78,7 +78,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.8.59</version>
+            <version>1.8.66-SNAPSHOT</version>
         </dependency>
 
         <dependency>

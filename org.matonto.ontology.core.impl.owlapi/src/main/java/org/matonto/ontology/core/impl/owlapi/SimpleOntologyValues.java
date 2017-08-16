@@ -57,6 +57,7 @@ import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleAnnotation
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
@@ -112,6 +113,7 @@ public class SimpleOntologyValues {
     private static ValueFactory factory;
     private static OntologyManager ontologyManager;
     private static SesameTransformer sesameTransformer;
+    private static BNodeService bNodeService;
     private static final Logger LOG = LoggerFactory.getLogger(SimpleOntologyValues.class);
     
     @Activate
@@ -139,6 +141,11 @@ public class SimpleOntologyValues {
         sesameTransformer = transformer;
     }
 
+    @Reference
+    protected void setbNodeService(BNodeService bNodeService) {
+        SimpleOntologyValues.bNodeService = bNodeService;
+    }
+
     public SimpleOntologyValues() {}
 
     /**
@@ -148,7 +155,7 @@ public class SimpleOntologyValues {
         if (ontology == null) {
             return null;
         }
-        return new SimpleOntology(ontology, resource, ontologyManager, sesameTransformer);
+        return new SimpleOntology(ontology, resource, ontologyManager, sesameTransformer, bNodeService);
     }
 
     /**

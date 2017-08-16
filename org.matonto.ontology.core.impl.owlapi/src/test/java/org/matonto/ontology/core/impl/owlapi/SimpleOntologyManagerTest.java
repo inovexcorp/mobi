@@ -25,6 +25,7 @@ package org.matonto.ontology.core.impl.owlapi;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -54,6 +55,7 @@ import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import org.matonto.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.Bindings;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
@@ -123,6 +125,9 @@ public class SimpleOntologyManagerTest {
 
     @Mock
     private RepositoryManager mockRepoManager;
+
+    @Mock
+    private BNodeService bNodeService;
 
     private SimpleOntologyManager manager;
     private ValueFactory vf = SimpleValueFactory.getInstance();
@@ -203,9 +208,11 @@ public class SimpleOntologyManagerTest {
 
         InputStream testOntology = getClass().getResourceAsStream("/test-ontology.ttl");
         when(ontology.asModel(mf)).thenReturn(Values.matontoModel(Rio.parse(testOntology, "", RDFFormat.TURTLE)));
+        when(ontology.getImportsClosure()).thenReturn(Collections.singleton(ontology));
 
         InputStream testVocabulary = getClass().getResourceAsStream("/test-vocabulary.ttl");
         when(vocabulary.asModel(mf)).thenReturn(Values.matontoModel(Rio.parse(testVocabulary, "", RDFFormat.TURTLE)));
+        when(vocabulary.getImportsClosure()).thenReturn(Collections.singleton(vocabulary));
 
         PowerMockito.mockStatic(SimpleOntologyValues.class);
         when(SimpleOntologyValues.owlapiIRI(ontologyIRI)).thenReturn(owlOntologyIRI);
@@ -237,6 +244,7 @@ public class SimpleOntologyManagerTest {
         manager.setBranchFactory(branchFactory);
         manager.setRepositoryManager(mockRepoManager);
         manager.setOntologyCache(ontologyCache);
+        manager.setbNodeService(bNodeService);
     }
 
     @After
@@ -262,12 +270,6 @@ public class SimpleOntologyManagerTest {
 
         OntologyRecord record = manager.createOntologyRecord(config);
         assertFalse(record.getOntologyIRI().isPresent());
-    }
-
-    @Test
-    public void testCreateOntology() throws Exception {
-        Ontology result = manager.createOntology(mf.createModel());
-        assertEquals(ontology, result);
     }
 
     // Testing retrieveOntologyByIRI
@@ -296,7 +298,7 @@ public class SimpleOntologyManagerTest {
 
         Optional<Ontology> result = manager.retrieveOntologyByIRI(ontologyIRI);
         assertTrue(result.isPresent());
-        assertEquals(ontology, result.get());
+        assertNotEquals(ontology, result.get());
         String key = ontologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
         verify(mockCache).containsKey(eq(key));
         verify(mockCache).put(eq(key), eq(result.get()));
@@ -315,6 +317,7 @@ public class SimpleOntologyManagerTest {
 
         Optional<Ontology> result = manager.retrieveOntologyByIRI(ontologyIRI);
         assertTrue(result.isPresent());
+        assertEquals(ontology, result.get());
         verify(mockCache).containsKey(eq(key));
         verify(mockCache).get(eq(key));
         verify(mockCache, times(0)).put(eq(key), eq(result.get()));
@@ -365,7 +368,7 @@ public class SimpleOntologyManagerTest {
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI);
         assertTrue(optionalOntology.isPresent());
-        assertEquals(ontology, optionalOntology.get());
+        assertNotEquals(ontology, optionalOntology.get());
         String key = ontologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
         verify(mockCache).containsKey(eq(key));
         verify(mockCache).put(eq(key), eq(optionalOntology.get()));
@@ -384,6 +387,7 @@ public class SimpleOntologyManagerTest {
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI);
         assertTrue(optionalOntology.isPresent());
+        assertEquals(ontology, optionalOntology.get());
         verify(mockCache).containsKey(eq(key));
         verify(mockCache).get(eq(key));
         verify(mockCache, times(0)).put(eq(key), eq(optionalOntology.get()));
@@ -443,7 +447,7 @@ public class SimpleOntologyManagerTest {
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI);
         assertTrue(optionalOntology.isPresent());
-        assertEquals(ontology, optionalOntology.get());
+        assertNotEquals(ontology, optionalOntology.get());
         String key = ontologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
         verify(mockCache).containsKey(eq(key));
         verify(mockCache).put(eq(key), eq(optionalOntology.get()));
@@ -462,6 +466,7 @@ public class SimpleOntologyManagerTest {
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI);
         assertTrue(optionalOntology.isPresent());
+        assertEquals(ontology, optionalOntology.get());
         verify(mockCache).containsKey(eq(key));
         verify(mockCache).get(eq(key));
         verify(mockCache, times(0)).put(eq(key), eq(optionalOntology.get()));
@@ -510,7 +515,7 @@ public class SimpleOntologyManagerTest {
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
         assertTrue(optionalOntology.isPresent());
-        assertEquals(ontology, optionalOntology.get());
+        assertNotEquals(ontology, optionalOntology.get());
         String key = ontologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
         verify(mockCache, times(2)).containsKey(eq(key));
         verify(mockCache).put(eq(key), eq(optionalOntology.get()));
@@ -528,6 +533,7 @@ public class SimpleOntologyManagerTest {
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
         assertTrue(optionalOntology.isPresent());
+        assertEquals(ontology, optionalOntology.get());
         verify(mockCache).get(eq(key));
         verify(mockCache, times(0)).put(eq(key), eq(optionalOntology.get()));
     }

@@ -1314,11 +1314,13 @@
                     if (om.isProperty(entity)) {
                         setPropertyIcon(entity);
                     } else if (om.isBlankNode(entity)) {
-                        let id = _.get(entity, '@id');
-                        _.set(blankNodes, id, mc.jsonldToManchester(id, ontology, true));
+                        blankNodes[_.get(entity, '@id')] = undefined;
                     } else if (om.isIndividual(entity)) {
                         findValuesMissingDatatypes(entity);
                     }
+                });
+                _.forEach(blankNodes, (value, id) => {
+                    blankNodes[id] = mc.jsonldToManchester(id, ontology, index, true);
                 });
                 listItem.ontologyId = ontologyId;
                 listItem.editorTabStates.project.entityIRI = ontologyId;
@@ -1462,6 +1464,7 @@
             }
             function addImportedOntologyToListItem(listItem, importedOntObj, type) {
                 var index = {};
+                var blankNodes = {};
                 _.forEach(importedOntObj.ontology, (entity, i) => {
                     if (_.has(entity, '@id')) {
                         index[entity['@id']] = {
@@ -1469,15 +1472,23 @@
                             label: om.getEntityName(entity, type),
                             ontologyIri: importedOntObj.id
                         }
+                        if (om.isBlankNode(entity)) {
+                            blankNodes[entity['@id']] =  undefined;
+                        }
                     }
                     self.updatePropertyIcon(entity);
                     _.set(entity, 'matonto.imported', true);
+                    _.set(entity, 'matonto.importedIRI', importedOntObj.ontologyId);
+                });
+                _.forEach(blankNodes, (value, id) => {
+                    blankNodes[id] = mc.jsonldToManchester(id, importedOntObj.ontology, index, true);
                 });
                 var importedOntologyListItem = {
                     id: importedOntObj.id,
                     ontologyId: importedOntObj.ontologyId,
-                    index: index,
-                    ontology: importedOntObj.ontology
+                    ontology: importedOntObj.ontology,
+                    index,
+                    blankNodes
                 };
                 listItem.importedOntologyIds.push(importedOntObj.id);
                 listItem.importedOntologies.push(importedOntologyListItem);

@@ -914,8 +914,10 @@ public class CatalogRestImpl implements CatalogRest {
                                            String additionsJson, String deletionsJson) {
         try {
             User activeUser = getActiveUser(context, engineManager);
-            Model additions = StringUtils.isEmpty(additionsJson) ? null : convertJsonld(additionsJson);
-            Model deletions = StringUtils.isEmpty(deletionsJson) ? null : convertJsonld(deletionsJson);
+            Model additions = StringUtils.isEmpty(additionsJson) ? null : jsonldToDeskolemizedModel(additionsJson,
+                    transformer, bNodeService);
+            Model deletions = StringUtils.isEmpty(deletionsJson) ? null : jsonldToDeskolemizedModel(deletionsJson,
+                    transformer, bNodeService);
             catalogManager.updateInProgressCommit(vf.createIRI(catalogId), vf.createIRI(recordId), activeUser,
                     additions, deletions);
             return Response.ok().build();
