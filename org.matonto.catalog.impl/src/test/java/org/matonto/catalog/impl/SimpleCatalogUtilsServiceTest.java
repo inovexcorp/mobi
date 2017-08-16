@@ -1557,14 +1557,18 @@ public class SimpleCatalogUtilsServiceTest {
 
     @Test
     public void getAdditionsUsingResourceWithQuads() {
+        IRI commit = vf.createIRI(COMMITS + "quad-test1");
+        IRI object1 = vf.createIRI("http://matonto.org/test/object1");
+        IRI object2 = vf.createIRI("http://matonto.org/test/object2");
+        IRI revisionedGraph = vf.createIRI(GRAPHS + "quad-graph1");
+
         Model expected = mf.createModel(Stream.of(
-                vf.createStatement(vf.createIRI("http://matonto.org/test/object1"), titleIRI, vf.createLiteral("Test 1 Title")),
-                vf.createStatement(vf.createIRI("http://matonto.org/test/object2"), titleIRI, vf.createLiteral("Test 1 Title"), vf.createIRI(GRAPHS + "quad-graph1")),
-                vf.createStatement(vf.createIRI("http://matonto.org/test/object2"), typeIRI, OWL_THING, vf.createIRI(GRAPHS + "quad-graph1"))
+                vf.createStatement(object1, titleIRI, vf.createLiteral("Test 1 Title")),
+                vf.createStatement(object2, titleIRI, vf.createLiteral("Test 1 Title"), revisionedGraph),
+                vf.createStatement(object2, typeIRI, OWL_THING, revisionedGraph)
         ).collect(Collectors.toList()));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            IRI commit = vf.createIRI(COMMITS + "quad-test1");
             Stream<Statement> result = service.getAdditions(commit, conn);
             assertEquals(new HashSet<>(expected), result.collect(Collectors.toSet()));
         }
