@@ -316,7 +316,22 @@
                         branchId,
                         commitId,
                         rdfFormat,
-                        clearCache
+                        clearCache,
+                        skolemize: true
+                    }
+                };
+                return $http.get(prefix + '/' + encodeURIComponent(recordId), config)
+                    .then(response => response.data, util.rejectError);
+            }
+            self.previewOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld') {
+                var config = {
+                    headers: {
+                        'Accept': 'text/plain'
+                    },
+                    params: {
+                        branchId,
+                        commitId,
+                        rdfFormat
                     }
                 };
                 return $http.get(prefix + '/' + encodeURIComponent(recordId), config)

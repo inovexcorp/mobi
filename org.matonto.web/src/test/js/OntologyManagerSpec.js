@@ -385,7 +385,7 @@ describe('Ontology Manager service', function() {
     describe('getOntology hits the proper endpoint', function() {
         var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId, rdfFormat: format, clearCache: false });
+            params = paramSerializer({ branchId: branchId, commitId: commitId, rdfFormat: format, clearCache: false, skolemize: true });
         });
         it('unless an error occurs', function() {
             util.rejectError.and.returnValue($q.reject(error));
@@ -411,6 +411,43 @@ describe('Ontology Manager service', function() {
                     return headers['Accept'] === 'text/plain';
                 }).respond(200, ontology);
             ontologyManagerSvc.getOntology(recordId, branchId, commitId, format, false)
+                .then(function(data) {
+                    expect(data).toEqual(ontology);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
+    describe('previewOntology hits the proper endpoint', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({ branchId: branchId, commitId: commitId, rdfFormat: format });
+        });
+        it('unless an error occurs', function() {
+            util.rejectError.and.returnValue($q.reject(error));
+            $httpBackend.expectGET('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+                function(headers) {
+                    return headers['Accept'] === 'text/plain';
+                }).respond(400, null, null, error);
+            ontologyManagerSvc.previewOntology(recordId, branchId, commitId, format)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual(error);
+                    expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: error
+                    }));
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('successfully', function() {
+            $httpBackend.expectGET('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+                function(headers) {
+                    return headers['Accept'] === 'text/plain';
+                }).respond(200, ontology);
+            ontologyManagerSvc.previewOntology(recordId, branchId, commitId, format)
                 .then(function(data) {
                     expect(data).toEqual(ontology);
                 }, function(response) {
