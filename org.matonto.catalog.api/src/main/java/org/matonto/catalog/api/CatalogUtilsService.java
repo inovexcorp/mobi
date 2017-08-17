@@ -396,10 +396,11 @@ public interface CatalogUtilsService {
     void addCommit(Branch branch, Commit commit, RepositoryConnection conn);
 
     /**
+     * Gets the Revision associated with the provided commit Resource.
      *
-     * @param commitId
-     * @param conn
-     * @return
+     * @param commitId The commit for which to retrieve the revision.
+     * @param conn The RepositoryConnection used to query the Repository.
+     * @return The Revision associated with the provided commit Resource.
      */
     Revision getRevision(Resource commitId, RepositoryConnection conn);
 

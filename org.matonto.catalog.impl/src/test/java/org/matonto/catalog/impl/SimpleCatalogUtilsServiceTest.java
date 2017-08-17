@@ -1720,6 +1720,8 @@ public class SimpleCatalogUtilsServiceTest {
 
     @Test
     public void getRevisionChangesWithListWithQuadsTest() {
+        IRI graph1 = vf.createIRI(GRAPHS + "quad-graph1");
+
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Resource object1 = vf.createIRI("http://matonto.org/test/object1");
@@ -1733,8 +1735,8 @@ public class SimpleCatalogUtilsServiceTest {
             Model expectAdd = mf.createModel();
             expectAdd.add(vf.createStatement(object1, typeIRI, OWL_THING));
             expectAdd.add(vf.createStatement(object1, titleIRI, vf.createLiteral("Test 2 Title")));
-            expectAdd.add(vf.createStatement(object2, typeIRI, OWL_THING, vf.createIRI(GRAPHS + "quad-graph1")));
-            expectAdd.add(vf.createStatement(object2, titleIRI, vf.createLiteral("Test 2 Title"), vf.createIRI(GRAPHS + "quad-graph1")));
+            expectAdd.add(vf.createStatement(object2, typeIRI, OWL_THING, graph1));
+            expectAdd.add(vf.createStatement(object2, titleIRI, vf.createLiteral("Test 2 Title"), graph1));
             Model expectDel = mf.createModel();
 
             Difference result = service.getRevisionChanges(commits, conn);
@@ -1796,6 +1798,8 @@ public class SimpleCatalogUtilsServiceTest {
 
     @Test
     public void getCommitDifferenceTestWithQuads() {
+        IRI graph1 = vf.createIRI(GRAPHS + "quad-graph1");
+        
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Resource commitId = vf.createIRI(COMMITS + "quad-test1");
@@ -1803,8 +1807,8 @@ public class SimpleCatalogUtilsServiceTest {
             IRI object2 = vf.createIRI("http://matonto.org/test/object2");
 
             Statement add1 = vf.createStatement(object1, titleIRI, vf.createLiteral("Test 1 Title"));
-            Statement add2 = vf.createStatement(object2, typeIRI, OWL_THING, vf.createIRI(GRAPHS + "quad-graph1"));
-            Statement add3 = vf.createStatement(object2, titleIRI, vf.createLiteral("Test 1 Title"), vf.createIRI(GRAPHS + "quad-graph1"));
+            Statement add2 = vf.createStatement(object2, typeIRI, OWL_THING, graph1);
+            Statement add3 = vf.createStatement(object2, titleIRI, vf.createLiteral("Test 1 Title"), graph1);
             Model adds = mf.createModel(Stream.of(add1, add2, add3).collect(Collectors.toSet()));
 
             Statement del1 = vf.createStatement(object1, titleIRI, vf.createLiteral("Test 0 Title"));

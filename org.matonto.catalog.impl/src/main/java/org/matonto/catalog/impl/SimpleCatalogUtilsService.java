@@ -550,7 +550,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     /**
-     * Gets the deletion statements for the provided Revision. Assumes additions are stored in the Repository.
+     * Gets the deletion statements for the provided Revision. Assumes deletions are stored in the Repository.
      *
      * @param revision The Revision containing change statements.
      * @param conn The RepositoryConnection used to query the Repository.
