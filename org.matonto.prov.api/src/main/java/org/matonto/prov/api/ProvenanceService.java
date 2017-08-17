@@ -25,15 +25,20 @@ package org.matonto.prov.api;
 
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.prov.api.builder.ActivityConfig;
+import org.matonto.rdf.api.Resource;
+import org.matonto.repository.api.RepositoryConnection;
+
+import java.util.Optional;
 
 public interface ProvenanceService {
 
     /**
-     * Returns a ProvenanceQueryConnection that facilitates running SPARQL queries against the provenance repository.
+     * Returns a read-only RepositoryConnection that facilitates running SPARQL queries against the provenance
+     * repository.
      *
-     * @return a ProvenanceQueryConnection
+     * @return a read-only RepositoryConnection on provenance data
      */
-    ProvenanceQueryConnection getQueryConnection();
+    RepositoryConnection getConnection();
 
     /**
      * Creates an Activity using the provided configuration with the Activity types, associated User, and references
@@ -51,6 +56,15 @@ public interface ProvenanceService {
      * @param activity The Activity to be added to the provenance repository
      */
     void addActivity(Activity activity);
+
+    /**
+     * Retrieves an Activity identified by its IRI from the provenance store. Activity will include all referenced
+     * Entities.
+     *
+     * @param activityIRI The IRI of an Activity
+     * @return The identified Activity if found; otherwise, an empty Optional
+     */
+    Optional<Activity> getActivity(Resource activityIRI);
 
     /**
      * Updates the Activity with the matching IRI from the provided Activity. The Activity should include all

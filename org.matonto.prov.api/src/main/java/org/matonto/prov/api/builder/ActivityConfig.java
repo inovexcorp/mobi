@@ -25,6 +25,7 @@ package org.matonto.prov.api.builder;
 
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.ontologies.provo.Activity;
+import org.matonto.ontologies.provo.Entity;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
@@ -40,9 +41,9 @@ import java.util.UUID;
 public class ActivityConfig {
     private Set<Class<? extends Activity>> types;
     private User user;
-    private Set<Map<Resource, String>> generatedEntities = new HashSet<>();
-    private Set<Map<Resource, String>> usedEntities = new HashSet<>();
-    private Set<Map<Resource, String>> invalidatedEntities = new HashSet<>();
+    private Set<Entity> generatedEntities = new HashSet<>();
+    private Set<Entity> usedEntities = new HashSet<>();
+    private Set<Entity> invalidatedEntities = new HashSet<>();
 
     private ActivityConfig(Builder builder) {
         this.types = builder.types;
@@ -60,47 +61,41 @@ public class ActivityConfig {
         return user;
     }
 
-    public Set<Map<Resource, String>> getGeneratedEntities() {
+    public Set<Entity> getGeneratedEntities() {
         return generatedEntities;
     }
 
-    public Set<Map<Resource, String>> getUsedEntities() {
+    public Set<Entity> getUsedEntities() {
         return usedEntities;
     }
 
-    public Set<Map<Resource, String>> getInvalidatedEntities() {
+    public Set<Entity> getInvalidatedEntities() {
         return invalidatedEntities;
     }
 
     public static class Builder {
         private Set<Class<? extends Activity>> types;
         private User user;
-        private Set<Map<Resource, String>> generatedEntities = new HashSet<>();
-        private Set<Map<Resource, String>> usedEntities = new HashSet<>();
-        private Set<Map<Resource, String>> invalidatedEntities = new HashSet<>();
+        private Set<Entity> generatedEntities = new HashSet<>();
+        private Set<Entity> usedEntities = new HashSet<>();
+        private Set<Entity> invalidatedEntities = new HashSet<>();
 
         public Builder(Set<Class<? extends Activity>> types, User user) {
             this.types = types;
             this.user = user;
         }
 
-        public Builder generatedEntity(Resource entityIRI, String title) {
-            Map<Resource, String> entity = new HashMap<>();
-            entity.put(entityIRI, title);
+        public Builder generatedEntity(Entity entity) {
             this.generatedEntities.add(entity);
             return this;
         }
 
-        public Builder usedEntity(Resource entityIRI, String title) {
-            Map<Resource, String> entity = new HashMap<>();
-            entity.put(entityIRI, title);
+        public Builder usedEntity(Entity entity) {
             this.usedEntities.add(entity);
             return this;
         }
 
-        public Builder invalidatedEntity(Resource entityIRI, String title) {
-            Map<Resource, String> entity = new HashMap<>();
-            entity.put(entityIRI, title);
+        public Builder invalidatedEntity(Entity entity) {
             this.invalidatedEntities.add(entity);
             return this;
         }
