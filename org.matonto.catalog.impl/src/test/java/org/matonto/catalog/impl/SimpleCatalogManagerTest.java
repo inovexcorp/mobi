@@ -180,7 +180,7 @@ public class SimpleCatalogManagerTest {
     private static final String RECORDS = "http://matonto.org/test/records#";
     private static final String GRAPHS = "http://matonto.org/test/graphs#";
 
-    private static final int TOTAL_SIZE = 7;
+    private static final int TOTAL_SIZE = 8;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -452,10 +452,10 @@ public class SimpleCatalogManagerTest {
         // then
         verify(utilsService, atLeastOnce()).getRecord(eq(distributedCatalogId), any(Resource.class), eq(recordFactory), any(RepositoryConnection.class));
         assertEquals(RECORD_IRI, resources1.getPage().iterator().next().getResource());
-        assertEquals(VERSIONED_RDF_RECORD_IRI, resources2.getPage().iterator().next().getResource());
+        assertEquals(vf.createIRI(RECORDS + "quad-versioned-rdf-record"), resources2.getPage().iterator().next().getResource());
         assertEquals(UNVERSIONED_RECORD_IRI, resources3.getPage().iterator().next().getResource());
         assertEquals(VERSIONED_RECORD_IRI, resources4.getPage().iterator().next().getResource());
-        assertEquals(RECORD_IRI, resources5.getPage().iterator().next().getResource());
+        assertEquals(vf.createIRI(RECORDS + "quad-versioned-rdf-record"), resources5.getPage().iterator().next().getResource());
         assertEquals(resources6.getPage().iterator().next().getResource().stringValue(), "http://matonto.org/test/records#versioned-record-missing-version");
     }
 
@@ -523,8 +523,8 @@ public class SimpleCatalogManagerTest {
 
         // then
         assertTrue(true);
-        assertEquals(4, versionedRecords.getPage().size());
-        assertEquals(4, versionedRecords.getTotalSize());
+        assertEquals(5, versionedRecords.getPage().size());
+        assertEquals(5, versionedRecords.getTotalSize());
         assertEquals(2, unversionedRecords.getPage().size());
         assertEquals(2, unversionedRecords.getTotalSize());
         assertEquals(TOTAL_SIZE, fullRecords.getPage().size());
