@@ -21,20 +21,22 @@
  * #L%
  */
 describe('Search Form directive', function() {
-    var $compile, scope, $q, element, controller, searchSvc, discoverStateSvc;
+    var $compile, scope, $q, element, controller, searchSvc, discoverStateSvc, exploreSvc;
 
     beforeEach(function() {
         module('templates');
         module('searchForm');
         mockDiscoverState();
         mockSearch();
+        mockExplore();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _searchService_, _discoverStateService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _searchService_, _discoverStateService_, _exploreService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             searchSvc = _searchService_;
             discoverStateSvc = _discoverStateService_;
+            exploreSvc = _exploreService_;
         });
 
         element = $compile(angular.element('<search-form></search-form>'))(scope);
@@ -51,7 +53,7 @@ describe('Search Form directive', function() {
                 searchSvc.submitSearch.and.returnValue($q.reject('Error Message'));
                 controller.submit();
                 scope.$apply();
-                expect(searchSvc.submitSearch).toHaveBeenCalledWith(discoverStateSvc.search.keywords.arr, discoverStateSvc.search.keywords.isOr);
+                expect(searchSvc.submitSearch).toHaveBeenCalledWith(discoverStateSvc.search.datasetRecordId, discoverStateSvc.search.queryConfig);
                 expect(controller.errorMessage).toEqual('Error Message');
                 expect(discoverStateSvc.search.results).toBeUndefined();
             });
@@ -59,9 +61,42 @@ describe('Search Form directive', function() {
                 searchSvc.submitSearch.and.returnValue($q.when({head: {}}));
                 controller.submit();
                 scope.$apply();
-                expect(searchSvc.submitSearch).toHaveBeenCalledWith(discoverStateSvc.search.keywords.arr, discoverStateSvc.search.keywords.isOr);
+                expect(searchSvc.submitSearch).toHaveBeenCalledWith(discoverStateSvc.search.datasetRecordId, discoverStateSvc.search.queryConfig);
                 expect(controller.errorMessage).toEqual('');
                 expect(discoverStateSvc.search.results).toEqual({head: {}});
+            });
+        });
+        describe('getTypes calls the proper method when getClassDetails', function() {
+            beforeEach(function() {
+                discoverStateSvc.search.datasetRecordId = 'id';
+                controller.typeObject = {key: []};
+            });
+            it('resolves', function() {
+                exploreSvc.getClassDetails.and.returnValue($q.when([{ontologyRecordTitle: 'title', prop: 'details'}]));
+                controller.getTypes();
+                scope.$apply();
+                expect(discoverStateSvc.search.queryConfig.types).toEqual([]);
+                expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('id');
+                expect(angular.copy(controller.typeObject)).toEqual({title: [{ontologyRecordTitle: 'title', prop: 'details'}]});
+                expect(controller.errorMessage).toBe('');
+            });
+            it('rejects', function() {
+                exploreSvc.getClassDetails.and.returnValue($q.reject('error'));
+                controller.getTypes();
+                scope.$apply();
+                expect(discoverStateSvc.search.queryConfig.types).toEqual([]);
+                expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('id');
+                expect(controller.typeObject).toEqual({});
+                expect(controller.errorMessage).toBe('error');
+            });
+        });
+        describe('getSelectedText returns the correct text when queryConfig.types', function() {
+            it('is empty', function() {
+                expect(controller.getSelectedText()).toBe('');
+            });
+            it('has values', function() {
+                discoverStateSvc.search.queryConfig.types = [{classTitle: 'title1'}, {classTitle: 'title2'}];
+                expect(controller.getSelectedText()).toBe('title1, title2');
             });
         });
     });
@@ -76,11 +111,17 @@ describe('Search Form directive', function() {
         it('with a block-content', function() {
             expect(element.find('block-content').length).toEqual(1);
         });
+        it('with a .strike', function() {
+            expect(element.querySelectorAll('.strike').length).toEqual(2);
+        });
+        it('with a dataset-form-group', function() {
+            expect(element.find('dataset-form-group').length).toEqual(1);
+        });
         it('with a block-footer', function() {
             expect(element.find('block-footer').length).toEqual(1);
         });
         it('with a custom-label', function() {
-            expect(element.find('custom-label').length).toEqual(1);
+            expect(element.find('custom-label').length).toEqual(2);
         });
         it('with a md-chips', function() {
             expect(element.find('md-chips').length).toEqual(1);

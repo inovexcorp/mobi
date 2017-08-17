@@ -48,7 +48,8 @@ class RDFExportSpec extends Specification {
     def p = "http://test.com/p"
     def oIRI = "http://test.com/o"
     def oLit = "o"
-    def testFile = new ClassPathResource("exporter/testFile.nt").getFile()
+    def testFile = new ClassPathResource("exporter/testFile.trig").getFile()
+    def testFileWithoutQuads = new ClassPathResource("exporter/testFile.ttl").getFile()
     def invalidFile = new ClassPathResource("exporter/testFile.txt").getFile()
 
     def transformer = Mock(SesameTransformer)
@@ -60,6 +61,7 @@ class RDFExportSpec extends Specification {
 
     def setup() {
         testFile.setWritable(true)
+        testFileWithoutQuads.setWritable(true)
         invalidFile.setWritable(true)
 
         transformer.sesameStatement(_) >> { args -> Values.sesameStatement(args[0])}
@@ -70,6 +72,9 @@ class RDFExportSpec extends Specification {
         datasetManager.getConnection(datasetId) >> datasetConn
         datasetManager.getConnection(!datasetId) >> {throw new IllegalArgumentException()}
         datasetConn.getStatements(*_) >> result
+        datasetConn.getDefaultNamedGraphs() >> result
+        datasetConn.getNamedGraphs() >> result
+        datasetConn.getSystemDefaultNamedGraph() >> vf.createIRI("http://test.com/system-default")
 
         service.setDatasetManager(datasetManager)
         service.setTransformer(transformer)
@@ -172,7 +177,7 @@ class RDFExportSpec extends Specification {
         thrown IOException
     }
 
-    def "Export File from Dataset without restrictions"() {
+    def "Export File from Dataset without restrictions with quads"() {
         setup:
         def config = new ExportServiceConfig.Builder(testFile.absolutePath).build()
 
@@ -181,10 +186,22 @@ class RDFExportSpec extends Specification {
 
         then:
         result != null
-        1 * datasetConn.getStatements(null, null, null) >> result
+        2 * datasetConn.getStatements(null, null, null, _) >> result
     }
 
-    def "Export File from Dataset with restrictions and both object IRI and Lit"() {
+    def "Export File from Dataset without restrictions without quads"() {
+        setup:
+        def config = new ExportServiceConfig.Builder(testFileWithoutQuads.absolutePath).build()
+
+        when:
+        def result = service.exportToFile(config, datasetId)
+
+        then:
+        result != null
+        1 * datasetConn.getStatements(null, null, null, _) >> result
+    }
+
+    def "Export File from Dataset with restrictions and both object IRI and Lit with quads"() {
         setup:
         def config = new ExportServiceConfig.Builder(testFile.absolutePath).subj(s).pred(p).objIRI(oIRI).objLit(oLit).build()
 
@@ -193,10 +210,22 @@ class RDFExportSpec extends Specification {
 
         then:
         result != null
-        1 * datasetConn.getStatements(vf.createIRI(s), vf.createIRI(p), vf.createIRI(oIRI)) >> result
+        2 * datasetConn.getStatements(vf.createIRI(s), vf.createIRI(p), vf.createIRI(oIRI), _) >> result
     }
 
-    def "Export File from Dataset with restrictions and object Lit"() {
+    def "Export File from Dataset with restrictions and both object IRI and Lit without quads"() {
+        setup:
+        def config = new ExportServiceConfig.Builder(testFileWithoutQuads.absolutePath).subj(s).pred(p).objIRI(oIRI).objLit(oLit).build()
+
+        when:
+        def result = service.exportToFile(config, datasetId)
+
+        then:
+        result != null
+        1 * datasetConn.getStatements(vf.createIRI(s), vf.createIRI(p), vf.createIRI(oIRI), _) >> result
+    }
+
+    def "Export File from Dataset with restrictions and object Lit with quads"() {
         setup:
         def config = new ExportServiceConfig.Builder(testFile.absolutePath).subj(s).pred(p).objLit(oLit).build()
 
@@ -205,7 +234,19 @@ class RDFExportSpec extends Specification {
 
         then:
         result != null
-        1 * datasetConn.getStatements(vf.createIRI(s), vf.createIRI(p), vf.createLiteral(oLit)) >> result
+        2 * datasetConn.getStatements(vf.createIRI(s), vf.createIRI(p), vf.createLiteral(oLit), _) >> result
+    }
+
+    def "Export File from Dataset with restrictions and object Lit without quads"() {
+        setup:
+        def config = new ExportServiceConfig.Builder(testFileWithoutQuads.absolutePath).subj(s).pred(p).objLit(oLit).build()
+
+        when:
+        def result = service.exportToFile(config, datasetId)
+
+        then:
+        result != null
+        1 * datasetConn.getStatements(vf.createIRI(s), vf.createIRI(p), vf.createLiteral(oLit), _) >> result
     }
 
     def "Throws exception if dataset does not exist"() {

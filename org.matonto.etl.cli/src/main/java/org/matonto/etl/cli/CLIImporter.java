@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 
-@Command(scope = "matonto", name = "import", description = "Imports objects to a repository or dataset")
+@Command(scope = "mobi", name = "import", description = "Imports objects to a repository or dataset")
 @Service
 public class CLIImporter implements Action {
 

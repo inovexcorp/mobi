@@ -21,25 +21,27 @@
  * #L%
  */
 describe('Search Service', function() {
-    var searchSvc, scope, $q, httpSvc, sparqlManagerSvc, discoverStateSvc;
+    var searchSvc, scope, $q, httpSvc, sparqlManagerSvc, discoverStateSvc, prefixes;
 
     beforeEach(function() {
         module('search');
         mockHttpService();
         mockSparqlManager();
         mockDiscoverState();
+        mockPrefixes();
 
         module(function($provide) {
             $provide.constant('sparqljs', window.sparqljs);
         });
 
-        inject(function(searchService, _$rootScope_, _$q_, _httpService_, _sparqlManagerService_, _discoverStateService_) {
+        inject(function(searchService, _$rootScope_, _$q_, _httpService_, _sparqlManagerService_, _discoverStateService_, _prefixes_) {
             searchSvc = searchService;
             scope = _$rootScope_;
             $q = _$q_;
             httpSvc = _httpService_;
             sparqlManagerSvc = _sparqlManagerService_;
             discoverStateSvc = _discoverStateService_;
+            prefixes = _prefixes_;
         });
     });
 
@@ -50,20 +52,22 @@ describe('Search Service', function() {
         });
         it('unless an error occurs', function() {
             sparqlManagerSvc.query.and.returnValue($q.reject('Error Message'));
-            searchSvc.submitSearch([]).then(function() {
+            searchSvc.submitSearch('', {}).then(function() {
                 fail('Promise should have rejected');
             }, function(response) {
                 expect(response).toEqual('Error Message');
-                expect(searchSvc.createQueryString).toHaveBeenCalledWith([], false);
+                expect(searchSvc.createQueryString).toHaveBeenCalledWith({});
+                expect(sparqlManagerSvc.query).toHaveBeenCalledWith(query, '', discoverStateSvc.search.targetedId);
                 expect(httpSvc.cancel).toHaveBeenCalledWith(discoverStateSvc.search.targetedId);
             });
             scope.$apply();
         });
         it('successfully', function() {
             sparqlManagerSvc.query.and.returnValue($q.when({}));
-            searchSvc.submitSearch([]).then(function(response) {
+            searchSvc.submitSearch('', {}).then(function(response) {
                 expect(response).toEqual({});
-                expect(searchSvc.createQueryString).toHaveBeenCalledWith([], false);
+                expect(searchSvc.createQueryString).toHaveBeenCalledWith({});
+                expect(sparqlManagerSvc.query).toHaveBeenCalledWith(query, '', discoverStateSvc.search.targetedId);
                 expect(httpSvc.cancel).toHaveBeenCalledWith(discoverStateSvc.search.targetedId);
             }, function() {
                 fail('Promise should have rejected');
@@ -73,12 +77,22 @@ describe('Search Service', function() {
     });
     describe('should create a keyword query', function() {
         it('with and', function() {
-            var result = searchSvc.createQueryString(['test1', 'test2']);
-            expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = ", ") AS ?Values) WHERE {\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test1")))\n  }\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test2")))\n  }\n}\nGROUP BY ?Subject ?Predicate');
-        })
+            var result = searchSvc.createQueryString({keywords: ['test1', 'test2']});
+            expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test1")))\n  }\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test2")))\n  }\n}\nGROUP BY ?Subject ?Predicate');
+        });
         it('with or', function() {
-            var result = searchSvc.createQueryString(['test1', 'test2'], true);
-            expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = ", ") AS ?Values) WHERE {\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test1")))\n  }\n  UNION\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test2")))\n  }\n}\nGROUP BY ?Subject ?Predicate');
+            var result = searchSvc.createQueryString({keywords: ['test1', 'test2'], isOrKeywords: true});
+            expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test1")))\n  }\n  UNION\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test2")))\n  }\n}\nGROUP BY ?Subject ?Predicate');
+        });
+    });
+    describe('should create a type query', function() {
+        it('with and', function() {
+            var result = searchSvc.createQueryString({types: [{classIRI: 'http://matonto.org/1'}, {classIRI: 'http://matonto.org/2'}]});
+            expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject <' + prefixes.rdf + 'type> <http://matonto.org/1>.\n    ?Subject ?Predicate ?o.\n  }\n  {\n    ?Subject <' + prefixes.rdf + 'type> <http://matonto.org/2>.\n    ?Subject ?Predicate ?o.\n  }\n}\nGROUP BY ?Subject ?Predicate');
+        });
+        it('with or', function() {
+            var result = searchSvc.createQueryString({types: [{classIRI: 'http://matonto.org/1'}, {classIRI: 'http://matonto.org/2'}], isOrTypes: true});
+            expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject <' + prefixes.rdf + 'type> <http://matonto.org/1>.\n    ?Subject ?Predicate ?o.\n  }\n  UNION\n  {\n    ?Subject <' + prefixes.rdf + 'type> <http://matonto.org/2>.\n    ?Subject ?Predicate ?o.\n  }\n}\nGROUP BY ?Subject ?Predicate');
         });
     });
 });

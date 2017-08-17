@@ -28,7 +28,7 @@
     </thead>
     <tbody>
         <tr ng-repeat="result in data track by $index">
-            <td ng-repeat="binding in bindings">{{result[binding].value}}</td>
+            <td ng-repeat="binding in bindings" ng-bind-html="result[binding].value | trusted"></td>
         </tr>
     </tbody>
 </table>

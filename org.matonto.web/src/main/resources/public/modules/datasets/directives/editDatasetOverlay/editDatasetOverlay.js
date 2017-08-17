@@ -113,7 +113,7 @@
                             $q.all(_.map(added, recordId => cm.getRecordMasterBranch(recordId, cm.localCatalog['@id'])))
                                     .then(responses => {
                                         _.forEach(responses, (branch, idx) => {
-                                            var id = dvm.util.getIdForBlankNode();
+                                            var id = dvm.util.getSkolemizedIRI();
                                             newIdentifiers.push(createBlankNode(id, added[idx], branch['@id'], dvm.util.getPropertyId(branch, prefixes.catalog + 'head')));
                                             dvm.util.setPropertyId(newRecord, prefixes.dataset + 'ontology', id);
                                         });

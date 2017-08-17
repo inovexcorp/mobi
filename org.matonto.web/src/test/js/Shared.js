@@ -941,6 +941,7 @@ function mockUtil() {
             this.getChangesById = jasmine.createSpy('getChangesById');
             this.getPredicateLocalName = jasmine.createSpy('getPredicateLocalName');
             this.getIdForBlankNode = jasmine.createSpy('getIdForBlankNode').and.returnValue('');
+            this.getSkolemizedIRI = jasmine.createSpy('getSkolemizedIRI').and.returnValue('');
         });
     });
 }
@@ -1037,10 +1038,13 @@ function mockDiscoverState() {
                 targetedId: '',
                 active: false,
                 results: undefined,
-                keywords: {
-                    arr: [],
-                    isOr: false
-                }
+                queryConfig: {
+                    isOrKeywords: false,
+                    isOrTypes: false,
+                    keywords: [],
+                    types: []
+                },
+                datasetRecordId: ''
             };
             this.resetPagedInstanceDetails = jasmine.createSpy('resetPagedInstanceDetails');
             this.cleanUpOnDatasetDelete = jasmine.createSpy('cleanUpOnDatasetDelete');
@@ -1079,6 +1083,7 @@ function mockExploreUtils() {
             this.getNewProperties = jasmine.createSpy('getNewProperties').and.returnValue([]);
             this.removeEmptyProperties = jasmine.createSpy('removeEmptyProperties').and.returnValue({});
             this.removeEmptyPropertiesFromArray = jasmine.createSpy('removeEmptyPropertiesFromArray').and.returnValue([]);
+            this.getReification = jasmine.createSpy('getReification');
         });
     });
 }

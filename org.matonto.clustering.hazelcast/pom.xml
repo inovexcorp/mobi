@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.50-SNAPSHOT</version>
+        <version>1.8.66-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -40,7 +40,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>platform.config.api</artifactId>
-            <version>1.8.26</version>
+            <version>1.8.59</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -63,7 +63,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.8.26</version>
+            <version>1.8.42</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
