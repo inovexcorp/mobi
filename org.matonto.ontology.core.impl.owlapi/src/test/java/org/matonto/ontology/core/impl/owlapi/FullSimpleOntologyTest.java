@@ -42,6 +42,7 @@ import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.impl.owlapi.classexpression.SimpleClass;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
@@ -89,7 +90,10 @@ public class FullSimpleOntologyTest {
     private OntologyId ontologyId;
 
     @Mock
-    SesameTransformer transformer;
+    private SesameTransformer transformer;
+
+    @Mock
+    private BNodeService bNodeService;
 
     @Before
     public void setUp() {
@@ -119,23 +123,23 @@ public class FullSimpleOntologyTest {
         when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
 
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");
-        ontology = new SimpleOntology(stream, ontologyManager, transformer);
+        ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService);
         Resource ont3IRI = vf.createIRI("http://matonto.org/ontology/test-local-imports-3");
         Resource ont3RecordIRI = vf.createIRI("https://matonto.org/record/test-local-imports-3");
         InputStream stream3 = this.getClass().getResourceAsStream("/test-local-imports-3.ttl");
-        Ontology ont3 = new SimpleOntology(stream3, ontologyManager, transformer);
+        Ontology ont3 = new SimpleOntology(stream3, ontologyManager, transformer, bNodeService);
         when(ontologyManager.getOntologyRecordResource(ont3IRI)).thenReturn(Optional.of(ont3RecordIRI));
         when(ontologyManager.retrieveOntology(ont3RecordIRI)).thenReturn(Optional.of(ont3));
 
         Resource ont2IRI = vf.createIRI("http://matonto.org/ontology/test-local-imports-2");
         Resource ont2RecordIRI = vf.createIRI("https://matonto.org/record/test-local-imports-2");
         InputStream stream2 = this.getClass().getResourceAsStream("/test-local-imports-2.ttl");
-        Ontology ont2 = new SimpleOntology(stream2, ontologyManager, transformer);
+        Ontology ont2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService);
         when(ontologyManager.getOntologyRecordResource(ont2IRI)).thenReturn(Optional.of(ont2RecordIRI));
         when(ontologyManager.retrieveOntology(ont2RecordIRI)).thenReturn(Optional.of(ont2));
 
         InputStream stream1 = this.getClass().getResourceAsStream("/test-local-imports-1.ttl");
-        ont1 = new SimpleOntology(stream1, ontologyManager, transformer);
+        ont1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService);
 
         values.setOntologyManager(ontologyManager);
         values.setTransformer(transformer);
@@ -145,7 +149,7 @@ public class FullSimpleOntologyTest {
     public void getImportedOntologyIRIsTest() throws Exception {
         // Setup:
         InputStream stream = this.getClass().getResourceAsStream("/test-imports.owl");
-        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer);
+        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService);
 
         Set<IRI> iris = ont.getImportedOntologyIRIs();
         assertEquals(2, iris.size());
@@ -156,7 +160,7 @@ public class FullSimpleOntologyTest {
     public void getImportsClosureFromStreamTest() throws Exception {
         // Setup:
         InputStream stream = this.getClass().getResourceAsStream("/test-imports.owl");
-        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer);
+        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService);
 
         Set<Ontology> ontologies = ont.getImportsClosure();
         assertEquals(5, ontologies.size());
@@ -176,7 +180,7 @@ public class FullSimpleOntologyTest {
                 .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
         RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
         parser.parse(new RioMemoryTripleSource(sesameModel), ontology, config);
-        Ontology ont = new SimpleOntology(ontology, null, ontologyManager, transformer);
+        Ontology ont = new SimpleOntology(ontology, null, ontologyManager, transformer, bNodeService);
 
         Set<Ontology> ontologies = ont.getImportsClosure();
         assertEquals(5, ontologies.size());

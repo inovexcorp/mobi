@@ -145,58 +145,69 @@
              * @param {string} id The IRI of the blank node to begin with
              * @param {Object[]} jsonld A JSON-LD array of all blank node in question and any supporting blanks
              * nodes needed for the display
+             * @param {Object} index A index of entity ids to objects containing the array position of that entity
+             * in the jsonld array
              * @param {boolean} html Whether or not the resulting string should include HTML tags for formatting
              * @return {string} A string containing the converted blank node with optional HTML tags for formatting
              */
-            self.jsonldToManchester = function(id, jsonld, html = false) {
-                var entity = _.find(jsonld, {'@id': id});
+            self.jsonldToManchester = function(id, jsonld, index, html = false) {
+                return render(id, jsonld, index, html);
+            }
+
+            function render(id, jsonld, index, html, listKeyword = '') {
+                var entity = jsonld[index[id].position];
                 var result = '';
                 if (om.isClass(entity)) {
                     var prop = _.intersection(_.keys(entity), _.keys(expressionKeywords));
                     if (prop.length === 1) {
-                        var item = _.get(entity[prop[0]], '0');
+                        var item = _.head(entity[prop[0]]);
                         var keyword = expressionKeywords[prop[0]];
                         if (html && prop[0] !== prefixes.owl + 'oneOf') {
                             keyword = surround(keyword, expressionClassName);
                         }
-                        if (_.has(item, '@list')) {
-                            result += _.join(_.map(_.get(item, '@list'), item =>  getManchesterValue(item, jsonld, html)), keyword);
+                        if (_.includes([prefixes.owl + 'unionOf', prefixes.owl + 'intersectionOf', prefixes.owl + 'oneOf'], prop[0])) {
+                            if (_.has(item, '@list')) {
+                                result += getValue(item['@list'][0], jsonld, index, html, keyword);
+                            } else {
+                                result += renderList(item['@id'], jsonld, index, html, keyword);
+                            }
                         } else {
-                            result += keyword + getManchesterValue(item, jsonld, html);
+                            result += keyword + getValue(item, jsonld, index, html);
                         }
                         if (prop[0] === prefixes.owl + 'oneOf') {
                             result = '{' + result + '}';
                         }
-
                     }
                 } else if (om.isRestriction(entity)) {
-                    var onProperty = _.get(entity, '["' + prefixes.owl + 'onProperty"][0]["@id"]', '');
-                    var onClass = _.get(entity, '["' + prefixes.owl + 'onClass"][0]["@id"]');
+                    var onProperty = util.getPropertyId(entity, prefixes.owl + 'onProperty');
+                    var onClass = util.getPropertyId(entity, prefixes.owl + 'onClass');
 
                     if (onProperty) {
                         var propertyRestriction = $filter('splitIRI')(onProperty).end;
                         var classRestriction = onClass ? $filter('splitIRI')(onClass).end : undefined;
                         var prop = _.intersection(_.keys(entity), _.keys(restrictionKeywords));
                         if (prop.length === 1) {
-                            var item = _.get(entity[prop[0]], '0');
+                            var item = _.head(entity[prop[0]]);
                             var keyword = html ? surround(restrictionKeywords[prop[0]], restrictionClassName) : restrictionKeywords[prop[0]];
-                            result += propertyRestriction + keyword + getManchesterValue(item, jsonld, html) + (classRestriction ? ' ' + classRestriction : '');
+                            result += propertyRestriction + keyword + getValue(item, jsonld, index, html) + (classRestriction ? ' ' + classRestriction : '');
                         }
                     }
                 } else if (om.isDatatype(entity)) {
                     var prop = _.intersection(_.keys(entity), _.keys(datatypeKeywords));
                     if (prop.length === 1 && prop[0] === prefixes.owl + 'oneOf') {
-                        var item = _.get(entity[prop[0]], '0');
+                        var item = _.head(entity[prop[0]]);
                         var separator = datatypeKeywords[prop[0]];
                         if (_.has(item, '@list')) {
-                            result += '{' + _.join(_.map(_.get(item, '@list'), item =>  getManchesterValue(item, jsonld, html)), separator) + '}';
+                            result += getValue(item['@list'][0], jsonld, index, html, separator);
+                        } else {
+                            result += renderList(item['@id'], jsonld, index, html, separator);
                         }
+                        result = '{' + result + '}';
                     }
                 }
                 return result === '' ? id : result;
             }
-
-            function getManchesterValue(item, jsonld, html = false) {
+            function getValue(item, jsonld, index, html, listKeyword = '') {
                 if (_.has(item, '@value')) {
                     var literal, lang = '';
                     if (_.has(item, '@language')) {
@@ -231,15 +242,35 @@
                     return (html ? surround(literal, literalClassName) : literal) + lang;
                 } else {
                     var value = _.get(item, '@id');
-                    return om.isBlankNodeId(value) ? '(' + self.jsonldToManchester(value, jsonld, html) + ')' : $filter('splitIRI')(value).end;
+                    if (!om.isBlankNodeId(value)) {
+                        return $filter('splitIRI')(value).end;
+                    }
+                    return listKeyword ? render(value, jsonld, index, html, listKeyword) : '(' + render(value, jsonld, index, html, listKeyword) + ')';
                 }
             }
-
             function surround(str, className) {
                 if (str.trim() !== '') {
                     return '<span class="' + className + '">' + str + '</span>';
                 }
                 return str;
+            }
+            function renderList(startId, jsonld, index, html, listKeyword) {
+                var result = '';
+                var id = startId;
+                var end = false;
+                while (!end) {
+                    var entity = jsonld[index[id].position];
+                    var first = _.head(entity[prefixes.rdf + 'first']);
+                    var rest = _.head(entity[prefixes.rdf + 'rest']);
+                    result += getValue(first, jsonld, index, html) + listKeyword;
+                    if (_.has(rest, '@list')) {
+                        result += getValue(rest['@list'][0], jsonld, index, html);
+                        end = true;
+                    } else {
+                        id = rest['@id'];
+                    }
+                }
+                return result;
             }
         }
 })();

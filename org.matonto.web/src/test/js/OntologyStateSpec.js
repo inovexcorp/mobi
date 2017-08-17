@@ -1527,7 +1527,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.getDataPropertyHierarchies.and.returnValue($q.when(dataPropertyHierarchiesResponse));
             ontologyManagerSvc.getObjectPropertyHierarchies.and.returnValue($q.when(objectPropertyHierarchiesResponse));
             ontologyManagerSvc.getAnnotationPropertyHierarchies.and.returnValue($q.when(annotationPropertyHierarchiesResponse));
-            ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([{id: 'imported-ontology', ontology: [{'@id': 'ontologyId'}]}]));
+            ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([{id: 'imported-ontology', ontologyId: 'ontologyId', ontology: [{'@id': 'ontologyId'}]}]));
             catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: branches}));
             spyOn(ontologyStateSvc, 'flattenHierarchy').and.returnValue([{prop: 'flatten'}]);
             spyOn(ontologyStateSvc, 'createFlatEverythingTree').and.returnValue([{prop: 'everything'}]);
@@ -1603,7 +1603,8 @@ describe('Ontology State Service', function() {
                         '@id': 'ontologyId',
                         matonto: {
                             icon: 'fa-square-o',
-                            imported: true
+                            imported: true,
+                            importedIRI: 'ontologyId'
                         }
                     }]], response);
                     expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);

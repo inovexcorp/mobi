@@ -28,7 +28,6 @@ import static org.matonto.rest.util.RestUtils.getRDFFormatFileExtension;
 import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
 import static org.matonto.rest.util.RestUtils.getTypedObjectFromJsonld;
 import static org.matonto.rest.util.RestUtils.jsonldToDeskolemizedModel;
-import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToSkolemizedString;
 
 import aQute.bnd.annotation.component.Component;
@@ -1005,7 +1004,8 @@ public class CatalogRestImpl implements CatalogRest {
         return createPaginatedResponseWithJson(uriInfo, results, totalSize, limit, offset);
     }
 
-    private Response createPaginatedResponseWithJson(UriInfo uriInfo, JSONArray items, int totalSize, int limit, int offset) {
+    private Response createPaginatedResponseWithJson(UriInfo uriInfo, JSONArray items, int totalSize, int limit,
+                                                     int offset) {
         Links links = LinksUtils.buildLinks(uriInfo, items.size(), totalSize, limit, offset);
         Response.ResponseBuilder response = Response.ok(items).header("X-Total-Count", totalSize);
         if (links.getNext() != null) {
@@ -1195,7 +1195,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @return The new Thing if the JSON-LD contains the correct ID Resource; throws a 400 otherwise.
      */
     private <T extends Thing> T getNewThing(String newThingJson, Resource thingId, OrmFactory<T> factory) {
-        Model newThingModel = jsonldToDeskolemizedModel(newThingJson, transformer, bNodeService);
+        Model newThingModel = convertJsonld(newThingJson);
         return factory.getExisting(thingId, newThingModel).orElseThrow(() ->
                 ErrorUtils.sendError(factory.getTypeIRI().getLocalName() + " IDs must match",
                         Response.Status.BAD_REQUEST));
@@ -1257,7 +1257,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @return A Model containing the statements from the JSON-LD string.
      */
     private Model convertJsonld(String jsonld) {
-        return jsonldToModel(jsonld, transformer);
+        return jsonldToDeskolemizedModel(jsonld, transformer, bNodeService);
     }
 
 
