@@ -63,6 +63,9 @@ describe('Manchester Converter service', function() {
         splitIRIFilter.and.callFake(function(str) {
             return {end: str};
         });
+        utilSvc.getPropertyId.and.callFake(function(obj, prop) {
+            return _.get(obj[prop], "[0]['@id']", '');
+        });
     });
 
     describe('should convert a Manchester syntax string into JSON-LD', function() {

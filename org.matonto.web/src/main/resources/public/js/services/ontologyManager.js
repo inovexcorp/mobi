@@ -305,9 +305,11 @@
              * @param {string} commitId The id of the Commit to retrieve the ontology from
              * @param {string} [rdfFormat='jsonld'] The RDF format to return the ontology in
              * @param {boolean} [clearCache=false] Boolean indicating whether or not you should clear the cache
+             * @param {boolen} [preview=false] Boolean indicating whether or not this ontology is inteded to be
+             * previewed, not edited
              * @return {Promise} A promise with the ontology at the specified commit in the specified RDF format
              */
-            self.getOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld', clearCache = false) {
+            self.getOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld', clearCache = false, preview = false) {
                 var config = {
                     headers: {
                         'Accept': 'text/plain'
@@ -317,21 +319,7 @@
                         commitId,
                         rdfFormat,
                         clearCache,
-                        skolemize: true
-                    }
-                };
-                return $http.get(prefix + '/' + encodeURIComponent(recordId), config)
-                    .then(response => response.data, util.rejectError);
-            }
-            self.previewOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld') {
-                var config = {
-                    headers: {
-                        'Accept': 'text/plain'
-                    },
-                    params: {
-                        branchId,
-                        commitId,
-                        rdfFormat
+                        skolemize: !preview
                     }
                 };
                 return $http.get(prefix + '/' + encodeURIComponent(recordId), config)

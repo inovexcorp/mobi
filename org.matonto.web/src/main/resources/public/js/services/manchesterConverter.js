@@ -179,10 +179,8 @@
                         }
                     }
                 } else if (om.isRestriction(entity)) {
-                    var onProperty = _.get(entity, '["' + prefixes.owl + 'onProperty"][0]["@id"]', '');
-                    var onClass = _.get(entity, '["' + prefixes.owl + 'onClass"][0]["@id"]');
-                    /*var onProperty = util.getPropertyId(entity, prefixes.owl + 'onProperty');
-                    var onClass = util.getPropertyId(entity, prefixes.owl + 'onClass');*/
+                    var onProperty = util.getPropertyId(entity, prefixes.owl + 'onProperty');
+                    var onClass = util.getPropertyId(entity, prefixes.owl + 'onClass');
 
                     if (onProperty) {
                         var propertyRestriction = $filter('splitIRI')(onProperty).end;

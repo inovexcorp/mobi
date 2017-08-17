@@ -213,7 +213,6 @@ function mockOntologyManager() {
             this.uploadFile = jasmine.createSpy('uploadFile').and.returnValue($q.when({}));
             this.uploadJson = jasmine.createSpy('uploadJson').and.returnValue($q.when({}));
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
-            this.previewOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
             this.getIris = jasmine.createSpy('getIris').and.returnValue($q.when({}));
             this.getImportedIris = jasmine.createSpy('getImportedIris').and.returnValue($q.when([]));
             this.getClassHierarchies = jasmine.createSpy('getClassHierarchies').and.returnValue($q.when({}));
