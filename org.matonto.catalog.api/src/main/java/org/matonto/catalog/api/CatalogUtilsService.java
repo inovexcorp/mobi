@@ -398,8 +398,8 @@ public interface CatalogUtilsService {
     /**
      * Gets the Revision associated with the provided commit Resource.
      *
-     * @param commitId The commit for which to retrieve the revision.
-     * @param conn The RepositoryConnection used to query the Repository.
+     * @param commitId The Resource identifying the commit
+     * @param conn The connection to the repository
      * @return The Revision associated with the provided commit Resource.
      */
     Revision getRevision(Resource commitId, RepositoryConnection conn);
