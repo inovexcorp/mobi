@@ -26,6 +26,7 @@ package org.matonto.ontology.core.impl.owlapi;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -298,6 +299,7 @@ public class SimpleOntologyManagerTest {
 
         Optional<Ontology> result = manager.retrieveOntologyByIRI(ontologyIRI);
         assertTrue(result.isPresent());
+        assertNotNull(result.get());
         assertNotEquals(ontology, result.get());
         String key = ontologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
         verify(mockCache).containsKey(eq(key));
@@ -368,6 +370,7 @@ public class SimpleOntologyManagerTest {
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI);
         assertTrue(optionalOntology.isPresent());
+        assertNotNull(optionalOntology.get());
         assertNotEquals(ontology, optionalOntology.get());
         String key = ontologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
         verify(mockCache).containsKey(eq(key));
@@ -447,6 +450,7 @@ public class SimpleOntologyManagerTest {
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI);
         assertTrue(optionalOntology.isPresent());
+        assertNotNull(optionalOntology.get());
         assertNotEquals(ontology, optionalOntology.get());
         String key = ontologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
         verify(mockCache).containsKey(eq(key));
@@ -515,6 +519,7 @@ public class SimpleOntologyManagerTest {
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
         assertTrue(optionalOntology.isPresent());
+        assertNotNull(optionalOntology.get());
         assertNotEquals(ontology, optionalOntology.get());
         String key = ontologyCache.generateKey(recordIRI.stringValue(), branchIRI.stringValue(), commitIRI.stringValue());
         verify(mockCache, times(2)).containsKey(eq(key));
