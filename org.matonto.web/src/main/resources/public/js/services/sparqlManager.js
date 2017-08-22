@@ -50,10 +50,10 @@
          */
         .service('sparqlManagerService', sparqlManagerService);
 
-        sparqlManagerService.$inject = ['$http', '$q', '$window', '$httpParamSerializer', 'utilService', 'httpService'];
+        sparqlManagerService.$inject = ['$http', '$q', '$window', '$httpParamSerializer', 'utilService', 'httpService', 'REST_PREFIX'];
 
-        function sparqlManagerService($http, $q, $window, $httpParamSerializer, utilService, httpService) {
-            var prefix = '/matontorest/sparql';
+        function sparqlManagerService($http, $q, $window, $httpParamSerializer, utilService, httpService, REST_PREFIX) {
+            var prefix = REST_PREFIX + 'sparql';
             var self = this;
             var util = utilService;
 
@@ -233,7 +233,7 @@
              * @methodOf sparqlManager.service:sparqlManagerService
              *
              * @description
-             * Calls the GET /matontorest/sparql endpoint using the `window.location` variable which
+             * Calls the GET /mobirest/sparql endpoint using the `window.location` variable which
              * will start a download of the results of running the current
              * {@link sparqlManager.service:sparqlManagerService#queryString query} and
              * {@link sparqlManager.service:sparqlManagerService#prefixes prefixes}, optionally using

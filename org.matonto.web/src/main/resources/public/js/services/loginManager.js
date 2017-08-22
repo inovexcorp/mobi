@@ -74,7 +74,7 @@
              * @methodOf loginManager.service:loginManagerService
              *
              * @description
-             * Makes a call to GET /matontorest/user/login to attempt to log into MatOnto using the
+             * Makes a call to GET /mobirest/user/login to attempt to log into MatOnto using the
              * passed credentials. Returns a Promise with the success of the log in attempt.
              * If failed, contains an appropriate error message.
              *
@@ -92,7 +92,7 @@
                     },
                     deferred = $q.defer();
 
-                $http.get('/matontorest/user/login', config)
+                $http.get('/mobirest/user/login', config)
                     .then(response => {
                         if (response.status === 200 && response.data.scope !== anon) {
                             self.currentUser = response.data.sub;
@@ -118,11 +118,11 @@
              * @methodOf loginManager.service:loginManagerService
              *
              * @description
-             * Makes a call to GET /matontorest/user/logout to log out of which ever user account
+             * Makes a call to GET /mobirest/user/logout to log out of which ever user account
              * is current. Navigates back to the login page.
              */
             self.logout = function() {
-                $http.get('/matontorest/user/logout')
+                $http.get('/mobirest/user/logout')
                     .then(response => {
                         self.currentUser = '';
                         $state.go('login');
@@ -176,7 +176,7 @@
              * @methodOf loginManager.service:loginManagerService
              *
              * @description
-             * Makes a call to GET /matontorest/user/current to retrieve the user that is currently logged
+             * Makes a call to GET /mobirest/user/current to retrieve the user that is currently logged
              * in. Returns a Promise with the result of the call.
              *
              * @return {Promise} A Promise with the response data that resolves if the request was successful;
@@ -185,7 +185,7 @@
             self.getCurrentLogin = function () {
                 var deferred = $q.defer();
 
-                $http.get('/matontorest/user/current').then(response => {
+                $http.get('/mobirest/user/current').then(response => {
                     if (response.status === 200) {
                         deferred.resolve(response.data);
                     } else {

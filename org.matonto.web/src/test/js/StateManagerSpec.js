@@ -39,6 +39,7 @@ describe('State Manager service', function() {
         module('stateManager');
         mockPrefixes();
         mockUtil();
+        injectRestPathConstant();
 
         module(function($provide) {
             $provide.service('uuid', function() {
@@ -62,7 +63,7 @@ describe('State Manager service', function() {
 
     describe('getStates', function() {
         it('without parameters', function() {
-            $httpBackend.whenGET('/matontorest/states?').respond(200, states);
+            $httpBackend.whenGET('/mobirest/states?').respond(200, states);
             stateManagerSvc.getStates().then(function(response) {
                 expect(response).toEqual(states);
             });
@@ -72,7 +73,7 @@ describe('State Manager service', function() {
             var params = $httpParamSerializer({
                 application: application
             });
-            $httpBackend.whenGET('/matontorest/states?' + params).respond(200, states);
+            $httpBackend.whenGET('/mobirest/states?' + params).respond(200, states);
             stateManagerSvc.getStates({application: application}).then(function(response) {
                 expect(response).toEqual(states);
             });
@@ -83,7 +84,7 @@ describe('State Manager service', function() {
                 application: application,
                 subjects: subjects
             });
-            $httpBackend.whenGET('/matontorest/states?' + params).respond(200, states);
+            $httpBackend.whenGET('/mobirest/states?' + params).respond(200, states);
             stateManagerSvc.getStates({application: application, subjects: subjects}).then(function(response) {
                 expect(response).toEqual(states);
             });
@@ -93,7 +94,7 @@ describe('State Manager service', function() {
             var params = $httpParamSerializer({
                 subjects: subjects
             });
-            $httpBackend.whenGET('/matontorest/states?' + params).respond(200, states);
+            $httpBackend.whenGET('/mobirest/states?' + params).respond(200, states);
             stateManagerSvc.getStates({subjects: subjects}).then(function(response) {
                 expect(response).toEqual(states);
             });
@@ -103,7 +104,7 @@ describe('State Manager service', function() {
 
     describe('createState', function() {
         it('with no application', function() {
-            $httpBackend.expectPOST('/matontorest/states', function(data) {
+            $httpBackend.expectPOST('/mobirest/states', function(data) {
                 return _.isEqual(data, JSON.stringify(state));
             }, function(headers) {
                 return headers['Content-Type'] === 'application/json';
@@ -115,7 +116,7 @@ describe('State Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('with application', function() {
-            $httpBackend.expectPOST('/matontorest/states?application=' + application, function(data) {
+            $httpBackend.expectPOST('/mobirest/states?application=' + application, function(data) {
                 return _.isEqual(data, JSON.stringify(state));
             }, function(headers) {
                 return headers['Content-Type'] === 'application/json';
@@ -129,7 +130,7 @@ describe('State Manager service', function() {
     });
 
     it('getState hits the correct endpoint', function() {
-        $httpBackend.expectGET('/matontorest/states/' + encodeURIComponent(stateId)).respond(200, states[0]);
+        $httpBackend.expectGET('/mobirest/states/' + encodeURIComponent(stateId)).respond(200, states[0]);
         stateManagerSvc.getState(stateId).then(function(response) {
             expect(response).toEqual(states[0]);
         });
@@ -138,7 +139,7 @@ describe('State Manager service', function() {
 
     it('updateState hits the correct endpoint', function() {
         stateManagerSvc.states = [{id: stateId, model: 'old-model'}];
-        $httpBackend.expectPUT('/matontorest/states/' + encodeURIComponent(stateId), function(data) {
+        $httpBackend.expectPUT('/mobirest/states/' + encodeURIComponent(stateId), function(data) {
             return _.isEqual(data, JSON.stringify(state));
         }).respond(200, '');
         stateManagerSvc.updateState(stateId, state).then(function() {
@@ -150,7 +151,7 @@ describe('State Manager service', function() {
 
     it('deleteState hits the correct endpoint', function() {
         stateManagerSvc.states = [{id: stateId, model: 'old-model'}];
-        $httpBackend.expectDELETE('/matontorest/states/' + encodeURIComponent(stateId)).respond(200, '');
+        $httpBackend.expectDELETE('/mobirest/states/' + encodeURIComponent(stateId)).respond(200, '');
         stateManagerSvc.deleteState(stateId).then(function() {
             expect(stateManagerSvc.states.length).toBe(0);
         });

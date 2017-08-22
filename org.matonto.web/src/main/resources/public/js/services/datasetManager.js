@@ -49,14 +49,14 @@
          */
         .service('datasetManagerService', datasetManagerService);
 
-        datasetManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'discoverStateService', 'catalogManagerService'];
+        datasetManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'discoverStateService', 'catalogManagerService', 'REST_PREFIX'];
 
-        function datasetManagerService($http, $q, utilService, prefixes, discoverStateService, catalogManagerService) {
+        function datasetManagerService($http, $q, utilService, prefixes, discoverStateService, catalogManagerService, REST_PREFIX) {
             var self = this,
                 util = utilService,
                 ds = discoverStateService,
                 cm = catalogManagerService,
-                prefix = '/matontorest/datasets';
+                prefix = REST_PREFIX + 'datasets';
 
             /**
              * @ngdoc property
@@ -76,7 +76,7 @@
              * @methodOf datasetManager.service:datasetManagerService
              *
              * @description
-             * Calls the GET /matontorest/datasets endpoint to collect a list of the DatasetRecords in MatOnto.
+             * Calls the GET /mobirest/datasets endpoint to collect a list of the DatasetRecords in MatOnto.
              * Can optionally be paged and sorted through the properties in the passed `paginatedConfig` object.
              * Returns a response with the list of DatasetRecords in the data and any extra pagination information
              * in the headers.
@@ -107,7 +107,7 @@
              * @methodOf datasetManager.service:datasetManagerService
              *
              * @description
-             * Calls POST /matontorest/datasets endpoint with the passed metadata and creates a new DatasetRecord and
+             * Calls POST /mobirest/datasets endpoint with the passed metadata and creates a new DatasetRecord and
              * associated Dataset. Returns a Promise with the IRI of the new DatasetRecord if successful or rejects
              * with an error message.
              *
@@ -159,7 +159,7 @@
              * @methodOf datasetManager.service:datasetManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/datasets/{datasetRecordId} endpoint and removes the identified DatasetRecord
+             * Calls the DELETE /mobirest/datasets/{datasetRecordId} endpoint and removes the identified DatasetRecord
              * and its associated Dataset and named graphs from MatOnto. By default, only removes named graphs that are not
              * used by other Datasets, but can be forced to delete them by passed in a boolean. Returns a Promise indicating
              * the success of the request.
@@ -183,7 +183,7 @@
              * @methodOf datasetManager.service:datasetManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/datasets/{datasetRecordId}/data endpoint and removes the named graphs of the
+             * Calls the DELETE /mobirest/datasets/{datasetRecordId}/data endpoint and removes the named graphs of the
              * Dataset associated with the identified DatasetRecord from MatOnto. By default, only removes named graphs that
              * are not used by other Datasets, but can be forced to delete them by passed in a boolean. Returns a Promise
              * indicating the success of the request.

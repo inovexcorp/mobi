@@ -49,12 +49,12 @@
          */
         .service('catalogManagerService', catalogManagerService);
 
-        catalogManagerService.$inject = ['$window', '$http', 'httpService', '$q', 'prefixes', 'utilService'];
+        catalogManagerService.$inject = ['$window', '$http', 'httpService', '$q', 'prefixes', 'utilService', 'REST_PREFIX'];
 
-        function catalogManagerService($window, $http, httpService, $q, prefixes, utilService) {
+        function catalogManagerService($window, $http, httpService, $q, prefixes, utilService, REST_PREFIX) {
             var self = this,
                 util = utilService,
-                prefix = '/matontorest/catalogs';
+                prefix = REST_PREFIX + 'catalogs';
 
             /**
              * @ngdoc property
@@ -117,7 +117,7 @@
              * @description
              * Initializes the `sortOptions`, `recordTypes`, `localCatalog`, and `distributedCatalog` of the
              * catalogManagerService using the `getSortOptions` and `getRecordTypes` methods along with the
-             * GET /matontorest/catalogs endpoint. If the local or distributed Catalog cannot be found, rejects
+             * GET /mobirest/catalogs endpoint. If the local or distributed Catalog cannot be found, rejects
              * with an error message.
              *
              * @returns {Promise} A promise that resolves if initialization was successful or is rejected
@@ -158,7 +158,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/record-types endpoint and returns the
+             * Calls the GET /mobirest/catalogs/record-types endpoint and returns the
              * array of record type IRIs.
              *
              * @returns {Promise} A promise that resolves to an array of the IRIs for all
@@ -174,7 +174,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/sort-options endpoint and returns the
+             * Calls the GET /mobirest/catalogs/sort-options endpoint and returns the
              * array of record property IRIs.
              *
              * @return {Promise} A promise that resolves to an array of the IRIs for all
@@ -209,7 +209,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records endpoint and returns the paginated
+             * Calls the GET /mobirest/catalogs/{catalogId}/records endpoint and returns the paginated
              * response for the query using the passed page index, limit, sort option from the `sortOptions`
              * array, and Record type filter IRI from the `recordTypes` array. The data of the response will
              * be the array of Records, the "x-total-count" headers will contain the total number of Records
@@ -248,7 +248,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId} endpoint with the passed
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId} endpoint with the passed
              * Catalog and Record ids and returns the matching Record object if it exists.
              *
              * @param {string} recordId The id of the Record to retrieve
@@ -267,7 +267,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records endpoint with the passed Catalog id and
+             * Calls the POST /mobirest/catalogs/{catalogId}/records endpoint with the passed Catalog id and
              * metadata and creates a new Record for the identified Catalog. Returns a Promise with the IRI of the
              * new Record if successful or rejects with an error message.
              *
@@ -307,7 +307,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the PUT /matontorest/catalogs/{catalogId}/records/{recordId} endpoint with the passed Catalog and
+             * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId} endpoint with the passed Catalog and
              * Record ids and updates the identified Record with the passed Record JSON-LD object.
              *
              * @param {string} recordId The id of the Record to update
@@ -326,7 +326,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId} endpoint with the passed Catalog
+             * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId} endpoint with the passed Catalog
              * and Record ids and removes the identified Record and all associated entities from MatOnto.
              *
              * @param {string} recordId The id of the Record to delete
@@ -344,7 +344,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/distributions endpoint and
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/distributions endpoint and
              * returns the paginated response using the passed page index, limit, and sort option from the
              * `sortOption` array. The data of the response will be the array of Distributions, the
              * "x-total-count" headers will contain the total number of Distributions matching the query, and
@@ -374,7 +374,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId}
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId}
              * endpoint and returns the matching Distribution JSON-LD object.
              *
              * @param {string} distributionId The id of the Distribution to retrieve
@@ -394,7 +394,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/distributions endpoint with the passed
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/distributions endpoint with the passed
              * Catalog and Record id and metadata and creates a new Distribution for the identified Record. Returns a
              * Promise with the IRI of the new Distribution if successful or rejects with an error message.
              *
@@ -440,7 +440,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the PUT /matontorest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId} endpoint with
+             * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId} endpoint with
              * the passed Catalog, Record, and Distribution ids and updates the identified Distribution with the passed
              * Distribution JSON-LD object.
              *
@@ -461,7 +461,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId} endpoint
+             * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId} endpoint
              * with the passed Catalog, Record, and Distribution ids and removes the identified Distribution and all associated
              * entities from MatOnto.
              *
@@ -481,7 +481,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/versions endpoint and
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions endpoint and
              * returns the paginated response using the passed page index, limit, and sort option from the
              * `sortOption` array. The data of the response will be the array of Versions, the
              * "x-total-count" headers will contain the total number of Versions matching the query, and
@@ -511,7 +511,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/versions/latest
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions/latest
              * endpoint and returns the matching Version JSON-LD object for the Record's latest Version.
              *
              * @param {string} recordId The id of the Record to retrieve the latest Version of
@@ -529,7 +529,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}
              * endpoint and returns the matching Version JSON-LD object.
              *
              * @param {string} versionId The id of the Version to retrieve
@@ -549,7 +549,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/versions endpoint with the passed
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/versions endpoint with the passed
              * Catalog and Record ids and metadata and creates a new Version for the identified Record. Returns a
              * Promise with the IRI of the new Version if successful or rejects with an error message.
              *
@@ -572,7 +572,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/versions endpoint with the passed
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/versions endpoint with the passed
              * Catalog and Record ids, metadata, and associated Commit id and creates a new Tag for the identified
              * Record. Returns a Promise with the IRI of the new Tag if successful or rejects with an error message.
              *
@@ -601,7 +601,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the PUT /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId} endpoint with
+             * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId} endpoint with
              * the passed Catalog, Record, and Version ids and updates the identified Version with the passed
              * Version JSON-LD object.
              *
@@ -622,7 +622,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId} endpoint
+             * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId} endpoint
              * with the passed Catalog, Record, and Version ids and removes the identified Version and all associated
              * entities from MatOnto.
              *
@@ -642,7 +642,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/commit endpoint
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/commit endpoint
              * with the passed Catalog, Record, and Version ids and retrieves the associated Commit for the identified
              * Version in the passed RDF format.
              *
@@ -664,7 +664,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions
              * endpoint and returns the paginated response using the passed page index, limit, and sort option from the
              * `sortOption` array. The data of the response will be the array of Distributions, the
              * "x-total-count" headers will contain the total number of Distributions matching the query, and
@@ -695,7 +695,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
              * endpoint and returns the matching Distribution JSON-LD object.
              *
              * @param {string} distributionId The id of the Distribution to retrieve
@@ -716,7 +716,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions
              * endpoint with the passed Catalog, Record, and Version ids and metadata and creates a new Distribution
              * for the identified Version. Returns a Promise with the IRI of the new Distribution if successful or
              * rejects with an error message.
@@ -764,7 +764,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the PUT /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
+             * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
              * endpoint with the passed Catalog, Record, Version, and Distribution ids and updates the identified Distribution with
              * the passed Distribution JSON-LD object.
              *
@@ -786,7 +786,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
+             * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
              * endpoint with the passed Catalog, Record, Version, and Distribution ids and removes the identified Distribution and all
              * associated entities from MatOnto.
              *
@@ -807,7 +807,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches endpoint and
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches endpoint and
              * returns the paginated response using the passed page index, limit, and sort option from the
              * `sortOption` array. The data of the response will be the array of Branches, the
              * "x-total-count" headers will contain the total number of Branches matching the query, and
@@ -840,7 +840,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/master endpoint and
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/master endpoint and
              * returns the matching Branch JSON-LD object for the Record's master Branch.
              *
              * @param {string} recordId The id of the Record to retrieve the master Branch of
@@ -858,7 +858,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}
              * endpoint and returns the matching Branch JSON-LD object.
              *
              * @param {string} branchId The id of the Branch to retrieve
@@ -877,7 +877,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/branches endpoint with the passed
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/branches endpoint with the passed
              * Catalog and Record ids, metadata, and associated Commit id and creates a new Branch for the identified
              * Record. Returns a Promise with the IRI of the new Branch if successful or rejects with an error message.
              *
@@ -906,7 +906,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/branches endpoint with the passed
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/branches endpoint with the passed
              * Catalog and Record ids, metadata, and associated Commit id and creates a new UserBranch for the identified
              * Record. Returns a Promise with the IRI of the new UserBranch if successful or rejects with an error message.
              *
@@ -937,7 +937,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the PUT /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} endpoint with
+             * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} endpoint with
              * the passed Catalog, Record, and Branch ids and updates the identified Branch with the passed
              * Branch JSON-LD object.
              *
@@ -959,7 +959,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} endpoint
+             * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} endpoint
              * with the passed Catalog, Record, and Branch ids and removes the identified Branch and all associated
              * entities from MatOnto.
              *
@@ -979,7 +979,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits endpoint
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits endpoint
              * with the passed Catalog, Record, and Branch ids and retrieves the list of Commits in that Branch.
              *
              * @param {string} branchId The id of the Branch to retrieve the Commits of
@@ -998,7 +998,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits endpoint
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits endpoint
              * with the passed Catalog, Record, and Branch ids and string message and creates a Commit on the identified
              * Branch using the logged in User's InProgressCommit with the passed message.
              *
@@ -1020,7 +1020,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/head endpoint
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/head endpoint
              * and returns the matching Commit JSON object of the Branch's head Commit in the passed RDF format.
              *
              * @param {string} branchId The id of the Branch to retrieve the head Commit of
@@ -1041,7 +1041,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId} endpoint
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId} endpoint
              * and returns the matching Commit JSON object in the passed RDF format.
              *
              * @param {string} commitId The id of the Commit to retrieve
@@ -1063,7 +1063,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/conflicts endpoint
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/conflicts endpoint
              * and returns an array of conflicts between the identified source Branch and the target Branch identified by
              * the passed id.
              *
@@ -1091,7 +1091,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/conflicts/resolution endpoint
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/conflicts/resolution endpoint
              * and performs a merge between the two identified Branches, creating a Commit using the additions and deletions JSON-LD
              * provided in the passed difference object.
              *
@@ -1126,7 +1126,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource
              * endpoint and returns the resource compiled starting at the identified Commit.
              *
              * @param {string} commitId The id of the Commit to retrieve the compiled resource from
@@ -1159,7 +1159,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource
              * endpoint using the `window.location` variable which will start a download of the compiled resource starting at the
              * identified Commit.
              *
@@ -1181,7 +1181,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and creates
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and creates
              * a new InProgressCommit for the logged-in User for the identified Record.
              *
              * @param {string} recordId The id of the Record to create an InProgressCommit for
@@ -1199,7 +1199,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and
              * retrieves the InProgressCommit for the logged-in User for the identified Record.
              *
              * @param {string} recordId The id of the Record to retrieve the InProgressCommit from
@@ -1217,7 +1217,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the PUT /matontorest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and
+             * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and
              * updates the InProgressCommit for the logged-in User for the identified Record using the additions and
              * deletions JSON-LD provided in the passed difference object.
              *
@@ -1252,7 +1252,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and deletes
+             * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and deletes
              * the InProgressCommit for the logged-in User for the identified Record.
              *
              * @param {string} recordId The id of the Record to delete the InProgressCommit from

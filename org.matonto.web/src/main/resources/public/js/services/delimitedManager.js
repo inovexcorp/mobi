@@ -48,12 +48,12 @@
          */
         .service('delimitedManagerService', delimitedManagerService);
 
-        delimitedManagerService.$inject = ['$http', '$httpParamSerializer', '$q', '$window', 'utilService'];
+        delimitedManagerService.$inject = ['$http', '$httpParamSerializer', '$q', '$window', 'utilService', 'REST_PREFIX'];
 
-        function delimitedManagerService($http, $httpParamSerializer, $q, $window, utilService) {
+        function delimitedManagerService($http, $httpParamSerializer, $q, $window, utilService, REST_PREFIX) {
             var self = this,
                 util = utilService,
-                prefix = '/matontorest/delimited-files';
+                prefix = REST_PREFIX + 'delimited-files';
 
             /**
              * @ngdoc property
@@ -63,7 +63,7 @@
              *
              * @description
              * `dataRows` holds an array of a preview of delimited data. Set by the
-             * POST /matontorest/delimited-files endpoint
+             * POST /mobirest/delimited-files endpoint
              */
             self.dataRows = undefined;
             /**
@@ -74,7 +74,7 @@
              *
              * @description
              * `fileName` holds a string with the name of the uploaded delimited file given
-             * back from the POST /matontorest/delimited-files endpoint
+             * back from the POST /mobirest/delimited-files endpoint
              * endpoint calls.
              */
             self.fileName = '';
@@ -86,9 +86,9 @@
              *
              * @description
              * `separator` holds a string with the character separating columns in the uploaded
-             * delimited file if it is an SV file. It is used in the GET /matontorest/delimited-files/{fileName},
-             * the POST /matontorest/delimited-files/{fileName}/map, and the
-             * GET /matontorest/delimited-files/{fileName}/map
+             * delimited file if it is an SV file. It is used in the GET /mobirest/delimited-files/{fileName},
+             * the POST /mobirest/delimited-files/{fileName}/map, and the
+             * GET /mobirest/delimited-files/{fileName}/map
              * endpoints calls.
              */
             self.separator = ',';
@@ -100,9 +100,9 @@
              *
              * @description
              * `separator` holds a boolean indicating whether the uploaded delimited file contains a
-             * header row or not. It is used in the GET /matontorest/delimited-files/{fileName}, the POST
-             * /matontorest/delimited-files/{fileName}/map-preview, and the
-             * GET /matontorest/delimited-files/{fileName}/map
+             * header row or not. It is used in the GET /mobirest/delimited-files/{fileName}, the POST
+             * /mobirest/delimited-files/{fileName}/map-preview, and the
+             * GET /mobirest/delimited-files/{fileName}/map
              * endpoints calls.
              */
             self.containsHeaders = true;
@@ -135,7 +135,7 @@
              * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description
-             * Makes a call to POST /matontorest/delimited-files to upload the passed File object to the repository.
+             * Makes a call to POST /mobirest/delimited-files to upload the passed File object to the repository.
              * Returns the resulting file name is a promise.
              *
              * @param {object} file a File object to upload (should be a SV or Excel file)
@@ -162,7 +162,7 @@
              * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description
-             * Makes a call to GET /matontorest/delimited-files/{fileName} to retrieve the passed in number of rows
+             * Makes a call to GET /mobirest/delimited-files/{fileName} to retrieve the passed in number of rows
              * of an uploaded delimited file. Uses {@link delimitedManager.delimitedManager#separator separator} and
              * {@link delimitedManager.delimitedManager#fileName fileName} to make the call. Depending on the value
              * of {@link delimitedManager.delimitedManager#containsHeaders containsHeaders}, either uses the first
@@ -202,7 +202,7 @@
              * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description
-             * Makes a call to POST /matontorest/delimited-files/{fileName}/map-preview to retrieve the first 10 rows of
+             * Makes a call to POST /mobirest/delimited-files/{fileName}/map-preview to retrieve the first 10 rows of
              * delimited data mapped into RDF data using the passed in JSON-LD mapping and returns the RDF
              * data in the passed in format. Uses {@link delimitedManager.delimitedManager#separator separator},
              * {@link delimitedManager.delimitedManager#containsHeaders containsHeaders}, and
@@ -239,7 +239,7 @@
              * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description
-             * Opens the current window to the location of GET /matontorest/delimited-files/{fileName}/map which
+             * Opens the current window to the location of GET /mobirest/delimited-files/{fileName}/map which
              * will start a file download of the complete mapped delimited data in the specified format
              * of an uploaded delimited file using a saved Mapping identified by the passed IRI. Uses
              * {@link delimitedManager.delimitedManager#separator separator},
@@ -270,7 +270,7 @@
              * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description
-             * Calls the POST /matontorest/delimited-files/{fileName}/map to map the data of an uploaded delimited file
+             * Calls the POST /mobirest/delimited-files/{fileName}/map to map the data of an uploaded delimited file
              * using a saved Mapping identified by the passed IRI into the Dataset associated with the DatasetRecord
              * identified by the passed IRI. Returns a Promise indicating the success of the request.
              *

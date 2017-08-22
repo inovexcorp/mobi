@@ -45,12 +45,12 @@
          */
         .service('userManagerService', userManagerService);
 
-        userManagerService.$inject = ['$http', '$q'];
+        userManagerService.$inject = ['$http', '$q', 'REST_PREFIX'];
 
-        function userManagerService($http, $q) {
+        function userManagerService($http, $q, REST_PREFIX) {
             var self = this,
-                userPrefix = '/matontorest/users',
-                groupPrefix = '/matontorest/groups';
+                userPrefix = REST_PREFIX + 'users',
+                groupPrefix = REST_PREFIX + 'groups';
 
             /**
              * @ngdoc property
@@ -113,10 +113,10 @@
              * @description
              * Initializes the {@link userManager.service:userManagerService#users users} and
              * {@link userManager.service:userManagerService#groups groups} lists. Uses
-             * the results of the GET /matontorest/users, GET /matontorest/users/{username},
-             * and GET /matontorest/users/{username}/roles endpoints for the users list. Uses the
-             * results of the GET /matontorest/groups, GET /matontorest/groups/{groupTitle},
-             * GET /matontorest/groups/{groupTitle}/roles, and GET /matontorest/groups/{groupTitle}/roles
+             * the results of the GET /mobirest/users, GET /mobirest/users/{username},
+             * and GET /mobirest/users/{username}/roles endpoints for the users list. Uses the
+             * results of the GET /mobirest/groups, GET /mobirest/groups/{groupTitle},
+             * GET /mobirest/groups/{groupTitle}/roles, and GET /mobirest/groups/{groupTitle}/roles
              * endpoints for the groups list. If an error occurs in any of the HTTP calls,
              * logs the error on the console.
              */
@@ -159,7 +159,7 @@
              *
              * @description
              * Finds the username of the user associated with the passed IRI. If it has not been found before,
-             * calls the GET /matontorest/users/username endpoint and saves the result in the
+             * calls the GET /mobirest/users/username endpoint and saves the result in the
              * {@link userManager.service:userManagerService#users users} list. If it has been found before,
              * grabs the username from the users list. Returns a Promise that resolves with the username and rejects
              * if the endpoint fails.
@@ -192,7 +192,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the POST /matontorest/users endpoint to add the passed user to MatOnto. Returns a Promise
+             * Calls the POST /mobirest/users endpoint to add the passed user to MatOnto. Returns a Promise
              * that resolves if the addition was successful and rejects with an error message if it was not.
              * Updates the {@link userManager.service:userManagerService#users users} list appropriately.
              *
@@ -219,7 +219,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the GET /matontorest/users/{username} endpoint to retrieve a MatOnto user
+             * Calls the GET /mobirest/users/{username} endpoint to retrieve a MatOnto user
              * with passed username. Returns a Promise that resolves with the result of the call
              * if it was successful and rejects with an error message if it was not.
              *
@@ -239,7 +239,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the PUT /matontorest/users/{username} endpoint to update a MatOnto user specified
+             * Calls the PUT /mobirest/users/{username} endpoint to update a MatOnto user specified
              * by the passed username with the passed new user. Returns a Promise that resolves if it
              * was successful and rejects with an error message if it was not. Updates the
              * {@link userManager.service:userManagerService#users users} list appropriately.
@@ -266,7 +266,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the POST /matontorest/users/{username}/password endpoint to change the password of
+             * Calls the POST /mobirest/users/{username}/password endpoint to change the password of
              * a MatOnto user specified by the passed username. Requires the user's current password to
              * succeed. Returns a Promise that resolves if it was successful and rejects with an error
              * message if it was not.
@@ -295,7 +295,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the PUT /matontorest/users/{username}/password endpoint to reset the password of
+             * Calls the PUT /mobirest/users/{username}/password endpoint to reset the password of
              * a MatOnto user specified by the passed username. Can only be performed by an admin user.
              * Returns a Promise that resolves if it was successful and rejects with an error message
              * if it was not.
@@ -318,7 +318,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/users/{username} endpoint to remove the MatOnto user
+             * Calls the DELETE /mobirest/users/{username} endpoint to remove the MatOnto user
              * with passed username. Returns a Promise that resolves if the deletion was successful
              * and rejects with an error message if it was not. Updates the
              * {@link userManager.service:userManagerService#groups groups} list appropriately.
@@ -343,7 +343,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the PUT /matontorest/users/{username}/roles endpoint to add the passed
+             * Calls the PUT /mobirest/users/{username}/roles endpoint to add the passed
              * roles to the MatOnto user specified by the passed username. Returns a Promise
              * that resolves if the addition was successful and rejects with an error message
              * if not. Updates the {@link userManager.service:userManagerService#users users}
@@ -373,7 +373,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/users/{username}/roles endpoint to remove the passed
+             * Calls the DELETE /mobirest/users/{username}/roles endpoint to remove the passed
              * role from the MatOnto user specified by the passed username. Returns a Promise
              * that resolves if the deletion was successful and rejects with an error message
              * if not. Updates the {@link userManager.service:userManagerService#users users}
@@ -404,7 +404,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the PUT /matontorest/users/{username}/groups endpoint to add the MatOnto user specified
+             * Calls the PUT /mobirest/users/{username}/groups endpoint to add the MatOnto user specified
              * by the passed username to the group specified by the passed group title. Returns a Promise
              * that resolves if the addition was successful and rejects with an error message if not.
              * Updates the {@link userManager.service:userManagerService#groups groups} list appropriately.
@@ -435,7 +435,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/users/{username}/groups endpoint to remove the MatOnto
+             * Calls the DELETE /mobirest/users/{username}/groups endpoint to remove the MatOnto
              * user specified by the passed username from the group specified by the passed group
              * title. Returns a Promise that resolves if the deletion was successful and rejects
              * with an error message if not. Updates the
@@ -466,7 +466,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the POST /matontorest/groups endpoint to add the passed group to MatOnto. Returns
+             * Calls the POST /mobirest/groups endpoint to add the passed group to MatOnto. Returns
              * a Promise that resolves if the addition was successful and rejects with an error message
              * if it was not. Updates the {@link userManager.service:userManagerService#groups groups}
              * list appropriately.
@@ -490,7 +490,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the GET /matontorest/groups/{groupTitle} endpoint to retrieve a MatOnto group
+             * Calls the GET /mobirest/groups/{groupTitle} endpoint to retrieve a MatOnto group
              * with passed title. Returns a Promise that resolves with the result of the call
              * if it was successful and rejects with an error message if it was not.
              *
@@ -510,7 +510,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the PUT /matontorest/groups/{groupTitle} endpoint to update a MatOnto group specified
+             * Calls the PUT /mobirest/groups/{groupTitle} endpoint to update a MatOnto group specified
              * by the passed title with the passed new group. Returns a Promise that resolves if it
              * was successful and rejects with an error message if it was not. Updates the
              * {@link userManager.service:userManagerService#groups groups} list appropriately.
@@ -537,7 +537,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/groups/{groupTitle} endpoint to remove the MatOnto group
+             * Calls the DELETE /mobirest/groups/{groupTitle} endpoint to remove the MatOnto group
              * with passed title. Returns a Promise that resolves if the deletion was successful
              * and rejects with an error message if it was not. Updates the
              * {@link userManager.service:userManagerService#groups groups} list appropriately.
@@ -561,7 +561,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the PUT /matontorest/groups/{groupTitle}/roles endpoint to add the passed
+             * Calls the PUT /mobirest/groups/{groupTitle}/roles endpoint to add the passed
              * roles to the MatOnto group specified by the passed title. Returns a Promise
              * that resolves if the addition was successful and rejects with an error message
              * if not. Updates the {@link userManager.service:userManagerService#groups groups}
@@ -591,7 +591,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/groups/{groupTitle}/roles endpoint to remove the passed
+             * Calls the DELETE /mobirest/groups/{groupTitle}/roles endpoint to remove the passed
              * role from the MatOnto group specified by the passed title. Returns a Promise
              * that resolves if the deletion was successful and rejects with an error message
              * if not. Updates the {@link userManager.service:userManagerService#groups groups}
@@ -622,7 +622,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the GET /matontorest/groups/{groupTitle}/users endpoint to retrieve the list of
+             * Calls the GET /mobirest/groups/{groupTitle}/users endpoint to retrieve the list of
              * users assigned to the MatOnto group specified by the passed title. Returns a Promise
              * that resolves with the result of the call is successful and rejects with an error message
              * if it was not.
@@ -643,7 +643,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the PUT /matontorest/groups/{groupTitle}/users endpoint to add the MatOnto
+             * Calls the PUT /mobirest/groups/{groupTitle}/users endpoint to add the MatOnto
              * users specified by the passed array of usernames to the group specified by the
              * passed group title. Returns a Promise that resolves if the addition was successful
              * and rejects with an error message if not. Updates the
@@ -673,7 +673,7 @@
              * @methodOf userManager.service:userManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/groups/{groupTitle}/users endpoint to remove the MatOnto
+             * Calls the DELETE /mobirest/groups/{groupTitle}/users endpoint to remove the MatOnto
              * user specified by the passed username from the group specified by the passed group
              * title. Returns a Promise that resolves if the deletion was successful and rejects
              * with an error message if not. Updates the
