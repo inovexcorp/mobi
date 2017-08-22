@@ -35,7 +35,6 @@ import org.matonto.persistence.utils.StatementIterable;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
-import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.Value;
@@ -57,10 +56,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @Component
 public class RDFExportServiceImpl implements RDFExportService {
@@ -70,7 +67,6 @@ public class RDFExportServiceImpl implements RDFExportService {
     private Map<String, Repository> initializedRepositories = new HashMap<>();
 
     private ValueFactory vf;
-    private ModelFactory mf;
     private SesameTransformer transformer;
     private DatasetManager datasetManager;
 
@@ -89,11 +85,6 @@ public class RDFExportServiceImpl implements RDFExportService {
     @Reference
     public void setVf(ValueFactory vf) {
         this.vf = vf;
-    }
-
-    @Reference
-    public void setMf(ModelFactory mf) {
-        this.mf = mf;
     }
 
     @Reference

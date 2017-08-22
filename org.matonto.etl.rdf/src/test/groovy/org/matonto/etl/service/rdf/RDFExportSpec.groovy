@@ -26,8 +26,6 @@ import org.matonto.dataset.api.DatasetConnection
 import org.matonto.dataset.api.DatasetManager
 import org.matonto.etl.api.config.ExportServiceConfig
 import org.matonto.persistence.utils.api.SesameTransformer
-import org.matonto.rdf.api.ModelFactory
-import org.matonto.rdf.core.impl.sesame.LinkedHashModel
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.rdf.core.utils.Values
@@ -78,7 +76,6 @@ class RDFExportSpec extends Specification {
 
         service.setDatasetManager(datasetManager)
         service.setTransformer(transformer)
-        service.setMf(mf)
         service.setVf(vf)
         service.addRepository(repo)
     }
