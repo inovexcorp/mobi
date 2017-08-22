@@ -27,6 +27,7 @@ describe('SPARQL Manager service', function() {
         module('sparqlManager');
         mockUtil();
         mockHttpService();
+        injectRestPathConstant();
 
         module(function($provide) {
             $provide.service('$window', function() {
@@ -49,7 +50,7 @@ describe('SPARQL Manager service', function() {
     });
 
     describe('should query the repository', function() {
-        var query = 'query', url = '/matontorest/sparql', data = {head: {}}, id = 'id';
+        var query = 'query', url = '/mobirest/sparql', data = {head: {}}, id = 'id';
         describe('with a dataset', function() {
             var dataset = 'dataset';
             describe('when id is set', function() {
@@ -145,7 +146,7 @@ describe('SPARQL Manager service', function() {
         beforeEach(function() {
             params.limit = sparqlManagerSvc.limit;
             params.offset = sparqlManagerSvc.currentPage * sparqlManagerSvc.limit;
-            url = '/matontorest/sparql/page?';
+            url = '/mobirest/sparql/page?';
         });
         it('with a dataset', function(done) {
             sparqlManagerSvc.datasetRecordIRI = 'dataset';
@@ -211,20 +212,20 @@ describe('SPARQL Manager service', function() {
             sparqlManagerSvc.datasetRecordIRI = 'dataset';
             params.dataset = sparqlManagerSvc.datasetRecordIRI;
             sparqlManagerSvc.downloadResults(params.fileType);
-            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(params));
+            expect(windowSvc.location).toBe('/mobirest/sparql?' + $httpParamSerializer(params));
         });
         it('with a file name', function() {
             params.fileName = 'test';
             sparqlManagerSvc.downloadResults(params.fileType, params.fileName);
-            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(params));
+            expect(windowSvc.location).toBe('/mobirest/sparql?' + $httpParamSerializer(params));
         });
         it('without a file name', function() {
             sparqlManagerSvc.downloadResults(params.fileType);
-            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(params));
+            expect(windowSvc.location).toBe('/mobirest/sparql?' + $httpParamSerializer(params));
 
             windowSvc.location = '';
             sparqlManagerSvc.downloadResults(params.fileType, '');
-            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(params));
+            expect(windowSvc.location).toBe('/mobirest/sparql?' + $httpParamSerializer(params));
         });
     });
 });

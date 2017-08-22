@@ -92,6 +92,12 @@ function injectRegexConstant() {
     });
 }
 
+function injectRestPathConstant() {
+    module(function($provide) {
+        $provide.constant('REST_PREFIX', '/mobirest/');
+    });
+}
+
 function injectIndentConstant() {
     module(function($provide) {
         $provide.constant('INDENT', 1);

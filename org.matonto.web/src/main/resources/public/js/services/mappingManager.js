@@ -30,7 +30,7 @@
          *
          * @description
          * The `mappingManager` module only provides the `mappingManagerService` service which
-         * provides access to the MatOnto mapping REST endpoints and utility functions for
+         * provides access to the Mobi mapping REST endpoints and utility functions for
          * manipulating mapping arrays
          */
         .module('mappingManager', [])
@@ -46,19 +46,19 @@
          * @requires uuid
          *
          * @description
-         * `mappingManagerService` is a service that provides access to the MatOnto mapping REST
+         * `mappingManagerService` is a service that provides access to the Mobi mapping REST
          * endpoints and utility functions for editing/creating mapping arrays and accessing
          * various aspects of mapping arrays.
          */
         .service('mappingManagerService', mappingManagerService);
 
-        mappingManagerService.$inject = ['$window', '$filter', '$http', '$q', 'utilService', 'ontologyManagerService', 'prefixes', 'uuid'];
+        mappingManagerService.$inject = ['$window', '$filter', '$http', '$q', 'utilService', 'ontologyManagerService', 'prefixes', 'uuid', 'REST_PREFIX'];
 
-        function mappingManagerService($window, $filter, $http, $q, utilService, ontologyManagerService, prefixes, uuid) {
+        function mappingManagerService($window, $filter, $http, $q, utilService, ontologyManagerService, prefixes, uuid, REST_PREFIX) {
             var self = this,
                 om = ontologyManagerService,
                 util = utilService,
-                prefix = '/matontorest/mappings';
+                prefix = REST_PREFIX + 'mappings';
 
             /**
              * @ngdoc property
@@ -79,7 +79,7 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Calls the GET /matontorest/mappings endpoint which retrieves a paginated list of MappingRecords
+             * Calls the GET /mobirest/mappings endpoint which retrieves a paginated list of MappingRecords
              * sorted by dcterms:title.
              */
             self.getMappingRecords = function() {
@@ -96,7 +96,7 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Calls the POST /matontorest/mappings endpoint which uploads a mapping to the MatOnto
+             * Calls the POST /mobirest/mappings endpoint which uploads a mapping to the Mobi
              * repository with a generated IRI. Returns a promise with the IRI of the newly uploaded
              * mapping.
              *
@@ -126,7 +126,7 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Calls the GET /matontorest/mappings/{mappingName} endpoint which returns the JSONL-LD
+             * Calls the GET /mobirest/mappings/{mappingName} endpoint which returns the JSONL-LD
              * of a saved mapping. Returns a promise with "@graph" of the mapping.
              *
              * @param {string} mappingId The IRI for the mapping
@@ -142,7 +142,7 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Calls the GET /matontorest/mappings/{mappingName} endpoint using the `window.location` function
+             * Calls the GET /mobirest/mappings/{mappingName} endpoint using the `window.location` function
              * which will start a download of the JSON-LD of a saved mapping.
              *
              * @param {string} mappingId The IRI for the mapping
@@ -157,8 +157,8 @@
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/mappings/{mappingName} endpoint which deleted the specified
-             * mapping from the MatOnto repository. Returns a promise with the success of the deletion.
+             * Calls the DELETE /mobirest/mappings/{mappingName} endpoint which deleted the specified
+             * mapping from the Mobi repository. Returns a promise with the success of the deletion.
              *
              * @param {string} mappingId The IRI for the mapping
              * @returns {Promise} A promise resolves if the deletion succeeded; rejects otherwise
