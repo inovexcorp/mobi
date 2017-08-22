@@ -30,7 +30,7 @@
          *
          * @description
          * The `ontologyManager` module only provides the `ontologyManagerService` service which
-         * provides access to the MatOnto ontology REST endpoints and utility functions for
+         * provides access to the Mobi ontology REST endpoints and utility functions for
          * manipulating ontologies
          */
         .module('ontologyManager', [])
@@ -46,7 +46,7 @@
          * @requires httpService
          *
          * @description
-         * `ontologyManagerService` is a service that provides access to the MatOnto ontology REST
+         * `ontologyManagerService` is a service that provides access to the Mobi ontology REST
          * endpoints and utility functions for editing/creating ontologies and accessing
          * various entities within the ontology.
          */
@@ -193,7 +193,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the POST /mobirest/ontologies endpoint which uploads an ontology to the MatOnto repository
+             * Calls the POST /mobirest/ontologies endpoint which uploads an ontology to the Mobi repository
              * with the file provided. This creates a new OntologyRecord associated with this ontology. Returns a
              * promise indicating whether the ontology was persisted.
              *
@@ -261,7 +261,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the POST /mobirest/ontologies endpoint which uploads an ontology to the MatOnto repository
+             * Calls the POST /mobirest/ontologies endpoint which uploads an ontology to the Mobi repository
              * with the JSON-LD ontology string provided. Creates a new OntologyRecord for the associated ontology.
              * Returns a promise with the entityIRI and ontologyId for the state of the newly created ontology.
              *
@@ -1347,7 +1347,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets entity with the provided IRI from the provided ontologies in the MatOnto repository. Returns the
+             * Gets entity with the provided IRI from the provided ontologies in the Mobi repository. Returns the
              * entity Object.
              *
              * @param {Object[]} ontologies The array of ontologies you want to check.

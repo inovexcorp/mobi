@@ -30,7 +30,7 @@
          *
          * @description
          * The `delimitedManager` module only provides the `delimitedManagerService` service which
-         * provides access to the MatOnto CSV REST endpoints and variable to hold data
+         * provides access to the Mobi CSV REST endpoints and variable to hold data
          * pertaining to the results of these endpoints.
          */
         .module('delimitedManager', [])
@@ -42,7 +42,7 @@
          * @requires $window
          *
          * @description
-         * `delimitedManagerService` is a service that provides access to the MatOnto CSV REST
+         * `delimitedManagerService` is a service that provides access to the Mobi CSV REST
          * endpoints and various variables to hold data pertaining to the parameters
          * passed to the endpoints and the results of the endpoints.
          */

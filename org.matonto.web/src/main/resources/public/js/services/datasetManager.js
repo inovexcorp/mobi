@@ -32,7 +32,7 @@
          *
          * @description
          * The `datasetManager` module only provides the `datasetManagerService` service which provides access
-         * to the MatOnto Dataset REST endpoints.
+         * to the Mobi Dataset REST endpoints.
          */
         .module('datasetManager', [])
         /**
@@ -45,7 +45,7 @@
          * @requires discoverState.service:discoverStateService
          *
          * @description
-         * `datasetManagerService` is a service that provides access to the MatOnto Dataset REST endpoints.
+         * `datasetManagerService` is a service that provides access to the Mobi Dataset REST endpoints.
          */
         .service('datasetManagerService', datasetManagerService);
 
@@ -76,7 +76,7 @@
              * @methodOf datasetManager.service:datasetManagerService
              *
              * @description
-             * Calls the GET /mobirest/datasets endpoint to collect a list of the DatasetRecords in MatOnto.
+             * Calls the GET /mobirest/datasets endpoint to collect a list of the DatasetRecords in Mobi.
              * Can optionally be paged and sorted through the properties in the passed `paginatedConfig` object.
              * Returns a response with the list of DatasetRecords in the data and any extra pagination information
              * in the headers.
@@ -160,7 +160,7 @@
              *
              * @description
              * Calls the DELETE /mobirest/datasets/{datasetRecordId} endpoint and removes the identified DatasetRecord
-             * and its associated Dataset and named graphs from MatOnto. By default, only removes named graphs that are not
+             * and its associated Dataset and named graphs from Mobi. By default, only removes named graphs that are not
              * used by other Datasets, but can be forced to delete them by passed in a boolean. Returns a Promise indicating
              * the success of the request.
              *
@@ -184,7 +184,7 @@
              *
              * @description
              * Calls the DELETE /mobirest/datasets/{datasetRecordId}/data endpoint and removes the named graphs of the
-             * Dataset associated with the identified DatasetRecord from MatOnto. By default, only removes named graphs that
+             * Dataset associated with the identified DatasetRecord from Mobi. By default, only removes named graphs that
              * are not used by other Datasets, but can be forced to delete them by passed in a boolean. Returns a Promise
              * indicating the success of the request.
              *

@@ -30,7 +30,7 @@
          *
          * @description
          * The `catalogManager` module only provides the `catalogManagerService` service which
-         * provides access to the MatOnto catalog REST endpoints and utility functions for the
+         * provides access to the Mobi catalog REST endpoints and utility functions for the
          * results of those endpoints
          */
         .module('catalogManager', [])
@@ -43,7 +43,7 @@
          * @requires ontologyManager.service:ontologyManagerService
          *
          * @description
-         * `catalogManagerService` is a service that provides access to the MatOnto catalog REST
+         * `catalogManagerService` is a service that provides access to the Mobi catalog REST
          * endpoints and utility functions for the record, distribution, version, and branch objects
          * that are returned.
          */
@@ -93,7 +93,7 @@
              * @type {Object}
              *
              * @description
-             * `localCatalog` contains the JSON-LD object for the local Catalog in MatOnto. It is populated by
+             * `localCatalog` contains the JSON-LD object for the local Catalog in Mobi. It is populated by
              * the `initialize` method.
              */
             self.localCatalog = undefined;
@@ -104,7 +104,7 @@
              * @type {Object}
              *
              * @description
-             * `distributedCatalog` contains the JSON-LD object for the distributed Catalog in MatOnto. It is
+             * `distributedCatalog` contains the JSON-LD object for the distributed Catalog in Mobi. It is
              * populated by the `initialize` method.
              */
             self.distributedCatalog = undefined;
@@ -327,7 +327,7 @@
              *
              * @description
              * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId} endpoint with the passed Catalog
-             * and Record ids and removes the identified Record and all associated entities from MatOnto.
+             * and Record ids and removes the identified Record and all associated entities from Mobi.
              *
              * @param {string} recordId The id of the Record to delete
              * @param {string} catalogId The id of the Catalog the Record should be part of
@@ -463,7 +463,7 @@
              * @description
              * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId} endpoint
              * with the passed Catalog, Record, and Distribution ids and removes the identified Distribution and all associated
-             * entities from MatOnto.
+             * entities from Mobi.
              *
              * @param {string} distributionId The id of the Distribution to delete
              * @param {string} recordId The id of the Record with the specified Distribution
@@ -624,7 +624,7 @@
              * @description
              * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId} endpoint
              * with the passed Catalog, Record, and Version ids and removes the identified Version and all associated
-             * entities from MatOnto.
+             * entities from Mobi.
              *
              * @param {string} versionId The id of the Version to delete
              * @param {string} recordId The id of the Record with the specified Version
@@ -788,7 +788,7 @@
              * @description
              * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
              * endpoint with the passed Catalog, Record, Version, and Distribution ids and removes the identified Distribution and all
-             * associated entities from MatOnto.
+             * associated entities from Mobi.
              *
              * @param {string} distributionId The id of the Distribution to delete
              * @param {string} versionId The id of the Version with the specified Distribution
@@ -961,7 +961,7 @@
              * @description
              * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} endpoint
              * with the passed Catalog, Record, and Branch ids and removes the identified Branch and all associated
-             * entities from MatOnto.
+             * entities from Mobi.
              *
              * @param {string} branchId The id of the Branch to delete
              * @param {string} recordId The id of the Record with the specified Branch

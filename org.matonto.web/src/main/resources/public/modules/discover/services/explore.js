@@ -30,7 +30,7 @@
          *
          * @description
          * The `explore` module only provides the `exploreService` service which provides access
-         * to the MatOnto explorable-datasets REST endpoints.
+         * to the Mobi explorable-datasets REST endpoints.
          */
         .module('explore', [])
         /**
@@ -42,7 +42,7 @@
          * @requires discoverState.service:discoverStateService
          *
          * @description
-         * `exploreService` is a service that provides access to the MatOnto explorable-datasets REST
+         * `exploreService` is a service that provides access to the Mobi explorable-datasets REST
          * endpoints.
          */
         .service('exploreService', exploreService);
