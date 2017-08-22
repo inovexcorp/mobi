@@ -5,11 +5,11 @@ Export of RDF will be added.
 
 The endpoints can be found at 
 ```
-localhost:8443/matontorest/csv/
+localhost:8443/mobirest/csv/
 ```
 and 
 ```
-localhost:8443/matontorest/mappings/
+localhost:8443/mobirest/mappings/
 ```
 
 ##Deployment
@@ -30,7 +30,7 @@ localhost:8443/matontorest/mappings/
 The swagger spec for the ETL REST Service can be found at
 
 ```
-localhost:8443/matontorest/swagger-ui/index.html
+localhost:8443/mobirest/swagger-ui/index.html
 ```
 
 Point the swagger UI at that URL to view the swagger spec.
