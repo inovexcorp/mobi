@@ -1,4 +1,4 @@
-package org.matonto.etl.cli;
+package org.matonto.etl.cli.export;
 
 /*-
  * #%L
@@ -43,9 +43,9 @@ import java.io.OutputStream;
 
 @Command(scope = "mobi", name = "export", description = "Exports objects from a repository or dataset")
 @Service
-public class CLIExporter implements Action {
+public class ExportRDF implements Action {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CLIExporter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExportRDF.class);
 
     @Reference
     private RDFExportService exportService;
