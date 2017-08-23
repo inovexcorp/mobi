@@ -305,8 +305,7 @@
          * for entities that have the provided predicate and exactly matches the provided keyword.
          *
          * @param {string} predicate The predicate's existence which is being searched for
-         * @param {string} value The value which should be either true or false
-         * @param {string} range The range of the keyword
+         * @param {boolean} value The value which is being searched for
          * @return {Object} A part of a SPARQL query object
          */
         self.createBooleanQuery = function(predicate, value) {
