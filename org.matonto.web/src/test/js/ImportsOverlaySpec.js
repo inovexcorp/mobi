@@ -32,6 +32,7 @@ describe('Imports Overlay directive', function() {
         mockUtil();
         mockPrefixes();
         mockHttpService();
+        injectRestPathConstant();
 
         inject(function(_$q_, _$compile_, _$rootScope_, _$httpBackend_, _ontologyStateService_, _ontologyManagerService_, _utilService_, _prefixes_) {
             $q = _$q_;
@@ -209,13 +210,13 @@ describe('Imports Overlay directive', function() {
                     controller.url = 'url';
                 });
                 it('and get request resolves', function() {
-                    $httpBackend.expectGET('/matontorest/imported-ontologies/url').respond(200);
+                    $httpBackend.expectGET('/mobirest/imported-ontologies/url').respond(200);
                     controller.addImport();
                     flushAndVerify($httpBackend);
                     expect(controller.confirmed).toHaveBeenCalledWith([controller.url]);
                 });
                 it('when get request rejects', function() {
-                    $httpBackend.expectGET('/matontorest/imported-ontologies/url').respond(400);
+                    $httpBackend.expectGET('/mobirest/imported-ontologies/url').respond(400);
                     controller.addImport();
                     flushAndVerify($httpBackend);
                     expect(controller.urlError).toBe('The provided URL was unresolvable.');

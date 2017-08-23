@@ -77,6 +77,7 @@ describe('Ontology Manager service', function() {
         mockCatalogManager();
         mockUtil();
         mockHttpService();
+        injectRestPathConstant();
 
         module(function($provide) {
             $provide.service('$window', function() {
@@ -257,7 +258,7 @@ describe('Ontology Manager service', function() {
     });
     describe('uploadFile hits the proper endpoint', function() {
         it('with description and keywords', function(done) {
-            $httpBackend.expectPOST('/matontorest/ontologies',
+            $httpBackend.expectPOST('/mobirest/ontologies',
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
@@ -274,7 +275,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('with no description or keywords', function(done) {
-            $httpBackend.expectPOST('/matontorest/ontologies',
+            $httpBackend.expectPOST('/mobirest/ontologies',
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
@@ -291,7 +292,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.expectPOST('/matontorest/ontologies',
+            $httpBackend.expectPOST('/mobirest/ontologies',
                 function(data) {
                     return data instanceof FormData;
                 },
@@ -316,7 +317,7 @@ describe('Ontology Manager service', function() {
                 description: description,
                 keywords: keywords
             });
-            $httpBackend.expectPOST('/matontorest/ontologies?' + params, ontologyObj,
+            $httpBackend.expectPOST('/mobirest/ontologies?' + params, ontologyObj,
                 function(headers) {
                     return headers['Content-Type'] === 'application/json';
                 }).respond(200, {ontologyId: ontologyId, recordId: recordId});
@@ -332,7 +333,7 @@ describe('Ontology Manager service', function() {
         });
         it('with no description or keywords', function(done) {
             var params = paramSerializer({ title: title });
-            $httpBackend.expectPOST('/matontorest/ontologies?' + params, ontologyObj,
+            $httpBackend.expectPOST('/mobirest/ontologies?' + params, ontologyObj,
                 function(headers) {
                     return headers['Content-Type'] === 'application/json';
                 }).respond(200, {ontologyId: ontologyId, recordId: recordId});
@@ -348,7 +349,7 @@ describe('Ontology Manager service', function() {
         });
         it('unless an error occurs', function(done) {
             var params = paramSerializer({ title: title });
-            $httpBackend.expectPOST('/matontorest/ontologies?' + params, ontologyObj,
+            $httpBackend.expectPOST('/mobirest/ontologies?' + params, ontologyObj,
                 function(headers) {
                     return headers['Content-Type'] === 'application/json';
                 }).respond(400, null, null, error);
@@ -367,19 +368,19 @@ describe('Ontology Manager service', function() {
     describe('downloadOntology should set the $window.location properly', function() {
         it('with a format', function() {
             ontologyManagerSvc.downloadOntology(recordId, branchId, commitId, 'turtle');
-            expect(windowSvc.location).toBe('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?branchId=' + encodeURIComponent(branchId) + '&commitId=' + encodeURIComponent(commitId) + '&fileName=ontology&rdfFormat=turtle');
+            expect(windowSvc.location).toBe('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?branchId=' + encodeURIComponent(branchId) + '&commitId=' + encodeURIComponent(commitId) + '&fileName=ontology&rdfFormat=turtle');
         });
         it('without a format', function() {
             ontologyManagerSvc.downloadOntology(recordId, branchId, commitId);
-            expect(windowSvc.location).toBe('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?branchId=' + encodeURIComponent(branchId) + '&commitId=' + encodeURIComponent(commitId) + '&fileName=ontology&rdfFormat=jsonld');
+            expect(windowSvc.location).toBe('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?branchId=' + encodeURIComponent(branchId) + '&commitId=' + encodeURIComponent(commitId) + '&fileName=ontology&rdfFormat=jsonld');
         });
         it('with a fileName', function() {
             ontologyManagerSvc.downloadOntology(recordId, branchId, commitId, 'turtle', 'fileName');
-            expect(windowSvc.location).toBe('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?branchId=' + encodeURIComponent(branchId) + '&commitId=' + encodeURIComponent(commitId) + '&fileName=fileName&rdfFormat=turtle');
+            expect(windowSvc.location).toBe('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?branchId=' + encodeURIComponent(branchId) + '&commitId=' + encodeURIComponent(commitId) + '&fileName=fileName&rdfFormat=turtle');
         });
         it('without a fileName', function() {
             ontologyManagerSvc.downloadOntology(recordId, branchId, commitId, 'turtle');
-            expect(windowSvc.location).toBe('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?branchId=' + encodeURIComponent(branchId) + '&commitId=' + encodeURIComponent(commitId) + '&fileName=ontology&rdfFormat=turtle');
+            expect(windowSvc.location).toBe('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?branchId=' + encodeURIComponent(branchId) + '&commitId=' + encodeURIComponent(commitId) + '&fileName=ontology&rdfFormat=turtle');
         });
     });
     describe('getOntology hits the proper endpoint', function() {
@@ -389,7 +390,7 @@ describe('Ontology Manager service', function() {
         });
         it('unless an error occurs', function() {
             util.rejectError.and.returnValue($q.reject(error));
-            $httpBackend.expectGET('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+            $httpBackend.expectGET('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
                 function(headers) {
                     return headers['Accept'] === 'text/plain';
                 }).respond(400, null, null, error);
@@ -406,7 +407,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+            $httpBackend.expectGET('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
                 function(headers) {
                     return headers['Accept'] === 'text/plain';
                 }).respond(200, ontology);
@@ -425,7 +426,7 @@ describe('Ontology Manager service', function() {
             params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/iris?' + params).respond(400, null, null, error);
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/iris?' + params).respond(400, null, null, error);
             ontologyManagerSvc.getIris(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
@@ -438,7 +439,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/iris?' + params).respond(200, {});
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/iris?' + params).respond(200, {});
             ontologyManagerSvc.getIris(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual({});
@@ -456,7 +457,7 @@ describe('Ontology Manager service', function() {
             params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-iris?' + params).respond(400, null, null, error);
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/imported-iris?' + params).respond(400, null, null, error);
             ontologyManagerSvc.getImportedIris(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
@@ -469,7 +470,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('unless there are none', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-iris?' + params).respond(204);
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/imported-iris?' + params).respond(204);
             ontologyManagerSvc.getImportedIris(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual([]);
@@ -481,7 +482,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/imported-iris?' + params).respond(200, [{}]);
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/imported-iris?' + params).respond(200, [{}]);
             ontologyManagerSvc.getImportedIris(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual([{}]);
@@ -499,7 +500,7 @@ describe('Ontology Manager service', function() {
             params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/class-hierarchies?' + params).respond(400, null, null, error);
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/class-hierarchies?' + params).respond(400, null, null, error);
             ontologyManagerSvc.getClassHierarchies(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
@@ -512,7 +513,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/class-hierarchies?' + params).respond(200, {});
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/class-hierarchies?' + params).respond(200, {});
             ontologyManagerSvc.getClassHierarchies(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual({});
@@ -530,7 +531,7 @@ describe('Ontology Manager service', function() {
             params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/classes-with-individuals?' + params).respond(400, null, null, error);
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/classes-with-individuals?' + params).respond(400, null, null, error);
             ontologyManagerSvc.getClassesWithIndividuals(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
@@ -543,7 +544,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/classes-with-individuals?' + params).respond(200, {});
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/classes-with-individuals?' + params).respond(200, {});
             ontologyManagerSvc.getClassesWithIndividuals(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual({});
@@ -561,7 +562,7 @@ describe('Ontology Manager service', function() {
             params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/data-property-hierarchies?' + params).respond(400, null, null, error);
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/data-property-hierarchies?' + params).respond(400, null, null, error);
             ontologyManagerSvc.getDataPropertyHierarchies(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
@@ -574,7 +575,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/data-property-hierarchies?' + params).respond(200, {});
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/data-property-hierarchies?' + params).respond(200, {});
             ontologyManagerSvc.getDataPropertyHierarchies(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual({});
@@ -592,7 +593,7 @@ describe('Ontology Manager service', function() {
             params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/object-property-hierarchies?' + params).respond(400, null, null, error);
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/object-property-hierarchies?' + params).respond(400, null, null, error);
             ontologyManagerSvc.getObjectPropertyHierarchies(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
@@ -603,7 +604,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/object-property-hierarchies?' + params).respond(200, {});
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/object-property-hierarchies?' + params).respond(200, {});
             ontologyManagerSvc.getObjectPropertyHierarchies(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual({});
@@ -619,7 +620,7 @@ describe('Ontology Manager service', function() {
             params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/annotation-property-hierarchies?' + params).respond(400, null, null, error);
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/annotation-property-hierarchies?' + params).respond(400, null, null, error);
             ontologyManagerSvc.getAnnotationPropertyHierarchies(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
@@ -632,7 +633,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/annotation-property-hierarchies?' + params).respond(200, {});
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/annotation-property-hierarchies?' + params).respond(200, {});
             ontologyManagerSvc.getAnnotationPropertyHierarchies(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual({});
@@ -650,7 +651,7 @@ describe('Ontology Manager service', function() {
             params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/concept-hierarchies?' + params).respond(400, null, null, error);
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/concept-hierarchies?' + params).respond(400, null, null, error);
             ontologyManagerSvc.getConceptHierarchies(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
@@ -661,7 +662,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/concept-hierarchies?' + params).respond(200, {});
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/concept-hierarchies?' + params).respond(200, {});
             ontologyManagerSvc.getConceptHierarchies(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual({});
@@ -677,7 +678,7 @@ describe('Ontology Manager service', function() {
             params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/concept-scheme-hierarchies?' + params).respond(400, null, null, error);
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/concept-scheme-hierarchies?' + params).respond(400, null, null, error);
             ontologyManagerSvc.getConceptSchemeHierarchies(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
@@ -688,7 +689,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/' + recordId + '/concept-scheme-hierarchies?' + params).respond(200, {});
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/concept-scheme-hierarchies?' + params).respond(200, {});
             ontologyManagerSvc.getConceptSchemeHierarchies(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual({});
@@ -708,7 +709,7 @@ describe('Ontology Manager service', function() {
             });
         });
         it('when get succeeds', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
+            $httpBackend.expectGET('/mobirest/ontologies/recordId/imported-ontologies?' + params)
                 .respond(200, [ontology]);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function(response) {
@@ -721,7 +722,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('when get is empty', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
+            $httpBackend.expectGET('/mobirest/ontologies/recordId/imported-ontologies?' + params)
                 .respond(204);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function(response) {
@@ -734,7 +735,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('when another success response', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
+            $httpBackend.expectGET('/mobirest/ontologies/recordId/imported-ontologies?' + params)
                 .respond(201, null, null, error);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function() {
@@ -747,7 +748,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('when get fails', function(done) {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/imported-ontologies?' + params)
+            $httpBackend.expectGET('/mobirest/ontologies/recordId/imported-ontologies?' + params)
                 .respond(400, null, null, error);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function() {
@@ -780,7 +781,7 @@ describe('Ontology Manager service', function() {
         describe('when get succeeds', function() {
             describe('with no id set', function() {
                 it('and queryType is select', function(done) {
-                    $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=select')
+                    $httpBackend.expectGET('/mobirest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=select')
                         .respond(200, usages);
                     ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'select')
                         .then(function(response) {
@@ -793,7 +794,7 @@ describe('Ontology Manager service', function() {
                     flushAndVerify($httpBackend);
                 });
                 it('and queryType is construct', function(done) {
-                    $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=construct')
+                    $httpBackend.expectGET('/mobirest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=construct')
                         .respond(200, usages);
                     ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'construct')
                         .then(function(response) {
@@ -813,7 +814,7 @@ describe('Ontology Manager service', function() {
                 it('and queryType is select', function(done) {
                     ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'select', 'usages')
                         .then(function(response) {
-                            expect(httpSvc.get).toHaveBeenCalledWith('/matontorest/ontologies/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(classId), config, 'usages');
+                            expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(classId), config, 'usages');
                             expect(response).toEqual(usages.results.bindings);
                             done();
                         }, function() {
@@ -826,7 +827,7 @@ describe('Ontology Manager service', function() {
                     config.params.queryType = 'construct';
                     ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'construct', 'usages')
                         .then(function(response) {
-                            expect(httpSvc.get).toHaveBeenCalledWith('/matontorest/ontologies/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(classId), config, 'usages');
+                            expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(classId), config, 'usages');
                             expect(response).toEqual(usages);
                             done();
                         }, function() {
@@ -839,7 +840,7 @@ describe('Ontology Manager service', function() {
         });
         describe('when get fails', function() {
             it('when id is not set', function(done) {
-                $httpBackend.expectGET('/matontorest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=select')
+                $httpBackend.expectGET('/mobirest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=select')
                     .respond(400, null, null, error);
                 ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId)
                     .then(function() {
@@ -857,7 +858,7 @@ describe('Ontology Manager service', function() {
                     .then(function() {
                         fail('Promise should have rejected');
                     }, function() {
-                        expect(httpSvc.get).toHaveBeenCalledWith('/matontorest/ontologies/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(classId), config, 'usages');
+                        expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(classId), config, 'usages');
                         expect(util.onError).toHaveBeenCalledWith(error, jasmine.any(Object));
                     });
                 scope.$apply();
@@ -924,7 +925,7 @@ describe('Ontology Manager service', function() {
             scope.$apply();
         });
     });
-    describe('getFailedImports calls the correct functions when GET /matontorest/ontologies/{recordId}/failed-imports', function() {
+    describe('getFailedImports calls the correct functions when GET /mobirest/ontologies/{recordId}/failed-imports', function() {
         var params;
         beforeEach(function() {
             params = paramSerializer({
@@ -933,7 +934,7 @@ describe('Ontology Manager service', function() {
             });
         });
         it('succeeds', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/failed-imports?' + params).respond(200, ['failedId']);
+            $httpBackend.expectGET('/mobirest/ontologies/recordId/failed-imports?' + params).respond(200, ['failedId']);
             ontologyManagerSvc.getFailedImports(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual(['failedId']);
@@ -943,7 +944,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('fails', function() {
-            $httpBackend.expectGET('/matontorest/ontologies/recordId/failed-imports?' + params).respond(400, null, null, 'error');
+            $httpBackend.expectGET('/mobirest/ontologies/recordId/failed-imports?' + params).respond(400, null, null, 'error');
             util.rejectError.and.returnValue($q.reject('util-error'));
             ontologyManagerSvc.getFailedImports(recordId, branchId, commitId)
                 .then(function() {
@@ -1808,7 +1809,7 @@ describe('Ontology Manager service', function() {
             params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
         it('with recordId, branchId and commitId', function(done) {
-            $httpBackend.expectPUT('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+            $httpBackend.expectPUT('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
@@ -1826,7 +1827,7 @@ describe('Ontology Manager service', function() {
         });
         it('with no branchId', function(done) {
             params = paramSerializer({ branchId: undefined, commitId: commitId });
-            $httpBackend.expectPUT('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+            $httpBackend.expectPUT('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
@@ -1843,7 +1844,7 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.expectPUT('/matontorest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+            $httpBackend.expectPUT('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
                 function(data) {
                     return data instanceof FormData;
                 },

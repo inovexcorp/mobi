@@ -31,7 +31,7 @@
          * @description
          * The `editUserProfileOverlay` module only provides the `editUserProfileOverlay` directive which creates
          * an overlay for changing the {@link userState.service:userStateService#selectedGroup selected group's}
-         * information in MatOnto.
+         * information in Mobi.
          */
         .module('editUserProfileOverlay', [])
         /**

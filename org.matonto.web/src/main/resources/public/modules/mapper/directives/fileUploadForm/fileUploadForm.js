@@ -30,7 +30,7 @@
          *
          * @description
          * The `fileUploadForm` module only provides the `fileUploadForm` directive which creates
-         * a form for uploading delimited data into MatOnto.
+         * a form for uploading delimited data into Mobi.
          */
         .module('fileUploadForm', [])
         /**
@@ -43,7 +43,7 @@
          * @requires mapperState.service:mapperStateService
          *
          * @description
-         * `fileUploadForm` is a directive that creates a form for uploaded delimited data into MatOnto
+         * `fileUploadForm` is a directive that creates a form for uploaded delimited data into Mobi
          * using the {@link delimitedManager.service:delimitedManagerService delimitedManagerService}.
          * If the chosen file is a SV file, the user must select a separator for the columns and selecting
          * a new value will automatically upload the file again. Tests whether the selected file is

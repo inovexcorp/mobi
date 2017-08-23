@@ -772,7 +772,7 @@
              *
              * @description
              * Adds the entity represented by the entityJSON to the ontology with the provided ontology ID in the
-             * MatOnto repository. Adds the new entity to the index.
+             * Mobi repository. Adds the new entity to the index.
              *
              * @param {Object} listItem The listItem linked to the ontology you want to add the entity to.
              * @param {string} entityJSON The JSON-LD representation for the entity you want to add to the ontology.
@@ -792,7 +792,7 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Removes the entity with the provided IRI from the ontology with the provided ontology ID in the MatOnto
+             * Removes the entity with the provided IRI from the ontology with the provided ontology ID in the Mobi
              * repository. Removes the entityIRI from the index. Returns the entity Object.
              *
              * @param {Object} listItem The listItem linked to the ontology you want to remove the entity from.
@@ -846,7 +846,7 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Gets entity with the provided IRI from the ontology linked to the provided recordId in the MatOnto
+             * Gets entity with the provided IRI from the ontology linked to the provided recordId in the Mobi
              * repository. Returns the entity Object.
              *
              * @param {string} recordId The recordId linked to the ontology you want to check.
@@ -916,9 +916,9 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Used to open an ontology from the MatOnto repository. It calls
+             * Used to open an ontology from the Mobi repository. It calls
              * {@link ontologyState.service:ontologyStateService#getOntology getOntology} to get the specified
-             * ontology from the MatOnto repository. Returns a promise.
+             * ontology from the Mobi repository. Returns a promise.
              *
              * @param {string} recordId The record ID of the requested ontology.
              * @returns {Promise} A promise with the ontology ID or error message.
@@ -955,7 +955,7 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Used to close an ontology from the MatOnto application. It removes the ontology list item from the
+             * Used to close an ontology from the Mobi application. It removes the ontology list item from the
              * {@link ontologyState.service:ontologyStateService#list list}.
              *
              * @param {string} recordId The record ID of the requested ontology.

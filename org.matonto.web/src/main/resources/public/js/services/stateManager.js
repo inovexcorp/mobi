@@ -27,11 +27,11 @@
         .module('stateManager', [])
         .service('stateManagerService', stateManagerService);
 
-        stateManagerService.$inject = ['$http', '$q', '$httpParamSerializer', 'uuid', 'prefixes', 'utilService'];
+        stateManagerService.$inject = ['$http', '$q', '$httpParamSerializer', 'uuid', 'prefixes', 'utilService', 'REST_PREFIX'];
 
-        function stateManagerService($http, $q, $httpParamSerializer, uuid, prefixes, utilService) {
+        function stateManagerService($http, $q, $httpParamSerializer, uuid, prefixes, utilService, REST_PREFIX) {
             var self = this;
-            var prefix = '/matontorest/states';
+            var prefix = REST_PREFIX + 'states';
 
             self.states = [];
 
