@@ -27,7 +27,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.api.DatasetManager;
-import org.matonto.etl.api.config.RDFExportConfig;
+import org.matonto.etl.api.config.rdf.RDFExportConfig;
 import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.RepositoryResults;

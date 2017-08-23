@@ -1,4 +1,4 @@
-package org.matonto.etl.api.config;
+package org.matonto.etl.api.config.rdf;
 
 /*-
  * #%L

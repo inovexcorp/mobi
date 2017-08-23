@@ -23,7 +23,7 @@ package org.matonto.etl.api.rdf;
  * #L%
  */
 
-import org.matonto.etl.api.config.RDFExportConfig;
+import org.matonto.etl.api.config.rdf.RDFExportConfig;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 

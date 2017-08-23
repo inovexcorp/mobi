@@ -31,7 +31,7 @@ import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.matonto.etl.api.config.ExcelConfig;
-import org.matonto.etl.api.config.RDFExportConfig;
+import org.matonto.etl.api.config.rdf.RDFExportConfig;
 import org.matonto.etl.api.config.ImportServiceConfig;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;

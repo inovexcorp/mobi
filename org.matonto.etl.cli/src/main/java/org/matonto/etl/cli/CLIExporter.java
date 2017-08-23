@@ -30,7 +30,7 @@ import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import org.matonto.etl.api.config.RDFExportConfig;
+import org.matonto.etl.api.config.rdf.RDFExportConfig;
 import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.rdf.api.ValueFactory;
 import org.slf4j.Logger;

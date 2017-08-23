@@ -24,7 +24,7 @@ package org.matonto.etl.service.rdf
 
 import org.matonto.dataset.api.DatasetConnection
 import org.matonto.dataset.api.DatasetManager
-import org.matonto.etl.api.config.RDFExportConfig
+import org.matonto.etl.api.config.rdf.RDFExportConfig
 import org.matonto.persistence.utils.api.SesameTransformer
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
