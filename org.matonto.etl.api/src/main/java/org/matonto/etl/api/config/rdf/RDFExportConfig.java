@@ -25,31 +25,20 @@ package org.matonto.etl.api.config.rdf;
 
 import org.openrdf.rio.RDFFormat;
 
-import java.util.Optional;
+import java.io.OutputStream;
 
-public class RDFExportConfig {
-    private String filePath;
-    private RDFFormat format;
+public class RDFExportConfig extends BaseExportConfig {
     private String subj;
     private String pred;
     private String objIRI;
     private String objLit;
 
     protected RDFExportConfig(Builder builder) {
-        this.filePath = builder.filePath;
-        this.format = builder.format;
+        super(builder);
         this.subj = builder.subj;
         this.pred = builder.pred;
         this.objIRI = builder.objIRI;
         this.objLit = builder.objLit;
-    }
-
-    public Optional<String> getFilePath() {
-        return Optional.ofNullable(filePath);
-    }
-
-    public RDFFormat getFormat() {
-        return format;
     }
 
     public String getSubj() {
@@ -68,9 +57,7 @@ public class RDFExportConfig {
         return objLit;
     }
 
-    public static class Builder {
-        private String filePath;
-        private RDFFormat format;
+    public static class Builder extends BaseExportConfig.Builder {
         private String subj;
         private String pred;
         private String objIRI;
@@ -79,21 +66,11 @@ public class RDFExportConfig {
         /**
          * Creates a new Builder for an RDFExportConfig.
          *
-         * @param filePath The path to the file with the exported data.
+         * @param output The OutputStream for the exported data.
+         * @param format The RDFFormat for the exported data.
          */
-        public Builder(String filePath) {
-            this.filePath = filePath;
-        }
-
-        /**
-         * Sets the RDF format for the export file.
-         *
-         * @param format The RDFFormat for the file with the exported data.
-         * @return The Builder
-         */
-        public Builder format(RDFFormat format) {
-            this.format = format;
-            return this;
+        public Builder(OutputStream output, RDFFormat format) {
+            super(output, format);
         }
 
         /**

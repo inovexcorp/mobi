@@ -27,7 +27,6 @@ import org.matonto.etl.api.config.rdf.RDFExportConfig;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
 
-import java.io.File;
 import java.io.IOException;
 
 public interface RDFExportService {
@@ -43,7 +42,7 @@ public interface RDFExportService {
      *      from the file name
      * @throws IllegalArgumentException Thrown if the Repository does not exist
      */
-    File exportToFile(RDFExportConfig config, String repositoryID) throws IOException;
+    void export(RDFExportConfig config, String repositoryID) throws IOException;
 
     /**
      * Exports triples from the specified DatasetRecord's Dataset to the specified File optionally restricted
@@ -56,7 +55,7 @@ public interface RDFExportService {
      *      from the file name
      * @throws IllegalArgumentException Thrown if the DatasetRecord does not exist
      */
-    File exportToFile(RDFExportConfig config, Resource datasetRecordID) throws IOException;
+    void export(RDFExportConfig config, Resource datasetRecordID) throws IOException;
 
     /**
      * Exports the specified Model to the specified File based on the passed Configuration.
@@ -67,5 +66,5 @@ public interface RDFExportService {
      * @throws IOException Thrown if there is an error writing to the file or the RDF format could not be determined
      *      from the file name
      */
-    File exportToFile(RDFExportConfig config, Model model) throws IOException;
+    void export(RDFExportConfig config, Model model) throws IOException;
 }

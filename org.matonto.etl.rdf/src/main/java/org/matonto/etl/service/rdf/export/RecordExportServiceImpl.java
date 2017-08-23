@@ -33,7 +33,7 @@ import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
-import org.matonto.etl.api.config.export.RecordExportConfig;
+import org.matonto.etl.api.config.rdf.export.RecordExportConfig;
 import org.matonto.etl.api.rdf.export.RecordExportService;
 import org.matonto.etl.service.rdf.RDFExportServiceImpl;
 import org.matonto.persistence.utils.BatchExporter;

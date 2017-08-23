@@ -160,7 +160,7 @@ public class CLITransform implements Action {
 
             if (outputFile != null) {
                 RDFExportConfig config = new RDFExportConfig.Builder(outputFile).build();
-                rdfExportService.exportToFile(config, model);
+                rdfExportService.export(config, model);
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());

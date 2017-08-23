@@ -23,8 +23,7 @@ package org.matonto.etl.api.rdf.export;
  * #L%
  */
 
-import org.matonto.etl.api.config.export.RecordExportConfig;
-
+import org.matonto.etl.api.config.rdf.export.RecordExportConfig;
 import java.io.IOException;
 
 public interface RecordExportService {

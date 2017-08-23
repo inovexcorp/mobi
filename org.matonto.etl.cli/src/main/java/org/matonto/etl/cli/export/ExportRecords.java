@@ -28,7 +28,7 @@ import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import org.matonto.etl.api.config.export.RecordExportConfig;
+import org.matonto.etl.api.config.rdf.export.RecordExportConfig;
 import org.matonto.etl.api.rdf.export.RecordExportService;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;

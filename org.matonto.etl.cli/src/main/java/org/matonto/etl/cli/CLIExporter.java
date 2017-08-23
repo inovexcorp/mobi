@@ -25,7 +25,6 @@ package org.matonto.etl.cli;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
-import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
@@ -33,8 +32,14 @@ import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.matonto.etl.api.config.rdf.RDFExportConfig;
 import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.rdf.api.ValueFactory;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 
 @Command(scope = "mobi", name = "export", description = "Exports objects from a repository or dataset")
 @Service
@@ -48,8 +53,11 @@ public class CLIExporter implements Action {
     @Reference
     private ValueFactory vf;
 
-    @Argument(index = 0, name = "file", description = "The file that will contain the exported data", required = true)
-    String filepath = null;
+    @Option(name = "-f", aliases = "--output-file", description = "The output file for the exported record data")
+    private String filepathParam = null;
+
+    @Option(name = "-t", aliases = "--format", description = "The output format (TRIG, NQUADS, JSONLD)")
+    private String formatParam = null;
 
     @Option(name = "-r", aliases = "--repository", description = "The id of the repository that data will be "
             + "exported from")
@@ -93,16 +101,33 @@ public class CLIExporter implements Action {
             return null;
         }
 
-        RDFExportConfig config = new RDFExportConfig.Builder(filepath)
+        OutputStream output;
+        if (filepathParam != null) {
+            output = new FileOutputStream(filepathParam);
+        } else {
+            output = System.out;
+        }
+
+        RDFFormat outputFormat;
+        if (formatParam != null) {
+            outputFormat = Rio.getParserFormatForMIMEType(formatParam)
+                    .orElseThrow(() -> new IOException("Invalid file format."));
+        } else if (filepathParam != null) {
+            outputFormat = Rio.getParserFormatForFileName(filepathParam).orElse(RDFFormat.TRIG);
+        } else {
+            outputFormat = RDFFormat.TRIG;
+        }
+
+        RDFExportConfig config = new RDFExportConfig.Builder(output, outputFormat)
                 .subj(subj)
                 .pred(predicate)
                 .objIRI(objIRI)
                 .objLit(objLit)
                 .build();
         if (repositoryId != null) {
-            exportService.exportToFile(config, repositoryId);
+            exportService.export(config, repositoryId);
         } else {
-            exportService.exportToFile(config, vf.createIRI(datasetRecordId));
+            exportService.export(config, vf.createIRI(datasetRecordId));
         }
 
         return null;
