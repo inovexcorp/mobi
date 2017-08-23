@@ -35,7 +35,6 @@ import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import org.matonto.etl.api.config.rdf.export.RecordExportConfig;
 import org.matonto.etl.api.rdf.export.RecordExportService;
-import org.matonto.etl.service.rdf.RDFExportServiceImpl;
 import org.matonto.persistence.utils.BatchExporter;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.Resource;

@@ -99,7 +99,7 @@
                             org.matonto.etl.api.rdf; provide:=true
                         </Export-Package>
                         <Export-Service>
-                            org.matonto.etl.api.rdf.RDFExportService,
+                            org.matonto.etl.api.rdf.export.RDFExportService,
                             org.matonto.etl.api.rdf.RDFImportService
                         </Export-Service>
                         <Service-Component>*</Service-Component>

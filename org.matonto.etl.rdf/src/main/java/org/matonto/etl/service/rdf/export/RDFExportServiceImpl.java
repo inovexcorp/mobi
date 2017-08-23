@@ -1,4 +1,4 @@
-package org.matonto.etl.service.rdf;
+package org.matonto.etl.service.rdf.export;
 
 /*-
  * #%L
@@ -28,7 +28,7 @@ import aQute.bnd.annotation.component.Reference;
 import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.etl.api.config.rdf.export.RDFExportConfig;
-import org.matonto.etl.api.rdf.RDFExportService;
+import org.matonto.etl.api.rdf.export.RDFExportService;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.RepositoryResults;
 import org.matonto.persistence.utils.StatementIterable;

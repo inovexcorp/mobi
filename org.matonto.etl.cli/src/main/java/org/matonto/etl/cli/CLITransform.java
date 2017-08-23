@@ -35,7 +35,7 @@ import org.matonto.etl.api.config.rdf.export.RDFExportConfig;
 import org.matonto.etl.api.config.rdf.ImportServiceConfig;
 import org.matonto.etl.api.config.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
-import org.matonto.etl.api.rdf.RDFExportService;
+import org.matonto.etl.api.rdf.export.RDFExportService;
 import org.matonto.etl.api.rdf.RDFImportService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.Model;
