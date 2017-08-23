@@ -1,6 +1,6 @@
 @Version("1.0.0.${build}")
 
-package org.matonto.etl.api.config.export;
+package org.matonto.etl.api.config.rdf.export;
 
 /*-
  * #%L

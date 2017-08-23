@@ -1,4 +1,4 @@
-package org.matonto.etl.api.config.export;
+package org.matonto.etl.api.config.rdf.export;
 
 /*-
  * #%L
@@ -23,18 +23,19 @@ package org.matonto.etl.api.config.export;
  * #L%
  */
 
+import org.matonto.etl.api.config.rdf.BaseExportConfig;
 import org.openrdf.rio.RDFFormat;
 
 import java.io.IOException;
 import java.io.OutputStream;
 
-public class RecordExportConfig extends RDFExportConfig {
+public class RecordExportConfig extends BaseExportConfig {
 
     protected RecordExportConfig(Builder builder) {
         super(builder);
     }
 
-    public static class Builder extends RDFExportConfig.Builder {
+    public static class Builder extends BaseExportConfig.Builder {
 
         public Builder(OutputStream output, RDFFormat format) {
             super(output, format);
