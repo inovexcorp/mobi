@@ -27,7 +27,7 @@ import org.openrdf.rio.RDFFormat;
 
 import java.util.Optional;
 
-public class ExportServiceConfig {
+public class RDFExportConfig {
     private String filePath;
     private RDFFormat format;
     private String subj;
@@ -35,7 +35,7 @@ public class ExportServiceConfig {
     private String objIRI;
     private String objLit;
 
-    protected ExportServiceConfig(Builder builder) {
+    protected RDFExportConfig(Builder builder) {
         this.filePath = builder.filePath;
         this.format = builder.format;
         this.subj = builder.subj;
@@ -77,7 +77,7 @@ public class ExportServiceConfig {
         private String objLit;
 
         /**
-         * Creates a new Builder for an ExportServiceConfig.
+         * Creates a new Builder for an RDFExportConfig.
          *
          * @param filePath The path to the file with the exported data.
          */
@@ -140,8 +140,8 @@ public class ExportServiceConfig {
             return this;
         }
 
-        public ExportServiceConfig build() {
-            return new ExportServiceConfig(this);
+        public RDFExportConfig build() {
+            return new RDFExportConfig(this);
         }
     }
 }

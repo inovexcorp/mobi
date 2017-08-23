@@ -24,7 +24,7 @@ package org.matonto.etl.service.rdf
 
 import org.matonto.dataset.api.DatasetConnection
 import org.matonto.dataset.api.DatasetManager
-import org.matonto.etl.api.config.ExportServiceConfig
+import org.matonto.etl.api.config.RDFExportConfig
 import org.matonto.persistence.utils.api.SesameTransformer
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
@@ -82,7 +82,7 @@ class RDFExportSpec extends Specification {
 
     def "Export File from Repository without restrictions"() {
         setup:
-        def config = new ExportServiceConfig.Builder(testFile.absolutePath).build()
+        def config = new RDFExportConfig.Builder(testFile.absolutePath).build()
 
         when:
         def result = service.exportToFile(config, repoId)
@@ -94,7 +94,7 @@ class RDFExportSpec extends Specification {
 
     def "Export File from Repository with restrictions and only subj"() {
         setup:
-        def config = new ExportServiceConfig.Builder(testFile.absolutePath).subj(s).build()
+        def config = new RDFExportConfig.Builder(testFile.absolutePath).subj(s).build()
 
         when:
         def result = service.exportToFile(config, repoId)
@@ -106,7 +106,7 @@ class RDFExportSpec extends Specification {
 
     def "Export File from Repository with restrictions and only pred"() {
         setup:
-        def config = new ExportServiceConfig.Builder(testFile.absolutePath).pred(p).build()
+        def config = new RDFExportConfig.Builder(testFile.absolutePath).pred(p).build()
 
         when:
         def result = service.exportToFile(config, repoId)
@@ -118,7 +118,7 @@ class RDFExportSpec extends Specification {
 
     def "Export File from Repository with restrictions and both object IRI and Lit"() {
         setup:
-        def config = new ExportServiceConfig.Builder(testFile.absolutePath).objIRI(oIRI).objLit(oLit).build()
+        def config = new RDFExportConfig.Builder(testFile.absolutePath).objIRI(oIRI).objLit(oLit).build()
 
         when:
         def result = service.exportToFile(config, repoId)
@@ -130,7 +130,7 @@ class RDFExportSpec extends Specification {
 
     def "Export File from Repository with restrictions and only object Lit"() {
         setup:
-        def config = new ExportServiceConfig.Builder(testFile.absolutePath).objLit(oLit).build()
+        def config = new RDFExportConfig.Builder(testFile.absolutePath).objLit(oLit).build()
 
         when:
         def result = service.exportToFile(config, repoId)
@@ -142,7 +142,7 @@ class RDFExportSpec extends Specification {
 
     def "Throws exception if repository does not exist"() {
         setup:
-        def config = new ExportServiceConfig.Builder(testFile.absolutePath).build()
+        def config = new RDFExportConfig.Builder(testFile.absolutePath).build()
 
         when:
         service.exportToFile(config, "missing")
@@ -153,7 +153,7 @@ class RDFExportSpec extends Specification {
 
     def "Throws exception for repository if file is unwritable"() {
         setup:
-        def config = new ExportServiceConfig.Builder(testFile.absolutePath).build()
+        def config = new RDFExportConfig.Builder(testFile.absolutePath).build()
         testFile.setReadOnly()
 
         when:
@@ -165,7 +165,7 @@ class RDFExportSpec extends Specification {
 
     def "Throws exception for repository if file is invalid RDF Type"() {
         setup:
-        def config = new ExportServiceConfig.Builder(invalidFile.absolutePath).build()
+        def config = new RDFExportConfig.Builder(invalidFile.absolutePath).build()
 
         when:
         service.exportToFile(config, repoId)
@@ -176,7 +176,7 @@ class RDFExportSpec extends Specification {
 
     def "Export File from Dataset without restrictions with quads"() {
         setup:
-        def config = new ExportServiceConfig.Builder(testFile.absolutePath).build()
+        def config = new RDFExportConfig.Builder(testFile.absolutePath).build()
 
         when:
         def result = service.exportToFile(config, datasetId)
@@ -188,7 +188,7 @@ class RDFExportSpec extends Specification {
 
     def "Export File from Dataset without restrictions without quads"() {
         setup:
-        def config = new ExportServiceConfig.Builder(testFileWithoutQuads.absolutePath).build()
+        def config = new RDFExportConfig.Builder(testFileWithoutQuads.absolutePath).build()
 
         when:
         def result = service.exportToFile(config, datasetId)
@@ -200,7 +200,7 @@ class RDFExportSpec extends Specification {
 
     def "Export File from Dataset with restrictions and both object IRI and Lit with quads"() {
         setup:
-        def config = new ExportServiceConfig.Builder(testFile.absolutePath).subj(s).pred(p).objIRI(oIRI).objLit(oLit).build()
+        def config = new RDFExportConfig.Builder(testFile.absolutePath).subj(s).pred(p).objIRI(oIRI).objLit(oLit).build()
 
         when:
         def result = service.exportToFile(config, datasetId)
@@ -212,7 +212,7 @@ class RDFExportSpec extends Specification {
 
     def "Export File from Dataset with restrictions and both object IRI and Lit without quads"() {
         setup:
-        def config = new ExportServiceConfig.Builder(testFileWithoutQuads.absolutePath).subj(s).pred(p).objIRI(oIRI).objLit(oLit).build()
+        def config = new RDFExportConfig.Builder(testFileWithoutQuads.absolutePath).subj(s).pred(p).objIRI(oIRI).objLit(oLit).build()
 
         when:
         def result = service.exportToFile(config, datasetId)
@@ -224,7 +224,7 @@ class RDFExportSpec extends Specification {
 
     def "Export File from Dataset with restrictions and object Lit with quads"() {
         setup:
-        def config = new ExportServiceConfig.Builder(testFile.absolutePath).subj(s).pred(p).objLit(oLit).build()
+        def config = new RDFExportConfig.Builder(testFile.absolutePath).subj(s).pred(p).objLit(oLit).build()
 
         when:
         def result = service.exportToFile(config, datasetId)
@@ -236,7 +236,7 @@ class RDFExportSpec extends Specification {
 
     def "Export File from Dataset with restrictions and object Lit without quads"() {
         setup:
-        def config = new ExportServiceConfig.Builder(testFileWithoutQuads.absolutePath).subj(s).pred(p).objLit(oLit).build()
+        def config = new RDFExportConfig.Builder(testFileWithoutQuads.absolutePath).subj(s).pred(p).objLit(oLit).build()
 
         when:
         def result = service.exportToFile(config, datasetId)
@@ -248,7 +248,7 @@ class RDFExportSpec extends Specification {
 
     def "Throws exception if dataset does not exist"() {
         setup:
-        def config = new ExportServiceConfig.Builder(testFile.absolutePath).build()
+        def config = new RDFExportConfig.Builder(testFile.absolutePath).build()
 
         when:
         service.exportToFile(config, vf.createIRI("http://test.com/missing"))
@@ -259,7 +259,7 @@ class RDFExportSpec extends Specification {
 
     def "Throws exception for dataset if file is unwritable"() {
         setup:
-        def config = new ExportServiceConfig.Builder(testFile.absolutePath).build()
+        def config = new RDFExportConfig.Builder(testFile.absolutePath).build()
         testFile.setReadOnly()
 
         when:
@@ -271,7 +271,7 @@ class RDFExportSpec extends Specification {
 
     def "Throws exception for dataset if file is invalid RDF Type"() {
         setup:
-        def config = new ExportServiceConfig.Builder(invalidFile.absolutePath).build()
+        def config = new RDFExportConfig.Builder(invalidFile.absolutePath).build()
 
         when:
         service.exportToFile(config, datasetId)

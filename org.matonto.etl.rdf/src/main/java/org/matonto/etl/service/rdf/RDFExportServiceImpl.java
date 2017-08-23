@@ -27,7 +27,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.api.DatasetManager;
-import org.matonto.etl.api.config.ExportServiceConfig;
+import org.matonto.etl.api.config.RDFExportConfig;
 import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.exception.MatOntoException;
 import org.matonto.persistence.utils.RepositoryResults;
@@ -98,7 +98,7 @@ public class RDFExportServiceImpl implements RDFExportService {
     }
     
     @Override
-    public File exportToFile(ExportServiceConfig config, String repositoryID) throws IOException {
+    public File exportToFile(RDFExportConfig config, String repositoryID) throws IOException {
         Repository repository = getRepo(repositoryID);
         try (RepositoryConnection conn = repository.getConnection()) {
             return export(conn, config);
@@ -106,7 +106,7 @@ public class RDFExportServiceImpl implements RDFExportService {
     }
 
     @Override
-    public File exportToFile(ExportServiceConfig config, Resource datasetRecordID) throws IOException {
+    public File exportToFile(RDFExportConfig config, Resource datasetRecordID) throws IOException {
         try (DatasetConnection conn = datasetManager.getConnection(datasetRecordID)) {
             String filePath = getFilePath(config);
             RDFFormat format = getRDFFormat(config, filePath);
@@ -145,13 +145,13 @@ public class RDFExportServiceImpl implements RDFExportService {
     }
 
     @Override
-    public File exportToFile(ExportServiceConfig config, Model model) throws IOException {
+    public File exportToFile(RDFExportConfig config, Model model) throws IOException {
         String filePath = getFilePath(config);
         RDFFormat format = getRDFFormat(config, filePath);
         return export(model, getFile(filePath), format);
     }
 
-    private File export(RepositoryConnection conn, ExportServiceConfig config) throws IOException {
+    private File export(RepositoryConnection conn, RDFExportConfig config) throws IOException {
         String filePath = getFilePath(config);
         RDFFormat format = getRDFFormat(config, filePath);
 
@@ -173,7 +173,7 @@ public class RDFExportServiceImpl implements RDFExportService {
         return file;
     }
 
-    private String getFilePath(ExportServiceConfig config) {
+    private String getFilePath(RDFExportConfig config) {
         return config.getFilePath().orElseThrow(() -> new IllegalArgumentException("The export file path is required"));
     }
 
@@ -190,7 +190,7 @@ public class RDFExportServiceImpl implements RDFExportService {
         return Rio.getParserFormatForFileName(filePath).orElseThrow(() -> new IOException("Unsupported file type"));
     }
 
-    private RDFFormat getRDFFormat(ExportServiceConfig config, String filePath) throws IOException {
+    private RDFFormat getRDFFormat(RDFExportConfig config, String filePath) throws IOException {
         return config.getFormat() == null ? getFileFormat(filePath) : config.getFormat();
     }
 
@@ -202,15 +202,15 @@ public class RDFExportServiceImpl implements RDFExportService {
         return repository;
     }
 
-    private Resource getSubject(ExportServiceConfig config) {
+    private Resource getSubject(RDFExportConfig config) {
         return config.getSubj() == null ? null : vf.createIRI(config.getSubj());
     }
 
-    private IRI getPredicate(ExportServiceConfig config) {
+    private IRI getPredicate(RDFExportConfig config) {
         return config.getPred() == null ? null : vf.createIRI(config.getPred());
     }
 
-    private Value getObject(ExportServiceConfig config) {
+    private Value getObject(RDFExportConfig config) {
         Value objValue = null;
         if (config.getObjIRI() != null) {
             objValue = vf.createIRI(config.getObjIRI());

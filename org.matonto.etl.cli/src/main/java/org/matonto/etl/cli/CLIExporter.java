@@ -30,7 +30,7 @@ import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import org.matonto.etl.api.config.ExportServiceConfig;
+import org.matonto.etl.api.config.RDFExportConfig;
 import org.matonto.etl.api.rdf.RDFExportService;
 import org.matonto.rdf.api.ValueFactory;
 import org.slf4j.Logger;
@@ -93,7 +93,7 @@ public class CLIExporter implements Action {
             return null;
         }
 
-        ExportServiceConfig config = new ExportServiceConfig.Builder(filepath)
+        RDFExportConfig config = new RDFExportConfig.Builder(filepath)
                 .subj(subj)
                 .pred(predicate)
                 .objIRI(objIRI)

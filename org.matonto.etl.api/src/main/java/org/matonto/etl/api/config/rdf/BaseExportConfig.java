@@ -50,7 +50,7 @@ public class BaseExportConfig {
         private RDFFormat format;
 
         /**
-         * Creates a new Builder for an ExportServiceConfig.
+         * Creates a new Builder for a BaseExportConfig.
          *
          * @param output The path to the file with the exported data.
          */
