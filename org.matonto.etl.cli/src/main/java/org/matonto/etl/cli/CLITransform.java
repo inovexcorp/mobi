@@ -46,6 +46,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.Optional;
 
 @Command(scope = "mobi", name = "transform", description = "Transforms CSV Files to RDF using a mapping file")
@@ -159,7 +161,9 @@ public class CLITransform implements Action {
             }
 
             if (outputFile != null) {
-                RDFExportConfig config = new RDFExportConfig.Builder(outputFile).build();
+                OutputStream output = new FileOutputStream(outputFile);
+                RDFFormat outputFormat = Rio.getParserFormatForFileName(outputFile).orElse(RDFFormat.TRIG);
+                RDFExportConfig config = new RDFExportConfig.Builder(output, outputFormat).build();
                 rdfExportService.export(config, model);
             }
         } catch (Exception e) {
