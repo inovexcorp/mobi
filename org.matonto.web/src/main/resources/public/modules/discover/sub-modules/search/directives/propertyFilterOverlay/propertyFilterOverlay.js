@@ -76,9 +76,12 @@
                     dvm.end = '';
                     dvm.value = '';
                     dvm.regex = '';
+                    dvm.boolean = undefined;
 
                     dvm.submittable = function() {
                         switch (dvm.filterType) {
+                            case 'Boolean':
+                                return dvm.boolean !== undefined;
                             case 'Contains':
                             case 'Exact':
                             case 'Greater than':
@@ -99,6 +102,10 @@
 
                     dvm.submit = function() {
                         switch (dvm.filterType) {
+                            case 'Boolean':
+                                ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, 'Is ' + dvm.boolean));
+                                ds.search.queryConfig.filters.push(s.createBooleanQuery(dvm.property['@id'], dvm.boolean));
+                                break;
                             case 'Contains':
                                 ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, 'Contains "' + dvm.value + '"'));
                                 ds.search.queryConfig.filters.push(s.createContainsQuery(dvm.property['@id'], dvm.value));

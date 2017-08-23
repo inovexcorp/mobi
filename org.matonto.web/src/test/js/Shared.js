@@ -1105,6 +1105,7 @@ function mockSearch() {
             this.createExactQuery = jasmine.createSpy('createExactQuery').and.returnValue({});
             this.createRegexQuery = jasmine.createSpy('createRegexQuery').and.returnValue({});
             this.createRangeQuery = jasmine.createSpy('createRangeQuery').and.returnValue({});
+            this.createBooleanQuery = jasmine.createSpy('createBooleanQuery').and.returnValue({});
         });
     });
 }

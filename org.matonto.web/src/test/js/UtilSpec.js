@@ -61,7 +61,8 @@ describe('Util service', function() {
             prefixes.xsd + 'integer',
             prefixes.xsd + 'long',
             prefixes.xsd + 'short',
-            prefixes.xsd + 'other'
+            prefixes.xsd + 'other',
+            prefixes.xsd + 'byte'
         ];
     });
 
@@ -383,7 +384,7 @@ describe('Util service', function() {
         _.forEach([0, 1], function(id) {
             expect(utilSvc.getInputType(properties[id])).toBe('datetime-local');
         });
-        _.forEach([2, 3, 4, 5, 6, 7, 8], function(id) {
+        _.forEach([2, 3, 4, 5, 6, 7, 8, 10], function(id) {
             expect(utilSvc.getInputType(properties[id])).toBe('number');
         });
         expect(utilSvc.getInputType(properties[9])).toBe('text');
@@ -395,7 +396,7 @@ describe('Util service', function() {
         _.forEach([2, 3, 4], function(id) {
             expect(utilSvc.getPattern(properties[id])).toBe(regex.DECIMAL);
         });
-        _.forEach([5, 6, 7, 8], function(id) {
+        _.forEach([5, 6, 7, 8, 10], function(id) {
             expect(utilSvc.getPattern(properties[id])).toBe(regex.INTEGER);
         });
         expect(utilSvc.getPattern(properties[9])).toBe(regex.ANYTHING);

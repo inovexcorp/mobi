@@ -579,6 +579,7 @@
                     case 'dateTime':
                     case 'dateTimeStamp':
                         return 'datetime-local';
+                    case 'byte':
                     case 'decimal':
                     case 'double':
                     case 'float':
@@ -611,6 +612,7 @@
                     case 'double':
                     case 'float':
                         return REGEX.DECIMAL;
+                    case 'byte':
                     case 'int':
                     case 'long':
                     case 'short':

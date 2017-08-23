@@ -96,6 +96,14 @@ describe('Property Filter Overlay directive', function() {
     });
     describe('controller methods', function() {
         describe('submittable should return the correct value when filterType is', function() {
+            it('Boolean', function() {
+                controller.filterType = 'Boolean';
+                expect(controller.submittable()).toBe(false);
+                controller.boolean = true;
+                expect(controller.submittable()).toBe(true);
+                controller.boolean = false;
+                expect(controller.submittable()).toBe(true);
+            });
             it('Contains', function() {
                 controller.filterType = 'Contains';
                 expect(controller.submittable()).toBeFalsy();
@@ -136,6 +144,20 @@ describe('Property Filter Overlay directive', function() {
                 utilSvc.getBeautifulIRI.and.returnValue('range');
                 ontologyManagerSvc.getEntityName.and.returnValue('name');
                 controller.value = 'value';
+            });
+            it('Boolean', function() {
+                controller.filterType = 'Boolean';
+                controller.boolean = false;
+                searchSvc.createBooleanQuery.and.returnValue({prop: 'boolean query'});
+                controller.submit();
+                expect(discoverStateSvc.search.filterMeta).toContain({
+                    display: 'Is false',
+                    range: 'range',
+                    title: 'name'
+                });
+                expect(searchSvc.createBooleanQuery).toHaveBeenCalledWith('id', false);
+                expect(discoverStateSvc.search.queryConfig.filters).toContain({prop: 'boolean query'});
+                expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Contains', function() {
                 controller.filterType = 'Contains';

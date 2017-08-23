@@ -21,26 +21,34 @@
   #L%
   -->
 <div class="filter-selector">
-    <div ng-if=""
-    <custom-label>Filter Type</custom-label>
-    <md-select ng-model="dvm.filterType">
-        <md-option ng-value="type" ng-repeat="type in dvm.types[dvm.type] | orderBy track by $index">{{type}}</md-option>
-    </md-select>
-    <div ng-if="dvm.filterType && dvm.filterType !== 'Existence'" class="input-container">
-        <custom-label>{{dvm.util.getBeautifulIRI(range)}}</custom-label>
-        <md-input-container ng-if="dvm.filterType === 'Regex'">
-            <input type="{{dvm.type}}" ng-model="dvm.regex" />
-        </md-input-container>
-        <md-input-container ng-if="dvm.needsOneInput()">
-            <input type="{{dvm.type}}" ng-pattern="dvm.pattern" ng-model="dvm.value" />
-        </md-input-container>
-        <div ng-if="dvm.filterType === 'Range'" class="range-container">
-            <md-input-container>
-                <input type="{{dvm.type}}" ng-pattern="dvm.pattern" ng-model="dvm.begin" />
+    <div ng-if="!dvm.isBoolean()">
+        <custom-label>Filter Type</custom-label>
+        <md-select ng-model="dvm.filterType">
+            <md-option ng-value="type" ng-repeat="type in dvm.types[dvm.type] | orderBy track by $index">{{type}}</md-option>
+        </md-select>
+        <div ng-if="dvm.filterType && dvm.filterType !== 'Existence'" class="input-container">
+            <custom-label>{{dvm.util.getBeautifulIRI(dvm.range)}}</custom-label>
+            <md-input-container ng-if="dvm.filterType === 'Regex'">
+                <input type="{{dvm.type}}" ng-model="dvm.regex" />
             </md-input-container>
-            <md-input-container>
-                <input type="{{dvm.type}}" ng-pattern="dvm.pattern" ng-model="dvm.end" />
+            <md-input-container ng-if="dvm.needsOneInput()">
+                <input type="{{dvm.type}}" ng-pattern="dvm.pattern" ng-model="dvm.value" />
             </md-input-container>
+            <div ng-if="dvm.filterType === 'Range'" class="range-container">
+                <md-input-container>
+                    <input type="{{dvm.type}}" ng-pattern="dvm.pattern" ng-model="dvm.begin" />
+                </md-input-container>
+                <md-input-container>
+                    <input type="{{dvm.type}}" ng-pattern="dvm.pattern" ng-model="dvm.end" />
+                </md-input-container>
+            </div>
         </div>
+    </div>
+    <div ng-if="dvm.isBoolean()">
+        <custom-label>{{dvm.util.getBeautifulIRI(dvm.range)}}</custom-label>
+        <md-select ng-model="dvm.boolean">
+            <md-option ng-value="true">True</md-option>
+            <md-option ng-value="false">False</md-option>
+        </md-select>
     </div>
 </div>

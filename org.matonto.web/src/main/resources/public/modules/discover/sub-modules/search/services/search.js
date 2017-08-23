@@ -124,6 +124,7 @@
          * @param {boolean} [queryConfig.isOrKeywords=false] Whether or not the keyword search results should be combined with OR or not
          * @param {string[]} [queryConfig.types=[]] An array of types to search for
          * @param {boolean} [queryConfig.isOrTypes=false] Whether or not the type search results should be combined with OR or not
+         * @param {Object[]} queryConfig.filters An array of property filters to apply to the query
          * @return {string} A SPARQL query string
          */
         self.createQueryString = function(queryConfig) {
@@ -165,10 +166,10 @@
                     query.where = _.concat(query.where, _.map(queryConfig.types, createTypeQuery));
                 }
             }
-            _.forEach(queryConfig.filters, filter => {
-                var obj = {type: 'union', patterns: [filter]};
+            if (_.get(queryConfig, 'filters', []).length) {
+                var obj = {type: 'union', patterns: queryConfig.filters};
                 query.where.push(obj);
-            });
+            }
             if (!query.where.length) {
                 query.where.push(angular.copy(simplePattern));
             }
@@ -211,7 +212,7 @@
             var containsPattern = createPattern('?Subject', predicate, '?o');
             return {
                 type: 'group',
-                patterns: [containsPattern, angular.copy(simplePattern), createKeywordFilter(keyword)]
+                patterns: [containsPattern, createKeywordFilter(keyword)]
             };
         }
         /**
@@ -257,7 +258,7 @@
             });
             return {
                 type: 'group',
-                patterns: [regexPattern, angular.copy(simplePattern), regexFilter]
+                patterns: [regexPattern, regexFilter]
             };
         }
         /**
@@ -279,7 +280,7 @@
          */
         self.createRangeQuery = function(predicate, rangeConfig) {
             var rangePattern = createPattern('?Subject', predicate, '?o');
-            var patterns = [rangePattern, angular.copy(simplePattern)];
+            var patterns = [rangePattern];
             if (_.has(rangeConfig, 'lessThan')) {
                 patterns.push(createFilter('?o < ' + rangeConfig.lessThan));
             }
@@ -293,6 +294,33 @@
                 patterns.push(createFilter('?o >= ' + rangeConfig.greaterThanOrEqualTo));
             }
             return { type: 'group', patterns };
+        }
+        /**
+         * @ngdoc method
+         * @name createExactQuery
+         * @methodOf search.service:searchService
+         *
+         * @description
+         * Creates a part of a SPARQL query that selects all subjects, predicates, and objects
+         * for entities that have the provided predicate and exactly matches the provided keyword.
+         *
+         * @param {string} predicate The predicate's existence which is being searched for
+         * @param {string} value The value which should be either true or false
+         * @param {string} range The range of the keyword
+         * @return {Object} A part of a SPARQL query object
+         */
+        self.createBooleanQuery = function(predicate, value) {
+            var values = value ? [true, 1] : [false, 0];
+            var booleanPattern = createPattern('?Subject', predicate, '?o');
+            var booleanFilter = createFilter({
+                type: 'operation',
+                operator: 'in',
+                args: ['?o', _.map(values, value => '"' + value + '"^^' + prefixes.xsd + 'boolean')]
+            });
+            return {
+                type: 'group',
+                patterns: [booleanPattern, angular.copy(simplePattern), booleanFilter]
+            };
         }
 
         function createKeywordQuery(keyword) {

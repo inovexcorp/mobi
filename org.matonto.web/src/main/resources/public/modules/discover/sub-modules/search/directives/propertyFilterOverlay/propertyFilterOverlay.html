@@ -26,7 +26,7 @@
         <div class="main">
             <div class="parts"><span ng-if="dvm.property">{{dvm.om.getEntityName(dvm.property)}}</span></div>
             <property-selector property="dvm.property" range="dvm.range" keys="dvm.keys"></property-selector>
-            <filter-selector ng-if="dvm.range" begin="dvm.begin" end="dvm.end" filter-type="dvm.filterType" regex="dvm.regex" value="dvm.value" range="dvm.range"></filter-selector>
+            <filter-selector ng-if="dvm.range" begin="dvm.begin" end="dvm.end" filter-type="dvm.filterType" regex="dvm.regex" value="dvm.value" range="dvm.range" boolean="dvm.boolean"></filter-selector>
         </div>
         <div class="btn-container clearfix">
             <button ng-if="dvm.property" type="submit" class="btn btn-primary pull-right" ng-disabled="!dvm.submittable()" ng-click="dvm.submit()">Submit</button>

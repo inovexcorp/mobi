@@ -38,6 +38,8 @@
          * @name filterSelector.directive:filterSelector
          * @scope
          * @restrict E
+         * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * HTML contents for the filter selector which provides the users with the options to select filter options
@@ -45,9 +47,9 @@
          */
         .directive('filterSelector', filterSelector);
         
-        filterSelector.$inject = ['utilService'];
+        filterSelector.$inject = ['utilService', 'prefixes'];
         
-        function filterSelector(utilService) {
+        function filterSelector(utilService, prefixes) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/search/directives/filterSelector/filterSelector.html',
@@ -56,6 +58,7 @@
                 scope: {},
                 bindToController: {
                     begin: '=',
+                    boolean: '=',
                     end: '=',
                     filterType: '=',
                     range: '<',
@@ -77,6 +80,16 @@
                     
                     dvm.needsOneInput = function() {
                         return _.includes(needsOneInput, dvm.filterType);
+                    }
+                    
+                    dvm.isBoolean = function() {
+                        return dvm.range === prefixes.xsd + 'boolean';
+                    }
+
+                    if (dvm.isBoolean()) {
+                        dvm.filterType = 'Boolean';
+                    } else {
+                        dvm.filterType = undefined;
                     }
                 }
             }

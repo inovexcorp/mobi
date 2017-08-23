@@ -21,24 +21,18 @@
  * #L%
  */
 describe('Filter Selector directive', function() {
-    var $compile, scope, element, controller, utilSvc, ontologyManagerSvc, discoverStateSvc, searchSvc, prefixes;
+    var $compile, scope, element, controller, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
         module('filterSelector');
-        mockDiscoverState();
         mockUtil();
-        mockSearch();
         mockPrefixes();
-        mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _utilService_, _ontologyManagerService_, _discoverStateService_, _searchService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             utilSvc = _utilService_;
-            ontologyManagerSvc = _ontologyManagerService_;
-            discoverStateSvc = _discoverStateService_;
-            searchSvc = _searchService_;
             prefixes = _prefixes_;
         });
 
@@ -48,7 +42,8 @@ describe('Filter Selector directive', function() {
         scope.range = 'range';
         scope.regex = '/[a-zA-Z]/';
         scope.value = 'value';
-        element = $compile(angular.element('<filter-selector begin="begin" end="end" filter-type="filterType" range="range" regex="regex" value="value"></filter-selector>'))(scope);
+        scope.boolean = false;
+        element = $compile(angular.element('<filter-selector begin="begin" end="end" filter-type="filterType" range="range" regex="regex" value="value" boolean="boolean"></filter-selector>'))(scope);
         scope.$digest();
         controller = element.controller('filterSelector');
     });
@@ -79,10 +74,15 @@ describe('Filter Selector directive', function() {
             scope.$apply();
             expect(scope.regex).toEqual('/[a-z]/');
         });
-        it('value should be one way bound', function() {
+        it('value should be two way bound', function() {
             controller.value = 'new-value';
             scope.$apply();
             expect(scope.value).toEqual('new-value');
+        });
+        it('boolean should be two way bound', function() {
+            controller.boolean = true;
+            scope.$apply();
+            expect(scope.boolean).toEqual(true);
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -90,108 +90,129 @@ describe('Filter Selector directive', function() {
             expect(element.prop('tagName')).toBe('DIV');
             expect(element.hasClass('filter-selector')).toBe(true);
         });
-        it('with a custom-label', function() {
-            expect(element.find('custom-label').length).toBe(1);
-        });
-        it('with a md-select', function() {
-            expect(element.find('md-select').length).toBe(1);
-        });
-        describe('with md-options when type is', function() {
-            it('date', function() {
-                controller.type = 'date';
-                scope.$apply();
-                expect(element.find('md-option').length).toBe(7);
-            });
-            it('number', function() {
-                controller.type = 'number';
-                scope.$apply();
-                expect(element.find('md-option').length).toBe(7);
-            });
-            it('text', function() {
-                controller.type = 'text';
-                scope.$apply();
-                expect(element.find('md-option').length).toBe(4);
-            });
-        });
-        describe('when filterType is', function() {
-            it('Existence with a .input-container', function() {
-                controller.filterType = 'Existence';
-                scope.$apply();
-                expect(element.find('.input-container').length).toBe(0);
-            });
-            describe('Regex', function() {
+        describe('when isBoolean is', function() {
+            describe('false and filterType is', function() {
                 beforeEach(function() {
-                    controller.filterType = 'Regex';
+                    spyOn(controller, 'isBoolean').and.returnValue(false);
                     scope.$apply();
                 });
-                it('with a .input-container', function() {
-                    expect(element.querySelectorAll('.input-container').length).toBe(1);
-                });
                 it('with a custom-label', function() {
-                    expect(element.querySelectorAll('.input-container custom-label').length).toBe(1);
+                    expect(element.find('custom-label').length).toBe(1);
                 });
-                it('with a md-input-container', function() {
-                    expect(element.find('md-input-container').length).toBe(1);
+                it('with a md-select', function() {
+                    expect(element.find('md-select').length).toBe(1);
                 });
-                it('with a input', function() {
-                    expect(element.find('input').length).toBe(1);
+                describe('with md-options when type is', function() {
+                    it('date', function() {
+                        controller.type = 'date';
+                        scope.$apply();
+                        expect(element.find('md-option').length).toBe(7);
+                    });
+                    it('number', function() {
+                        controller.type = 'number';
+                        scope.$apply();
+                        expect(element.find('md-option').length).toBe(7);
+                    });
+                    it('text', function() {
+                        controller.type = 'text';
+                        scope.$apply();
+                        expect(element.find('md-option').length).toBe(4);
+                    });
+                });
+                it('Existence with a .input-container', function() {
+                    controller.filterType = 'Existence';
+                    scope.$apply();
+                    expect(element.find('.input-container').length).toBe(0);
+                });
+                describe('Regex', function() {
+                    beforeEach(function() {
+                        controller.filterType = 'Regex';
+                        scope.$apply();
+                    });
+                    it('with a .input-container', function() {
+                        expect(element.querySelectorAll('.input-container').length).toBe(1);
+                    });
+                    it('with a custom-label', function() {
+                        expect(element.querySelectorAll('.input-container custom-label').length).toBe(1);
+                    });
+                    it('with a md-input-container', function() {
+                        expect(element.find('md-input-container').length).toBe(1);
+                    });
+                    it('with a input', function() {
+                        expect(element.find('input').length).toBe(1);
+                    });
+                });
+                describe('Contains', function() {
+                    beforeEach(function() {
+                        controller.filterType = 'Contains';
+                        scope.$apply();
+                    });
+                    it('with a .input-container', function() {
+                        expect(element.querySelectorAll('.input-container').length).toBe(1);
+                    });
+                    it('with a custom-label', function() {
+                        expect(element.querySelectorAll('.input-container custom-label').length).toBe(1);
+                    });
+                    it('with a md-input-container', function() {
+                        expect(element.find('md-input-container').length).toBe(1);
+                    });
+                    it('with a input', function() {
+                        expect(element.find('input').length).toBe(1);
+                    });
+                });
+                describe('Exact', function() {
+                    beforeEach(function() {
+                        controller.filterType = 'Exact';
+                        scope.$apply();
+                    });
+                    it('with a .input-container', function() {
+                        expect(element.querySelectorAll('.input-container').length).toBe(1);
+                    });
+                    it('with a custom-label', function() {
+                        expect(element.querySelectorAll('.input-container custom-label').length).toBe(1);
+                    });
+                    it('with a md-input-container', function() {
+                        expect(element.find('md-input-container').length).toBe(1);
+                    });
+                    it('with a input', function() {
+                        expect(element.find('input').length).toBe(1);
+                    });
+                });
+                describe('Range', function() {
+                    beforeEach(function() {
+                        controller.filterType = 'Range';
+                        scope.$apply();
+                    });
+                    it('with a .input-container', function() {
+                        expect(element.querySelectorAll('.input-container').length).toBe(1);
+                    });
+                    it('with a custom-label', function() {
+                        expect(element.querySelectorAll('.input-container custom-label').length).toBe(1);
+                    });
+                    it('with a .range-container', function() {
+                        expect(element.querySelectorAll('.range-container').length).toBe(1);
+                    });
+                    it('with md-input-containers', function() {
+                        expect(element.find('md-input-container').length).toBe(2);
+                    });
+                    it('with inputs', function() {
+                        expect(element.find('input').length).toBe(2);
+                    });
                 });
             });
-            describe('Contains', function() {
+            describe('true', function() {
                 beforeEach(function() {
-                    controller.filterType = 'Contains';
+                    spyOn(controller, 'isBoolean').and.returnValue(true);
                     scope.$apply();
                 });
-                it('with a .input-container', function() {
-                    expect(element.querySelectorAll('.input-container').length).toBe(1);
-                });
                 it('with a custom-label', function() {
-                    expect(element.querySelectorAll('.input-container custom-label').length).toBe(1);
+                    expect(element.find('custom-label').length).toBe(1);
                 });
-                it('with a md-input-container', function() {
-                    expect(element.find('md-input-container').length).toBe(1);
+                it('with a md-select', function() {
+                    expect(element.find('md-select').length).toBe(1);
                 });
-                it('with a input', function() {
-                    expect(element.find('input').length).toBe(1);
-                });
-            });
-            describe('Exact', function() {
-                beforeEach(function() {
-                    controller.filterType = 'Exact';
-                    scope.$apply();
-                });
-                it('with a .input-container', function() {
-                    expect(element.querySelectorAll('.input-container').length).toBe(1);
-                });
-                it('with a custom-label', function() {
-                    expect(element.querySelectorAll('.input-container custom-label').length).toBe(1);
-                });
-                it('with a md-input-container', function() {
-                    expect(element.find('md-input-container').length).toBe(1);
-                });
-                it('with a input', function() {
-                    expect(element.find('input').length).toBe(1);
-                });
-            });
-            describe('Range', function() {
-                beforeEach(function() {
-                    controller.filterType = 'Range';
-                    scope.$apply();
-                });
-                it('with a .input-container', function() {
-                    expect(element.querySelectorAll('.input-container').length).toBe(1);
-                });
-                it('with a custom-label', function() {
-                    expect(element.querySelectorAll('.input-container custom-label').length).toBe(1);
-                });
-                it('with a .range-container', function() {
-                    expect(element.querySelectorAll('.range-container').length).toBe(1);
-                });
-                it('with md-input-containers', function() {
-                    expect(element.find('md-input-container').length).toBe(2);
-                });
-                it('with inputs', function() {
-                    expect(element.find('input').length).toBe(2);
+                it('with md-options', function() {
+                    expect(element.find('md-option').length).toBe(2);
                 });
             });
         });
@@ -204,6 +225,15 @@ describe('Filter Selector directive', function() {
             });
             controller.filterType = 'Other';
             expect(controller.needsOneInput()).toBe(false);
+        });
+        describe('isBoolean returns the correct value when range', function() {
+            it('is xsd:boolean', function() {
+                controller.range = prefixes.xsd + 'boolean';
+                expect(controller.isBoolean()).toBe(true);
+            });
+            it('is not xsd:boolean', function() {
+                expect(controller.isBoolean()).toBe(false);
+            });
         });
     });
 });
