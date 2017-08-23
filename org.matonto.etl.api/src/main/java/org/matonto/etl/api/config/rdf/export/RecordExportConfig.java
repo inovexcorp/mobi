@@ -23,7 +23,6 @@ package org.matonto.etl.api.config.rdf.export;
  * #L%
  */
 
-import org.matonto.etl.api.config.rdf.BaseExportConfig;
 import org.openrdf.rio.RDFFormat;
 
 import java.io.IOException;
