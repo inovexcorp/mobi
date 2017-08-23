@@ -39,6 +39,12 @@ describe('Search Form directive', function() {
             exploreSvc = _exploreService_;
         });
 
+        discoverStateSvc.search.filterMeta = [{
+            title: 'title',
+            range: 'range',
+            display: 'display'
+        }];
+
         element = $compile(angular.element('<search-form></search-form>'))(scope);
         scope.$digest();
         controller = element.controller('searchForm');
@@ -99,6 +105,21 @@ describe('Search Form directive', function() {
                 expect(controller.getSelectedText()).toBe('title1, title2');
             });
         });
+        it('removeFilter should remove the filter associated with the provided index', function() {
+            var data = [{
+                prop: 'removed'
+            }, {
+                prop: 'saved'
+            }];
+            var expected = [{
+                prop: 'saved'
+            }];
+            discoverStateSvc.search.queryConfig.filters = angular.copy(data);
+            discoverStateSvc.search.filterMeta = angular.copy(data);
+            controller.removeFilter(0);
+            expect(discoverStateSvc.search.queryConfig.filters).toEqual(expected);
+            expect(discoverStateSvc.search.filterMeta).toEqual(expected);
+        });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
@@ -112,7 +133,7 @@ describe('Search Form directive', function() {
             expect(element.find('block-content').length).toEqual(1);
         });
         it('with a .strike', function() {
-            expect(element.querySelectorAll('.strike').length).toEqual(2);
+            expect(element.querySelectorAll('.strike').length).toEqual(3);
         });
         it('with a dataset-form-group', function() {
             expect(element.find('dataset-form-group').length).toEqual(1);
@@ -121,13 +142,40 @@ describe('Search Form directive', function() {
             expect(element.find('block-footer').length).toEqual(1);
         });
         it('with a custom-label', function() {
-            expect(element.find('custom-label').length).toEqual(2);
+            expect(element.find('custom-label').length).toEqual(3);
         });
         it('with a md-chips', function() {
             expect(element.find('md-chips').length).toEqual(1);
         });
+        it('with a .properties-container', function() {
+            expect(element.querySelectorAll('.properties-container').length).toEqual(1);
+        });
+        it('with a .header-wrapper', function() {
+            expect(element.querySelectorAll('.header-wrapper').length).toEqual(1);
+        });
+        it('with a .property-link', function() {
+            expect(element.querySelectorAll('.property-link').length).toEqual(1);
+        });
+        it('with a md-list', function() {
+            expect(element.find('md-list').length).toEqual(1);
+        });
+        it('with a md-list-item', function() {
+            expect(element.find('md-list-item').length).toEqual(1);
+        });
+        it('with a .md-list-item-text', function() {
+            expect(element.querySelectorAll('.md-list-item-text').length).toEqual(1);
+        });
+        it('with a .md-list-item-text h3', function() {
+            expect(element.querySelectorAll('.md-list-item-text h3').length).toEqual(1);
+        });
+        it('with a .md-list-item-text p', function() {
+            expect(element.querySelectorAll('.md-list-item-text p').length).toEqual(2);
+        });
+        it('with a .md-list-item-text md-icon', function() {
+            expect(element.querySelectorAll('.md-list-item-text md-icon').length).toEqual(1);
+        });
         it('with a button to submit', function() {
-            var buttons = element.find('button');
+            var buttons = element.querySelectorAll('[type="submit"]');
             expect(buttons.length).toEqual(1);
             expect(buttons.text()).toContain('Submit');
         });

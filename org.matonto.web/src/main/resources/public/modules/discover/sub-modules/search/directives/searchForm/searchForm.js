@@ -92,6 +92,11 @@
                     dvm.getSelectedText = function() {
                         return _.join(_.map(dvm.ds.search.queryConfig.types, 'classTitle'), ', ');
                     }
+                    
+                    dvm.removeFilter = function(index) {
+                        _.pullAt(dvm.ds.search.queryConfig.filters, index);
+                        _.pullAt(dvm.ds.search.filterMeta, index);
+                    }
                 }
             }
         }

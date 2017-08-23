@@ -103,6 +103,23 @@
 
             /**
              * @ngdoc method
+             * @name getDatasetRecord
+             * @methodOf datasetManager.service:datasetManagerService
+             *
+             * @description
+             * Calls the GET /matontorest/datasets/{datasetRecordIRI} endpoint to get the DatasetRecord associated
+             * with the provided ID.
+             *
+             * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+             * error message
+             */
+            self.getDatasetRecord = function(datasetRecordIRI) {
+                return $http.get(prefix + '/' + encodeURIComponent(datasetRecordIRI))
+                    .then(response => response.data, util.rejectError);
+            }
+
+            /**
+             * @ngdoc method
              * @name createDatasetRecord
              * @methodOf datasetManager.service:datasetManagerService
              *
@@ -143,13 +160,11 @@
                 }
                 _.forEach(_.get(recordConfig, 'ontologies', []), id => fd.append('ontologies', id));
                 return $http.post(prefix, fd, config)
+                    .then(response => self.getDatasetRecord(response.data), $q.reject)
                     .then(response => {
-                        self.datasetRecords.push({
-                            '@id': response.data,
-                            [prefixes.dcterms + 'title']: [{'@value': recordConfig.title}]
-                        });
-                        self.datasetRecords = _.orderBy(self.datasetRecords, record => util.getDctermsValue(record, 'title'));
-                        return $q.when(response.data);
+                        self.datasetRecords.push(response);
+                        self.datasetRecords = _.orderBy(self.datasetRecords, array => util.getDctermsValue(_.find(array, '@type'), 'title'));
+                        return response['@id'];
                     }, util.rejectError);
             }
 
@@ -173,7 +188,7 @@
                 return $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI), config)
                     .then(() => {
                         ds.cleanUpOnDatasetDelete(datasetRecordIRI);
-                        _.remove(self.datasetRecords, {'@id': datasetRecordIRI});
+                        removeDataset(datasetRecordIRI);
                     }, util.rejectError);
             }
 
@@ -217,8 +232,8 @@
              */
             self.updateDatasetRecord = function(datasetRecordIRI, catalogIRI, jsonld) {
                 return cm.updateRecord(datasetRecordIRI, catalogIRI, jsonld).then(() => {
-                    _.remove(self.datasetRecords, {'@id': datasetRecordIRI});
-                    self.datasetRecords.push(_.find(jsonld, {'@id': datasetRecordIRI}));
+                    removeDataset(datasetRecordIRI);
+                    self.datasetRecords.push(jsonld);
                 }, $q.reject);
             }
 
@@ -239,8 +254,12 @@
                 }
                 self.getDatasetRecords(paginatedConfig)
                     .then(response => {
-                        self.datasetRecords = _.map(response.data, arr => _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord')));
+                        self.datasetRecords = response.data;
                     }, util.createErrorToast);
+            }
+
+            function removeDataset(datasetRecordIRI) {
+                _.remove(self.datasetRecords, array => _.find(array, {'@id': datasetRecordIRI}));
             }
         }
 })();

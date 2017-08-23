@@ -563,6 +563,63 @@
             self.getSkolemizedIRI = function() {
                 return 'http://matonto.org/.well-known/genid/' + uuid.v4();
             }
+            /**
+             * @ngdoc method
+             * @name getInputType
+             * @methodOf exploreUtils.service:exploreUtilsService
+             *
+             * @description
+             * Gets the input type associated with the property in the properties list provided.
+             *
+             * @param {string} typeIRI The IRI of the type
+             * @returns {string} A string identifying the input type that should be used for the provided property.
+             */
+            self.getInputType = function(typeIRI) {
+                switch (_.replace(typeIRI, prefixes.xsd, '')) {
+                    case 'dateTime':
+                    case 'dateTimeStamp':
+                        return 'datetime-local';
+                    case 'decimal':
+                    case 'double':
+                    case 'float':
+                    case 'int':
+                    case 'integer':
+                    case 'long':
+                    case 'short':
+                        return 'number';
+                    default:
+                        return 'text';
+                }
+            }
+            /**
+             * @ngdoc method
+             * @name getPattern
+             * @methodOf exploreUtils.service:exploreUtilsService
+             *
+             * @description
+             * Gets the pattern type associated with the property in the properties list provided.
+             *
+             * @param {string} typeIRI The IRI of the type
+             * @returns {RegEx} A Regular Expression identifying the acceptable values for the provided property.
+             */
+            self.getPattern = function(typeIRI) {
+                switch (_.replace(typeIRI, prefixes.xsd, '')) {
+                    case 'dateTime':
+                    case 'dateTimeStamp':
+                        return REGEX.DATETIME;
+                    case 'decimal':
+                    case 'double':
+                    case 'float':
+                        return REGEX.DECIMAL;
+                    case 'int':
+                    case 'long':
+                    case 'short':
+                    case 'integer':
+                        return REGEX.INTEGER;
+                    default:
+                        return REGEX.ANYTHING;
+                }
+            }
 
             function setValue(entity, propertyIRI, valueObj) {
                 if (_.has(entity, "['" + propertyIRI + "']")) {

@@ -94,16 +94,20 @@
          * discover section of the application.
          */
         self.search = {
-            targetedId: 'discover-search-results',
             active: false,
-            results: undefined,
+            datasetRecordId: '',
+            filterMeta: [],
+            noDomains: undefined,
+            properties: undefined,
             queryConfig: {
                 isOrKeywords: false,
                 isOrTypes: false,
                 keywords: [],
-                types: []
+                types: [],
+                filters: []
             },
-            datasetRecordId: ''
+            results: undefined,
+            targetedId: 'discover-search-results'
         };
 
         /**

@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Util service', function() {
-    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, uuid, $filter, $httpBackend, $q, $timeout;
+    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, uuid, $filter, $httpBackend, $q, $timeout, properties, regex;
 
     beforeEach(function() {
         module('util');
@@ -37,7 +37,7 @@ describe('Util service', function() {
             });
         });
 
-        inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_, _uuid_, _$filter_, _$httpBackend_, _$q_, _$timeout_) {
+        inject(function(utilService, _prefixes_, _toastr_, _splitIRIFilter_, _beautifyFilter_, _uuid_, _$filter_, _$httpBackend_, _$q_, _$timeout_, _REGEX_) {
             utilSvc = utilService;
             prefixes = _prefixes_;
             toastr = _toastr_;
@@ -48,7 +48,21 @@ describe('Util service', function() {
             $q = _$q_;
             $timeout = _$timeout_;
             uuid = _uuid_;
+            regex = _REGEX_;
         });
+
+        properties = [
+            prefixes.xsd + 'dateTime',
+            prefixes.xsd + 'dateTimeStamp',
+            prefixes.xsd + 'decimal',
+            prefixes.xsd + 'double',
+            prefixes.xsd + 'float',
+            prefixes.xsd + 'int',
+            prefixes.xsd + 'integer',
+            prefixes.xsd + 'long',
+            prefixes.xsd + 'short',
+            prefixes.xsd + 'other'
+        ];
     });
 
     describe('should get the beautified version of an IRI', function() {
@@ -364,5 +378,26 @@ describe('Util service', function() {
     it('getSkolemizedIRI should create the correct type of string', function() {
         expect(_.startsWith(utilSvc.getSkolemizedIRI(), 'http://matonto.org/.well-known/genid/')).toBe(true);
         expect(uuid.v4).toHaveBeenCalled();
+    });
+    it('getInputType should return the proper input type based on datatype', function() {
+        _.forEach([0, 1], function(id) {
+            expect(utilSvc.getInputType(properties[id])).toBe('datetime-local');
+        });
+        _.forEach([2, 3, 4, 5, 6, 7, 8], function(id) {
+            expect(utilSvc.getInputType(properties[id])).toBe('number');
+        });
+        expect(utilSvc.getInputType(properties[9])).toBe('text');
+    });
+    it('getPattern should return the proper REGEX based on datatype', function() {
+        _.forEach([0, 1], function(id) {
+            expect(utilSvc.getPattern(properties[id])).toBe(regex.DATETIME);
+        });
+        _.forEach([2, 3, 4], function(id) {
+            expect(utilSvc.getPattern(properties[id])).toBe(regex.DECIMAL);
+        });
+        _.forEach([5, 6, 7, 8], function(id) {
+            expect(utilSvc.getPattern(properties[id])).toBe(regex.INTEGER);
+        });
+        expect(utilSvc.getPattern(properties[9])).toBe(regex.ANYTHING);
     });
 });

@@ -40,6 +40,8 @@
          * @requires httpService.service:httpService
          * @requires sparqlManager.service:sparqlManager
          * @requires prefixes.service:prefixes
+         * @requires ontologyManagerService.service:ontologyManagerService
+         * @requires utilService.service:utilService
          *
          * @description
          * `searchService` is a service that provides methods to create search query strings
@@ -47,22 +49,45 @@
          */
         .service('searchService', searchService);
 
-    searchService.$inject = ['discoverStateService', 'httpService', 'sparqlManagerService', 'sparqljs', 'prefixes'];
+    searchService.$inject = ['$q', 'discoverStateService', 'httpService', 'sparqlManagerService', 'sparqljs', 'prefixes', 'datasetManagerService', 'ontologyManagerService', 'utilService'];
 
-    function searchService(discoverStateService, httpService, sparqlManagerService, sparqljs, prefixes) {
+    function searchService($q, discoverStateService, httpService, sparqlManagerService, sparqljs, prefixes, datasetManagerService, ontologyManagerService, utilService) {
         var self = this;
         var ds = discoverStateService;
         var sm = sparqlManagerService;
+        var dm = datasetManagerService;
+        var om = ontologyManagerService;
+        var util = utilService;
 
-        var simplePattern = {
-            type: 'bgp',
-            triples: [{
-                subject: '?Subject',
-                predicate: '?Predicate',
-                object: '?o'
-            }]
-        };
+        var simplePattern = createPattern('?Subject', '?Predicate', '?o');
 
+        /**
+         * @ngdoc method
+         * @name getPropertiesForDataset
+         * @methodOf search.service:searchService
+         *
+         * @description
+         * Gets all of the data properties for all ontologies associated with the identified dataset.
+         *
+         * @param {string} datasetRecordIRI The IRI of the DatasetRecord to restrict the query to
+         * @return {Promise} A Promise that resolves with the list of data properties or rejects with an error message.
+         */
+        self.getPropertiesForDataset = function(datasetRecordIRI) {
+            var dataset = {};
+            var datasetArray = _.find(dm.datasetRecords, arr => {
+                if (_.some(arr, {'@id': datasetRecordIRI})) {
+                    dataset = _.find(arr, {'@id': datasetRecordIRI});
+                    return true;
+                }
+            });
+            var ontologyArray = _.reject(datasetArray, item => _.has(item, '@type'));
+            return $q.all(_.map(ontologyArray, identifier => {
+                var recordId = getIdentifierPart(identifier, 'linksToRecord');
+                var branchId = getIdentifierPart(identifier, 'linksToBranch');
+                var commitId = getIdentifierPart(identifier, 'linksToCommit');
+                return om.getDataProperties(recordId, branchId, commitId);
+            })).then(response => _.flatten(response), util.rejectError);
+        }
         /**
          * @ngdoc method
          * @name submitSearch
@@ -140,44 +165,180 @@
                     query.where = _.concat(query.where, _.map(queryConfig.types, createTypeQuery));
                 }
             }
+            _.forEach(queryConfig.filters, filter => {
+                var obj = {type: 'union', patterns: [filter]};
+                query.where.push(obj);
+            });
             if (!query.where.length) {
                 query.where.push(angular.copy(simplePattern));
             }
             var generator = new sparqljs.Generator();
             return generator.stringify(query);
         }
-
-        function createKeywordQuery(keyword) {
-            var keywordFilter = {
-                type: 'filter',
-                expression: {
-                    type: 'operation',
-                    operator: 'contains',
-                    args: [
-                        { type: 'operation', operator: 'lcase', args: ['?o'] },
-                        { type: 'operation', operator: 'lcase', args: ['\"' + keyword + '\"'] }
-                    ]
-                }
-            };
+        /**
+         * @ngdoc method
+         * @name createExistenceQuery
+         * @methodOf search.service:searchService
+         *
+         * @description
+         * Creates a part of a SPARQL query that selects all subjects, predicates, and objects
+         * for entities that have the provided predicate.
+         *
+         * @param {string} predicate The predicate's existence which is being searched for
+         * @return {Object} A part of a SPARQL query object
+         */
+        self.createExistenceQuery = function(predicate) {
+            var existencePattern = createPattern('?Subject', predicate, '?o');
             return {
                 type: 'group',
-                patterns: [angular.copy(simplePattern), keywordFilter]
+                patterns: [existencePattern, angular.copy(simplePattern)]
+            };
+        }
+        /**
+         * @ngdoc method
+         * @name createContainsQuery
+         * @methodOf search.service:searchService
+         *
+         * @description
+         * Creates a part of a SPARQL query that selects all subjects, predicates, and objects
+         * for entities that have the provided predicate and contains the provided keyword.
+         *
+         * @param {string} predicate The predicate's existence which is being searched for
+         * @param {string} keyword The keyword to filter results by
+         * @return {Object} A part of a SPARQL query object
+         */
+        self.createContainsQuery = function(predicate, keyword) {
+            var containsPattern = createPattern('?Subject', predicate, '?o');
+            return {
+                type: 'group',
+                patterns: [containsPattern, angular.copy(simplePattern), createKeywordFilter(keyword)]
+            };
+        }
+        /**
+         * @ngdoc method
+         * @name createExactQuery
+         * @methodOf search.service:searchService
+         *
+         * @description
+         * Creates a part of a SPARQL query that selects all subjects, predicates, and objects
+         * for entities that have the provided predicate and exactly matches the provided keyword.
+         *
+         * @param {string} predicate The predicate's existence which is being searched for
+         * @param {string} keyword The keyword to filter results by
+         * @param {string} range The range of the keyword
+         * @return {Object} A part of a SPARQL query object
+         */
+        self.createExactQuery = function(predicate, keyword, range) {
+            var exactPattern = createPattern('?Subject', predicate, '"' + keyword + '"^^' + range);
+            return {
+                type: 'group',
+                patterns: [exactPattern, angular.copy(simplePattern)]
+            };
+        }
+        /**
+         * @ngdoc method
+         * @name createRegexQuery
+         * @methodOf search.service:searchService
+         *
+         * @description
+         * Creates a part of a SPARQL query that selects all subjects, predicates, and objects
+         * for entities that have the provided predicate and matches the provided regex.
+         *
+         * @param {string} predicate The predicate's existence which is being searched for
+         * @param {string} regex The regex to filter results by
+         * @return {Object} A part of a SPARQL query object
+         */
+        self.createRegexQuery = function(predicate, regex) {
+            var regexPattern = createPattern('?Subject', predicate, '?o');
+            var regexFilter = createFilter({
+                type: 'operation',
+                operator: 'regex',
+                args: ['?o', '\"' + regex.toString() + '\"']
+            });
+            return {
+                type: 'group',
+                patterns: [regexPattern, angular.copy(simplePattern), regexFilter]
+            };
+        }
+        /**
+         * @ngdoc method
+         * @name createRangeQuery
+         * @methodOf search.service:searchService
+         *
+         * @description
+         * Creates a part of a SPARQL query that selects all subjects, predicates, and objects
+         * for entities that have the provided predicate and are within the configured range.
+         *
+         * @param {string} predicate The predicate's existence which is being searched for
+         * @param {Object} rangeConfig The range configuration
+         * @param {string} rangeConfig.lessThan The value that the result must be less than
+         * @param {string} rangeConfig.lessThanOrEqualTo The value that the result must be less than or equal to
+         * @param {string} rangeConfig.greaterThan The value that the result must be greater than
+         * @param {string} rangeConfig.greaterThanOrEqualTo The value that the result must be greater than or equal to
+         * @return {Object} A part of a SPARQL query object
+         */
+        self.createRangeQuery = function(predicate, rangeConfig) {
+            var rangePattern = createPattern('?Subject', predicate, '?o');
+            var patterns = [rangePattern, angular.copy(simplePattern)];
+            if (_.has(rangeConfig, 'lessThan')) {
+                patterns.push(createFilter('?o < ' + rangeConfig.lessThan));
+            }
+            if (_.has(rangeConfig, 'lessThanOrEqualTo')) {
+                patterns.push(createFilter('?o <= ' + rangeConfig.lessThanOrEqualTo));
+            }
+            if (_.has(rangeConfig, 'greaterThan')) {
+                patterns.push(createFilter('?o > ' + rangeConfig.greaterThan));
+            }
+            if (_.has(rangeConfig, 'greaterThanOrEqualTo')) {
+                patterns.push(createFilter('?o >= ' + rangeConfig.greaterThanOrEqualTo));
+            }
+            return { type: 'group', patterns };
+        }
+
+        function createKeywordQuery(keyword) {
+            return {
+                type: 'group',
+                patterns: [angular.copy(simplePattern), createKeywordFilter(keyword)]
             };
         }
 
         function createTypeQuery(item) {
-            var typePattern = {
-                type: 'bgp',
-                triples: [{
-                    subject: '?Subject',
-                    predicate: prefixes.rdf + 'type',
-                    object: item.classIRI
-                }]
-            };
+            var typePattern = createPattern('?Subject', prefixes.rdf + 'type', item.classIRI);
             return {
                 type: 'group',
                 patterns: [typePattern, angular.copy(simplePattern)]
             };
+        }
+
+        function createKeywordFilter(keyword) {
+            return createFilter({
+                type: 'operation',
+                operator: 'contains',
+                args: [{
+                    type: 'operation',
+                    operator: 'lcase',
+                    args: ['?o']
+                }, {
+                    type: 'operation',
+                    operator: 'lcase',
+                    args: ['\"' + keyword + '\"']
+                }]
+            });
+        }
+
+        function getIdentifierPart(identifier, localName) {
+            return _.get(identifier, "['" + prefixes.dataset + localName + "'][0]['@id']");
+        }
+
+        function createPattern(subject, predicate, object) {
+            return {
+                type: 'bgp',
+                triples: [{ subject, predicate, object }]
+            };
+        }
+
+        function createFilter(expression) {
+            return { type: 'filter', expression };
         }
     }
 })();

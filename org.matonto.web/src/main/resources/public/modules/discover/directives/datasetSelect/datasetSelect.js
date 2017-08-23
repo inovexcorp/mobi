@@ -40,15 +40,16 @@
          * @restrict E
          * @requires util.service:utilService
          * @requires datasetManager.service:datasetManagerService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * HTML contents in the dataset select which provides a dropdown select of all datasets.
          */
         .directive('datasetSelect', datasetSelect);
         
-        datasetSelect.$inject = ['utilService', 'datasetManagerService'];
+        datasetSelect.$inject = ['utilService', 'datasetManagerService', 'prefixes'];
 
-        function datasetSelect(utilService, datasetManagerService) {
+        function datasetSelect(utilService, datasetManagerService, prefixes) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/directives/datasetSelect/datasetSelect.html',
@@ -64,8 +65,9 @@
                     var dvm = this;
                     dvm.dm = datasetManagerService;
                     dvm.util = utilService;
+                    dvm.datasetRecords = _.map(dvm.dm.datasetRecords, arr => _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord')));
 
-                    if (!_.some(dvm.dm.datasetRecords, {'@id': dvm.bindModel})) {
+                    if (!_.some(dvm.datasetRecords, {'@id': dvm.bindModel})) {
                         dvm.bindModel = '';
                     }
                 }
