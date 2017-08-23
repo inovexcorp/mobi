@@ -30,7 +30,7 @@
          *
          * @description
          * The `createGroupOverlay` module only provides the `createGroupOverlay` directive which creates an
-         * overlay for adding a group to MatOnto.
+         * overlay for adding a group to Mobi.
          */
         .module('createGroupOverlay', [])
         /**

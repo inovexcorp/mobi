@@ -20,34 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<blueprint default-activation="eager"
-           xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
-           xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
-           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0">
 
     <cm:property-placeholder persistent-id="org.matonto.swagger.ui"
                              update-strategy="reload" >
     </cm:property-placeholder>
 
-    <bean id="resourceMapping"
-          class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultResourceMapping">
-        <property name="alias" value="/matontorest/swagger-ui" />
-        <property name="path" value="swagger" />
-    </bean>
-
-    <bean id="welcomeFile"
-          class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultWelcomeFileMapping">
-        <property name="redirect" value="true" />
-        <property name="welcomeFiles">
-            <array>
-                <value>index.html</value>
-            </array>
-        </property>
-    </bean>
-
-    <service id="resources" ref="resourceMapping"
-             interface="org.ops4j.pax.web.extender.whiteboard.ResourceMapping" />
-
-    <service id="welcomeFileService" ref="welcomeFile"
-             interface="org.ops4j.pax.web.extender.whiteboard.WelcomeFileMapping" />
+    <service id="resources" interface="org.ops4j.pax.web.extender.whiteboard.ResourceMapping">
+        <bean class="org.ops4j.pax.web.extender.whiteboard.runtime.DefaultResourceMapping">
+            <property name="alias" value="/mobirest/swagger-ui" />
+            <property name="path" value="swagger" />
+        </bean>
+    </service>
 </blueprint>

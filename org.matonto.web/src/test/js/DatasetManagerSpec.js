@@ -40,6 +40,7 @@ describe('Dataset Manager service', function() {
         mockPrefixes();
         mockDiscoverState();
         mockCatalogManager();
+        injectRestPathConstant();
 
         inject(function(datasetManagerService, _catalogManagerService_, _$httpBackend_, _$httpParamSerializer_, _$q_, _utilService_, _$rootScope_, _prefixes_, _discoverStateService_) {
             datasetManagerSvc = datasetManagerService;
@@ -66,7 +67,7 @@ describe('Dataset Manager service', function() {
             };
         });
         it('unless an error occurs', function() {
-            $httpBackend.whenGET('/matontorest/datasets').respond(400, null, null, 'Error Message');
+            $httpBackend.whenGET('/mobirest/datasets').respond(400, null, null, 'Error Message');
             datasetManagerSvc.getDatasetRecords().then(function() {
                 fail('Promise should have rejected');
             }, function() {
@@ -76,7 +77,7 @@ describe('Dataset Manager service', function() {
         });
         it('with all config passed', function() {
             var params = $httpParamSerializer(this.config);
-            $httpBackend.whenGET('/matontorest/datasets?' + params).respond(200, []);
+            $httpBackend.whenGET('/mobirest/datasets?' + params).respond(200, []);
             datasetManagerSvc.getDatasetRecords(this.config).then(function(response) {
                 expect(response.data).toEqual([]);
             }, function() {
@@ -85,7 +86,7 @@ describe('Dataset Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('without any config', function() {
-            $httpBackend.whenGET('/matontorest/datasets').respond(200, []);
+            $httpBackend.whenGET('/mobirest/datasets').respond(200, []);
             datasetManagerSvc.getDatasetRecords().then(function(response) {
                 expect(response.data).toEqual([]);
             }, function() {
@@ -96,7 +97,7 @@ describe('Dataset Manager service', function() {
     });
     describe('should retrieve a DatasetRecord', function() {
         it('unless an error occurs', function() {
-            $httpBackend.whenGET('/matontorest/datasets/recordId').respond(400, null, null, 'Error Message');
+            $httpBackend.whenGET('/mobirest/datasets/recordId').respond(400, null, null, 'Error Message');
             datasetManagerSvc.getDatasetRecord('recordId')
                 .then(function() {
                     fail('Promise should have rejected');
@@ -109,7 +110,7 @@ describe('Dataset Manager service', function() {
                 flushAndVerify($httpBackend);
         });
         it('when resolved', function() {
-            $httpBackend.whenGET('/matontorest/datasets/recordId').respond(200, {});
+            $httpBackend.whenGET('/mobirest/datasets/recordId').respond(200, {});
             datasetManagerSvc.getDatasetRecord('recordId')
                 .then(function(response) {
                     expect(response).toEqual({});
@@ -131,7 +132,7 @@ describe('Dataset Manager service', function() {
             };
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectPOST('/matontorest/datasets',
+            $httpBackend.expectPOST('/mobirest/datasets',
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
@@ -144,7 +145,7 @@ describe('Dataset Manager service', function() {
         });
         describe('when no error occurs', function() {
             beforeEach(function() {
-                $httpBackend.expectPOST('/matontorest/datasets',
+                $httpBackend.expectPOST('/mobirest/datasets',
                     function(data) {
                         return data instanceof FormData;
                     }).respond(200, recordId);
@@ -190,7 +191,7 @@ describe('Dataset Manager service', function() {
     });
     describe('should delete a DatasetRecord', function() {
         it('unless an error occurs', function() {
-            $httpBackend.whenDELETE('/matontorest/datasets/' + encodeURIComponent(recordId) + '?force=false').respond(400, null, null, 'Error Message');
+            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(recordId) + '?force=false').respond(400, null, null, 'Error Message');
             datasetManagerSvc.deleteDatasetRecord(recordId).then(function() {
                 fail('Promise should have rejected');
             }, function() {
@@ -201,7 +202,7 @@ describe('Dataset Manager service', function() {
         it('with force delete', function() {
             var datasetRecord = [{'@id': recordId, '@type': [prefixes.dataset + 'DatasetRecord']}];
             datasetManagerSvc.datasetRecords = [datasetRecord];
-            $httpBackend.whenDELETE('/matontorest/datasets/' + encodeURIComponent(recordId) + '?force=true').respond(200);
+            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(recordId) + '?force=true').respond(200);
             datasetManagerSvc.deleteDatasetRecord(recordId, true).then(function() {
                 expect(datasetManagerSvc.datasetRecords).toEqual([]);
                 expect(discoverStateSvc.cleanUpOnDatasetDelete).toHaveBeenCalledWith(recordId);
@@ -213,7 +214,7 @@ describe('Dataset Manager service', function() {
         it('without force delete', function() {
             var datasetRecord = [{'@id': recordId, '@type': [prefixes.dataset + 'DatasetRecord']}];
             datasetManagerSvc.datasetRecords = [datasetRecord];
-            $httpBackend.whenDELETE('/matontorest/datasets/' + encodeURIComponent(recordId) + '?force=false').respond(200);
+            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(recordId) + '?force=false').respond(200);
             datasetManagerSvc.deleteDatasetRecord(recordId).then(function() {
                 expect(datasetManagerSvc.datasetRecords).toEqual([]);
                 expect(discoverStateSvc.cleanUpOnDatasetDelete).toHaveBeenCalledWith(recordId);
@@ -225,7 +226,7 @@ describe('Dataset Manager service', function() {
     });
     describe('should clear a DatasetRecord', function() {
         it('unless an error occurs', function() {
-            $httpBackend.whenDELETE('/matontorest/datasets/' + encodeURIComponent(recordId) + '/data?force=false').respond(400, null, null, 'Error Message');
+            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(recordId) + '/data?force=false').respond(400, null, null, 'Error Message');
             datasetManagerSvc.clearDatasetRecord(recordId).then(function() {
                 fail('Promise should have rejected');
             }, function() {
@@ -234,7 +235,7 @@ describe('Dataset Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('with force delete', function() {
-            $httpBackend.whenDELETE('/matontorest/datasets/' + encodeURIComponent(recordId) + '/data?force=true').respond(200);
+            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(recordId) + '/data?force=true').respond(200);
             datasetManagerSvc.clearDatasetRecord(recordId, true).then(function() {
                 expect(discoverStateSvc.cleanUpOnDatasetClear).toHaveBeenCalledWith(recordId);
             }, function() {
@@ -243,7 +244,7 @@ describe('Dataset Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('without force delete', function() {
-            $httpBackend.whenDELETE('/matontorest/datasets/' + encodeURIComponent(recordId) + '/data?force=false').respond(200);
+            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(recordId) + '/data?force=false').respond(200);
             datasetManagerSvc.clearDatasetRecord(recordId).then(function() {
                 expect(discoverStateSvc.cleanUpOnDatasetClear).toHaveBeenCalledWith(recordId);
             }, function() {

@@ -34,6 +34,7 @@ describe('Catalog Manager service', function() {
         mockPrefixes();
         mockUtil();
         mockHttpService();
+        injectRestPathConstant();
 
         module(function($provide) {
             $provide.service('$window', function() {
@@ -61,7 +62,7 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             spyOn(catalogManagerSvc, 'getRecordTypes').and.returnValue($q.reject());
             spyOn(catalogManagerSvc, 'getSortOptions').and.returnValue($q.reject());
-            $httpBackend.whenGET('/matontorest/catalogs').respond(400, '');
+            $httpBackend.whenGET('/mobirest/catalogs').respond(400, '');
             catalogManagerSvc.initialize().then(function(response) {
                 fail('Promise should have rejected');
             }, function() {
@@ -77,7 +78,7 @@ describe('Catalog Manager service', function() {
                 spyOn(catalogManagerSvc, 'getSortOptions').and.returnValue($q.when(this.sortOptions));
             });
             it('unless a catalog cannot be found', function() {
-                $httpBackend.whenGET('/matontorest/catalogs').respond(200, []);
+                $httpBackend.whenGET('/mobirest/catalogs').respond(200, []);
                 catalogManagerSvc.initialize().then(function(response) {
                     fail('Promise should have rejected');
                 }, function(error) {
@@ -92,7 +93,7 @@ describe('Catalog Manager service', function() {
                 localCatalog[prefixes.dcterms + 'title'] = [{'@value': 'MatOnto Catalog (Local)'}];
                 var distributedCatalog = {};
                 distributedCatalog[prefixes.dcterms + 'title'] = [{'@value': 'MatOnto Catalog (Distributed)'}];
-                $httpBackend.whenGET('/matontorest/catalogs').respond(200, [localCatalog, distributedCatalog]);
+                $httpBackend.whenGET('/mobirest/catalogs').respond(200, [localCatalog, distributedCatalog]);
                 catalogManagerSvc.initialize().then(function(response) {
                     expect(catalogManagerSvc.recordTypes).toEqual(types);
                     expect(catalogManagerSvc.localCatalog).toEqual(localCatalog);
@@ -110,7 +111,7 @@ describe('Catalog Manager service', function() {
         });
     });
     it('should get the IRIs for all record types', function() {
-        $httpBackend.whenGET('/matontorest/catalogs/record-types').respond(200, []);
+        $httpBackend.whenGET('/mobirest/catalogs/record-types').respond(200, []);
         catalogManagerSvc.getRecordTypes().then(function(value) {
             expect(value).toEqual([]);
         }, function(response) {
@@ -119,7 +120,7 @@ describe('Catalog Manager service', function() {
         flushAndVerify($httpBackend);
     });
     it('should get the IRIs for all sort options', function() {
-        $httpBackend.whenGET('/matontorest/catalogs/sort-options').respond(200, []);
+        $httpBackend.whenGET('/mobirest/catalogs/sort-options').respond(200, []);
         catalogManagerSvc.getSortOptions().then(function(value) {
             expect(value).toEqual([]);
         }, function(response) {
@@ -128,7 +129,7 @@ describe('Catalog Manager service', function() {
         flushAndVerify($httpBackend);
     });
     describe('should get a page of results based on the passed URL', function() {
-        var url = 'matontorest/catalogs/local/records';
+        var url = 'mobirest/catalogs/local/records';
         it('unless there is an error', function() {
             $httpBackend.expectGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getResultsPage(url).then(function(response) {
@@ -151,7 +152,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve a list of Records', function() {
         var promiseId = 'id',
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records',
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records',
             config;
         beforeEach(function(){
             config = {
@@ -244,7 +245,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should retrieve a Record', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId);
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId);
         it('unless an error occurs', function() {
             $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecord(recordId, catalogId).then(function(response) {
@@ -267,7 +268,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should create a new Record', function() {
         var recordConfig,
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records';
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records';
         beforeEach(function() {
             recordConfig = {
                 type: prefixes.catalog + 'Record',
@@ -318,7 +319,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should update a Record', function() {
         var newRecord = {},
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId);
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId);
         it('unless an error occurs', function() {
             $httpBackend.expectPUT(url, newRecord).respond(400, null, null, 'Error Message');
             catalogManagerSvc.updateRecord(recordId, catalogId, newRecord).then(function() {
@@ -340,7 +341,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should delete a Record', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId);
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId);
         it('unless an error occurs', function() {
             $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteRecord(recordId, catalogId).then(function() {
@@ -368,7 +369,7 @@ describe('Catalog Manager service', function() {
                 sort: 'http://purl.org/dc/terms/issued',
                 ascending: true
             },
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions';
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions';
         beforeEach(function() {
             catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title', asc: false}];
         });
@@ -408,7 +409,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should retrieve a Record Distribution', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId);
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId);
         it('unless an error occurs', function() {
             $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordDistribution(distributionId, recordId, catalogId).then(function(response) {
@@ -437,7 +438,7 @@ describe('Catalog Manager service', function() {
                 accessURL: 'http://example.com/access',
                 downloadURL: 'http://example.com/download',
             },
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions';
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions';
         it('unless an error occurs', function() {
             $httpBackend.expectPOST(url,
                 function(data) {
@@ -482,7 +483,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should update a Record Distribution', function() {
         var newDistribution = {},
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId);
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId);
         it('unless an error occurs', function() {
             $httpBackend.expectPUT(url, newDistribution).respond(400, null, null, 'Error Message');
             catalogManagerSvc.updateRecordDistribution(distributionId, recordId, catalogId, newDistribution).then(function() {
@@ -504,7 +505,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should delete a Record Distribution', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId);
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId);
         it('unless an error occurs', function() {
             $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteRecordDistribution(distributionId, recordId, catalogId).then(function() {
@@ -532,7 +533,7 @@ describe('Catalog Manager service', function() {
                 sort: 'http://purl.org/dc/terms/issued',
                 ascending: true
             },
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions';
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions';
         beforeEach(function() {
             catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title', asc: false}];
         });
@@ -572,7 +573,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should retrieve the latest Record Version', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/latest';
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/latest';
         it('unless an error occurs', function() {
             $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordLatestVersion(recordId, catalogId).then(function(response) {
@@ -594,7 +595,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should retrieve a Record Version', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId);
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId);
         it('unless an error occurs', function() {
             $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordVersion(versionId, recordId, catalogId).then(function(response) {
@@ -620,7 +621,7 @@ describe('Catalog Manager service', function() {
                 title: 'Title',
                 description: 'Description'
             },
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions';
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions';
         it('unless an error occurs', function() {
             $httpBackend.expectPOST(url,
                 function(data) {
@@ -666,7 +667,7 @@ describe('Catalog Manager service', function() {
                 title: 'Title',
                 description: 'Description'
             },
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions';
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions';
         beforeEach(function() {
             version = {'@id': versionId};
             spyOn(catalogManagerSvc, 'getRecordVersion').and.returnValue($q.when(version));
@@ -721,7 +722,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should update a Record Version', function() {
         var newVersion = {},
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId);
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId);
         it('unless an error occurs', function() {
             $httpBackend.expectPUT(url, newVersion).respond(400, null, null, 'Error Message');
             catalogManagerSvc.updateRecordVersion(versionId, recordId, catalogId, newVersion).then(function() {
@@ -743,7 +744,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should delete a Record Version', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId);
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId);
         it('unless an error occurs', function() {
             $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteRecordVersion(versionId, recordId, catalogId).then(function() {
@@ -765,7 +766,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should retrieve the Commit of a Version', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit';
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit';
         it('unless an error occurs', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
             $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
@@ -805,7 +806,7 @@ describe('Catalog Manager service', function() {
                 sort: 'http://purl.org/dc/terms/issued',
                 ascending: true
             },
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions';
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions';
         beforeEach(function() {
             catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title', asc: false}];
         });
@@ -845,7 +846,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should retrieve a Version Distribution', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId);
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId);
         it('unless an error occurs', function() {
             $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getVersionDistribution(distributionId, versionId, recordId, catalogId).then(function(response) {
@@ -874,7 +875,7 @@ describe('Catalog Manager service', function() {
                 accessURL: 'http://example.com/access',
                 downloadURL: 'http://example.com/download',
             },
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions';
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions';
         it('unless an error occurs', function() {
             $httpBackend.expectPOST(url,
                 function(data) {
@@ -919,7 +920,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should update a Version Distribution', function() {
         var newDistribution = {},
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId);
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId);
         it('unless an error occurs', function() {
             $httpBackend.expectPUT(url, newDistribution).respond(400, null, null, 'Error Message');
             catalogManagerSvc.updateVersionDistribution(distributionId, versionId, recordId, catalogId, newDistribution).then(function() {
@@ -941,7 +942,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should delete a Version Distribution', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId);
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId);
         it('unless an error occurs', function() {
             $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteVersionDistribution(distributionId, versionId, recordId, catalogId).then(function() {
@@ -964,7 +965,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve a list of Record Branches', function() {
         var config,
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches';
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches';
         beforeEach(function() {
             config = {
                 limit: 10,
@@ -1013,7 +1014,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should retrieve the master Branch of a Record', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/master';
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/master';
         it('unless an error occurs', function() {
             $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordMasterBranch(recordId, catalogId).then(function(response) {
@@ -1035,7 +1036,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should retrieve a Record Branch', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId);
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId);
         it('unless an error occurs', function() {
             $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getRecordBranch(branchId, recordId, catalogId).then(function(response) {
@@ -1062,7 +1063,7 @@ describe('Catalog Manager service', function() {
                 title: 'Title',
                 description: 'Description'
             },
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches';
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches';
         beforeEach(function() {
             branch = {'@id': branchId};
             spyOn(catalogManagerSvc, 'getRecordBranch').and.returnValue($q.when(branch));
@@ -1121,7 +1122,7 @@ describe('Catalog Manager service', function() {
                 title: 'Title',
                 description: 'Description'
             },
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches';
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches';
         beforeEach(function() {
             branch = {'@id': branchId};
             spyOn(catalogManagerSvc, 'getRecordBranch').and.returnValue($q.when(branch));
@@ -1178,7 +1179,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should update a Record Branch', function() {
         var newBranch = {},
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId);
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId);
         it('unless an error occurs', function() {
             $httpBackend.expectPUT(url, newBranch).respond(400, null, null, 'Error Message');
             catalogManagerSvc.updateRecordBranch(branchId, recordId, catalogId, newBranch).then(function() {
@@ -1200,7 +1201,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should delete a Record Branch', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId);
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId);
         it('unless an error occurs', function() {
             $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteRecordBranch(branchId, recordId, catalogId).then(function() {
@@ -1222,7 +1223,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should retrieve Branch Commits', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits';
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits';
         it('unless an error occurs', function() {
             $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getBranchCommits(branchId, recordId, catalogId).then(function(response) {
@@ -1245,7 +1246,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should create a new commit on a Branch', function() {
         var message = 'Message',
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits';
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits';
         it('unless an error occurs', function() {
             var params = $httpParamSerializer({message: message});
             $httpBackend.expectPOST(url + '?' + params).respond(400, null, null, 'Error Message');
@@ -1269,7 +1270,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should retrieve the head Commit of a Branch', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head';
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head';
         it('unless an error occurs', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
             $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
@@ -1303,7 +1304,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should retrieve a Branch Commit', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId);
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId);
         it('unless an error occurs', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
             $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
@@ -1338,7 +1339,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should get the conflicts between two Branches', function() {
         var config,
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts';
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts';
         beforeEach(function() {
             config = {
                 format: 'jsonld',
@@ -1379,7 +1380,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should merge two Branches', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts/resolution';
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts/resolution';
         it('unless an error occurs', function() {
             var differenceObj = {};
             var params = $httpParamSerializer({targetId: branchId});
@@ -1426,7 +1427,7 @@ describe('Catalog Manager service', function() {
     });
     describe('should retrieve the compiled resource from a Branch Commit', function() {
         var config,
-            url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource';
+            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource';
         beforeEach(function() {
             config = {
                 applyInProgressCommit: true,
@@ -1467,7 +1468,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should download the compiled resource from a Branch Commit', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource';
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource';
         it('with a format', function() {
             catalogManagerSvc.downloadResource(commitId, branchId, recordId, catalogId, true, 'turtle');
             expect(windowSvc.location).toBe(url + '?applyInProgressCommit=true&format=turtle&fileName=resource');
@@ -1478,7 +1479,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should create a new InProgressCommit for the logged-in User', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
         it('unless an error occurs', function() {
             $httpBackend.whenPOST(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.createInProgressCommit(recordId, catalogId).then(function(response) {
@@ -1500,7 +1501,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should retrieve an InProgressCommit for the logged-in User', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
         it('unless an error occurs', function() {
             $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.getInProgressCommit(recordId, catalogId).then(function(response) {
@@ -1522,7 +1523,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should update an InProgressCommit for the logged-in User', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
         it('unless an error occurs', function() {
             var differenceObj = {};
             $httpBackend.whenPUT(url,
@@ -1565,7 +1566,7 @@ describe('Catalog Manager service', function() {
         });
     });
     describe('should remove an InProgressCommit for the logged-in User', function() {
-        var url = '/matontorest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
+        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
         it('unless an error occurs', function() {
             $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
             catalogManagerSvc.deleteInProgressCommit(recordId, catalogId).then(function(response) {

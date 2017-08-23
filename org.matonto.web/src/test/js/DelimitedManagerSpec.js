@@ -28,6 +28,8 @@ describe('Delimited Manager service', function() {
     beforeEach(function() {
         module('delimitedManager');
         mockUtil();
+        injectRestPathConstant();
+
         module(function($provide) {
             $provide.service('$window', function() {
                 this.location = '';
@@ -48,7 +50,7 @@ describe('Delimited Manager service', function() {
 
     describe('should upload a delimited file', function() {
         it('unless an error occurs', function(done) {
-            $httpBackend.expectPOST('/matontorest/delimited-files',
+            $httpBackend.expectPOST('/mobirest/delimited-files',
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
@@ -64,7 +66,7 @@ describe('Delimited Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
-            $httpBackend.expectPOST('/matontorest/delimited-files',
+            $httpBackend.expectPOST('/mobirest/delimited-files',
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
@@ -87,7 +89,7 @@ describe('Delimited Manager service', function() {
                 'rowCount': rowEnd,
                 'separator': delimitedManagerSvc.separator
             });
-            $httpBackend.expectGET('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + '?' + params).respond(400, null, null, 'Error Message');
+            $httpBackend.expectGET('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '?' + params).respond(400, null, null, 'Error Message');
             delimitedManagerSvc.previewFile(rowEnd).then(function() {
                 fail('Promise should have rejected');
                 done();
@@ -102,7 +104,7 @@ describe('Delimited Manager service', function() {
                 'rowCount': rowEnd,
                 'separator': delimitedManagerSvc.separator
             });
-            $httpBackend.expectGET('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + '?' + params).respond(200, []);
+            $httpBackend.expectGET('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '?' + params).respond(200, []);
             delimitedManagerSvc.previewFile(rowEnd).then(function() {
                 fail('Promise should have rejected');
                 done();
@@ -118,7 +120,7 @@ describe('Delimited Manager service', function() {
                 'rowCount': rowEnd,
                 'separator': delimitedManagerSvc.separator
             });
-            $httpBackend.expectGET('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + '?' + params).respond(200, preview);
+            $httpBackend.expectGET('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '?' + params).respond(200, preview);
             delimitedManagerSvc.previewFile(rowEnd);
             flushAndVerify($httpBackend);
             expect(_.isArray(delimitedManagerSvc.dataRows)).toBe(true);
@@ -136,7 +138,7 @@ describe('Delimited Manager service', function() {
             fileName: fileName
         });
         delimitedManagerSvc.mapAndDownload(mappingRecordIRI, format, fileName);
-        expect(windowSvc.location).toEqual('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + '/map?' + params);
+        expect(windowSvc.location).toEqual('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map?' + params);
     });
     describe('should return a preview of mapped data from an uploaded delimited file', function() {
         var jsonld = '',
@@ -147,7 +149,7 @@ describe('Delimited Manager service', function() {
                 format: format,
                 separator: delimitedManagerSvc.separator
             });
-            $httpBackend.expectPOST('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + '/map-preview?' + params,
+            $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map-preview?' + params,
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
@@ -168,7 +170,7 @@ describe('Delimited Manager service', function() {
                 format: format,
                 separator: delimitedManagerSvc.separator
             });
-            $httpBackend.expectPOST('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + '/map-preview?' + params,
+            $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map-preview?' + params,
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
@@ -190,7 +192,7 @@ describe('Delimited Manager service', function() {
                 format: format,
                 separator: delimitedManagerSvc.separator
             });
-            $httpBackend.expectPOST('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + '/map-preview?' + params,
+            $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map-preview?' + params,
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
@@ -217,7 +219,7 @@ describe('Delimited Manager service', function() {
             });
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.expectPOST('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + '/map?' + params).respond(400, null, null, 'Error Message');
+            $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map?' + params).respond(400, null, null, 'Error Message');
             delimitedManagerSvc.mapAndUpload(mappingRecordIRI, datasetRecordIRI).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -228,7 +230,7 @@ describe('Delimited Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
-            $httpBackend.expectPOST('/matontorest/delimited-files/' + delimitedManagerSvc.fileName + '/map?' + params).respond(200, '');
+            $httpBackend.expectPOST('/mobirest/delimited-files/' + delimitedManagerSvc.fileName + '/map?' + params).respond(200, '');
             delimitedManagerSvc.mapAndUpload(mappingRecordIRI, datasetRecordIRI).then(function(response) {
                 expect(response).toBe('');
                 done();

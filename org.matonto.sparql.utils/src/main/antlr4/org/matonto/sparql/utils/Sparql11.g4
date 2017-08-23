@@ -460,7 +460,6 @@ groupGraphPattern
     subSelect
     | groupGraphPatternSub
   )
-  groupGraphPatternSub
   CLOSE_CURLY_BRACE
   ;
 
@@ -1278,7 +1277,7 @@ anon
 
 /* sparql 1.1 r139 */
 
-IRI_REF: '<' ( ~('<' | '>' | '"' | '{' | '}' | '|' | '^' | '\\' | '`') | (PN_CHARS))* '>';
+IRI_REF: '<' ~('<' | '>' | '"' | '{' | '}' | '|' | '^' | '\\' | '`' | '\u0000'..'\u0020')* '>';
 
 /* sparql 1.1 r140 */
 

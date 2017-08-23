@@ -30,7 +30,7 @@
          *
          * @description
          * The `util` module only provides the `utilService` service which provides various common utility
-         * methods for use across MatOnto.
+         * methods for use across Mobi.
          */
         .module('util', [])
         /**
@@ -39,7 +39,7 @@
          * @requires $filter
          *
          * @description
-         * `utilService` is a service that provides various utility methods for use across MatOnto.
+         * `utilService` is a service that provides various utility methods for use across Mobi.
          */
         .service('utilService', utilService);
 
