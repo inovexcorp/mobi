@@ -41,6 +41,7 @@ import org.matonto.clustering.hazelcast.listener.ClusterServiceLifecycleListener
 import org.matonto.platform.config.api.server.MatOnto;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +50,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 
 /**
  * This is the {@link ClusteringService} implementation built on top of Hazelcast.
@@ -105,6 +107,13 @@ public class HazelcastClusteringService implements ClusteringService {
     private ClusterServiceLifecycleListener listener;
 
     /**
+     * The task on the {@link ForkJoinPool} representing this service.
+     */
+    private ForkJoinTask<?> runningTask;
+
+    private ServiceRegistration<ClusteringService> registration;
+
+    /**
      * Method that joins the hazelcast cluster when the service is activated.
      */
     @Activate
@@ -112,7 +121,7 @@ public class HazelcastClusteringService implements ClusteringService {
         this.configuration = configuration;
         final HazelcastClusteringServiceConfig serviceConfig = Configurable.createConfigurable(HazelcastClusteringServiceConfig.class, configuration);
         if (serviceConfig.enabled()) {
-            ForkJoinPool.commonPool().submit(() -> {
+            runningTask = ForkJoinPool.commonPool().submit(() -> {
                 LOGGER.debug("Spinning up underlying hazelcast instance");
                 this.hazelcastInstance = Hazelcast.newHazelcastInstance(HazelcastConfigurationFactory.build(serviceConfig, this.matOntoServer.getServerIdentifier().toString()));
                 LOGGER.info("Clustering Service {}: Successfully initialized Hazelcast instance", this.matOntoServer.getServerIdentifier());
@@ -123,7 +132,7 @@ public class HazelcastClusteringService implements ClusteringService {
 
                 registerWithClusterNodes();
                 // Register service
-                context.registerService(ClusteringService.class, this, new Hashtable<>(configuration));
+                this.registration = context.registerService(ClusteringService.class, this, new Hashtable<>(configuration));
             });
         } else {
             LOGGER.warn("Clustering Service {}: Service initialized in disabled state... Not going to start a hazelcast node " +
@@ -153,6 +162,21 @@ public class HazelcastClusteringService implements ClusteringService {
             this.hazelcastInstance.shutdown();
         } else {
             LOGGER.debug("Already disabled, so deactivation is a noop");
+        }
+        // Stop running task.
+        if (runningTask != null) {
+            if (!runningTask.isDone()) {
+                if (!runningTask.cancel(true)) {
+                    LOGGER.warn("Stopping previous thread was unsuccessful...");
+                }
+            } else {
+                LOGGER.debug("Service initialization task already complete, so no need to cancel");
+            }
+        }
+        // Unregister previous service.
+        if (registration != null) {
+            LOGGER.info("Unregistering previously spun up service.");
+            registration.unregister();
         }
     }
 
