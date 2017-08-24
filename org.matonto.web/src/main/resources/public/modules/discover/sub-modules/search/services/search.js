@@ -302,7 +302,7 @@
          *
          * @description
          * Creates a part of a SPARQL query that selects all subjects, predicates, and objects
-         * for entities that have the provided predicate and and exactly matches the provided boolean value.
+         * for entities that have the provided predicate and exactly matches the provided boolean value.
          *
          * @param {string} predicate The predicate's existence which is being searched for
          * @param {boolean} value The value which is being searched for
