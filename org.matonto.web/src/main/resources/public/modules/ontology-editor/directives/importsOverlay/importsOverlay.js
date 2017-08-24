@@ -82,7 +82,7 @@
                     }
                     dvm.addImport = function() {
                         if (dvm.tabs.url) {
-                            $http.get('/matontorest/imported-ontologies/' + encodeURIComponent(dvm.url))
+                            $http.get('/mobirest/imported-ontologies/' + encodeURIComponent(dvm.url))
                                 .then(response => {
                                     dvm.confirmed([dvm.url]);
                                 }, () => onError('The provided URL was unresolvable.'));

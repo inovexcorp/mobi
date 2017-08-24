@@ -30,7 +30,7 @@
          *
          * @description
          * The `sparqlManager` module only provides the `sparqlManagerService` service which
-         * provides access to the MatOnto SPARQL query REST endpoint and state variables for
+         * provides access to the Mobi SPARQL query REST endpoint and state variables for
          * the SPARQL Editor
          */
         .module('sparqlManager', [])
@@ -45,15 +45,15 @@
          * @requires httpService.service:httpService
          *
          * @description
-         * `sparqlManagerService` is a service that provides access to the MatOnto SPARQL query
+         * `sparqlManagerService` is a service that provides access to the Mobi SPARQL query
          * REST endpoint and various state variables for the SPARQL Editor.
          */
         .service('sparqlManagerService', sparqlManagerService);
 
-        sparqlManagerService.$inject = ['$http', '$q', '$window', '$httpParamSerializer', 'utilService', 'httpService'];
+        sparqlManagerService.$inject = ['$http', '$q', '$window', '$httpParamSerializer', 'utilService', 'httpService', 'REST_PREFIX'];
 
-        function sparqlManagerService($http, $q, $window, $httpParamSerializer, utilService, httpService) {
-            var prefix = '/matontorest/sparql';
+        function sparqlManagerService($http, $q, $window, $httpParamSerializer, utilService, httpService, REST_PREFIX) {
+            var prefix = REST_PREFIX + 'sparql';
             var self = this;
             var util = utilService;
 
@@ -76,7 +76,7 @@
              *
              * @description
              * The query string from the {@link sparqlEditor.directive:sparqlEditor SPARQL editor} to
-             * be ran against the MatOnto repository.
+             * be ran against the Mobi repository.
              */
             self.queryString = '';
             /**
@@ -86,7 +86,7 @@
              * @type {string}
              *
              * @description
-             * The IRI of a DatasetRecord in the MatOnto repository to perform the query against.
+             * The IRI of a DatasetRecord in the Mobi repository to perform the query against.
              */
             self.datasetRecordIRI = '';
             /**
@@ -106,7 +106,7 @@
              * @type {string}
              *
              * @description
-             * An error message obtained from attempting to run a SPARQL query against the MatOnto repository.
+             * An error message obtained from attempting to run a SPARQL query against the Mobi repository.
              */
             self.errorMessage = '';
             /**
@@ -116,7 +116,7 @@
              * @type {string}
              *
              * @description
-             * Details about an error obtained from attempting to run a SPARQL query against the MatOnto repository.
+             * Details about an error obtained from attempting to run a SPARQL query against the Mobi repository.
              */
             self.errorDetails = '';
             /**
@@ -233,7 +233,7 @@
              * @methodOf sparqlManager.service:sparqlManagerService
              *
              * @description
-             * Calls the GET /matontorest/sparql endpoint using the `window.location` variable which
+             * Calls the GET /mobirest/sparql endpoint using the `window.location` variable which
              * will start a download of the results of running the current
              * {@link sparqlManager.service:sparqlManagerService#queryString query} and
              * {@link sparqlManager.service:sparqlManagerService#prefixes prefixes}, optionally using
