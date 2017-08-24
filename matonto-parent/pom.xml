@@ -78,7 +78,7 @@
         <ehcache.version>3.3.1</ehcache.version>
         <javax.cache.version>1.0.0</javax.cache.version>
         <orm.version>1.8.63</orm.version>
-        <hazelcast.version>3.8.2</hazelcast.version>
+        <hazelcast.version>3.8.4</hazelcast.version>
     </properties>
 
     <dependencyManagement>
