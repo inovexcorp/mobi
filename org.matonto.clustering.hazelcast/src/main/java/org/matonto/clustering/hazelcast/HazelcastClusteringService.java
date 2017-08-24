@@ -109,8 +109,11 @@ public class HazelcastClusteringService implements ClusteringService {
     /**
      * The task on the {@link ForkJoinPool} representing this service.
      */
-    private ForkJoinTask<?> runningTask;
+    private ForkJoinTask<?> initializationTask;
 
+    /**
+     * Service registration if it is necessary.
+     */
     private ServiceRegistration<ClusteringService> registration;
 
     /**
@@ -121,7 +124,7 @@ public class HazelcastClusteringService implements ClusteringService {
         this.configuration = configuration;
         final HazelcastClusteringServiceConfig serviceConfig = Configurable.createConfigurable(HazelcastClusteringServiceConfig.class, configuration);
         if (serviceConfig.enabled()) {
-            runningTask = ForkJoinPool.commonPool().submit(() -> {
+            this.initializationTask = ForkJoinPool.commonPool().submit(() -> {
                 LOGGER.debug("Spinning up underlying hazelcast instance");
                 this.hazelcastInstance = Hazelcast.newHazelcastInstance(HazelcastConfigurationFactory.build(serviceConfig, this.matOntoServer.getServerIdentifier().toString()));
                 LOGGER.info("Clustering Service {}: Successfully initialized Hazelcast instance", this.matOntoServer.getServerIdentifier());
@@ -132,8 +135,9 @@ public class HazelcastClusteringService implements ClusteringService {
 
                 registerWithClusterNodes();
                 // Register service
-                this.registration = context.registerService(ClusteringService.class, this, new Hashtable<>(configuration));
             });
+            this.registration = context.registerService(ClusteringService.class, this, new Hashtable<>(configuration));
+            LOGGER.info("Successfully spawned initialization thread.");
         } else {
             LOGGER.warn("Clustering Service {}: Service initialized in disabled state... Not going to start a hazelcast node " +
                     "instance and join cluster", this.matOntoServer.getServerIdentifier());
@@ -157,26 +161,30 @@ public class HazelcastClusteringService implements ClusteringService {
      */
     @Deactivate
     public void deactivate() {
+        // Stop running initialization task.
+        LOGGER.info("Going to try and cancel the initialization task if it exists");
+        if (initializationTask != null) {
+            LOGGER.debug("Initialization task is done: {}", initializationTask.isDone());
+            final boolean cancelled = initializationTask.cancel(true);
+            LOGGER.debug("Cancelled initialization task: {}", cancelled);
+        } else {
+            LOGGER.warn("No initialization task was found... Skipping task cancellation");
+        }
+
+        // Shut down the hazelcast instance.
         LOGGER.info("Shutting down underlying hazelcast instance");
         if (this.hazelcastInstance != null) {
             this.hazelcastInstance.shutdown();
         } else {
             LOGGER.debug("Already disabled, so deactivation is a noop");
         }
-        // Stop running task.
-        if (runningTask != null) {
-            if (!runningTask.isDone()) {
-                if (!runningTask.cancel(true)) {
-                    LOGGER.warn("Stopping previous thread was unsuccessful...");
-                }
-            } else {
-                LOGGER.debug("Service initialization task already complete, so no need to cancel");
-            }
-        }
+
         // Unregister previous service.
         if (registration != null) {
-            LOGGER.info("Unregistering previously spun up service.");
+            LOGGER.info("Un-registering previously registered service in the OSGi service registry");
             registration.unregister();
+        } else {
+            LOGGER.warn("No previously registered service, so we're skipping this deactivation step");
         }
     }
 
