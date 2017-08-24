@@ -40,6 +40,8 @@ public class RecordExportConfig extends BaseExportConfig {
             super(output, format);
         }
 
+        // TODO: Allow passing in list of records
+
         public RecordExportConfig build() throws IOException {
             return new RecordExportConfig(this);
         }

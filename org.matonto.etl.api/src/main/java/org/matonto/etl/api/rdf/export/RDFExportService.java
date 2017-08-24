@@ -31,26 +31,21 @@ import java.io.IOException;
 public interface RDFExportService {
 
     /**
-     * Exports triples from the specified Repository to the specified File optionally restricted based on the
-     * passed Configuration.
+     * Exports data from the specified Repository based on the passed Configuration.
      *
-     * @param config The configuration for the export with the file path, RDF format, and optional restrictions
+     * @param config The configuration for the export with the OutputStream, RDFFormat, and optional restrictions
      * @param repositoryID The ID of the source Repository
-     * @return A File with the result of the export
-     * @throws IOException Thrown if there is an error writing to the file or the RDF format could not be determined
-     *      from the file name
+     * @throws IOException Thrown if there is an error writing to the OutputStream
      * @throws IllegalArgumentException Thrown if the Repository does not exist
      */
     void export(RDFExportConfig config, String repositoryID) throws IOException;
 
     /**
-     * Exports the specified Model to the specified File based on the passed Configuration.
+     * Exports the specified Model based on the passed Configuration.
      *
-     * @param config The configuration for the export with the file path and RDF format
+     * @param config The configuration for the export with the OutputStream and RDFFormat
      * @param model An RDF Model
-     * @return A File with the result of the export
-     * @throws IOException Thrown if there is an error writing to the file or the RDF format could not be determined
-     *      from the file name
+     * @throws IOException Thrown if there is an error writing to the OutputStream
      */
     void export(RDFExportConfig config, Model model) throws IOException;
 }

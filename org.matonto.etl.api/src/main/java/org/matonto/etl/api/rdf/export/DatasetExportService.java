@@ -7,14 +7,10 @@ import java.io.IOException;
 public interface DatasetExportService {
 
     /**
-     * Exports triples from the specified DatasetRecord's Dataset to the specified File optionally restricted
-     * based on the passed Configuration.
+     * Exports data from the specified DatasetRecord's Dataset based on the passed Configuration.
      *
-     * @param config The configuration for the export with the file path, RDF format, and optional restrictions
-     * @param datasetRecordID The ID of the DatasetRecord with the target Dataset
-     * @return A File with the result of the export
-     * @throws IOException Thrown if there is an error writing to the file or the RDF format could not be determined
-     *      from the file name
+     * @param config The configuration for the export
+     * @param datasetRecord The Resource ID of the DatasetRecord to export
      * @throws IllegalArgumentException Thrown if the DatasetRecord does not exist
      */
     void export(BaseExportConfig config, String datasetRecord) throws IOException;

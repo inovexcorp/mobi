@@ -52,7 +52,8 @@ public class BaseExportConfig {
         /**
          * Creates a new Builder for a BaseExportConfig.
          *
-         * @param output The path to the file with the exported data.
+         * @param output The OutputStream for the exported data.
+         * @param format The RDFFormat for the exported data.
          */
         public Builder(OutputStream output, RDFFormat format) {
             this.output = output;

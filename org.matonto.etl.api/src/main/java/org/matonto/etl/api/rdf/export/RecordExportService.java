@@ -28,5 +28,10 @@ import java.io.IOException;
 
 public interface RecordExportService {
 
+    /**
+     * Exports Catalog Records based on the passed Configuration.
+     *
+     * @param config The configuration for the export
+     */
     void export(RecordExportConfig config) throws IOException;
 }
