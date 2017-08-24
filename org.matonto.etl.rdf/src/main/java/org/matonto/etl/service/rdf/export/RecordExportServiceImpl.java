@@ -31,12 +31,15 @@ import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
+import org.matonto.catalog.api.ontologies.mcat.Record;
+import org.matonto.catalog.api.ontologies.mcat.RecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import org.matonto.etl.api.config.rdf.export.RecordExportConfig;
 import org.matonto.etl.api.rdf.export.RecordExportService;
 import org.matonto.persistence.utils.BatchExporter;
 import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.openrdf.rio.Rio;
@@ -57,7 +60,8 @@ public class RecordExportServiceImpl implements RecordExportService {
     private CatalogManager catalogManager;
     private CatalogUtilsService catalogUtils;
     private ValueFactory vf;
-    private VersionedRDFRecordFactory recordFactory;
+    private RecordFactory recordFactory;
+    private VersionedRDFRecordFactory versionedRDFRecordFactory;
     private BranchFactory branchFactory;
     private SesameTransformer transformer;
 
@@ -77,8 +81,13 @@ public class RecordExportServiceImpl implements RecordExportService {
     }
 
     @Reference
-    void setRecordFactory(VersionedRDFRecordFactory recordFactory) {
+    void setRecordFactory(RecordFactory recordFactory) {
         this.recordFactory = recordFactory;
+    }
+
+    @Reference
+    void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
+        this.versionedRDFRecordFactory = versionedRDFRecordFactory;
     }
 
     @Reference
@@ -111,44 +120,58 @@ public class RecordExportServiceImpl implements RecordExportService {
         writer.startRDF();
         records.forEach(resource -> {
             // Write Record
-            VersionedRDFRecord record = catalogManager.getRecord(localCatalog, resource, recordFactory)
-                    .orElseThrow(() -> new IllegalStateException("Could not retrieve expected record " + resource.stringValue()));
+            Record record = catalogManager.getRecord(localCatalog, resource, recordFactory)
+                    .orElseThrow(() -> new IllegalStateException("Could not retrieve record " + resource.stringValue()));
             record.getModel().forEach(writer::handleStatement);
 
-            Set<String> processedCommits = new HashSet<>();
-            // Write Branches
-            record.getBranch_resource().forEach(branchResource -> {
-                Branch branch = catalogManager.getBranch(localCatalog, resource, branchResource, branchFactory)
-                        .orElseThrow(() -> new IllegalStateException("Could not retrieve expected branch " + branchResource.stringValue()));
-                branch.getModel().forEach(writer::handleStatement);
-
-                // Write Commits
-                for (Commit commit : catalogManager.getCommitChain(localCatalog, resource, branch.getResource())) {
-                    Resource commitResource = commit.getResource();
-
-                    if (processedCommits.contains(commitResource.stringValue())) {
-                        break;
-                    } else {
-                        processedCommits.add(commitResource.stringValue());
-                    }
-
-                    commit = catalogManager.getCommit(localCatalog, resource, branchResource, commitResource)
-                            .orElseThrow(() -> new IllegalStateException("Could not retrieve expected commit " + commitResource.stringValue()));
-                    commit.getModel().forEach(writer::handleStatement);
-
-                    Resource additionsResource = catalogUtils.getAdditionsResource(commit);
-                    Resource deletionsResource = catalogUtils.getDeletionsResource(commit);
-
-                    Difference commitDifference = catalogManager.getCommitDifference(commit.getResource());
-                    commitDifference.getAdditions().stream()
-                            .map(stmt -> vf.createStatement(stmt.getSubject(), stmt.getPredicate(), stmt.getObject(), additionsResource))
-                            .forEach(writer::handleStatement);
-                    commitDifference.getDeletions().stream()
-                            .map(stmt -> vf.createStatement(stmt.getSubject(), stmt.getPredicate(), stmt.getObject(), deletionsResource))
-                            .forEach(writer::handleStatement);
-                }
-            });
+            // Write Versioned Data
+            IRI typeIRI = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI);
+            IRI versionedRDFRecordType = vf.createIRI(VersionedRDFRecord.TYPE);
+            if (record.getProperties(typeIRI).contains(versionedRDFRecordType)) {
+                exportVersionedRDFData(resource, writer);
+            }
         });
         writer.endRDF();
+    }
+
+    private void exportVersionedRDFData(Resource resource, BatchExporter writer) {
+        Resource localCatalog = catalogManager.getLocalCatalogIRI();
+
+        VersionedRDFRecord record = catalogManager.getRecord(localCatalog, resource, versionedRDFRecordFactory)
+                .orElseThrow(() -> new IllegalStateException("Could not retrieve record " + resource.stringValue()));
+
+        Set<String> processedCommits = new HashSet<>();
+        // Write Branches
+        record.getBranch_resource().forEach(branchResource -> {
+            Branch branch = catalogManager.getBranch(localCatalog, resource, branchResource, branchFactory)
+                    .orElseThrow(() -> new IllegalStateException("Could not retrieve expected branch " + branchResource.stringValue()));
+            branch.getModel().forEach(writer::handleStatement);
+
+            // Write Commits
+            for (Commit commit : catalogManager.getCommitChain(localCatalog, resource, branch.getResource())) {
+                Resource commitResource = commit.getResource();
+
+                if (processedCommits.contains(commitResource.stringValue())) {
+                    break;
+                } else {
+                    processedCommits.add(commitResource.stringValue());
+                }
+
+                commit = catalogManager.getCommit(localCatalog, resource, branchResource, commitResource)
+                        .orElseThrow(() -> new IllegalStateException("Could not retrieve expected commit " + commitResource.stringValue()));
+                commit.getModel().forEach(writer::handleStatement);
+
+                Resource additionsResource = catalogUtils.getAdditionsResource(commit);
+                Resource deletionsResource = catalogUtils.getDeletionsResource(commit);
+
+                Difference commitDifference = catalogManager.getCommitDifference(commit.getResource());
+                commitDifference.getAdditions().stream()
+                        .map(stmt -> vf.createStatement(stmt.getSubject(), stmt.getPredicate(), stmt.getObject(), additionsResource))
+                        .forEach(writer::handleStatement);
+                commitDifference.getDeletions().stream()
+                        .map(stmt -> vf.createStatement(stmt.getSubject(), stmt.getPredicate(), stmt.getObject(), deletionsResource))
+                        .forEach(writer::handleStatement);
+            }
+        });
     }
 }

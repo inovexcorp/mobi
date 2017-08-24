@@ -56,6 +56,11 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
+            <artifactId>rdf.orm.ontologies</artifactId>
+            <version>1.8.65</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
             <version>1.8.42</version>
             <scope>test</scope>
