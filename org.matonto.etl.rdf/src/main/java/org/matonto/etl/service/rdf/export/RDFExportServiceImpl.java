@@ -102,9 +102,17 @@ public class RDFExportServiceImpl implements RDFExportService {
         Resource subjResource = getSubject(config);
         IRI predicateIRI = getPredicate(config);
         Value objValue = getObject(config);
-        LOGGER.warn("Restricting to:\nSubj: " + subjResource + "\nPred: " + predicateIRI + "\nObj: " + objValue);
+        Resource graphResource = getGraph(config);
+        LOGGER.info("Restricting to:\nSubj: " + subjResource + "\nPred: " + predicateIRI + "\nObj: " + objValue
+                + "\nGraph: " + graphResource);
 
-        RepositoryResult<Statement> result = conn.getStatements(subjResource, predicateIRI, objValue);
+        RepositoryResult<Statement> result;
+        if (graphResource == null) {
+            result = conn.getStatements(subjResource, predicateIRI, objValue);
+        } else {
+            result = conn.getStatements(subjResource, predicateIRI, objValue, graphResource);
+        }
+
         export(result, config.getOutput(), config.getFormat());
     }
 
@@ -141,5 +149,9 @@ public class RDFExportServiceImpl implements RDFExportService {
         }
 
         return objValue;
+    }
+
+    private Resource getGraph(RDFExportConfig config) {
+        return config.getGraph() == null ? null : vf.createIRI(config.getGraph());
     }
 }

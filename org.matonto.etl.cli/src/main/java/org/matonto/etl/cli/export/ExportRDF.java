@@ -63,21 +63,22 @@ public class ExportRDF implements Action {
             + "exported from")
     String repositoryId = null;
 
-    @Option( name = "-subj", aliases = "--subject", description = "A subject that all exported triples will be "
-            + "restricted to.")
+    @Option( name = "-subj", aliases = "--subject", description = "A subject filter for exported data.")
     String subj = null;
 
-    @Option(name = "-pred", aliases = "--predicate", description = "A predicate that all exported triples will be "
-            + "restricted to.")
+    @Option(name = "-pred", aliases = "--predicate", description = "A predicate filter for exported data.")
     String predicate = null;
 
-    @Option(name = "-objIRI", aliases = "--objectIRI", description = "An object that all exported triples will be "
-            + "restricted to. Takes precedence over ObjectLiteral")
+    @Option(name = "-objIRI", aliases = "--objectIRI", description = "An object filter for exported data. Takes " +
+            "precedence over ObjectLiteral")
     String objIRI = null;
 
-    @Option(name = "-objLit", aliases = "--objectLiteral", description = "An object literal that all exported triples "
-            + "will be restricted to. ObjectIRI takes precedence")
+    @Option(name = "-objLit", aliases = "--objectLiteral", description = "An object literal filter for exported data. " +
+            "ObjectIRI takes precedence")
     String objLit = null;
+
+    @Option(name = "-g", aliases = "--graph", description = "A graph filter for exported data.")
+    String graph = null;
 
     // Implementation
 
@@ -109,6 +110,7 @@ public class ExportRDF implements Action {
                 .pred(predicate)
                 .objIRI(objIRI)
                 .objLit(objLit)
+                .graph(graph)
                 .build();
 
         exportService.export(config, repositoryId);

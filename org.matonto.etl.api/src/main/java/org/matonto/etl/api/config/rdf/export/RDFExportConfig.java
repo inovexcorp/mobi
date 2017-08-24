@@ -32,6 +32,7 @@ public class RDFExportConfig extends BaseExportConfig {
     private String pred;
     private String objIRI;
     private String objLit;
+    private String graph;
 
     protected RDFExportConfig(Builder builder) {
         super(builder);
@@ -57,11 +58,16 @@ public class RDFExportConfig extends BaseExportConfig {
         return objLit;
     }
 
+    public String getGraph() {
+        return graph;
+    }
+
     public static class Builder extends BaseExportConfig.Builder {
         private String subj;
         private String pred;
         private String objIRI;
         private String objLit;
+        private String graph;
 
         /**
          * Creates a new Builder for an RDFExportConfig.
@@ -74,7 +80,7 @@ public class RDFExportConfig extends BaseExportConfig {
         }
 
         /**
-         * Sets the subject to restrict all exported triples to.
+         * Sets the subject to restrict all exported data to.
          *
          * @param subj A subject string
          * @return The Builder
@@ -85,7 +91,7 @@ public class RDFExportConfig extends BaseExportConfig {
         }
 
         /**
-         * Sets the subject to restrict all exported triples to.
+         * Sets the subject to restrict all exported data to.
          *
          * @param pred A predicate string
          * @return The Builder
@@ -96,7 +102,7 @@ public class RDFExportConfig extends BaseExportConfig {
         }
 
         /**
-         * An object IRI to restrict all exported triples. Takes precedence over objLit.
+         * An object IRI to restrict all exported data. Takes precedence over objLit.
          *
          * @param objIRI An object IRI string
          * @return The Builder
@@ -107,13 +113,24 @@ public class RDFExportConfig extends BaseExportConfig {
         }
 
         /**
-         * Sets the object literal to restrict all exported triples. Will only be used if objIRI is not passed.
+         * Sets the object literal to restrict all exported data. Will only be used if objIRI is not passed.
          *
          * @param objLit An object literal string
          * @return The Builder
          */
         public Builder objLit(String objLit) {
             this.objLit = objLit;
+            return this;
+        }
+
+        /**
+         * Sets the graph to restrict all exported data.
+         *
+         * @param graph A graph string
+         * @return The Builder
+         */
+        public Builder graph(String graph) {
+            this.graph = graph;
             return this;
         }
 
