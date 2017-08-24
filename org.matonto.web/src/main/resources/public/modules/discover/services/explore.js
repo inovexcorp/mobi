@@ -30,7 +30,7 @@
          *
          * @description
          * The `explore` module only provides the `exploreService` service which provides access
-         * to the MatOnto explorable-datasets REST endpoints.
+         * to the Mobi explorable-datasets REST endpoints.
          */
         .module('explore', [])
         /**
@@ -42,16 +42,16 @@
          * @requires discoverState.service:discoverStateService
          *
          * @description
-         * `exploreService` is a service that provides access to the MatOnto explorable-datasets REST
+         * `exploreService` is a service that provides access to the Mobi explorable-datasets REST
          * endpoints.
          */
         .service('exploreService', exploreService);
     
-    exploreService.$inject = ['$http', '$q', 'utilService', 'discoverStateService'];
+    exploreService.$inject = ['$http', '$q', 'utilService', 'discoverStateService', 'REST_PREFIX'];
     
-    function exploreService($http, $q, utilService, discoverStateService) {
+    function exploreService($http, $q, utilService, discoverStateService, REST_PREFIX) {
         var self = this;
-        var prefix = '/matontorest/explorable-datasets/';
+        var prefix = REST_PREFIX + 'explorable-datasets/';
         var util = utilService;
         var ds = discoverStateService;
         
@@ -61,7 +61,7 @@
          * @methodOf explore.service:exploreService
          *
          * @description
-         * Calls the GET /matontorest/explorable-datasets/{recordId}/class-details endpoint and returns the
+         * Calls the GET /mobirest/explorable-datasets/{recordId}/class-details endpoint and returns the
          * array of class details.
          *
          * @returns {Promise} A promise that resolves to an array of the class details for the identified dataset record.
@@ -77,7 +77,7 @@
          * @methodOf explore.service:exploreService
          *
          * @description
-         * Calls the GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/instance-details endpoint and returns the
+         * Calls the GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/instance-details endpoint and returns the
          * array of instance details.
          *
          * @param {string} recordId The id of the Record
@@ -104,7 +104,7 @@
          * @methodOf explore.service:exploreService
          *
          * @description
-         * Calls the GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/property-details endpoint and returns the
+         * Calls the GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/property-details endpoint and returns the
          * array of class property details.
          *
          * @param {string} recordId The id of the Record
@@ -123,7 +123,7 @@
          * @methodOf explore.service:exploreService
          *
          * @description
-         * Calls the POST /matontorest/explorable-datasets/{recordId}/classes/{classId}/instances endpoint
+         * Calls the POST /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances endpoint
          * and returns the instance IRI.
          *
          * @param {string} recordId The id of the Record
@@ -141,7 +141,7 @@
          * @methodOf explore.service:exploreService
          *
          * @description
-         * Calls the GET /matontorest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint
+         * Calls the GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint
          * and returns the instance.
          *
          * @param {string} recordId The id of the Record
@@ -160,7 +160,7 @@
          * @methodOf explore.service:exploreService
          *
          * @description
-         * Calls the PUT /matontorest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint
+         * Calls the PUT /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint
          * and identifies if the instance was updated.
          *
          * @param {string} recordId The id of the Record

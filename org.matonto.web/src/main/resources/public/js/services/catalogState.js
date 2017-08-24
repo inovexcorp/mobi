@@ -60,7 +60,7 @@
              * @type {Object}
              *
              * @description
-             * `catalogs` holds the current state for each catalog, local and distributed, of MatOnto.
+             * `catalogs` holds the current state for each catalog, local and distributed, of Mobi.
              * Each state contains a "show" boolean indicating whether it is currently being shown, the
              * full "catalog" object from the {@link catalogManager.service:catalogManagerService catalogManagerService},
              * the "openedPath" indicating which entity in the catalog is currently opened, and key-value

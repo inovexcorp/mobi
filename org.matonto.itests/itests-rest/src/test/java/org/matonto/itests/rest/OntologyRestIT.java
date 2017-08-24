@@ -81,7 +81,7 @@ public class OntologyRestIT extends KarafTestSupport {
     private static Boolean setupComplete = false;
     private static String userName = "admin";
     private static String password = "admin";
-    private static String baseUrl = "https://localhost:9082/matontorest";
+    private static String baseUrl = "https://localhost:9082/mobirest";
 
     @Inject
     protected static BundleContext thisBundleContext;

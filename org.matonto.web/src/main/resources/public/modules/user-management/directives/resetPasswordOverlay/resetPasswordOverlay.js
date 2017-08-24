@@ -31,7 +31,7 @@
          * @description
          * The `resetPasswordOverlay` module only provides the `resetPasswordOverlay` directive which creates
          * an overlay for resetting the {@link userState.service:userStateService#selectedUser selected user's}
-         * password in MatOnto.
+         * password in Mobi.
          */
         .module('resetPasswordOverlay', [])
         /**
