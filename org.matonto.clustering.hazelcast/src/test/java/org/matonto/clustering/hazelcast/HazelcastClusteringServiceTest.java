@@ -26,9 +26,9 @@ package org.matonto.clustering.hazelcast;
 import junit.framework.TestCase;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.matonto.clustering.api.ClusteringService;
 import org.matonto.platform.config.api.server.MatOnto;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -88,6 +88,11 @@ public class HazelcastClusteringServiceTest extends TestCase {
         Mockito.verify(context, Mockito.timeout(30000L)
                 .times(3))
                 .registerService(Mockito.any(Class.class), Mockito.any(HazelcastClusteringService.class), Mockito.any(Dictionary.class));
+
+        Assert.assertNotNull(s1.getHazelcastInstance());
+        Assert.assertNotNull(s2.getHazelcastInstance());
+        Assert.assertNotNull(s3.getHazelcastInstance());
+
 
         assertEquals(3, s1.getMemberCount());
         assertEquals(3, s2.getMemberCount());
