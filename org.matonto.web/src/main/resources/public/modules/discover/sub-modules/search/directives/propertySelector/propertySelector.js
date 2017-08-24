@@ -38,11 +38,10 @@
          * @name propertySelector.directive:propertySelector
          * @scope
          * @restrict E
-         * @requires $filter
          * @requires discoverState.service:discoverStateService
-         * @requires ontologyManagerService.service:ontologyManagerService
+         * @requires ontologyManager.service:ontologyManagerService
          * @requires prefixes.service:prefixes
-         * @requires utilService.service:utilService
+         * @requires util.service:utilService
          *
          * @description
          * HTML contents for the property selector which provides the users an option to select a property and range
@@ -50,9 +49,9 @@
          */
         .directive('propertySelector', propertySelector);
         
-        propertySelector.$inject = ['$filter', 'discoverStateService', 'ontologyManagerService', 'prefixes', 'utilService'];
+        propertySelector.$inject = ['discoverStateService', 'ontologyManagerService', 'prefixes', 'utilService'];
         
-        function propertySelector($filter, discoverStateService, ontologyManagerService, prefixes, utilService) {
+        function propertySelector(discoverStateService, ontologyManagerService, prefixes, utilService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/search/directives/propertySelector/propertySelector.html',
@@ -87,8 +86,8 @@
                         return dvm.util.getBeautifulIRI(range['@id']);
                     }
                     
-                    dvm.typeCheck = function(type) {
-                        if (!$filter('filter')(dvm.ds.search.properties[type], dvm.propertySearch).length) {
+                    dvm.shouldDisplayOptGroup = function(type) {
+                        if (!filterArrayWithSearch(dvm.ds.search.properties[type]).length) {
                             return false;
                         }
                         if (dvm.ds.search.queryConfig.types.length) {
@@ -106,7 +105,11 @@
                     
                     dvm.showNoDomains = function() {
                         var noDomains = _.get(dvm.ds.search, 'noDomains', []);
-                        return noDomains.length && $filter('filter')(noDomains, dvm.propertySearch).length;
+                        return noDomains.length && filterArrayWithSearch(noDomains).length;
+                    }
+                    
+                    function filterArrayWithSearch(array) {
+                        return _.filter(array, item => _.includes(item, dvm.propertySearch));
                     }
                 }
             }

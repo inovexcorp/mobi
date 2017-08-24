@@ -39,10 +39,10 @@
          * @scope
          * @restrict E
          * @requires discoverState.service:discoverStateService
-         * @requires utilService.service:utilService
-         * @requires searchService.service:searchService
+         * @requires util.service:utilService
+         * @requires search.service:searchService
          * @requires prefixes.service:prefixes
-         * @requires ontologyManagerService.service:ontologyManagerService
+         * @requires ontologyManager.service:ontologyManagerService
          *
          * @description
          * HTML contents for the property filter overlay which provides the users with step by step options for building

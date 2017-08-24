@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Search Service', function() {
-    var searchSvc, scope, $q, httpSvc, sparqlManagerSvc, discoverStateSvc, prefixes;
+    var searchSvc, scope, $q, httpSvc, sparqlManagerSvc, discoverStateSvc, prefixes, util, datasetManagerSvc, ontologyManagerSvc;
 
     beforeEach(function() {
         module('search');
@@ -37,7 +37,7 @@ describe('Search Service', function() {
             $provide.constant('sparqljs', window.sparqljs);
         });
 
-        inject(function(searchService, _$rootScope_, _$q_, _httpService_, _sparqlManagerService_, _discoverStateService_, _prefixes_) {
+        inject(function(searchService, _$rootScope_, _$q_, _httpService_, _sparqlManagerService_, _discoverStateService_, _prefixes_, _utilService_, _datasetManagerService_, _ontologyManagerService_) {
             searchSvc = searchService;
             scope = _$rootScope_;
             $q = _$q_;
@@ -45,9 +45,49 @@ describe('Search Service', function() {
             sparqlManagerSvc = _sparqlManagerService_;
             discoverStateSvc = _discoverStateService_;
             prefixes = _prefixes_;
+            util = _utilService_;
+            datasetManagerSvc = _datasetManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
     });
 
+    describe('getPropertiesForDataset should return the correct list when getDataProperties', function() {
+        beforeEach(function() {
+            datasetManagerSvc.datasetRecords = [[
+                {'@id': 'id', '@type': []},
+                {prop: 'other'}
+            ]];
+            util.getPropertyId.and.returnValue('value');
+        });
+        it('resolves', function() {
+            ontologyManagerSvc.getDataProperties.and.returnValue($q.when([{prop: 'prop1'}]));
+            searchSvc.getPropertiesForDataset('id')
+                .then(function(response) {
+                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToRecord');
+                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToBranch');
+                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToCommit');
+                    expect(ontologyManagerSvc.getDataProperties).toHaveBeenCalledWith('value', 'value', 'value');
+                    expect(response).toEqual([{prop: 'prop1'}]);
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            scope.$apply();
+        });
+        it('rejects', function() {
+            ontologyManagerSvc.getDataProperties.and.returnValue($q.reject('error'));
+            searchSvc.getPropertiesForDataset('id')
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToRecord');
+                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToBranch');
+                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToCommit');
+                    expect(ontologyManagerSvc.getDataProperties).toHaveBeenCalledWith('value', 'value', 'value');
+                    expect(response).toBe('error');
+                });
+            scope.$apply();
+        });
+    });
     describe('should submit a search query', function() {
         var query = 'query';
         beforeEach(function() {

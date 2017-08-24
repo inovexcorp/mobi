@@ -102,12 +102,12 @@ describe('Dataset Manager service', function() {
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                    expect(response).toEqual(jasmine.objectContaining({
                         status: 400,
                         statusText: 'Error Message'
                     }));
                 });
-                flushAndVerify($httpBackend);
+            flushAndVerify($httpBackend);
         });
         it('when resolved', function() {
             $httpBackend.whenGET('/mobirest/datasets/recordId').respond(200, {});
@@ -117,7 +117,7 @@ describe('Dataset Manager service', function() {
                 }, function() {
                     fail('Promise should have resolved');
                 });
-                flushAndVerify($httpBackend);
+            flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Record', function() {
@@ -151,11 +151,11 @@ describe('Dataset Manager service', function() {
                     }).respond(200, recordId);
             });
             it('when getDatasetRecord is rejected', function() {
-                spyOn(datasetManagerSvc, 'getDatasetRecord').and.returnValue($q.reject('error'));
+                spyOn(datasetManagerSvc, 'getDatasetRecord').and.returnValue($q.reject({prop: 'error'}));
                 datasetManagerSvc.createDatasetRecord(this.recordConfig).then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith('error');
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith({prop: 'error'});
                 });
                 flushAndVerify($httpBackend);
             });

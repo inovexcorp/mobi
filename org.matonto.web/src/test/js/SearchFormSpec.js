@@ -168,7 +168,7 @@ describe('Search Form directive', function() {
         it('with a .md-list-item-text h3', function() {
             expect(element.querySelectorAll('.md-list-item-text h3').length).toEqual(1);
         });
-        it('with a .md-list-item-text p', function() {
+        it('with .md-list-item-text ps', function() {
             expect(element.querySelectorAll('.md-list-item-text p').length).toEqual(2);
         });
         it('with a .md-list-item-text md-icon', function() {

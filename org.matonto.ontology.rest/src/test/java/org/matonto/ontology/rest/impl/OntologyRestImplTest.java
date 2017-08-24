@@ -601,7 +601,6 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     private void assertDataProperties(JSONArray responseArray, Set<DataProperty> set) {
         assertNotNull(responseArray);
         assertEquals(responseArray.size(), set.size());
-        // set.forEach(dataProperty -> assertTrue(responseArray.contains(createJsonIRI(dataProperty.getIRI()))));
     }
 
     private void assertIndividuals(JSONObject responseObject, Set<Individual> set) {

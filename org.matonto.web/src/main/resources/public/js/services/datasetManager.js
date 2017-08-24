@@ -115,7 +115,7 @@
              */
             self.getDatasetRecord = function(datasetRecordIRI) {
                 return $http.get(prefix + '/' + encodeURIComponent(datasetRecordIRI))
-                    .then(response => response.data, util.rejectError);
+                    .then(response => response.data, $q.reject);
             }
 
             /**

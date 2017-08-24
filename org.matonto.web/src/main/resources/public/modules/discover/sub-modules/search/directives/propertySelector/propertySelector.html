@@ -27,7 +27,7 @@
             <md-select-header>
                 <input ng-model="dvm.propertySearch" type="search" class="search-form-searchbox" ng-keydown="$event.stopPropagation()" placeholder="Search...">
             </md-select-header>
-            <md-optgroup ng-repeat="key in dvm.keys | filter:dvm.typeCheck track by $index" label="{{dvm.util.getBeautifulIRI(key)}}">
+            <md-optgroup ng-repeat="key in dvm.keys | filter:dvm.shouldDisplayOptGroup track by $index" label="{{dvm.util.getBeautifulIRI(key)}}">
                 <md-option ng-value="property" ng-repeat="property in dvm.ds.search.properties[key] | orderBy:dvm.om.getEntityName | filter:dvm.propertySearch track by $index">{{dvm.om.getEntityName(property)}} :: {{property['@id']}}</md-option>
             </md-optgroup>
             <md-optgroup ng-if="dvm.showNoDomains()">

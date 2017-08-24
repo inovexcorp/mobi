@@ -75,6 +75,7 @@ describe('Property Selector directive', function() {
         describe('with no controller.property', function() {
             beforeEach(function() {
                 controller.property = undefined;
+                controller.propertySearch = 'id';
                 discoverStateSvc.search.properties = {
                     key: [{'@id': 'id'}]
                 };
@@ -157,7 +158,7 @@ describe('Property Selector directive', function() {
             expect(controller.orderRange({'@id': 'id'})).toBe('iri');
             expect(utilSvc.getBeautifulIRI).toHaveBeenCalledWith('id');
         });
-        describe('typeCheck should return the correct value with', function() {
+        describe('shouldDisplayOptGroup should return the correct value with', function() {
             beforeEach(function() {
                 discoverStateSvc.search.properties = {
                     type: ['type'],
@@ -166,16 +167,16 @@ describe('Property Selector directive', function() {
                 };
             });
             it('no queryConfig types', function() {
-                expect(controller.typeCheck('type')).toBe(true);
+                expect(controller.shouldDisplayOptGroup('type')).toBe(true);
             });
             it('queryConfig types', function() {
                 discoverStateSvc.search.queryConfig.types = [{classIRI: 'iri'}];
-                expect(controller.typeCheck('iri')).toBe(true);
-                expect(controller.typeCheck('other')).toBe(false);
+                expect(controller.shouldDisplayOptGroup('iri')).toBe(true);
+                expect(controller.shouldDisplayOptGroup('other')).toBe(false);
             });
             it('nothing left after filter', function() {
                 controller.propertySearch = 'word';
-                expect(controller.typeCheck('type')).toBe(false);
+                expect(controller.shouldDisplayOptGroup('type')).toBe(false);
             });
         });
         describe('propertyChanged should set variables correctly when ranges is equal to', function() {
@@ -204,6 +205,7 @@ describe('Property Selector directive', function() {
             });
             it('something after filter', function() {
                 discoverStateSvc.search.noDomains = ['domain'];
+                expect(controller.showNoDomains()).toBeTruthy();
                 controller.propertySearch = 'domain';
                 expect(controller.showNoDomains()).toBeTruthy();
             });

@@ -291,6 +291,7 @@ function mockOntologyManager() {
             this.getAnnotationPropertyHierarchies = jasmine.createSpy('getAnnotationPropertyHierarchies');
             this.uploadChangesFile = jasmine.createSpy('uploadChangesFile').and.returnValue($q.when({}));
             this.getFailedImports = jasmine.createSpy('getFailedImports').and.returnValue($q.when([]));
+            this.getDataProperties = jasmine.createSpy('getDataProperties').and.returnValue($q.when([]));
         });
     });
 }

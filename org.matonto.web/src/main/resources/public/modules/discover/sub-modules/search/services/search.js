@@ -40,8 +40,8 @@
          * @requires httpService.service:httpService
          * @requires sparqlManager.service:sparqlManager
          * @requires prefixes.service:prefixes
-         * @requires ontologyManagerService.service:ontologyManagerService
-         * @requires utilService.service:utilService
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires util.service:utilService
          *
          * @description
          * `searchService` is a service that provides methods to create search query strings
@@ -82,11 +82,11 @@
             });
             var ontologyArray = _.reject(datasetArray, item => _.has(item, '@type'));
             return $q.all(_.map(ontologyArray, identifier => {
-                var recordId = getIdentifierPart(identifier, 'linksToRecord');
-                var branchId = getIdentifierPart(identifier, 'linksToBranch');
-                var commitId = getIdentifierPart(identifier, 'linksToCommit');
+                var recordId = util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord');
+                var branchId = util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch');
+                var commitId = util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit');
                 return om.getDataProperties(recordId, branchId, commitId);
-            })).then(response => _.flatten(response), util.rejectError);
+            })).then(response => _.flatten(response));
         }
         /**
          * @ngdoc method
@@ -302,7 +302,7 @@
          *
          * @description
          * Creates a part of a SPARQL query that selects all subjects, predicates, and objects
-         * for entities that have the provided predicate and exactly matches the provided keyword.
+         * for entities that have the provided predicate and and exactly matches the provided boolean value.
          *
          * @param {string} predicate The predicate's existence which is being searched for
          * @param {boolean} value The value which is being searched for
@@ -351,10 +351,6 @@
                     args: ['\"' + keyword + '\"']
                 }]
             });
-        }
-
-        function getIdentifierPart(identifier, localName) {
-            return _.get(identifier, "['" + prefixes.dataset + localName + "'][0]['@id']");
         }
 
         function createPattern(subject, predicate, object) {

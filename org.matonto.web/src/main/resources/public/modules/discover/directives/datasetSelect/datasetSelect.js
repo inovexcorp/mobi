@@ -65,7 +65,7 @@
                     var dvm = this;
                     dvm.dm = datasetManagerService;
                     dvm.util = utilService;
-                    dvm.datasetRecords = _.map(dvm.dm.datasetRecords, arr => _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord')));
+                    dvm.datasetRecords = _.map(dvm.dm.datasetRecords, arr => _.find(arr, '@type'));
 
                     if (!_.some(dvm.datasetRecords, {'@id': dvm.bindModel})) {
                         dvm.bindModel = '';
