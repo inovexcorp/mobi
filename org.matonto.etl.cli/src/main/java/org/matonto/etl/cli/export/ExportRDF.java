@@ -31,7 +31,6 @@ import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.matonto.etl.api.config.rdf.export.RDFExportConfig;
 import org.matonto.etl.api.rdf.export.RDFExportService;
-import org.matonto.rdf.api.ValueFactory;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
 import org.slf4j.Logger;
@@ -47,11 +46,16 @@ public class ExportRDF implements Action {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExportRDF.class);
 
+    // Service References
+
     @Reference
     private RDFExportService exportService;
 
-    @Reference
-    private ValueFactory vf;
+    public void setExportService(RDFExportService exportService) {
+        this.exportService = exportService;
+    }
+
+    // Command Parameters
 
     @Option(name = "-f", aliases = "--output-file", description = "The output file for the exported record data")
     private String filepathParam = null;
@@ -62,10 +66,6 @@ public class ExportRDF implements Action {
     @Option(name = "-r", aliases = "--repository", description = "The id of the repository that data will be "
             + "exported from")
     String repositoryId = null;
-
-    @Option( name = "-d", aliases = "--dataset", description = "The id of the DatasetRecord the data will be "
-            + "exported from")
-    String datasetRecordId = null;
 
     @Option( name = "-subj", aliases = "--subject", description = "A subject that all exported triples will be "
             + "restricted to.")
@@ -83,22 +83,12 @@ public class ExportRDF implements Action {
             + "will be restricted to. ObjectIRI takes precedence")
     String objLit = null;
 
-    public void setExportService(RDFExportService exportService) {
-        this.exportService = exportService;
-    }
-
-    public void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
+    // Implementation
 
     @Override
     public Object execute() throws Exception {
-        if ((StringUtils.isEmpty(repositoryId) && StringUtils.isEmpty(datasetRecordId))
-                || (!StringUtils.isEmpty(repositoryId) && !StringUtils.isEmpty(datasetRecordId))) {
-            String msg = "Repository ID or DatasetRecord ID is required";
-            LOGGER.error(msg);
-            System.out.println(msg);
-            return null;
+        if (StringUtils.isEmpty(repositoryId)) {
+            repositoryId = "system";
         }
 
         OutputStream output;
@@ -124,11 +114,8 @@ public class ExportRDF implements Action {
                 .objIRI(objIRI)
                 .objLit(objLit)
                 .build();
-        if (repositoryId != null) {
-            exportService.export(config, repositoryId);
-        } else {
-            exportService.export(config, vf.createIRI(datasetRecordId));
-        }
+
+        exportService.export(config, repositoryId);
 
         return null;
     }

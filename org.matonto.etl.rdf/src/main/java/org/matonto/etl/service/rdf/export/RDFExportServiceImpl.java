@@ -25,12 +25,8 @@ package org.matonto.etl.service.rdf.export;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import org.matonto.dataset.api.DatasetConnection;
-import org.matonto.dataset.api.DatasetManager;
 import org.matonto.etl.api.config.rdf.export.RDFExportConfig;
 import org.matonto.etl.api.rdf.export.RDFExportService;
-import org.matonto.exception.MatOntoException;
-import org.matonto.persistence.utils.RepositoryResults;
 import org.matonto.persistence.utils.StatementIterable;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
@@ -45,7 +41,6 @@ import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
-import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
@@ -67,7 +62,6 @@ public class RDFExportServiceImpl implements RDFExportService {
 
     private ValueFactory vf;
     private SesameTransformer transformer;
-    private DatasetManager datasetManager;
 
     private List<RDFFormat> quadFormats = Arrays.asList(RDFFormat.JSONLD, RDFFormat.NQUADS, RDFFormat.TRIG,
             RDFFormat.TRIX);
@@ -91,52 +85,11 @@ public class RDFExportServiceImpl implements RDFExportService {
         this.transformer = transformer;
     }
 
-    @Reference
-    public void setDatasetManager(DatasetManager datasetManager) {
-        this.datasetManager = datasetManager;
-    }
-    
     @Override
     public void export(RDFExportConfig config, String repositoryID) throws IOException {
         Repository repository = getRepo(repositoryID);
         try (RepositoryConnection conn = repository.getConnection()) {
             export(conn, config);
-        }
-    }
-
-    @Override
-    public void export(RDFExportConfig config, Resource datasetRecordID) throws IOException {
-        try (DatasetConnection conn = datasetManager.getConnection(datasetRecordID)) {
-            RDFFormat format = config.getFormat();
-
-            Resource subjResource = getSubject(config);
-            IRI predicateIRI = getPredicate(config);
-            Value objValue = getObject(config);
-            LOGGER.warn("Restricting to:\nSubj: " + subjResource + "\nPred: " + predicateIRI + "\nObj: " + objValue);
-
-            if (!quadFormats.contains(format)) {
-                LOGGER.warn("RDF format does not support quads so they will not be exported.");
-                System.out.println("WARN: RDF format does not support quads so they will not be exported.");
-            }
-            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, config.getOutput()));
-            List<Resource> defaultsList = RepositoryResults.asList(conn.getDefaultNamedGraphs());
-            defaultsList.add(conn.getSystemDefaultNamedGraph());
-            Resource[] defaults = defaultsList.toArray(new Resource[defaultsList.size()]);
-            List<Resource> graphsList = RepositoryResults.asList(conn.getNamedGraphs());
-            Resource[] graphs = graphsList.toArray(new Resource[graphsList.size()]);
-            rdfWriter.startRDF();
-            for (Statement st: conn.getStatements(subjResource, predicateIRI, objValue, defaults)) {
-                Statement noContext = vf.createStatement(st.getSubject(), st.getPredicate(), st.getObject());
-                rdfWriter.handleStatement(transformer.sesameStatement(noContext));
-            }
-            if (quadFormats.contains(format)) {
-                for (Statement st: conn.getStatements(subjResource, predicateIRI, objValue, graphs)) {
-                    rdfWriter.handleStatement(transformer.sesameStatement(st));
-                }
-            }
-            rdfWriter.endRDF();
-        } catch (RDFHandlerException e) {
-            throw new MatOntoException(e);
         }
     }
 
