@@ -30,6 +30,7 @@ describe('Remove Property Overlay directive', function() {
         mockPropertyManager();
         mockOntologyUtilsManager();
         mockPrefixes();
+        mockOntologyManager();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _propertyManagerService_, _ontologyUtilsManagerService_, _prefixes_) {
             $compile = _$compile_;
@@ -45,7 +46,7 @@ describe('Remove Property Overlay directive', function() {
         scope.key = 'key';
         scope.onSubmit = jasmine.createSpy('onSubmit');
         scope.overlayFlag = true;
-
+        _.set(ontologyStateSvc.listItem.selected, scope.key + '[' + scope.index + ']', 'value');
         element = $compile(angular.element('<remove-property-overlay index="index" key="key" on-submit="onSubmit()" overlay-flag="overlayFlag"></remove-property-overlay>'))(scope);
         scope.$digest();
         controller = element.controller('removePropertyOverlay');
@@ -58,7 +59,7 @@ describe('Remove Property Overlay directive', function() {
             expect(scope.index).toEqual(0);
         });
         it('key should be one way bound', function() {
-            controller.key = 'new key';
+            controller.key = 'newKey';
             scope.$digest();
             expect(scope.key).toEqual('key');
         });

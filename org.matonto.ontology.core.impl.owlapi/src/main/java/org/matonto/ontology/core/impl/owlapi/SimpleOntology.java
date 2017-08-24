@@ -55,8 +55,6 @@ import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.RDFParseException;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.WriterConfig;
-import org.openrdf.rio.helpers.JSONLDMode;
-import org.openrdf.rio.helpers.JSONLDSettings;
 import org.openrdf.rio.helpers.StatementCollector;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
@@ -736,7 +734,6 @@ public class SimpleOntology implements Ontology {
     public @Nonnull OutputStream asJsonLD(boolean skolemize) throws MatontoOntologyException {
         OutputStream outputStream = new ByteArrayOutputStream();
         WriterConfig config = new WriterConfig();
-        config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
         try {
             org.openrdf.model.Model sesameModel = asSesameModel();
             if (skolemize) {

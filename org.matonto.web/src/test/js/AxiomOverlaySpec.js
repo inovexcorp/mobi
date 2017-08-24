@@ -22,6 +22,10 @@
  */
 describe('Axiom Overlay directive', function() {
     var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, ontologyManagerSvc, ontoUtils, prefixes, manchesterSvc, splitIRI;
+    var localNameMap = {
+        'ClassA': 'http://test.com/ClassA',
+        'PropA': 'http://test.com/PropA'
+    };
 
     beforeEach(function() {
         module('templates');
@@ -47,6 +51,11 @@ describe('Axiom Overlay directive', function() {
             splitIRI = _splitIRIFilter_;
         });
 
+        invertedMap = _.invert(localNameMap);
+        ontologyStateSvc.listItem.iriList = _.values(localNameMap);
+        splitIRI.and.callFake(function(iri) {
+            return {end: invertedMap[iri]};
+        });
         scope.axiomList = [];
         scope.onSubmit = jasmine.createSpy('onSubmit');
         element = $compile(angular.element('<axiom-overlay axiom-list="axiomList" on-submit="onSubmit()"></axiom-overlay>'))(scope);
@@ -192,12 +201,7 @@ describe('Axiom Overlay directive', function() {
                 });
             });
             describe('if adding an expression', function() {
-                var manchesterResult,
-                    localNameMap = {
-                        'ClassA': 'http://test.com/ClassA',
-                        'PropA': 'http://test.com/PropA'
-                    },
-                    invertedMap = _.invert(localNameMap);
+                var manchesterResult;
                 beforeEach(function() {
                     manchesterResult = {
                         errorMessage: '',
@@ -205,10 +209,6 @@ describe('Axiom Overlay directive', function() {
                     };
                     controller.tabs.list = false;
                     controller.tabs.editor = true;
-                    ontologyStateSvc.listItem.iriList = _.values(localNameMap);
-                    splitIRI.and.callFake(function(iri) {
-                        return {end: invertedMap[iri]};
-                    });
                     manchesterSvc.manchesterToJsonld.and.returnValue(manchesterResult);
                 });
                 it('unless the expression is invalid', function() {

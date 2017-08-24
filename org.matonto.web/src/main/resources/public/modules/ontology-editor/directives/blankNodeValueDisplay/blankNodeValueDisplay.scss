@@ -1,0 +1,14 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.blank-node-value-display {
+    .CodeMirror {
+        font-family: inherit;
+        height: inherit;
+        background: inherit;
+
+        .CodeMirror-lines {
+            padding: 0;
+        }
+    }
+}

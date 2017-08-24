@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+CodeMirror.defineOption("localNames", [], undefined);
 CodeMirror.defineMode("manchestersyntax", function(config) {
 
     var tokenTypes = {
@@ -151,7 +152,11 @@ CodeMirror.defineMode("manchestersyntax", function(config) {
             }
         }
         if (type == null) {
-            type = "word";
+            if (config.localNames.length && !config.localNames.includes(tokenBuffer)) {
+                type = "manchester-error";
+            } else {
+                type = "word";
+            }
         }
         return new Token(tokenBuffer, type);
     }

@@ -32,6 +32,7 @@ describe('Object Property Axioms directive', function() {
         mockResponseObj();
         mockPrefixes();
         mockOntologyUtilsManager();
+        mockOntologyManager();
 
         inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;

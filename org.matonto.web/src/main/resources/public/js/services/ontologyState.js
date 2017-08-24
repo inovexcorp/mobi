@@ -799,15 +799,40 @@
              * @returns {Object} An Object which represents the requested entity.
              */
             self.removeEntity = function(listItem, entityIRI) {
-                var entityPosition = _.get(listItem.index, "['" + entityIRI + "'].position");
-                _.remove(listItem.iriList, (iri) => { return iri === entityIRI });
-                _.unset(listItem.index, entityIRI);
-                _.forOwn(listItem.index, (value, key) => {
-                    if (value.position > entityPosition) {
-                        listItem.index[key].position = value.position - 1;
-                    }
+                var position = _.get(listItem.index, "['" + entityIRI + "'].position");
+                var toRemove = [{entityIRI, position}];
+                var toTest = [{entityIRI, position}];
+                while (toTest.length > 0) {
+                    var obj = toTest.pop();
+                    var entity = listItem.ontology[obj.position];
+                    _.forEach(_.omit(entity, ['@id', '@type']), (value, key) => {
+                        if (om.isBlankNodeId(key)) {
+                            var newObj = {entityIRI: key, position: _.get(listItem.index, "['" + key + "'].position")};
+                            toRemove.push(newObj);
+                            toTest.push(newObj);
+                        }
+                        _.forEach(value, valueObj => {
+                            var id = _.get(valueObj, '@id');
+                            if (om.isBlankNodeId(id)) {
+                                var newObj = {entityIRI: id, position: _.get(listItem.index, "['" + id + "'].position")};
+                                toRemove.push(newObj);
+                                toTest.push(newObj);
+                            }
+                        });
+                    });
+                }
+                var removed = _.pullAt(listItem.ontology, _.map(toRemove, 'position'))
+                _.forEach(toRemove, obj => {
+                    var newPosition = _.get(listItem.index, "['" + obj.entityIRI + "'].position");
+                    _.remove(listItem.iriList, obj.entityIRI);
+                    _.unset(listItem.index, obj.entityIRI);
+                    _.forOwn(listItem.index, (value, key) => {
+                        if (value.position > newPosition) {
+                            listItem.index[key].position = value.position - 1;
+                        }
+                    });
                 });
-                return _.remove(listItem.ontology, {'@id': entityIRI})[0];
+                return removed;
             }
             /**
              * @ngdoc method
@@ -1320,7 +1345,7 @@
                     }
                 });
                 _.forEach(blankNodes, (value, id) => {
-                    blankNodes[id] = mc.jsonldToManchester(id, ontology, index, true);
+                    blankNodes[id] = mc.jsonldToManchester(id, ontology, index);
                 });
                 listItem.ontologyId = ontologyId;
                 listItem.editorTabStates.project.entityIRI = ontologyId;
@@ -1481,7 +1506,7 @@
                     _.set(entity, 'matonto.importedIRI', importedOntObj.ontologyId);
                 });
                 _.forEach(blankNodes, (value, id) => {
-                    blankNodes[id] = mc.jsonldToManchester(id, importedOntObj.ontology, index, true);
+                    blankNodes[id] = mc.jsonldToManchester(id, importedOntObj.ontology, index);
                 });
                 var importedOntologyListItem = {
                     id: importedOntObj.id,

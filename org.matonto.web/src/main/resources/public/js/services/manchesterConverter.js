@@ -262,11 +262,13 @@
                     var entity = jsonld[index[id].position];
                     var first = _.head(entity[prefixes.rdf + 'first']);
                     var rest = _.head(entity[prefixes.rdf + 'rest']);
-                    result += getValue(first, jsonld, index, html) + listKeyword;
+                    result += getValue(first, jsonld, index, html);
+                    // result += getValue(first, jsonld, index, html) + listKeyword;
                     if (_.has(rest, '@list')) {
-                        result += getValue(rest['@list'][0], jsonld, index, html);
+                        // result += getValue(rest['@list'][0], jsonld, index, html);
                         end = true;
                     } else {
+                        result += listKeyword;
                         id = rest['@id'];
                     }
                 }

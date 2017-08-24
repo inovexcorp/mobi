@@ -61,6 +61,7 @@ describe('Ontology Utils Manager service', function() {
                 getDeferred.resolve([{'@id': 'id'}]);
                 ontologyStateSvc.getOntologiesArray.and.returnValue([{prop: 'ontology'}]);
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
+                ontologyStateSvc.removeEntity.and.returnValue([ontologyStateSvc.listItem.selected]);
             });
             it('and when updateEverythingTree is false', function() {
                 ontologyUtilsManagerSvc.commonDelete('iri');

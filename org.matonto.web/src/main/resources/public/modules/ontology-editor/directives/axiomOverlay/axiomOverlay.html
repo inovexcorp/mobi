@@ -26,7 +26,7 @@
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
         <div class="form-group">
             <custom-label>Axiom</custom-label>
-            <ui-select ng-model="dvm.axiom" on-select="dvm.values = []" autofocus>
+            <ui-select ng-model="dvm.axiom" on-select="dvm.values = []; dvm.editorOptions.readOnly = false" autofocus>
                 <ui-select-match placeholder="Select an axiom">{{dvm.ro.getItemIri($select.selected)}}</ui-select-match>
                 <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="axiom in axiomList | filter:$select.search | orderBy:'localName'">
                     <div ng-bind-html="axiom.localName | highlight: $select.search | trusted"></div>
@@ -49,7 +49,7 @@
             </tab>
             <tab heading="'Editor'" active="dvm.tabs.editor">
                 <custom-label>Expression</custom-label>
-                <div class="codemirror-wrapper">
+                <div class="codemirror-wrapper" ng-class="{'readOnly': dvm.editorOptions.readOnly}">
                     <ui-codemirror ng-model="dvm.expression" ui-codemirror-opts="dvm.editorOptions"></ui-codemirror>
                 </div>
             </tab>

@@ -40,8 +40,8 @@
             self.commonDelete = function(entityIRI, updateEverythingTree = false) {
                 om.getEntityUsages(os.listItem.ontologyRecord.recordId, os.listItem.ontologyRecord.branchId, os.listItem.ontologyRecord.commitId, entityIRI, 'construct')
                     .then(statements => {
-                        os.addToDeletions(os.listItem.ontologyRecord.recordId, os.listItem.selected);
-                        os.removeEntity(os.listItem, entityIRI);
+                        var removedEntities = os.removeEntity(os.listItem, entityIRI);
+                        _.forEach(removedEntities, entity => os.addToDeletions(os.listItem.ontologyRecord.recordId, entity));
                         _.forEach(statements, statement => os.addToDeletions(os.listItem.ontologyRecord.recordId, statement));
                         ur.remove(os.listItem.ontology, entityIRI);
                         os.unSelectItem();

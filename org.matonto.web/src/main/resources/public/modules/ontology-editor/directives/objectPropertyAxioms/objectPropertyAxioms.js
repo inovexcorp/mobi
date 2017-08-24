@@ -27,9 +27,9 @@
         .module('objectPropertyAxioms', [])
         .directive('objectPropertyAxioms', objectPropertyAxioms);
 
-        objectPropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService'];
+        objectPropertyAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService', 'ontologyManagerService'];
 
-        function objectPropertyAxioms(ontologyStateService, propertyManagerService, responseObj, prefixes, ontologyUtilsManagerService) {
+        function objectPropertyAxioms(ontologyStateService, propertyManagerService, responseObj, prefixes, ontologyUtilsManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,6 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.pm = propertyManagerService;
                     dvm.ro = responseObj;
@@ -59,7 +60,7 @@
                     }
 
                     dvm.removeFromHierarchy = function(axiomObject) {
-                        if (prefixes.rdfs + 'subPropertyOf' === dvm.key) {
+                        if (prefixes.rdfs + 'subPropertyOf' === dvm.key && !om.isBlankNodeId(axiomObject['@id'])) {
                             dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.objectPropertyHierarchy, dvm.os.listItem.selected['@id'], axiomObject['@id'], dvm.os.listItem.objectPropertyIndex);
                             dvm.os.listItem.flatObjectPropertyHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.objectPropertyHierarchy, dvm.os.listItem.ontologyRecord.recordId);
                         }

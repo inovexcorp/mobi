@@ -30,6 +30,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.matonto.ontology.core.api.Individual;
@@ -44,10 +45,14 @@ import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleDataProper
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
 import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.impl.SimpleBNodeService;
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
+import org.matonto.rdf.core.utils.Values;
 import org.matonto.vocabularies.xsd.XSD;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -69,6 +74,7 @@ import java.util.Set;
 
 public class FullSimpleOntologyTest {
     private ValueFactory vf;
+    private ModelFactory mf;
     private IRI classIRI;
     private IRI classIRIC;
     private IRI classIRID;
@@ -98,6 +104,7 @@ public class FullSimpleOntologyTest {
     @Before
     public void setUp() {
         vf = SimpleValueFactory.getInstance();
+        mf = LinkedHashModelFactory.getInstance();
         IRI ontologyIRI = vf.createIRI("http://test.com/ontology1");
         IRI versionIRI = vf.createIRI("http://test.com/ontology1/1.0.0");
         classIRI = vf.createIRI("http://test.com/ontology1#TestClassA");
@@ -115,6 +122,9 @@ public class FullSimpleOntologyTest {
         values.setValueFactory(vf);
 
         MockitoAnnotations.initMocks(this);
+
+        when(transformer.matontoModel(any(Model.class))).thenAnswer(i -> Values.matontoModel(i.getArgumentAt(0, Model.class)));
+        when(transformer.sesameModel(any(org.matonto.rdf.api.Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, org.matonto.rdf.api.Model.class)));
 
         when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
         when(ontologyId.getVersionIRI()).thenReturn(Optional.of(versionIRI));
@@ -370,5 +380,19 @@ public class FullSimpleOntologyTest {
     @Test
     public void getAllNoDomainDataPropertiesWithImportsTest() {
         assertEquals(1, ont1.getAllNoDomainDataProperties().size());
+    }
+
+    @Test
+    public void asJsonldTest() throws Exception {
+        // Setup
+        SimpleBNodeService blankNodeService = new SimpleBNodeService();
+        blankNodeService.setModelFactory(mf);
+        blankNodeService.setValueFactory(vf);
+        InputStream stream = this.getClass().getResourceAsStream("/list-ontology.ttl");
+        InputStream expected = this.getClass().getResourceAsStream("/list-ontology.jsonld");
+        Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService);
+
+        String jsonld = listOntology.asJsonLD(true).toString();
+        assertEquals(IOUtils.toString(expected), jsonld);
     }
 }

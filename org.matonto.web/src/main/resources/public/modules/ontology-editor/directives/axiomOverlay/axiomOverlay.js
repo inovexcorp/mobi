@@ -54,11 +54,15 @@
                         list: true,
                         editor: false
                     };
+                    var localNameMap = createLocalNameMap();
                     dvm.editorOptions = {
                         mode: 'text/omn',
                         indentUnit: 4,
                         lineWrapping: true,
-                        matchBrackets: true
+                        matchBrackets: true,
+                        readOnly: 'nocursor',
+                        noNewlines: true,
+                        localNames: _.keys(localNameMap)
                     };
 
                     dvm.addAxiom = function() {
@@ -66,7 +70,6 @@
                         var values;
                         // Collect values depending on current tab
                         if (dvm.tabs.editor) {
-                            var localNameMap = createLocalNameMap();
                             var result = mc.manchesterToJsonld(dvm.expression, localNameMap);
                             if (result.errorMessage) {
                                 dvm.errorMessage = result.errorMessage;
@@ -75,8 +78,13 @@
                                 dvm.errorMessage = 'Expression resulted in no values. Please try again.';
                                 return;
                             } else {
-                                values = [{'@id': result.jsonld[0]['@id']}];
-                                _.forEach(result.jsonld, obj => dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, obj));
+                                var bnodeId = result.jsonld[0]['@id'];
+                                values = [{'@id': bnodeId}];
+                                _.forEach(result.jsonld, obj => {
+                                    dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, obj);
+                                    dvm.os.addEntity(dvm.os.listItem, obj);
+                                });
+                                dvm.os.listItem.blankNodes[bnodeId] = dvm.expression;
                             }
                         } else if (dvm.tabs.list) {
                             values = _.map(dvm.values, value => ({'@id': dvm.ro.getItemIri(value)}));

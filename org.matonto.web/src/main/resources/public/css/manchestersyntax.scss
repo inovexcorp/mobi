@@ -13,7 +13,10 @@
 .manchester-lit, .cm-manchester-lit {
     color: #f49c1f;
 }
-/*.cm-open-par {
+.cm-manchester-error {
+    border-bottom: 1px dotted red;
+}
+.cm-open-par {
     color: #646464 !important;
 }
 .cm-close-par {
@@ -22,7 +25,7 @@
 .cm-comma {
     color: gray;
     font-weight: bold !important;
-}*/
+}
 .cm-string {
     color: #ab5b2f !important;
 }
@@ -36,12 +39,12 @@
 .cm-facet {
     color: #2835D0 !important;
 }
-/*.cm-lang-tag {
+.cm-lang-tag {
     color: gray;
 }
 .cm-literal-datatype {
     color: gray;
-}*/
+}
 .cm-integer-lit {
     color: #2835D0;
 }
@@ -51,7 +54,7 @@
 .cm-floating-point-lit {
     color: #2835D0;
 }
-.cm-boolean-lit {
+/*.cm-boolean-lit {
     color: #2835D0;
-}
+}*/
 

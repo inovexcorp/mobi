@@ -69,7 +69,7 @@ describe('Ontology State Service', function() {
             position: 2,
             label: 'data property',
             ontologyIri: ontologyId
-        }
+        },
     };
     var importedOntologies = [];
     var importedOntologyIds = [];
@@ -1288,10 +1288,40 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith('');
         });
     });
-    it('removeEntity removes the entity from the provided ontology and index', function() {
-        expect(ontologyStateSvc.removeEntity(listItem, classId)).toEqual(classObj);
-        expect(_.has(listItem.index, classId)).toBe(false);
-        expect(listItem.index.dataPropertyId.position).toEqual(1);
+    describe('removeEntity removes the entity from the provided ontology and index', function() {
+        it('if it points to blank nodes', function() {
+            listItem.index = {
+                classA: {position: 0},
+                bnode0: {position: 1},
+                classB: {position: 2},
+                bnode1: {position: 3},
+                bnode2: {position: 4},
+                classC: {position: 5}
+            };
+            listItem.ontology = [
+                {'@id': 'classA', '@type': [], bnode0: [{'@value': 'A'}], propA: [{'@id': 'bnode2'}]},
+                {'@id': 'bnode0', propA: [{'@id': 'bnode1'}]},
+                {'@id': 'classB'},
+                {'@id': 'bnode1', propA: [{'@id': 'classB'}]},
+                {'@id': 'bnode2'},
+                {'@id': 'classC'}
+            ];
+            ontologyManagerSvc.isBlankNodeId.and.callFake(function(iri) {
+                return _.startsWith(iri, 'bnode');
+            });
+            expect(ontologyStateSvc.removeEntity(listItem, 'classA')).toEqual([
+                {'@id': 'classA', '@type': [], bnode0: [{'@value': 'A'}], propA: [{'@id': 'bnode2'}]},
+                {'@id': 'bnode0', propA: [{'@id': 'bnode1'}]},
+                {'@id': 'bnode2'},
+                {'@id': 'bnode1', propA: [{'@id': 'classB'}]}
+            ]);
+            expect(listItem.index).toEqual({classB: {position: 0}, classC: {position: 1}});
+        });
+        it('if it does not point to blank nodes', function() {
+            expect(ontologyStateSvc.removeEntity(listItem, classId)).toEqual([classObj]);
+            expect(_.has(listItem.index, classId)).toBe(false);
+            expect(listItem.index.dataPropertyId.position).toEqual(1);
+        });
     });
     it('flattenHierarchy properly flattens the provided hierarchy', function() {
         spyOn(ontologyStateSvc, 'getEntityNameByIndex').and.callFake(_.identity);
