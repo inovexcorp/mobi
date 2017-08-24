@@ -20,13 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-package org.matonto.etl.service.rdf
+package org.matonto.etl.service.rdf.export
 
 import org.apache.commons.io.output.NullOutputStream
 import org.matonto.dataset.api.DatasetConnection
 import org.matonto.dataset.api.DatasetManager
 import org.matonto.etl.api.config.rdf.export.RDFExportConfig
-import org.matonto.etl.service.rdf.export.RDFExportServiceImpl
 import org.matonto.persistence.utils.api.SesameTransformer
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
@@ -77,7 +76,6 @@ class RDFExportSpec extends Specification {
         datasetConn.getNamedGraphs() >> result
         datasetConn.getSystemDefaultNamedGraph() >> vf.createIRI("http://test.com/system-default")
 
-        service.setDatasetManager(datasetManager)
         service.setTransformer(transformer)
         service.setVf(vf)
         service.addRepository(repo)
