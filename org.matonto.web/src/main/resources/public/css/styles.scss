@@ -43,7 +43,7 @@ body {
 
     /* Error message font */
     .error-display {
-        color: #f00;
+        color: $error-color;
         font-weight: bold;
     }
 
