@@ -109,7 +109,7 @@
                     }
                     
                     function filterArrayWithSearch(array) {
-                        return _.filter(array, item => _.includes(item, dvm.propertySearch));
+                        return _.filter(array, entity => _.includes(dvm.om.getEntityName(entity), dvm.propertySearch));
                     }
                 }
             }

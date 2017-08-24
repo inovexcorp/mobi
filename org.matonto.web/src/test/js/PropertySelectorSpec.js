@@ -42,6 +42,8 @@ describe('Property Selector directive', function() {
             prefixes = _prefixes_;
         });
 
+        ontologyManagerSvc.getEntityName.and.callFake(_.identity);
+
         scope.keys = ['key'];
         scope.property = {'@id': 'id'};
         scope.range = 'range';
@@ -168,15 +170,19 @@ describe('Property Selector directive', function() {
             });
             it('no queryConfig types', function() {
                 expect(controller.shouldDisplayOptGroup('type')).toBe(true);
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith('type');
             });
             it('queryConfig types', function() {
                 discoverStateSvc.search.queryConfig.types = [{classIRI: 'iri'}];
                 expect(controller.shouldDisplayOptGroup('iri')).toBe(true);
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith('');
                 expect(controller.shouldDisplayOptGroup('other')).toBe(false);
+                expect(ontologyManagerSvc.getEntityName).not.toHaveBeenCalledWith('other');
             });
             it('nothing left after filter', function() {
                 controller.propertySearch = 'word';
                 expect(controller.shouldDisplayOptGroup('type')).toBe(false);
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith('type');
             });
         });
         describe('propertyChanged should set variables correctly when ranges is equal to', function() {
@@ -197,17 +203,24 @@ describe('Property Selector directive', function() {
             it('noDomains is empty', function() {
                 discoverStateSvc.search.noDomains = [];
                 expect(controller.showNoDomains()).toBeFalsy();
+                expect(ontologyManagerSvc.getEntityName).not.toHaveBeenCalled();
             });
             it('nothing left after filter', function() {
                 discoverStateSvc.search.noDomains = ['domain'];
                 controller.propertySearch = 'word';
                 expect(controller.showNoDomains()).toBeFalsy();
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith('domain');
             });
             it('something after filter', function() {
                 discoverStateSvc.search.noDomains = ['domain'];
-                expect(controller.showNoDomains()).toBeTruthy();
                 controller.propertySearch = 'domain';
                 expect(controller.showNoDomains()).toBeTruthy();
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith('domain');
+            });
+            it('propertySearch is empty', function() {
+                discoverStateSvc.search.noDomains = ['domain'];
+                expect(controller.showNoDomains()).toBeTruthy();
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith('domain');
             });
         });
     });
