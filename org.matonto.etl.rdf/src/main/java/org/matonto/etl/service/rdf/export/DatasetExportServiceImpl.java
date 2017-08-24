@@ -99,9 +99,11 @@ public class DatasetExportServiceImpl implements DatasetExportService {
 
             if (quadFormats.contains(format)) {
                 List<Resource> graphsList = RepositoryResults.asList(conn.getNamedGraphs());
-                Resource[] graphs = graphsList.toArray(new Resource[graphsList.size()]);
-                for (Statement st: conn.getStatements(null, null, null, graphs)) {
-                    rdfWriter.handleStatement(transformer.sesameStatement(st));
+                if (!graphsList.isEmpty()) {
+                    Resource[] graphs = graphsList.toArray(new Resource[graphsList.size()]);
+                    for (Statement st: conn.getStatements(null, null, null, graphs)) {
+                        rdfWriter.handleStatement(transformer.sesameStatement(st));
+                    }
                 }
             }
         } catch (RDFHandlerException e) {

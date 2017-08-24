@@ -63,17 +63,6 @@ class DatasetExportSpec extends Specification {
         service.setValueFactory(vf)
     }
 
-    def "Export File from Dataset without restrictions with quads"() {
-        setup:
-        def config = new BaseExportConfig.Builder(new NullOutputStream(), RDFFormat.TRIG).build()
-
-        when:
-        service.export(config, datasetId)
-
-        then:
-        2 * datasetConn.getStatements(null, null, null, _) >> result
-    }
-
     def "Export File from Dataset without restrictions without quads"() {
         setup:
         def config = new BaseExportConfig.Builder(new NullOutputStream(), RDFFormat.TURTLE).build()
