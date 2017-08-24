@@ -90,7 +90,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.8.66-SNAPSHOT</version>
+            <version>1.8.68-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
