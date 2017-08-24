@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class RecordExportServiceImpl implements RecordExportService {
@@ -98,8 +99,17 @@ public class RecordExportServiceImpl implements RecordExportService {
 
         Resource localCatalog = catalogManager.getLocalCatalogIRI();
 
+        Set<Resource> records;
+        if (config.getRecords() == null) {
+            records = catalogManager.getRecordIds(localCatalog);
+        } else {
+            records = config.getRecords().stream()
+                    .map(recordString -> vf.createIRI(recordString))
+                    .collect(Collectors.toSet());
+        }
+
         writer.startRDF();
-        catalogManager.getRecordIds(localCatalog).forEach(resource -> {
+        records.forEach(resource -> {
             // Write Record
             VersionedRDFRecord record = catalogManager.getRecord(localCatalog, resource, recordFactory)
                     .orElseThrow(() -> new IllegalStateException("Could not retrieve expected record " + resource.stringValue()));

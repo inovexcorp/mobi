@@ -23,7 +23,9 @@ package org.matonto.etl.cli.export;
  * #L%
  */
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
+import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
@@ -36,6 +38,9 @@ import org.openrdf.rio.Rio;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 @Command(scope = "mobi", name = "export-records", description = "Exports records from the local catalog")
 @Service
@@ -52,13 +57,14 @@ public class ExportRecords implements Action {
 
     // Command Parameters
 
+    @Argument(name = "CatalogRecords", description = "A comma-separated list of catalog record IDs to export")
+    private String recordsParam = null;
+
     @Option(name = "-f", aliases = "--output-file", description = "The output file for the exported record data")
     private String filepathParam = null;
 
     @Option(name = "-t", aliases = "--format", description = "The output format (TRIG, NQUADS, JSONLD)")
     private String formatParam = null;
-
-    // TODO Support list of records
 
     // Implementation
 
@@ -81,9 +87,14 @@ public class ExportRecords implements Action {
             outputFormat = RDFFormat.TRIG;
         }
 
-        RecordExportConfig config = new RecordExportConfig.Builder(output, outputFormat).build();
+        RecordExportConfig.Builder builder = new RecordExportConfig.Builder(output, outputFormat);
 
-        exportService.export(config);
+        if (!StringUtils.isEmpty(recordsParam)) {
+            Set<String> records = new HashSet<>(Arrays.asList(recordsParam.split(",")));
+            builder.records(records);
+        }
+
+        exportService.export(builder.build());
 
         return null;
     }
