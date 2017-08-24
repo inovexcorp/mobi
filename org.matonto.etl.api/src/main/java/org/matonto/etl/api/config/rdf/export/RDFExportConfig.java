@@ -40,6 +40,7 @@ public class RDFExportConfig extends BaseExportConfig {
         this.pred = builder.pred;
         this.objIRI = builder.objIRI;
         this.objLit = builder.objLit;
+        this.graph = builder.graph;
     }
 
     public String getSubj() {
