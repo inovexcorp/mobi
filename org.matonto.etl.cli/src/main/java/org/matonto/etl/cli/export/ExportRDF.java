@@ -33,8 +33,6 @@ import org.matonto.etl.api.config.rdf.export.RDFExportConfig;
 import org.matonto.etl.api.rdf.export.RDFExportService;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -43,8 +41,6 @@ import java.io.OutputStream;
 @Command(scope = "mobi", name = "export", description = "Exports objects from a repository or dataset")
 @Service
 public class ExportRDF implements Action {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExportRDF.class);
 
     // Service References
 
@@ -60,7 +56,7 @@ public class ExportRDF implements Action {
     @Option(name = "-f", aliases = "--output-file", description = "The output file for the exported record data")
     private String filepathParam = null;
 
-    @Option(name = "-t", aliases = "--format", description = "The output format (TRIG, NQUADS, JSONLD)")
+    @Option(name = "-t", aliases = "--format", description = "The output format (TRIG, NQUADS, JSONLD, TRIX)")
     private String formatParam = null;
 
     @Option(name = "-r", aliases = "--repository", description = "The id of the repository that data will be "

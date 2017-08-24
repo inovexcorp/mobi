@@ -37,7 +37,7 @@ public class ExportDataset implements Action {
     @Option(name = "-f", aliases = "--output-file", description = "The output file for the exported record data")
     private String filepathParam = null;
 
-    @Option(name = "-t", aliases = "--format", description = "The output format (TRIG, NQUADS, JSONLD)")
+    @Option(name = "-t", aliases = "--format", description = "The output format (TRIG, NQUADS, JSONLD, TRIX)")
     private String formatParam = null;
 
     // Implementation

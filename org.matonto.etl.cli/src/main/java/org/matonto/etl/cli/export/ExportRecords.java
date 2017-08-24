@@ -58,6 +58,8 @@ public class ExportRecords implements Action {
     @Option(name = "-t", aliases = "--format", description = "The output format (TRIG, NQUADS, JSONLD)")
     private String formatParam = null;
 
+    // TODO Support list of records
+
     // Implementation
 
     @Override
