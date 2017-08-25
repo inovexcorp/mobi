@@ -25,9 +25,8 @@ package org.matonto.etl.service.rdf;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import org.matonto.dataset.api.DatasetConnection;
 import org.matonto.dataset.api.DatasetManager;
-import org.matonto.etl.api.config.ImportServiceConfig;
+import org.matonto.etl.api.config.rdf.ImportServiceConfig;
 import org.matonto.etl.api.rdf.RDFImportService;
 import org.matonto.persistence.utils.BatchInserter;
 import org.matonto.persistence.utils.api.SesameTransformer;

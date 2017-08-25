@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.68-SNAPSHOT</version>
+        <version>1.8.70-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -42,7 +42,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
-            <version>1.8.59</version>
+            <version>1.8.69</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -52,7 +52,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.8.56</version>
+            <version>1.8.69</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>rdf.orm.ontologies</artifactId>
+            <version>1.8.65</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -99,7 +104,7 @@
                             org.matonto.etl.api.rdf; provide:=true
                         </Export-Package>
                         <Export-Service>
-                            org.matonto.etl.api.rdf.RDFExportService,
+                            org.matonto.etl.api.rdf.export.RDFExportService,
                             org.matonto.etl.api.rdf.RDFImportService
                         </Export-Service>
                         <Service-Component>*</Service-Component>
