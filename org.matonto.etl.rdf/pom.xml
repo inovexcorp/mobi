@@ -42,7 +42,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
-            <version>1.8.66-SNAPSHOT</version>
+            <version>1.8.68-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -52,7 +52,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.8.66-SNAPSHOT</version>
+            <version>1.8.68-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
