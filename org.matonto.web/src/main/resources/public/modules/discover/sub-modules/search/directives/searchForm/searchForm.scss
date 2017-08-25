@@ -40,6 +40,26 @@
             width: 100%;
         }
     }
+
+    .properties-container {
+        .header-wrapper .property-label {
+            margin: 7px 0;
+        }
+    }
+
+    md-list {
+        border: 1px solid $gray-custom;
+        min-height: 250px;
+        padding: 0;
+
+        md-list-item:hover {
+            background: $gray-custom;
+        }
+
+        .fa {
+            font-size: 1.5em;
+        }
+    }
 }
 
 .search-form-searchbox {

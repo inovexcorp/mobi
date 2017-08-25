@@ -52,6 +52,9 @@
 
             /* Search tab */
             'discoverSearchTab',
+            'filterSelector',
+            'propertyFilterOverlay',
+            'propertySelector',
             'searchForm',
 
             /* Query tab */

@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Search Service', function() {
-    var searchSvc, scope, $q, httpSvc, sparqlManagerSvc, discoverStateSvc, prefixes;
+    var searchSvc, scope, $q, httpSvc, sparqlManagerSvc, discoverStateSvc, prefixes, util, datasetManagerSvc, ontologyManagerSvc;
 
     beforeEach(function() {
         module('search');
@@ -29,12 +29,15 @@ describe('Search Service', function() {
         mockSparqlManager();
         mockDiscoverState();
         mockPrefixes();
+        mockDatasetManager();
+        mockOntologyManager();
+        mockUtil();
 
         module(function($provide) {
             $provide.constant('sparqljs', window.sparqljs);
         });
 
-        inject(function(searchService, _$rootScope_, _$q_, _httpService_, _sparqlManagerService_, _discoverStateService_, _prefixes_) {
+        inject(function(searchService, _$rootScope_, _$q_, _httpService_, _sparqlManagerService_, _discoverStateService_, _prefixes_, _utilService_, _datasetManagerService_, _ontologyManagerService_) {
             searchSvc = searchService;
             scope = _$rootScope_;
             $q = _$q_;
@@ -42,9 +45,49 @@ describe('Search Service', function() {
             sparqlManagerSvc = _sparqlManagerService_;
             discoverStateSvc = _discoverStateService_;
             prefixes = _prefixes_;
+            util = _utilService_;
+            datasetManagerSvc = _datasetManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
     });
 
+    describe('getPropertiesForDataset should return the correct list when getDataProperties', function() {
+        beforeEach(function() {
+            datasetManagerSvc.datasetRecords = [[
+                {'@id': 'id', '@type': []},
+                {prop: 'other'}
+            ]];
+            util.getPropertyId.and.returnValue('value');
+        });
+        it('resolves', function() {
+            ontologyManagerSvc.getDataProperties.and.returnValue($q.when([{prop: 'prop1'}]));
+            searchSvc.getPropertiesForDataset('id')
+                .then(function(response) {
+                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToRecord');
+                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToBranch');
+                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToCommit');
+                    expect(ontologyManagerSvc.getDataProperties).toHaveBeenCalledWith('value', 'value', 'value');
+                    expect(response).toEqual([{prop: 'prop1'}]);
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            scope.$apply();
+        });
+        it('rejects', function() {
+            ontologyManagerSvc.getDataProperties.and.returnValue($q.reject('error'));
+            searchSvc.getPropertiesForDataset('id')
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToRecord');
+                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToBranch');
+                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToCommit');
+                    expect(ontologyManagerSvc.getDataProperties).toHaveBeenCalledWith('value', 'value', 'value');
+                    expect(response).toBe('error');
+                });
+            scope.$apply();
+        });
+    });
     describe('should submit a search query', function() {
         var query = 'query';
         beforeEach(function() {
@@ -93,6 +136,311 @@ describe('Search Service', function() {
         it('with or', function() {
             var result = searchSvc.createQueryString({types: [{classIRI: 'http://matonto.org/1'}, {classIRI: 'http://matonto.org/2'}], isOrTypes: true});
             expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject <' + prefixes.rdf + 'type> <http://matonto.org/1>.\n    ?Subject ?Predicate ?o.\n  }\n  UNION\n  {\n    ?Subject <' + prefixes.rdf + 'type> <http://matonto.org/2>.\n    ?Subject ?Predicate ?o.\n  }\n}\nGROUP BY ?Subject ?Predicate');
+        });
+    });
+    it('should create a filtered query', function() {
+        var result = searchSvc.createQueryString({filters: [{type: 'bgp', triples: [{subject: '?s', predicate: '?p', object: '?o'}]}]});
+        expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE { { ?s ?p ?o. } }\nGROUP BY ?Subject ?Predicate');
+    });
+    it('createExistenceQuery should create the correct query part', function() {
+        expect(searchSvc.createExistenceQuery('predicate')).toEqual({
+            type: 'group',
+            patterns: [{
+                type: 'bgp',
+                triples: [{
+                    subject: '?Subject',
+                    predicate: 'predicate',
+                    object: '?o'
+                }]
+            }, {
+                type: 'bgp',
+                triples: [{
+                    subject: '?Subject',
+                    predicate: '?Predicate',
+                    object: '?o'
+                }]
+            }]
+        });
+    });
+    it('createContainsQuery should create the correct query part', function() {
+        expect(searchSvc.createContainsQuery('predicate', 'keyword')).toEqual({
+            type: 'group',
+            patterns: [{
+                type: 'bgp',
+                triples: [{
+                    subject: '?Subject',
+                    predicate: 'predicate',
+                    object: '?o'
+                }]
+            }, {
+                type: 'bgp',
+                triples: [{
+                    subject: '?Subject',
+                    predicate: '?Predicate',
+                    object: '?o'
+                }]
+            }, {
+                type: 'filter',
+                expression: {
+                    type: 'operation',
+                    operator: 'contains',
+                    args: [{
+                        type: 'operation',
+                        operator: 'lcase',
+                        args: ['?o']
+                    }, {
+                        type: 'operation',
+                        operator: 'lcase',
+                        args: ['\"keyword\"']
+                    }]
+                }
+            }]
+        });
+    });
+    it('createExactQuery should create the correct query part', function() {
+        expect(searchSvc.createExactQuery('predicate', 'keyword', 'range')).toEqual({
+            type: 'group',
+            patterns: [{
+                type: 'bgp',
+                triples: [{
+                    subject: '?Subject',
+                    predicate: 'predicate',
+                    object: '"keyword"^^range'
+                }]
+            }, {
+                type: 'bgp',
+                triples: [{
+                    subject: '?Subject',
+                    predicate: '?Predicate',
+                    object: '?o'
+                }]
+            }]
+        });
+    });
+    it('createRegexQuery should create the correct query part', function() {
+        expect(searchSvc.createRegexQuery('predicate', '/[A-Z]/')).toEqual({
+            type: 'group',
+            patterns: [{
+                type: 'bgp',
+                triples: [{
+                    subject: '?Subject',
+                    predicate: 'predicate',
+                    object: '?o'
+                }]
+            }, {
+                type: 'filter',
+                expression: {
+                    type: 'operation',
+                    operator: 'regex',
+                    args: ['?o', '\"/[A-Z]/\"']
+                }
+            }]
+        });
+    });
+    describe('createRangeQuery should create the correct query part when rangeConfig contains', function() {
+        it('lessThan', function() {
+            expect(searchSvc.createRangeQuery('predicate', 'range', {lessThan: 1})).toEqual({
+                type: 'group',
+                patterns: [{
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: 'predicate',
+                        object: '?o'
+                    }]
+                }, {
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: '?Predicate',
+                        object: '?o'
+                    }]
+                }, {
+                    type: 'filter',
+                    expression: '?o < 1'
+                }]
+            });
+            expect(util.getInputType).toHaveBeenCalledWith('range');
+        });
+        it('lessThanOrEqualTo', function() {
+            expect(searchSvc.createRangeQuery('predicate', 'range', {lessThanOrEqualTo: 1})).toEqual({
+                type: 'group',
+                patterns: [{
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: 'predicate',
+                        object: '?o'
+                    }]
+                }, {
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: '?Predicate',
+                        object: '?o'
+                    }]
+                }, {
+                    type: 'filter',
+                    expression: '?o <= 1'
+                }]
+            });
+            expect(util.getInputType).toHaveBeenCalledWith('range');
+        });
+        it('greaterThan', function() {
+            expect(searchSvc.createRangeQuery('predicate', 'range', {greaterThan: 1})).toEqual({
+                type: 'group',
+                patterns: [{
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: 'predicate',
+                        object: '?o'
+                    }]
+                }, {
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: '?Predicate',
+                        object: '?o'
+                    }]
+                }, {
+                    type: 'filter',
+                    expression: '?o > 1'
+                }]
+            });
+            expect(util.getInputType).toHaveBeenCalledWith('range');
+        });
+        it('greaterThanOrEqualTo', function() {
+            expect(searchSvc.createRangeQuery('predicate', 'range', {greaterThanOrEqualTo: 1})).toEqual({
+                type: 'group',
+                patterns: [{
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: 'predicate',
+                        object: '?o'
+                    }]
+                }, {
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: '?Predicate',
+                        object: '?o'
+                    }]
+                }, {
+                    type: 'filter',
+                    expression: '?o >= 1'
+                }]
+            });
+            expect(util.getInputType).toHaveBeenCalledWith('range');
+        });
+        it('lessThanOrEqualTo and greaterThanOrEqualTo', function() {
+            expect(searchSvc.createRangeQuery('predicate', 'range', {lessThanOrEqualTo: 1, greaterThanOrEqualTo: 0})).toEqual({
+                type: 'group',
+                patterns: [{
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: 'predicate',
+                        object: '?o'
+                    }]
+                }, {
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: '?Predicate',
+                        object: '?o'
+                    }]
+                }, {
+                    type: 'filter',
+                    expression: '?o <= 1'
+                }, {
+                    type: 'filter',
+                    expression: '?o >= 0'
+                }]
+            });
+            expect(util.getInputType).toHaveBeenCalledWith('range');
+        });
+    });
+    it('createRangeQuery should create the correct query part when input type is datetime-local', function() {
+        util.getInputType.and.returnValue('datetime-local');
+        expect(searchSvc.createRangeQuery('predicate', 'range', {greaterThanOrEqualTo: 1})).toEqual({
+            type: 'group',
+            patterns: [{
+                type: 'bgp',
+                triples: [{
+                    subject: '?Subject',
+                    predicate: 'predicate',
+                    object: '?o'
+                }]
+            }, {
+                type: 'bgp',
+                triples: [{
+                    subject: '?Subject',
+                    predicate: '?Predicate',
+                    object: '?o'
+                }]
+            }, {
+                type: 'filter',
+                expression: '?o >= 1^^<' + prefixes.xsd + 'dateTime>'
+            }]
+        });
+        expect(util.getInputType).toHaveBeenCalledWith('range');
+    });
+    describe('createBooleanQuery should create the correct query part when value is', function() {
+        it('true', function() {
+            expect(searchSvc.createBooleanQuery('predicate', true)).toEqual({
+                type: 'group',
+                patterns: [{
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: 'predicate',
+                        object: '?o'
+                    }]
+                }, {
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: '?Predicate',
+                        object: '?o'
+                    }]
+                }, {
+                    type: 'filter',
+                    expression: {
+                        type: 'operation',
+                        operator: 'in',
+                        args: ['?o', ['"true"^^' + prefixes.xsd + 'boolean', '"1"^^' + prefixes.xsd + 'boolean']]
+                    }
+                }]
+            });
+        });
+        it('false', function() {
+            expect(searchSvc.createBooleanQuery('predicate', false)).toEqual({
+                type: 'group',
+                patterns: [{
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: 'predicate',
+                        object: '?o'
+                    }]
+                }, {
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: '?Predicate',
+                        object: '?o'
+                    }]
+                }, {
+                    type: 'filter',
+                    expression: {
+                        type: 'operation',
+                        operator: 'in',
+                        args: ['?o', ['"false"^^' + prefixes.xsd + 'boolean', '"0"^^' + prefixes.xsd + 'boolean']]
+                    }
+                }]
+            });
         });
     });
 });
