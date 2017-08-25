@@ -143,7 +143,7 @@ describe('Search Service', function() {
         expect(result).toEqual('SELECT DISTINCT ?Entity WHERE { { ?s ?p ?var0. } }\nGROUP BY ?Entity');
     });
     it('createExistenceQuery should create the correct query part', function() {
-        expect(searchSvc.createExistenceQuery('predicate')).toEqual({
+        expect(searchSvc.createExistenceQuery('predicate', 'exist')).toEqual({
             type: 'group',
             patterns: [{
                 type: 'bgp',
@@ -156,7 +156,7 @@ describe('Search Service', function() {
         });
     });
     it('createContainsQuery should create the correct query part', function() {
-        expect(searchSvc.createContainsQuery('predicate', 'keyword')).toEqual({
+        expect(searchSvc.createContainsQuery('predicate', 'keyword', 'contains')).toEqual({
             type: 'group',
             patterns: [{
                 type: 'bgp',
@@ -164,13 +164,6 @@ describe('Search Service', function() {
                     subject: '?Entity',
                     predicate: 'predicate',
                     object: '?var0'
-                }]
-            }, {
-                type: 'bgp',
-                triples: [{
-                    subject: '?Subject',
-                    predicate: '?Predicate',
-                    object: '?o'
                 }]
             }, {
                 type: 'filter',
@@ -191,7 +184,7 @@ describe('Search Service', function() {
         });
     });
     it('createExactQuery should create the correct query part', function() {
-        expect(searchSvc.createExactQuery('predicate', 'keyword', 'range')).toEqual({
+        expect(searchSvc.createExactQuery('predicate', 'keyword', 'range', 'exact')).toEqual({
             type: 'group',
             patterns: [{
                 type: 'bgp',
@@ -212,7 +205,7 @@ describe('Search Service', function() {
         });
     });
     it('createRegexQuery should create the correct query part', function() {
-        expect(searchSvc.createRegexQuery('predicate', '/[A-Z]/')).toEqual({
+        expect(searchSvc.createRegexQuery('predicate', '/[A-Z]/', 'regex')).toEqual({
             type: 'group',
             patterns: [{
                 type: 'bgp',
@@ -245,9 +238,9 @@ describe('Search Service', function() {
                 }, {
                     type: 'bgp',
                     triples: [{
-                        subject: '?Subject',
-                        predicate: '?Predicate',
-                        object: '?o'
+                        subject: '?Entity',
+                        predicate: '?p',
+                        object: '?var0'
                     }]
                 }, {
                     type: 'filter',
@@ -269,9 +262,9 @@ describe('Search Service', function() {
                 }, {
                     type: 'bgp',
                     triples: [{
-                        subject: '?Subject',
-                        predicate: '?Predicate',
-                        object: '?o'
+                        subject: '?Entity',
+                        predicate: '?p',
+                        object: '?var0'
                     }]
                 }, {
                     type: 'filter',
@@ -293,9 +286,9 @@ describe('Search Service', function() {
                 }, {
                     type: 'bgp',
                     triples: [{
-                        subject: '?Subject',
-                        predicate: '?Predicate',
-                        object: '?o'
+                        subject: '?Entity',
+                        predicate: '?p',
+                        object: '?var0'
                     }]
                 }, {
                     type: 'filter',
@@ -317,9 +310,9 @@ describe('Search Service', function() {
                 }, {
                     type: 'bgp',
                     triples: [{
-                        subject: '?Subject',
-                        predicate: '?Predicate',
-                        object: '?o'
+                        subject: '?Entity',
+                        predicate: '?p',
+                        object: '?var0'
                     }]
                 }, {
                     type: 'filter',
@@ -341,9 +334,9 @@ describe('Search Service', function() {
                 }, {
                     type: 'bgp',
                     triples: [{
-                        subject: '?Subject',
-                        predicate: '?Predicate',
-                        object: '?o'
+                        subject: '?Entity',
+                        predicate: '?p',
+                        object: '?var0'
                     }]
                 }, {
                     type: 'filter',
@@ -363,27 +356,27 @@ describe('Search Service', function() {
             patterns: [{
                 type: 'bgp',
                 triples: [{
-                    subject: '?Subject',
+                    subject: '?Entity',
                     predicate: 'predicate',
-                    object: '?o'
+                    object: '?var0'
                 }]
             }, {
                 type: 'bgp',
                 triples: [{
-                    subject: '?Subject',
-                    predicate: '?Predicate',
-                    object: '?o'
+                    subject: '?Entity',
+                    predicate: '?p',
+                    object: '?var0'
                 }]
             }, {
                 type: 'filter',
-                expression: '?o >= 1^^<' + prefixes.xsd + 'dateTime>'
+                expression: '?var0 >= 1^^<' + prefixes.xsd + 'dateTime>'
             }]
         });
         expect(util.getInputType).toHaveBeenCalledWith('range');
     });
     describe('createBooleanQuery should create the correct query part when value is', function() {
         it('true', function() {
-            expect(searchSvc.createBooleanQuery('predicate', true)).toEqual({
+            expect(searchSvc.createBooleanQuery('predicate', true, 'boolean')).toEqual({
                 type: 'group',
                 patterns: [{
                     type: 'bgp',

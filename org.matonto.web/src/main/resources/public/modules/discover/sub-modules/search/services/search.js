@@ -195,6 +195,7 @@
          * for entities that have the provided predicate.
          *
          * @param {string} predicate The predicate's existence which is being searched for
+         * @param {string} variable The variable name to use in the query
          * @return {Object} A part of a SPARQL query object
          */
         self.createExistenceQuery = function(predicate) {
@@ -215,6 +216,7 @@
          *
          * @param {string} predicate The predicate's existence which is being searched for
          * @param {string} keyword The keyword to filter results by
+         * @param {string} variable The variable name to use in the query
          * @return {Object} A part of a SPARQL query object
          */
         self.createContainsQuery = function(predicate, keyword) {
@@ -237,6 +239,7 @@
          * @param {string} predicate The predicate's existence which is being searched for
          * @param {string} keyword The keyword to filter results by
          * @param {string} range The range of the keyword
+         * @param {string} variable The variable name to use in the query
          * @return {Object} A part of a SPARQL query object
          */
         self.createExactQuery = function(predicate, keyword, range) {
@@ -259,6 +262,7 @@
          *
          * @param {string} predicate The predicate's existence which is being searched for
          * @param {string} regex The regex to filter results by
+         * @param {string} variable The variable name to use in the query
          * @return {Object} A part of a SPARQL query object
          */
         self.createRegexQuery = function(predicate, regex) {
@@ -290,12 +294,13 @@
          * @param {string} rangeConfig.lessThanOrEqualTo The value that the result must be less than or equal to
          * @param {string} rangeConfig.greaterThan The value that the result must be greater than
          * @param {string} rangeConfig.greaterThanOrEqualTo The value that the result must be greater than or equal to
+         * @param {string} variable The variable name to use in the query
          * @return {Object} A part of a SPARQL query object
          */
         self.createRangeQuery = function(predicate, predRange, rangeConfig) {
             var variable = getNextVariable();
             var config = angular.copy(rangeConfig);
-            var rangePattern = createPattern('?Subject', predicate, '?o');
+            var rangePattern = createPattern('?Entity', predicate, variable);
             var patterns = [rangePattern, angular.copy(simplePattern)];
             if (util.getInputType(predRange) === 'datetime-local') {
                 _.forOwn(config, (value, key) => {
