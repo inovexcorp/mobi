@@ -40,8 +40,10 @@ public class BatchExporter implements RDFHandler {
     private boolean printToSystem = false;
 
     /**
+     * Creates a new BatchExporter that will log exported statements. Wraps a Sesame RDFHandler and performs conversion
+     * from MatOnto to Sesame Statements.
      *
-     *
+     * @param delegate The Sesame RDFHandler to wrap
      * @param transformer A SesameTransformer for converting statements
      */
     public BatchExporter(SesameTransformer transformer, org.openrdf.rio.RDFHandler delegate) {
@@ -54,9 +56,6 @@ public class BatchExporter implements RDFHandler {
         delegate.startRDF();
     }
 
-    /**
-     *
-     */
     @Override
     public void endRDF() throws RDFHandlerException {
         delegate.endRDF();
