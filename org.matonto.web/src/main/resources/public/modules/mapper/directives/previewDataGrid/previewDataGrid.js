@@ -31,7 +31,7 @@
          * @description 
          * The `previewDataGrid` module only provides the `previewDataGrid` directive which creates
          * a HandsonTable for the {@link delimitedManager.service:delimitedManagerService#dataRows delimited data}
-         * loaded into MatOnto.
+         * loaded into Mobi.
          */
         .module('previewDataGrid', [])
         /**
@@ -46,7 +46,7 @@
          * @description 
          * `previewDataGrid` is a directive that creates a HandsonTable (`hot-table`) with the 
          * {@link delimitedManager.service:delimitedManagerService#dataRows delimited data} loaded into
-         * MatOnto. The `hot-table` will automatically update whenever new data is loaded, the 
+         * Mobi. The `hot-table` will automatically update whenever new data is loaded, the 
          * {@link mapperState.service:mapperStateService#highlightIndex highlighted column} changes, and
          * when whether or not the data {@link delimitedManager.service:delimitedManagerService#containsHeaders contains headers}
          * changes. The `hot-table` is uneditable and the user cannot select a cell within it. The directive 

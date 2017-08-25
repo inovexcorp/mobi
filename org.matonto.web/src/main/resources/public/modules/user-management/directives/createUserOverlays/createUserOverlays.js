@@ -30,7 +30,7 @@
          *
          * @description
          * The `createUserOverlays` module only provides the `createUserOverlays` directive which creates overlays
-         * for adding a user to MatOnto.
+         * for adding a user to Mobi.
          */
         .module('createUserOverlays', [])
         /**
