@@ -121,23 +121,23 @@
                                 break;
                             case 'Greater than':
                                 ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, 'value > ' + dvm.value));
-                                ds.search.queryConfig.filters.push(s.createRangeQuery(dvm.property['@id'], { greaterThan: dvm.value }));
+                                ds.search.queryConfig.filters.push(s.createRangeQuery(dvm.property['@id'], dvm.range, { greaterThan: dvm.value }));
                                 break;
                             case 'Greater than or equal to':
                                 ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, 'value >= ' + dvm.value));
-                                ds.search.queryConfig.filters.push(s.createRangeQuery(dvm.property['@id'], { greaterThanOrEqualTo: dvm.value }));
+                                ds.search.queryConfig.filters.push(s.createRangeQuery(dvm.property['@id'], dvm.range, { greaterThanOrEqualTo: dvm.value }));
                                 break;
                             case 'Less than':
                                 ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, 'value < ' + dvm.value));
-                                ds.search.queryConfig.filters.push(s.createRangeQuery(dvm.property['@id'], { lessThan: dvm.value }));
+                                ds.search.queryConfig.filters.push(s.createRangeQuery(dvm.property['@id'], dvm.range, { lessThan: dvm.value }));
                                 break;
                             case 'Less than or equal to':
                                 ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, 'value <= ' + dvm.value));
-                                ds.search.queryConfig.filters.push(s.createRangeQuery(dvm.property['@id'], { lessThanOrEqualTo: dvm.value }));
+                                ds.search.queryConfig.filters.push(s.createRangeQuery(dvm.property['@id'], dvm.range, { lessThanOrEqualTo: dvm.value }));
                                 break;
                             case 'Range':
                                 ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, dvm.begin + ' <= value <= ' + dvm.end));
-                                ds.search.queryConfig.filters.push(s.createRangeQuery(dvm.property['@id'], {
+                                ds.search.queryConfig.filters.push(s.createRangeQuery(dvm.property['@id'], dvm.range, {
                                     greaterThanOrEqualTo: dvm.begin,
                                     lessThanOrEqualTo: dvm.end
                                 }));

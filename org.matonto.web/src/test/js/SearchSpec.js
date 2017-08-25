@@ -237,9 +237,9 @@ describe('Search Service', function() {
             }]
         });
     });
-    describe('createRangeQuery should create the correct when rangeConfig contains', function() {
+    describe('createRangeQuery should create the correct query part when rangeConfig contains', function() {
         it('lessThan', function() {
-            expect(searchSvc.createRangeQuery('predicate', {lessThan: 1})).toEqual({
+            expect(searchSvc.createRangeQuery('predicate', 'range', {lessThan: 1})).toEqual({
                 type: 'group',
                 patterns: [{
                     type: 'bgp',
@@ -260,9 +260,10 @@ describe('Search Service', function() {
                     expression: '?o < 1'
                 }]
             });
+            expect(util.getInputType).toHaveBeenCalledWith('range');
         });
         it('lessThanOrEqualTo', function() {
-            expect(searchSvc.createRangeQuery('predicate', {lessThanOrEqualTo: 1})).toEqual({
+            expect(searchSvc.createRangeQuery('predicate', 'range', {lessThanOrEqualTo: 1})).toEqual({
                 type: 'group',
                 patterns: [{
                     type: 'bgp',
@@ -283,9 +284,10 @@ describe('Search Service', function() {
                     expression: '?o <= 1'
                 }]
             });
+            expect(util.getInputType).toHaveBeenCalledWith('range');
         });
         it('greaterThan', function() {
-            expect(searchSvc.createRangeQuery('predicate', {greaterThan: 1})).toEqual({
+            expect(searchSvc.createRangeQuery('predicate', 'range', {greaterThan: 1})).toEqual({
                 type: 'group',
                 patterns: [{
                     type: 'bgp',
@@ -306,9 +308,10 @@ describe('Search Service', function() {
                     expression: '?o > 1'
                 }]
             });
+            expect(util.getInputType).toHaveBeenCalledWith('range');
         });
         it('greaterThanOrEqualTo', function() {
-            expect(searchSvc.createRangeQuery('predicate', {greaterThanOrEqualTo: 1})).toEqual({
+            expect(searchSvc.createRangeQuery('predicate', 'range', {greaterThanOrEqualTo: 1})).toEqual({
                 type: 'group',
                 patterns: [{
                     type: 'bgp',
@@ -329,9 +332,10 @@ describe('Search Service', function() {
                     expression: '?o >= 1'
                 }]
             });
+            expect(util.getInputType).toHaveBeenCalledWith('range');
         });
         it('lessThanOrEqualTo and greaterThanOrEqualTo', function() {
-            expect(searchSvc.createRangeQuery('predicate', {lessThanOrEqualTo: 1, greaterThanOrEqualTo: 0})).toEqual({
+            expect(searchSvc.createRangeQuery('predicate', 'range', {lessThanOrEqualTo: 1, greaterThanOrEqualTo: 0})).toEqual({
                 type: 'group',
                 patterns: [{
                     type: 'bgp',
@@ -355,7 +359,33 @@ describe('Search Service', function() {
                     expression: '?o >= 0'
                 }]
             });
+            expect(util.getInputType).toHaveBeenCalledWith('range');
         });
+    });
+    it('createRangeQuery should create the correct query part when input type is datetime-local', function() {
+        util.getInputType.and.returnValue('datetime-local');
+        expect(searchSvc.createRangeQuery('predicate', 'range', {greaterThanOrEqualTo: 1})).toEqual({
+            type: 'group',
+            patterns: [{
+                type: 'bgp',
+                triples: [{
+                    subject: '?Subject',
+                    predicate: 'predicate',
+                    object: '?o'
+                }]
+            }, {
+                type: 'bgp',
+                triples: [{
+                    subject: '?Subject',
+                    predicate: '?Predicate',
+                    object: '?o'
+                }]
+            }, {
+                type: 'filter',
+                expression: '?o >= 1^^<' + prefixes.xsd + 'dateTime>'
+            }]
+        });
+        expect(util.getInputType).toHaveBeenCalledWith('range');
     });
     describe('createBooleanQuery should create the correct query part when value is', function() {
         it('true', function() {

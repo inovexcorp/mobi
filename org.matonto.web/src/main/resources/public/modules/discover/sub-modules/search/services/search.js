@@ -271,6 +271,7 @@
          * for entities that have the provided predicate and are within the configured range.
          *
          * @param {string} predicate The predicate's existence which is being searched for
+         * @param {Object} predRange The predicate's range
          * @param {Object} rangeConfig The range configuration
          * @param {string} rangeConfig.lessThan The value that the result must be less than
          * @param {string} rangeConfig.lessThanOrEqualTo The value that the result must be less than or equal to
@@ -278,20 +279,26 @@
          * @param {string} rangeConfig.greaterThanOrEqualTo The value that the result must be greater than or equal to
          * @return {Object} A part of a SPARQL query object
          */
-        self.createRangeQuery = function(predicate, rangeConfig) {
+        self.createRangeQuery = function(predicate, predRange, rangeConfig) {
+            var config = angular.copy(rangeConfig);
             var rangePattern = createPattern('?Subject', predicate, '?o');
             var patterns = [rangePattern, angular.copy(simplePattern)];
-            if (_.has(rangeConfig, 'lessThan')) {
-                patterns.push(createFilter('?o < ' + rangeConfig.lessThan));
+            if (util.getInputType(predRange) === 'datetime-local') {
+                _.forOwn(config, (value, key) => {
+                    config[key] = JSON.stringify(value) + '^^<' + prefixes.xsd + 'dateTime>';
+                });
             }
-            if (_.has(rangeConfig, 'lessThanOrEqualTo')) {
-                patterns.push(createFilter('?o <= ' + rangeConfig.lessThanOrEqualTo));
+            if (_.has(config, 'lessThan')) {
+                patterns.push(createFilter('?o < ' + config.lessThan));
             }
-            if (_.has(rangeConfig, 'greaterThan')) {
-                patterns.push(createFilter('?o > ' + rangeConfig.greaterThan));
+            if (_.has(config, 'lessThanOrEqualTo')) {
+                patterns.push(createFilter('?o <= ' + config.lessThanOrEqualTo));
             }
-            if (_.has(rangeConfig, 'greaterThanOrEqualTo')) {
-                patterns.push(createFilter('?o >= ' + rangeConfig.greaterThanOrEqualTo));
+            if (_.has(config, 'greaterThan')) {
+                patterns.push(createFilter('?o > ' + config.greaterThan));
+            }
+            if (_.has(config, 'greaterThanOrEqualTo')) {
+                patterns.push(createFilter('?o >= ' + config.greaterThanOrEqualTo));
             }
             return { type: 'group', patterns };
         }

@@ -208,7 +208,7 @@ describe('Property Filter Overlay directive', function() {
                     range: 'range',
                     title: 'name'
                 });
-                expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('id', {greaterThan: 'value'});
+                expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('id', 'range', {greaterThan: 'value'});
                 expect(discoverStateSvc.search.queryConfig.filters).toContain({prop: 'range query'});
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
@@ -221,7 +221,7 @@ describe('Property Filter Overlay directive', function() {
                     range: 'range',
                     title: 'name'
                 });
-                expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('id', {greaterThanOrEqualTo: 'value'});
+                expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('id', 'range', {greaterThanOrEqualTo: 'value'});
                 expect(discoverStateSvc.search.queryConfig.filters).toContain({prop: 'range query'});
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
@@ -234,7 +234,7 @@ describe('Property Filter Overlay directive', function() {
                     range: 'range',
                     title: 'name'
                 });
-                expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('id', {lessThan: 'value'});
+                expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('id', 'range', {lessThan: 'value'});
                 expect(discoverStateSvc.search.queryConfig.filters).toContain({prop: 'range query'});
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
@@ -247,7 +247,7 @@ describe('Property Filter Overlay directive', function() {
                     range: 'range',
                     title: 'name'
                 });
-                expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('id', {lessThanOrEqualTo: 'value'});
+                expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('id', 'range', {lessThanOrEqualTo: 'value'});
                 expect(discoverStateSvc.search.queryConfig.filters).toContain({prop: 'range query'});
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
@@ -262,7 +262,7 @@ describe('Property Filter Overlay directive', function() {
                     range: 'range',
                     title: 'name'
                 });
-                expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('id', {lessThanOrEqualTo: 'end', greaterThanOrEqualTo: 'begin'});
+                expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('id', 'range', {lessThanOrEqualTo: 'end', greaterThanOrEqualTo: 'begin'});
                 expect(discoverStateSvc.search.queryConfig.filters).toContain({prop: 'range query'});
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
