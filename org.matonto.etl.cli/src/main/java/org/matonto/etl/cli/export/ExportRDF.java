@@ -32,15 +32,12 @@ import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.matonto.etl.api.config.rdf.export.RDFExportConfig;
 import org.matonto.etl.api.rdf.export.RDFExportService;
 import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 
 @Command(scope = "mobi", name = "export", description = "Exports objects from a repository or dataset")
 @Service
-public class ExportRDF implements Action {
+public class ExportRDF extends ExportBase implements Action {
 
     // Service References
 
@@ -52,12 +49,6 @@ public class ExportRDF implements Action {
     }
 
     // Command Parameters
-
-    @Option(name = "-f", aliases = "--output-file", description = "The output file for the exported record data")
-    private String filepathParam = null;
-
-    @Option(name = "-t", aliases = "--format", description = "The output format (TRIG, NQUADS, JSONLD, TRIX)")
-    private String formatParam = null;
 
     @Option(name = "-r", aliases = "--repository", description = "The id of the repository that data will be "
             + "exported from")
@@ -88,22 +79,8 @@ public class ExportRDF implements Action {
             repositoryId = "system";
         }
 
-        OutputStream output;
-        if (filepathParam != null) {
-            output = new FileOutputStream(filepathParam);
-        } else {
-            output = System.out;
-        }
-
-        RDFFormat outputFormat;
-        if (formatParam != null) {
-            outputFormat = Rio.getParserFormatForMIMEType(formatParam)
-                    .orElseThrow(() -> new IOException("Invalid file format."));
-        } else if (filepathParam != null) {
-            outputFormat = Rio.getParserFormatForFileName(filepathParam).orElse(RDFFormat.TRIG);
-        } else {
-            outputFormat = RDFFormat.TRIG;
-        }
+        OutputStream output = getOuput();
+        RDFFormat outputFormat = getFormat();
 
         RDFExportConfig config = new RDFExportConfig.Builder(output, outputFormat)
                 .subj(subj)
