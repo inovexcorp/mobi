@@ -485,7 +485,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<DataProperty> getAllDataProperties() {
-        return owlOntology.dataPropertiesInSignature()
+        return owlOntology.dataPropertiesInSignature(Imports.INCLUDED)
                 .map(SimpleOntologyValues::matontoDataProperty)
                 .collect(Collectors.toSet());
     }
