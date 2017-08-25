@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Class Axioms directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, resObj, prefixes, ontoUtils;
+    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, resObj, prefixes, ontoUtils, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -34,7 +34,7 @@ describe('Class Axioms directive', function() {
         mockOntologyUtilsManager();
         mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_, _prefixes_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_, _prefixes_, _ontologyUtilsManagerService_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
@@ -42,6 +42,7 @@ describe('Class Axioms directive', function() {
             resObj = _responseObj_;
             prefixes = _prefixes_;
             ontoUtils = _ontologyUtilsManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         ontologyStateSvc.listItem.selected = {
@@ -99,8 +100,13 @@ describe('Class Axioms directive', function() {
                 this.values = [{localName: 'local', namespace: 'namespace/'}];
                 this.axiom = {};
             });
-            it('unless the axiom is not subClassOf', function() {
+            it('unless the axiom is not subClassOf or there are no values', function() {
                 controller.updateHierarchy(this.axiom, this.values);
+                expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
+                expect(resObj.getItemIri).not.toHaveBeenCalled();
+
+                this.axiom.localName = 'subClassOf';
+                this.values = [];
                 expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
                 expect(resObj.getItemIri).not.toHaveBeenCalled();
             });
@@ -119,12 +125,18 @@ describe('Class Axioms directive', function() {
             beforeEach(function() {
                 this.axiomObject = {'@id': 'axiom'};
             });
-            it('unless the selected key is not subClassOf', function() {
+            it('unless the selected key is not subClassOf or the value is a blank node', function() {
+                controller.removeFromHierarchy(this.axiomObject);
+                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+
+                controller.key = prefixes.rdfs + 'subClassOf';
+                ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
                 controller.removeFromHierarchy(this.axiomObject);
                 expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
             });
-            it('if the selected key is subClassOf', function() {
+            it('if the selected key is subClassOf and the value is not a blank node', function() {
                 controller.key = prefixes.rdfs + 'subClassOf';
                 ontologyStateSvc.flattenHierarchy.and.returnValue([{entityIRI: 'new'}]);
                 controller.removeFromHierarchy(this.axiomObject);

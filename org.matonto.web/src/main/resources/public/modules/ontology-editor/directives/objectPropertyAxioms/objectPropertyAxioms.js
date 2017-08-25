@@ -52,9 +52,9 @@
 
                     dvm.updateHierarchy = function(axiom, values) {
                         var localName = _.get(axiom, 'localName');
-                        if (localName === 'subPropertyOf') {
+                        if (localName === 'subPropertyOf' && values.length) {
                             dvm.ontoUtils.setSuperProperties(dvm.os.listItem.selected['@id'], _.map(values, value => dvm.ro.getItemIri(value)), 'objectPropertyHierarchy', 'objectPropertyIndex', 'flatObjectPropertyHierarchy');
-                        } else if (localName === 'domain') {
+                        } else if (localName === 'domain' && values.length) {
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         }
                     }

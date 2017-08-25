@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Remove Property Overlay directive', function() {
-    var $compile, scope, $q, element, controller, ontologyStateSvc, propertyManagerSvc, ontoUtils, prefixes;
+    var $compile, scope, $q, element, controller, ontologyStateSvc, propertyManagerSvc, ontoUtils, prefixes, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -32,7 +32,7 @@ describe('Remove Property Overlay directive', function() {
         mockPrefixes();
         mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _propertyManagerService_, _ontologyUtilsManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _propertyManagerService_, _ontologyUtilsManagerService_, _prefixes_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
@@ -40,6 +40,7 @@ describe('Remove Property Overlay directive', function() {
             propertyManagerSvc = _propertyManagerService_;
             ontoUtils = _ontologyUtilsManagerService_;
             prefixes = _prefixes_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         scope.index = 0;
@@ -91,6 +92,23 @@ describe('Remove Property Overlay directive', function() {
         });
     });
     describe('controller methods', function() {
+        describe('getValueDisplay should return', function() {
+            it('the property @value', function() {
+                ontologyStateSvc.listItem.selected[scope.key][scope.index] = {'@value': 'value'};
+                expect(controller.getValueDisplay()).toEqual('value');
+            });
+            it('the property blank node value', function() {
+                ontologyStateSvc.listItem.selected[scope.key][scope.index] = {'@id': 'id'};
+                ontoUtils.getBlankNodeValue.and.returnValue('bnode');
+                expect(controller.getValueDisplay()).toEqual('bnode');
+                expect(ontoUtils.getBlankNodeValue).toHaveBeenCalledWith('id');
+            });
+            it('the property @id', function() {
+                ontologyStateSvc.listItem.selected[scope.key][scope.index] = {'@id': 'id'};
+                expect(controller.getValueDisplay()).toEqual('id');
+                expect(ontoUtils.getBlankNodeValue).toHaveBeenCalledWith('id');
+            });
+        });
         describe('removeProperty calls the correct methods', function() {
             beforeEach(function() {
                 ontologyStateSvc.listItem.flatEverythingTree = [];
@@ -128,7 +146,6 @@ describe('Remove Property Overlay directive', function() {
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
             });
             it('if the selected key is neither rdfs:domain or rdfs:range', function() {
-                _.set(ontologyStateSvc.listItem.selected, 'key[0]', 'value');
                 controller.removeProperty();
                 expect(scope.onSubmit).toHaveBeenCalled();
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
@@ -140,6 +157,51 @@ describe('Remove Property Overlay directive', function() {
                 expect(ontologyStateSvc.getOntologiesArray).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([]);
+            });
+            describe('if the selected value is a blank node', function() {
+                var expected;
+                beforeEach(function() {
+                    ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
+                    ontologyStateSvc.removeEntity.and.returnValue([{'@id': 'id'}]);
+                    expected = {'@id': ontologyStateSvc.listItem.selected['@id']};
+                });
+                it('and the selected key is rdfs:domain', function() {
+                    controller.key = prefixes.rdfs + 'domain';
+                    _.set(ontologyStateSvc.listItem.selected, controller.key + '[0]', {'@id': 'id'});
+                    expected[controller.key] = [{'@id': 'id'}];
+                    controller.removeProperty();
+                    expect(scope.onSubmit).toHaveBeenCalled();
+                    expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, expected);
+                    expect(ontologyManagerSvc.isBlankNodeId).toHaveBeenCalledWith('id');
+                    expect(ontologyStateSvc.removeEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, 'id');
+                    expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': 'id'});
+                    expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, controller.key, controller.index);
+                    expect(controller.overlayFlag).toBe(false);
+                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                    expect(ontoUtils.updateLabel).toHaveBeenCalled();
+                    expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.getOntologiesArray).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([]);
+                });
+                it('and the selected key is not rdf:domain', function() {
+                    ontologyStateSvc.listItem.selected[scope.key][scope.index] = {'@id': 'id'};
+                    expected[scope.key] = [{'@id': 'id'}];
+                    controller.removeProperty();
+                    expect(scope.onSubmit).toHaveBeenCalled();
+                    expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, expected);
+                    expect(ontologyManagerSvc.isBlankNodeId).toHaveBeenCalledWith('id');
+                    expect(ontologyStateSvc.removeEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, 'id');
+                    expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': 'id'});
+                    expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, controller.key, controller.index);
+                    expect(controller.overlayFlag).toBe(false);
+                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                    expect(ontoUtils.updateLabel).toHaveBeenCalled();
+                    expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.getOntologiesArray).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
+                    expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([]);
+                })
             });
         });
     });

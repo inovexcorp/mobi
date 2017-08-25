@@ -68,7 +68,7 @@
                             _.forEach(removed, entity => dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, entity));
                         }
                         dvm.pm.remove(dvm.os.listItem.selected, dvm.key, dvm.index);
-                        if (prefixes.rdfs + 'domain' === dvm.key) {
+                        if (prefixes.rdfs + 'domain' === dvm.key && !om.isBlankNodeId(dvm.os.listItem.selected[dvm.key][dvm.index]['@id'])) {
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         } else if (prefixes.rdfs + 'range' === dvm.key) {
                             dvm.os.updatePropertyIcon(dvm.os.listItem.selected);

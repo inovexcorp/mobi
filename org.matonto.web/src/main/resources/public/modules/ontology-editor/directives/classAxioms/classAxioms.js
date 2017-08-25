@@ -51,7 +51,7 @@
                     }
 
                     dvm.updateHierarchy = function(axiom, values) {
-                        if (_.get(axiom, 'localName') === 'subClassOf') {
+                        if (_.get(axiom, 'localName') === 'subClassOf' && values.length) {
                             var classIRIs = _.map(values, value => dvm.ro.getItemIri(value));
                             dvm.ontoUtils.setSuperClasses(dvm.os.listItem.selected['@id'], classIRIs);
                             dvm.ontoUtils.updateflatIndividualsHierarchy(classIRIs);

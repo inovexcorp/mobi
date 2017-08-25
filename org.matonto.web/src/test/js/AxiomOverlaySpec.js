@@ -88,11 +88,20 @@ describe('Axiom Overlay directive', function() {
         it('with .form-groups', function() {
             expect(element.querySelectorAll('.form-group').length).toBe(2);
         });
-        it('with a custom-label', function() {
+        it('with custom-labels', function() {
             expect(element.find('custom-label').length).toBe(3);
+        });
+        it('with a tabset', function() {
+            expect(element.find('tabset').length).toBe(1);
+        });
+        it('with tabs', function() {
+            expect(element.find('tab').length).toBe(2);
         });
         it('with ui-selects', function() {
             expect(element.find('ui-select').length).toBe(2);
+        });
+        it('with a ui-codemirror', function() {
+            expect(element.find('ui-codemirror').length).toBe(1);
         });
         it('with a .btn-container', function() {
             expect(element.querySelectorAll('.btn-container').length).toBe(1);
@@ -104,7 +113,6 @@ describe('Axiom Overlay directive', function() {
             expect(['Cancel', 'Add']).toContain(angular.element(buttons[1]).text().trim());
         });
         it('depending on whether the form is invalid', function() {
-            controller = element.controller('axiomOverlay');
             controller.axiom = {};
             controller.values = [{}];
             scope.$digest();
@@ -116,7 +124,6 @@ describe('Axiom Overlay directive', function() {
             expect(button.attr('disabled')).toBeTruthy();
         });
         it('depending on whether an axiom is selected', function() {
-            controller = element.controller('axiomOverlay');
             controller.values = [{}];
             scope.$digest();
             var button = angular.element(element.querySelectorAll('.btn-container .btn-primary')[0]);
@@ -127,7 +134,6 @@ describe('Axiom Overlay directive', function() {
             expect(button.attr('disabled')).toBeFalsy();
         });
         it('depending on whether values have been selected', function() {
-            controller = element.controller('axiomOverlay');
             controller.axiom = {};
             scope.$digest();
             var button = angular.element(element.querySelectorAll('.btn-container .btn-primary')[0]);
@@ -136,6 +142,26 @@ describe('Axiom Overlay directive', function() {
             controller.values = [{}];
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
+        });
+        it('depending on whether an expression has been entered', function() {
+            controller.axiom = {};
+            controller.tabs.list = false;
+            controller.tabs.editor = true;
+            scope.$digest();
+            var button = angular.element(element.querySelectorAll('.btn-container .btn-primary')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
+
+            controller.expression = 'test';
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
+        });
+        it('depending on whether the expression editor is readOnly', function() {
+            var codemirrorWrapper = angular.element(element.querySelectorAll('.codemirror-wrapper')[0]);
+            expect(codemirrorWrapper.hasClass('readOnly')).toEqual(true);
+
+            controller.editorOptions.readOnly = false;
+            scope.$digest();
+            expect(codemirrorWrapper.hasClass('readOnly')).toEqual(false);
         });
     });
     describe('controller methods', function() {

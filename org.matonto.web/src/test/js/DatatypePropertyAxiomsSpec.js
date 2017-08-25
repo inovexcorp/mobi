@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Datatype Property Axioms directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, resObj, prefixes, ontoUtils;
+    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, resObj, prefixes, ontoUtils, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -34,7 +34,7 @@ describe('Datatype Property Axioms directive', function() {
         mockOntologyUtilsManager();
         mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_, _prefixes_, _ontologyUtilsManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _propertyManagerService_, _responseObj_, _prefixes_, _ontologyUtilsManagerService_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
@@ -42,6 +42,7 @@ describe('Datatype Property Axioms directive', function() {
             resObj = _responseObj_;
             prefixes = _prefixes_;
             ontoUtils = _ontologyUtilsManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         ontologyStateSvc.listItem.selected = {
@@ -94,10 +95,24 @@ describe('Datatype Property Axioms directive', function() {
                 this.values = [{}];
                 this.axiom = {};
             });
-            it('unless the axiom is not subPropertyOf', function() {
+            it('unless the axiom is not subPropertyOf or domain or there are no values', function() {
                 controller.updateHierarchy(this.axiom, this.values);
-                expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
+                expect(ontoUtils.setSuperProperties).not.toHaveBeenCalled();
                 expect(resObj.getItemIri).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
+
+                this.axiom.localName = 'subPropertyOf';
+                this.values = [];
+                controller.updateHierarchy(this.axiom, this.values);
+                expect(ontoUtils.setSuperProperties).not.toHaveBeenCalled();
+                expect(resObj.getItemIri).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
+
+                this.axiom.localName = 'domain';
+                controller.updateHierarchy(this.axiom, this.values);
+                expect(ontoUtils.setSuperProperties).not.toHaveBeenCalled();
+                expect(resObj.getItemIri).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.createFlatEverythingTree).not.toHaveBeenCalled();
             });
             it('if the axiom is subPropertyOf', function() {
                 this.axiom.localName = 'subPropertyOf';
@@ -115,13 +130,20 @@ describe('Datatype Property Axioms directive', function() {
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
             });
         });
-        describe('should remove a class from the hierarchy', function() {
+        describe('should remove a property from the hierarchy', function() {
             beforeEach(function() {
                 this.axiomObject = {'@id': 'axiom'};
             });
-            it('unless the selected key is not subPropertyOf', function() {
+            it('unless the selected key is not subPropertyOf or the value is a blank node', function() {
                 controller.removeFromHierarchy(this.axiomObject);
                 expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+
+                controller.key = prefixes.rdfs + 'subPropertyOf';
+                ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
+                controller.removeFromHierarchy(this.axiomObject);
+                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
             });
             it('if the selected key is subPropertyOf', function() {
                 controller.key = prefixes.rdfs + 'subPropertyOf';
