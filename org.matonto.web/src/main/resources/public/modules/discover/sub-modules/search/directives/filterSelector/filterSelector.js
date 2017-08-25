@@ -73,7 +73,7 @@
                     dvm.type = dvm.util.getInputType(dvm.range);
                     dvm.pattern = dvm.util.getPattern(dvm.range);
                     dvm.types = {
-                        date: ['Exact', 'Existence', 'Greater than', 'Greater than or equal to', 'Less than', 'Less than or equal to', 'Range'],
+                        'datetime-local': ['Exact', 'Existence', 'Greater than', 'Greater than or equal to', 'Less than', 'Less than or equal to', 'Range'],
                         number: ['Exact', 'Existence', 'Greater than', 'Greater than or equal to', 'Less than', 'Less than or equal to', 'Range'],
                         text: ['Contains', 'Exact', 'Existence', 'Regex']
                     };

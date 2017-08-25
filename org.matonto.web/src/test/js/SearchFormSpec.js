@@ -75,7 +75,7 @@ describe('Search Form directive', function() {
         describe('getTypes calls the proper method when getClassDetails', function() {
             beforeEach(function() {
                 discoverStateSvc.search.datasetRecordId = 'id';
-                controller.typeObject = {key: []};
+                discoverStateSvc.search.typeObject = {key: []};
             });
             it('resolves', function() {
                 exploreSvc.getClassDetails.and.returnValue($q.when([{ontologyRecordTitle: 'title', prop: 'details'}]));
@@ -83,7 +83,7 @@ describe('Search Form directive', function() {
                 scope.$apply();
                 expect(discoverStateSvc.search.queryConfig.types).toEqual([]);
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('id');
-                expect(angular.copy(controller.typeObject)).toEqual({title: [{ontologyRecordTitle: 'title', prop: 'details'}]});
+                expect(angular.copy(discoverStateSvc.search.typeObject)).toEqual({title: [{ontologyRecordTitle: 'title', prop: 'details'}]});
                 expect(controller.errorMessage).toBe('');
             });
             it('rejects', function() {
@@ -92,7 +92,7 @@ describe('Search Form directive', function() {
                 scope.$apply();
                 expect(discoverStateSvc.search.queryConfig.types).toEqual([]);
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('id');
-                expect(controller.typeObject).toEqual({});
+                expect(discoverStateSvc.search.typeObject).toEqual({});
                 expect(controller.errorMessage).toBe('error');
             });
         });

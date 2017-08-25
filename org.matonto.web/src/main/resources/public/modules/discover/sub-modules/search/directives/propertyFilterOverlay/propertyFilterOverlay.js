@@ -67,15 +67,16 @@
                     var util = utilService;
                     var ds = discoverStateService;
                     var s = searchService;
+                    var defaultProperties = _.map([prefixes.rdfs + 'label', prefixes.rdfs + 'comment', prefixes.dcterms + 'title', prefixes.dcterms + 'description'], iri => ({'@id': iri}));
                     dvm.om = ontologyManagerService;
                     dvm.property = undefined;
                     dvm.range = undefined;
                     dvm.keys = getKeys();
                     dvm.filterType = undefined;
-                    dvm.begin = '';
-                    dvm.end = '';
-                    dvm.value = '';
-                    dvm.regex = '';
+                    dvm.begin = undefined;
+                    dvm.end = undefined;
+                    dvm.value = undefined;
+                    dvm.regex = undefined;
                     dvm.boolean = undefined;
 
                     dvm.submittable = function() {
@@ -88,13 +89,13 @@
                             case 'Greater than or equal to':
                             case 'Less than':
                             case 'Less than or equal to':
-                                return dvm.value;
+                                return dvm.value !== undefined;
                             case 'Existence':
                                 return true;
                             case 'Range':
-                                return dvm.begin && dvm.end;
+                                return dvm.begin !== undefined && dvm.end !== undefined;
                             case 'Regex':
-                                return dvm.regex;
+                                return dvm.regex !== undefined;
                             default:
                                 return false;
                         }
@@ -175,6 +176,7 @@
                                             ds.search.noDomains.push(property);
                                         }
                                     });
+                                    ds.search.noDomains = _.concat(ds.search.noDomains, defaultProperties);
                                     dvm.keys = getKeys();
                                 }, util.createErrorToast);
                         }

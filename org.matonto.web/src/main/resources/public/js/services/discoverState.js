@@ -107,7 +107,8 @@
                 filters: []
             },
             results: undefined,
-            targetedId: 'discover-search-results'
+            targetedId: 'discover-search-results',
+            typeObject: undefined
         };
 
         /**

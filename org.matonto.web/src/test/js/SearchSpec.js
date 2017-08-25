@@ -173,6 +173,13 @@ describe('Search Service', function() {
                     object: '?o'
                 }]
             }, {
+                type: 'bgp',
+                triples: [{
+                    subject: '?Subject',
+                    predicate: '?Predicate',
+                    object: '?o'
+                }]
+            }, {
                 type: 'filter',
                 expression: {
                     type: 'operation',
@@ -242,6 +249,13 @@ describe('Search Service', function() {
                         object: '?o'
                     }]
                 }, {
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: '?Predicate',
+                        object: '?o'
+                    }]
+                }, {
                     type: 'filter',
                     expression: '?o < 1'
                 }]
@@ -255,6 +269,13 @@ describe('Search Service', function() {
                     triples: [{
                         subject: '?Subject',
                         predicate: 'predicate',
+                        object: '?o'
+                    }]
+                }, {
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: '?Predicate',
                         object: '?o'
                     }]
                 }, {
@@ -274,6 +295,13 @@ describe('Search Service', function() {
                         object: '?o'
                     }]
                 }, {
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: '?Predicate',
+                        object: '?o'
+                    }]
+                }, {
                     type: 'filter',
                     expression: '?o > 1'
                 }]
@@ -290,6 +318,13 @@ describe('Search Service', function() {
                         object: '?o'
                     }]
                 }, {
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: '?Predicate',
+                        object: '?o'
+                    }]
+                }, {
                     type: 'filter',
                     expression: '?o >= 1'
                 }]
@@ -303,6 +338,13 @@ describe('Search Service', function() {
                     triples: [{
                         subject: '?Subject',
                         predicate: 'predicate',
+                        object: '?o'
+                    }]
+                }, {
+                    type: 'bgp',
+                    triples: [{
+                        subject: '?Subject',
+                        predicate: '?Predicate',
                         object: '?o'
                     }]
                 }, {

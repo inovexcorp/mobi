@@ -62,7 +62,6 @@
                     var s = searchService;
                     var es = exploreService;
                     dvm.ds = discoverStateService;
-                    dvm.typeObject = {};
                     dvm.typeSearch = '';
                     dvm.errorMessage = '';
 
@@ -81,10 +80,10 @@
                         dvm.ds.search.queryConfig.types = [];
                         es.getClassDetails(dvm.ds.search.datasetRecordId)
                             .then(details => {
-                                dvm.typeObject = _.groupBy(details, 'ontologyRecordTitle');
+                                dvm.ds.search.typeObject = _.groupBy(details, 'ontologyRecordTitle');
                                 dvm.errorMessage = '';
                             }, errorMessage => {
-                                dvm.typeObject = {};
+                                dvm.ds.search.typeObject = {};
                                 dvm.errorMessage = errorMessage;
                             });
                     }

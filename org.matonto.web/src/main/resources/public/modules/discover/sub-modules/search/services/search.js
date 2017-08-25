@@ -167,8 +167,8 @@
                 }
             }
             if (_.get(queryConfig, 'filters', []).length) {
-                var obj = {type: 'union', patterns: queryConfig.filters};
-                query.where.push(obj);
+                var obj = {type: 'union', patterns: _.concat(query.where, queryConfig.filters)};
+                query.where = [obj];
             }
             if (!query.where.length) {
                 query.where.push(angular.copy(simplePattern));
@@ -212,7 +212,7 @@
             var containsPattern = createPattern('?Subject', predicate, '?o');
             return {
                 type: 'group',
-                patterns: [containsPattern, createKeywordFilter(keyword)]
+                patterns: [containsPattern, angular.copy(simplePattern), createKeywordFilter(keyword)]
             };
         }
         /**
@@ -280,7 +280,7 @@
          */
         self.createRangeQuery = function(predicate, rangeConfig) {
             var rangePattern = createPattern('?Subject', predicate, '?o');
-            var patterns = [rangePattern];
+            var patterns = [rangePattern, angular.copy(simplePattern)];
             if (_.has(rangeConfig, 'lessThan')) {
                 patterns.push(createFilter('?o < ' + rangeConfig.lessThan));
             }

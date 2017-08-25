@@ -103,8 +103,8 @@ describe('Filter Selector directive', function() {
                     expect(element.find('md-select').length).toBe(1);
                 });
                 describe('with md-options when type is', function() {
-                    it('date', function() {
-                        controller.type = 'date';
+                    it('datetime-local', function() {
+                        controller.type = 'datetime-local';
                         scope.$apply();
                         expect(element.find('md-option').length).toBe(7);
                     });

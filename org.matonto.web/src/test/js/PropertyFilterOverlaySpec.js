@@ -98,6 +98,7 @@ describe('Property Filter Overlay directive', function() {
         describe('submittable should return the correct value when filterType is', function() {
             it('Boolean', function() {
                 controller.filterType = 'Boolean';
+                controller.boolean = undefined;
                 expect(controller.submittable()).toBe(false);
                 controller.boolean = true;
                 expect(controller.submittable()).toBe(true);
@@ -106,15 +107,15 @@ describe('Property Filter Overlay directive', function() {
             });
             it('Contains', function() {
                 controller.filterType = 'Contains';
-                expect(controller.submittable()).toBeFalsy();
+                expect(controller.submittable()).toBe(false);
                 controller.value = 'value';
-                expect(controller.submittable()).toBeTruthy();
+                expect(controller.submittable()).toBe(true);
             });
             it('Exact', function() {
                 controller.filterType = 'Exact';
-                expect(controller.submittable()).toBeFalsy();
+                expect(controller.submittable()).toBe(false);
                 controller.value = 'value';
-                expect(controller.submittable()).toBeTruthy();
+                expect(controller.submittable()).toBe(true);
             });
             it('Existence', function() {
                 controller.filterType = 'Existence';
@@ -122,17 +123,17 @@ describe('Property Filter Overlay directive', function() {
             });
             it('Range', function() {
                 controller.filterType = 'Range';
-                expect(controller.submittable()).toBeFalsy();
+                expect(controller.submittable()).toBe(false);
                 controller.begin = 'begin';
                 expect(controller.submittable()).toBeFalsy();
                 controller.end = 'end';
-                expect(controller.submittable()).toBeTruthy();
+                expect(controller.submittable()).toBe(true);
             });
             it('Regex', function() {
                 controller.filterType = 'Regex';
-                expect(controller.submittable()).toBeFalsy();
+                expect(controller.submittable()).toBe(false);
                 controller.regex = '/[a-zA-Z]/';
-                expect(controller.submittable()).toBeTruthy();
+                expect(controller.submittable()).toBe(true);
             });
             it('something else', function() {
                 controller.filterType = 'Other';
