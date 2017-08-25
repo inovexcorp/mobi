@@ -1,4 +1,6 @@
-package org.matonto.etl.api.config;
+@Version("1.0.0.${build}")
+
+package org.matonto.etl.api.config.rdf;
 
 /*-
  * #%L
@@ -23,23 +25,4 @@ package org.matonto.etl.api.config;
  * #L%
  */
 
-import org.matonto.catalog.api.builder.RecordConfig;
-import org.matonto.jaas.api.ontologies.usermanagement.User;
-
-import java.util.Set;
-
-public class MappingRecordConfig extends RecordConfig {
-
-    private MappingRecordConfig(MappingRecordBuilder builder) {
-        super(builder);
-    }
-    public static class MappingRecordBuilder extends Builder {
-        public MappingRecordBuilder(String title, Set<User> publishers) {
-            super(title, publishers);
-        }
-
-        public MappingRecordConfig build() {
-            return new MappingRecordConfig(this);
-        }
-    }
-}
+import aQute.bnd.annotation.Version;

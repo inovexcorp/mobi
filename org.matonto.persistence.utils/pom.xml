@@ -81,6 +81,7 @@
                         <Import-Package>*</Import-Package>
                         <Export-Package>
                             org.matonto.persistence.utils.api; provide:=true,
+                            org.matonto.persistence.utils.exception,
                             org.matonto.persistence.utils
                         </Export-Package>
                         <Service-Component>*</Service-Component>

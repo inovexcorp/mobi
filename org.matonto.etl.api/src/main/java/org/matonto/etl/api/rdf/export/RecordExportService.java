@@ -1,6 +1,4 @@
-@Version("2.0.0.${build}")
-
-package org.matonto.etl.api.rdf;
+package org.matonto.etl.api.rdf.export;
 
 /*-
  * #%L
@@ -8,7 +6,7 @@ package org.matonto.etl.api.rdf;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,15 @@ package org.matonto.etl.api.rdf;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.matonto.etl.api.config.rdf.export.RecordExportConfig;
+import java.io.IOException;
+
+public interface RecordExportService {
+
+    /**
+     * Exports Catalog Records based on the passed Configuration.
+     *
+     * @param config The configuration for the export
+     */
+    void export(RecordExportConfig config) throws IOException;
+}

@@ -1,7 +1,7 @@
 package org.matonto.etl.service.delimited
 
-import org.matonto.etl.api.config.ExcelConfig
-import org.matonto.etl.api.config.SVConfig
+import org.matonto.etl.api.config.delimited.ExcelConfig
+import org.matonto.etl.api.config.delimited.SVConfig
 import org.matonto.etl.api.exception.MatOntoETLException
 import org.matonto.etl.api.ontologies.delimited.*
 import org.matonto.ontology.core.api.Ontology

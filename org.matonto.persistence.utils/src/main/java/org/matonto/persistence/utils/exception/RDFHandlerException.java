@@ -1,14 +1,12 @@
-@Version("2.0.0.${build}")
-
-package org.matonto.etl.api.rdf;
+package org.matonto.persistence.utils.exception;
 
 /*-
  * #%L
- * org.matonto.etl.api
+ * org.matonto.persistence.utils
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,23 @@ package org.matonto.etl.api.rdf;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.matonto.exception.MatOntoException;
+
+public class RDFHandlerException extends MatOntoException {
+
+    public RDFHandlerException() {
+        super();
+    }
+
+    public RDFHandlerException(String message) {
+        super(message);
+    }
+
+    public RDFHandlerException(Throwable exception) {
+        super(exception);
+    }
+
+    public RDFHandlerException(String message, Throwable exception) {
+        super(message, exception);
+    }
+}
