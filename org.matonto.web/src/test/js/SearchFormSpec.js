@@ -39,7 +39,7 @@ describe('Search Form directive', function() {
             exploreSvc = _exploreService_;
         });
 
-        discoverStateSvc.search.filterMeta = [{
+        discoverStateSvc.search.queryConfig.filters = [{
             title: 'title',
             range: 'range',
             display: 'display'
@@ -115,10 +115,8 @@ describe('Search Form directive', function() {
                 prop: 'saved'
             }];
             discoverStateSvc.search.queryConfig.filters = angular.copy(data);
-            discoverStateSvc.search.filterMeta = angular.copy(data);
             controller.removeFilter(0);
             expect(discoverStateSvc.search.queryConfig.filters).toEqual(expected);
-            expect(discoverStateSvc.search.filterMeta).toEqual(expected);
         });
     });
     describe('replaces the element with the correct html', function() {

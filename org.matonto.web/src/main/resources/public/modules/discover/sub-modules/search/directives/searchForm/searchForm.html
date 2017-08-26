@@ -64,7 +64,7 @@
                       <button type="button" ng-disabled="!dvm.ds.search.datasetRecordId" class="pull-right btn btn-link property-link" ng-click="dvm.showPropertyFilterOverlay = true"><i class="fa fa-fw fa-plus"></i>Property</button>
                   </div>
                   <md-list>
-                      <md-list-item ng-repeat="meta in dvm.ds.search.filterMeta" class="md-3-line">
+                      <md-list-item ng-repeat="meta in dvm.ds.search.queryConfig.filters" class="md-3-line">
                           <div class="md-list-item-text">
                               <h3>{{meta.title}}</h3>
                               <p>Range: {{meta.range}}</p>

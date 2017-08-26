@@ -96,7 +96,6 @@
         self.search = {
             active: false,
             datasetRecordId: '',
-            filterMeta: [],
             noDomains: undefined,
             properties: undefined,
             queryConfig: {
@@ -104,7 +103,8 @@
                 isOrTypes: false,
                 keywords: [],
                 types: [],
-                filters: []
+                filters: [],
+                variables: {}
             },
             results: undefined,
             targetedId: 'discover-search-results',

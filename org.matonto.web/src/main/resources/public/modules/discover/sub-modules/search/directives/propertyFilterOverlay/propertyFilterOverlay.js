@@ -102,73 +102,49 @@
                     }
 
                     dvm.submit = function() {
-                        var display = '';
                         var config = {};
                         switch (dvm.filterType) {
                             case 'Boolean':
-                                display = 'Is ' + dvm.boolean;
+                                config.display = 'Is ' + dvm.boolean;
                                 config.boolean = dvm.boolean;
-                                // ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, 'Is ' + dvm.boolean));
-                                // ds.search.queryConfig.filters.push(s.createBooleanQuery(dvm.property['@id'], dvm.boolean));
                                 break;
                             case 'Contains':
-                                display = 'Contains "' + dvm.value + '"';
+                                config.display = 'Contains "' + dvm.value + '"';
                                 config.value = dvm.value;
-                                // ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, 'Contains "' + dvm.value + '"'));
-                                // ds.search.queryConfig.filters.push(s.createContainsQuery(dvm.property['@id'], dvm.value));
                                 break;
                             case 'Exact':
-                                display = 'Exactly matches "' + dvm.value + '"';
+                                config.display = 'Exactly matches "' + dvm.value + '"';
                                 config.value = dvm.value;
-                                // ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, 'Exactly matches "' + dvm.value + '"'));
-                                // ds.search.queryConfig.filters.push(s.createExactQuery(dvm.property['@id'], dvm.value, dvm.range));
                                 break;
                             case 'Existence':
-                                display = 'Existence';
-                                // ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, 'Existence'));
-                                // ds.search.queryConfig.filters.push(s.createExistenceQuery(dvm.property['@id']));
+                                config.display = 'Existence';
                                 break;
                             case 'Greater than':
-                                display = 'value > ' + dvm.value;
+                                config.display = 'value > ' + dvm.value;
                                 config.value = dvm.value;
-                                // ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, 'value > ' + dvm.value));
-                                // ds.search.queryConfig.filters.push(s.createRangeQuery(dvm.property['@id'], { greaterThan: dvm.value }));
                                 break;
                             case 'Greater than or equal to':
-                                display = 'value >= ' + dvm.value;
+                                config.display = 'value >= ' + dvm.value;
                                 config.value = dvm.value;
-                                // ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, 'value >= ' + dvm.value));
-                                // ds.search.queryConfig.filters.push(s.createRangeQuery(dvm.property['@id'], { greaterThanOrEqualTo: dvm.value }));
                                 break;
                             case 'Less than':
-                                display = 'value < ' + dvm.value;
+                                config.display = 'value < ' + dvm.value;
                                 config.value = dvm.value;
-                                // ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, 'value < ' + dvm.value));
-                                // ds.search.queryConfig.filters.push(s.createRangeQuery(dvm.property['@id'], { lessThan: dvm.value }));
                                 break;
                             case 'Less than or equal to':
-                                display = 'value <= ' + dvm.value;
+                                config.display = 'value <= ' + dvm.value;
                                 config.value = dvm.value;
-                                // ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, 'value <= ' + dvm.value));
-                                // ds.search.queryConfig.filters.push(s.createRangeQuery(dvm.property['@id'], { lessThanOrEqualTo: dvm.value }));
                                 break;
                             case 'Range':
-                                display = dvm.begin + ' <= value <= ' + dvm.end;
+                                config.display = dvm.begin + ' <= value <= ' + dvm.end;
                                 config.begin = dvm.begin;
                                 config.end = dvm.end;
-                                // ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, dvm.begin + ' <= value <= ' + dvm.end));
-                                // ds.search.queryConfig.filters.push(s.createRangeQuery(dvm.property['@id'], {
-                                //     greaterThanOrEqualTo: dvm.begin,
-                                //     lessThanOrEqualTo: dvm.end
-                                // }));
                                 break;
                             case 'Regex':
                                 try {
                                     var regex = new RegExp(dvm.regex);
-                                    display = 'Matches ' + dvm.regex;
+                                    config.display = 'Matches ' + dvm.regex;
                                     config.regex = dvm.regex;
-                                    // ds.search.filterMeta.push(createMeta(dvm.property, dvm.range, 'Matches ' + dvm.regex));
-                                    // ds.search.queryConfig.filters.push(s.createRegexQuery(dvm.property['@id'], dvm.regex));
                                     break;
                                 } catch (e) {
                                     util.createErrorToast(e.message);
@@ -176,10 +152,9 @@
                                 }
                         }
                         ds.search.queryConfig.filters.push(_.assign(config, {
-                            display,
                             predicate: dvm.property['@id'],
-                            range: util.getBeautifulIRI(range),
-                            title: dvm.om.getEntityName(property),
+                            range: util.getBeautifulIRI(dvm.range),
+                            title: dvm.om.getEntityName(dvm.property),
                             type: dvm.filterType
                         }));
                         dvm.closeOverlay();

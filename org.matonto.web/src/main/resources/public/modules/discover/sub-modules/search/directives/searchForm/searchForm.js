@@ -94,7 +94,6 @@
                     
                     dvm.removeFilter = function(index) {
                         _.pullAt(dvm.ds.search.queryConfig.filters, index);
-                        _.pullAt(dvm.ds.search.filterMeta, index);
                     }
                 }
             }
