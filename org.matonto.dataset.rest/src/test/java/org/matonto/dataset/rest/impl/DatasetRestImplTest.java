@@ -78,6 +78,7 @@ import org.matonto.rdf.orm.conversion.impl.ResourceValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
 import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
+import org.matonto.repository.exception.RepositoryException;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.matonto.rest.util.UsernameTestFilter;
 import org.mockito.Mock;
@@ -226,6 +227,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
         when(service.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgumentAt(0, Statement.class));
 
+        when(datasetManager.getDatasetRecord(any(Resource.class))).thenReturn(Optional.of(record1));
         when(datasetManager.getDatasetRecords(any(DatasetPaginatedSearchParams.class))).thenReturn(results);
         when(datasetManager.createDataset(any(DatasetRecordConfig.class))).thenReturn(record1);
 
@@ -396,6 +398,51 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
+    }
+
+    /* GET datasets/{datasetId} */
+
+    @Test
+    public void getDatasetRecordTest() {
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue())).request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(datasetManager).getDatasetRecord(record1.getResource());
+    }
+
+    @Test
+    public void getDatasetRecordThatCouldNotBeFoundTest() {
+        when(datasetManager.getDatasetRecord(any(Resource.class))).thenReturn(Optional.empty());
+
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue())).request().get();
+        assertEquals(response.getStatus(), 404);
+        verify(datasetManager).getDatasetRecord(record1.getResource());
+    }
+
+    @Test
+    public void getDatasetRecordThatDoesNotExistTest() {
+        doThrow(new IllegalArgumentException()).when(datasetManager).getDatasetRecord(any(Resource.class));
+
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue())).request().get();
+        assertEquals(response.getStatus(), 400);
+        verify(datasetManager).getDatasetRecord(record1.getResource());
+    }
+
+    @Test
+    public void getDatasetRecordWithIllegalStateTest() {
+        doThrow(new IllegalStateException()).when(datasetManager).getDatasetRecord(any(Resource.class));
+
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue())).request().get();
+        assertEquals(response.getStatus(), 500);
+        verify(datasetManager).getDatasetRecord(record1.getResource());
+    }
+
+    @Test
+    public void getDatasetRecordWithFailedConnectionTest() {
+        doThrow(new RepositoryException()).when(datasetManager).getDatasetRecord(any(Resource.class));
+
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue())).request().get();
+        assertEquals(response.getStatus(), 500);
+        verify(datasetManager).getDatasetRecord(record1.getResource());
     }
 
     /* DELETE datasets/{datasetId} */

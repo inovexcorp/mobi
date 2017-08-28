@@ -26,6 +26,8 @@ package org.matonto.dataset.rest.impl;
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
+import static org.matonto.rest.util.RestUtils.getTypedObjectFromJsonld;
+import static org.matonto.rest.util.RestUtils.modelToJsonld;
 import static org.matonto.rest.util.RestUtils.modelToSkolemizedJsonld;
 
 import aQute.bnd.annotation.component.Component;
@@ -171,6 +173,23 @@ public class DatasetRestImpl implements DatasetRest {
             }
             DatasetRecord record = manager.createDataset(builder.build());
             return Response.status(201).entity(record.getResource().stringValue()).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MatOntoException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public Response getDatasetRecord(String datasetRecordId) {
+        Resource recordIRI = vf.createIRI(datasetRecordId);
+        try {
+            DatasetRecord datasetRecord = manager.getDatasetRecord(recordIRI).orElseThrow(() ->
+                    ErrorUtils.sendError("DatasetRecord " + datasetRecordId + " could not be found",
+                            Response.Status.NOT_FOUND));
+            Model copy = mf.createModel();
+            datasetRecord.getModel().forEach(st -> copy.add(st.getSubject(), st.getPredicate(), st.getObject()));
+            return Response.ok(modelToJsonld(copy, transformer)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MatOntoException ex) {

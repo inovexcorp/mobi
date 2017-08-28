@@ -30,7 +30,7 @@ import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
 import org.matonto.catalog.api.ontologies.mcat.Record;
-import org.matonto.etl.api.config.MappingRecordConfig;
+import org.matonto.etl.api.config.delimited.MappingRecordConfig;
 import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.etl.api.delimited.MappingWrapper;

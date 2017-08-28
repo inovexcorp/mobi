@@ -1,6 +1,4 @@
-@Version("2.1.1.${build}")
-
-package org.matonto.etl.api.config;
+package org.matonto.etl.api.rdf.export;
 
 /*-
  * #%L
@@ -8,7 +6,7 @@ package org.matonto.etl.api.config;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,18 @@ package org.matonto.etl.api.config;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+import org.matonto.etl.api.config.rdf.export.BaseExportConfig;
+
+import java.io.IOException;
+
+public interface DatasetExportService {
+
+    /**
+     * Exports data from the specified DatasetRecord's Dataset based on the passed Configuration.
+     *
+     * @param config The configuration for the export
+     * @param datasetRecord The Resource ID of the DatasetRecord to export
+     * @throws IllegalArgumentException Thrown if the DatasetRecord does not exist
+     */
+    void export(BaseExportConfig config, String datasetRecord) throws IOException;
+}
