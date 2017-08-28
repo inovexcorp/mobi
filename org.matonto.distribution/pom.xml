@@ -237,7 +237,7 @@
                     <registryUrl>https://index.docker.io/v1/</registryUrl>
                     <useGitCommitId>true</useGitCommitId>
                     <dockerDirectory>${project.build.directory}/assembly/docker</dockerDirectory>
-                    <imageName>matonto/matonto</imageName>
+                    <imageName>inovexis/mobi</imageName>
                     <imageTags>
                         <imageTag>${project.version}</imageTag>
                         <imageTag>latest</imageTag>
