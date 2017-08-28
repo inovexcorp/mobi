@@ -119,6 +119,37 @@ describe('Search Form directive', function() {
             controller.removeFilter(0);
             expect(discoverStateSvc.search.queryConfig.filters).toEqual(expected);
         });
+        describe('isSubmittable should return the correct boolean value when', function() {
+            it('dataset is not selected', function() {
+                discoverStateSvc.search.datasetRecordId = undefined;
+                expect(controller.isSubmittable()).toBeFalsy();
+            });
+            describe('dataset is selected and', function() {
+                beforeEach(function() {
+                    discoverStateSvc.search.datasetRecordId = 'id';
+                    discoverStateSvc.search.queryConfig = {
+                        filters: [],
+                        keywords: [],
+                        types: []
+                    };
+                });
+                it('nothing else', function() {
+                    expect(controller.isSubmittable()).toBeFalsy();
+                });
+                it('a keyword is set', function() {
+                    discoverStateSvc.search.queryConfig.keywords = ['keyword'];
+                    expect(controller.isSubmittable()).toBeTruthy();
+                });
+                it('a type is set', function() {
+                    discoverStateSvc.search.queryConfig.types = ['type'];
+                    expect(controller.isSubmittable()).toBeTruthy();
+                });
+                it('a filter is set', function() {
+                    discoverStateSvc.search.queryConfig.filters = [{prop: 'filter'}];
+                    expect(controller.isSubmittable()).toBeTruthy();
+                });
+            });
+        });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
@@ -177,6 +208,9 @@ describe('Search Form directive', function() {
             var buttons = element.querySelectorAll('[type="submit"]');
             expect(buttons.length).toEqual(1);
             expect(buttons.text()).toContain('Submit');
+        });
+        it('with a .reset-link', function() {
+            expect(element.querySelectorAll('.reset-link').length).toBe(1);
         });
         it('depending on whether an error has occurred', function() {
             expect(element.find('error-display').length).toEqual(0);

@@ -97,6 +97,10 @@
                     dvm.removeFilter = function(index) {
                         _.pullAt(dvm.ds.search.queryConfig.filters, index);
                     }
+
+                    dvm.isSubmittable = function() {
+                         return dvm.ds.search.datasetRecordId && (dvm.ds.search.queryConfig.keywords.length || dvm.ds.search.queryConfig.types.length || dvm.ds.search.queryConfig.filters.length);
+                    }
                 }
             }
         }

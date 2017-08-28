@@ -158,10 +158,6 @@
             if (_.get(queryConfig, 'filters', []).length) {
                 query.where = _.concat(query.where, _.map(queryConfig.filters, getQueryPart));
             }
-            if (!query.where.length) {
-                query.where.push(createPattern('?Entity', '?p', '?Object'));
-                variables.Objects = 'Objects';
-            }
             query.variables = _.concat(['?Entity'], _.map(_.keys(variables), createVariableExpression));
             queryConfig.variables = _.assign({Entity: 'Entity'}, variables);
             var generator = new sparqljs.Generator();

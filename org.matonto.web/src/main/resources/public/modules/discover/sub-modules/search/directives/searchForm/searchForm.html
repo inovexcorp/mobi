@@ -76,8 +76,9 @@
               </div>
           </form>
       </block-content>
-      <block-footer>
-          <button type="submit" class="btn btn-primary" ng-disabled="!dvm.ds.search.datasetRecordId" ng-click="dvm.submit()">Submit</button>
+      <block-footer class="btn-container clearfix">
+          <button type="submit" class="btn btn-primary" ng-disabled="!dvm.isSubmittable()" ng-click="dvm.submit()">Submit</button>
+          <a class="btn btn-link reset-link" ng-click="dvm.ds.resetSearchQueryConfig()">Reset</a>
       </block-footer>
   </block>
   <property-filter-overlay ng-if="dvm.showPropertyFilterOverlay" close-overlay="dvm.showPropertyFilterOverlay = false"></property-filter-overlay>

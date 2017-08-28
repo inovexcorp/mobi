@@ -173,4 +173,30 @@ describe('Discover State Service', function() {
         }];
         expect(discoverStateSvc.getInstance()).toEqual({'@id': 'id'});
     });
+
+    it('resetSearchQueryConfig should reset the query config variables', function() {
+        discoverStateSvc.search.queryConfig = {
+            isOrKeywords: true,
+            isOrTypes: true,
+            keywords: ['keyword'],
+            types: ['type'],
+            filters: [{
+                prop: 'filter'
+            }],
+            variables: {
+                var0: 'var0'
+            }
+        };
+        discoverStateSvc.resetSearchQueryConfig();
+        expect(discoverStateSvc.search.queryConfig).toEqual({
+            isOrKeywords: false,
+            isOrTypes: false,
+            keywords: [],
+            types: [],
+            filters: [],
+            variables: {
+                var0: 'var0'
+            }
+        });
+    });
 });
