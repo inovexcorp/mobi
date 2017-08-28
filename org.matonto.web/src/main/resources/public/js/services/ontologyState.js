@@ -799,24 +799,27 @@
              * @returns {Object} An Object which represents the requested entity.
              */
             self.removeEntity = function(listItem, entityIRI) {
-                var position = _.get(listItem.index, "['" + entityIRI + "'].position");
-                var toRemove = [{entityIRI, position}];
-                var toTest = [{entityIRI, position}];
-                while (toTest.length > 0) {
+                var toRemove = [];
+                var toTest = [];
+
+                // Helper method
+                function addToLists(iri) {
+                    var newObj = {entityIRI: iri, position: _.get(listItem.index, "['" + iri + "'].position")};
+                    toRemove.push(newObj);
+                    toTest.push(newObj);
+                }
+                addToLists(entityIRI);
+                while (toTest.length) {
                     var obj = toTest.pop();
                     var entity = listItem.ontology[obj.position];
                     _.forEach(_.omit(entity, ['@id', '@type']), (value, key) => {
                         if (om.isBlankNodeId(key)) {
-                            var newObj = {entityIRI: key, position: _.get(listItem.index, "['" + key + "'].position")};
-                            toRemove.push(newObj);
-                            toTest.push(newObj);
+                            addToLists(key);
                         }
                         _.forEach(value, valueObj => {
                             var id = _.get(valueObj, '@id');
                             if (om.isBlankNodeId(id)) {
-                                var newObj = {entityIRI: id, position: _.get(listItem.index, "['" + id + "'].position")};
-                                toRemove.push(newObj);
-                                toTest.push(newObj);
+                                addToLists(id);
                             }
                         });
                     });

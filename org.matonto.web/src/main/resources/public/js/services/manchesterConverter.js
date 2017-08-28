@@ -145,7 +145,7 @@
              * @param {string} id The IRI of the blank node to begin with
              * @param {Object[]} jsonld A JSON-LD array of all blank node in question and any supporting blanks
              * nodes needed for the display
-             * @param {Object} index A index of entity ids to objects containing the array position of that entity
+             * @param {Object} index An index of entity ids to objects containing the array position of that entity
              * in the jsonld array
              * @param {boolean} html Whether or not the resulting string should include HTML tags for formatting
              * @return {string} A string containing the converted blank node with optional HTML tags for formatting
@@ -245,7 +245,7 @@
                     if (!om.isBlankNodeId(value)) {
                         return $filter('splitIRI')(value).end;
                     }
-                    return listKeyword ? render(value, jsonld, index, html, listKeyword) : '(' + render(value, jsonld, index, html, listKeyword) + ')';
+                    return listKeyword ? render(value, jsonld, index, html, listKeyword) : '(' + render(value, jsonld, index, html) + ')';
                 }
             }
             function surround(str, className) {
@@ -263,9 +263,7 @@
                     var first = _.head(entity[prefixes.rdf + 'first']);
                     var rest = _.head(entity[prefixes.rdf + 'rest']);
                     result += getValue(first, jsonld, index, html);
-                    // result += getValue(first, jsonld, index, html) + listKeyword;
                     if (_.has(rest, '@list')) {
-                        // result += getValue(rest['@list'][0], jsonld, index, html);
                         end = true;
                     } else {
                         result += listKeyword;
