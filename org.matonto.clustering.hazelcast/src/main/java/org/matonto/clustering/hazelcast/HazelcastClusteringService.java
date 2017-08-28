@@ -30,9 +30,10 @@ import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
-import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ReplicatedMap;
+import com.hazelcast.osgi.HazelcastOSGiInstance;
+import com.hazelcast.osgi.HazelcastOSGiService;
 import org.matonto.clustering.api.ClusteringService;
 import org.matonto.clustering.api.ClusteringServiceConfig;
 import org.matonto.clustering.hazelcast.config.HazelcastClusteringServiceConfig;
@@ -50,7 +51,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
-import java.util.concurrent.Semaphore;
 
 /**
  * This is the {@link ClusteringService} implementation built on top of Hazelcast.
@@ -87,6 +87,11 @@ public class HazelcastClusteringService implements ClusteringService {
     private MatOnto matOntoServer;
 
     /**
+     * {@link HazelcastOSGiService} instance.
+     */
+    private HazelcastOSGiService hazelcastOSGiService;
+
+    /**
      * Hazelcast instance that will drive the features of this {@link ClusteringService} implementation.
      */
     private HazelcastInstance hazelcastInstance;
@@ -117,15 +122,10 @@ public class HazelcastClusteringService implements ClusteringService {
     private ServiceRegistration<ClusteringService> registration;
 
     /**
-     * Simple locking mechanism so we don't access the {@link HazelcastInstance} before it is initialized.
-     */
-    private final Semaphore lock = new Semaphore(1);
-
-    /**
      * Method that joins the hazelcast cluster when the service is activated.
      */
     @Activate
-    public void activate(BundleContext context, Map<String, Object> configuration) {
+    void activate(BundleContext context, Map<String, Object> configuration) {
         this.configuration = configuration;
         start();
         this.registration = context.registerService(ClusteringService.class, this, new Hashtable<>(configuration));
@@ -137,7 +137,7 @@ public class HazelcastClusteringService implements ClusteringService {
      * @param configuration The configuration map for this service
      */
     @Modified
-    public void modified(BundleContext context, Map<String, Object> configuration) {
+    void modified(BundleContext context, Map<String, Object> configuration) {
         LOGGER.warn("Modified configuration of service! Going to deactivate, and re-activate with new configuration...");
         deactivate();
         activate(context, configuration);
@@ -147,7 +147,7 @@ public class HazelcastClusteringService implements ClusteringService {
      * Method that spins down the hazelcast instance, leaves the cluster, on deactivation.
      */
     @Deactivate
-    public void deactivate() {
+    void deactivate() {
         stop();
         // Blank out previous configuration.
         this.configuration = null;
@@ -177,23 +177,14 @@ public class HazelcastClusteringService implements ClusteringService {
         final HazelcastClusteringServiceConfig serviceConfig = Configurable.createConfigurable(HazelcastClusteringServiceConfig.class, this.configuration);
         if (serviceConfig.enabled()) {
             this.initializationTask = ForkJoinPool.commonPool().submit(() -> {
-                try {
-                    this.lock.acquire();
-                    LOGGER.debug("Spinning up underlying hazelcast instance");
-                    HazelcastInstance hazelcastInstance = Hazelcast.newHazelcastInstance(HazelcastConfigurationFactory.build(serviceConfig, this.matOntoServer.getServerIdentifier().toString()));
-                    LOGGER.info("Clustering Service {}: Successfully initialized Hazelcast instance", this.matOntoServer.getServerIdentifier());
-                    // Listen to lifecycle changes...
-                    this.listener = new ClusterServiceLifecycleListener();
-                    hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
-                    hazelcastInstance.getCluster().addMembershipListener(listener);
-                    registerWithClusterNodes(hazelcastInstance);
-                    this.hazelcastInstance = hazelcastInstance;
-                } catch (InterruptedException e) {
-                    //Ignore
-                    LOGGER.warn("Initialization lock interrupted", e);
-                } finally {
-                    this.lock.release();
-                }
+                LOGGER.debug("Spinning up underlying hazelcast instance");
+                this.hazelcastInstance = this.hazelcastOSGiService.newHazelcastInstance(HazelcastConfigurationFactory.build(serviceConfig, this.matOntoServer.getServerIdentifier().toString()));
+                LOGGER.info("Clustering Service {}: Successfully initialized Hazelcast instance", this.matOntoServer.getServerIdentifier());
+                // Listen to lifecycle changes...
+                this.listener = new ClusterServiceLifecycleListener();
+                this.hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
+                this.hazelcastInstance.getCluster().addMembershipListener(listener);
+                registerWithClusterNodes(hazelcastInstance);
             });
             LOGGER.info("Successfully spawned initialization thread.");
         } else
@@ -212,15 +203,18 @@ public class HazelcastClusteringService implements ClusteringService {
         if (initializationTask != null) {
             LOGGER.debug("Initialization task is done: {}", initializationTask.isDone());
             final boolean cancelled = initializationTask.cancel(true);
-            LOGGER.debug("Cancelled initialization task: {}", cancelled);
+            LOGGER.debug("Cancelled initialization task: {}, still running: {}", cancelled, initializationTask.isDone());
         } else {
             LOGGER.warn("No initialization task was found... Skipping task cancellation");
         }
 
         // Shut down the hazelcast instance.
-        LOGGER.info("Shutting down underlying hazelcast instance");
+
         if (this.hazelcastInstance != null) {
-            this.hazelcastInstance.shutdown();
+            LOGGER.info("Shutting down underlying hazelcast clustering infrastructure");
+            this.hazelcastOSGiService.shutdownHazelcastInstance((HazelcastOSGiInstance) this.hazelcastInstance);
+            this.hazelcastInstance.getLifecycleService().terminate();
+            LOGGER.debug("Successfully shut down hazelcast clustering infrastructure");
         } else {
             LOGGER.debug("Already disabled, so deactivation is a noop");
         }
@@ -251,13 +245,23 @@ public class HazelcastClusteringService implements ClusteringService {
     }
 
     /**
-     * Inject the {@link MatOnto} service
+     * Inject the {@link MatOnto} service.
      *
      * @param matOntoServer The service for the platform
      */
     @Reference
     public void setMatOntoServer(MatOnto matOntoServer) {
         this.matOntoServer = matOntoServer;
+    }
+
+    /**
+     * Inject the {@link HazelcastOSGiService} reference.
+     *
+     * @param hazelcastOSGiService
+     */
+    @Reference
+    public void setHazelcastOSGiService(HazelcastOSGiService hazelcastOSGiService) {
+        this.hazelcastOSGiService = hazelcastOSGiService;
     }
 
     /**
@@ -270,14 +274,6 @@ public class HazelcastClusteringService implements ClusteringService {
     }
 
     protected synchronized HazelcastInstance getHazelcastInstance() {
-        try {
-            this.lock.acquire();
-            return this.hazelcastInstance;
-        } catch (Exception e) {
-            LOGGER.error("", e);
-        } finally {
-            this.lock.release();
-        }
-        return null;
+        return this.hazelcastInstance;
     }
 }
