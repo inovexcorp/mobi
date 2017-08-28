@@ -142,8 +142,8 @@ public class SimpleOntologyValues {
     }
 
     @Reference
-    protected void setbNodeService(BNodeService bNodeService) {
-        SimpleOntologyValues.bNodeService = bNodeService;
+    protected void setbNodeService(final BNodeService service) {
+        bNodeService = service;
     }
 
     public SimpleOntologyValues() {}

@@ -28,6 +28,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.apache.commons.io.IOUtils;
@@ -55,6 +57,7 @@ import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.vocabularies.xsd.XSD;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
@@ -383,16 +386,32 @@ public class FullSimpleOntologyTest {
     }
 
     @Test
-    public void asJsonldTest() throws Exception {
+    public void asJsonldWithSkolemizeTest() throws Exception {
         // Setup
-        SimpleBNodeService blankNodeService = new SimpleBNodeService();
+        SimpleBNodeService blankNodeService = Mockito.spy(new SimpleBNodeService());
+        blankNodeService.setModelFactory(mf);
+        blankNodeService.setValueFactory(vf);
+        InputStream stream = this.getClass().getResourceAsStream("/list-ontology.ttl");
+        InputStream expected = this.getClass().getResourceAsStream("/list-ontology-skolemize.jsonld");
+        Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService);
+
+        String jsonld = listOntology.asJsonLD(true).toString();
+        assertEquals(IOUtils.toString(expected), jsonld);
+        verify(blankNodeService).skolemize(any(org.matonto.rdf.api.Model.class));
+    }
+
+    @Test
+    public void asJsonldWithoutSkolemizeTest() throws Exception {
+        // Setup
+        SimpleBNodeService blankNodeService = Mockito.spy(new SimpleBNodeService());
         blankNodeService.setModelFactory(mf);
         blankNodeService.setValueFactory(vf);
         InputStream stream = this.getClass().getResourceAsStream("/list-ontology.ttl");
         InputStream expected = this.getClass().getResourceAsStream("/list-ontology.jsonld");
         Ontology listOntology = new SimpleOntology(stream, ontologyManager, transformer, blankNodeService);
 
-        String jsonld = listOntology.asJsonLD(true).toString();
+        String jsonld = listOntology.asJsonLD(false).toString();
         assertEquals(IOUtils.toString(expected), jsonld);
+        verify(blankNodeService, times(0)).skolemize(any(org.matonto.rdf.api.Model.class));
     }
 }

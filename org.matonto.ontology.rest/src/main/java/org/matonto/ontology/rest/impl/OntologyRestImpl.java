@@ -1165,6 +1165,8 @@ public class OntologyRestImpl implements OntologyRest {
      *
      * @param ontology  the Ontology you want to serialize in a different format.
      * @param rdfFormat the format you want.
+     * @param skolemize whether or not the Ontology should be skoelmized before serialized (NOTE: only applies to
+     *                  serializing as JSON-LD)
      * @return A String containing the newly serialized Ontology.
      */
     private String getOntologyAsRdf(Ontology ontology, String rdfFormat, boolean skolemize) {

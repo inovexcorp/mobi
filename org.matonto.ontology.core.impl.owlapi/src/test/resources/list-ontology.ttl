@@ -14,7 +14,8 @@
 :ClassD a owl:Class ;
     rdfs:subClassOf [ a owl:Class ; owl:unionOf ( :ClassA :ClassB :ClassC ) ] .
 
-<http://example.com> <http://example.com/property> _:a .
+:dataPropA a owl:DatatypeProperty ;
+    rdfs:range [ a rdfs:Datatype ; owl:oneOf _:a ] .
 _:a a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List> ;
     <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> "a" ;
     <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:b .

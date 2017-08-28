@@ -1,40 +1,26 @@
 [ {
-  "@id" : "http://example.com",
-  "http://example.com/property" : [ {
-    "@id" : "http://matonto.org/.well-known/genid/genid5"
+  "@id" : "_:genid1",
+  "@type" : [ "http://www.w3.org/2000/01/rdf-schema#Datatype" ],
+  "http://www.w3.org/2002/07/owl#oneOf" : [ {
+    "@list" : [ {
+      "@value" : "a"
+    }, {
+      "@value" : "b"
+    }, {
+      "@value" : "c"
+    } ]
   } ]
 }, {
-  "@id" : "http://matonto.org/.well-known/genid/genid1",
+  "@id" : "_:genid5",
   "@type" : [ "http://www.w3.org/2002/07/owl#Class" ],
   "http://www.w3.org/2002/07/owl#unionOf" : [ {
-    "@id" : "http://matonto.org/.well-known/genid/genid4"
-  } ]
-}, {
-  "@id" : "http://matonto.org/.well-known/genid/genid2",
-  "@type" : [ "http://www.w3.org/1999/02/22-rdf-syntax-ns#List" ],
-  "http://www.w3.org/1999/02/22-rdf-syntax-ns#first" : [ {
-    "@id" : "http://matonto.org/ontology/list#ClassC"
-  } ],
-  "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" : [ {
-    "@list" : [ ]
-  } ]
-}, {
-  "@id" : "http://matonto.org/.well-known/genid/genid3",
-  "@type" : [ "http://www.w3.org/1999/02/22-rdf-syntax-ns#List" ],
-  "http://www.w3.org/1999/02/22-rdf-syntax-ns#first" : [ {
-    "@id" : "http://matonto.org/ontology/list#ClassB"
-  } ],
-  "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" : [ {
-    "@id" : "http://matonto.org/.well-known/genid/genid2"
-  } ]
-}, {
-  "@id" : "http://matonto.org/.well-known/genid/genid4",
-  "@type" : [ "http://www.w3.org/1999/02/22-rdf-syntax-ns#List" ],
-  "http://www.w3.org/1999/02/22-rdf-syntax-ns#first" : [ {
-    "@id" : "http://matonto.org/ontology/list#ClassA"
-  } ],
-  "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest" : [ {
-    "@id" : "http://matonto.org/.well-known/genid/genid3"
+    "@list" : [ {
+      "@id" : "http://matonto.org/ontology/list#ClassA"
+    }, {
+      "@id" : "http://matonto.org/ontology/list#ClassB"
+    }, {
+      "@id" : "http://matonto.org/ontology/list#ClassC"
+    } ]
   } ]
 }, {
   "@id" : "http://matonto.org/ontology/list",
@@ -52,6 +38,12 @@
   "@id" : "http://matonto.org/ontology/list#ClassD",
   "@type" : [ "http://www.w3.org/2002/07/owl#Class" ],
   "http://www.w3.org/2000/01/rdf-schema#subClassOf" : [ {
-    "@id" : "http://matonto.org/.well-known/genid/genid1"
+    "@id" : "_:genid5"
+  } ]
+}, {
+  "@id" : "http://matonto.org/ontology/list#dataPropA",
+  "@type" : [ "http://www.w3.org/2002/07/owl#DatatypeProperty" ],
+  "http://www.w3.org/2000/01/rdf-schema#range" : [ {
+    "@id" : "_:genid1"
   } ]
 } ]
