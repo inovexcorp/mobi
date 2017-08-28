@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- #%L itests-orm $Id:$ $HeadURL:$ %% Copyright (C) 2016 iNovex Information 
+	Systems, Inc. %% This program is free software: you can redistribute it and/or 
+	modify it under the terms of the GNU Affero General Public License as published 
+	by the Free Software Foundation, either version 3 of the License, or (at 
+	your option) any later version. This program is distributed in the hope that 
+	it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty 
+	of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General 
+	Public License for more details. You should have received a copy of the GNU 
+	Affero General Public License along with this program. If not, see <http://www.gnu.org/licenses/>. 
+	#L% -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<parent>
+		<artifactId>matonto-itests</artifactId>
+		<groupId>org.matonto</groupId>
+		<version>1.8.70-SNAPSHOT</version>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+
+    <artifactId>itests-orm</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>itests-support</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Pax Exam Dependencies -->
+        <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-junit4</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Karaf Dependencies -->
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>distribution</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+            <type>tar.gz</type>
+            <exclusions>
+                <exclusion>
+                    <artifactId>org.apache.karaf.client</artifactId>
+                    <groupId>org.apache.karaf</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.matonto.orm</groupId>
+                <artifactId>rdf-orm-maven-plugin</artifactId>
+                <version>${project.version}</version>
+                <executions>
+                    <execution>
+                        <id>generateOrmSources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate-orm</goal>
+                        </goals>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <generates>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/test/resources/ontologies/crazy.trig</ontologyFile>
+                                    <outputPackage>org.matonto.delimited</outputPackage>
+                                    <ontologyName>Delimited</ontologyName>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/test/resources/ontologies/crazy2.trig</ontologyFile>
+                                    <outputPackage>org.matonto.inherit</outputPackage>
+                                    <ontologyName>InheritTest</ontologyName>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/test/resources/ontologies/provo.owl</ontologyFile>
+                                    <outputPackage>org.provo</outputPackage>
+                                    <ontologyName>ProvO</ontologyName>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../../org.matonto.rdf.orm.ontologies/src/main/resources/foaf.owl</ontologyFile>
+                                    <outputPackage>org.matonto.foaf</outputPackage>
+                                    <ontologyName>FOAF</ontologyName>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/test/resources/ontologies/test-ont.trig</ontologyFile>
+                                    <outputPackage>org.matonto.test</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/test/resources/inheritsImportsTests/child.trig</ontologyFile>
+                                    <outputPackage>org.matonto.inherits.child</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/test/resources/inheritsImportsTests/parent.trig</ontologyFile>
+                                    <outputPackage>org.matonto.inherits.parent</outputPackage>
+                                </ontology>
+                            </generates>
+                            <references>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/test/resources/inheritsImportsTests/parent.trig</ontologyFile>
+                                    <outputPackage>org.matonto.inherits.parent</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../../org.matonto.rdf.orm.ontologies/src/main/resources/foaf.owl</ontologyFile>
+                                    <outputPackage>org.matonto.foaf</outputPackage>
+                                    <ontologyName>FOAF</ontologyName>
+                                </ontology>
+                            </references>
+                            <outputLocation>${project.basedir}/src/test/java</outputLocation>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
