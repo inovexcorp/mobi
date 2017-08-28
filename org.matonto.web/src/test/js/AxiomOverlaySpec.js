@@ -167,7 +167,7 @@ describe('Axiom Overlay directive', function() {
     describe('controller methods', function() {
         describe('should add an axiom', function() {
             var axiom;
-            beforeEach(function () {
+            beforeEach(function() {
                 axiom = 'axiom';
                 controller.values = [{}];
                 controller.axiom = {};
