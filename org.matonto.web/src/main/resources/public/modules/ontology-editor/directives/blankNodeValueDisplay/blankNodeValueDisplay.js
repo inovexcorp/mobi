@@ -50,7 +50,7 @@
                         height: 'dynamic'
                     };
                     dvm.value = '';
-                    $scope.$watch('nodeId', function(newValue) {
+                    $scope.$watch('nodeId', newValue => {
                         dvm.value = dvm.ontoUtils.getBlankNodeValue(newValue);
                     });
                 }]

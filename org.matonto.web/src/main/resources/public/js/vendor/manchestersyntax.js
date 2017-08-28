@@ -21,7 +21,7 @@
  * #L%
  */
 CodeMirror.defineOption("localNames", [], undefined);
-CodeMirror.defineMode("manchestersyntax", function(config) {
+CodeMirror.defineMode("manchestersyntax", config => {
 
     var tokenTypes = {
         "some": "manchester-rest",
@@ -53,8 +53,6 @@ CodeMirror.defineMode("manchestersyntax", function(config) {
         "langRange": "facet",
         "true" : "manchester-lit",
         "false" : "manchester-lit",
-        /*"true" : "boolean-lit",
-        "false" : "boolean-lit",*/
         "owl:Thing" : "builtin-kw owl-thing",
         "owl:Nothing" : "builtin-kw owl-nothing",
     };
@@ -66,12 +64,6 @@ CodeMirror.defineMode("manchestersyntax", function(config) {
         '(\\+|\\-)?(\\d+(\\.\\d+)?((e|E)(\\+|\\-)?\\d+)?|\\.\\d+((e|E)(\\+|\\-)?\\d+)?)(f|F)': "manchester-lit",
         '(\\+|\\-)?\\d+\\.\\d+': "manchester-lit",
         '(\\+|\\-)?\\d+': "manchester-lit",
-        /*'"(\\"|[^"])*"': "string",
-        '\\^\\^[^ ]+': "literal-datatype",
-        '@[^ ]+': "lang-tag",
-        '(\\+|\\-)?(\\d+(\\.\\d+)?((e|E)(\\+|\\-)?\\d+)?|\\.\\d+((e|E)(\\+|\\-)?\\d+)?)(f|F)': "floating-point-lit",
-        '(\\+|\\-)?\\d+\\.\\d+': "decimal-lit",
-        '(\\+|\\-)?\\d+': "integer-lit",*/
     };
     var delimeters = {
         "(" : "delim",

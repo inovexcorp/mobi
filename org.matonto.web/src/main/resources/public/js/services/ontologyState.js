@@ -793,10 +793,11 @@
              *
              * @description
              * Removes the entity with the provided IRI from the ontology with the provided ontology ID in the Mobi
-             * repository. Removes the entityIRI from the index. Returns the entity Object.
+             * repository along with any referenced blank nodes. Removes the entityIRI and any reference blank nodes
+             * from the index.
              *
              * @param {Object} listItem The listItem linked to the ontology you want to remove the entity from.
-             * @returns {Object} An Object which represents the requested entity.
+             * @returns {Object[]} The list of JSON-LD entities that were removed.
              */
             self.removeEntity = function(listItem, entityIRI) {
                 var toRemove = [];
@@ -824,8 +825,8 @@
                         });
                     });
                 }
-                var removed = _.pullAt(listItem.ontology, _.map(toRemove, 'position'))
-                _.forEach(toRemove, obj => {
+                var removed = _.pullAt(listItem.ontology, _.map(toRemove, 'position'));
+                _.forOwn(toRemove, obj => {
                     var newPosition = _.get(listItem.index, "['" + obj.entityIRI + "'].position");
                     _.remove(listItem.iriList, obj.entityIRI);
                     _.unset(listItem.index, obj.entityIRI);
