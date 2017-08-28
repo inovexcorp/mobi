@@ -96,7 +96,6 @@
         self.search = {
             active: false,
             datasetRecordId: '',
-            filterMeta: [],
             noDomains: undefined,
             properties: undefined,
             queryConfig: {
@@ -104,7 +103,8 @@
                 isOrTypes: false,
                 keywords: [],
                 types: [],
-                filters: []
+                filters: [],
+                variables: {}
             },
             results: undefined,
             targetedId: 'discover-search-results',
@@ -211,6 +211,26 @@
          */
         self.getInstance = function() {
             return _.find(self.explore.instance.entity, {'@id': self.explore.instance.metadata.instanceIRI});
+        }
+
+        /**
+         * @ngdoc method
+         * @name resetSearchQueryConfig
+         * @methodOf discoverState.service:discoverStateService
+         *
+         * @description
+         * Resets the search query config to be the default values.
+         */
+        self.resetSearchQueryConfig = function() {
+            var variables = angular.copy(self.search.queryConfig.variables);
+            self.search.queryConfig = {
+                isOrKeywords: false,
+                isOrTypes: false,
+                keywords: [],
+                types: [],
+                filters: [],
+                variables
+            };
         }
 
         function resetOnClear() {

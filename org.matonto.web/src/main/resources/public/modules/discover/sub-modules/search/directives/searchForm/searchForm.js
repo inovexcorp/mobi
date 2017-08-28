@@ -41,6 +41,7 @@
          * @requires search.service:searchService
          * @requires discoverState.service:discoverStateService
          * @requires explore.service:exploreService
+         * @requires util.service:utilService
          *
          * @description
          * HTML contents in the search form within the Search page for entering a keyword search combined
@@ -48,9 +49,9 @@
          */
         .directive('searchForm', searchForm);
 
-        searchForm.$inject = ['searchService', 'discoverStateService', 'exploreService'];
+        searchForm.$inject = ['searchService', 'discoverStateService', 'exploreService', 'utilService'];
 
-        function searchForm(searchService, discoverStateService, exploreService) {
+        function searchForm(searchService, discoverStateService, exploreService, utilService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/search/directives/searchForm/searchForm.html',
@@ -62,6 +63,7 @@
                     var s = searchService;
                     var es = exploreService;
                     dvm.ds = discoverStateService;
+                    dvm.util = utilService;
                     dvm.typeSearch = '';
                     dvm.errorMessage = '';
 
@@ -94,7 +96,10 @@
                     
                     dvm.removeFilter = function(index) {
                         _.pullAt(dvm.ds.search.queryConfig.filters, index);
-                        _.pullAt(dvm.ds.search.filterMeta, index);
+                    }
+
+                    dvm.isSubmittable = function() {
+                         return dvm.ds.search.datasetRecordId && (dvm.ds.search.queryConfig.keywords.length || dvm.ds.search.queryConfig.types.length || dvm.ds.search.queryConfig.filters.length);
                     }
                 }
             }
