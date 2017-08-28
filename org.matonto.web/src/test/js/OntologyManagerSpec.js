@@ -451,6 +451,34 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
     });
+    describe('getDataProperties retrieves all data properties in an ontology', function() {
+        var params;
+        beforeEach(function() {
+            params = paramSerializer({ branchId: branchId, commitId: commitId });
+        });
+        it('unless an error occurs', function() {
+            util.rejectError.and.returnValue($q.reject(error));
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/data-properties?' + params).respond(400, null, null, error);
+            ontologyManagerSvc.getDataProperties(recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: 'error'}));
+                    expect(response).toEqual(error);
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('successfully', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/data-properties?' + params).respond(200, [{}]);
+            ontologyManagerSvc.getDataProperties(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual([{}]);
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
     describe('getImportedIris retrieves all IRIs in an ontology', function() {
         var params;
         beforeEach(function() {

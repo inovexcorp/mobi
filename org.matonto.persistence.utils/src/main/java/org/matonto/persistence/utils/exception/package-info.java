@@ -1,12 +1,14 @@
-package org.matonto.etl.api.config;
+@Version("1.0.0.${build}")
+
+package org.matonto.persistence.utils.exception;
 
 /*-
  * #%L
- * org.matonto.etl.api
+ * org.matonto.persistence.utils
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,23 +25,4 @@ package org.matonto.etl.api.config;
  * #L%
  */
 
-import org.matonto.rdf.api.Model;
-
-import java.io.InputStream;
-
-public class ExcelConfig extends DelimitedConfig {
-
-    private ExcelConfig(ExcelConfigBuilder builder) {
-        super(builder);
-    }
-
-    public static class ExcelConfigBuilder extends Builder<ExcelConfigBuilder> {
-        public ExcelConfigBuilder(InputStream data, Model mapping) {
-            super(data, mapping);
-        }
-
-        public ExcelConfig build() {
-            return new ExcelConfig(this);
-        }
-    }
-}
+import aQute.bnd.annotation.Version;

@@ -24,7 +24,7 @@ package org.matonto.etl.api.delimited;
  */
 
 import org.matonto.catalog.api.PaginatedSearchResults;
-import org.matonto.etl.api.config.MappingRecordConfig;
+import org.matonto.etl.api.config.delimited.MappingRecordConfig;
 import org.matonto.etl.api.ontologies.delimited.MappingRecord;
 import org.matonto.etl.api.pagination.MappingPaginatedSearchParams;
 import org.matonto.exception.MatOntoException;
@@ -36,7 +36,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
-import java.util.Set;
 import javax.annotation.Nonnull;
 
 public interface MappingManager {

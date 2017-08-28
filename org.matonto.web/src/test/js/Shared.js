@@ -291,6 +291,7 @@ function mockOntologyManager() {
             this.getAnnotationPropertyHierarchies = jasmine.createSpy('getAnnotationPropertyHierarchies');
             this.uploadChangesFile = jasmine.createSpy('uploadChangesFile').and.returnValue($q.when({}));
             this.getFailedImports = jasmine.createSpy('getFailedImports').and.returnValue($q.when([]));
+            this.getDataProperties = jasmine.createSpy('getDataProperties').and.returnValue($q.when([]));
         });
     });
 }
@@ -948,6 +949,8 @@ function mockUtil() {
             this.getPredicateLocalName = jasmine.createSpy('getPredicateLocalName');
             this.getIdForBlankNode = jasmine.createSpy('getIdForBlankNode').and.returnValue('');
             this.getSkolemizedIRI = jasmine.createSpy('getSkolemizedIRI').and.returnValue('');
+            this.getInputType = jasmine.createSpy('getInputType').and.returnValue('');
+            this.getPattern = jasmine.createSpy('getPattern').and.returnValue(/[a-zA-Z]/);
         });
     });
 }
@@ -1043,16 +1046,20 @@ function mockDiscoverState() {
                 active: false
             };
             this.search = {
-                targetedId: '',
                 active: false,
-                results: undefined,
+                datasetRecordId: '',
+                filterMeta: [],
+                noDomains: undefined,
+                properties: undefined,
                 queryConfig: {
                     isOrKeywords: false,
                     isOrTypes: false,
                     keywords: [],
-                    types: []
+                    types: [],
+                    filters: []
                 },
-                datasetRecordId: ''
+                results: undefined,
+                targetedId: 'discover-search-results'
             };
             this.resetPagedInstanceDetails = jasmine.createSpy('resetPagedInstanceDetails');
             this.cleanUpOnDatasetDelete = jasmine.createSpy('cleanUpOnDatasetDelete');
@@ -1099,8 +1106,15 @@ function mockExploreUtils() {
 function mockSearch() {
     module(function($provide) {
         $provide.service('searchService', function($q) {
+            this.getPropertiesForDataset = jasmine.createSpy('getPropertiesForDataset').and.returnValue($q.when([]));
             this.createQueryString = jasmine.createSpy("createQueryString").and.returnValue('');
             this.submitSearch = jasmine.createSpy('submitSearch').and.returnValue($q.when({}));
+            this.createExistenceQuery = jasmine.createSpy('createExistenceQuery').and.returnValue({});
+            this.createContainsQuery = jasmine.createSpy('createContainsQuery').and.returnValue({});
+            this.createExactQuery = jasmine.createSpy('createExactQuery').and.returnValue({});
+            this.createRegexQuery = jasmine.createSpy('createRegexQuery').and.returnValue({});
+            this.createRangeQuery = jasmine.createSpy('createRangeQuery').and.returnValue({});
+            this.createBooleanQuery = jasmine.createSpy('createBooleanQuery').and.returnValue({});
         });
     });
 }

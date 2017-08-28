@@ -1,4 +1,4 @@
-package org.matonto.etl.api.config;
+package org.matonto.etl.api.config.delimited;
 
 /*-
  * #%L
@@ -26,34 +26,20 @@ package org.matonto.etl.api.config;
 import org.matonto.rdf.api.Model;
 
 import java.io.InputStream;
-import java.util.Optional;
 
-public class SVConfig extends DelimitedConfig {
-    private char separator = ',';
+public class ExcelConfig extends DelimitedConfig {
 
-    private SVConfig(SVConfigBuilder builder) {
+    private ExcelConfig(ExcelConfigBuilder builder) {
         super(builder);
-        separator = builder.separator;
     }
 
-    public char getSeparator() {
-        return separator;
-    }
-
-    public static class SVConfigBuilder extends Builder<SVConfigBuilder> {
-        private char separator = ',';
-
-        public SVConfigBuilder(InputStream data, Model mapping) {
+    public static class ExcelConfigBuilder extends Builder<ExcelConfigBuilder> {
+        public ExcelConfigBuilder(InputStream data, Model mapping) {
             super(data, mapping);
         }
 
-        public SVConfigBuilder separator(char separator) {
-            this.separator = separator;
-            return this;
-        }
-
-        public SVConfig build() {
-            return new SVConfig(this);
+        public ExcelConfig build() {
+            return new ExcelConfig(this);
         }
     }
 }
