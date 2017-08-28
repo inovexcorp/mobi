@@ -187,9 +187,7 @@ public class HazelcastClusteringService implements ClusteringService {
                 registerWithClusterNodes(hazelcastInstance);
             });
             LOGGER.info("Successfully spawned initialization thread.");
-        } else
-
-        {
+        } else {
             LOGGER.warn("Clustering Service {}: Service initialized in disabled state... Not going to start a hazelcast node " +
                     "instance and join cluster", this.matOntoServer.getServerIdentifier());
         }

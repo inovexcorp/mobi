@@ -29,12 +29,15 @@ import org.apache.commons.lang.StringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.matonto.clustering.api.ClusteringService;
 import org.matonto.platform.config.api.server.MatOnto;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.HashMap;
@@ -44,6 +47,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.TimeUnit;
 
 @RunWith(MockitoJUnitRunner.class)
 public class HazelcastClusteringServiceTest extends TestCase {
@@ -60,22 +64,37 @@ public class HazelcastClusteringServiceTest extends TestCase {
     @Mock
     private BundleContext context;
 
+    @Mock
+    private ServiceRegistration<ClusteringService> registration;
+
     @Test
     public void testClustering() throws Exception {
+        final FakeHazelcastOsgiService hazelcastOSGiService = new FakeHazelcastOsgiService();
+
         UUID u1 = UUID.randomUUID();
         UUID u2 = UUID.randomUUID();
         UUID u3 = UUID.randomUUID();
         Mockito.when(matOnto1.getServerIdentifier()).thenReturn(u1);
         Mockito.when(matOnto2.getServerIdentifier()).thenReturn(u2);
         Mockito.when(matOnto3.getServerIdentifier()).thenReturn(u3);
+        Mockito.when(context.registerService(Mockito.eq(ClusteringService.class), Mockito.any(ClusteringService.class), Mockito.any()))
+                .thenReturn(registration);
+
+        Mockito.doAnswer(invocation -> {
+            Thread.sleep(500L);
+            return null;
+        }).when(registration).unregister();
 
         System.setProperty("java.net.preferIPv4Stack", "true");
         final HazelcastClusteringService s1 = new HazelcastClusteringService();
         s1.setMatOntoServer(matOnto1);
+        s1.setHazelcastOSGiService(hazelcastOSGiService);
         final HazelcastClusteringService s2 = new HazelcastClusteringService();
         s2.setMatOntoServer(matOnto2);
+        s2.setHazelcastOSGiService(hazelcastOSGiService);
         final HazelcastClusteringService s3 = new HazelcastClusteringService();
         s3.setMatOntoServer(matOnto3);
+        s3.setHazelcastOSGiService(hazelcastOSGiService);
         ForkJoinPool pool = new ForkJoinPool(3);
 
         ForkJoinTask<?> task1 = createNode(pool, s1, 5123, new HashSet<>(Arrays.asList("127.0.0.1:5234", "127.0.0.1:5345")));
@@ -88,6 +107,7 @@ public class HazelcastClusteringServiceTest extends TestCase {
         Mockito.verify(context, Mockito.timeout(30000L)
                 .times(3))
                 .registerService(Mockito.any(Class.class), Mockito.any(HazelcastClusteringService.class), Mockito.any(Dictionary.class));
+
 
         Assert.assertNotNull(s1.getHazelcastInstance());
         Assert.assertNotNull(s2.getHazelcastInstance());
@@ -112,8 +132,11 @@ public class HazelcastClusteringServiceTest extends TestCase {
         s3.deactivate();
     }
 
-    private void waitOnInitialize(HazelcastClusteringService s) {
-
+    private void waitOnInitialize(HazelcastClusteringService s) throws Exception {
+        Field f = s.getClass().getDeclaredField("initializationTask");
+        f.setAccessible(true);
+        ForkJoinTask<?> task = (ForkJoinTask<?>) f.get(s);
+        task.get(30, TimeUnit.SECONDS);
     }
 
     private ForkJoinTask<?> createNode(ForkJoinPool pool, HazelcastClusteringService service, int port, Set<String> members) {
@@ -125,6 +148,13 @@ public class HazelcastClusteringServiceTest extends TestCase {
             map.put("joinMechanism", "TCPIP");
             map.put("tcpIpMembers", StringUtils.join(members, ", "));
             service.activate(context, map);
+            try {
+                waitOnInitialize(service);
+            } catch (Exception e) {
+                throw new RuntimeException("Issue waiting on service initialization", e);
+            }
+
         });
+
     }
 }
