@@ -110,6 +110,7 @@
         <bundle start-level="80">mvn:org.matonto/sparql.utils/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/cache/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/cache.impl.ehcache/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/etl.workflows/${project.version}</bundle>
     </feature>
     <feature name="matonto-cli" description="MatOnto CLI Bundles" version="${project.version}">
         <feature prerequisite="true">matonto-core</feature>

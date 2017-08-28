@@ -247,6 +247,11 @@
             <artifactId>clustering.cli</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>etl.workflows</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
