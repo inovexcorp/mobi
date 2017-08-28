@@ -141,143 +141,119 @@ describe('Property Filter Overlay directive', function() {
             });
         });
         describe('submit should adjust the correct lists when filterType is', function() {
+            var config = {};
             beforeEach(function() {
                 utilSvc.getBeautifulIRI.and.returnValue('range');
                 ontologyManagerSvc.getEntityName.and.returnValue('name');
                 controller.value = 'value';
+                config = {
+                    predicate: 'id',
+                    range: 'range',
+                    title: 'name'
+                };
             });
             it('Boolean', function() {
                 controller.filterType = 'Boolean';
                 controller.boolean = false;
-                searchSvc.createBooleanQuery.and.returnValue({prop: 'boolean query'});
                 controller.submit();
-                expect(discoverStateSvc.search.filterMeta).toContain({
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
+                    boolean: false,
                     display: 'Is false',
-                    range: 'range',
-                    title: 'name'
-                });
-                expect(searchSvc.createBooleanQuery).toHaveBeenCalledWith('id', false);
-                expect(discoverStateSvc.search.queryConfig.filters).toContain({prop: 'boolean query'});
+                    type: 'Boolean'
+                }));
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Contains', function() {
                 controller.filterType = 'Contains';
-                searchSvc.createContainsQuery.and.returnValue({prop: 'contains query'});
                 controller.submit();
-                expect(discoverStateSvc.search.filterMeta).toContain({
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
                     display: 'Contains "value"',
-                    range: 'range',
-                    title: 'name'
-                });
-                expect(searchSvc.createContainsQuery).toHaveBeenCalledWith('id', 'value');
-                expect(discoverStateSvc.search.queryConfig.filters).toContain({prop: 'contains query'});
+                    type: 'Contains',
+                    value: 'value'
+                }));
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Exact', function() {
                 controller.filterType = 'Exact';
-                searchSvc.createExactQuery.and.returnValue({prop: 'exact query'});
                 controller.submit();
-                expect(discoverStateSvc.search.filterMeta).toContain({
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
                     display: 'Exactly matches "value"',
-                    range: 'range',
-                    title: 'name'
-                });
-                expect(searchSvc.createExactQuery).toHaveBeenCalledWith('id', 'value', 'range');
-                expect(discoverStateSvc.search.queryConfig.filters).toContain({prop: 'exact query'});
+                    type: 'Exact',
+                    value: 'value'
+                }));
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Existence', function() {
                 controller.filterType = 'Existence';
-                searchSvc.createExistenceQuery.and.returnValue({prop: 'existence query'});
                 controller.submit();
-                expect(discoverStateSvc.search.filterMeta).toContain({
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
                     display: 'Existence',
-                    range: 'range',
-                    title: 'name'
-                });
-                expect(searchSvc.createExistenceQuery).toHaveBeenCalledWith('id');
-                expect(discoverStateSvc.search.queryConfig.filters).toContain({prop: 'existence query'});
+                    type: 'Existence'
+                }));
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Greater than', function() {
                 controller.filterType = 'Greater than';
-                searchSvc.createRangeQuery.and.returnValue({prop: 'range query'});
                 controller.submit();
-                expect(discoverStateSvc.search.filterMeta).toContain({
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
                     display: 'value > value',
-                    range: 'range',
-                    title: 'name'
-                });
-                expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('id', 'range', {greaterThan: 'value'});
-                expect(discoverStateSvc.search.queryConfig.filters).toContain({prop: 'range query'});
+                    type: 'Greater than',
+                    value: 'value'
+                }));
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Greater than or equal to', function() {
                 controller.filterType = 'Greater than or equal to';
-                searchSvc.createRangeQuery.and.returnValue({prop: 'range query'});
                 controller.submit();
-                expect(discoverStateSvc.search.filterMeta).toContain({
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
                     display: 'value >= value',
-                    range: 'range',
-                    title: 'name'
-                });
-                expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('id', 'range', {greaterThanOrEqualTo: 'value'});
-                expect(discoverStateSvc.search.queryConfig.filters).toContain({prop: 'range query'});
+                    type: 'Greater than or equal to',
+                    value: 'value'
+                }));
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Less than', function() {
                 controller.filterType = 'Less than';
-                searchSvc.createRangeQuery.and.returnValue({prop: 'range query'});
                 controller.submit();
-                expect(discoverStateSvc.search.filterMeta).toContain({
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
                     display: 'value < value',
-                    range: 'range',
-                    title: 'name'
-                });
-                expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('id', 'range', {lessThan: 'value'});
-                expect(discoverStateSvc.search.queryConfig.filters).toContain({prop: 'range query'});
+                    type: 'Less than',
+                    value: 'value'
+                }));
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Less than or equal to', function() {
                 controller.filterType = 'Less than or equal to';
-                searchSvc.createRangeQuery.and.returnValue({prop: 'range query'});
                 controller.submit();
-                expect(discoverStateSvc.search.filterMeta).toContain({
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
                     display: 'value <= value',
-                    range: 'range',
-                    title: 'name'
-                });
-                expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('id', 'range', {lessThanOrEqualTo: 'value'});
-                expect(discoverStateSvc.search.queryConfig.filters).toContain({prop: 'range query'});
+                    type: 'Less than or equal to',
+                    value: 'value'
+                }));
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Range', function() {
                 controller.begin = 'begin';
                 controller.end = 'end';
                 controller.filterType = 'Range';
-                searchSvc.createRangeQuery.and.returnValue({prop: 'range query'});
                 controller.submit();
-                expect(discoverStateSvc.search.filterMeta).toContain({
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
+                    begin: 'begin',
                     display: 'begin <= value <= end',
-                    range: 'range',
-                    title: 'name'
-                });
-                expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('id', 'range', {lessThanOrEqualTo: 'end', greaterThanOrEqualTo: 'begin'});
-                expect(discoverStateSvc.search.queryConfig.filters).toContain({prop: 'range query'});
+                    end: 'end',
+                    type: 'Range'
+                }));
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Regex', function() {
                 controller.filterType = 'Regex';
-                searchSvc.createRegexQuery.and.returnValue({prop: 'regex query'});
                 controller.regex = '/[a-zA-Z]/';
                 controller.submit();
-                expect(discoverStateSvc.search.filterMeta).toContain({
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
                     display: 'Matches /[a-zA-Z]/',
-                    range: 'range',
-                    title: 'name'
-                });
-                expect(searchSvc.createRegexQuery).toHaveBeenCalledWith('id', '/[a-zA-Z]/');
-                expect(discoverStateSvc.search.queryConfig.filters).toContain({prop: 'regex query'});
+                    type: 'Regex',
+                    regex: '/[a-zA-Z]/'
+                }));
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
         });
