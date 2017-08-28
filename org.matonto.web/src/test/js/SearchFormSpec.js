@@ -29,6 +29,7 @@ describe('Search Form directive', function() {
         mockDiscoverState();
         mockSearch();
         mockExplore();
+        mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _searchService_, _discoverStateService_, _exploreService_) {
             $compile = _$compile_;
