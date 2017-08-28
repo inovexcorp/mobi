@@ -156,8 +156,7 @@
                 }
             }
             if (_.get(queryConfig, 'filters', []).length) {
-                var obj = {type: 'union', patterns: _.map(queryConfig.filters, getQueryPart)};
-                query.where.push(obj);
+                query.where = _.concat(query.where, _.map(queryConfig.filters, getQueryPart));
             }
             if (!query.where.length) {
                 query.where.push(createPattern('?Entity', '?p', '?Object'));
@@ -229,12 +228,16 @@
          * @return {Object} A part of a SPARQL query object
          */
         self.createExactQuery = function(predicate, keyword, range, label) {
-            var object = '"' + keyword + '"^^' + range;
-            var exactPattern = createPattern('?Entity', predicate, object);
-            var exactBind = createBindOperation(object, getNextVariable(label));
+            var variable = getNextVariable(label);
+            var exactPattern = createPattern('?Entity', predicate, variable);
+            var exactFilter = createFilter({
+                type: 'operation',
+                operator: '=',
+                args: [variable, '"' + keyword + '"^^' + range]
+            });
             return {
                 type: 'group',
-                patterns: [exactPattern, exactBind]
+                patterns: [exactPattern, exactFilter]
             };
         }
         /**
@@ -427,15 +430,15 @@
                 case 'Existence':
                     return self.createExistenceQuery(filter.predicate, filter.title);
                 case 'Greater than':
-                    return self.createRangeQuery(filter.predicate, {greaterThan: filter.value}, filter.title);
+                    return self.createRangeQuery(filter.predicate, filter.range, {greaterThan: filter.value}, filter.title);
                 case 'Greater than or equal to':
-                    return self.createRangeQuery(filter.predicate, {greaterThanOrEqualTo: filter.value}, filter.title);
+                    return self.createRangeQuery(filter.predicate, filter.range, {greaterThanOrEqualTo: filter.value}, filter.title);
                 case 'Less than':
-                    return self.createRangeQuery(filter.predicate, {lessThan: filter.value}, filter.title);
+                    return self.createRangeQuery(filter.predicate, filter.range, {lessThan: filter.value}, filter.title);
                 case 'Less than or equal to':
-                    return self.createRangeQuery(filter.predicate, {lessThanOrEqualTo: filter.value}, filter.title);
+                    return self.createRangeQuery(filter.predicate, filter.range, {lessThanOrEqualTo: filter.value}, filter.title);
                 case 'Range':
-                    return self.createRangeQuery(filter.predicate, {
+                    return self.createRangeQuery(filter.predicate, filter.range, {
                         greaterThanOrEqualTo: filter.begin,
                         lessThanOrEqualTo: filter.end
                     }, filter.title);

@@ -153,7 +153,7 @@
                         }
                         ds.search.queryConfig.filters.push(_.assign(config, {
                             predicate: dvm.property['@id'],
-                            range: util.getBeautifulIRI(dvm.range),
+                            range: dvm.range,
                             title: dvm.om.getEntityName(dvm.property),
                             type: dvm.filterType
                         }));

@@ -67,7 +67,7 @@
                       <md-list-item ng-repeat="meta in dvm.ds.search.queryConfig.filters" class="md-3-line">
                           <div class="md-list-item-text">
                               <h3>{{meta.title}}</h3>
-                              <p>Range: {{meta.range}}</p>
+                              <p>Range: {{dvm.util.getBeautifulIRI(meta.range)}}</p>
                               <p>Filter: {{meta.display}}</p>
                               <md-icon class="md-secondary fa fa-trash-o" ng-click="dvm.removeFilter($index)"></md-icon>
                           </div>

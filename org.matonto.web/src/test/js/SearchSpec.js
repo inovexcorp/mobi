@@ -155,7 +155,7 @@ describe('Search Service', function() {
                 object: '?o'
             }]
         };
-        var expected = 'SELECT DISTINCT ?Entity WHERE { { ?s ?p ?o. } }\nGROUP BY ?Entity';
+        var expected = 'SELECT DISTINCT ?Entity WHERE { ?s ?p ?o. }\nGROUP BY ?Entity';
         it('Boolean', function() {
             spyOn(searchSvc, 'createBooleanQuery').and.returnValue(defaultQuery);
             var config = {filters: [{type: 'Boolean', predicate: 'predicate', boolean: 'boolean', title: 'title'}]};
@@ -186,37 +186,37 @@ describe('Search Service', function() {
         });
         it('Greater than', function() {
             spyOn(searchSvc, 'createRangeQuery').and.returnValue(defaultQuery);
-            var config = {filters: [{type: 'Greater than', predicate: 'predicate', value: 'value', title: 'title'}]};
+            var config = {filters: [{type: 'Greater than', predicate: 'predicate', range: 'range', value: 'value', title: 'title'}]};
             var result = searchSvc.createQueryString(config);
             expect(result).toEqual(expected);
-            expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('predicate', {greaterThan: 'value'}, 'title');
+            expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('predicate', 'range', {greaterThan: 'value'}, 'title');
         });
         it('Greater than or equal to', function() {
             spyOn(searchSvc, 'createRangeQuery').and.returnValue(defaultQuery);
-            var config = {filters: [{type: 'Greater than or equal to', predicate: 'predicate', value: 'value', title: 'title'}]};
+            var config = {filters: [{type: 'Greater than or equal to', predicate: 'predicate', range: 'range', value: 'value', title: 'title'}]};
             var result = searchSvc.createQueryString(config);
             expect(result).toEqual(expected);
-            expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('predicate', {greaterThanOrEqualTo: 'value'}, 'title');
+            expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('predicate', 'range', {greaterThanOrEqualTo: 'value'}, 'title');
         });
         it('Less than', function() {
             spyOn(searchSvc, 'createRangeQuery').and.returnValue(defaultQuery);
-            var config = {filters: [{type: 'Less than', predicate: 'predicate', value: 'value', title: 'title'}]};
+            var config = {filters: [{type: 'Less than', predicate: 'predicate', range: 'range', value: 'value', title: 'title'}]};
             var result = searchSvc.createQueryString(config);
             expect(result).toEqual(expected);
-            expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('predicate', {lessThan: 'value'}, 'title');
+            expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('predicate', 'range', {lessThan: 'value'}, 'title');
         });
         it('Less than or equal to', function() {
             spyOn(searchSvc, 'createRangeQuery').and.returnValue(defaultQuery);
-            var config = {filters: [{type: 'Less than or equal to', predicate: 'predicate', value: 'value', title: 'title'}]};
+            var config = {filters: [{type: 'Less than or equal to', predicate: 'predicate', range: 'range', value: 'value', title: 'title'}]};
             var result = searchSvc.createQueryString(config);
             expect(result).toEqual(expected);
-            expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('predicate', {lessThanOrEqualTo: 'value'}, 'title');
+            expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('predicate', 'range', {lessThanOrEqualTo: 'value'}, 'title');
         });
         it('Range', function() {
             spyOn(searchSvc, 'createRangeQuery').and.returnValue(defaultQuery);
-            var config = {filters: [{type: 'Range', predicate: 'predicate', begin: 'begin', end: 'end', title: 'title'}]};
+            var config = {filters: [{type: 'Range', predicate: 'predicate', range: 'range', begin: 'begin', end: 'end', title: 'title'}]};
             var result = searchSvc.createQueryString(config);
-            expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('predicate', {lessThanOrEqualTo: 'end', greaterThanOrEqualTo: 'begin'}, 'title');
+            expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('predicate', 'range', {lessThanOrEqualTo: 'end', greaterThanOrEqualTo: 'begin'}, 'title');
             expect(result).toEqual(expected);
         });
         it('Regex', function() {
@@ -276,16 +276,15 @@ describe('Search Service', function() {
                 triples: [{
                     subject: '?Entity',
                     predicate: 'predicate',
-                    object: '"keyword"^^range'
+                    object: '?var0'
                 }]
             }, {
-                type: 'operation',
-                operator: 'bind',
-                args: [{
+                type: 'filter',
+                expression: {
                     type: 'operation',
-                    operator: 'as',
-                    args: ['"keyword"^^range', '?var0']
-                }]
+                    operator: '=',
+                    args: ['?var0', '"keyword"^^range']
+                }
             }]
         });
     });
