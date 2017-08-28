@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  org.matonto.prov.api
+  org.matonto.prov.impl
   $Id:$
   $HeadURL:$
   %%
@@ -33,34 +33,39 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>prov.api</artifactId>
+    <artifactId>prov.impl</artifactId>
     <packaging>bundle</packaging>
     <name>${project.groupId}.${project.artifactId}</name>
 
     <dependencies>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>persistence.api</artifactId>
+            <artifactId>prov.api</artifactId>
             <version>1.8.70-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>jaas.api</artifactId>
+            <artifactId>persistence.utils</artifactId>
             <version>1.8.70-SNAPSHOT</version>
         </dependency>
+
         <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>rdf.orm</artifactId>
-            <version>${orm.version}</version>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-all</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.spockframework</groupId>
+            <artifactId>spock-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>rdf.orm.ontologies</artifactId>
-            <version>1.8.65</version>
-        </dependency>
-        <dependency>
-            <groupId>biz.aQute.bnd</groupId>
-            <artifactId>biz.aQute.bndlib</artifactId>
+            <artifactId>repository.impl.sesame</artifactId>
+            <version>1.8.70-SNAPSHOT</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -73,46 +78,16 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>Mobi Provenance API</Bundle-Name>
+                        <Bundle-Name>MatOnto Provenance Impl</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.prov.api*
+                            org.matonto.prov.api;provide:=true,
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
                     </instructions>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.matonto.orm</groupId>
-                <artifactId>rdf-orm-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>generateOrmSources</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>generate-orm</goal>
-                        </goals>
-                        <inherited>false</inherited>
-                        <configuration>
-                            <generates>
-                                <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/mobi_prov.ttl</ontologyFile>
-                                    <outputPackage>org.matonto.prov.api.ontologies.mobiprov</outputPackage>
-                                    <ontologyName>MobiProv</ontologyName>
-                                </ontology>
-                            </generates>
-                            <references>
-                                <ontology>
-                                    <ontologyFile>${project.basedir}/../org.matonto.rdf.orm.ontologies/src/main/resources/prov-o.ttl</ontologyFile>
-                                    <outputPackage>org.matonto.ontologies.provo</outputPackage>
-                                </ontology>
-                            </references>
-                            <outputLocation>${project.basedir}/src/main/java</outputLocation>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

@@ -1,4 +1,4 @@
-@Version("1.2.2.${build}")
+@Version("1.2.3.${build}")
 
 package org.matonto.persistence.utils;
 

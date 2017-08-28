@@ -1,0 +1,190 @@
+package org.matonto.prov.impl;
+
+/*-
+ * #%L
+ * org.matonto.prov.impl
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
+import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.ConfigurationPolicy;
+import aQute.bnd.annotation.component.Reference;
+import org.matonto.ontologies.provo.Activity;
+import org.matonto.ontologies.provo.ActivityFactory;
+import org.matonto.ontologies.provo.Entity;
+import org.matonto.persistence.utils.ReadOnlyRepositoryConnection;
+import org.matonto.persistence.utils.RepositoryResults;
+import org.matonto.prov.api.ProvenanceService;
+import org.matonto.prov.api.builder.ActivityConfig;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.ValueFactory;
+import org.matonto.rdf.orm.OrmFactory;
+import org.matonto.rdf.orm.OrmFactoryRegistry;
+import org.matonto.repository.api.Repository;
+import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.config.RepositoryConsumerConfig;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+@Component(
+        configurationPolicy = ConfigurationPolicy.require,
+        designateFactory = RepositoryConsumerConfig.class,
+        name = SimpleProvenanceService.COMPONENT_NAME
+)
+public class SimpleProvenanceService implements ProvenanceService {
+    static final String COMPONENT_NAME = "org.matonto.prov.api.ProvenanceService";
+    private Repository repo;
+    private OrmFactoryRegistry factoryRegistry;
+    private ValueFactory vf;
+    private ModelFactory mf;
+    private ActivityFactory activityFactory;
+
+    private static String ACTIVITY_NAMESPACE = "http://matonto.org/activities/";
+
+    @Reference(name = "repo")
+    protected void setRepo(Repository repo) {
+        this.repo = repo;
+    }
+
+    @Reference
+    protected void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
+        this.factoryRegistry = factoryRegistry;
+    }
+
+    @Reference
+    protected void setVf(ValueFactory vf) {
+        this.vf = vf;
+    }
+
+    @Reference
+    protected void setMf(ModelFactory mf) {
+        this.mf = mf;
+    }
+
+    @Reference
+    protected void setActivityFactory(ActivityFactory activityFactory) {
+        this.activityFactory = activityFactory;
+    }
+
+    @Override
+    public RepositoryConnection getConnection() {
+        RepositoryConnection conn = repo.getConnection();
+        return new ReadOnlyRepositoryConnection(conn);
+    }
+
+    @Override
+    public Activity createActivity(ActivityConfig config) {
+        Map<Class<? extends Activity>, OrmFactory<? extends Activity>> factoryMap = getActivityFactories();
+        Activity activity = null;
+        for (Class<? extends Activity> type : config.getTypes()) {
+            if (!factoryMap.containsKey(type)) {
+                throw new IllegalStateException("No factory registered for type: " + type);
+            }
+            if (activity != null) {
+                activity = factoryMap.get(type).createNew(activity.getResource(), activity.getModel());
+            } else {
+                activity = factoryMap.get(type).createNew(vf.createIRI(ACTIVITY_NAMESPACE + UUID.randomUUID()));
+            }
+        }
+        activity.setWasAssociatedWith(Collections.singleton(config.getUser()));
+        activity.setGenerated(config.getGeneratedEntities());
+        for (Entity entity1 : config.getGeneratedEntities()) {
+            activity.getModel().addAll(entity1.getModel());
+        }
+        activity.setInvalidated(config.getInvalidatedEntities());
+        for (Entity entity1 : config.getInvalidatedEntities()) {
+            activity.getModel().addAll(entity1.getModel());
+        }
+        activity.setUsed(config.getUsedEntities());
+        for (Entity entity : config.getUsedEntities()) {
+            activity.getModel().addAll(entity.getModel());
+        }
+        return activity;
+    }
+
+    @Override
+    public void addActivity(Activity activity) {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            activity.getModel().subjects().forEach(resource -> {
+                if (conn.contains(resource, null, null)) {
+                    throw new IllegalArgumentException("Resource " + resource + " already exists");
+                }
+            });
+            conn.begin();
+            conn.add(activity.getModel());
+            conn.commit();
+        }
+    }
+
+    @Override
+    public Optional<Activity> getActivity(Resource activityIRI) {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Model activityModel = RepositoryResults.asModel(conn.getStatements(activityIRI, null, null), mf);
+            return activityFactory.getExisting(activityIRI, activityModel).flatMap(activity -> {
+                activity.getGenerated_resource().forEach(resource -> {
+                    Model entityModel = RepositoryResults.asModel(conn.getStatements(resource, null, null), mf);
+                    activity.getModel().addAll(entityModel);
+                });
+                activity.getInvalidated_resource().forEach(resource -> {
+                    Model entityModel = RepositoryResults.asModel(conn.getStatements(resource, null, null), mf);
+                    activity.getModel().addAll(entityModel);
+                });
+                activity.getUsed_resource().forEach(resource -> {
+                    Model entityModel = RepositoryResults.asModel(conn.getStatements(resource, null, null), mf);
+                    activity.getModel().addAll(entityModel);
+                });
+                return Optional.of(activity);
+            });
+        }
+    }
+
+    @Override
+    public void updateActivity(Activity newActivity) {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            if (!conn.contains(newActivity.getResource(), null, null)) {
+                throw new IllegalArgumentException("Activity " + newActivity.getResource() + " does not exist");
+            }
+            conn.begin();
+            Model activityModel = RepositoryResults.asModel(conn.getStatements(newActivity.getResource(), null, null),
+                    mf);
+            conn.remove(activityModel);
+            Activity activity = activityFactory.getExisting(newActivity.getResource(), activityModel).orElseThrow(() ->
+                    new IllegalStateException("Activity " + newActivity.getResource() + " could not be found"));
+            activity.getGenerated_resource().forEach(resource -> conn.remove(resource, null, null));
+            activity.getInvalidated_resource().forEach(resource -> conn.remove(resource, null, null));
+            activity.getUsed_resource().forEach(resource -> conn.remove(resource, null, null));
+            conn.add(newActivity.getModel());
+            conn.commit();
+        }
+    }
+
+    private Map<Class<? extends Activity>, OrmFactory<? extends Activity>> getActivityFactories() {
+        Map<Class<? extends Activity>, OrmFactory<? extends Activity>> factoryMap = new HashMap<>();
+        factoryRegistry.getFactoriesOfType(Activity.class).forEach(factory ->
+                factoryMap.put(factory.getType(), factory));
+        return factoryMap;
+    }
+}
