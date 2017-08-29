@@ -39,6 +39,7 @@ import org.matonto.clustering.api.ClusteringServiceConfig;
 import org.matonto.clustering.hazelcast.config.HazelcastClusteringServiceConfig;
 import org.matonto.clustering.hazelcast.config.HazelcastConfigurationFactory;
 import org.matonto.clustering.hazelcast.listener.ClusterServiceLifecycleListener;
+import org.matonto.exception.MatOntoException;
 import org.matonto.platform.config.api.server.MatOnto;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -47,10 +48,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.Semaphore;
 
 /**
  * This is the {@link ClusteringService} implementation built on top of Hazelcast.
@@ -122,6 +125,11 @@ public class HazelcastClusteringService implements ClusteringService {
     private ServiceRegistration<ClusteringService> registration;
 
     /**
+     * Lock to protect the hazelcast instance.
+     */
+    private Semaphore semaphore = new Semaphore(1, true);
+
+    /**
      * Method that joins the hazelcast cluster when the service is activated.
      */
     @Activate
@@ -177,14 +185,19 @@ public class HazelcastClusteringService implements ClusteringService {
         final HazelcastClusteringServiceConfig serviceConfig = Configurable.createConfigurable(HazelcastClusteringServiceConfig.class, this.configuration);
         if (serviceConfig.enabled()) {
             this.initializationTask = ForkJoinPool.commonPool().submit(() -> {
-                LOGGER.debug("Spinning up underlying hazelcast instance");
-                this.hazelcastInstance = this.hazelcastOSGiService.newHazelcastInstance(HazelcastConfigurationFactory.build(serviceConfig, this.matOntoServer.getServerIdentifier().toString()));
-                LOGGER.info("Clustering Service {}: Successfully initialized Hazelcast instance", this.matOntoServer.getServerIdentifier());
-                // Listen to lifecycle changes...
-                this.listener = new ClusterServiceLifecycleListener();
-                this.hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
-                this.hazelcastInstance.getCluster().addMembershipListener(listener);
-                registerWithClusterNodes(hazelcastInstance);
+                this.semaphore.acquireUninterruptibly();
+                try {
+                    LOGGER.debug("Spinning up underlying hazelcast instance");
+                    this.hazelcastInstance = this.hazelcastOSGiService.newHazelcastInstance(HazelcastConfigurationFactory.build(serviceConfig, this.matOntoServer.getServerIdentifier().toString()));
+                    LOGGER.info("Clustering Service {}: Successfully initialized Hazelcast instance", this.matOntoServer.getServerIdentifier());
+                    // Listen to lifecycle changes...
+                    this.listener = new ClusterServiceLifecycleListener();
+                    this.hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
+                    this.hazelcastInstance.getCluster().addMembershipListener(listener);
+                    registerWithClusterNodes(hazelcastInstance);
+                } finally {
+                    this.semaphore.release();
+                }
             });
             LOGGER.info("Successfully spawned initialization thread.");
         } else {
@@ -231,7 +244,12 @@ public class HazelcastClusteringService implements ClusteringService {
      */
     @Override
     public int getMemberCount() {
-        return getHazelcastInstance().getCluster().getMembers().size();
+        Optional<HazelcastInstance> optional = getHazelcastInstance();
+        if (optional.isPresent()) {
+            return optional.get().getCluster().getMembers().size();
+        } else {
+            return 0;
+        }
     }
 
     /**
@@ -265,13 +283,23 @@ public class HazelcastClusteringService implements ClusteringService {
     /**
      * Simple method that will register this node as it comes alive with the cluster registry.
      */
-    private void registerWithClusterNodes(HazelcastInstance hazelcastInstance) {
+    private void registerWithClusterNodes(final HazelcastInstance hazelcastInstance) {
         this.clusterNodes = hazelcastInstance.getReplicatedMap(CLUSTER_MEMBERS_KEY);
         //TODO - add metadata about this node to the model in the map.
         this.clusterNodes.put(matOntoServer.getServerIdentifier(), "");
     }
 
-    protected synchronized HazelcastInstance getHazelcastInstance() {
-        return this.hazelcastInstance;
+    synchronized Optional<HazelcastInstance> getHazelcastInstance() {
+        try {
+            try {
+                this.semaphore.acquire();
+                return Optional.ofNullable(this.hazelcastInstance);
+            } finally {
+                this.semaphore.release();
+            }
+        } catch (Exception e) {
+            throw new MatOntoException("Issue acquiring underlying hazelcast clustering infrastructure", e);
+        }
+
     }
 }
