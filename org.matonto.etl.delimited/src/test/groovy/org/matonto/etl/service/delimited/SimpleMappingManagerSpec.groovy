@@ -24,7 +24,7 @@ package org.matonto.etl.service.delimited
 
 import org.matonto.catalog.api.CatalogManager
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory
-import org.matonto.etl.api.config.MappingRecordConfig
+import org.matonto.etl.api.config.delimited.MappingRecordConfig
 import org.matonto.etl.api.delimited.MappingId
 import org.matonto.etl.api.delimited.MappingWrapper
 import org.matonto.etl.api.ontologies.delimited.*

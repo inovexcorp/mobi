@@ -23,8 +23,8 @@ package org.matonto.etl.api.delimited;
  * #L%
  */
 
-import org.matonto.etl.api.config.ExcelConfig;
-import org.matonto.etl.api.config.SVConfig;
+import org.matonto.etl.api.config.delimited.ExcelConfig;
+import org.matonto.etl.api.config.delimited.SVConfig;
 import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Model;
 

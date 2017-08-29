@@ -32,6 +32,7 @@
             'associationBlock',
             'axiomBlock',
             'axiomOverlay',
+            'blankNodeValueDisplay',
             'branchSelect',
             'characteristicsBlock',
             'characteristicsRow',

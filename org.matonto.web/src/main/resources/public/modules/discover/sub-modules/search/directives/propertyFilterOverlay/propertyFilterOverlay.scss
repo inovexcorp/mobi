@@ -1,0 +1,38 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.property-filter-overlay {
+    z-index: 10;
+    
+    .parts {
+        border-bottom: 1px solid $gray-light;
+        margin: -10px -10px 10px -10px;
+        min-height: 33px;
+        padding: 8px 10px;
+    }
+    
+    .input-container {
+        label {
+            width: 100%;
+        }
+        
+        md-input-container {
+            margin-top: 0;
+            width: 100%;
+        }
+    }
+    
+    .range-container {
+        display: flex;
+        
+        md-input-container {
+            &:first-child {
+                margin-right: 10px;
+            }
+            
+            &:last-child {
+                margin-left: 10px;
+            }
+        }
+    }
+}

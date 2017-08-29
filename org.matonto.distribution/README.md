@@ -7,12 +7,12 @@ means that if you specify this target, you can then run a docker image
 containing the distribution just built.
 
 To run your docker container after building it: 
-`docker run --name MatOnto -p 8443:8443 -d matonto/matonto`
+`docker run --name Mobi -p 8443:8443 -d inovexis/mobi`
 
 ### Docker Deployment
 In order to deploy tags of the docker container to DockerHub, you 
-must first be part of the DockerHub MatOnto project.  Then, you can run
-`mvn docker:build -DpushImageTag` to push tags of the MatOnto docker image
+must first be part of the DockerHub Mobi project.  Then, you can run
+`mvn docker:build -DpushImageTag` to push tags of the Mobi docker image
 to the hub.  Key to this configuration is to provide maven your DockerHub
 credentials.  To do this, add an entry in the `<servers>` entry of your
 `~/.m2/settings.xml`:

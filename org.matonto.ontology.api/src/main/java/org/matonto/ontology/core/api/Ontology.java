@@ -50,7 +50,14 @@ public interface Ontology {
 
     OutputStream asOwlXml() throws MatontoOntologyException;
 
-    OutputStream asJsonLD() throws MatontoOntologyException;
+    /**
+     * Returns the Ontology as JSON-LD in an OutputStream.
+     *
+     * @param skolemize Whether or not blank node ids should be skolemized before rendering
+     * @return an OutputStream of JSON-LD
+     * @throws MatontoOntologyException If an error occurs while parsing
+     */
+    OutputStream asJsonLD(boolean skolemize) throws MatontoOntologyException;
 
     /**
      * Returns the OntologyID that describes the Ontology IRI, Version IRI,

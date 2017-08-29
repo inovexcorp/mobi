@@ -1,4 +1,4 @@
-package org.matonto.etl.api.config;
+package org.matonto.etl.api.config.rdf.export;
 
 /*-
  * #%L
@@ -25,31 +25,22 @@ package org.matonto.etl.api.config;
 
 import org.openrdf.rio.RDFFormat;
 
-import java.util.Optional;
+import java.io.OutputStream;
 
-public class ExportServiceConfig {
-    private String filePath;
-    private RDFFormat format;
+public class RDFExportConfig extends BaseExportConfig {
     private String subj;
     private String pred;
     private String objIRI;
     private String objLit;
+    private String graph;
 
-    protected ExportServiceConfig(Builder builder) {
-        this.filePath = builder.filePath;
-        this.format = builder.format;
+    protected RDFExportConfig(Builder builder) {
+        super(builder);
         this.subj = builder.subj;
         this.pred = builder.pred;
         this.objIRI = builder.objIRI;
         this.objLit = builder.objLit;
-    }
-
-    public Optional<String> getFilePath() {
-        return Optional.ofNullable(filePath);
-    }
-
-    public RDFFormat getFormat() {
-        return format;
+        this.graph = builder.graph;
     }
 
     public String getSubj() {
@@ -68,36 +59,29 @@ public class ExportServiceConfig {
         return objLit;
     }
 
-    public static class Builder {
-        private String filePath;
-        private RDFFormat format;
+    public String getGraph() {
+        return graph;
+    }
+
+    public static class Builder extends BaseExportConfig.Builder {
         private String subj;
         private String pred;
         private String objIRI;
         private String objLit;
+        private String graph;
 
         /**
-         * Creates a new Builder for an ExportServiceConfig.
+         * Creates a new Builder for an RDFExportConfig.
          *
-         * @param filePath The path to the file with the exported data.
+         * @param output The OutputStream for the exported data.
+         * @param format The RDFFormat for the exported data.
          */
-        public Builder(String filePath) {
-            this.filePath = filePath;
+        public Builder(OutputStream output, RDFFormat format) {
+            super(output, format);
         }
 
         /**
-         * Sets the RDF format for the export file.
-         *
-         * @param format The RDFFormat for the file with the exported data.
-         * @return The Builder
-         */
-        public Builder format(RDFFormat format) {
-            this.format = format;
-            return this;
-        }
-
-        /**
-         * Sets the subject to restrict all exported triples to.
+         * Sets the subject to restrict all exported data to.
          *
          * @param subj A subject string
          * @return The Builder
@@ -108,7 +92,7 @@ public class ExportServiceConfig {
         }
 
         /**
-         * Sets the subject to restrict all exported triples to.
+         * Sets the subject to restrict all exported data to.
          *
          * @param pred A predicate string
          * @return The Builder
@@ -119,7 +103,7 @@ public class ExportServiceConfig {
         }
 
         /**
-         * An object IRI to restrict all exported triples. Takes precedence over objLit.
+         * An object IRI to restrict all exported data. Takes precedence over objLit.
          *
          * @param objIRI An object IRI string
          * @return The Builder
@@ -130,7 +114,7 @@ public class ExportServiceConfig {
         }
 
         /**
-         * Sets the object literal to restrict all exported triples. Will only be used if objIRI is not passed.
+         * Sets the object literal to restrict all exported data. Will only be used if objIRI is not passed.
          *
          * @param objLit An object literal string
          * @return The Builder
@@ -140,8 +124,19 @@ public class ExportServiceConfig {
             return this;
         }
 
-        public ExportServiceConfig build() {
-            return new ExportServiceConfig(this);
+        /**
+         * Sets the graph to restrict all exported data.
+         *
+         * @param graph A graph string
+         * @return The Builder
+         */
+        public Builder graph(String graph) {
+            this.graph = graph;
+            return this;
+        }
+
+        public RDFExportConfig build() {
+            return new RDFExportConfig(this);
         }
     }
 }
