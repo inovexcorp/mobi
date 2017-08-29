@@ -186,14 +186,14 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response getOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
-                                String commitIdStr, String rdfFormat, boolean clearCache) {
+                                String commitIdStr, String rdfFormat, boolean clearCache, boolean skolemize) {
         try {
             if (clearCache) {
                 ontologyCache.removeFromCache(recordIdStr, branchIdStr, commitIdStr);
             }
             Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr).orElseThrow(() ->
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
-            String ontologyAsRdf = getOntologyAsRdf(ontology, rdfFormat);
+            String ontologyAsRdf = getOntologyAsRdf(ontology, rdfFormat, skolemize);
             Response.ResponseBuilder ok = Response.ok(ontologyAsRdf);
             return ok.build();
         } catch (MatOntoException e) {
@@ -224,7 +224,7 @@ public class OntologyRestImpl implements OntologyRest {
                     ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             StreamingOutput stream = os -> {
                 Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-                writer.write(getOntologyAsRdf(ontology, rdfFormat));
+                writer.write(getOntologyAsRdf(ontology, rdfFormat, false));
                 writer.flush();
                 writer.close();
             };
@@ -1165,9 +1165,11 @@ public class OntologyRestImpl implements OntologyRest {
      *
      * @param ontology  the Ontology you want to serialize in a different format.
      * @param rdfFormat the format you want.
+     * @param skolemize whether or not the Ontology should be skoelmized before serialized (NOTE: only applies to
+     *                  serializing as JSON-LD)
      * @return A String containing the newly serialized Ontology.
      */
-    private String getOntologyAsRdf(Ontology ontology, String rdfFormat) {
+    private String getOntologyAsRdf(Ontology ontology, String rdfFormat, boolean skolemize) {
         switch (rdfFormat.toLowerCase()) {
             case "rdf/xml":
                 return ontology.asRdfXml().toString();
@@ -1176,7 +1178,7 @@ public class OntologyRestImpl implements OntologyRest {
             case "turtle":
                 return ontology.asTurtle().toString();
             default:
-                OutputStream outputStream = ontology.asJsonLD();
+                OutputStream outputStream = ontology.asJsonLD(skolemize);
                 return outputStream.toString();
         }
     }
@@ -1195,7 +1197,7 @@ public class OntologyRestImpl implements OntologyRest {
                 .element("documentFormat", rdfFormat)
                 .element("id", ontologyId.getOntologyIdentifier().stringValue())
                 .element("ontologyId", optIri.isPresent() ? optIri.get().stringValue() : "")
-                .element("ontology", getOntologyAsRdf(ontology, rdfFormat));
+                .element("ontology", getOntologyAsRdf(ontology, rdfFormat, false));
     }
 
     /**

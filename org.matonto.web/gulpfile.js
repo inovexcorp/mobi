@@ -34,6 +34,7 @@ var src = './src/main/resources/public/',
 // NOTE: This is where we determine the order in which JS files are loaded
 var jsFiles = function(prefix) {
         return [
+            prefix + 'js/vendor/manchestersyntax.js',
             prefix + 'js/services/responseObj.js',
             prefix + 'js/services/prefixes.js',
             prefix + 'js/filters/*.js',
@@ -55,6 +56,7 @@ var jsFiles = function(prefix) {
             prefix + 'codemirror/**/xml.js',
             prefix + 'codemirror/**/javascript.js',
             prefix + 'codemirror/**/matchbrackets.js',
+            prefix + 'codemirror-no-newlines/**/no-newlines.js',
             prefix + 'angular/**/angular.min.js',
             prefix + 'angular-mocks/**/angular-mocks.js',
             prefix + 'angular-animate/**/angular-animate.js',
