@@ -120,64 +120,135 @@ describe('Search Service', function() {
     });
     describe('should create a keyword query', function() {
         it('with and', function() {
-            var result = searchSvc.createQueryString({keywords: ['test1', 'test2']});
-            expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test1")))\n  }\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test2")))\n  }\n}\nGROUP BY ?Subject ?Predicate');
+            var config = {keywords: ['test1', 'test2']};
+            var result = searchSvc.createQueryString(config);
+            expect(result).toEqual('SELECT DISTINCT ?Entity (GROUP_CONCAT(DISTINCT ?Keyword; SEPARATOR = "<br>") AS ?Keywords) WHERE {\n  {\n    ?Entity ?p ?Keyword.\n    FILTER(CONTAINS(LCASE(?Keyword), LCASE("test1")))\n  }\n  {\n    ?Entity ?p ?Keyword.\n    FILTER(CONTAINS(LCASE(?Keyword), LCASE("test2")))\n  }\n}\nGROUP BY ?Entity');
+            expect(config.variables).toEqual({Entity: 'Entity', Keywords: 'Keywords'});
         });
         it('with or', function() {
-            var result = searchSvc.createQueryString({keywords: ['test1', 'test2'], isOrKeywords: true});
-            expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test1")))\n  }\n  UNION\n  {\n    ?Subject ?Predicate ?o.\n    FILTER(CONTAINS(LCASE(?o), LCASE("test2")))\n  }\n}\nGROUP BY ?Subject ?Predicate');
+            var config = {keywords: ['test1', 'test2'], isOrKeywords: true};
+            var result = searchSvc.createQueryString(config);
+            expect(result).toEqual('SELECT DISTINCT ?Entity (GROUP_CONCAT(DISTINCT ?Keyword; SEPARATOR = "<br>") AS ?Keywords) WHERE {\n  {\n    ?Entity ?p ?Keyword.\n    FILTER(CONTAINS(LCASE(?Keyword), LCASE("test1")))\n  }\n  UNION\n  {\n    ?Entity ?p ?Keyword.\n    FILTER(CONTAINS(LCASE(?Keyword), LCASE("test2")))\n  }\n}\nGROUP BY ?Entity');
+            expect(config.variables).toEqual({Entity: 'Entity', Keywords: 'Keywords'});
         });
     });
     describe('should create a type query', function() {
         it('with and', function() {
-            var result = searchSvc.createQueryString({types: [{classIRI: 'http://matonto.org/1'}, {classIRI: 'http://matonto.org/2'}]});
-            expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject <' + prefixes.rdf + 'type> <http://matonto.org/1>.\n    ?Subject ?Predicate ?o.\n  }\n  {\n    ?Subject <' + prefixes.rdf + 'type> <http://matonto.org/2>.\n    ?Subject ?Predicate ?o.\n  }\n}\nGROUP BY ?Subject ?Predicate');
+            var config = {types: [{classIRI: 'http://matonto.org/1'}, {classIRI: 'http://matonto.org/2'}]};
+            var result = searchSvc.createQueryString(config);
+            expect(result).toEqual('SELECT DISTINCT ?Entity (GROUP_CONCAT(DISTINCT ?Type; SEPARATOR = "<br>") AS ?Types) WHERE {\n  {\n    ?Entity <' + prefixes.rdf + 'type> <http://matonto.org/1>.\n    ?Entity <' + prefixes.rdf + 'type> ?Type.\n  }\n  {\n    ?Entity <' + prefixes.rdf + 'type> <http://matonto.org/2>.\n    ?Entity <' + prefixes.rdf + 'type> ?Type.\n  }\n}\nGROUP BY ?Entity');
+            expect(config.variables).toEqual({Entity: 'Entity', Types: 'Types'});
         });
         it('with or', function() {
-            var result = searchSvc.createQueryString({types: [{classIRI: 'http://matonto.org/1'}, {classIRI: 'http://matonto.org/2'}], isOrTypes: true});
-            expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE {\n  {\n    ?Subject <' + prefixes.rdf + 'type> <http://matonto.org/1>.\n    ?Subject ?Predicate ?o.\n  }\n  UNION\n  {\n    ?Subject <' + prefixes.rdf + 'type> <http://matonto.org/2>.\n    ?Subject ?Predicate ?o.\n  }\n}\nGROUP BY ?Subject ?Predicate');
+            var config = {types: [{classIRI: 'http://matonto.org/1'}, {classIRI: 'http://matonto.org/2'}], isOrTypes: true};
+            var result = searchSvc.createQueryString(config);
+            expect(result).toEqual('SELECT DISTINCT ?Entity (GROUP_CONCAT(DISTINCT ?Type; SEPARATOR = "<br>") AS ?Types) WHERE {\n  {\n    ?Entity <' + prefixes.rdf + 'type> <http://matonto.org/1>.\n    ?Entity <' + prefixes.rdf + 'type> ?Type.\n  }\n  UNION\n  {\n    ?Entity <' + prefixes.rdf + 'type> <http://matonto.org/2>.\n    ?Entity <' + prefixes.rdf + 'type> ?Type.\n  }\n}\nGROUP BY ?Entity');
+            expect(config.variables).toEqual({Entity: 'Entity', Types: 'Types'});
         });
     });
-    it('should create a filtered query', function() {
-        var result = searchSvc.createQueryString({filters: [{type: 'bgp', triples: [{subject: '?s', predicate: '?p', object: '?o'}]}]});
-        expect(result).toEqual('SELECT DISTINCT ?Subject ?Predicate (GROUP_CONCAT(DISTINCT ?o; SEPARATOR = "<br>") AS ?Objects) WHERE { { ?s ?p ?o. } }\nGROUP BY ?Subject ?Predicate');
+    describe('should create a filtered query when filterType is', function() {
+        var defaultQuery = {
+            type: 'bgp',
+            triples: [{
+                subject: '?s',
+                predicate: '?p',
+                object: '?o'
+            }]
+        };
+        var expected = 'SELECT DISTINCT ?Entity WHERE { ?s ?p ?o. }\nGROUP BY ?Entity';
+        it('Boolean', function() {
+            spyOn(searchSvc, 'createBooleanQuery').and.returnValue(defaultQuery);
+            var config = {filters: [{type: 'Boolean', predicate: 'predicate', boolean: 'boolean', title: 'title'}]};
+            var result = searchSvc.createQueryString(config);
+            expect(result).toEqual(expected);
+            expect(searchSvc.createBooleanQuery).toHaveBeenCalledWith('predicate', 'boolean', 'title');
+        });
+        it('Contains', function() {
+            spyOn(searchSvc, 'createContainsQuery').and.returnValue(defaultQuery);
+            var config = {filters: [{type: 'Contains', predicate: 'predicate', value: 'value', title: 'title'}]};
+            var result = searchSvc.createQueryString(config);
+            expect(result).toEqual(expected);
+            expect(searchSvc.createContainsQuery).toHaveBeenCalledWith('predicate', 'value', 'title');
+        });
+        it('Exact', function() {
+            spyOn(searchSvc, 'createExactQuery').and.returnValue(defaultQuery);
+            var config = {filters: [{type: 'Exact', predicate: 'predicate', value: 'value', range: 'range', title: 'title'}]};
+            var result = searchSvc.createQueryString(config);
+            expect(result).toEqual(expected);
+            expect(searchSvc.createExactQuery).toHaveBeenCalledWith('predicate', 'value', 'range', 'title');
+        });
+        it('Existence', function() {
+            spyOn(searchSvc, 'createExistenceQuery').and.returnValue(defaultQuery);
+            var config = {filters: [{type: 'Existence', predicate: 'predicate', title: 'title'}]};
+            var result = searchSvc.createQueryString(config);
+            expect(result).toEqual(expected);
+            expect(searchSvc.createExistenceQuery).toHaveBeenCalledWith('predicate', 'title');
+        });
+        it('Greater than', function() {
+            spyOn(searchSvc, 'createRangeQuery').and.returnValue(defaultQuery);
+            var config = {filters: [{type: 'Greater than', predicate: 'predicate', range: 'range', value: 'value', title: 'title'}]};
+            var result = searchSvc.createQueryString(config);
+            expect(result).toEqual(expected);
+            expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('predicate', 'range', {greaterThan: 'value'}, 'title');
+        });
+        it('Greater than or equal to', function() {
+            spyOn(searchSvc, 'createRangeQuery').and.returnValue(defaultQuery);
+            var config = {filters: [{type: 'Greater than or equal to', predicate: 'predicate', range: 'range', value: 'value', title: 'title'}]};
+            var result = searchSvc.createQueryString(config);
+            expect(result).toEqual(expected);
+            expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('predicate', 'range', {greaterThanOrEqualTo: 'value'}, 'title');
+        });
+        it('Less than', function() {
+            spyOn(searchSvc, 'createRangeQuery').and.returnValue(defaultQuery);
+            var config = {filters: [{type: 'Less than', predicate: 'predicate', range: 'range', value: 'value', title: 'title'}]};
+            var result = searchSvc.createQueryString(config);
+            expect(result).toEqual(expected);
+            expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('predicate', 'range', {lessThan: 'value'}, 'title');
+        });
+        it('Less than or equal to', function() {
+            spyOn(searchSvc, 'createRangeQuery').and.returnValue(defaultQuery);
+            var config = {filters: [{type: 'Less than or equal to', predicate: 'predicate', range: 'range', value: 'value', title: 'title'}]};
+            var result = searchSvc.createQueryString(config);
+            expect(result).toEqual(expected);
+            expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('predicate', 'range', {lessThanOrEqualTo: 'value'}, 'title');
+        });
+        it('Range', function() {
+            spyOn(searchSvc, 'createRangeQuery').and.returnValue(defaultQuery);
+            var config = {filters: [{type: 'Range', predicate: 'predicate', range: 'range', begin: 'begin', end: 'end', title: 'title'}]};
+            var result = searchSvc.createQueryString(config);
+            expect(searchSvc.createRangeQuery).toHaveBeenCalledWith('predicate', 'range', {lessThanOrEqualTo: 'end', greaterThanOrEqualTo: 'begin'}, 'title');
+            expect(result).toEqual(expected);
+        });
+        it('Regex', function() {
+            spyOn(searchSvc, 'createRegexQuery').and.returnValue(defaultQuery);
+            var config = {filters: [{type: 'Regex', predicate: 'predicate', regex: 'regex', title: 'title'}]};
+            var result = searchSvc.createQueryString(config);
+            expect(result).toEqual(expected);
+            expect(searchSvc.createRegexQuery).toHaveBeenCalledWith('predicate', 'regex', 'title');
+        });
     });
     it('createExistenceQuery should create the correct query part', function() {
-        expect(searchSvc.createExistenceQuery('predicate')).toEqual({
+        expect(searchSvc.createExistenceQuery('predicate', 'exist')).toEqual({
             type: 'group',
             patterns: [{
                 type: 'bgp',
                 triples: [{
-                    subject: '?Subject',
+                    subject: '?Entity',
                     predicate: 'predicate',
-                    object: '?o'
-                }]
-            }, {
-                type: 'bgp',
-                triples: [{
-                    subject: '?Subject',
-                    predicate: '?Predicate',
-                    object: '?o'
+                    object: '?var0'
                 }]
             }]
         });
     });
     it('createContainsQuery should create the correct query part', function() {
-        expect(searchSvc.createContainsQuery('predicate', 'keyword')).toEqual({
+        expect(searchSvc.createContainsQuery('predicate', 'keyword', 'contains')).toEqual({
             type: 'group',
             patterns: [{
                 type: 'bgp',
                 triples: [{
-                    subject: '?Subject',
+                    subject: '?Entity',
                     predicate: 'predicate',
-                    object: '?o'
-                }]
-            }, {
-                type: 'bgp',
-                triples: [{
-                    subject: '?Subject',
-                    predicate: '?Predicate',
-                    object: '?o'
+                    object: '?var0'
                 }]
             }, {
                 type: 'filter',
@@ -187,7 +258,7 @@ describe('Search Service', function() {
                     args: [{
                         type: 'operation',
                         operator: 'lcase',
-                        args: ['?o']
+                        args: ['?var0']
                     }, {
                         type: 'operation',
                         operator: 'lcase',
@@ -198,41 +269,41 @@ describe('Search Service', function() {
         });
     });
     it('createExactQuery should create the correct query part', function() {
-        expect(searchSvc.createExactQuery('predicate', 'keyword', 'range')).toEqual({
+        expect(searchSvc.createExactQuery('predicate', 'keyword', 'range', 'exact')).toEqual({
             type: 'group',
             patterns: [{
                 type: 'bgp',
                 triples: [{
-                    subject: '?Subject',
+                    subject: '?Entity',
                     predicate: 'predicate',
-                    object: '"keyword"^^range'
+                    object: '?var0'
                 }]
             }, {
-                type: 'bgp',
-                triples: [{
-                    subject: '?Subject',
-                    predicate: '?Predicate',
-                    object: '?o'
-                }]
+                type: 'filter',
+                expression: {
+                    type: 'operation',
+                    operator: '=',
+                    args: ['?var0', '"keyword"^^range']
+                }
             }]
         });
     });
     it('createRegexQuery should create the correct query part', function() {
-        expect(searchSvc.createRegexQuery('predicate', '/[A-Z]/')).toEqual({
+        expect(searchSvc.createRegexQuery('predicate', '/[A-Z]/', 'regex')).toEqual({
             type: 'group',
             patterns: [{
                 type: 'bgp',
                 triples: [{
-                    subject: '?Subject',
+                    subject: '?Entity',
                     predicate: 'predicate',
-                    object: '?o'
+                    object: '?var0'
                 }]
             }, {
                 type: 'filter',
                 expression: {
                     type: 'operation',
                     operator: 'regex',
-                    args: ['?o', '\"/[A-Z]/\"']
+                    args: ['?var0', '\"/[A-Z]/\"']
                 }
             }]
         });
@@ -244,20 +315,13 @@ describe('Search Service', function() {
                 patterns: [{
                     type: 'bgp',
                     triples: [{
-                        subject: '?Subject',
+                        subject: '?Entity',
                         predicate: 'predicate',
-                        object: '?o'
-                    }]
-                }, {
-                    type: 'bgp',
-                    triples: [{
-                        subject: '?Subject',
-                        predicate: '?Predicate',
-                        object: '?o'
+                        object: '?var0'
                     }]
                 }, {
                     type: 'filter',
-                    expression: '?o < 1'
+                    expression: '?var0 < 1'
                 }]
             });
             expect(util.getInputType).toHaveBeenCalledWith('range');
@@ -268,20 +332,13 @@ describe('Search Service', function() {
                 patterns: [{
                     type: 'bgp',
                     triples: [{
-                        subject: '?Subject',
+                        subject: '?Entity',
                         predicate: 'predicate',
-                        object: '?o'
-                    }]
-                }, {
-                    type: 'bgp',
-                    triples: [{
-                        subject: '?Subject',
-                        predicate: '?Predicate',
-                        object: '?o'
+                        object: '?var0'
                     }]
                 }, {
                     type: 'filter',
-                    expression: '?o <= 1'
+                    expression: '?var0 <= 1'
                 }]
             });
             expect(util.getInputType).toHaveBeenCalledWith('range');
@@ -292,20 +349,13 @@ describe('Search Service', function() {
                 patterns: [{
                     type: 'bgp',
                     triples: [{
-                        subject: '?Subject',
+                        subject: '?Entity',
                         predicate: 'predicate',
-                        object: '?o'
-                    }]
-                }, {
-                    type: 'bgp',
-                    triples: [{
-                        subject: '?Subject',
-                        predicate: '?Predicate',
-                        object: '?o'
+                        object: '?var0'
                     }]
                 }, {
                     type: 'filter',
-                    expression: '?o > 1'
+                    expression: '?var0 > 1'
                 }]
             });
             expect(util.getInputType).toHaveBeenCalledWith('range');
@@ -316,20 +366,13 @@ describe('Search Service', function() {
                 patterns: [{
                     type: 'bgp',
                     triples: [{
-                        subject: '?Subject',
+                        subject: '?Entity',
                         predicate: 'predicate',
-                        object: '?o'
-                    }]
-                }, {
-                    type: 'bgp',
-                    triples: [{
-                        subject: '?Subject',
-                        predicate: '?Predicate',
-                        object: '?o'
+                        object: '?var0'
                     }]
                 }, {
                     type: 'filter',
-                    expression: '?o >= 1'
+                    expression: '?var0 >= 1'
                 }]
             });
             expect(util.getInputType).toHaveBeenCalledWith('range');
@@ -340,23 +383,16 @@ describe('Search Service', function() {
                 patterns: [{
                     type: 'bgp',
                     triples: [{
-                        subject: '?Subject',
+                        subject: '?Entity',
                         predicate: 'predicate',
-                        object: '?o'
-                    }]
-                }, {
-                    type: 'bgp',
-                    triples: [{
-                        subject: '?Subject',
-                        predicate: '?Predicate',
-                        object: '?o'
+                        object: '?var0'
                     }]
                 }, {
                     type: 'filter',
-                    expression: '?o <= 1'
+                    expression: '?var0 <= 1'
                 }, {
                     type: 'filter',
-                    expression: '?o >= 0'
+                    expression: '?var0 >= 0'
                 }]
             });
             expect(util.getInputType).toHaveBeenCalledWith('range');
@@ -369,48 +405,34 @@ describe('Search Service', function() {
             patterns: [{
                 type: 'bgp',
                 triples: [{
-                    subject: '?Subject',
+                    subject: '?Entity',
                     predicate: 'predicate',
-                    object: '?o'
-                }]
-            }, {
-                type: 'bgp',
-                triples: [{
-                    subject: '?Subject',
-                    predicate: '?Predicate',
-                    object: '?o'
+                    object: '?var0'
                 }]
             }, {
                 type: 'filter',
-                expression: '?o >= 1^^<' + prefixes.xsd + 'dateTime>'
+                expression: '?var0 >= 1^^<' + prefixes.xsd + 'dateTime>'
             }]
         });
         expect(util.getInputType).toHaveBeenCalledWith('range');
     });
     describe('createBooleanQuery should create the correct query part when value is', function() {
         it('true', function() {
-            expect(searchSvc.createBooleanQuery('predicate', true)).toEqual({
+            expect(searchSvc.createBooleanQuery('predicate', true, 'boolean')).toEqual({
                 type: 'group',
                 patterns: [{
                     type: 'bgp',
                     triples: [{
-                        subject: '?Subject',
+                        subject: '?Entity',
                         predicate: 'predicate',
-                        object: '?o'
-                    }]
-                }, {
-                    type: 'bgp',
-                    triples: [{
-                        subject: '?Subject',
-                        predicate: '?Predicate',
-                        object: '?o'
+                        object: '?var0'
                     }]
                 }, {
                     type: 'filter',
                     expression: {
                         type: 'operation',
                         operator: 'in',
-                        args: ['?o', ['"true"^^' + prefixes.xsd + 'boolean', '"1"^^' + prefixes.xsd + 'boolean']]
+                        args: ['?var0', ['"true"^^' + prefixes.xsd + 'boolean', '"1"^^' + prefixes.xsd + 'boolean']]
                     }
                 }]
             });
@@ -421,23 +443,16 @@ describe('Search Service', function() {
                 patterns: [{
                     type: 'bgp',
                     triples: [{
-                        subject: '?Subject',
+                        subject: '?Entity',
                         predicate: 'predicate',
-                        object: '?o'
-                    }]
-                }, {
-                    type: 'bgp',
-                    triples: [{
-                        subject: '?Subject',
-                        predicate: '?Predicate',
-                        object: '?o'
+                        object: '?var0'
                     }]
                 }, {
                     type: 'filter',
                     expression: {
                         type: 'operation',
                         operator: 'in',
-                        args: ['?o', ['"false"^^' + prefixes.xsd + 'boolean', '"0"^^' + prefixes.xsd + 'boolean']]
+                        args: ['?var0', ['"false"^^' + prefixes.xsd + 'boolean', '"0"^^' + prefixes.xsd + 'boolean']]
                     }
                 }]
             });

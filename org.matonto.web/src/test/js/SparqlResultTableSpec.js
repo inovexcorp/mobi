@@ -44,7 +44,8 @@ describe('SPARQL Result Table directive', function() {
             }
         ];
         scope.bindings = ['var1', 'var2'];
-        element = $compile(angular.element('<sparql-result-table bindings="bindings" data="data"></sparql-result-table>'))(scope);
+        scope.headers = {var1: 'var1', var2: 'var2'};
+        element = $compile(angular.element('<sparql-result-table bindings="bindings" data="data" headers="headers"></sparql-result-table>'))(scope);
         scope.$digest();
         isolatedScope = element.isolateScope();
     });
@@ -68,6 +69,11 @@ describe('SPARQL Result Table directive', function() {
             isolatedScope.bindings = [];
             scope.$digest();
             expect(scope.bindings).toEqual(['var1', 'var2']);
+        });
+        it('headers is one way bound', function() {
+            isolatedScope.headers = [];
+            scope.$digest();
+            expect(scope.headers).toEqual({var1: 'var1', var2: 'var2'});
         });
     });
     describe('replaces the element with the correct html', function() {
