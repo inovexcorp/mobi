@@ -41,7 +41,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.api</artifactId>
-            <version>1.8.14</version>
+            <version>1.8.71</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -51,7 +51,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas</artifactId>
-            <version>1.8.59</version>
+            <version>1.8.71</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
