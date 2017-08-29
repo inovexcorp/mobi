@@ -1,0 +1,56 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+/* Manchester Syntax styles */
+.manchester-expr, .cm-manchester-expr {
+    color: $brand-primary;
+    font-weight: bold;
+}
+.manchester-rest, .cm-manchester-rest {
+    color: $brand-success;
+    font-weight: bold;
+}
+.manchester-lit, .cm-manchester-lit {
+    color: #f49c1f;
+}
+.cm-manchester-error {
+    border-bottom: 1px dotted $error-color;
+}
+.cm-open-par {
+    color: #646464 !important;
+}
+.cm-close-par {
+    color: #646464 !important;
+}
+.cm-comma {
+    color: gray;
+    font-weight: bold !important;
+}
+.cm-string {
+    color: #ab5b2f !important;
+}
+.cm-builtin-kw {
+    color: #4e8187;
+}
+.cm-iri {
+    color: #747474 !important;
+    text-decoration: underline;
+}
+.cm-facet {
+    color: #2835D0 !important;
+}
+.cm-lang-tag {
+    color: gray;
+}
+.cm-literal-datatype {
+    color: gray;
+}
+.cm-integer-lit {
+    color: #2835D0;
+}
+.cm-decimal-lit {
+    color: #2835D0;
+}
+.cm-floating-point-lit {
+    color: #2835D0;
+}

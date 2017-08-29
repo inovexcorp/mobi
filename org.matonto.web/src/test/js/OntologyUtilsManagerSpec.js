@@ -61,6 +61,7 @@ describe('Ontology Utils Manager service', function() {
                 getDeferred.resolve([{'@id': 'id'}]);
                 ontologyStateSvc.getOntologiesArray.and.returnValue([{prop: 'ontology'}]);
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
+                ontologyStateSvc.removeEntity.and.returnValue([ontologyStateSvc.listItem.selected]);
             });
             it('and when updateEverythingTree is false', function() {
                 ontologyUtilsManagerSvc.commonDelete('iri');
@@ -211,16 +212,30 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
     });
     describe('getBlankNodeValue returns', function() {
+        var importedOntology;
         beforeEach(function() {
+            importedOntology = {ontologyId: 'imported', blankNodes: {key1: 'importedValue1'}};
             ontologyStateSvc.listItem.blankNodes = {key1: 'value1'};
-        });
-        it('value for the key provided contained in the object', function() {
             ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
-            expect(ontologyUtilsManagerSvc.getBlankNodeValue('key1')).toEqual(ontologyStateSvc.listItem.blankNodes['key1']);
+            ontologyStateSvc.listItem.importedOntologies = [importedOntology];
         });
-        it('key for the key provided not contained in the object', function() {
-            ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
-            expect(ontologyUtilsManagerSvc.getBlankNodeValue('key2')).toEqual('key2');
+        describe('value for the key provided contained in the object', function() {
+            it('if selected is imported', function() {
+                ontologyStateSvc.listItem.selected.matonto = {imported: true, importedIRI: importedOntology.ontologyId};
+                expect(ontologyUtilsManagerSvc.getBlankNodeValue('key1')).toEqual(importedOntology.blankNodes['key1']);
+            });
+            it('if selected is not imported', function() {
+                expect(ontologyUtilsManagerSvc.getBlankNodeValue('key1')).toEqual(ontologyStateSvc.listItem.blankNodes['key1']);
+            });
+        });
+        describe('key for the key provided not contained in the object', function() {
+            it('if selected is imported', function() {
+                ontologyStateSvc.listItem.selected.matonto = {imported: true, importedIRI: importedOntology.ontologyId};
+                expect(ontologyUtilsManagerSvc.getBlankNodeValue('key2')).toEqual('key2');
+            });
+            it('if selected is not imported', function() {
+                expect(ontologyUtilsManagerSvc.getBlankNodeValue('key2')).toEqual('key2');
+            });
         });
         it('undefined if isBlankNodeId returns false', function() {
             ontologyManagerSvc.isBlankNodeId.and.returnValue(false);
