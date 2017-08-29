@@ -79,6 +79,7 @@
         <javax.cache.version>1.0.0</javax.cache.version>
         <orm.version>1.8.63</orm.version>
         <hazelcast.version>3.8.2</hazelcast.version>
+        <camel.version>2.19.2</camel.version>
     </properties>
 
     <dependencyManagement>
@@ -272,6 +273,16 @@
                 <groupId>javax.cache</groupId>
                 <artifactId>cache-api</artifactId>
                 <version>${javax.cache.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.camel</groupId>
+                <artifactId>camel-core</artifactId>
+                <version>${camel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.camel</groupId>
+                <artifactId>camel-blueprint</artifactId>
+                <version>${camel.version}</version>
             </dependency>
 
             <!-- Test Dependencies -->

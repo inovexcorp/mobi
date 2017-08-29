@@ -1,14 +1,36 @@
 package org.matonto.etl.service.workflows;
 
+/*-
+ * #%L
+ * org.matonto.etl.workflows
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
 import aQute.bnd.annotation.component.Activate;
+import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.camel.CamelContext;
-import org.apache.camel.Route;
-import org.apache.camel.ServiceStatus;
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.core.osgi.OsgiDefaultCamelContext;
 import org.apache.camel.model.OptionalIdentifiedDefinition;
-import org.apache.camel.osgi.OsgiDefaultCamelContext;
 import org.matonto.etl.api.ontologies.etl.Workflow;
 import org.matonto.etl.api.workflows.WorkflowConverterService;
 import org.matonto.etl.api.workflows.WorkflowManagerService;
@@ -23,6 +45,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Component
 public class WorkflowManagerServiceImpl implements WorkflowManagerService {
     private static final Logger LOG = LoggerFactory.getLogger(WorkflowManagerServiceImpl.class);
 

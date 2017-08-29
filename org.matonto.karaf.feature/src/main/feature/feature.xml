@@ -83,12 +83,15 @@
         <feature prerequisite="true">jax-rs-provider-gson</feature>
         <feature prerequisite="true">jax-rs-provider-multipart</feature>
         <feature prerequisite="true">jax-rs-provider-security</feature>
+        <feature prerequisite="true">aries-blueprint</feature>
+        <feature prerequisite="true">camel</feature>
         <feature prerequisite="true">matonto-deps</feature>
         <bundle start-level="80">mvn:org.matonto/api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/rest.util/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/etl.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/etl.delimited/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/etl.rdf/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/etl.workflows/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/ontology.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/ontology.core.impl.owlapi/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/ontology.utils/${project.version}</bundle>
@@ -110,7 +113,6 @@
         <bundle start-level="80">mvn:org.matonto/sparql.utils/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/cache/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/cache.impl.ehcache/${project.version}</bundle>
-        <bundle start-level="80">mvn:org.matonto/etl.workflows/${project.version}</bundle>
     </feature>
     <feature name="matonto-cli" description="MatOnto CLI Bundles" version="${project.version}">
         <feature prerequisite="true">matonto-core</feature>

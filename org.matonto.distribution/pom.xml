@@ -218,6 +218,7 @@
                         <feature>jax-rs-provider-multipart</feature>
                         <feature>jax-rs-provider-gson</feature>
                         <feature>jax-rs-provider-security</feature>
+                        <feature>camel</feature>
 
                         <!-- MatOnto Features -->
                         <feature>matonto-deps</feature>
