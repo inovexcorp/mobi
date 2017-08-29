@@ -47,6 +47,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Component(
@@ -98,30 +99,20 @@ public class SimpleProvenanceService implements ProvenanceService {
     @Override
     public Activity createActivity(ActivityConfig config) {
         Map<Class<? extends Activity>, OrmFactory<? extends Activity>> factoryMap = getActivityFactories();
-        Activity activity = null;
+        Activity activity = activityFactory.createNew(vf.createIRI(ACTIVITY_NAMESPACE + UUID.randomUUID()));
         for (Class<? extends Activity> type : config.getTypes()) {
             if (!factoryMap.containsKey(type)) {
                 throw new IllegalStateException("No factory registered for type: " + type);
             }
-            if (activity != null) {
-                activity = factoryMap.get(type).createNew(activity.getResource(), activity.getModel());
-            } else {
-                activity = factoryMap.get(type).createNew(vf.createIRI(ACTIVITY_NAMESPACE + UUID.randomUUID()));
-            }
+            activity = factoryMap.get(type).createNew(activity.getResource(), activity.getModel());
         }
         activity.setWasAssociatedWith(Collections.singleton(config.getUser()));
         activity.setGenerated(config.getGeneratedEntities());
-        for (Entity entity1 : config.getGeneratedEntities()) {
-            activity.getModel().addAll(entity1.getModel());
-        }
+        addEntitiesToModel(config.getInvalidatedEntities(), activity.getModel());
         activity.setInvalidated(config.getInvalidatedEntities());
-        for (Entity entity1 : config.getInvalidatedEntities()) {
-            activity.getModel().addAll(entity1.getModel());
-        }
+        addEntitiesToModel(config.getGeneratedEntities(), activity.getModel());
         activity.setUsed(config.getUsedEntities());
-        for (Entity entity : config.getUsedEntities()) {
-            activity.getModel().addAll(entity.getModel());
-        }
+        addEntitiesToModel(config.getUsedEntities(), activity.getModel());
         return activity;
     }
 
@@ -133,9 +124,7 @@ public class SimpleProvenanceService implements ProvenanceService {
                     throw new IllegalArgumentException("Resource " + resource + " already exists");
                 }
             });
-            conn.begin();
             conn.add(activity.getModel());
-            conn.commit();
         }
     }
 
@@ -144,18 +133,9 @@ public class SimpleProvenanceService implements ProvenanceService {
         try (RepositoryConnection conn = repo.getConnection()) {
             Model activityModel = RepositoryResults.asModel(conn.getStatements(activityIRI, null, null), mf);
             return activityFactory.getExisting(activityIRI, activityModel).flatMap(activity -> {
-                activity.getGenerated_resource().forEach(resource -> {
-                    Model entityModel = RepositoryResults.asModel(conn.getStatements(resource, null, null), mf);
-                    activity.getModel().addAll(entityModel);
-                });
-                activity.getInvalidated_resource().forEach(resource -> {
-                    Model entityModel = RepositoryResults.asModel(conn.getStatements(resource, null, null), mf);
-                    activity.getModel().addAll(entityModel);
-                });
-                activity.getUsed_resource().forEach(resource -> {
-                    Model entityModel = RepositoryResults.asModel(conn.getStatements(resource, null, null), mf);
-                    activity.getModel().addAll(entityModel);
-                });
+                addEntitiesToModel(activity.getGenerated_resource(), activityModel, conn);
+                addEntitiesToModel(activity.getInvalidated_resource(), activityModel, conn);
+                addEntitiesToModel(activity.getUsed_resource(), activityModel, conn);
                 return Optional.of(activity);
             });
         }
@@ -186,5 +166,16 @@ public class SimpleProvenanceService implements ProvenanceService {
         factoryRegistry.getFactoriesOfType(Activity.class).forEach(factory ->
                 factoryMap.put(factory.getType(), factory));
         return factoryMap;
+    }
+
+    private void addEntitiesToModel(Set<Resource> entityIRIs, Model model, RepositoryConnection conn) {
+        entityIRIs.forEach(resource -> {
+            Model entityModel = RepositoryResults.asModel(conn.getStatements(resource, null, null), mf);
+            model.addAll(entityModel);
+        });
+    }
+
+    private void addEntitiesToModel(Set<Entity> entities, Model model) {
+        entities.forEach(entity -> model.addAll(entity.getModel()));
     }
 }
