@@ -386,7 +386,7 @@ describe('Ontology Manager service', function() {
     describe('getOntology hits the proper endpoint', function() {
         var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId, rdfFormat: format, clearCache: false });
+            params = paramSerializer({ branchId: branchId, commitId: commitId, rdfFormat: format, clearCache: false, skolemize: true });
         });
         it('unless an error occurs', function() {
             util.rejectError.and.returnValue($q.reject(error));
@@ -394,7 +394,7 @@ describe('Ontology Manager service', function() {
                 function(headers) {
                     return headers['Accept'] === 'text/plain';
                 }).respond(400, null, null, error);
-            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format, false)
+            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format, false, false)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
@@ -411,7 +411,7 @@ describe('Ontology Manager service', function() {
                 function(headers) {
                     return headers['Accept'] === 'text/plain';
                 }).respond(200, ontology);
-            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format, false)
+            ontologyManagerSvc.getOntology(recordId, branchId, commitId, format, false, false)
                 .then(function(data) {
                     expect(data).toEqual(ontology);
                 }, function(response) {

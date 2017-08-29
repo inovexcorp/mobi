@@ -43,6 +43,7 @@ import org.matonto.ontology.core.api.axiom.Axiom;
 import org.matonto.ontology.core.api.classexpression.OClass;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.ValueFactory;
@@ -72,6 +73,7 @@ public class SimpleOntologyTest {
     OntologyId ontologyIdMock;
     OntologyManager ontologyManager;
     SesameTransformer transformer;
+    BNodeService bNodeService;
     IRI ontologyIRI;
     IRI versionIRI;
 
@@ -83,6 +85,7 @@ public class SimpleOntologyTest {
         ontologyIdMock = mock(OntologyId.class);
         transformer = mock(SesameTransformer.class);
         ontologyManager = mock(OntologyManager.class);
+        bNodeService = mock(BNodeService.class);
 
         ontologyIRI = mock(IRI.class);
         when(ontologyIRI.stringValue()).thenReturn("http://test.com/ontology1");
@@ -108,21 +111,21 @@ public class SimpleOntologyTest {
 
     @Test
     public void testGetOntologyIdReturnsAnEqualObject() throws Exception {
-        Ontology ontology = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
+        Ontology ontology = new SimpleOntology(ontologyIdMock, ontologyManager, transformer, bNodeService);
         assertEquals(ontologyIdMock, ontology.getOntologyId());
     }
 
     @Test
     public void testStreamConstructor() throws Exception {
         InputStream stream = new FileInputStream(testFile);
-        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService);
         assertEquals(ontologyIRI, ontology.getOntologyId().getOntologyIRI().get());
         assertEquals(versionIRI, ontology.getOntologyId().getVersionIRI().get());
     }
 
     @Test
     public void testFileConstructor() throws Exception {
-        Ontology ontology = new SimpleOntology(testFile, ontologyManager, transformer);
+        Ontology ontology = new SimpleOntology(testFile, ontologyManager, transformer, bNodeService);
         assertEquals(ontologyIRI, ontology.getOntologyId().getOntologyIRI().get());
         assertEquals(versionIRI, ontology.getOntologyId().getVersionIRI().get());
     }
@@ -132,14 +135,14 @@ public class SimpleOntologyTest {
         InputStream stream1 = new FileInputStream(testFile);
         InputStream stream2 = new FileInputStream(testFile);
 
-        Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
-        Ontology ontology2 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
+        Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer, bNodeService);
+        Ontology ontology2 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer, bNodeService);
 
-        Ontology ontology3 = new SimpleOntology(testFile, ontologyManager, transformer);
-        Ontology ontology4 = new SimpleOntology(testFile, ontologyManager, transformer);
+        Ontology ontology3 = new SimpleOntology(testFile, ontologyManager, transformer, bNodeService);
+        Ontology ontology4 = new SimpleOntology(testFile, ontologyManager, transformer, bNodeService);
 
-        Ontology ontology5 = new SimpleOntology(stream1, ontologyManager, transformer);
-        Ontology ontology6 = new SimpleOntology(stream2, ontologyManager, transformer);
+        Ontology ontology5 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService);
+        Ontology ontology6 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService);
 
         assertEquals(ontology1, ontology2);
         assertEquals(ontology3, ontology4);
@@ -152,9 +155,9 @@ public class SimpleOntologyTest {
         InputStream stream1 = new FileInputStream(testFile);
         InputStream stream2 = this.getClass().getResourceAsStream("/travel.owl");
 
-        Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
-        Ontology ontology2 = new SimpleOntology(stream1, ontologyManager, transformer);
-        Ontology ontology3 = new SimpleOntology(stream2, ontologyManager, transformer);
+        Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer, bNodeService);
+        Ontology ontology2 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService);
+        Ontology ontology3 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService);
 
         assertNotEquals(ontology1, ontology2);
         assertNotEquals(ontology1, ontology3);
@@ -167,14 +170,14 @@ public class SimpleOntologyTest {
         InputStream stream1 = new FileInputStream(testFile);
         InputStream stream2 = new FileInputStream(testFile);
 
-        Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
-        Ontology ontology2 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
+        Ontology ontology1 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer, bNodeService);
+        Ontology ontology2 = new SimpleOntology(ontologyIdMock, ontologyManager, transformer, bNodeService);
 
-        Ontology ontology3 = new SimpleOntology(testFile, ontologyManager, transformer);
-        Ontology ontology4 = new SimpleOntology(testFile, ontologyManager, transformer);
+        Ontology ontology3 = new SimpleOntology(testFile, ontologyManager, transformer, bNodeService);
+        Ontology ontology4 = new SimpleOntology(testFile, ontologyManager, transformer, bNodeService);
 
-        Ontology ontology5 = new SimpleOntology(stream1, ontologyManager, transformer);
-        Ontology ontology6 = new SimpleOntology(stream2, ontologyManager, transformer);
+        Ontology ontology5 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService);
+        Ontology ontology6 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService);
 
         assertEquals(ontology1.hashCode(), ontology2.hashCode());
         assertEquals(ontology3.hashCode(), ontology4.hashCode());
@@ -184,7 +187,7 @@ public class SimpleOntologyTest {
 
     @Test
     public void annotationsAreEmptyForEmptyOntology() throws Exception {
-        Ontology ontology = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
+        Ontology ontology = new SimpleOntology(ontologyIdMock, ontologyManager, transformer, bNodeService);
         Set<Annotation> annotations = ontology.getOntologyAnnotations();
         assertTrue(annotations.size() == 0);
     }
@@ -196,7 +199,7 @@ public class SimpleOntologyTest {
 
         // Setup
         InputStream stream = new FileInputStream(testFile);
-        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService);
 
         // Test
         Set<Annotation> annotations = ontology.getOntologyAnnotations();
@@ -207,7 +210,7 @@ public class SimpleOntologyTest {
 
     @Test
     public void axiomsAreEmptyForEmptyOntology() throws Exception {
-        Ontology ontology = new SimpleOntology(ontologyIdMock, ontologyManager, transformer);
+        Ontology ontology = new SimpleOntology(ontologyIdMock, ontologyManager, transformer, bNodeService);
         Set<Axiom> axioms = ontology.getAxioms();
         assertTrue(axioms.size() == 0);
     }
@@ -219,7 +222,7 @@ public class SimpleOntologyTest {
 
         // Setup
         InputStream stream = new FileInputStream(testFile);
-        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer);
+        Ontology ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService);
 
         // Test
         Set<Axiom> axioms = ontology.getAxioms();
@@ -231,31 +234,31 @@ public class SimpleOntologyTest {
     @Test
     public void missingDirectImportTest() throws Exception {
         File file = Paths.get(getClass().getResource("/protegeSample.owl").toURI()).toFile();
-        Ontology ontology = new SimpleOntology(file, ontologyManager, transformer);
+        Ontology ontology = new SimpleOntology(file, ontologyManager, transformer, bNodeService);
         assertEquals(5, ontology.getUnloadableImportIRIs().size());
     }
 
     @Test
     public void getCardinalityPropertiesTest() throws Exception {
-        Ontology ontology = new SimpleOntology(restrictionFile, ontologyManager, transformer);
+        Ontology ontology = new SimpleOntology(restrictionFile, ontologyManager, transformer, bNodeService);
         assertEquals(0, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Woman")).size());
     }
 
     @Test
     public void getCardinalityPropertiesOfSubClassTest() throws Exception {
-        Ontology ontology = new SimpleOntology(restrictionFile, ontologyManager, transformer);
+        Ontology ontology = new SimpleOntology(restrictionFile, ontologyManager, transformer, bNodeService);
         assertEquals(1, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Parent")).size());
     }
 
     @Test
     public void getCardinalityPropertiesOfEquivalentClassTest() throws Exception {
-        Ontology ontology = new SimpleOntology(restrictionFile, ontologyManager, transformer);
+        Ontology ontology = new SimpleOntology(restrictionFile, ontologyManager, transformer, bNodeService);
         assertEquals(1, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Person")).size());
     }
 
     @Test
     public void getCardinalityPropertiesOfEquivalentClassAndSubClassTest() throws Exception {
-        Ontology ontology = new SimpleOntology(restrictionFile, ontologyManager, transformer);
+        Ontology ontology = new SimpleOntology(restrictionFile, ontologyManager, transformer, bNodeService);
         assertEquals(2, ontology.getCardinalityProperties(vf.createIRI("http://example.com/owl/families#Man")).size());
     }
 

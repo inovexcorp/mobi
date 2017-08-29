@@ -41,12 +41,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.8.59</version>
+            <version>1.8.71-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.8.56</version>
+            <version>1.8.71-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
@@ -78,6 +78,22 @@
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
             <artifactId>sesame-runtime-osgi</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.github.jsonld-java</groupId>
+                    <artifactId>jsonld-java</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.inovexcorp.mobi</groupId>
+            <artifactId>jsonld-java</artifactId>
+            <version>0.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient-osgi</artifactId>
+            <version>4.5.1</version>
         </dependency>
 
         <!-- Owlapi dependencies -->
