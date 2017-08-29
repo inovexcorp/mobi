@@ -1066,6 +1066,7 @@ function mockDiscoverState() {
             this.cleanUpOnDatasetClear = jasmine.createSpy('cleanUpOnDatasetClear');
             this.clickCrumb = jasmine.createSpy('clickCrumb');
             this.getInstance = jasmine.createSpy('getInstance').and.returnValue({});
+            this.resetSearchQueryConfig = jasmine.createSpy('resetSearchQueryConfig');
         });
     });
 }

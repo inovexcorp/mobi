@@ -55,7 +55,8 @@
                 replace: true,
                 scope: {
                     bindings: '<',
-                    data: '<'
+                    data: '<',
+                    headers: '<?'
                 },
             }
         }
