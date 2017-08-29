@@ -51,7 +51,7 @@
 
                     dvm.getValueDisplay = function() {
                         return _.get(dvm.os.listItem.selected[dvm.key], '[' + dvm.index + ']["@value"]')
-                            || ontoUtils.getBlankNodeValue(_.get(dvm.os.listItem.selected[dvm.key], '[' + dvm.index + ']["@id"]'))
+                            || _.truncate(ontoUtils.getBlankNodeValue(_.get(dvm.os.listItem.selected[dvm.key], '[' + dvm.index + ']["@id"]')), {length: 150})
                             || _.get(dvm.os.listItem.selected[dvm.key], '[' + dvm.index + ']["@id"]');
                     }
                     dvm.removeProperty = function() {

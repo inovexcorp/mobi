@@ -813,7 +813,7 @@
                 while (toTest.length) {
                     var obj = toTest.pop();
                     var entity = listItem.ontology[obj.position];
-                    _.forEach(_.omit(entity, ['@id', '@type']), (value, key) => {
+                    _.forOwn(_.omit(entity, ['@id', '@type']), (value, key) => {
                         if (om.isBlankNodeId(key)) {
                             addToLists(key);
                         }
@@ -826,7 +826,7 @@
                     });
                 }
                 var removed = _.pullAt(listItem.ontology, _.map(toRemove, 'position'));
-                _.forOwn(toRemove, obj => {
+                _.forEach(toRemove, obj => {
                     var newPosition = _.get(listItem.index, "['" + obj.entityIRI + "'].position");
                     _.remove(listItem.iriList, obj.entityIRI);
                     _.unset(listItem.index, obj.entityIRI);
