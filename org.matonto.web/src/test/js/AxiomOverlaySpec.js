@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Axiom Overlay directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, ontologyManagerSvc, ontoUtils, prefixes, manchesterSvc, splitIRI;
+    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, ontologyManagerSvc, ontoUtils, prefixes, manchesterSvc, ontologyManagerSvc, splitIRI;
     var localNameMap = {
         'ClassA': 'http://test.com/ClassA',
         'PropA': 'http://test.com/PropA'
@@ -36,11 +36,12 @@ describe('Axiom Overlay directive', function() {
         mockOntologyUtilsManager();
         mockPrefixes();
         mockManchesterConverter();
+        mockOntologyManager();
         injectHighlightFilter();
         injectTrustedFilter();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyUtilsManagerService_, _prefixes_, _manchesterConverterService_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyUtilsManagerService_, _prefixes_, _manchesterConverterService_, _ontologyManagerService_, _splitIRIFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
@@ -48,6 +49,7 @@ describe('Axiom Overlay directive', function() {
             ontoUtils = _ontologyUtilsManagerService_;
             prefixes = _prefixes_;
             manchesterSvc = _manchesterConverterService_;
+            ontologyManagerSvc = _ontologyManagerService_;
             splitIRI = _splitIRIFilter_;
         });
 
@@ -236,11 +238,12 @@ describe('Axiom Overlay directive', function() {
                     controller.tabs.list = false;
                     controller.tabs.editor = true;
                     manchesterSvc.manchesterToJsonld.and.returnValue(manchesterResult);
+                    ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
                 });
                 it('unless the expression is invalid', function() {
                     manchesterResult.errorMessage = 'This is an error';
                     controller.addAxiom();
-                    expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(controller.expression, localNameMap);
+                    expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(controller.expression, localNameMap, false);
                     expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.showAxiomOverlay).toBe(true);
@@ -249,7 +252,7 @@ describe('Axiom Overlay directive', function() {
                 });
                 it('unless no blank nodes could be created', function() {
                     controller.addAxiom();
-                    expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(controller.expression, localNameMap);
+                    expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(controller.expression, localNameMap, false);
                     expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.showAxiomOverlay).toBe(true);
@@ -266,7 +269,7 @@ describe('Axiom Overlay directive', function() {
                         axiom = prefixes.rdfs + 'range';
                         ontologyStateSvc.listItem.selected = _.set({}, axiom, [previousValue]);
                         controller.addAxiom();
-                        expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(controller.expression, localNameMap);
+                        expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(controller.expression, localNameMap, false);
                         expect(ontologyStateSvc.listItem.selected[axiom].length).toBe(2);
                         expect(ontologyStateSvc.listItem.selected[axiom]).toContain(previousValue);
                         expect(ontologyStateSvc.listItem.selected[axiom]).toContain({'@id': blankNodes[0]['@id']});
@@ -280,7 +283,7 @@ describe('Axiom Overlay directive', function() {
                     it('and the axiom is not rdfs:range', function() {
                         ontologyStateSvc.listItem.selected = _.set({}, axiom, [previousValue]);
                         controller.addAxiom();
-                        expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(controller.expression, localNameMap);
+                        expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(controller.expression, localNameMap, false);
                         expect(ontologyStateSvc.listItem.selected[axiom].length).toBe(2);
                         expect(ontologyStateSvc.listItem.selected[axiom]).toContain(previousValue);
                         expect(ontologyStateSvc.listItem.selected[axiom]).toContain({'@id': blankNodes[0]['@id']});

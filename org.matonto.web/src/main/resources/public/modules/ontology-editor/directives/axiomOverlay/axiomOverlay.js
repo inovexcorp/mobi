@@ -27,9 +27,9 @@
         .module('axiomOverlay', [])
         .directive('axiomOverlay', axiomOverlay);
 
-        axiomOverlay.$inject = ['responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes', 'manchesterConverterService', '$filter'];
+        axiomOverlay.$inject = ['responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes', 'manchesterConverterService', 'ontologyManagerService', '$filter'];
 
-        function axiomOverlay(responseObj, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes, manchesterConverterService, $filter) {
+        function axiomOverlay(responseObj, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes, manchesterConverterService, ontologyManagerService, $filter) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -42,6 +42,7 @@
                 controller: function() {
                     var dvm = this;
                     var mc = manchesterConverterService;
+                    var om = ontologyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
@@ -70,7 +71,7 @@
                         var values;
                         // Collect values depending on current tab
                         if (dvm.tabs.editor) {
-                            var result = mc.manchesterToJsonld(dvm.expression, localNameMap);
+                            var result = mc.manchesterToJsonld(dvm.expression, localNameMap, om.isDataTypeProperty(dvm.os.listItem.selected));
                             if (result.errorMessage) {
                                 dvm.errorMessage = result.errorMessage;
                                 return;
