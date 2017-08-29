@@ -47,7 +47,9 @@
                         lineWrapping: true,
                         readOnly: true,
                         cursorBlinkRate: -1,
-                        height: 'dynamic'
+                        height: 'dynamic',
+                        scrollbarStyle: 'null',
+                        viewportMargin: Infinity
                     };
                     dvm.value = '';
                     $scope.$watch('nodeId', newValue => {
