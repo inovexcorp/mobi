@@ -38,16 +38,21 @@ import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class MatOntoOntologyFactory implements OWLOntologyFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(MatOntoOntologyFactory.class);
 
     private OntologyManager ontologyManager;
     private OWLOntologyFactory ontologyFactory;
+    private Map<IRI, OWLOntology> loadedOntologies;
 
     public MatOntoOntologyFactory(OntologyManager ontologyManager, OWLOntologyFactory factory) {
         this.ontologyManager = ontologyManager;
         this.ontologyFactory = factory;
+        this.loadedOntologies = new HashMap<>();
     }
 
     @Override
@@ -74,17 +79,21 @@ public class MatOntoOntologyFactory implements OWLOntologyFactory {
             throws OWLOntologyCreationException {
         IRI iri = source.getDocumentIRI();
         LOG.debug("loadOWLOntology called with: {}", iri);
-        IRI recordId = IRI.create(iri.getIRIString().replace(MatOntoOntologyIRIMapper.protocol,
-                MatOntoOntologyIRIMapper.standardProtocol));
-        Ontology matOnt = ontologyManager.retrieveOntology(SimpleOntologyValues.matontoIRI(recordId))
-                .orElseThrow(() -> new OWLOntologyCreationException("Ontology " + recordId
-                        + " could not be found"));
-        OWLOntology ont = SimpleOntologyValues.owlapiOntology(matOnt);
-        handler.ontologyCreated(ont);
-        ont.importsDeclarations().forEach(manager::makeLoadImportRequest);
-        OWLDocumentFormat format = new RDFXMLDocumentFormat();
-        format.setAddMissingTypes(false);
-        handler.setOntologyFormat(ont, format);
-        return ont;
+        // if (!loadedOntologies.containsKey(iri)) {
+            IRI recordId = IRI.create(iri.getIRIString().replace(MatOntoOntologyIRIMapper.protocol,
+                    MatOntoOntologyIRIMapper.standardProtocol));
+            Ontology matOnt = ontologyManager.retrieveOntology(SimpleOntologyValues.matontoIRI(recordId))
+                    .orElseThrow(() -> new OWLOntologyCreationException("Ontology " + recordId
+                            + " could not be found"));
+            OWLOntology ont = SimpleOntologyValues.owlapiOntology(matOnt);
+            handler.ontologyCreated(ont);
+            ont.importsDeclarations().forEach(manager::makeLoadImportRequest);
+            OWLDocumentFormat format = new RDFXMLDocumentFormat();
+            format.setAddMissingTypes(false);
+            handler.setOntologyFormat(ont, format);
+            loadedOntologies.put(iri, ont);
+            return ont;
+        /*}
+        return loadedOntologies.get(iri);*/
     }
 }
