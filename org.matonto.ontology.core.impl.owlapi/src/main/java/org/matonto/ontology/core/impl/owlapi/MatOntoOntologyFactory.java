@@ -35,8 +35,13 @@ import org.semanticweb.owlapi.model.OWLOntologyFactory;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MatOntoOntologyFactory implements OWLOntologyFactory {
+
+    private static final Logger LOG = LoggerFactory.getLogger(MatOntoOntologyFactory.class);
+
     private OntologyManager ontologyManager;
     private OWLOntologyFactory ontologyFactory;
 
@@ -59,6 +64,7 @@ public class MatOntoOntologyFactory implements OWLOntologyFactory {
     @Override
     public OWLOntology createOWLOntology(OWLOntologyManager manager, OWLOntologyID ontologyID, IRI documentIRI,
                                          OWLOntologyCreationHandler handler) throws OWLOntologyCreationException {
+        LOG.debug("createOWLOntology called with: {}", documentIRI);
         return ontologyFactory.createOWLOntology(manager, ontologyID, documentIRI, handler);
     }
 
@@ -67,6 +73,7 @@ public class MatOntoOntologyFactory implements OWLOntologyFactory {
                                        OWLOntologyCreationHandler handler, OWLOntologyLoaderConfiguration config)
             throws OWLOntologyCreationException {
         IRI iri = source.getDocumentIRI();
+        LOG.debug("loadOWLOntology called with: {}", iri);
         IRI recordId = IRI.create(iri.getIRIString().replace(MatOntoOntologyIRIMapper.protocol,
                 MatOntoOntologyIRIMapper.standardProtocol));
         Ontology matOnt = ontologyManager.retrieveOntology(SimpleOntologyValues.matontoIRI(recordId))
