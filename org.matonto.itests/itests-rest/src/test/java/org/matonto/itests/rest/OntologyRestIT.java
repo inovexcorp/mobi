@@ -224,7 +224,7 @@ public class OntologyRestIT extends KarafTestSupport {
 
     private Resource validateOntologyCreated(Resource recordId, Resource branchId, Resource commitId) {
         IRI additionsGraphIRI;
-        Repository repo = getOsgiService(Repository.class);
+        Repository repo = getOsgiService(Repository.class, "id=system", 30000L);
         ValueFactory vf = getOsgiService(ValueFactory.class);
         IRI branchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
         IRI headIRI = vf.createIRI(Branch.head_IRI);

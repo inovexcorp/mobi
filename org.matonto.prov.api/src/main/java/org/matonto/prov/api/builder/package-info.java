@@ -1,14 +1,14 @@
-@Version("1.3.0.${build}")
+@Version("1.0.0.${build}")
 
-package org.matonto.persistence.utils;
+package org.matonto.prov.api.builder;
 
 /*-
  * #%L
- * org.matonto.persistence.utils
+ * org.matonto.prov.api
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
