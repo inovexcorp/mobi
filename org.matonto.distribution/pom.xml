@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.70-SNAPSHOT</version>
+        <version>1.9.1-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -238,7 +238,7 @@
                     <registryUrl>https://index.docker.io/v1/</registryUrl>
                     <useGitCommitId>true</useGitCommitId>
                     <dockerDirectory>${project.build.directory}/assembly/docker</dockerDirectory>
-                    <imageName>matonto/matonto</imageName>
+                    <imageName>inovexis/mobi</imageName>
                     <imageTags>
                         <imageTag>${project.version}</imageTag>
                         <imageTag>latest</imageTag>

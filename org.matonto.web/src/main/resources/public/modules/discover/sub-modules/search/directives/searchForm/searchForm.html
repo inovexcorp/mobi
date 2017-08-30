@@ -64,10 +64,10 @@
                       <button type="button" ng-disabled="!dvm.ds.search.datasetRecordId" class="pull-right btn btn-link property-link" ng-click="dvm.showPropertyFilterOverlay = true"><i class="fa fa-fw fa-plus"></i>Property</button>
                   </div>
                   <md-list>
-                      <md-list-item ng-repeat="meta in dvm.ds.search.filterMeta" class="md-3-line">
+                      <md-list-item ng-repeat="meta in dvm.ds.search.queryConfig.filters" class="md-3-line">
                           <div class="md-list-item-text">
                               <h3>{{meta.title}}</h3>
-                              <p>Range: {{meta.range}}</p>
+                              <p>Range: {{dvm.util.getBeautifulIRI(meta.range)}}</p>
                               <p>Filter: {{meta.display}}</p>
                               <md-icon class="md-secondary fa fa-trash-o" ng-click="dvm.removeFilter($index)"></md-icon>
                           </div>
@@ -76,8 +76,9 @@
               </div>
           </form>
       </block-content>
-      <block-footer>
-          <button type="submit" class="btn btn-primary" ng-disabled="!dvm.ds.search.datasetRecordId" ng-click="dvm.submit()">Submit</button>
+      <block-footer class="btn-container clearfix">
+          <button type="submit" class="btn btn-primary" ng-disabled="!dvm.isSubmittable()" ng-click="dvm.submit()">Submit</button>
+          <a class="btn btn-link reset-link" ng-click="dvm.ds.resetSearchQueryConfig()">Reset</a>
       </block-footer>
   </block>
   <property-filter-overlay ng-if="dvm.showPropertyFilterOverlay" close-overlay="dvm.showPropertyFilterOverlay = false"></property-filter-overlay>

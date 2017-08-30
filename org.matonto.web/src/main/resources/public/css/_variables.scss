@@ -10,6 +10,8 @@ $gray-light:             lighten($gray-base, 75%) !default; // #777
 $gray-lighter:           lighten($gray-base, 93.5%) !default; // #eee
 $gray-custom:            #E8E8E8;
 
+$error-color: #f00;
+
 $brand-primary:         darken(#428bca, 6.5%) !default; // #337ab7
 $brand-success:         #5cb85c !default;
 $brand-success-light:   lighten($brand-success, 30%);

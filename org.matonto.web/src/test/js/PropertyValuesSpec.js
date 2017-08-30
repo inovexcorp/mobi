@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Property Values directive', function() {
-    var $compile,
-        scope,
-        element,
-        isolatedScope,
-        resObj,
-        ontologyUtilsManagerSvc,
-        ontologyManagerSvc;
+    var $compile, scope, element, isolatedScope, resObj, ontologyUtilsManagerSvc, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -90,16 +84,12 @@ describe('Property Values directive', function() {
             expect(values.length).toBe(2);
         });
         it('depending on whether a value is a blank node', function() {
-            ontologyUtilsManagerSvc.getBlankNodeValue.and.callFake(function(string) {
-                return string === '_:genid0' ? '<span>test</span>' : '';
-            });
-            scope.$digest();
-            var blankNodeValue = element.querySelectorAll('.value-container .value-display-wrapper .blank-node-value');
+            var blankNodeValue = element.querySelectorAll('.value-container .value-display-wrapper blank-node-value-display');
             expect(blankNodeValue.length).toBe(1);
             var editButtons = element.querySelectorAll('.value-container [title=Edit]');
             expect(editButtons.length).toBe(1);
             var deleteButtons = element.querySelectorAll('.value-container [title=Delete]');
-            expect(deleteButtons.length).toBe(1);
+            expect(deleteButtons.length).toBe(2);
         });
         it('depending on whether the values are open or closed', function() {
             var isolatedScope = element.isolateScope();
