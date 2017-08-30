@@ -38,6 +38,7 @@ import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.api.types.AxiomType;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 import org.matonto.ontology.core.api.types.EntityType;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.ValueFactory;
@@ -81,6 +82,7 @@ import static org.powermock.api.easymock.PowerMock.replay;
 public class SimpleOntologyValuesTest {
 
     private ValueFactory factory;
+    private BNodeService bNodeService;
     private IRI ontologyIRI;
     private IRI versionIRI;
     private org.semanticweb.owlapi.model.IRI owlOntologyIRI;
@@ -88,12 +90,14 @@ public class SimpleOntologyValuesTest {
     @Before
     public void setUp() {
         factory = mock(ValueFactory.class);
+        bNodeService = mock(BNodeService.class);
         owlOntologyIRI = mock(org.semanticweb.owlapi.model.IRI.class);
         ontologyIRI = mock(IRI.class);
         versionIRI = mock(IRI.class);
 
         SimpleOntologyValues sov = new SimpleOntologyValues();
         sov.setValueFactory(factory);
+        sov.setbNodeService(bNodeService);
     }
     
     @Test

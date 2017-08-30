@@ -81,7 +81,7 @@ function injectRegexConstant() {
     module(function($provide) {
         $provide.constant('REGEX', {
             'IRI': /[a-zA-Z]/,
-            'LOCALNAME': /[a-zA-Z]/,
+            'LOCALNAME': /[a-zA-Z]+/,
             'FILENAME': /[a-zA-Z]/,
             'UUID': /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
             'DATETIME': /[a-zA-Z]/,
@@ -997,7 +997,9 @@ function mockDatasetState() {
 function mockManchesterConverter() {
     module(function($provide) {
         $provide.service('manchesterConverterService', function() {
+            this.getKeywords = jasmine.createSpy('getKeywords').and.returnValue([]);
             this.jsonldToManchester = jasmine.createSpy('jsonldToManchester').and.returnValue('');
+            this.manchesterToJsonld = jasmine.createSpy('jsonldToManchester').and.returnValue({errorMessage: '', jsonld: []});
         });
     })
 }
