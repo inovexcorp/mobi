@@ -24,6 +24,7 @@
 
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.3.0" name="matonto-features">
     <feature name="matonto-deps" description="MatOnto Dependency Bundles" version="${project.version}">
+        <feature prerequisite="true">eventadmin</feature>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.ezmorph/1.0.6_1</bundle>
         <bundle start-level="80">mvn:org.apache.httpcomponents/httpclient-osgi/4.5.2</bundle>
         <bundle start-level="80">mvn:org.apache.httpcomponents/httpcore-osgi/4.4</bundle>
@@ -57,6 +58,7 @@
         <bundle start-level="80">mvn:com.opencsv/opencsv/${opencsv.version}</bundle>
         <bundle start-level="80">mvn:ch.qos.logback/logback-classic/${logback.version}</bundle>
         <bundle start-level="80">mvn:ch.qos.logback/logback-core/${logback.version}</bundle>
+        <bundle start-level="80">mvn:org.apache.camel/camel-core-osgi/${camel.version}</bundle>
 
         <!-- Ontology Dependencies -->
         <bundle start-level="80">mvn:net.sourceforge.owlapi/owlapi-distribution/${owlapi.version}</bundle>
