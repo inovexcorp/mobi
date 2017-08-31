@@ -1,5 +1,6 @@
+@Version("1.0.0.${build}")
 
-package org.matonto.prov.api.ontologies.mobiprov;
+package org.matonto.prov.api.builder;
 
 /*-
  * #%L
@@ -24,25 +25,4 @@ package org.matonto.prov.api.ontologies.mobiprov;
  * #L%
  */
 
-import org.matonto.ontologies.provo.Activity;
-
-
-/**
- * Generated class representing things with the type: http://matonto.org/ontologies/prov#CreateActivity
- * 
- */
-public interface CreateActivity extends Activity, MobiProv_Thing
-{
-
-    /**
-     * The rdf:type IRI of this class.
-     * 
-     */
-    public final static String TYPE = "http://matonto.org/ontologies/prov#CreateActivity";
-    /**
-     * The default implementation for this interface
-     * 
-     */
-    public final static Class<? extends CreateActivity> DEFAULT_IMPL = CreateActivityImpl.class;
-
-}
+import aQute.bnd.annotation.Version;

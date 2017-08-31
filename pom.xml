@@ -29,7 +29,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.9.1-SNAPSHOT</version>
+    <version>1.9.2-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -96,6 +96,8 @@
         <module>org.matonto.explorable.dataset.rest</module>
         <module>org.matonto.itests</module>
         <module>org.matonto.etl.workflows</module>
+        <module>org.matonto.prov.api</module>
+        <module>org.matonto.prov.impl</module>
     </modules>
 
     <properties>
