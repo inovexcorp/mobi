@@ -171,9 +171,9 @@
 
 # Message
 
-:Messsage a owl:Class ;
+:Message a owl:Class ;
     dct:title "Message"@en ;
-    dct:description "A Messsage indicates the format of the data flowing through a Workflow at a particular moment."@en .
+    dct:description "A Message indicates the format of the data flowing through a Workflow at a particular moment."@en .
 
 :previousMessage a owl:ObjectProperty, owl:FunctionalProperty ;
     dct:title "previous message"@en ;
