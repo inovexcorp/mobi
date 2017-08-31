@@ -31,11 +31,14 @@ import org.matonto.ontologies.provo.ActivityFactory;
 import org.matonto.ontologies.provo.Entity;
 import org.matonto.persistence.utils.ReadOnlyRepositoryConnection;
 import org.matonto.persistence.utils.RepositoryResults;
+import org.matonto.persistence.utils.Statements;
 import org.matonto.prov.api.ProvenanceService;
 import org.matonto.prov.api.builder.ActivityConfig;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.OrmFactoryRegistry;
@@ -45,10 +48,12 @@ import org.matonto.repository.config.RepositoryConsumerConfig;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component(
         configurationPolicy = ConfigurationPolicy.require,
@@ -159,6 +164,39 @@ public class SimpleProvenanceService implements ProvenanceService {
             conn.add(newActivity.getModel());
             conn.commit();
         }
+    }
+
+    @Override
+    public void deleteActivity(Resource activityIRI) {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            if (!conn.contains(activityIRI, null, null)) {
+                throw new IllegalArgumentException("Activity " + activityIRI + " does not exist");
+            }
+            conn.begin();
+            List<Resource> generated = getReferencedEntityIRIs(activityIRI, Activity.generated_IRI, conn);
+            List<Resource> invalided = getReferencedEntityIRIs(activityIRI, Activity.invalidated_IRI, conn);
+            List<Resource> used = getReferencedEntityIRIs(activityIRI, Activity.used_IRI, conn);
+            conn.remove(activityIRI, null, null);
+            conn.remove((Resource) null, null, activityIRI);
+            generated.forEach(resource -> removeIfNotReferenced(resource, conn));
+            invalided.forEach(resource -> removeIfNotReferenced(resource, conn));
+            used.forEach(resource -> removeIfNotReferenced(resource, conn));
+            conn.commit();
+        }
+    }
+
+    private void removeIfNotReferenced(Resource iri, RepositoryConnection conn) {
+        if (!conn.contains(null, null, iri)) {
+            conn.remove(iri, null, null);
+        }
+    }
+
+    private List<Resource> getReferencedEntityIRIs(Resource activityIRI, String propIRI, RepositoryConnection conn) {
+        return RepositoryResults.asList(conn.getStatements(activityIRI, vf.createIRI(propIRI), null)).stream()
+                .map(Statements::objectResource)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
     }
 
     private Map<Class<? extends Activity>, OrmFactory<? extends Activity>> getActivityFactories() {

@@ -40,6 +40,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.matonto.ontologies.provo.ActivityFactory;
+import org.matonto.ontologies.provo.EntityFactory;
+import org.matonto.prov.api.ProvenanceService;
+import org.matonto.prov.api.builder.ActivityConfig;
+import org.matonto.rdf.orm.conversion.impl.DateValueConverter;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.repository.sail.SailRepository;
@@ -142,6 +147,8 @@ public class SimpleCatalogManagerTest {
     private TagFactory tagFactory = new TagFactory();
     private UserBranchFactory userBranchFactory = new UserBranchFactory();
     private UserFactory userFactory = new UserFactory();
+    private EntityFactory entityFactory = new EntityFactory();
+    private ActivityFactory activityFactory = new ActivityFactory();
 
     private IRI distributedCatalogId;
     private IRI localCatalogId;
@@ -168,6 +175,8 @@ public class SimpleCatalogManagerTest {
     private final IRI COMMIT_IRI = vf.createIRI("http://matonto.org/test/commits#commit");
     private final IRI IN_PROGRESS_COMMIT_IRI = vf.createIRI("http://matonto.org/test/commits#in-progress-commit");
 
+    private Activity activity;
+
     private static final int TOTAL_SIZE = 7;
 
     @Rule
@@ -175,6 +184,9 @@ public class SimpleCatalogManagerTest {
 
     @Mock
     private CatalogUtilsService utilsService;
+
+    @Mock
+    private ProvenanceService provenanceService;
 
     @Before
     public void setUp() throws Exception {
@@ -184,83 +196,88 @@ public class SimpleCatalogManagerTest {
         catalogFactory.setModelFactory(mf);
         catalogFactory.setValueFactory(vf);
         catalogFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(catalogFactory);
 
         recordFactory.setModelFactory(mf);
         recordFactory.setValueFactory(vf);
         recordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(recordFactory);
 
         unversionedRecordFactory.setModelFactory(mf);
         unversionedRecordFactory.setValueFactory(vf);
         unversionedRecordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(unversionedRecordFactory);
 
         versionedRecordFactory.setModelFactory(mf);
         versionedRecordFactory.setValueFactory(vf);
         versionedRecordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(versionedRecordFactory);
 
         versionedRDFRecordFactory.setModelFactory(mf);
         versionedRDFRecordFactory.setValueFactory(vf);
         versionedRDFRecordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(versionedRDFRecordFactory);
 
         commitFactory.setModelFactory(mf);
         commitFactory.setValueFactory(vf);
         commitFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(commitFactory);
 
         inProgressCommitFactory.setModelFactory(mf);
         inProgressCommitFactory.setValueFactory(vf);
         inProgressCommitFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(inProgressCommitFactory);
 
         revisionFactory.setModelFactory(mf);
         revisionFactory.setValueFactory(vf);
         revisionFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(revisionFactory);
 
         branchFactory.setModelFactory(mf);
         branchFactory.setValueFactory(vf);
         branchFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(branchFactory);
 
         distributionFactory.setModelFactory(mf);
         distributionFactory.setValueFactory(vf);
         distributionFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(distributionFactory);
 
         versionFactory.setModelFactory(mf);
         versionFactory.setValueFactory(vf);
         versionFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(versionFactory);
 
         tagFactory.setModelFactory(mf);
         tagFactory.setValueFactory(vf);
         tagFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(tagFactory);
 
         userFactory.setModelFactory(mf);
         userFactory.setValueFactory(vf);
         userFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(userFactory);
 
-        versionedRDFRecordFactory.setModelFactory(mf);
-        versionedRDFRecordFactory.setValueFactory(vf);
-        versionedRDFRecordFactory.setValueConverterRegistry(vcr);
+        entityFactory.setModelFactory(mf);
+        entityFactory.setValueFactory(vf);
+        entityFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(entityFactory);
+
+        activityFactory.setModelFactory(mf);
+        activityFactory.setValueFactory(vf);
+        activityFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(activityFactory);
 
         userBranchFactory.setModelFactory(mf);
         userBranchFactory.setValueFactory(vf);
         userBranchFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(userBranchFactory);
 
         thingFactory.setModelFactory(mf);
         thingFactory.setValueFactory(vf);
         thingFactory.setValueConverterRegistry(vcr);
-
-        vcr.registerValueConverter(catalogFactory);
-        vcr.registerValueConverter(recordFactory);
-        vcr.registerValueConverter(unversionedRecordFactory);
-        vcr.registerValueConverter(versionedRecordFactory);
-        vcr.registerValueConverter(versionedRDFRecordFactory);
-        vcr.registerValueConverter(distributionFactory);
-        vcr.registerValueConverter(branchFactory);
-        vcr.registerValueConverter(inProgressCommitFactory);
-        vcr.registerValueConverter(commitFactory);
-        vcr.registerValueConverter(revisionFactory);
-        vcr.registerValueConverter(versionFactory);
-        vcr.registerValueConverter(tagFactory);
         vcr.registerValueConverter(thingFactory);
-        vcr.registerValueConverter(userFactory);
-        vcr.registerValueConverter(versionedRDFRecordFactory);
-        vcr.registerValueConverter(userBranchFactory);
+
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -270,6 +287,7 @@ public class SimpleCatalogManagerTest {
         vcr.registerValueConverter(new StringValueConverter());
         vcr.registerValueConverter(new ValueValueConverter());
         vcr.registerValueConverter(new LiteralValueConverter());
+        vcr.registerValueConverter(new DateValueConverter());
 
         MockitoAnnotations.initMocks(this);
         manager = new SimpleCatalogManager();
@@ -289,6 +307,9 @@ public class SimpleCatalogManagerTest {
         manager.setUnversionedRecordFactory(unversionedRecordFactory);
         manager.setVersionedRecordFactory(versionedRecordFactory);
         manager.setUtils(utilsService);
+        manager.setEntityFactory(entityFactory);
+        manager.setUserFactory(userFactory);
+        manager.setProvenanceService(provenanceService);
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
@@ -326,6 +347,9 @@ public class SimpleCatalogManagerTest {
                 vf.createIRI("http://matonto.org/test/deletions#" + vf.createIRI(i.getArgumentAt(0, Resource.class).stringValue()).getLocalName()));
         when(utilsService.throwAlreadyExists(any(Resource.class), any(OrmFactory.class))).thenReturn(new IllegalArgumentException());
         when(utilsService.throwThingNotFound(any(Resource.class), any(OrmFactory.class))).thenReturn(new IllegalStateException());
+
+        activity = activityFactory.createNew(vf.createIRI("http://test.com/activity"));
+        when(provenanceService.createActivity(any(ActivityConfig.class))).thenReturn(activity);
     }
 
     @After
@@ -547,10 +571,14 @@ public class SimpleCatalogManagerTest {
     public void testAddRecord() throws Exception {
         // Setup:
         Record record = recordFactory.createNew(NEW_IRI);
+        record.setProperty(USER_IRI, vf.createIRI(_Thing.publisher_IRI));
 
         manager.addRecord(distributedCatalogId, record);
+        verify(provenanceService).createActivity(any(ActivityConfig.class));
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
         verify(utilsService).addObject(eq(record), any(RepositoryConnection.class));
+        verify(provenanceService).addActivity(activity);
+        verify(provenanceService).updateActivity(activity);
         assertTrue(record.getCatalog_resource().isPresent());
         assertEquals(distributedCatalogId, record.getCatalog_resource().get());
     }
@@ -559,10 +587,14 @@ public class SimpleCatalogManagerTest {
     public void testAddUnversionedRecord() throws Exception {
         // Setup:
         UnversionedRecord record = unversionedRecordFactory.createNew(NEW_IRI);
+        record.setProperty(USER_IRI, vf.createIRI(_Thing.publisher_IRI));
 
         manager.addRecord(distributedCatalogId, record);
+        verify(provenanceService).createActivity(any(ActivityConfig.class));
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
         verify(utilsService).addObject(eq(record), any(RepositoryConnection.class));
+        verify(provenanceService).addActivity(activity);
+        verify(provenanceService).updateActivity(activity);
         assertTrue(record.getCatalog_resource().isPresent());
         assertEquals(distributedCatalogId, record.getCatalog_resource().get());
     }
@@ -571,10 +603,14 @@ public class SimpleCatalogManagerTest {
     public void testAddVersionedRecord() throws Exception {
         // Setup:
         VersionedRecord record = versionedRecordFactory.createNew(NEW_IRI);
+        record.setProperty(USER_IRI, vf.createIRI(_Thing.publisher_IRI));
 
         manager.addRecord(distributedCatalogId, record);
+        verify(provenanceService).createActivity(any(ActivityConfig.class));
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
         verify(utilsService).addObject(eq(record), any(RepositoryConnection.class));
+        verify(provenanceService).addActivity(activity);
+        verify(provenanceService).updateActivity(activity);
         assertTrue(record.getCatalog_resource().isPresent());
         assertEquals(distributedCatalogId, record.getCatalog_resource().get());
     }
@@ -583,8 +619,10 @@ public class SimpleCatalogManagerTest {
     public void testAddVersionedRDFRecord() throws Exception {
         // Setup:
         VersionedRDFRecord record = versionedRDFRecordFactory.createNew(NEW_IRI);
+        record.setProperty(USER_IRI, vf.createIRI(_Thing.publisher_IRI));
 
         manager.addRecord(distributedCatalogId, record);
+        verify(provenanceService).createActivity(any(ActivityConfig.class));
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
         verify(utilsService, times(0)).addObject(eq(record), any(RepositoryConnection.class));
@@ -601,8 +639,12 @@ public class SimpleCatalogManagerTest {
         Record record = recordFactory.createNew(RECORD_IRI);
 
         manager.addRecord(distributedCatalogId, record);
+        verify(provenanceService).createActivity(any(ActivityConfig.class));
         verify(utilsService, times(0)).addObject(eq(record), any(RepositoryConnection.class));
         verify(utilsService).throwAlreadyExists(RECORD_IRI, recordFactory);
+        verify(provenanceService).addActivity(activity);
+        verify(provenanceService).deleteActivity(activity.getResource());
+        verify(provenanceService, times(0)).updateActivity(activity);
     }
 
     /* updateRecord */
