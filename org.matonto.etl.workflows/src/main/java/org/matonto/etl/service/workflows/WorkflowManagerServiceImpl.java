@@ -97,9 +97,9 @@ public class WorkflowManagerServiceImpl implements WorkflowManagerService {
         if (workflows.containsKey(workflow.getResource())) {
             throw new IllegalArgumentException("Workflow " + workflow.getResource() + " already exists");
         }
+        LOG.info("Adding Workflow " + workflow.getResource());
         RouteBuilder routes = converterService.convert(workflow);
         try {
-            LOG.info("Adding Workflow routes to CamelContext");
             camelContext.addRoutes(routes);
         } catch (Exception e) {
             throw new MatOntoException("Error in adding routes to CamelContext", e);
@@ -108,6 +108,7 @@ public class WorkflowManagerServiceImpl implements WorkflowManagerService {
                 .map(OptionalIdentifiedDefinition::getId)
                 .collect(Collectors.toSet());
         workflows.put(workflow.getResource(), routeIds);
+        LOG.info("Added routes " + routeIds.toString() + " to CamelContext");
     }
 
     @Override
@@ -116,7 +117,7 @@ public class WorkflowManagerServiceImpl implements WorkflowManagerService {
         Set<String> routeIds = workflows.get(workflowIRI);
         try {
             for (String s : routeIds) {
-                LOG.info("Starting Workflow routes");
+                LOG.info("Starting Workflow " + workflowIRI + " routes");
                 camelContext.startRoute(s);
             }
         } catch (Exception e) {
@@ -130,7 +131,7 @@ public class WorkflowManagerServiceImpl implements WorkflowManagerService {
         Set<String> routeIds = workflows.get(workflowIRI);
         try {
             for (String s : routeIds) {
-                LOG.info("Stopping Workflow routes");
+                LOG.info("Stopping Workflow " + workflowIRI + " routes");
                 camelContext.stopRoute(s);
             }
         } catch (Exception e) {
