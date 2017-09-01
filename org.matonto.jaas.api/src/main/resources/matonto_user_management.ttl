@@ -5,13 +5,13 @@
 @prefix foaf: <http://xmlns.com/foaf/0.1/>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix dct: <http://purl.org/dc/terms/>.
-@prefix prov: <http://www.w3.org/ns/prov-o#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
 @prefix : <http://matonto.org/ontologies/user/management#>.
 @base <http://matonto.org/ontologies/user/management>.
 
 <http://matonto.org/ontologies/user/management> a owl:Ontology;
     owl:versionIRI <http://matonto.org/ontologies/user/management/1.0>;
-    owl:imports <http://www.w3.org/ns/prov-o#>, <http://xmlns.com/foaf/0.1>;
+    owl:imports <http://www.w3.org/ns/prov#>, <http://xmlns.com/foaf/0.1>;
     rdfs:label "The MatOnto user management ontology"@en;
     rdfs:comment "The MatOnto user management ontology describes how users are expressed within the MatOnto framework."@en;
     dct:creator [foaf:name "Jordan Lewis"], [foaf:name "Megan Mercer"];
