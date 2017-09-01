@@ -435,7 +435,8 @@ public class SimpleCatalogManager implements CatalogManager {
         Value userResource = record.getProperty(vf.createIRI(_Thing.publisher_IRI)).orElseThrow(() ->
                 new IllegalArgumentException("Record must have a publisher."));
         User publisher = userFactory.createNew(vf.createIRI(userResource.stringValue()));
-        ActivityConfig config = new ActivityConfig.Builder(Collections.singleton(CreateActivity.class), publisher).build();
+        ActivityConfig config = new ActivityConfig.Builder(Collections.singleton(CreateActivity.class), publisher)
+                .build();
         Activity activity = provenanceService.createActivity(config);
         activity.addProperty(vf.createLiteral(start), vf.createIRI(Activity.startedAtTime_IRI));
         provenanceService.addActivity(activity);

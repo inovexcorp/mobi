@@ -71,27 +71,27 @@ public class SimpleProvenanceService implements ProvenanceService {
     private static String ACTIVITY_NAMESPACE = "http://matonto.org/activities/";
 
     @Reference(name = "repo")
-    protected void setRepo(Repository repo) {
+    void setRepo(Repository repo) {
         this.repo = repo;
     }
 
     @Reference
-    protected void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
+    void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
         this.factoryRegistry = factoryRegistry;
     }
 
     @Reference
-    protected void setVf(ValueFactory vf) {
+    void setVf(ValueFactory vf) {
         this.vf = vf;
     }
 
     @Reference
-    protected void setMf(ModelFactory mf) {
+    void setMf(ModelFactory mf) {
         this.mf = mf;
     }
 
     @Reference
-    protected void setActivityFactory(ActivityFactory activityFactory) {
+    void setActivityFactory(ActivityFactory activityFactory) {
         this.activityFactory = activityFactory;
     }
 
