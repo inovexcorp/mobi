@@ -23,8 +23,8 @@ package org.matonto.analytic.pagination;
  * #L%
  */
 
-import org.matonto.analytic.ontology.analytic.AnalyticRecord;
-import org.matonto.analytic.ontology.analytic.AnalyticRecordFactory;
+import org.matonto.analytic.ontologies.analytic.AnalyticRecord;
+import org.matonto.analytic.ontologies.analytic.AnalyticRecordFactory;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Record;
 

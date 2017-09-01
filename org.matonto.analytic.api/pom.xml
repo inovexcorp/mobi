@@ -90,7 +90,7 @@
                             <generates>
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/main/resources/analytic.ttl</ontologyFile>
-                                    <outputPackage>org.matonto.analytic.ontology.analytic</outputPackage>
+                                    <outputPackage>org.matonto.analytic.ontologies.analytic</outputPackage>
                                     <ontologyName>Mobi Analytic</ontologyName>
                                 </ontology>
                             </generates>

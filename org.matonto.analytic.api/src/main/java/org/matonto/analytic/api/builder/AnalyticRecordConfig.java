@@ -23,11 +23,12 @@ package org.matonto.analytic.api.builder;
  * #L%
  */
 
-import org.matonto.analytic.ontology.analytic.Configuration;
+import org.matonto.analytic.ontologies.analytic.Configuration;
 import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 
 import java.util.Set;
+import javax.annotation.Nonnull;
 
 public class AnalyticRecordConfig extends RecordConfig {
 
@@ -52,7 +53,7 @@ public class AnalyticRecordConfig extends RecordConfig {
          * @param publishers    The {@link Set} of users publishing this analytic record.
          * @param configuration The {@link Configuration} associated with this analytic record.
          */
-        public AnalyticRecordBuilder(String title, Set<User> publishers, Configuration configuration) {
+        public AnalyticRecordBuilder(String title, Set<User> publishers, @Nonnull Configuration configuration) {
             super(title, publishers);
             this.configuration = configuration;
         }

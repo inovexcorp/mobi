@@ -23,7 +23,7 @@ package org.matonto.analytic.pagination;
  * #L%
  */
 
-import org.matonto.analytic.ontology.analytic.AnalyticRecord;
+import org.matonto.analytic.ontologies.analytic.AnalyticRecord;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;

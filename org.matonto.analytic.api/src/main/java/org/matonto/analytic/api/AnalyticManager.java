@@ -25,8 +25,8 @@ package org.matonto.analytic.api;
 
 import org.matonto.analytic.api.builder.AnalyticRecordConfig;
 import org.matonto.analytic.api.builder.ConfigurationConfig;
-import org.matonto.analytic.ontology.analytic.AnalyticRecord;
-import org.matonto.analytic.ontology.analytic.Configuration;
+import org.matonto.analytic.ontologies.analytic.AnalyticRecord;
+import org.matonto.analytic.ontologies.analytic.Configuration;
 import org.matonto.analytic.pagination.AnalyticPaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.rdf.api.Resource;
@@ -45,8 +45,8 @@ public interface AnalyticManager {
      * http://purl.org/dc/terms/issued.
      *
      * @param searchParams The AnalyticPaginatedSearchParams indicating which records to return.
-     * @return The PaginatedSearchResults of AnalyticRecords in the local catalog. AnalyticRecord includes empty
-     * Configuration object.
+     * @return The PaginatedSearchResults of AnalyticRecords in the local catalog. AnalyticRecord does not contain
+     * referenced Configuration object.
      */
     PaginatedSearchResults<AnalyticRecord> getAnalyticRecords(AnalyticPaginatedSearchParams searchParams);
 
@@ -54,7 +54,7 @@ public interface AnalyticManager {
      * Retrieves the AnalyticRecord for an analytic described by the specified AnalyticRecord Resource.
      *
      * @param recordId The Resource of the AnalyticRecord.
-     * @return The AnalyticRecord from the local catalog which includes an empty Configuration object.
+     * @return The AnalyticRecord from the local catalog which does not contain referenced Configuration object.
      */
     Optional<AnalyticRecord> getAnalyticRecord(Resource recordId);
 
@@ -74,6 +74,17 @@ public interface AnalyticManager {
     void deleteAnalytic(Resource recordId);
 
     /**
+     * Retrieves the Configuration associated with the AnalyticRecord described by the specified AnalyticRecord
+     * Resource.
+     *
+     * @param recordId The Resource of the AnalyticRecord associated with the Configuration you want to get.
+     * @param factory  The OrmFactory of the Type of Configuration you want to get.
+     * @param <T>      An Object which extends Configuration.
+     * @return The Configuration from the local catalog.
+     */
+    <T extends Configuration> Optional<T> getConfigurationByAnalyticRecord(Resource recordId, OrmFactory<T> factory);
+
+    /**
      * Retrieves the Configuration for a configuration described by the specified Configuration Resource.
      *
      * @param configId The Resource of the Configuration.
@@ -84,7 +95,8 @@ public interface AnalyticManager {
     <T extends Configuration> Optional<T> getConfiguration(Resource configId, OrmFactory<T> factory);
 
     /**
-     * Creates a Configuration according to the specified config.
+     * Creates a Configuration according to the specified config. NOTE: This does not store the configuration in the
+     * local catalog.
      *
      * @param config  The ConfigurationConfig describing the details of the Configuration to create.
      * @param factory The OrmFactory for creating the Configuration.

@@ -36,6 +36,8 @@
     <artifactId>analytic.impl</artifactId>
     <packaging>bundle</packaging>
 
+    <name>${project.groupId}.${project.artifactId}</name>
+
     <dependencies>
         <dependency>
             <groupId>org.matonto</groupId>

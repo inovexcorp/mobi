@@ -28,9 +28,9 @@ import aQute.bnd.annotation.component.Reference;
 import org.matonto.analytic.api.AnalyticManager;
 import org.matonto.analytic.api.builder.AnalyticRecordConfig;
 import org.matonto.analytic.api.builder.ConfigurationConfig;
-import org.matonto.analytic.ontology.analytic.AnalyticRecord;
-import org.matonto.analytic.ontology.analytic.AnalyticRecordFactory;
-import org.matonto.analytic.ontology.analytic.Configuration;
+import org.matonto.analytic.ontologies.analytic.AnalyticRecord;
+import org.matonto.analytic.ontologies.analytic.AnalyticRecordFactory;
+import org.matonto.analytic.ontologies.analytic.Configuration;
 import org.matonto.analytic.pagination.AnalyticPaginatedSearchParams;
 import org.matonto.analytic.pagination.AnalyticRecordSearchResults;
 import org.matonto.catalog.api.CatalogManager;
@@ -44,11 +44,10 @@ import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 
-import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
-@Component(immediate = true)
+@Component
 public class SimpleAnalyticManager implements AnalyticManager {
 
     private static final String CONFIG_NAMESPACE = "https://matonto.org/configurations#";
@@ -69,7 +68,7 @@ public class SimpleAnalyticManager implements AnalyticManager {
         this.catalogUtils = catalogUtils;
     }
 
-    @Reference
+    @Reference(target = "(id=system)")
     void setRepository(Repository repository) {
         this.repository = repository;
     }
@@ -120,6 +119,15 @@ public class SimpleAnalyticManager implements AnalyticManager {
     }
 
     @Override
+    public <T extends Configuration> Optional<T> getConfigurationByAnalyticRecord(Resource recordId, OrmFactory<T> factory) {
+        AnalyticRecord record = getAnalyticRecord(recordId).orElseThrow(() ->
+                new IllegalArgumentException("Could not find the required AnalyticRecord in the Catalog."));
+        Resource configId = record.getHasConfig_resource().orElseThrow(() ->
+                new IllegalStateException("Could not retrieve the Configuration IRI from the AnalyticRecord."));
+        return getConfiguration(configId, factory);
+    }
+
+    @Override
     public <T extends Configuration> Optional<T> getConfiguration(Resource configId, OrmFactory<T> factory) {
         try (RepositoryConnection conn = repository.getConnection()) {
             return catalogUtils.optObject(configId, factory, conn);
@@ -136,6 +144,7 @@ public class SimpleAnalyticManager implements AnalyticManager {
     @Override
     public <T extends Configuration> void updateConfiguration(T newConfiguration) {
         try (RepositoryConnection conn = repository.getConnection()) {
+            catalogUtils.validateResource(newConfiguration.getResource(), vf.createIRI(Configuration.TYPE), conn);
             conn.begin();
             catalogUtils.updateObject(newConfiguration, conn);
             conn.commit();
