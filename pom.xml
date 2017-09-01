@@ -97,6 +97,8 @@
         <module>org.matonto.itests</module>
         <module>org.matonto.prov.api</module>
         <module>org.matonto.prov.impl</module>
+        <module>org.matonto.analytic.api</module>
+        <module>org.matonto.analytic.impl</module>
     </modules>
 
     <properties>
