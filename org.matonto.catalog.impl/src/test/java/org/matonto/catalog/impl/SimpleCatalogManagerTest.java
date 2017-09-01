@@ -42,6 +42,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.matonto.ontologies.provo.ActivityFactory;
 import org.matonto.ontologies.provo.EntityFactory;
+import org.matonto.platform.config.api.server.MatOnto;
 import org.matonto.prov.api.ProvenanceService;
 import org.matonto.prov.api.builder.ActivityConfig;
 import org.matonto.rdf.orm.conversion.impl.DateValueConverter;
@@ -122,6 +123,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -187,6 +189,9 @@ public class SimpleCatalogManagerTest {
 
     @Mock
     private ProvenanceService provenanceService;
+
+    @Mock
+    private MatOnto matOnto;
 
     @Before
     public void setUp() throws Exception {
@@ -310,6 +315,7 @@ public class SimpleCatalogManagerTest {
         manager.setEntityFactory(entityFactory);
         manager.setUserFactory(userFactory);
         manager.setProvenanceService(provenanceService);
+        manager.setMatOnto(matOnto);
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
@@ -350,6 +356,8 @@ public class SimpleCatalogManagerTest {
 
         activity = activityFactory.createNew(vf.createIRI("http://test.com/activity"));
         when(provenanceService.createActivity(any(ActivityConfig.class))).thenReturn(activity);
+
+        when(matOnto.getServerIdentifier()).thenReturn(UUID.randomUUID());
     }
 
     @After

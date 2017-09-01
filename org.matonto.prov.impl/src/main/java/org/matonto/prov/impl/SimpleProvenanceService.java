@@ -24,7 +24,6 @@ package org.matonto.prov.impl;
  */
 
 import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Reference;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontologies.provo.ActivityFactory;
@@ -34,17 +33,14 @@ import org.matonto.persistence.utils.RepositoryResults;
 import org.matonto.persistence.utils.Statements;
 import org.matonto.prov.api.ProvenanceService;
 import org.matonto.prov.api.builder.ActivityConfig;
-import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.OrmFactoryRegistry;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.config.RepositoryConsumerConfig;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,11 +51,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Component(
-        configurationPolicy = ConfigurationPolicy.require,
-        designateFactory = RepositoryConsumerConfig.class,
-        name = SimpleProvenanceService.COMPONENT_NAME
-)
+@Component( name = SimpleProvenanceService.COMPONENT_NAME )
 public class SimpleProvenanceService implements ProvenanceService {
     static final String COMPONENT_NAME = "org.matonto.prov.api.ProvenanceService";
     private Repository repo;
@@ -70,7 +62,7 @@ public class SimpleProvenanceService implements ProvenanceService {
 
     private static String ACTIVITY_NAMESPACE = "http://matonto.org/activities/";
 
-    @Reference(name = "repo")
+    @Reference(target = "(id=prov)")
     void setRepo(Repository repo) {
         this.repo = repo;
     }

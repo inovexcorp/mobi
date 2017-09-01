@@ -74,6 +74,7 @@ import org.matonto.ontologies.provo.Entity;
 import org.matonto.ontologies.provo.EntityFactory;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.persistence.utils.RepositoryResults;
+import org.matonto.platform.config.api.server.MatOnto;
 import org.matonto.prov.api.ProvenanceService;
 import org.matonto.prov.api.builder.ActivityConfig;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
@@ -97,7 +98,6 @@ import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -124,6 +124,7 @@ public class SimpleCatalogManager implements CatalogManager {
     private ModelFactory mf;
     private CatalogUtilsService utils;
     private ProvenanceService provenanceService;
+    private MatOnto matOnto;
     private UserFactory userFactory;
     private EntityFactory entityFactory;
     private CatalogFactory catalogFactory;
@@ -146,97 +147,102 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Reference(name = "repository")
-    protected void setRepository(Repository repository) {
+    void setRepository(Repository repository) {
         this.repository = repository;
     }
 
     @Reference
-    protected void setValueFactory(ValueFactory valueFactory) {
+    void setValueFactory(ValueFactory valueFactory) {
         vf = valueFactory;
     }
 
     @Reference
-    protected void setUtils(CatalogUtilsService utils) {
+    void setUtils(CatalogUtilsService utils) {
         this.utils = utils;
     }
 
     @Reference
-    protected void setProvenanceService(ProvenanceService provenanceService) {
+    void setProvenanceService(ProvenanceService provenanceService) {
         this.provenanceService = provenanceService;
     }
 
     @Reference
-    protected void setModelFactory(ModelFactory modelFactory) {
+    void setMatOnto(MatOnto matOnto) {
+        this.matOnto = matOnto;
+    }
+
+    @Reference
+    void setModelFactory(ModelFactory modelFactory) {
         mf = modelFactory;
     }
 
     @Reference
-    protected void setUserFactory(UserFactory userFactory) {
+    void setUserFactory(UserFactory userFactory) {
         this.userFactory = userFactory;
     }
 
     @Reference
-    protected void setEntityFactory(EntityFactory entityFactory) {
+    void setEntityFactory(EntityFactory entityFactory) {
         this.entityFactory = entityFactory;
     }
 
     @Reference
-    protected void setCatalogFactory(CatalogFactory catalogFactory) {
+    void setCatalogFactory(CatalogFactory catalogFactory) {
         this.catalogFactory = catalogFactory;
     }
 
     @Reference
-    protected void setRecordFactory(RecordFactory recordFactory) {
+    void setRecordFactory(RecordFactory recordFactory) {
         this.recordFactory = recordFactory;
     }
 
     @Reference
-    protected void setDistributionFactory(DistributionFactory distributionFactory) {
+    void setDistributionFactory(DistributionFactory distributionFactory) {
         this.distributionFactory = distributionFactory;
     }
 
     @Reference
-    protected void setBranchFactory(BranchFactory branchFactory) {
+    void setBranchFactory(BranchFactory branchFactory) {
         this.branchFactory = branchFactory;
     }
 
     @Reference
-    protected void setInProgressCommitFactory(InProgressCommitFactory inProgressCommitFactory) {
+    void setInProgressCommitFactory(InProgressCommitFactory inProgressCommitFactory) {
         this.inProgressCommitFactory = inProgressCommitFactory;
     }
 
     @Reference
-    protected void setCommitFactory(CommitFactory commitFactory) {
+    void setCommitFactory(CommitFactory commitFactory) {
         this.commitFactory = commitFactory;
     }
 
     @Reference
-    protected void setRevisionFactory(RevisionFactory revisionFactory) {
+    void setRevisionFactory(RevisionFactory revisionFactory) {
         this.revisionFactory = revisionFactory;
     }
 
     @Reference
-    protected void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
+    void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
         this.versionedRDFRecordFactory = versionedRDFRecordFactory;
     }
 
     @Reference
-    protected void setVersionedRecordFactory(VersionedRecordFactory versionedRecordFactory) {
+    void setVersionedRecordFactory(VersionedRecordFactory versionedRecordFactory) {
         this.versionedRecordFactory = versionedRecordFactory;
     }
 
     @Reference
-    protected void setUnversionedRecordFactory(UnversionedRecordFactory unversionedRecordFactory) {
+    void setUnversionedRecordFactory(UnversionedRecordFactory unversionedRecordFactory) {
         this.unversionedRecordFactory = unversionedRecordFactory;
     }
 
     @Reference
-    protected void setVersionFactory(VersionFactory versionFactory) {
+    void setVersionFactory(VersionFactory versionFactory) {
         this.versionFactory = versionFactory;
     }
 
     @Reference
-    protected void setTagFactory(TagFactory tagFactory) {
+    void setTagFactory(TagFactory tagFactory) {
         this.tagFactory = tagFactory;
     }
 
@@ -439,6 +445,8 @@ public class SimpleCatalogManager implements CatalogManager {
                 .build();
         Activity activity = provenanceService.createActivity(config);
         activity.addProperty(vf.createLiteral(start), vf.createIRI(Activity.startedAtTime_IRI));
+        activity.addProperty(vf.createLiteral(matOnto.getServerIdentifier().toString()),
+                vf.createIRI("http://www.w3.org/ns/prov#atLocation"));
         provenanceService.addActivity(activity);
 
         try (RepositoryConnection conn = repository.getConnection()) {
