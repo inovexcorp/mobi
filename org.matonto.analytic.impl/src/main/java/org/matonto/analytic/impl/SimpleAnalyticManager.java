@@ -47,9 +47,10 @@ import org.matonto.repository.api.RepositoryConnection;
 import java.util.Optional;
 import java.util.UUID;
 
-@Component
+@Component(name = SimpleAnalyticManager.COMPONENT_NAME)
 public class SimpleAnalyticManager implements AnalyticManager {
 
+    static final String COMPONENT_NAME = "org.matonto.analytic.api.AnalyticManager";
     private static final String CONFIG_NAMESPACE = "https://matonto.org/configurations#";
 
     private CatalogManager catalogManager;
