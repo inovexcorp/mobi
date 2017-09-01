@@ -55,7 +55,7 @@ public class WorkflowManagerServiceImpl implements WorkflowManagerService {
     private WorkflowConverterService converterService;
 
     @Reference
-    protected void setConverterService(WorkflowConverterService converterService) {
+    void setConverterService(WorkflowConverterService converterService) {
         this.converterService = converterService;
     }
 
