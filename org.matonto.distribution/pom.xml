@@ -65,7 +65,6 @@
             <classifier>features</classifier>
             <version>${karaf.version}</version>
             <type>xml</type>
-            <!--<scope>runtime</scope>-->
         </dependency>
         <dependency>
             <!-- scope is runtime so the feature repo is listed in etc/org.apache.karaf.features.cfg file, and features will installed into the system directory if specify in the plugin configuration -->
