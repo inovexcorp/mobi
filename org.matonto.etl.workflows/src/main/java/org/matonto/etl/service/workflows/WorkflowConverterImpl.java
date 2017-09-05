@@ -1,8 +1,8 @@
-package org.matonto.etl.api.workflows;
+package org.matonto.etl.service.workflows;
 
 /*-
  * #%L
- * org.matonto.etl.api
+ * org.matonto.etl.workflows
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,17 +23,26 @@ package org.matonto.etl.api.workflows;
  * #L%
  */
 
+import aQute.bnd.annotation.component.Component;
+import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
 import org.matonto.etl.api.ontologies.etl.Workflow;
+import org.matonto.etl.api.workflows.WorkflowConverter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public interface WorkflowConverterService {
-    /**
-     * Converts the Workflow RDF configuration into Routes within a RouteBuilder for the purpose of adding them to a
-     * CamelContext. Should include all referenced DataSources, Processors, and Destinations along with rdf:Lists
-     * describing the Routes to be created.
-     *
-     * @param workflow a Workflow containing route definitions of DataSources, Processors, and Destinations
-     * @return A RouteBuilder containing Routes configured by the Workflow RDF
-     */
-    RouteBuilder convert(Workflow workflow);
+@Component
+public class WorkflowConverterImpl implements WorkflowConverter {
+    private static final Logger LOG = LoggerFactory.getLogger(WorkflowConverterImpl.class);
+
+    @Override
+    public RouteBuilder convert(Workflow workflow) {
+        Processor processor = exchange -> LOG.debug("Called with exchange: " + exchange);
+        return new RouteBuilder() {
+            @Override
+            public void configure() throws Exception {
+                from("direct:a").routeId("foo").process(processor);
+            }
+        };
+    }
 }

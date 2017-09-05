@@ -2,6 +2,7 @@
 (&(objectClass=org.matonto.catalog.api.ontologies.mcat.CatalogFactory))
 (&(objectClass=org.matonto.sparql.rest.SparqlRest))
 (&(objectClass=org.matonto.etl.api.delimited.DelimitedConverter))
+(&(objectClass=org.matonto.etl.api.workflows.WorkflowManager))
 (&(objectClass=org.matonto.rdf.orm.impl.ThingFactory))
 (&(objectClass=org.matonto.sparql.rest.SparqlRest))
 (&(objectClass=org.matonto.jaas.rest.GroupRest))

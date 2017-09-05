@@ -46,6 +46,18 @@
     rdfs:domain :Workflow ;
     rdfs:range :Destination .
 
+# SubRoute
+
+:SubRoute a owl:Class ;
+    dct:title "SubRoute"@en ;
+    dct:description "A SubRoute is a representative of an Apache Camel route. A Workflow Route generates one or more SubRoutes."@en .
+
+:workflow a owl:ObjectProperty, owl:FunctionalProperty ;
+    dct:title "workflow"@en ;
+    dct:description "The Workflow that the described SubRoute belongs to."@en ;
+    rdfs:domain :SubRoute ;
+    rdfs:range :Workflow .
+
 # DataSource
 
 :DataSource a owl:Class ;

@@ -26,10 +26,9 @@ package org.matonto.etl.api.workflows;
 import org.matonto.etl.api.ontologies.etl.Workflow;
 import org.matonto.rdf.api.Resource;
 
-import java.util.Map;
 import java.util.Set;
 
-public interface WorkflowManagerService {
+public interface WorkflowManager {
 
     /**
      * Returns the name of the CamelContext that runs Workflow Routes. This can be used to pull statistics
@@ -40,11 +39,11 @@ public interface WorkflowManagerService {
     String getContextName();
 
     /**
-     * Returns a Map of Workflow IRIs to a Set of Strings identifying the Routes associated with the Workflow.
+     * Returns a Set of Workflow that have been deployed.
      *
-     * @return Workflow IRIs to their Route ids
+     * @return A Set of deployed Workflows
      */
-    Map<Resource, Set<String>> getWorkflows();
+    Set<Workflow> getWorkflows();
 
     /**
      * Creates Routes based on the configuration in the Workflow RDF. Should include all referenced DataSources,

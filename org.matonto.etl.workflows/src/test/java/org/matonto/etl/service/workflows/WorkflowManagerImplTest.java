@@ -31,14 +31,13 @@ import static org.mockito.Mockito.when;
 
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.core.osgi.OsgiDefaultCamelContext;
-import org.apache.camel.model.RouteDefinition;
-import org.apache.camel.model.RoutesDefinition;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.matonto.etl.api.ontologies.etl.SubRoute;
 import org.matonto.etl.api.ontologies.etl.Workflow;
 import org.matonto.etl.api.ontologies.etl.WorkflowFactory;
-import org.matonto.etl.api.workflows.WorkflowConverterService;
+import org.matonto.etl.api.workflows.WorkflowConverter;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
@@ -62,21 +61,20 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.util.Collections;
-
 @RunWith(PowerMockRunner.class)
-@PrepareForTest(WorkflowManagerServiceImpl.class)
-public class WorkflowManagerServiceImplTest {
-    private WorkflowManagerServiceImpl service;
+@PrepareForTest(WorkflowManagerImpl.class)
+public class WorkflowManagerImplTest {
+    private WorkflowManagerImpl service;
 
     private ValueFactory vf = SimpleValueFactory.getInstance();
     private ModelFactory mf = LinkedHashModelFactory.getInstance();
     private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
     private WorkflowFactory workflowFactory = new WorkflowFactory();
 
-    private static final String CONTEXT_NAME = "context";
-    private static final String ROUTE_ID = "id";
+    private final String CONTEXT_NAME = "context";
+    private final Resource ROUTE_ID = vf.createIRI("http://test.org/id");
     private Resource workflowIRI;
+    private Workflow workflow;
 
     @Mock
     private BundleContext bundleContext;
@@ -85,16 +83,10 @@ public class WorkflowManagerServiceImplTest {
     private OsgiDefaultCamelContext context;
 
     @Mock
-    private WorkflowConverterService converterService;
+    private WorkflowConverter converterService;
 
     @Mock
     private RouteBuilder routeBuilder;
-
-    @Mock
-    private RoutesDefinition routesDefinition;
-
-    @Mock
-    private RouteDefinition definition;
 
     @Before
     public void setUp() throws Exception {
@@ -113,18 +105,18 @@ public class WorkflowManagerServiceImplTest {
         vcr.registerValueConverter(new LiteralValueConverter());
 
         workflowIRI = vf.createIRI("http://test.com/workflow");
+        workflow = workflowFactory.createNew(workflowIRI);
+        workflow.getModel().add(ROUTE_ID, vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI), vf.createIRI(SubRoute.TYPE));
 
         MockitoAnnotations.initMocks(this);
 
         when(context.getName()).thenReturn(CONTEXT_NAME);
         PowerMockito.whenNew(OsgiDefaultCamelContext.class).withAnyArguments().thenReturn(context);
         when(converterService.convert(any(Workflow.class))).thenReturn(routeBuilder);
-        when(routeBuilder.getRouteCollection()).thenReturn(routesDefinition);
-        when(routesDefinition.getRoutes()).thenReturn(Collections.singletonList(definition));
-        when(definition.getId()).thenReturn(ROUTE_ID);
 
-        service = new WorkflowManagerServiceImpl();
+        service = new WorkflowManagerImpl();
         service.setConverterService(converterService);
+        service.setVf(vf);
         service.start(bundleContext);
     }
 
@@ -147,16 +139,9 @@ public class WorkflowManagerServiceImplTest {
 
     @Test
     public void deployWorkflowTest() throws Exception {
-        // Setup:
-        Workflow workflow = workflowFactory.createNew(workflowIRI);
-
         service.deployWorkflow(workflow);
-        assertTrue(service.getWorkflows().containsKey(workflow.getResource()));
-        assertTrue(service.getWorkflows().get(workflow.getResource()).contains(ROUTE_ID));
+        assertTrue(service.getWorkflows().contains(workflow));
         verify(context).addRoutes(routeBuilder);
-        verify(routeBuilder).getRouteCollection();
-        verify(routesDefinition).getRoutes();
-        verify(definition).getId();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -167,11 +152,10 @@ public class WorkflowManagerServiceImplTest {
     @Test
     public void startWorkflowTest() throws Exception {
         // Setup:
-        Workflow workflow = workflowFactory.createNew(workflowIRI);
         service.deployWorkflow(workflow);
 
         service.startWorkflow(workflowIRI);
-        verify(context).startRoute(ROUTE_ID);
+        verify(context).startRoute(ROUTE_ID.stringValue());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -182,10 +166,9 @@ public class WorkflowManagerServiceImplTest {
     @Test
     public void stopWorkflowTest() throws Exception {
         // Setup:
-        Workflow workflow = workflowFactory.createNew(workflowIRI);
         service.deployWorkflow(workflow);
 
         service.stopWorkflow(workflowIRI);
-        verify(context).stopRoute(ROUTE_ID);
+        verify(context).stopRoute(ROUTE_ID.stringValue());
     }
 }

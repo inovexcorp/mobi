@@ -30,33 +30,41 @@ import aQute.bnd.annotation.component.Reference;
 import org.apache.camel.CamelContext;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.core.osgi.OsgiDefaultCamelContext;
-import org.apache.camel.model.OptionalIdentifiedDefinition;
+import org.matonto.etl.api.ontologies.etl.SubRoute;
 import org.matonto.etl.api.ontologies.etl.Workflow;
-import org.matonto.etl.api.workflows.WorkflowConverterService;
-import org.matonto.etl.api.workflows.WorkflowManagerService;
+import org.matonto.etl.api.workflows.WorkflowConverter;
+import org.matonto.etl.api.workflows.WorkflowManager;
 import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.ValueFactory;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-@Component
-public class WorkflowManagerServiceImpl implements WorkflowManagerService {
-    private static final Logger LOG = LoggerFactory.getLogger(WorkflowManagerServiceImpl.class);
+@Component(name = WorkflowManagerImpl.COMPONENT_NAME)
+public class WorkflowManagerImpl implements WorkflowManager {
+    static final String COMPONENT_NAME = "org.matonto.etl.api.workflows.WorkflowManager";
+    private static final Logger LOG = LoggerFactory.getLogger(WorkflowManagerImpl.class);
 
     private CamelContext camelContext;
-    private Map<Resource, Set<String>> workflows = new HashMap<>();
+    private Map<Resource, Workflow> workflows = new HashMap<>();
 
-    private WorkflowConverterService converterService;
+    private WorkflowConverter converterService;
+    private ValueFactory vf;
 
     @Reference
-    void setConverterService(WorkflowConverterService converterService) {
+    void setConverterService(WorkflowConverter converterService) {
         this.converterService = converterService;
+    }
+
+    @Reference
+    void setVf(ValueFactory vf) {
+        this.vf = vf;
     }
 
     @Activate
@@ -88,8 +96,8 @@ public class WorkflowManagerServiceImpl implements WorkflowManagerService {
     }
 
     @Override
-    public Map<Resource, Set<String>> getWorkflows() {
-        return workflows;
+    public Set<Workflow> getWorkflows() {
+        return new HashSet<>(workflows.values());
     }
 
     @Override
@@ -104,21 +112,19 @@ public class WorkflowManagerServiceImpl implements WorkflowManagerService {
         } catch (Exception e) {
             throw new MatOntoException("Error in adding routes to CamelContext", e);
         }
-        Set<String> routeIds = routes.getRouteCollection().getRoutes().stream()
-                .map(OptionalIdentifiedDefinition::getId)
-                .collect(Collectors.toSet());
-        workflows.put(workflow.getResource(), routeIds);
+        workflows.put(workflow.getResource(), workflow);
+        Set<Resource> routeIds = getRouteIds(workflow);
         LOG.info("Added routes " + routeIds.toString() + " to CamelContext");
     }
 
     @Override
     public void startWorkflow(Resource workflowIRI) {
         validateWorkflow(workflowIRI);
-        Set<String> routeIds = workflows.get(workflowIRI);
+        Set<Resource> routeIds = getRouteIds(workflows.get(workflowIRI));
         try {
-            for (String s : routeIds) {
+            for (Resource iri : routeIds) {
                 LOG.info("Starting Workflow " + workflowIRI + " routes");
-                camelContext.startRoute(s);
+                camelContext.startRoute(iri.stringValue());
             }
         } catch (Exception e) {
             throw new MatOntoException("Error in starting Workflow", e);
@@ -128,11 +134,11 @@ public class WorkflowManagerServiceImpl implements WorkflowManagerService {
     @Override
     public void stopWorkflow(Resource workflowIRI) {
         validateWorkflow(workflowIRI);
-        Set<String> routeIds = workflows.get(workflowIRI);
+        Set<Resource> routeIds = getRouteIds(workflows.get(workflowIRI));
         try {
-            for (String s : routeIds) {
+            for (Resource iri : routeIds) {
                 LOG.info("Stopping Workflow " + workflowIRI + " routes");
-                camelContext.stopRoute(s);
+                camelContext.stopRoute(iri.stringValue());
             }
         } catch (Exception e) {
             throw new MatOntoException("Error in stopping Workflow", e);
@@ -143,5 +149,10 @@ public class WorkflowManagerServiceImpl implements WorkflowManagerService {
         if (!workflows.containsKey(workflowIRI)) {
             throw new IllegalArgumentException("Workflow " + workflowIRI + " does not exist");
         }
+    }
+
+    private Set<Resource> getRouteIds(Workflow workflow) {
+        return workflow.getModel().filter(null, vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI),
+                vf.createIRI(SubRoute.TYPE)).subjects();
     }
 }
