@@ -165,7 +165,7 @@ public class WorkflowManagerServiceImplTest {
     }
 
     @Test
-    public void startWorkflow() throws Exception {
+    public void startWorkflowTest() throws Exception {
         // Setup:
         Workflow workflow = workflowFactory.createNew(workflowIRI);
         service.deployWorkflow(workflow);
@@ -180,7 +180,7 @@ public class WorkflowManagerServiceImplTest {
     }
 
     @Test
-    public void stopWorkflow() throws Exception {
+    public void stopWorkflowTest() throws Exception {
         // Setup:
         Workflow workflow = workflowFactory.createNew(workflowIRI);
         service.deployWorkflow(workflow);

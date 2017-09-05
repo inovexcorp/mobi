@@ -121,7 +121,7 @@ public class WorkflowManagerServiceImpl implements WorkflowManagerService {
                 camelContext.startRoute(s);
             }
         } catch (Exception e) {
-            throw new MatOntoException("Error in stopping Workflow", e);
+            throw new MatOntoException("Error in starting Workflow", e);
         }
     }
 
