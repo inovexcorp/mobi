@@ -240,7 +240,6 @@ public class OntologyRestIT extends KarafTestSupport {
 
     private void validateOntologyDeleted(Resource recordId, Resource branchId, Resource commitId, Resource additionsGraphIRI) {
         Repository repo = getOsgiService(Repository.class, "id=system", 30000L);
-//        Repository repo = getOsgiService(Repository.class);
 
         try (RepositoryConnection conn = repo.getConnection()) {
             assertFalse(conn.getStatements(null, null, null, branchId).hasNext());

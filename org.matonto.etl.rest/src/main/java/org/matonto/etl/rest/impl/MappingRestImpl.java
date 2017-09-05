@@ -50,6 +50,7 @@ import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -170,7 +171,7 @@ public class MappingRestImpl implements MappingRest {
         }
         checkStringParam(title, "Title is required");
         User user = getActiveUser(context, engineManager);
-        Activity createActivity = null;
+        CreateActivity createActivity = null;
         try {
             createActivity = provUtils.startCreateActivity(user);
             MappingWrapper mapping;
@@ -202,19 +203,13 @@ public class MappingRestImpl implements MappingRest {
             provUtils.endCreateActivity(createActivity, record);
             return Response.status(201).entity(record.getResource().stringValue()).build();
         } catch (IOException | IllegalArgumentException ex) {
-            if (createActivity != null) {
-                provUtils.removeActivity(createActivity);
-            }
+            provUtils.removeActivity(createActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MatOntoException ex) {
-            if (createActivity != null) {
-                provUtils.removeActivity(createActivity);
-            }
+            provUtils.removeActivity(createActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } catch (Exception ex) {
-            if (createActivity != null) {
-                provUtils.removeActivity(createActivity);
-            }
+            provUtils.removeActivity(createActivity);
             throw ex;
         }
     }

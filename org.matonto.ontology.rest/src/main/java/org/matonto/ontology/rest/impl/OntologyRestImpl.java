@@ -65,6 +65,7 @@ import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
 import org.matonto.rdf.api.BNode;
@@ -170,20 +171,16 @@ public class OntologyRestImpl implements OntologyRest {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
         }
         User user = getActiveUser(context, engineManager);
-        Activity createActivity = null;
+        CreateActivity createActivity = null;
         try {
             createActivity = provUtils.startCreateActivity(user);
             Ontology ontology = ontologyManager.createOntology(fileInputStream);
             return uploadOntology(user, createActivity, ontology, title, description, keywords);
-        } catch (MatOntoException e) {
-            if (createActivity != null) {
-                provUtils.removeActivity(createActivity);
-            }
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (MatOntoException ex) {
+            provUtils.removeActivity(createActivity);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } catch (Exception ex) {
-            if (createActivity != null) {
-                provUtils.removeActivity(createActivity);
-            }
+            provUtils.removeActivity(createActivity);
             throw ex;
         } finally {
             IOUtils.closeQuietly(fileInputStream);
@@ -196,20 +193,16 @@ public class OntologyRestImpl implements OntologyRest {
         checkStringParam(title, "The title is missing.");
         checkStringParam(ontologyJson, "The ontologyJson is missing.");
         User user = getActiveUser(context, engineManager);
-        Activity createActivity = null;
+        CreateActivity createActivity = null;
         try {
             createActivity = provUtils.startCreateActivity(user);
             Ontology ontology = ontologyManager.createOntology(ontologyJson);
             return uploadOntology(user, createActivity, ontology, title, description, keywords);
-        } catch (MatOntoException e) {
-            if (createActivity != null) {
-                provUtils.removeActivity(createActivity);
-            }
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (MatOntoException ex) {
+            provUtils.removeActivity(createActivity);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } catch (Exception ex) {
-            if (createActivity != null) {
-                provUtils.removeActivity(createActivity);
-            }
+            provUtils.removeActivity(createActivity);
             throw ex;
         }
     }
@@ -1336,7 +1329,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @param keywords       the comma separated list of keywords associated with the OntologyRecord.
      * @return a Response indicating the success of the upload.
      */
-    private Response uploadOntology(User user, Activity createActivity, Ontology ontology, String title,
+    private Response uploadOntology(User user, CreateActivity createActivity, Ontology ontology, String title,
                                     String description, String keywords) throws MatOntoException {
         OntologyRecordConfig.OntologyRecordBuilder builder = new OntologyRecordConfig.OntologyRecordBuilder(title,
                 Collections.singleton(user));

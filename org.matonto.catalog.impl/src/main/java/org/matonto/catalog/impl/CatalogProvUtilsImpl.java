@@ -97,6 +97,8 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
 
     @Override
     public void removeActivity(Activity activity) {
-        provenanceService.deleteActivity(activity.getResource());
+        if (activity != null) {
+            provenanceService.deleteActivity(activity.getResource());
+        }
     }
 }

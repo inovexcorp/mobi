@@ -64,6 +64,7 @@ import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontologies.provo.InstantaneousEvent;
 import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Model;
@@ -262,7 +263,7 @@ public class CatalogRestImpl implements CatalogRest {
             throw ErrorUtils.sendError("Invalid Record type", Response.Status.BAD_REQUEST);
         }
         User activeUser = getActiveUser(context, engineManager);
-        Activity createActivity = null;
+        CreateActivity createActivity = null;
         try {
             createActivity = provUtils.startCreateActivity(activeUser);
             RecordConfig.Builder builder = new RecordConfig.Builder(title, Collections.singleton(activeUser));
@@ -281,19 +282,13 @@ public class CatalogRestImpl implements CatalogRest {
             provUtils.endCreateActivity(createActivity, newRecord);
             return Response.status(201).entity(newRecord.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
-            if (createActivity != null) {
-                provUtils.removeActivity(createActivity);
-            }
+            provUtils.removeActivity(createActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MatOntoException ex) {
-            if (createActivity != null) {
-                provUtils.removeActivity(createActivity);
-            }
+            provUtils.removeActivity(createActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } catch (Exception ex) {
-            if (createActivity != null) {
-                provUtils.removeActivity(createActivity);
-            }
+            provUtils.removeActivity(createActivity);
             throw ex;
         }
     }

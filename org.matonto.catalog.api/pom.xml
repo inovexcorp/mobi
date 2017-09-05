@@ -54,6 +54,11 @@
             <version>1.8.71</version>
         </dependency>
         <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>prov.api</artifactId>
+            <version>1.9.3-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
         </dependency>

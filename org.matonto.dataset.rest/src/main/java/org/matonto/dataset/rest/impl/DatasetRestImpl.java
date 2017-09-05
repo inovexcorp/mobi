@@ -51,6 +51,7 @@ import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
@@ -163,7 +164,7 @@ public class DatasetRestImpl implements DatasetRest {
         checkStringParam(title, "Title is required");
         checkStringParam(repositoryId, "Repository id is required");
         User activeUser = getActiveUser(context, engineManager);
-        Activity createActivity = null;
+        CreateActivity createActivity = null;
         try {
             createActivity = provUtils.startCreateActivity(activeUser);
             DatasetRecordConfig.DatasetRecordBuilder builder = new DatasetRecordConfig.DatasetRecordBuilder(title,
@@ -185,19 +186,13 @@ public class DatasetRestImpl implements DatasetRest {
             provUtils.endCreateActivity(createActivity, record);
             return Response.status(201).entity(record.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
-            if (createActivity != null) {
-                provUtils.removeActivity(createActivity);
-            }
+            provUtils.removeActivity(createActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MatOntoException ex) {
-            if (createActivity != null) {
-                provUtils.removeActivity(createActivity);
-            }
+            provUtils.removeActivity(createActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         } catch (Exception ex) {
-            if (createActivity != null) {
-                provUtils.removeActivity(createActivity);
-            }
+            provUtils.removeActivity(createActivity);
             throw ex;
         }
     }

@@ -26,6 +26,9 @@ package org.matonto.catalog.api;
 import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.ontologies.provo.Activity;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+
+import javax.annotation.Nullable;
 
 public interface CatalogProvUtils {
 
@@ -35,7 +38,7 @@ public interface CatalogProvUtils {
      * @param user The User who started the record creation
      * @return The CreateActivity for the record creation
      */
-    Activity startCreateActivity(User user);
+    CreateActivity startCreateActivity(User user);
 
     /**
      * Updates the provided CreateActivity with an end time and an Entity representing the provided Record.
@@ -43,7 +46,7 @@ public interface CatalogProvUtils {
      * @param createActivity The CreateActivity to update
      * @param record The Record that was successfully created
      */
-    void endCreateActivity(Activity createActivity, Record record);
+    void endCreateActivity(CreateActivity createActivity, Record record);
 
     /**
      * Removes the provided Activity. Typical use case is if something goes wrong during a process and the Activity
@@ -51,5 +54,5 @@ public interface CatalogProvUtils {
      *
      * @param activity The Activity to remove
      */
-    void removeActivity(Activity activity);
+    void removeActivity(@Nullable Activity activity);
 }
