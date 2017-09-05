@@ -23,6 +23,7 @@ package org.matonto.etl.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
 import static org.matonto.rest.util.RestUtils.getRDFFormat;
 import static org.matonto.rest.util.RestUtils.groupedModelToString;
@@ -35,6 +36,7 @@ import net.sf.json.JSONObject;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.CatalogProvUtils;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.versioning.VersioningManager;
 import org.matonto.etl.api.config.delimited.MappingRecordConfig;
@@ -46,6 +48,7 @@ import org.matonto.etl.rest.MappingRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.ontologies.provo.Activity;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -85,40 +88,46 @@ public class MappingRestImpl implements MappingRest {
     private EngineManager engineManager;
     private final Logger logger = LoggerFactory.getLogger(MappingRestImpl.class);
     private SesameTransformer transformer;
+    private CatalogProvUtils provUtils;
 
     @Reference
-    protected void setManager(MappingManager manager) {
+    void setManager(MappingManager manager) {
         this.manager = manager;
     }
 
     @Reference
-    protected void setCatalogManager(CatalogManager catalogManager) {
+    void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
     }
 
     @Reference
-    protected void setVersioningManager(VersioningManager versioningManager) {
+    void setVersioningManager(VersioningManager versioningManager) {
         this.versioningManager = versioningManager;
     }
 
     @Reference
-    protected void setVf(ValueFactory vf) {
+    void setVf(ValueFactory vf) {
         this.vf = vf;
     }
 
     @Reference
-    protected void setMf(ModelFactory mf) {
+    void setMf(ModelFactory mf) {
         this.mf = mf;
     }
 
     @Reference
-    protected void setEngineManager(EngineManager engineManager) {
+    void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
     }
 
     @Reference
-    protected void setTransformer(SesameTransformer transformer) {
+    void setTransformer(SesameTransformer transformer) {
         this.transformer = transformer;
+    }
+
+    @Reference
+    void setProvUtils(CatalogProvUtils provUtils) {
+        this.provUtils = provUtils;
     }
 
     @Override
@@ -159,8 +168,11 @@ public class MappingRestImpl implements MappingRest {
         if ((fileInputStream == null && jsonld == null) || (fileInputStream != null && jsonld != null)) {
             throw ErrorUtils.sendError("Must provide either a file or a JSON-LD string", Response.Status.BAD_REQUEST);
         }
-
+        checkStringParam(title, "Title is required");
+        User user = getActiveUser(context, engineManager);
+        Activity createActivity = null;
         try {
+            createActivity = provUtils.startCreateActivity(user);
             MappingWrapper mapping;
             if (fileInputStream != null) {
                 RDFFormat format = Rio.getParserFormatForFileName(fileDetail.getFileName()).orElseThrow(() ->
@@ -169,7 +181,6 @@ public class MappingRestImpl implements MappingRest {
             } else {
                 mapping = manager.createMapping(jsonld);
             }
-            User user = getActiveUser(context, engineManager);
             MappingRecordConfig.MappingRecordBuilder builder = new MappingRecordConfig.MappingRecordBuilder(title,
                     Collections.singleton(user));
             if (description != null) {
@@ -188,12 +199,23 @@ public class MappingRestImpl implements MappingRest {
                     mapping.getModel(), null);
 
             logger.info("Mapping Uploaded: " + record.getResource());
-
+            provUtils.endCreateActivity(createActivity, record);
             return Response.status(201).entity(record.getResource().stringValue()).build();
-        } catch (IOException | IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MatOntoException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IOException | IllegalArgumentException ex) {
+            if (createActivity != null) {
+                provUtils.removeActivity(createActivity);
+            }
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MatOntoException ex) {
+            if (createActivity != null) {
+                provUtils.removeActivity(createActivity);
+            }
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (Exception ex) {
+            if (createActivity != null) {
+                provUtils.removeActivity(createActivity);
+            }
+            throw ex;
         }
     }
 

@@ -40,19 +40,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.matonto.ontologies.provo.ActivityFactory;
-import org.matonto.ontologies.provo.EntityFactory;
-import org.matonto.platform.config.api.server.MatOnto;
-import org.matonto.prov.api.ProvenanceService;
-import org.matonto.prov.api.builder.ActivityConfig;
-import org.matonto.rdf.orm.conversion.impl.DateValueConverter;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
-import org.openrdf.sail.memory.MemoryStore;
-
 import org.matonto.catalog.api.CatalogUtilsService;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
@@ -101,6 +88,7 @@ import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
+import org.matonto.rdf.orm.conversion.impl.DateValueConverter;
 import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
 import org.matonto.rdf.orm.conversion.impl.DoubleValueConverter;
 import org.matonto.rdf.orm.conversion.impl.FloatValueConverter;
@@ -115,6 +103,12 @@ import org.matonto.rdf.orm.impl.ThingFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.openrdf.repository.sail.SailRepository;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.Rio;
+import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.InputStream;
 import java.util.Collections;
@@ -123,7 +117,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -149,8 +142,6 @@ public class SimpleCatalogManagerTest {
     private TagFactory tagFactory = new TagFactory();
     private UserBranchFactory userBranchFactory = new UserBranchFactory();
     private UserFactory userFactory = new UserFactory();
-    private EntityFactory entityFactory = new EntityFactory();
-    private ActivityFactory activityFactory = new ActivityFactory();
 
     private IRI distributedCatalogId;
     private IRI localCatalogId;
@@ -177,8 +168,6 @@ public class SimpleCatalogManagerTest {
     private final IRI COMMIT_IRI = vf.createIRI("http://matonto.org/test/commits#commit");
     private final IRI IN_PROGRESS_COMMIT_IRI = vf.createIRI("http://matonto.org/test/commits#in-progress-commit");
 
-    private Activity activity;
-
     private static final int TOTAL_SIZE = 7;
 
     @Rule
@@ -186,12 +175,6 @@ public class SimpleCatalogManagerTest {
 
     @Mock
     private CatalogUtilsService utilsService;
-
-    @Mock
-    private ProvenanceService provenanceService;
-
-    @Mock
-    private MatOnto matOnto;
 
     @Before
     public void setUp() throws Exception {
@@ -263,16 +246,6 @@ public class SimpleCatalogManagerTest {
         userFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(userFactory);
 
-        entityFactory.setModelFactory(mf);
-        entityFactory.setValueFactory(vf);
-        entityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(entityFactory);
-
-        activityFactory.setModelFactory(mf);
-        activityFactory.setValueFactory(vf);
-        activityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(activityFactory);
-
         userBranchFactory.setModelFactory(mf);
         userBranchFactory.setValueFactory(vf);
         userBranchFactory.setValueConverterRegistry(vcr);
@@ -312,10 +285,6 @@ public class SimpleCatalogManagerTest {
         manager.setUnversionedRecordFactory(unversionedRecordFactory);
         manager.setVersionedRecordFactory(versionedRecordFactory);
         manager.setUtils(utilsService);
-        manager.setEntityFactory(entityFactory);
-        manager.setUserFactory(userFactory);
-        manager.setProvenanceService(provenanceService);
-        manager.setMatOnto(matOnto);
 
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
@@ -353,11 +322,6 @@ public class SimpleCatalogManagerTest {
                 vf.createIRI("http://matonto.org/test/deletions#" + vf.createIRI(i.getArgumentAt(0, Resource.class).stringValue()).getLocalName()));
         when(utilsService.throwAlreadyExists(any(Resource.class), any(OrmFactory.class))).thenReturn(new IllegalArgumentException());
         when(utilsService.throwThingNotFound(any(Resource.class), any(OrmFactory.class))).thenReturn(new IllegalStateException());
-
-        activity = activityFactory.createNew(vf.createIRI("http://test.com/activity"));
-        when(provenanceService.createActivity(any(ActivityConfig.class))).thenReturn(activity);
-
-        when(matOnto.getServerIdentifier()).thenReturn(UUID.randomUUID());
     }
 
     @After
@@ -582,11 +546,8 @@ public class SimpleCatalogManagerTest {
         record.setProperty(USER_IRI, vf.createIRI(_Thing.publisher_IRI));
 
         manager.addRecord(distributedCatalogId, record);
-        verify(provenanceService).createActivity(any(ActivityConfig.class));
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
         verify(utilsService).addObject(eq(record), any(RepositoryConnection.class));
-        verify(provenanceService).addActivity(activity);
-        verify(provenanceService).updateActivity(activity);
         assertTrue(record.getCatalog_resource().isPresent());
         assertEquals(distributedCatalogId, record.getCatalog_resource().get());
     }
@@ -598,11 +559,8 @@ public class SimpleCatalogManagerTest {
         record.setProperty(USER_IRI, vf.createIRI(_Thing.publisher_IRI));
 
         manager.addRecord(distributedCatalogId, record);
-        verify(provenanceService).createActivity(any(ActivityConfig.class));
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
         verify(utilsService).addObject(eq(record), any(RepositoryConnection.class));
-        verify(provenanceService).addActivity(activity);
-        verify(provenanceService).updateActivity(activity);
         assertTrue(record.getCatalog_resource().isPresent());
         assertEquals(distributedCatalogId, record.getCatalog_resource().get());
     }
@@ -614,11 +572,8 @@ public class SimpleCatalogManagerTest {
         record.setProperty(USER_IRI, vf.createIRI(_Thing.publisher_IRI));
 
         manager.addRecord(distributedCatalogId, record);
-        verify(provenanceService).createActivity(any(ActivityConfig.class));
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
         verify(utilsService).addObject(eq(record), any(RepositoryConnection.class));
-        verify(provenanceService).addActivity(activity);
-        verify(provenanceService).updateActivity(activity);
         assertTrue(record.getCatalog_resource().isPresent());
         assertEquals(distributedCatalogId, record.getCatalog_resource().get());
     }
@@ -630,7 +585,6 @@ public class SimpleCatalogManagerTest {
         record.setProperty(USER_IRI, vf.createIRI(_Thing.publisher_IRI));
 
         manager.addRecord(distributedCatalogId, record);
-        verify(provenanceService).createActivity(any(ActivityConfig.class));
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
         verify(utilsService).updateObject(eq(record), any(RepositoryConnection.class));
         verify(utilsService, times(0)).addObject(eq(record), any(RepositoryConnection.class));
@@ -647,12 +601,8 @@ public class SimpleCatalogManagerTest {
         Record record = recordFactory.createNew(RECORD_IRI);
 
         manager.addRecord(distributedCatalogId, record);
-        verify(provenanceService).createActivity(any(ActivityConfig.class));
         verify(utilsService, times(0)).addObject(eq(record), any(RepositoryConnection.class));
         verify(utilsService).throwAlreadyExists(RECORD_IRI, recordFactory);
-        verify(provenanceService).addActivity(activity);
-        verify(provenanceService).deleteActivity(activity.getResource());
-        verify(provenanceService, times(0)).updateActivity(activity);
     }
 
     /* updateRecord */

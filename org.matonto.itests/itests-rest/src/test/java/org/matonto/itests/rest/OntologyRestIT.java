@@ -115,6 +115,8 @@ public class OntologyRestIT extends KarafTestSupport {
         HttpEntity entity = createFormData("/test-ontology.ttl", "Test Ontology");
 
         try (CloseableHttpResponse response = uploadFile(createHttpClient(), entity)) {
+            System.out.println("Status code: " + response.getStatusLine().getStatusCode());
+            System.out.println("Reason Phrase: " + response.getStatusLine().getReasonPhrase());
             assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_CREATED);
             String[] ids = parseAndValidateUploadResponse(response);
             recordId = ids[0];

@@ -67,17 +67,11 @@ import org.matonto.catalog.config.CatalogConfig;
 import org.matonto.catalog.util.SearchResults;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
-import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
 import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontologies.provo.Entity;
-import org.matonto.ontologies.provo.EntityFactory;
 import org.matonto.persistence.utils.Bindings;
 import org.matonto.persistence.utils.RepositoryResults;
-import org.matonto.platform.config.api.server.MatOnto;
-import org.matonto.prov.api.ProvenanceService;
-import org.matonto.prov.api.builder.ActivityConfig;
-import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
 import org.matonto.query.api.BindingSet;
@@ -97,7 +91,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -123,10 +116,6 @@ public class SimpleCatalogManager implements CatalogManager {
     private ValueFactory vf;
     private ModelFactory mf;
     private CatalogUtilsService utils;
-    private ProvenanceService provenanceService;
-    private MatOnto matOnto;
-    private UserFactory userFactory;
-    private EntityFactory entityFactory;
     private CatalogFactory catalogFactory;
     private RecordFactory recordFactory;
     private DistributionFactory distributionFactory;
@@ -162,28 +151,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Reference
-    void setProvenanceService(ProvenanceService provenanceService) {
-        this.provenanceService = provenanceService;
-    }
-
-    @Reference
-    void setMatOnto(MatOnto matOnto) {
-        this.matOnto = matOnto;
-    }
-
-    @Reference
     void setModelFactory(ModelFactory modelFactory) {
         mf = modelFactory;
-    }
-
-    @Reference
-    void setUserFactory(UserFactory userFactory) {
-        this.userFactory = userFactory;
-    }
-
-    @Reference
-    void setEntityFactory(EntityFactory entityFactory) {
-        this.entityFactory = entityFactory;
     }
 
     @Reference
@@ -437,18 +406,6 @@ public class SimpleCatalogManager implements CatalogManager {
 
     @Override
     public <T extends Record> void addRecord(Resource catalogId, T record) {
-        OffsetDateTime start = OffsetDateTime.now();
-        Value userResource = record.getProperty(vf.createIRI(_Thing.publisher_IRI)).orElseThrow(() ->
-                new IllegalArgumentException("Record must have a publisher."));
-        User publisher = userFactory.createNew(vf.createIRI(userResource.stringValue()));
-        ActivityConfig config = new ActivityConfig.Builder(Collections.singleton(CreateActivity.class), publisher)
-                .build();
-        Activity activity = provenanceService.createActivity(config);
-        activity.addProperty(vf.createLiteral(start), vf.createIRI(Activity.startedAtTime_IRI));
-        activity.addProperty(vf.createLiteral(matOnto.getServerIdentifier().toString()),
-                vf.createIRI("http://www.w3.org/ns/prov#atLocation"));
-        provenanceService.addActivity(activity);
-
         try (RepositoryConnection conn = repository.getConnection()) {
             if (conn.containsContext(record.getResource())) {
                 throw utils.throwAlreadyExists(record.getResource(), recordFactory);
@@ -462,18 +419,6 @@ public class SimpleCatalogManager implements CatalogManager {
                 utils.addObject(record, conn);
             }
             conn.commit();
-
-            OffsetDateTime stop = OffsetDateTime.now();
-            Value title = record.getProperty(vf.createIRI(_Thing.title_IRI)).orElse(record.getResource());
-            Entity recordEntity = entityFactory.createNew(record.getResource(), activity.getModel());
-            recordEntity.addProperty(vf.createLiteral(stop), vf.createIRI(Entity.generatedAtTime_IRI));
-            recordEntity.addProperty(title, vf.createIRI(_Thing.title_IRI));
-            activity.addProperty(vf.createLiteral(stop), vf.createIRI(Activity.endedAtTime_IRI));
-            activity.addGenerated(recordEntity);
-            provenanceService.updateActivity(activity);
-        } catch (Exception e) {
-            provenanceService.deleteActivity(activity.getResource());
-            throw e;
         }
     }
 
