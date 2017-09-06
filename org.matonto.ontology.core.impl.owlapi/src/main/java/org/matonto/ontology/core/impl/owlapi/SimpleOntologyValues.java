@@ -61,6 +61,7 @@ import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
+import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
@@ -111,6 +112,7 @@ import javax.annotation.Nonnull;
 public class SimpleOntologyValues {
     
     private static ValueFactory factory;
+    private static ModelFactory modelFactory;
     private static OntologyManager ontologyManager;
     private static SesameTransformer sesameTransformer;
     private static BNodeService bNodeService;
@@ -129,6 +131,11 @@ public class SimpleOntologyValues {
     @Reference
     protected void setValueFactory(final ValueFactory vf) {
         factory = vf;
+    }
+
+    @Reference
+    protected void setModelFactory(final ModelFactory mf) {
+        modelFactory = mf;
     }
 
     @Reference

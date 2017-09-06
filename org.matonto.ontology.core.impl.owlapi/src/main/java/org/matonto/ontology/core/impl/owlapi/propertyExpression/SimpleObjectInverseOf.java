@@ -23,9 +23,10 @@ package org.matonto.ontology.core.impl.owlapi.propertyExpression;
  * #L%
  */
 
-import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.propertyexpression.ObjectInverseOf;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
+
+import javax.annotation.Nonnull;
 
 
 public class SimpleObjectInverseOf 

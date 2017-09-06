@@ -23,9 +23,10 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
-import org.matonto.ontology.core.api.Ontology;
 import org.matonto.ontology.core.api.OntologyManager;
-import org.semanticweb.owlapi.formats.RDFXMLDocumentFormat;
+import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.rdf.api.Model;
+import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
 import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
 import org.semanticweb.owlapi.model.IRI;
 import org.semanticweb.owlapi.model.OWLDocumentFormat;
@@ -35,11 +36,10 @@ import org.semanticweb.owlapi.model.OWLOntologyFactory;
 import org.semanticweb.owlapi.model.OWLOntologyID;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
+import org.semanticweb.owlapi.rio.RioParserImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class MatOntoOntologyFactory implements OWLOntologyFactory {
 
@@ -47,12 +47,13 @@ public class MatOntoOntologyFactory implements OWLOntologyFactory {
 
     private OntologyManager ontologyManager;
     private OWLOntologyFactory ontologyFactory;
-    private Map<IRI, OWLOntology> loadedOntologies;
+    private SesameTransformer sesameTransformer;
 
-    public MatOntoOntologyFactory(OntologyManager ontologyManager, OWLOntologyFactory factory) {
+    public MatOntoOntologyFactory(OntologyManager ontologyManager, OWLOntologyFactory factory,
+                                  SesameTransformer sesameTransformer) {
         this.ontologyManager = ontologyManager;
         this.ontologyFactory = factory;
-        this.loadedOntologies = new HashMap<>();
+        this.sesameTransformer = sesameTransformer;
     }
 
     @Override
@@ -69,7 +70,9 @@ public class MatOntoOntologyFactory implements OWLOntologyFactory {
     @Override
     public OWLOntology createOWLOntology(OWLOntologyManager manager, OWLOntologyID ontologyID, IRI documentIRI,
                                          OWLOntologyCreationHandler handler) throws OWLOntologyCreationException {
-        LOG.debug("createOWLOntology called with: {}", documentIRI);
+        if (!ontologyID.isAnonymous()) {
+            LOG.debug("createOWLOntology: {}", ontologyID.toString());
+        }
         return ontologyFactory.createOWLOntology(manager, ontologyID, documentIRI, handler);
     }
 
@@ -77,23 +80,25 @@ public class MatOntoOntologyFactory implements OWLOntologyFactory {
     public OWLOntology loadOWLOntology(OWLOntologyManager manager, OWLOntologyDocumentSource source,
                                        OWLOntologyCreationHandler handler, OWLOntologyLoaderConfiguration config)
             throws OWLOntologyCreationException {
-        IRI iri = source.getDocumentIRI();
-        LOG.debug("loadOWLOntology called with: {}", iri);
-        // if (!loadedOntologies.containsKey(iri)) {
-            IRI recordId = IRI.create(iri.getIRIString().replace(MatOntoOntologyIRIMapper.protocol,
-                    MatOntoOntologyIRIMapper.standardProtocol));
-            Ontology matOnt = ontologyManager.retrieveOntology(SimpleOntologyValues.matontoIRI(recordId))
-                    .orElseThrow(() -> new OWLOntologyCreationException("Ontology " + recordId
-                            + " could not be found"));
-            OWLOntology ont = SimpleOntologyValues.owlapiOntology(matOnt);
-            handler.ontologyCreated(ont);
-            ont.importsDeclarations().forEach(manager::makeLoadImportRequest);
-            OWLDocumentFormat format = new RDFXMLDocumentFormat();
-            format.setAddMissingTypes(false);
-            handler.setOntologyFormat(ont, format);
-            loadedOntologies.put(iri, ont);
-            return ont;
-        /*}
-        return loadedOntologies.get(iri);*/
+        OWLOntology existingOntology = null;
+        IRI documentIRI = source.getDocumentIRI();
+        if (manager.contains(documentIRI)) {
+            existingOntology = manager.getOntology(documentIRI);
+        }
+        OWLOntologyID ontologyID = new OWLOntologyID();
+        OWLOntology ont = createOWLOntology(manager, ontologyID, documentIRI, handler);
+        if (existingOntology == null && !ont.isEmpty()) {
+            manager.removeOntology(ont);
+            ont = createOWLOntology(manager, ontologyID, documentIRI, handler);
+        }
+        IRI recordId = IRI.create(documentIRI.getIRIString().replace(MatOntoOntologyIRIMapper.protocol,
+                MatOntoOntologyIRIMapper.standardProtocol));
+        Model ontologyModel = ontologyManager.getOntologyModel(SimpleOntologyValues.matontoIRI(recordId));
+        RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
+        org.openrdf.model.Model sesameModel = sesameTransformer.sesameModel(ontologyModel);
+        OWLDocumentFormat format = parser.parse(new RioMemoryTripleSource(sesameModel), ont, config);
+        handler.setOntologyFormat(ont, format);
+        LOG.debug("loadOWLOntology: {}", ont.getOntologyID().toString());
+        return ont;
     }
 }

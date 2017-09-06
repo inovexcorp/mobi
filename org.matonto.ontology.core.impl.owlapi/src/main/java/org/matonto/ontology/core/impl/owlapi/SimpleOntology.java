@@ -186,7 +186,7 @@ public class SimpleOntology implements Ontology {
         this.ontologyId = ontologyId;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
-        setUpOwlManager(ontologyManager);
+        setUpOwlManager(ontologyManager, transformer);
 
         try {
             Optional<org.semanticweb.owlapi.model.IRI> owlOntIRI = Optional.empty();
@@ -223,7 +223,7 @@ public class SimpleOntology implements Ontology {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
-        setUpOwlManager(ontologyManager);
+        setUpOwlManager(ontologyManager, transformer);
 
         try {
             owlOntology = owlManager.loadOntologyFromOntologyDocument(inputStream);
@@ -247,7 +247,8 @@ public class SimpleOntology implements Ontology {
      * @throws FileNotFoundException If the provided File cannot be found
      */
     public SimpleOntology(File file, OntologyManager ontologyManager, SesameTransformer transformer,
-                          BNodeService bNodeService) throws MatontoOntologyException, FileNotFoundException {
+                          BNodeService bNodeService) throws MatontoOntologyException,
+            FileNotFoundException {
         this(new FileInputStream(file), ontologyManager, transformer, bNodeService);
     }
 
@@ -265,7 +266,7 @@ public class SimpleOntology implements Ontology {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
-        setUpOwlManager(ontologyManager);
+        setUpOwlManager(ontologyManager, transformer);
 
         try {
             owlOntology = owlManager.createOntology();
@@ -293,7 +294,7 @@ public class SimpleOntology implements Ontology {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
-        setUpOwlManager(ontologyManager);
+        setUpOwlManager(ontologyManager, transformer);
 
         try {
             OWLOntologyDocumentSource documentSource = new IRIDocumentSource(SimpleOntologyValues.owlapiIRI(iri));
@@ -319,7 +320,7 @@ public class SimpleOntology implements Ontology {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
-        setUpOwlManager(ontologyManager);
+        setUpOwlManager(ontologyManager, transformer);
 
         OWLParserFactory factory = new RioJsonLDParserFactory();
         OWLParser parser = factory.createParser();
@@ -342,7 +343,7 @@ public class SimpleOntology implements Ontology {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
-        setUpOwlManager(ontologyManager);
+        setUpOwlManager(ontologyManager, transformer);
 
         try {
             owlOntology = owlManager.copyOntology(ontology, OntologyCopy.DEEP);
@@ -865,9 +866,10 @@ public class SimpleOntology implements Ontology {
         return stream.map(HasDomain::getDomain).count() == 0;
     }
 
-    private void setUpOwlManager(OntologyManager ontologyManager) {
+    private void setUpOwlManager(OntologyManager ontologyManager, SesameTransformer sesameTransformer) {
         owlManager.getIRIMappers().add(new MatOntoOntologyIRIMapper(ontologyManager));
         OWLOntologyFactory originalFactory = owlManager.getOntologyFactories().iterator().next();
-        owlManager.getOntologyFactories().add(new MatOntoOntologyFactory(ontologyManager, originalFactory));
+        owlManager.getOntologyFactories().add(new MatOntoOntologyFactory(ontologyManager, originalFactory,
+                sesameTransformer));
     }
 }

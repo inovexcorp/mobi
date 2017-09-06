@@ -23,9 +23,6 @@ package org.matonto.ontology.core.impl.owlapi.classexpression;
  * #L%
  */
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.OClass;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
@@ -34,6 +31,10 @@ import org.matonto.ontology.core.impl.owlapi.SimpleOntologyValues;
 import org.matonto.rdf.api.IRI;
 import org.semanticweb.owlapi.model.OWLClass;
 import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
+
+import java.util.HashSet;
+import java.util.Set;
+import javax.annotation.Nonnull;
 
 
 public class SimpleClass implements OClass {
