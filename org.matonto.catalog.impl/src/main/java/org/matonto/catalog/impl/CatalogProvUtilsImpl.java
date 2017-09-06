@@ -36,6 +36,7 @@ import org.matonto.platform.config.api.server.MatOnto;
 import org.matonto.prov.api.ProvenanceService;
 import org.matonto.prov.api.builder.ActivityConfig;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 
@@ -46,6 +47,7 @@ import java.util.Collections;
 public class CatalogProvUtilsImpl implements CatalogProvUtils {
     private ValueFactory vf;
     private ProvenanceService provenanceService;
+    private CreateActivityFactory createActivityFactory;
     private EntityFactory entityFactory;
     private MatOnto matOnto;
 
@@ -62,6 +64,11 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
     }
 
     @Reference
+    void setCreateActivityFactory(CreateActivityFactory createActivityFactory) {
+        this.createActivityFactory = createActivityFactory;
+    }
+
+    @Reference
     void setEntityFactory(EntityFactory entityFactory) {
         this.entityFactory = entityFactory;
     }
@@ -72,7 +79,7 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
     }
 
     @Override
-    public Activity startCreateActivity(User user) {
+    public CreateActivity startCreateActivity(User user) {
         OffsetDateTime start = OffsetDateTime.now();
         ActivityConfig config = new ActivityConfig.Builder(Collections.singleton(CreateActivity.class), user)
                 .build();
@@ -80,11 +87,12 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
         activity.addProperty(vf.createLiteral(start), vf.createIRI(Activity.startedAtTime_IRI));
         activity.addProperty(vf.createLiteral(matOnto.getServerIdentifier().toString()), vf.createIRI(atLocation));
         provenanceService.addActivity(activity);
-        return activity;
+        return createActivityFactory.getExisting(activity.getResource(), activity.getModel()).orElseThrow(() ->
+                new IllegalStateException("CreateActivity not made correctly"));
     }
 
     @Override
-    public void endCreateActivity(Activity createActivity, Record record) {
+    public void endCreateActivity(CreateActivity createActivity, Record record) {
         OffsetDateTime stop = OffsetDateTime.now();
         Value title = record.getProperty(vf.createIRI(_Thing.title_IRI)).orElse(record.getResource());
         Entity recordEntity = entityFactory.createNew(record.getResource(), createActivity.getModel());

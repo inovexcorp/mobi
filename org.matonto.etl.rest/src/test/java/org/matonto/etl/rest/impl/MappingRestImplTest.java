@@ -58,9 +58,9 @@ import org.matonto.etl.api.ontologies.delimited.MappingRecordFactory;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
-import org.matonto.ontologies.provo.Activity;
-import org.matonto.ontologies.provo.ActivityFactory;
 import org.matonto.persistence.utils.impl.SimpleSesameTransformer;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -108,10 +108,10 @@ public class MappingRestImplTest extends MatontoRestTestNg {
     private MappingRecordFactory mappingRecordFactory;
     private BranchFactory branchFactory;
     private UserFactory userFactory;
-    private ActivityFactory activityFactory;
+    private CreateActivityFactory createActivityFactory;
     private Model fakeModel;
     private User user;
-    private Activity activity;
+    private CreateActivity activity;
     private MappingRecord record;
     private Branch branch;
 
@@ -160,11 +160,11 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         userFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(userFactory);
 
-        activityFactory = new ActivityFactory();
-        activityFactory.setValueFactory(vf);
-        activityFactory.setModelFactory(mf);
-        activityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(activityFactory);
+        createActivityFactory = new CreateActivityFactory();
+        createActivityFactory.setValueFactory(vf);
+        createActivityFactory.setModelFactory(mf);
+        createActivityFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(createActivityFactory);
 
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
@@ -182,7 +182,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         record = mappingRecordFactory.createNew(vf.createIRI(MAPPING_RECORD_IRI));
         record.setMasterBranch(branch);
         user = userFactory.createNew(vf.createIRI("http://test.org/" + UsernameTestFilter.USERNAME));
-        activity = activityFactory.createNew(vf.createIRI("http://test.org/activity"));
+        activity = createActivityFactory.createNew(vf.createIRI("http://test.org/activity"));
 
         MockitoAnnotations.initMocks(this);
 

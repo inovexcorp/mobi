@@ -86,6 +86,8 @@ import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontologies.provo.ActivityFactory;
 import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
@@ -147,7 +149,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     private BranchFactory branchFactory;
     private UserBranchFactory userBranchFactory;
     private UserFactory userFactory;
-    private ActivityFactory activityFactory;
+    private CreateActivityFactory createActivityFactory;
     private ValueFactory vf;
     private ModelFactory mf;
     private ValueConverterRegistry vcr;
@@ -166,7 +168,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     private Branch testBranch;
     private UserBranch testUserBranch;
     private User user;
-    private Activity activity;
+    private CreateActivity activity;
     private Model compiledResource;
     private Model compiledResourceWithChanges;
     private static final String ERROR_IRI = "http://matonto.org/error";
@@ -305,11 +307,11 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         userFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(userFactory);
 
-        activityFactory = new ActivityFactory();
-        activityFactory.setModelFactory(mf);
-        activityFactory.setValueFactory(vf);
-        activityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(activityFactory);
+        createActivityFactory = new CreateActivityFactory();
+        createActivityFactory.setModelFactory(mf);
+        createActivityFactory.setValueFactory(vf);
+        createActivityFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(createActivityFactory);
 
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
@@ -353,7 +355,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         testVersionedRDFRecord.setBranch(Stream.of(testBranch, testUserBranch).collect(Collectors.toSet()));
         testMappingRecord = mappingRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         user = userFactory.createNew(vf.createIRI(USER_IRI));
-        activity = activityFactory.createNew(vf.createIRI(ACTIVITY_IRI));
+        activity = createActivityFactory.createNew(vf.createIRI(ACTIVITY_IRI));
         compiledResource = mf.createModel();
         compiledResourceWithChanges = mf.createModel(compiledResource);
         compiledResourceWithChanges.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()),

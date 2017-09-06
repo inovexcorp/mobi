@@ -62,6 +62,8 @@ import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontologies.provo.ActivityFactory;
 import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -112,14 +114,14 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
     private UserFactory userFactory;
     private BranchFactory branchFactory;
     private CommitFactory commitFactory;
-    private ActivityFactory activityFactory;
+    private CreateActivityFactory createActivityFactory;
     private DatasetRecord record1;
     private DatasetRecord record2;
     private DatasetRecord record3;
     private Commit commit;
     private Branch branch;
     private User user;
-    private Activity activity;
+    private CreateActivity activity;
 
     private IRI errorIRI;
     private IRI localIRI;
@@ -183,11 +185,11 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         commitFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(commitFactory);
 
-        activityFactory = new ActivityFactory();
-        activityFactory.setValueFactory(vf);
-        activityFactory.setModelFactory(mf);
-        activityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(activityFactory);
+        createActivityFactory = new CreateActivityFactory();
+        createActivityFactory.setValueFactory(vf);
+        createActivityFactory.setModelFactory(mf);
+        createActivityFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(createActivityFactory);
 
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
@@ -209,7 +211,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         commit = commitFactory.createNew(commitIRI);
         branch = branchFactory.createNew(branchIRI);
         branch.setHead(commit);
-        activity = activityFactory.createNew(vf.createIRI("http://example.com/activity"));
+        activity = createActivityFactory.createNew(vf.createIRI("http://example.com/activity"));
 
         MockitoAnnotations.initMocks(this);
         rest = new DatasetRestImpl();

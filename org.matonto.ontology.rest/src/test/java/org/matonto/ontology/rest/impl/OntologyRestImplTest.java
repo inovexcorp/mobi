@@ -91,6 +91,8 @@ import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProp
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -198,8 +200,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     private OntologyRecordFactory ontologyRecordFactory;
     private InProgressCommitFactory inProgressCommitFactory;
     private UserFactory userFactory;
-    private ActivityFactory activityFactory;
-    private Activity activity;
+    private CreateActivityFactory createActivityFactory;
+    private CreateActivity activity;
     private IRI catalogId;
     private IRI recordId;
     private OntologyRecord record;
@@ -300,11 +302,11 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         userFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(userFactory);
 
-        activityFactory = new ActivityFactory();
-        activityFactory.setModelFactory(mf);
-        activityFactory.setValueFactory(vf);
-        activityFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(activityFactory);
+        createActivityFactory = new CreateActivityFactory();
+        createActivityFactory.setModelFactory(mf);
+        createActivityFactory.setValueFactory(vf);
+        createActivityFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(createActivityFactory);
 
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
@@ -407,7 +409,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         constructs = mf.createModel(Stream.of(vf.createStatement(class1b, subClassOf, class1a),
                 vf.createStatement(individual1a, type, class1a)).collect(Collectors.toSet()));
         failedImports = Collections.singleton(importedOntologyIRI);
-        activity = activityFactory.createNew(vf.createIRI("http://test.org/activity"));
+        activity = createActivityFactory.createNew(vf.createIRI("http://test.org/activity"));
 
         return new ResourceConfig()
                 .register(rest)
