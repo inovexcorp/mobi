@@ -57,7 +57,7 @@
         <!-- Karaf Dependencies -->
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>distribution</artifactId>
+            <artifactId>matonto-distribution</artifactId>
             <version>${project.version}</version>
             <type>tar.gz</type>
             <scope>provided</scope>
