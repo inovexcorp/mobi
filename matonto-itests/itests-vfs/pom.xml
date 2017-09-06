@@ -26,7 +26,7 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>itests</artifactId>
+        <artifactId>matonto-itests</artifactId>
         <groupId>org.matonto</groupId>
         <version>1.9.3-SNAPSHOT</version>
     </parent>
@@ -52,7 +52,7 @@
         <!-- Karaf Dependencies -->
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>distribution</artifactId>
+            <artifactId>matonto-distribution</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
             <type>tar.gz</type>
