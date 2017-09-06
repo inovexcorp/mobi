@@ -48,12 +48,12 @@
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>persistence.api</artifactId>
-                <version>1.8.71</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>persistence.utils</artifactId>
-                <version>1.8.71</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.matonto</groupId>
@@ -82,7 +82,7 @@
             <dependency>
                 <groupId>org.matonto</groupId>
                 <artifactId>rdf.impl.sesame</artifactId>
-                <version>1.8.71</version>
+                <version>${project.version}</version>
                 <scope>test</scope>
             </dependency>
 
