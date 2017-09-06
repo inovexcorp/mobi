@@ -24,12 +24,13 @@ package org.matonto.platform.config.api.application;
  */
 
 import aQute.bnd.annotation.metatype.Meta;
+import org.matonto.repository.config.RepositoryConsumerConfig;
 
 /**
  * Configuration for Application objects in the repository.
  */
 @Meta.OCD
-public interface ApplicationConfig {
+public interface ApplicationConfig extends RepositoryConsumerConfig {
 
     /**
      * The ID of the Application service. Used as the local name of the Application IRI.

@@ -73,4 +73,12 @@ public interface ProvenanceService {
      * @param newActivity The Activity to replace the existing one in the provenance repository
      */
     void updateActivity(Activity newActivity);
+
+    /**
+     * Removes an Activity identified by its IRI from the provenance store. Referenced Entities will only be removed
+     * if not referenced by another Activity.
+     *
+     * @param activityIRI The IRI of an Activity
+     */
+    void deleteActivity(Resource activityIRI);
 }

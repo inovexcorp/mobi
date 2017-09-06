@@ -30,6 +30,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -42,6 +43,7 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.CatalogProvUtils;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
@@ -56,8 +58,12 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
+import org.matonto.ontologies.provo.Activity;
+import org.matonto.ontologies.provo.ActivityFactory;
 import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -108,12 +114,14 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
     private UserFactory userFactory;
     private BranchFactory branchFactory;
     private CommitFactory commitFactory;
+    private CreateActivityFactory createActivityFactory;
     private DatasetRecord record1;
     private DatasetRecord record2;
     private DatasetRecord record3;
     private Commit commit;
     private Branch branch;
     private User user;
+    private CreateActivity activity;
 
     private IRI errorIRI;
     private IRI localIRI;
@@ -138,6 +146,9 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
     @Mock
     private BNodeService service;
+
+    @Mock
+    private CatalogProvUtils provUtils;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -174,6 +185,12 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         commitFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(commitFactory);
 
+        createActivityFactory = new CreateActivityFactory();
+        createActivityFactory.setValueFactory(vf);
+        createActivityFactory.setModelFactory(mf);
+        createActivityFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(createActivityFactory);
+
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -194,6 +211,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         commit = commitFactory.createNew(commitIRI);
         branch = branchFactory.createNew(branchIRI);
         branch.setHead(commit);
+        activity = createActivityFactory.createNew(vf.createIRI("http://example.com/activity"));
 
         MockitoAnnotations.initMocks(this);
         rest = new DatasetRestImpl();
@@ -204,6 +222,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         rest.setEngineManager(engineManager);
         rest.setCatalogManager(catalogManager);
         rest.setBNodeService(service);
+        rest.setProvUtils(provUtils);
 
         return new ResourceConfig()
                 .register(rest)
@@ -218,7 +237,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(datasetManager, catalogManager, transformer, results, service);
+        reset(datasetManager, catalogManager, transformer, results, service, provUtils);
 
         when(transformer.sesameModel(any(Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
@@ -240,6 +259,8 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         when(results.getPageNumber()).thenReturn(1);
         when(results.getPageSize()).thenReturn(10);
         when(results.getTotalSize()).thenReturn(3);
+
+        when(provUtils.startCreateActivity(any(User.class))).thenReturn(activity);
     }
 
     /* GET datasets */
@@ -321,6 +342,8 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         verify(datasetManager).createDataset(any(DatasetRecordConfig.class));
         verify(catalogManager).getMasterBranch(localIRI, ontologyRecordIRI);
         assertEquals(response.readEntity(String.class), record1.getResource().stringValue());
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).endCreateActivity(activity, record1);
     }
 
     @Test
@@ -330,6 +353,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
@@ -339,6 +363,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
@@ -350,6 +375,8 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(activity);
     }
 
     @Test
@@ -362,6 +389,8 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(activity);
     }
 
     @Test
@@ -374,6 +403,8 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(activity);
     }
 
     @Test
@@ -387,6 +418,8 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(activity);
     }
 
     @Test
@@ -398,6 +431,8 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(activity);
     }
 
     /* GET datasets/{datasetId} */
