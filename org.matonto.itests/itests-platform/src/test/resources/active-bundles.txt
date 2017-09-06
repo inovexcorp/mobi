@@ -26,3 +26,5 @@ org.matonto.web.security
 org.matonto.rdf.orm
 org.matonto.dataset.api
 org.matonto.dataset.impl
+org.matonto.prov.api
+org.matonto.prov.impl

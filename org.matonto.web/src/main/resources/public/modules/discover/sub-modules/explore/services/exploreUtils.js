@@ -37,16 +37,18 @@
          * @ngdoc service
          * @name exploreUtils.service:exploreUtilsService
          * @requires prefixes.service:prefixes
+         * @requires utilService.service:utilService
          *
          * @description
          * `exploreUtilsService` is a service that provides utility functions for the explore sub module.
          */
         .service('exploreUtilsService', exploreUtilsService);
 
-    exploreUtilsService.$inject = ['REGEX', 'prefixes'];
+    exploreUtilsService.$inject = ['REGEX', 'prefixes', 'utilService'];
 
-    function exploreUtilsService(REGEX, prefixes) {
+    function exploreUtilsService(REGEX, prefixes, utilService) {
         var self = this;
+        var util = utilService;
 
         /**
          * @ngdoc method
@@ -61,21 +63,7 @@
          * @returns {string} A string identifying the input type that should be used for the provided property.
          */
         self.getInputType = function(propertyIRI, properties) {
-            switch (_.replace(self.getRange(propertyIRI, properties), prefixes.xsd, '')) {
-                case 'dateTime':
-                case 'dateTimeStamp':
-                    return 'date';
-                case 'decimal':
-                case 'double':
-                case 'float':
-                case 'int':
-                case 'integer':
-                case 'long':
-                case 'short':
-                    return 'number';
-                default:
-                    return 'text';
-            }
+            return util.getInputType(self.getRange(propertyIRI, properties));
         }
         /**
          * @ngdoc method
@@ -90,22 +78,7 @@
          * @returns {RegEx} A Regular Expression identifying the acceptable values for the provided property.
          */
         self.getPattern = function(propertyIRI, properties) {
-            switch (_.replace(self.getRange(propertyIRI, properties), prefixes.xsd, '')) {
-                case 'dateTime':
-                case 'dateTimeStamp':
-                    return REGEX.DATETIME;
-                case 'decimal':
-                case 'double':
-                case 'float':
-                    return REGEX.DECIMAL;
-                case 'int':
-                case 'long':
-                case 'short':
-                case 'integer':
-                    return REGEX.INTEGER;
-                default:
-                    return REGEX.ANYTHING;
-            }
+            return util.getPattern(self.getRange(propertyIRI, properties));
         }
         /**
          * @ngdoc method

@@ -37,7 +37,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.versioning.VersioningManager;
-import org.matonto.etl.api.config.MappingRecordConfig;
+import org.matonto.etl.api.config.delimited.MappingRecordConfig;
 import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.etl.api.delimited.MappingWrapper;
 import org.matonto.etl.api.ontologies.delimited.MappingRecord;

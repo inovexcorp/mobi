@@ -30,12 +30,12 @@ import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import org.matonto.etl.api.config.ExcelConfig;
-import org.matonto.etl.api.config.ExportServiceConfig;
-import org.matonto.etl.api.config.ImportServiceConfig;
-import org.matonto.etl.api.config.SVConfig;
+import org.matonto.etl.api.config.delimited.ExcelConfig;
+import org.matonto.etl.api.config.rdf.export.RDFExportConfig;
+import org.matonto.etl.api.config.rdf.ImportServiceConfig;
+import org.matonto.etl.api.config.delimited.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
-import org.matonto.etl.api.rdf.RDFExportService;
+import org.matonto.etl.api.rdf.export.RDFExportService;
 import org.matonto.etl.api.rdf.RDFImportService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.Model;
@@ -46,6 +46,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.Optional;
 
 @Command(scope = "mobi", name = "transform", description = "Transforms CSV Files to RDF using a mapping file")
@@ -159,8 +161,10 @@ public class CLITransform implements Action {
             }
 
             if (outputFile != null) {
-                ExportServiceConfig config = new ExportServiceConfig.Builder(outputFile).build();
-                rdfExportService.exportToFile(config, model);
+                OutputStream output = new FileOutputStream(outputFile);
+                RDFFormat outputFormat = Rio.getParserFormatForFileName(outputFile).orElse(RDFFormat.TRIG);
+                RDFExportConfig config = new RDFExportConfig.Builder(output, outputFormat).build();
+                rdfExportService.export(config, model);
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());
