@@ -44,6 +44,7 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.CatalogProvUtils;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.builder.Conflict;
@@ -81,8 +82,12 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
+import org.matonto.ontologies.provo.Activity;
+import org.matonto.ontologies.provo.ActivityFactory;
 import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
@@ -144,6 +149,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     private BranchFactory branchFactory;
     private UserBranchFactory userBranchFactory;
     private UserFactory userFactory;
+    private CreateActivityFactory createActivityFactory;
     private ValueFactory vf;
     private ModelFactory mf;
     private ValueConverterRegistry vcr;
@@ -162,6 +168,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     private Branch testBranch;
     private UserBranch testUserBranch;
     private User user;
+    private CreateActivity activity;
     private Model compiledResource;
     private Model compiledResourceWithChanges;
     private static final String ERROR_IRI = "http://matonto.org/error";
@@ -177,6 +184,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     };
     private static final String BRANCH_IRI = "http://matonto.org/branches/test";
     private static final String USER_IRI = "http://matonto.org/users/tester";
+    private static final String ACTIVITY_IRI = "http://matonto.org/activity/test";
     private static final String CONFLICT_IRI = "http://matonto.org/conflicts/test";
 
     @Mock
@@ -206,82 +214,105 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     @Mock
     private BNodeService bNodeService;
 
+    @Mock
+    private CatalogProvUtils provUtils;
+
     @Override
     protected Application configureApp() throws Exception {
         vf = SimpleValueFactory.getInstance();
         mf = LinkedHashModelFactory.getInstance();
         vcr = new DefaultValueConverterRegistry();
+
         catalogFactory = new CatalogFactory();
-        recordFactory = new RecordFactory();
-        unversionedRecordFactory = new UnversionedRecordFactory();
-        versionedRecordFactory = new VersionedRecordFactory();
-        versionedRDFRecordFactory = new VersionedRDFRecordFactory();
-        mappingRecordFactory = new MappingRecordFactory();
-        distributionFactory = new DistributionFactory();
-        versionFactory = new VersionFactory();
-        tagFactory = new TagFactory();
-        commitFactory = new CommitFactory();
-        inProgressCommitFactory = new InProgressCommitFactory();
-        branchFactory = new BranchFactory();
-        userBranchFactory = new UserBranchFactory();
-        userFactory = new UserFactory();
         catalogFactory.setModelFactory(mf);
         catalogFactory.setValueFactory(vf);
         catalogFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(catalogFactory);
+
+        recordFactory = new RecordFactory();
         recordFactory.setModelFactory(mf);
         recordFactory.setValueFactory(vf);
         recordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(recordFactory);
+
+        unversionedRecordFactory = new UnversionedRecordFactory();
         unversionedRecordFactory.setModelFactory(mf);
         unversionedRecordFactory.setValueFactory(vf);
         unversionedRecordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(unversionedRecordFactory);
+
+        versionedRecordFactory = new VersionedRecordFactory();
         versionedRecordFactory.setModelFactory(mf);
         versionedRecordFactory.setValueFactory(vf);
         versionedRecordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(versionedRecordFactory);
+
+        versionedRDFRecordFactory = new VersionedRDFRecordFactory();
         versionedRDFRecordFactory.setModelFactory(mf);
         versionedRDFRecordFactory.setValueFactory(vf);
         versionedRDFRecordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(versionedRDFRecordFactory);
+
+        mappingRecordFactory = new MappingRecordFactory();
         mappingRecordFactory.setModelFactory(mf);
         mappingRecordFactory.setValueFactory(vf);
         mappingRecordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(mappingRecordFactory);
+
+        distributionFactory = new DistributionFactory();
         distributionFactory.setModelFactory(mf);
         distributionFactory.setValueFactory(vf);
         distributionFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(distributionFactory);
+
+        versionFactory = new VersionFactory();
         versionFactory.setModelFactory(mf);
         versionFactory.setValueFactory(vf);
         versionFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(versionFactory);
+
+        tagFactory = new TagFactory();
         tagFactory.setModelFactory(mf);
         tagFactory.setValueFactory(vf);
         tagFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(tagFactory);
+
+        commitFactory = new CommitFactory();
         commitFactory.setModelFactory(mf);
         commitFactory.setValueFactory(vf);
         commitFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(commitFactory);
+
+        inProgressCommitFactory = new InProgressCommitFactory();
         inProgressCommitFactory.setModelFactory(mf);
         inProgressCommitFactory.setValueFactory(vf);
         inProgressCommitFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(inProgressCommitFactory);
+
+        branchFactory = new BranchFactory();
         branchFactory.setModelFactory(mf);
         branchFactory.setValueFactory(vf);
         branchFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(branchFactory);
+
+        userBranchFactory = new UserBranchFactory();
         userBranchFactory.setModelFactory(mf);
         userBranchFactory.setValueFactory(vf);
         userBranchFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(userBranchFactory);
+
+        userFactory = new UserFactory();
         userFactory.setModelFactory(mf);
         userFactory.setValueFactory(vf);
         userFactory.setValueConverterRegistry(vcr);
-
-        vcr.registerValueConverter(catalogFactory);
-        vcr.registerValueConverter(recordFactory);
-        vcr.registerValueConverter(unversionedRecordFactory);
-        vcr.registerValueConverter(versionedRecordFactory);
-        vcr.registerValueConverter(versionedRDFRecordFactory);
-        vcr.registerValueConverter(mappingRecordFactory);
-        vcr.registerValueConverter(distributionFactory);
-        vcr.registerValueConverter(versionFactory);
-        vcr.registerValueConverter(tagFactory);
-        vcr.registerValueConverter(commitFactory);
-        vcr.registerValueConverter(inProgressCommitFactory);
-        vcr.registerValueConverter(branchFactory);
         vcr.registerValueConverter(userFactory);
-        vcr.registerValueConverter(userBranchFactory);
+
+        createActivityFactory = new CreateActivityFactory();
+        createActivityFactory.setModelFactory(mf);
+        createActivityFactory.setValueFactory(vf);
+        createActivityFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(createActivityFactory);
+
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -324,6 +355,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         testVersionedRDFRecord.setBranch(Stream.of(testBranch, testUserBranch).collect(Collectors.toSet()));
         testMappingRecord = mappingRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         user = userFactory.createNew(vf.createIRI(USER_IRI));
+        activity = createActivityFactory.createNew(vf.createIRI(ACTIVITY_IRI));
         compiledResource = mf.createModel();
         compiledResourceWithChanges = mf.createModel(compiledResource);
         compiledResourceWithChanges.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()),
@@ -349,6 +381,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         rest.setFactoryRegistry(factoryRegistry);
         rest.setVersioningManager(versioningManager);
         rest.setbNodeService(bNodeService);
+        rest.setProvUtils(provUtils);
 
         return new ResourceConfig()
                 .register(rest)
@@ -363,7 +396,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(catalogManager, versioningManager, engineManager, transformer, conflict, difference, results, bNodeService);
+        reset(catalogManager, versioningManager, engineManager, transformer, conflict, difference, results, bNodeService, provUtils);
 
         when(transformer.sesameModel(any(Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
@@ -460,6 +493,8 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.of(user.getResource().stringValue()));
+
+        when(provUtils.startCreateActivity(any(User.class))).thenReturn(activity);
     }
 
     // GET catalogs
@@ -682,6 +717,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
@@ -692,6 +728,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
@@ -704,6 +741,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
@@ -717,6 +755,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 401);
+        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
@@ -730,6 +769,8 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(ERROR_IRI) + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(activity);
     }
 
     @Test
@@ -743,6 +784,8 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records")
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(activity);
     }
 
     // GET catalogs/{catalogId}/records/{recordId}
@@ -3143,6 +3186,8 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         assertEquals(response.readEntity(String.class), RECORD_IRI);
         verify(catalogManager).createRecord(any(RecordConfig.class), eq(ormFactory));
         verify(catalogManager).addRecord(eq(vf.createIRI(LOCAL_IRI)), any(Record.class));
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).endCreateActivity(eq(activity), any(Record.class));
     }
 
     private <T extends Version> void testCreateVersionByType(OrmFactory<T> ormFactory) {

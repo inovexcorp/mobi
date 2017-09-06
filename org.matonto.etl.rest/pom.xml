@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.9.3-SNAPSHOT</version>
+        <version>1.9.5-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
 
     </parent>
@@ -47,22 +47,22 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rest.util</artifactId>
-            <version>1.8.71</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
-            <version>1.8.71</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.8.71</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>dataset.api</artifactId>
-            <version>1.8.71</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -110,13 +110,13 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.8.71</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>repository.impl.sesame</artifactId>
-            <version>1.8.71</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
