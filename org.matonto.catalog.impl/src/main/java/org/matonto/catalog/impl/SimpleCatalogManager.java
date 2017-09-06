@@ -136,82 +136,82 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Reference(name = "repository")
-    protected void setRepository(Repository repository) {
+    void setRepository(Repository repository) {
         this.repository = repository;
     }
 
     @Reference
-    protected void setValueFactory(ValueFactory valueFactory) {
+    void setValueFactory(ValueFactory valueFactory) {
         vf = valueFactory;
     }
 
     @Reference
-    protected void setUtils(CatalogUtilsService utils) {
+    void setUtils(CatalogUtilsService utils) {
         this.utils = utils;
     }
 
     @Reference
-    protected void setModelFactory(ModelFactory modelFactory) {
+    void setModelFactory(ModelFactory modelFactory) {
         mf = modelFactory;
     }
 
     @Reference
-    protected void setCatalogFactory(CatalogFactory catalogFactory) {
+    void setCatalogFactory(CatalogFactory catalogFactory) {
         this.catalogFactory = catalogFactory;
     }
 
     @Reference
-    protected void setRecordFactory(RecordFactory recordFactory) {
+    void setRecordFactory(RecordFactory recordFactory) {
         this.recordFactory = recordFactory;
     }
 
     @Reference
-    protected void setDistributionFactory(DistributionFactory distributionFactory) {
+    void setDistributionFactory(DistributionFactory distributionFactory) {
         this.distributionFactory = distributionFactory;
     }
 
     @Reference
-    protected void setBranchFactory(BranchFactory branchFactory) {
+    void setBranchFactory(BranchFactory branchFactory) {
         this.branchFactory = branchFactory;
     }
 
     @Reference
-    protected void setInProgressCommitFactory(InProgressCommitFactory inProgressCommitFactory) {
+    void setInProgressCommitFactory(InProgressCommitFactory inProgressCommitFactory) {
         this.inProgressCommitFactory = inProgressCommitFactory;
     }
 
     @Reference
-    protected void setCommitFactory(CommitFactory commitFactory) {
+    void setCommitFactory(CommitFactory commitFactory) {
         this.commitFactory = commitFactory;
     }
 
     @Reference
-    protected void setRevisionFactory(RevisionFactory revisionFactory) {
+    void setRevisionFactory(RevisionFactory revisionFactory) {
         this.revisionFactory = revisionFactory;
     }
 
     @Reference
-    protected void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
+    void setVersionedRDFRecordFactory(VersionedRDFRecordFactory versionedRDFRecordFactory) {
         this.versionedRDFRecordFactory = versionedRDFRecordFactory;
     }
 
     @Reference
-    protected void setVersionedRecordFactory(VersionedRecordFactory versionedRecordFactory) {
+    void setVersionedRecordFactory(VersionedRecordFactory versionedRecordFactory) {
         this.versionedRecordFactory = versionedRecordFactory;
     }
 
     @Reference
-    protected void setUnversionedRecordFactory(UnversionedRecordFactory unversionedRecordFactory) {
+    void setUnversionedRecordFactory(UnversionedRecordFactory unversionedRecordFactory) {
         this.unversionedRecordFactory = unversionedRecordFactory;
     }
 
     @Reference
-    protected void setVersionFactory(VersionFactory versionFactory) {
+    void setVersionFactory(VersionFactory versionFactory) {
         this.versionFactory = versionFactory;
     }
 
     @Reference
-    protected void setTagFactory(TagFactory tagFactory) {
+    void setTagFactory(TagFactory tagFactory) {
         this.tagFactory = tagFactory;
     }
 

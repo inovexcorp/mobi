@@ -26,6 +26,7 @@ package org.matonto.rest.util;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.persistence.utils.SkolemizedStatementIterable;
@@ -353,7 +354,7 @@ public class RestUtils {
      * @param errorMessage The error message to send if parameter is not set
      */
     public static void checkStringParam(@Nullable String param, String errorMessage) {
-        if (param == null || param.isEmpty()) {
+        if (StringUtils.isBlank(param)) {
             throw ErrorUtils.sendError(errorMessage, Response.Status.BAD_REQUEST);
         }
     }

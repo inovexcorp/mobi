@@ -24,13 +24,13 @@ package org.matonto.prov.impl;
  */
 
 import aQute.bnd.annotation.component.Component;
-import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Reference;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontologies.provo.ActivityFactory;
 import org.matonto.ontologies.provo.Entity;
 import org.matonto.persistence.utils.ReadOnlyRepositoryConnection;
 import org.matonto.persistence.utils.RepositoryResults;
+import org.matonto.persistence.utils.Statements;
 import org.matonto.prov.api.ProvenanceService;
 import org.matonto.prov.api.builder.ActivityConfig;
 import org.matonto.rdf.api.Model;
@@ -41,20 +41,17 @@ import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.OrmFactoryRegistry;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.config.RepositoryConsumerConfig;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
-@Component(
-        configurationPolicy = ConfigurationPolicy.require,
-        designateFactory = RepositoryConsumerConfig.class,
-        name = SimpleProvenanceService.COMPONENT_NAME
-)
+@Component( name = SimpleProvenanceService.COMPONENT_NAME )
 public class SimpleProvenanceService implements ProvenanceService {
     static final String COMPONENT_NAME = "org.matonto.prov.api.ProvenanceService";
     private Repository repo;
@@ -65,28 +62,28 @@ public class SimpleProvenanceService implements ProvenanceService {
 
     private static String ACTIVITY_NAMESPACE = "http://matonto.org/activities/";
 
-    @Reference(name = "repo")
-    protected void setRepo(Repository repo) {
+    @Reference(target = "(id=prov)")
+    void setRepo(Repository repo) {
         this.repo = repo;
     }
 
     @Reference
-    protected void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
+    void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
         this.factoryRegistry = factoryRegistry;
     }
 
     @Reference
-    protected void setVf(ValueFactory vf) {
+    void setVf(ValueFactory vf) {
         this.vf = vf;
     }
 
     @Reference
-    protected void setMf(ModelFactory mf) {
+    void setMf(ModelFactory mf) {
         this.mf = mf;
     }
 
     @Reference
-    protected void setActivityFactory(ActivityFactory activityFactory) {
+    void setActivityFactory(ActivityFactory activityFactory) {
         this.activityFactory = activityFactory;
     }
 
@@ -159,6 +156,39 @@ public class SimpleProvenanceService implements ProvenanceService {
             conn.add(newActivity.getModel());
             conn.commit();
         }
+    }
+
+    @Override
+    public void deleteActivity(Resource activityIRI) {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            if (!conn.contains(activityIRI, null, null)) {
+                throw new IllegalArgumentException("Activity " + activityIRI + " does not exist");
+            }
+            conn.begin();
+            List<Resource> generated = getReferencedEntityIRIs(activityIRI, Activity.generated_IRI, conn);
+            List<Resource> invalided = getReferencedEntityIRIs(activityIRI, Activity.invalidated_IRI, conn);
+            List<Resource> used = getReferencedEntityIRIs(activityIRI, Activity.used_IRI, conn);
+            conn.remove(activityIRI, null, null);
+            conn.remove((Resource) null, null, activityIRI);
+            generated.forEach(resource -> removeIfNotReferenced(resource, conn));
+            invalided.forEach(resource -> removeIfNotReferenced(resource, conn));
+            used.forEach(resource -> removeIfNotReferenced(resource, conn));
+            conn.commit();
+        }
+    }
+
+    private void removeIfNotReferenced(Resource iri, RepositoryConnection conn) {
+        if (!conn.contains(null, null, iri)) {
+            conn.remove(iri, null, null);
+        }
+    }
+
+    private List<Resource> getReferencedEntityIRIs(Resource activityIRI, String propIRI, RepositoryConnection conn) {
+        return RepositoryResults.asList(conn.getStatements(activityIRI, vf.createIRI(propIRI), null)).stream()
+                .map(Statements::objectResource)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toList());
     }
 
     private Map<Class<? extends Activity>, OrmFactory<? extends Activity>> getActivityFactories() {

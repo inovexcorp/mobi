@@ -54,6 +54,16 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
+            <artifactId>prov.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>platform.config.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
             <artifactId>rdf.orm</artifactId>
             <version>${project.version}</version>
         </dependency>
