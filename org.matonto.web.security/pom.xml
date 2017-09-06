@@ -41,12 +41,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas.api</artifactId>
-            <version>1.8.71</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas.proxy</artifactId>
-            <version>1.8.71</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>

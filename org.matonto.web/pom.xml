@@ -87,24 +87,24 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas.api</artifactId>
-            <version>1.8.71</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>web.security</artifactId>
-            <version>1.8.71</version>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- REST Dependencies -->
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.rest</artifactId>
-            <version>1.8.71</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.rest</artifactId>
-            <version>1.8.71</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 
