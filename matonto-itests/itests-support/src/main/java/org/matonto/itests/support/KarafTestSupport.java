@@ -127,7 +127,7 @@ public class KarafTestSupport {
     public Option[] config() throws IOException, URISyntaxException {
         MavenArtifactUrlReference karafUrl = CoreOptions.maven()
                 .groupId("org.matonto")
-                .artifactId("distribution")
+                .artifactId("matonto-distribution")
                 .versionAsInProject()
                 .type("tar.gz");
 
