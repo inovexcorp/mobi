@@ -29,7 +29,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.9.3-SNAPSHOT</version>
+    <version>1.9.5-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -60,26 +60,26 @@
         <module>org.matonto.api</module>
         <module>org.matonto.repository.impl.sesame</module>
         <module>org.matonto.semantic.service</module>
-        <module>org.matonto.distribution</module>
+        <module>matonto-distribution</module>
         <module>org.matonto.repository.impl.core</module>
         <module>org.matonto.persistence.cli</module>
         <module>org.matonto.persistence.utils</module>
         <module>org.matonto.ontology.utils</module>
         <module>org.matonto.swagger.ui</module>
-        <module>org.matonto.bnd-index</module>
+        <module>matonto-bnd-index</module>
         <module>org.matonto.rest.util</module>
         <module>org.matonto.sparql.rest</module>
         <module>org.matonto.catalog.api</module>
         <module>org.matonto.catalog.impl</module>
         <module>org.matonto.catalog.rest</module>
-        <module>org.matonto.index.dependency</module>
+        <module>matonto-index-dependency</module>
         <module>org.matonto.jaas</module>
         <module>org.matonto.web.security</module>
         <module>org.matonto.jaas.rest</module>
         <module>org.matonto.clustering.api</module>
         <module>org.matonto.clustering.hazelcast</module>
         <module>org.matonto.clustering.cli</module>
-        <module>org.matonto.karaf.feature</module>
+        <module>matonto-karaf-feature</module>
         <module>org.matonto.rdf.orm.ontologies</module>
         <module>rdf-orm</module>
         <module>org.matonto.jaas.api</module>
@@ -94,7 +94,7 @@
         <module>org.matonto.cache</module>
         <module>org.matonto.cache.impl.ehcache</module>
         <module>org.matonto.explorable.dataset.rest</module>
-        <module>org.matonto.itests</module>
+        <module>matonto-itests</module>
         <module>org.matonto.prov.api</module>
         <module>org.matonto.prov.impl</module>
         <module>org.matonto.analytic.api</module>

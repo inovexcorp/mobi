@@ -40,13 +40,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.openrdf.repository.sail.SailRepository;
-import org.openrdf.rio.RDFFormat;
-import org.openrdf.rio.Rio;
-import org.openrdf.sail.memory.MemoryStore;
-
 import org.matonto.catalog.api.CatalogUtilsService;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
@@ -95,6 +88,7 @@ import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
+import org.matonto.rdf.orm.conversion.impl.DateValueConverter;
 import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
 import org.matonto.rdf.orm.conversion.impl.DoubleValueConverter;
 import org.matonto.rdf.orm.conversion.impl.FloatValueConverter;
@@ -109,6 +103,12 @@ import org.matonto.rdf.orm.impl.ThingFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.openrdf.repository.sail.SailRepository;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.Rio;
+import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.InputStream;
 import java.util.Collections;
@@ -184,83 +184,78 @@ public class SimpleCatalogManagerTest {
         catalogFactory.setModelFactory(mf);
         catalogFactory.setValueFactory(vf);
         catalogFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(catalogFactory);
 
         recordFactory.setModelFactory(mf);
         recordFactory.setValueFactory(vf);
         recordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(recordFactory);
 
         unversionedRecordFactory.setModelFactory(mf);
         unversionedRecordFactory.setValueFactory(vf);
         unversionedRecordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(unversionedRecordFactory);
 
         versionedRecordFactory.setModelFactory(mf);
         versionedRecordFactory.setValueFactory(vf);
         versionedRecordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(versionedRecordFactory);
 
         versionedRDFRecordFactory.setModelFactory(mf);
         versionedRDFRecordFactory.setValueFactory(vf);
         versionedRDFRecordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(versionedRDFRecordFactory);
 
         commitFactory.setModelFactory(mf);
         commitFactory.setValueFactory(vf);
         commitFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(commitFactory);
 
         inProgressCommitFactory.setModelFactory(mf);
         inProgressCommitFactory.setValueFactory(vf);
         inProgressCommitFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(inProgressCommitFactory);
 
         revisionFactory.setModelFactory(mf);
         revisionFactory.setValueFactory(vf);
         revisionFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(revisionFactory);
 
         branchFactory.setModelFactory(mf);
         branchFactory.setValueFactory(vf);
         branchFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(branchFactory);
 
         distributionFactory.setModelFactory(mf);
         distributionFactory.setValueFactory(vf);
         distributionFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(distributionFactory);
 
         versionFactory.setModelFactory(mf);
         versionFactory.setValueFactory(vf);
         versionFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(versionFactory);
 
         tagFactory.setModelFactory(mf);
         tagFactory.setValueFactory(vf);
         tagFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(tagFactory);
 
         userFactory.setModelFactory(mf);
         userFactory.setValueFactory(vf);
         userFactory.setValueConverterRegistry(vcr);
-
-        versionedRDFRecordFactory.setModelFactory(mf);
-        versionedRDFRecordFactory.setValueFactory(vf);
-        versionedRDFRecordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(userFactory);
 
         userBranchFactory.setModelFactory(mf);
         userBranchFactory.setValueFactory(vf);
         userBranchFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(userBranchFactory);
 
         thingFactory.setModelFactory(mf);
         thingFactory.setValueFactory(vf);
         thingFactory.setValueConverterRegistry(vcr);
-
-        vcr.registerValueConverter(catalogFactory);
-        vcr.registerValueConverter(recordFactory);
-        vcr.registerValueConverter(unversionedRecordFactory);
-        vcr.registerValueConverter(versionedRecordFactory);
-        vcr.registerValueConverter(versionedRDFRecordFactory);
-        vcr.registerValueConverter(distributionFactory);
-        vcr.registerValueConverter(branchFactory);
-        vcr.registerValueConverter(inProgressCommitFactory);
-        vcr.registerValueConverter(commitFactory);
-        vcr.registerValueConverter(revisionFactory);
-        vcr.registerValueConverter(versionFactory);
-        vcr.registerValueConverter(tagFactory);
         vcr.registerValueConverter(thingFactory);
-        vcr.registerValueConverter(userFactory);
-        vcr.registerValueConverter(versionedRDFRecordFactory);
-        vcr.registerValueConverter(userBranchFactory);
+
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -270,6 +265,7 @@ public class SimpleCatalogManagerTest {
         vcr.registerValueConverter(new StringValueConverter());
         vcr.registerValueConverter(new ValueValueConverter());
         vcr.registerValueConverter(new LiteralValueConverter());
+        vcr.registerValueConverter(new DateValueConverter());
 
         MockitoAnnotations.initMocks(this);
         manager = new SimpleCatalogManager();
@@ -547,6 +543,7 @@ public class SimpleCatalogManagerTest {
     public void testAddRecord() throws Exception {
         // Setup:
         Record record = recordFactory.createNew(NEW_IRI);
+        record.setProperty(USER_IRI, vf.createIRI(_Thing.publisher_IRI));
 
         manager.addRecord(distributedCatalogId, record);
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
@@ -559,6 +556,7 @@ public class SimpleCatalogManagerTest {
     public void testAddUnversionedRecord() throws Exception {
         // Setup:
         UnversionedRecord record = unversionedRecordFactory.createNew(NEW_IRI);
+        record.setProperty(USER_IRI, vf.createIRI(_Thing.publisher_IRI));
 
         manager.addRecord(distributedCatalogId, record);
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
@@ -571,6 +569,7 @@ public class SimpleCatalogManagerTest {
     public void testAddVersionedRecord() throws Exception {
         // Setup:
         VersionedRecord record = versionedRecordFactory.createNew(NEW_IRI);
+        record.setProperty(USER_IRI, vf.createIRI(_Thing.publisher_IRI));
 
         manager.addRecord(distributedCatalogId, record);
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));
@@ -583,6 +582,7 @@ public class SimpleCatalogManagerTest {
     public void testAddVersionedRDFRecord() throws Exception {
         // Setup:
         VersionedRDFRecord record = versionedRDFRecordFactory.createNew(NEW_IRI);
+        record.setProperty(USER_IRI, vf.createIRI(_Thing.publisher_IRI));
 
         manager.addRecord(distributedCatalogId, record);
         verify(utilsService).getObject(eq(distributedCatalogId), eq(catalogFactory), any(RepositoryConnection.class));

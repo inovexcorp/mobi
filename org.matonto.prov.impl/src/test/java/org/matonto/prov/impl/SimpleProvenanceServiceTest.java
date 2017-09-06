@@ -78,6 +78,8 @@ public class SimpleProvenanceServiceTest {
     private ActivityFactory activityFactory;
     private EntityFactory entityFactory;
 
+    private IRI activityIRI;
+
     @Mock
     private OrmFactoryRegistry registry;
 
@@ -114,6 +116,8 @@ public class SimpleProvenanceServiceTest {
         vcr.registerValueConverter(new ValueValueConverter());
         vcr.registerValueConverter(new LiteralValueConverter());
 
+        activityIRI = vf.createIRI("http://test.com/activity");
+
         MockitoAnnotations.initMocks(this);
         when(registry.getFactoriesOfType(Activity.class)).thenReturn(Collections.singletonList(activityFactory));
 
@@ -133,7 +137,7 @@ public class SimpleProvenanceServiceTest {
 
     @Test
     public void createActivityTest() throws Exception {
-        // Setup
+        // Setup:
         User user = userFactory.createNew(vf.createIRI("http://test.com/user"));
         Entity generated = entityFactory.createNew(vf.createIRI("http://test.com/generated"));
         Entity invalidated = entityFactory.createNew(vf.createIRI("http://test.com/invalidated"));
@@ -157,8 +161,8 @@ public class SimpleProvenanceServiceTest {
 
     @Test
     public void addActivityTest() throws Exception {
-        // Setup
-        Activity activity = activityFactory.createNew(vf.createIRI("http://test.com/activity"));
+        // Setup:
+        Activity activity = activityFactory.createNew(activityIRI);
 
         service.addActivity(activity);
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -168,8 +172,8 @@ public class SimpleProvenanceServiceTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void addActivityThatAlreadyExistsTest() throws Exception {
-        // Setup
-        Activity activity = activityFactory.createNew(vf.createIRI("http://test.com/activity"));
+        // Setup:
+        Activity activity = activityFactory.createNew(activityIRI);
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(activity.getModel());
         }
@@ -179,8 +183,8 @@ public class SimpleProvenanceServiceTest {
 
     @Test
     public void getActivityTest() throws Exception {
-        // Setup
-        Activity activity = activityFactory.createNew(vf.createIRI("http://test.com/activity"));
+        // Setup:
+        Activity activity = activityFactory.createNew(activityIRI);
         Entity generated = entityFactory.createNew(vf.createIRI("http://test.com/generated"), activity.getModel());
         Entity invalidated = entityFactory.createNew(vf.createIRI("http://test.com/invalidated"), activity.getModel());
         Entity used = entityFactory.createNew(vf.createIRI("http://test.com/used"), activity.getModel());
@@ -198,15 +202,15 @@ public class SimpleProvenanceServiceTest {
 
     @Test
     public void getActivityThatDoesNotExistTest() throws Exception {
-        Optional<Activity> result = service.getActivity(vf.createIRI("http://test.com/activity"));
+        Optional<Activity> result = service.getActivity(activityIRI);
         assertFalse(result.isPresent());
     }
 
     @Test
     public void updateActivityTest() throws Exception {
-        // Setup
+        // Setup:
         IRI titleIRI = vf.createIRI(_Thing.title_IRI);
-        Activity activity = activityFactory.createNew(vf.createIRI("http://test.com/activity"));
+        Activity activity = activityFactory.createNew(activityIRI);
         Entity generated = entityFactory.createNew(vf.createIRI("http://test.com/generated"), activity.getModel());
         Entity invalidated = entityFactory.createNew(vf.createIRI("http://test.com/invalidated"), activity.getModel());
         Entity used = entityFactory.createNew(vf.createIRI("http://test.com/used"), activity.getModel());
@@ -235,11 +239,54 @@ public class SimpleProvenanceServiceTest {
     @Test(expected = IllegalStateException.class)
     public void updateActivityThatIsNotAnActivityTest() {
         // Setup:
-        IRI activityIRI = vf.createIRI("http://test.com/activity");
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(activityIRI, vf.createIRI(_Thing.title_IRI), vf.createLiteral("Title"));
         }
 
         service.updateActivity(activityFactory.createNew(activityIRI));
+    }
+
+    @Test
+    public void deleteActivityTest() throws Exception {
+        // Setup:
+        Activity toRemove = activityFactory.createNew(activityIRI);
+        Activity other = activityFactory.createNew(vf.createIRI("http://test.com/other"));
+        Entity generated1 = entityFactory.createNew(vf.createIRI("http://test.com/generated/1"));
+        Entity invalidated1 = entityFactory.createNew(vf.createIRI("http://test.com/invalidated/1"));
+        Entity used1 = entityFactory.createNew(vf.createIRI("http://test.com/used/1"));
+        Entity generated2 = entityFactory.createNew(vf.createIRI("http://test.com/generated/2"));
+        Entity invalidated2 = entityFactory.createNew(vf.createIRI("http://test.com/invalidated/2"));
+        Entity used2 = entityFactory.createNew(vf.createIRI("http://test.com/used/2"));
+        toRemove.setGenerated(Collections.singleton(generated1));
+        toRemove.setInvalidated(Collections.singleton(invalidated1));
+        toRemove.setUsed(Collections.singleton(used1));
+        toRemove.setGenerated(Collections.singleton(generated2));
+        toRemove.setInvalidated(Collections.singleton(invalidated2));
+        toRemove.setUsed(Collections.singleton(used2));
+        other.setGenerated(Collections.singleton(generated1));
+        other.setInvalidated(Collections.singleton(invalidated1));
+        other.setUsed(Collections.singleton(used1));
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(toRemove.getModel());
+            conn.add(generated1.getModel());
+            conn.add(invalidated1.getModel());
+            conn.add(used1.getModel());
+            conn.add(generated2.getModel());
+            conn.add(invalidated2.getModel());
+            conn.add(used2.getModel());
+            conn.add(other.getModel());
+        }
+
+        service.deleteActivity(activityIRI);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            toRemove.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            generated1.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            invalidated1.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            used1.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            generated2.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            invalidated2.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            used2.getModel().forEach(statement -> assertFalse(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+            other.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+        }
     }
 }
