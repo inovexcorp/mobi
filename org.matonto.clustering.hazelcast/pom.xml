@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.72-SNAPSHOT</version>
+        <version>1.9.3-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -40,12 +40,12 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>platform.config.api</artifactId>
-            <version>1.8.59</version>
+            <version>1.8.71</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>clustering.api</artifactId>
-            <version>1.8.44</version>
+            <version>1.8.71</version>
         </dependency>
         <dependency>
             <groupId>com.hazelcast</groupId>
@@ -63,7 +63,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.8.42</version>
+            <version>1.8.71</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
