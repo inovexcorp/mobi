@@ -101,7 +101,7 @@
         <bundle start-level="80">mvn:org.matonto/catalog.impl/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/jaas/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/jaas.api/${project.version}</bundle>
-        <bundle start-level="80">mvn:org.matonto/rdf.orm/${orm.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/rdf.orm/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/rdf.orm.ontologies/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/platform.config.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/platform.config.impl/${project.version}</bundle>
