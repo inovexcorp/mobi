@@ -26,12 +26,9 @@ package org.matonto.etl.service.workflows;
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.ConfigurationPolicy;
-import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.camel.CamelContext;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.core.osgi.OsgiDefaultCamelContext;
-import org.apache.camel.core.osgi.OsgiServiceRegistry;
 import org.matonto.etl.api.ontologies.etl.SubRoute;
 import org.matonto.etl.api.ontologies.etl.Workflow;
 import org.matonto.etl.api.ontologies.etl.WorkflowFactory;
@@ -46,7 +43,6 @@ import org.matonto.rdf.api.ValueFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.config.RepositoryConsumerConfig;
-import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,17 +61,22 @@ public class WorkflowManagerImpl implements WorkflowManager {
     static final String COMPONENT_NAME = "org.matonto.etl.api.workflows.WorkflowManager";
     private static final Logger LOG = LoggerFactory.getLogger(WorkflowManagerImpl.class);
 
-    private CamelContext camelContext;
     Set<Resource> workflows = new HashSet<>();
 
+    private CamelContext camelContext;
     private Repository repository;
     private WorkflowConverter converterService;
     private ValueFactory vf;
     private ModelFactory mf;
     private WorkflowFactory workflowFactory;
 
+    @Reference
+    void setCamelContext(CamelContext camelContext) {
+        this.camelContext = camelContext;
+    }
+
     @Reference(name = "repository")
-    protected void setRepository(Repository repository) {
+    void setRepository(Repository repository) {
         this.repository = repository;
     }
 
@@ -100,35 +101,24 @@ public class WorkflowManagerImpl implements WorkflowManager {
     }
 
     @Activate
-    protected void start(BundleContext bundleContext) {
-        if (camelContext == null) {
-            LOG.debug("Initializing Workflow CamelContext");
-            OsgiServiceRegistry registry = new OsgiServiceRegistry(bundleContext);
-            camelContext = new OsgiDefaultCamelContext(bundleContext, registry);
-            try {
-                camelContext.start();
-                Set<Workflow> workflowSet = getWorkflowsFromRepo();
-                workflowSet.forEach(this::deployWorkflow);
-                workflows = workflowSet.stream().map(Workflow::getResource).collect(Collectors.toSet());
-            } catch (Exception e) {
-                throw new MatOntoException("Error in starting CamelContext", e);
-            }
-        }
-    }
-
-    @Deactivate
-    protected void stop() {
+    protected void start() {
         try {
-            LOG.debug("Shutting down Workflow CamelContext");
-            camelContext.stop();
+            Set<Workflow> workflowSet = getWorkflowsFromRepo();
+            for (Workflow workflow: workflowSet) {
+                Set<Resource> routeIds = getRouteIds(workflow);
+                boolean deployed = routeIds.stream()
+                        .allMatch(resource -> camelContext.getRoute(resource.stringValue()) != null);
+                if (!deployed) {
+                    for (Resource routeId: routeIds) {
+                        camelContext.removeRoute(routeId.stringValue());
+                    }
+                    deployWorkflow(workflow);
+                }
+            }
+            workflows = workflowSet.stream().map(Workflow::getResource).collect(Collectors.toSet());
         } catch (Exception e) {
-            throw new MatOntoException("Error in stopping CamelContext", e);
+            throw new MatOntoException("Error in starting WorkflowManager", e);
         }
-    }
-
-    @Override
-    public String getContextName() {
-        return camelContext.getName();
     }
 
     @Override
@@ -226,7 +216,7 @@ public class WorkflowManagerImpl implements WorkflowManager {
                 new IllegalStateException("Workflow " + workflowIRI + " could not be retrieved"));
     }
 
-    private Workflow deployWorkflow(Workflow workflow) {
+    private void deployWorkflow(Workflow workflow) {
         RouteBuilder routes = converterService.convert(workflow);
         try {
             camelContext.addRoutes(routes);
@@ -235,6 +225,5 @@ public class WorkflowManagerImpl implements WorkflowManager {
         }
         Set<Resource> routeIds = getRouteIds(workflow);
         LOG.info("Added routes " + routeIds.toString() + " to CamelContext");
-        return workflow;
     }
 }

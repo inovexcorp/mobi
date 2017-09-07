@@ -32,14 +32,6 @@ import java.util.Set;
 public interface WorkflowManager {
 
     /**
-     * Returns the name of the CamelContext that runs Workflow Routes. This can be used to pull statistics
-     * about the CamelContext and its Routes using a CamelController.
-     *
-     * @return the name of the Workflow CamelContext
-     */
-    String getContextName();
-
-    /**
      * Returns a Set of Workflow that have been deployed.
      *
      * @return A Set of deployed Workflows
@@ -54,6 +46,12 @@ public interface WorkflowManager {
      */
     void addWorkflow(Workflow workflow);
 
+    /**
+     * Retrieves a Workflow identified by the provided Resource IRI.
+     *
+     * @param workflowIRI A Resource IRI identifying a Workflow
+     * @return The Workflow with the matching IRI if found; otherwise an empty Optional
+     */
     Optional<Workflow> getWorkflow(Resource workflowIRI);
 
     /**
