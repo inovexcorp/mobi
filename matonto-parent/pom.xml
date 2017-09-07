@@ -78,7 +78,7 @@
         <ehcache.version>3.3.1</ehcache.version>
         <javax.cache.version>1.0.0</javax.cache.version>
         <hazelcast.version>3.8.2</hazelcast.version>
-        <camel.version>2.19.1</camel.version>
+        <camel.version>2.18.4</camel.version>
     </properties>
 
     <dependencyManagement>

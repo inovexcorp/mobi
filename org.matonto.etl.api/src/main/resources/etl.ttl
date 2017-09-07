@@ -58,6 +58,12 @@
     rdfs:domain :SubRoute ;
     rdfs:range :Workflow .
 
+:subRoute a owl:ObjectProperty, owl:FunctionalProperty ;
+    dct:title "sub route"@en ;
+    dct:description "The SubRoute that the described route list element points to."@en ;
+    rdfs:domain rdf:List ;
+    rdfs:range :SubRoute .
+
 # DataSource
 
 :DataSource a owl:Class ;

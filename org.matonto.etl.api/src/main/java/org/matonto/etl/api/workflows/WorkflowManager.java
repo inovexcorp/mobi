@@ -26,6 +26,7 @@ package org.matonto.etl.api.workflows;
 import org.matonto.etl.api.ontologies.etl.Workflow;
 import org.matonto.rdf.api.Resource;
 
+import java.util.Optional;
 import java.util.Set;
 
 public interface WorkflowManager {
@@ -51,7 +52,9 @@ public interface WorkflowManager {
      *
      * @param workflow a Workflow containing route definitions of DataSources, Processors, and Destinations
      */
-    void deployWorkflow(Workflow workflow);
+    void addWorkflow(Workflow workflow);
+
+    Optional<Workflow> getWorkflow(Resource workflowIRI);
 
     /**
      * Starts all Routes associated with the Workflow identified by the provided Resource IRI.
