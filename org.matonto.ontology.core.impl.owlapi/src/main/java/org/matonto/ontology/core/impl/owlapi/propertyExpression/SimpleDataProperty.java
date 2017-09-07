@@ -24,9 +24,10 @@ package org.matonto.ontology.core.impl.owlapi.propertyExpression;
  */
 
 import org.matonto.ontology.core.api.propertyexpression.DataProperty;
-import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.types.EntityType;
 import org.matonto.rdf.api.IRI;
+
+import javax.annotation.Nonnull;
 
 
 public class SimpleDataProperty implements DataProperty {

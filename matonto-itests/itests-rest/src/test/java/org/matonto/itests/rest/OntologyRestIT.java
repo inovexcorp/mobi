@@ -98,7 +98,6 @@ public class OntologyRestIT extends KarafTestSupport {
         String vocabulary = "test-vocabulary.ttl";
         Files.copy(getBundleEntry(thisBundleContext, "/" + vocabulary), Paths.get(vocabulary));
 
-        waitForService("(&(objectClass=org.matonto.catalog.rest.impl.CatalogRest))", 10000L);
         waitForService("(&(objectClass=org.matonto.ontology.rest.impl.OntologyRest))", 10000L);
         waitForService("(&(objectClass=org.matonto.ontology.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=org.matonto.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
@@ -159,18 +158,8 @@ public class OntologyRestIT extends KarafTestSupport {
 
     private CloseableHttpClient createHttpClient() throws GeneralSecurityException {
         SSLContextBuilder builder = new SSLContextBuilder();
-        builder.loadTrustMaterial(null, new TrustStrategy() {
-            @Override
-            public boolean isTrusted(X509Certificate[] chain, String authType) throws CertificateException {
-                return true;
-            }
-        });
-        SSLConnectionSocketFactory factory = new SSLConnectionSocketFactory(builder.build(), new HostnameVerifier() {
-            @Override
-            public boolean verify(String s, SSLSession sslSession) {
-                return true;
-            }
-        });
+        builder.loadTrustMaterial(null, (TrustStrategy) (chain, authType) -> true);
+        SSLConnectionSocketFactory factory = new SSLConnectionSocketFactory(builder.build(), (s, sslSession) -> true);
         return HttpClients.custom().setSSLSocketFactory(factory).build();
     }
 
@@ -250,7 +239,7 @@ public class OntologyRestIT extends KarafTestSupport {
     }
 
     private void validateOntologyDeleted(Resource recordId, Resource branchId, Resource commitId, Resource additionsGraphIRI) {
-        Repository repo = getOsgiService(Repository.class);
+        Repository repo = getOsgiService(Repository.class, "id=system", 30000L);
 
         try (RepositoryConnection conn = repo.getConnection()) {
             assertFalse(conn.getStatements(null, null, null, branchId).hasNext());

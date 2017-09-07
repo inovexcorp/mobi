@@ -60,6 +60,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.model.Model;
+import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -128,12 +129,14 @@ public class FullSimpleOntologyTest {
 
         when(transformer.matontoModel(any(Model.class))).thenAnswer(i -> Values.matontoModel(i.getArgumentAt(0, Model.class)));
         when(transformer.sesameModel(any(org.matonto.rdf.api.Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, org.matonto.rdf.api.Model.class)));
+        when(transformer.matontoStatement(any(Statement.class))).thenAnswer(i -> Values.matontoStatement(i.getArgumentAt(0, Statement.class)));
 
         when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
         when(ontologyId.getVersionIRI()).thenReturn(Optional.of(versionIRI));
         when(ontologyManager.createOntologyId(any(IRI.class), any(IRI.class))).thenReturn(ontologyId);
         when(ontologyManager.createOntologyId(any(IRI.class))).thenReturn(ontologyId);
         when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
+        when(ontologyId.getOntologyIdentifier()).thenReturn(vf.createIRI("https://matonto.org/ontology-id"));
 
         InputStream stream = this.getClass().getResourceAsStream("/test.owl");
         ontology = new SimpleOntology(stream, ontologyManager, transformer, bNodeService);
@@ -143,6 +146,8 @@ public class FullSimpleOntologyTest {
         Ontology ont3 = new SimpleOntology(stream3, ontologyManager, transformer, bNodeService);
         when(ontologyManager.getOntologyRecordResource(ont3IRI)).thenReturn(Optional.of(ont3RecordIRI));
         when(ontologyManager.retrieveOntology(ont3RecordIRI)).thenReturn(Optional.of(ont3));
+        org.matonto.rdf.api.Model ont3Model = ont3.asModel(mf);
+        when(ontologyManager.getOntologyModel(ont3RecordIRI)).thenReturn(ont3Model);
 
         Resource ont2IRI = vf.createIRI("http://matonto.org/ontology/test-local-imports-2");
         Resource ont2RecordIRI = vf.createIRI("https://matonto.org/record/test-local-imports-2");
@@ -150,6 +155,8 @@ public class FullSimpleOntologyTest {
         Ontology ont2 = new SimpleOntology(stream2, ontologyManager, transformer, bNodeService);
         when(ontologyManager.getOntologyRecordResource(ont2IRI)).thenReturn(Optional.of(ont2RecordIRI));
         when(ontologyManager.retrieveOntology(ont2RecordIRI)).thenReturn(Optional.of(ont2));
+        org.matonto.rdf.api.Model ont2Model = ont2.asModel(mf);
+        when(ontologyManager.getOntologyModel(ont2RecordIRI)).thenReturn(ont2Model);
 
         InputStream stream1 = this.getClass().getResourceAsStream("/test-local-imports-1.ttl");
         ont1 = new SimpleOntology(stream1, ontologyManager, transformer, bNodeService);

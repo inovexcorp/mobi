@@ -303,4 +303,13 @@ public interface OntologyManager {
      * @return a Set with the query results.
      */
     TupleQueryResult getSearchResults(Ontology ontology, String searchText);
+
+    /**
+     * Gets the compiled resource of the head Commit on the master Branch for the OntologyRecord specified by the
+     * provided Resource.
+     *
+     * @param recordId the record id for the OntologyRecord you want to get the Model for.
+     * @return a Model containing the Ontology Statements.
+     */
+    Model getOntologyModel(Resource recordId);
 }

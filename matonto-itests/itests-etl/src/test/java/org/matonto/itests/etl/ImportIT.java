@@ -33,8 +33,10 @@ import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
 import org.matonto.itests.support.KarafTestSupport;
+import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.utils.Values;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
@@ -58,6 +60,8 @@ public class ImportIT extends KarafTestSupport {
     private static Boolean setupComplete = false;
     private static DatasetRecord record;
     private static DatasetManager manager;
+    private static UserFactory userFactory;
+    private static ValueFactory vf;
 
     private static Model data;
 
@@ -78,7 +82,10 @@ public class ImportIT extends KarafTestSupport {
         data = Values.matontoModel(Rio.parse(new FileInputStream(new File(dataFile)), "", RDFFormat.TRIG));
 
         manager = getOsgiService(DatasetManager.class);
-        DatasetRecordConfig config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset", Collections.EMPTY_SET, "system").build();
+        userFactory = getOsgiService(UserFactory.class);
+        vf = getOsgiService(ValueFactory.class);
+        DatasetRecordConfig config = new DatasetRecordConfig.DatasetRecordBuilder("Test Dataset",
+                Collections.singleton(userFactory.createNew(vf.createIRI("http://matonto.org/users/admin"))), "system").build();
         record = manager.createDataset(config);
 
         executeCommand(String.format("mobi:import -d=%s %s", record.getResource().stringValue(), dataFile));

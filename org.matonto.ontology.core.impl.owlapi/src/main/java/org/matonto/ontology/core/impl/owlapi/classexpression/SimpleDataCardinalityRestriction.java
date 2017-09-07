@@ -23,14 +23,15 @@ package org.matonto.ontology.core.impl.owlapi.classexpression;
  * #L%
  */
 
+import org.matonto.ontology.core.api.classexpression.ClassExpression;
+import org.matonto.ontology.core.api.classexpression.DataCardinalityRestriction;
+import org.matonto.ontology.core.api.datarange.DataRange;
+import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
+import org.matonto.ontology.core.api.types.ClassExpressionType;
+
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nonnull;
-import org.matonto.ontology.core.api.classexpression.ClassExpression;
-import org.matonto.ontology.core.api.classexpression.DataCardinalityRestriction;
-import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
-import org.matonto.ontology.core.api.datarange.DataRange;
-import org.matonto.ontology.core.api.types.ClassExpressionType;
 
 
 public class SimpleDataCardinalityRestriction implements DataCardinalityRestriction {

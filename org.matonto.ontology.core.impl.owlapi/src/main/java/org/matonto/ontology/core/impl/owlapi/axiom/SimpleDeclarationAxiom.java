@@ -23,13 +23,14 @@ package org.matonto.ontology.core.impl.owlapi.axiom;
  * #L%
  */
 
+import org.matonto.ontology.core.api.Annotation;
+import org.matonto.ontology.core.api.Entity;
+import org.matonto.ontology.core.api.axiom.DeclarationAxiom;
+import org.matonto.ontology.core.api.types.AxiomType;
+
 import java.util.Collections;
 import java.util.Set;
 import javax.annotation.Nonnull;
-import org.matonto.ontology.core.api.axiom.DeclarationAxiom;
-import org.matonto.ontology.core.api.Entity;
-import org.matonto.ontology.core.api.types.AxiomType;
-import org.matonto.ontology.core.api.Annotation;
 
 
 public class SimpleDeclarationAxiom 

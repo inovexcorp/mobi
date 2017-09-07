@@ -23,14 +23,15 @@ package org.matonto.ontology.core.impl.owlapi.classexpression;
  * #L%
  */
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.DataHasValue;
 import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 import org.matonto.rdf.api.Literal;
+
+import java.util.HashSet;
+import java.util.Set;
+import javax.annotation.Nonnull;
 
 
 public class SimpleDataHasValue implements DataHasValue {
