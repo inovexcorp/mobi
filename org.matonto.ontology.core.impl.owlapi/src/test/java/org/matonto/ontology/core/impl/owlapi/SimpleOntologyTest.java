@@ -46,9 +46,7 @@ import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProp
 import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
-import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.ValueFactory;
-import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -69,7 +67,6 @@ import java.util.Set;
 @PrepareForTest(SimpleOntologyValues.class)
 public class SimpleOntologyTest {
     private ValueFactory vf = SimpleValueFactory.getInstance();
-    private ModelFactory mf = LinkedHashModelFactory.getInstance();
     private File restrictionFile;
     private File testFile;
 
