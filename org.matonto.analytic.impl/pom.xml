@@ -57,7 +57,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>repository.impl.sesame</artifactId>
-            <version>1.9.2</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
