@@ -23,15 +23,16 @@ package org.matonto.ontology.core.impl.owlapi.axiom;
  * #L%
  */
 
+import org.matonto.ontology.core.api.Annotation;
+import org.matonto.ontology.core.api.axiom.DisjointUnionAxiom;
+import org.matonto.ontology.core.api.classexpression.ClassExpression;
+import org.matonto.ontology.core.api.classexpression.OClass;
+import org.matonto.ontology.core.api.types.AxiomType;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.annotation.Nonnull;
-import org.matonto.ontology.core.api.Annotation;
-import org.matonto.ontology.core.api.classexpression.ClassExpression;
-import org.matonto.ontology.core.api.axiom.DisjointUnionAxiom;
-import org.matonto.ontology.core.api.classexpression.OClass;
-import org.matonto.ontology.core.api.types.AxiomType;
 
 
 public class SimpleDisjointUnionAxiom 

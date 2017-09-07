@@ -23,16 +23,13 @@ package org.matonto.ontology.core.impl.owlapi.axiom;
  * #L%
  */
 
+import org.matonto.ontology.core.api.Annotation;
+import org.matonto.ontology.core.api.axiom.Axiom;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-
 import javax.annotation.Nonnull;
-
-import org.matonto.ontology.core.api.Annotation;
-
-import org.matonto.ontology.core.api.axiom.Axiom;
-import org.semanticweb.owlapi.model.OWLAxiom;
 
 public abstract class SimpleAxiom implements Axiom {
 

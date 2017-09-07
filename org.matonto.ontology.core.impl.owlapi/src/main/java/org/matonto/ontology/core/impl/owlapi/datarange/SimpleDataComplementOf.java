@@ -23,10 +23,11 @@ package org.matonto.ontology.core.impl.owlapi.datarange;
  * #L%
  */
 
-import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.datarange.DataComplementOf;
 import org.matonto.ontology.core.api.datarange.DataRange;
 import org.matonto.ontology.core.api.types.DataRangeType;
+
+import javax.annotation.Nonnull;
 
 
 public class SimpleDataComplementOf implements DataComplementOf {

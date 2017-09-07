@@ -23,9 +23,6 @@ package org.matonto.ontology.core.impl.owlapi.datarange;
  * #L%
  */
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.datarange.Datatype;
 import org.matonto.ontology.core.api.types.DataRangeType;
 import org.matonto.ontology.core.api.types.EntityType;
@@ -35,6 +32,10 @@ import org.matonto.rdf.api.IRI;
 import org.semanticweb.owlapi.model.OWLDatatype;
 import org.semanticweb.owlapi.vocab.OWL2Datatype;
 import uk.ac.manchester.cs.owl.owlapi.OWLDatatypeImpl;
+
+import java.util.HashSet;
+import java.util.Set;
+import javax.annotation.Nonnull;
 
 
 public class SimpleDatatype implements Datatype {

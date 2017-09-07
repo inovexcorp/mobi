@@ -23,12 +23,13 @@ package org.matonto.ontology.core.impl.owlapi.axiom;
  * #L%
  */
 
+import org.matonto.ontology.core.api.Annotation;
+import org.matonto.ontology.core.api.axiom.SubAnnotationPropertyOfAxiom;
+import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
+import org.matonto.ontology.core.api.types.AxiomType;
+
 import java.util.Set;
 import javax.annotation.Nonnull;
-import org.matonto.ontology.core.api.Annotation;
-import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
-import org.matonto.ontology.core.api.axiom.SubAnnotationPropertyOfAxiom;
-import org.matonto.ontology.core.api.types.AxiomType;
 
 
 public class SimpleSubAnnotationPropertyOfAxiom 

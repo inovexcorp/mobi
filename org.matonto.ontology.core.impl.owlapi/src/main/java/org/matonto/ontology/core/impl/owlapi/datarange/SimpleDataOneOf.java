@@ -23,12 +23,13 @@ package org.matonto.ontology.core.impl.owlapi.datarange;
  * #L%
  */
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.datarange.DataOneOf;
 import org.matonto.ontology.core.api.types.DataRangeType;
 import org.matonto.rdf.api.Literal;
+
+import java.util.HashSet;
+import java.util.Set;
+import javax.annotation.Nonnull;
 
 
 public class SimpleDataOneOf implements DataOneOf {	

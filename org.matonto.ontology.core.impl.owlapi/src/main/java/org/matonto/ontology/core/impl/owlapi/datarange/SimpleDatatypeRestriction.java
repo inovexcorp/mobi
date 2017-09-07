@@ -23,13 +23,14 @@ package org.matonto.ontology.core.impl.owlapi.datarange;
  * #L%
  */
 
+import org.matonto.ontology.core.api.FacetRestriction;
+import org.matonto.ontology.core.api.datarange.Datatype;
+import org.matonto.ontology.core.api.datarange.DatatypeRestriction;
+import org.matonto.ontology.core.api.types.DataRangeType;
+
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nonnull;
-import org.matonto.ontology.core.api.datarange.Datatype;
-import org.matonto.ontology.core.api.datarange.DatatypeRestriction;
-import org.matonto.ontology.core.api.FacetRestriction;
-import org.matonto.ontology.core.api.types.DataRangeType;
 
 
 public class SimpleDatatypeRestriction implements DatatypeRestriction {
