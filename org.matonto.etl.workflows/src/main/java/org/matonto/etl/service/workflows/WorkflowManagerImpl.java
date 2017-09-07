@@ -30,10 +30,8 @@ import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Reference;
 import org.apache.camel.CamelContext;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.core.osgi.OsgiCamelContextPublisher;
 import org.apache.camel.core.osgi.OsgiDefaultCamelContext;
 import org.apache.camel.core.osgi.OsgiServiceRegistry;
-import org.apache.camel.core.osgi.utils.BundleDelegatingClassLoader;
 import org.matonto.etl.api.ontologies.etl.SubRoute;
 import org.matonto.etl.api.ontologies.etl.Workflow;
 import org.matonto.etl.api.ontologies.etl.WorkflowFactory;
@@ -68,7 +66,7 @@ public class WorkflowManagerImpl implements WorkflowManager {
     private static final Logger LOG = LoggerFactory.getLogger(WorkflowManagerImpl.class);
 
     private CamelContext camelContext;
-    private Set<Resource> workflows = new HashSet<>();
+    Set<Resource> workflows = new HashSet<>();
 
     private Repository repository;
     private WorkflowConverter converterService;
@@ -107,8 +105,6 @@ public class WorkflowManagerImpl implements WorkflowManager {
             LOG.debug("Initializing Workflow CamelContext");
             OsgiServiceRegistry registry = new OsgiServiceRegistry(bundleContext);
             camelContext = new OsgiDefaultCamelContext(bundleContext, registry);
-            camelContext.setApplicationContextClassLoader(new BundleDelegatingClassLoader(bundleContext.getBundle()));
-            camelContext.getManagementStrategy().addEventNotifier(new OsgiCamelContextPublisher(bundleContext));
             try {
                 camelContext.start();
                 Set<Workflow> workflowSet = getWorkflowsFromRepo();

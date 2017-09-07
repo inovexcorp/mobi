@@ -26,15 +26,17 @@ package org.matonto.etl.service.workflows;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.core.osgi.OsgiDefaultCamelContext;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.matonto.etl.api.ontologies.etl.SubRoute;
+import org.matonto.etl.api.ontologies.etl.SubRouteFactory;
 import org.matonto.etl.api.ontologies.etl.Workflow;
 import org.matonto.etl.api.ontologies.etl.WorkflowFactory;
 import org.matonto.etl.api.workflows.WorkflowConverter;
@@ -54,8 +56,13 @@ import org.matonto.rdf.orm.conversion.impl.ResourceValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
 import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
+import org.matonto.repository.api.Repository;
+import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openrdf.repository.sail.SailRepository;
+import org.openrdf.sail.memory.MemoryStore;
 import org.osgi.framework.BundleContext;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -66,15 +73,20 @@ import org.powermock.modules.junit4.PowerMockRunner;
 public class WorkflowManagerImplTest {
     private WorkflowManagerImpl service;
 
+    private Repository repo;
     private ValueFactory vf = SimpleValueFactory.getInstance();
     private ModelFactory mf = LinkedHashModelFactory.getInstance();
     private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
     private WorkflowFactory workflowFactory = new WorkflowFactory();
+    private SubRouteFactory subRouteFactory= new SubRouteFactory();
 
     private final String CONTEXT_NAME = "context";
-    private final Resource ROUTE_ID = vf.createIRI("http://test.org/id");
-    private Resource workflowIRI;
-    private Workflow workflow;
+    private final Resource ROUTE1_ID = vf.createIRI("http://test.com/id1");
+    private final Resource ROUTE2_ID = vf.createIRI("http://test.com/id2");
+    private final Resource WORKFLOW1_ID = vf.createIRI("http://test.com/workflow1");
+    private final Resource WORKFLOW2_ID = vf.createIRI("http://test.com/workflow2");
+    private Workflow workflow1;
+    private Workflow workflow2;
 
     @Mock
     private BundleContext bundleContext;
@@ -90,10 +102,19 @@ public class WorkflowManagerImplTest {
 
     @Before
     public void setUp() throws Exception {
+        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        repo.initialize();
+
         workflowFactory.setModelFactory(mf);
         workflowFactory.setValueFactory(vf);
         workflowFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(workflowFactory);
+
+        subRouteFactory.setModelFactory(mf);
+        subRouteFactory.setValueFactory(vf);
+        subRouteFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(subRouteFactory);
+
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -104,9 +125,15 @@ public class WorkflowManagerImplTest {
         vcr.registerValueConverter(new ValueValueConverter());
         vcr.registerValueConverter(new LiteralValueConverter());
 
-        workflowIRI = vf.createIRI("http://test.com/workflow");
-        workflow = workflowFactory.createNew(workflowIRI);
-        workflow.getModel().add(ROUTE_ID, vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI), vf.createIRI(SubRoute.TYPE));
+        workflow1 = workflowFactory.createNew(WORKFLOW1_ID);
+        subRouteFactory.createNew(ROUTE1_ID, workflow1.getModel());
+        workflow2 = workflowFactory.createNew(WORKFLOW2_ID);
+        subRouteFactory.createNew(ROUTE2_ID, workflow2.getModel());
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
+            conn.add(workflow2.getModel(), WORKFLOW2_ID);
+        }
 
         MockitoAnnotations.initMocks(this);
 
@@ -117,12 +144,24 @@ public class WorkflowManagerImplTest {
         service = new WorkflowManagerImpl();
         service.setConverterService(converterService);
         service.setVf(vf);
-//        service.start(bundleContext);
+        service.setMf(mf);
+        service.setRepository(repo);
+        service.setWorkflowFactory(workflowFactory);
+
+        // Initialization of CamelContext
+        service.start(bundleContext);
     }
 
-    /*@Test
+    @After
+    public void tearDown() throws Exception {
+        repo.shutDown();
+    }
+
+    @Test
     public void startTest() throws Exception {
         verify(context).start();
+        assertTrue(service.workflows.contains(WORKFLOW2_ID));
+        verify(context).addRoutes(routeBuilder);
     }
 
     @Test
@@ -138,37 +177,39 @@ public class WorkflowManagerImplTest {
     }
 
     @Test
-    public void deployWorkflowTest() throws Exception {
-        service.addWorkflow(workflow);
-        assertTrue(service.getWorkflows().contains(workflow));
-        verify(context).addRoutes(routeBuilder);
+    public void addWorkflowTest() throws Exception {
+        service.addWorkflow(workflow1);
+        assertTrue(service.workflows.contains(WORKFLOW1_ID));
+        verify(context, atLeastOnce()).addRoutes(routeBuilder);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            workflow1.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject(), WORKFLOW1_ID)));
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void addWorkflowThatAlreadyExistsTest() throws Exception {
+        service.addWorkflow(workflow2);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void startWorkflowThatDoesNotExistTest() throws Exception {
-        service.startWorkflow(workflowIRI);
+        service.startWorkflow(WORKFLOW1_ID);
     }
 
     @Test
     public void startWorkflowTest() throws Exception {
-        // Setup:
-        service.addWorkflow(workflow);
-
-        service.startWorkflow(workflowIRI);
-        verify(context).startRoute(ROUTE_ID.stringValue());
+        service.startWorkflow(WORKFLOW2_ID);
+        verify(context).startRoute(ROUTE2_ID.stringValue());
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void stopWorkflowThatDoesNotExistTest() throws Exception {
-        service.stopWorkflow(vf.createIRI("http://test.com/workflow"));
+        service.stopWorkflow(WORKFLOW1_ID);
     }
 
     @Test
     public void stopWorkflowTest() throws Exception {
-        // Setup:
-        service.addWorkflow(workflow);
-
-        service.stopWorkflow(workflowIRI);
-        verify(context).stopRoute(ROUTE_ID.stringValue());
-    }*/
+        service.stopWorkflow(WORKFLOW2_ID);
+        verify(context).stopRoute(ROUTE2_ID.stringValue());
+    }
 }
