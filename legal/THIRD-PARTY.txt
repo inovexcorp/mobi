@@ -26,7 +26,7 @@ Lists of 279 third-party dependencies.
      (The Apache Software License, Version 2.0) Google Guice - Core Library (com.google.inject:guice:4.0 - https://github.com/google/guice/guice)
      (The Apache Software License, Version 2.0) Google Guice - Extensions - AssistedInject (com.google.inject.extensions:guice-assistedinject:4.0 - https://github.com/google/guice/extensions-parent/guice-assistedinject)
      (The Apache Software License, Version 2.0) Google Guice - Extensions - MultiBindings (com.google.inject.extensions:guice-multibindings:4.0 - https://github.com/google/guice/extensions-parent/guice-multibindings)
-     (The Apache Software License, Version 2.0) hazelcast (com.hazelcast:hazelcast:3.8.2 - http://www.hazelcast.com/hazelcast/)
+     (The Apache Software License, Version 2.0) hazelcast (com.hazelcast:hazelcast:3.8.4 - http://www.hazelcast.com/hazelcast/)
      (Revised BSD License) JSONLD Java :: Core (com.inovexcorp.mobi:jsonld-java:0.7.0 - http://github.com/jsonld-java/jsonld-java/jsonld-java/)
      (The Apache Software License, Version 2.0) Nimbus JOSE+JWT (com.nimbusds:nimbus-jose-jwt:4.11 - https://bitbucket.org/connect2id/nimbus-jose-jwt)
      (The Apache Software License, Version 2.0) opencsv (com.opencsv:opencsv:3.5 - http://opencsv.sourceforge.net/)
