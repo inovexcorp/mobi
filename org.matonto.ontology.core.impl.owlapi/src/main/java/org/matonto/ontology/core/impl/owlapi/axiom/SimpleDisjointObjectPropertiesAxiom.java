@@ -23,14 +23,15 @@ package org.matonto.ontology.core.impl.owlapi.axiom;
  * #L%
  */
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeSet;
-import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.axiom.DisjointObjectPropertiesAxiom;
 import org.matonto.ontology.core.api.propertyexpression.ObjectPropertyExpression;
 import org.matonto.ontology.core.api.types.AxiomType;
+
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
+import javax.annotation.Nonnull;
 
 
 public class SimpleDisjointObjectPropertiesAxiom 
