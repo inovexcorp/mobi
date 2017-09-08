@@ -67,6 +67,7 @@ import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
 
 import java.util.Optional;
+import java.util.Set;
 
 public class WorkflowManagerImplTest {
     private WorkflowManagerImpl service;
@@ -171,6 +172,21 @@ public class WorkflowManagerImplTest {
         verify(camelContext).getRoute(ROUTE2_ID.stringValue());
         verify(camelContext).removeRoute(ROUTE2_ID.stringValue());
         verify(camelContext).addRoutes(routeBuilder);
+    }
+
+    @Test
+    public void getWorkflowsTest() throws Exception {
+        Set<Workflow> result = service.getWorkflows();
+        assertEquals(1, result.size());
+        assertEquals(WORKFLOW2_ID, result.iterator().next().getResource());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void getWorkflowsWithMissingTest() {
+        // Setup:
+        service.workflows.add(WORKFLOW1_ID);
+
+        service.getWorkflows();
     }
 
     @Test
