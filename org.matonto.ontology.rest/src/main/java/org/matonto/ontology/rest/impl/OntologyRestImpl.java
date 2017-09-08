@@ -1364,7 +1364,7 @@ public class OntologyRestImpl implements OntologyRest {
                 .element("recordId", record.getResource().stringValue())
                 .element("branchId", masterBranchId.stringValue())
                 .element("commitId", commitId.stringValue());
-        provUtils.endCreateActivity(createActivity, record);
+        provUtils.endCreateActivity(createActivity, record.getResource());
         return Response.status(Response.Status.CREATED).entity(response).build();
     }
 
