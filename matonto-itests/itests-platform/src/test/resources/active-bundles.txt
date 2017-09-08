@@ -5,6 +5,7 @@ org.matonto.etl.cli
 org.matonto.etl.delimited
 org.matonto.etl.rdf
 org.matonto.etl.rest
+org.matonto.etl.workflows
 org.matonto.ontology.api
 org.matonto.ontology.core.impl.owlapi
 org.matonto.ontology.rest
