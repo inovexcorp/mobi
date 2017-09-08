@@ -32,11 +32,8 @@ import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.matonto.catalog.api.ontologies.mcat.Record;
-import org.matonto.catalog.api.ontologies.mcat.RecordFactory;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
-import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontologies.provo.ActivityFactory;
 import org.matonto.ontologies.provo.Entity;
@@ -76,11 +73,9 @@ public class CatalogProvUtilsImplTest {
     private ActivityFactory activityFactory= new ActivityFactory();
     private CreateActivityFactory createActivityFactory = new CreateActivityFactory();
     private EntityFactory entityFactory = new EntityFactory();
-    private RecordFactory recordFactory = new RecordFactory();
     private UserFactory userFactory = new UserFactory();
 
     private CreateActivity activity;
-    private Record record;
     private User user;
 
     @Mock
@@ -106,11 +101,6 @@ public class CatalogProvUtilsImplTest {
         entityFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(entityFactory);
 
-        recordFactory.setModelFactory(mf);
-        recordFactory.setValueFactory(vf);
-        recordFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(recordFactory);
-
         userFactory.setModelFactory(mf);
         userFactory.setValueFactory(vf);
         userFactory.setValueConverterRegistry(vcr);
@@ -128,8 +118,6 @@ public class CatalogProvUtilsImplTest {
         vcr.registerValueConverter(new DateValueConverter());
 
         activity = createActivityFactory.createNew(vf.createIRI("http://test.org/activity"));
-        record = recordFactory.createNew(vf.createIRI("http://test.org/record"));
-        record.addProperty(vf.createLiteral("Title"), vf.createIRI(_Thing.title_IRI));
         user = userFactory.createNew(vf.createIRI("http://test.org/user"));
 
         MockitoAnnotations.initMocks(this);
@@ -165,13 +153,15 @@ public class CatalogProvUtilsImplTest {
 
     @Test
     public void endCreateActivityTest() throws Exception {
-        utils.endCreateActivity(activity, record);
+        // Setup:
+        Resource recordIRI = vf.createIRI("http://test.org/record");
+
+        utils.endCreateActivity(activity, recordIRI);
         verify(provenanceService).updateActivity(activity);
         assertTrue(activity.getModel().contains(activity.getResource(), vf.createIRI(Activity.endedAtTime_IRI), null));
         assertEquals(1, activity.getGenerated().size());
         Entity entity = activity.getGenerated().iterator().next();
-        assertEquals(record.getResource(), entity.getResource());
-        assertTrue(entity.getModel().contains(entity.getResource(), vf.createIRI(_Thing.title_IRI), null));
+        assertEquals(recordIRI, entity.getResource());
         assertTrue(entity.getModel().contains(entity.getResource(), vf.createIRI(Entity.generatedAtTime_IRI), null));
     }
 

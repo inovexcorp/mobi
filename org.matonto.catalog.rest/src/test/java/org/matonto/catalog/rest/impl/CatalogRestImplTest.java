@@ -3187,7 +3187,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).createRecord(any(RecordConfig.class), eq(ormFactory));
         verify(catalogManager).addRecord(eq(vf.createIRI(LOCAL_IRI)), any(Record.class));
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(eq(activity), any(Record.class));
+        verify(provUtils).endCreateActivity(activity, vf.createIRI(RECORD_IRI));
     }
 
     private <T extends Version> void testCreateVersionByType(OrmFactory<T> ormFactory) {

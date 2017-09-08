@@ -23,10 +23,10 @@ package org.matonto.catalog.api;
  * #L%
  */
 
-import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.rdf.api.Resource;
 
 import javax.annotation.Nullable;
 
@@ -41,12 +41,13 @@ public interface CatalogProvUtils {
     CreateActivity startCreateActivity(User user);
 
     /**
-     * Updates the provided CreateActivity with an end time and an Entity representing the provided Record.
+     * Updates the provided CreateActivity with an end time and an Entity representing the Record identified by the
+     * provided Resource IRI.
      *
      * @param createActivity The CreateActivity to update
-     * @param record The Record that was successfully created
+     * @param recordIRI The IRI of the Record that was successfully created
      */
-    void endCreateActivity(CreateActivity createActivity, Record record);
+    void endCreateActivity(CreateActivity createActivity, Resource recordIRI);
 
     /**
      * Removes the provided Activity. Typical use case is if something goes wrong during a process and the Activity
