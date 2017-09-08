@@ -26,9 +26,7 @@ package org.matonto.catalog.impl;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.matonto.catalog.api.CatalogProvUtils;
-import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
-import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontologies.provo.Entity;
 import org.matonto.ontologies.provo.EntityFactory;
@@ -37,7 +35,7 @@ import org.matonto.prov.api.ProvenanceService;
 import org.matonto.prov.api.builder.ActivityConfig;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
-import org.matonto.rdf.api.Value;
+import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 
 import java.time.OffsetDateTime;
@@ -92,12 +90,10 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
     }
 
     @Override
-    public void endCreateActivity(CreateActivity createActivity, Record record) {
+    public void endCreateActivity(CreateActivity createActivity, Resource recordIRI) {
         OffsetDateTime stop = OffsetDateTime.now();
-        Value title = record.getProperty(vf.createIRI(_Thing.title_IRI)).orElse(record.getResource());
-        Entity recordEntity = entityFactory.createNew(record.getResource(), createActivity.getModel());
+        Entity recordEntity = entityFactory.createNew(recordIRI, createActivity.getModel());
         recordEntity.addProperty(vf.createLiteral(stop), vf.createIRI(Entity.generatedAtTime_IRI));
-        recordEntity.addProperty(title, vf.createIRI(_Thing.title_IRI));
         createActivity.addProperty(vf.createLiteral(stop), vf.createIRI(Activity.endedAtTime_IRI));
         createActivity.addGenerated(recordEntity);
         provenanceService.updateActivity(createActivity);

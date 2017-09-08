@@ -710,7 +710,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
         verify(mockCache).put(anyString(), any(Ontology.class));
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(activity, record);
+        verify(provUtils).endCreateActivity(activity, record.getResource());
     }
 
     @Test
@@ -801,7 +801,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
         verify(mockCache).put(anyString(), any(Ontology.class));
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(activity, record);
+        verify(provUtils).endCreateActivity(activity, record.getResource());
     }
 
     @Test

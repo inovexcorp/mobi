@@ -200,7 +200,7 @@ public class MappingRestImpl implements MappingRest {
                     mapping.getModel(), null);
 
             logger.info("Mapping Uploaded: " + record.getResource());
-            provUtils.endCreateActivity(createActivity, record);
+            provUtils.endCreateActivity(createActivity, record.getResource());
             return Response.status(201).entity(record.getResource().stringValue()).build();
         } catch (IOException | IllegalArgumentException ex) {
             provUtils.removeActivity(createActivity);
