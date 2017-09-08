@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  org.matonto.etl.delimited
+  org.matonto.etl.workflows
   $Id:$
   $HeadURL:$
   %%
-  Copyright (C) 2016 iNovex Information Systems, Inc.
+  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
   %%
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU Affero General Public License as published by
@@ -33,23 +33,11 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>etl.delimited</artifactId>
-
+    <artifactId>etl.workflows</artifactId>
     <packaging>bundle</packaging>
-
     <name>${project.groupId}.${project.artifactId}</name>
 
     <dependencies>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>persistence.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>persistence.utils</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>etl.api</artifactId>
@@ -57,12 +45,7 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>rest.util</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>api</artifactId>
+            <artifactId>persistence.api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -71,19 +54,8 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>rdf.orm.ontologies</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>ontology.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.opencsv</groupId>
-            <artifactId>opencsv</artifactId>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
@@ -94,18 +66,37 @@
             <artifactId>logback-classic</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.servicemix.bundles</groupId>
-            <artifactId>org.apache.servicemix.bundles.poi</artifactId>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-core</artifactId>
         </dependency>
-
-        <!-- Test Dependencies -->
         <dependency>
-            <groupId>org.spockframework</groupId>
-            <artifactId>spock-core</artifactId>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-blueprint</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-all</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-junit4</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito</artifactId>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
-            <artifactId>rdf.impl.sesame</artifactId>
+            <artifactId>repository.impl.sesame</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
@@ -120,12 +111,11 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>MatOnto ETL Impl - Delimited</Bundle-Name>
+                        <Bundle-Name>MatOnto ETL Impl - Workflows</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.etl.api.delimited; provide:=true
+                            org.matonto.etl.api.workflows; provide:=true
                         </Export-Package>
-                        <Export-Service>org.matonto.etl.api.delimited.DelimitedConverter</Export-Service>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>

@@ -108,12 +108,15 @@
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-core</artifactId>
+        </dependency>
 
         <!-- Ontology Dependencies -->
         <dependency>
             <groupId>net.sourceforge.owlapi</groupId>
             <artifactId>owlapi-distribution</artifactId>
-            <!--<version>${owlapi.version}</version>-->
         </dependency>
         <dependency>
             <groupId>org.tukaani</groupId>

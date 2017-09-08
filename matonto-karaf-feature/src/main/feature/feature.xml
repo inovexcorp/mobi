@@ -24,6 +24,7 @@
 
 <features xmlns="http://karaf.apache.org/xmlns/features/v1.3.0" name="matonto-features">
     <feature name="matonto-deps" description="MatOnto Dependency Bundles" version="${project.version}">
+        <feature prerequisite="true">eventadmin</feature>
         <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.ezmorph/1.0.6_1</bundle>
         <bundle start-level="80">mvn:org.apache.httpcomponents/httpclient-osgi/4.5.2</bundle>
         <bundle start-level="80">mvn:org.apache.httpcomponents/httpcore-osgi/4.4</bundle>
@@ -57,6 +58,7 @@
         <bundle start-level="80">mvn:com.opencsv/opencsv/${opencsv.version}</bundle>
         <bundle start-level="80">mvn:ch.qos.logback/logback-classic/${logback.version}</bundle>
         <bundle start-level="80">mvn:ch.qos.logback/logback-core/${logback.version}</bundle>
+        <bundle start-level="80">mvn:org.apache.camel/camel-core-osgi/${camel.version}</bundle>
 
         <!-- Ontology Dependencies -->
         <bundle start-level="80">mvn:net.sourceforge.owlapi/owlapi-distribution/${owlapi.version}</bundle>
@@ -83,12 +85,15 @@
         <feature prerequisite="true">jax-rs-provider-gson</feature>
         <feature prerequisite="true">jax-rs-provider-multipart</feature>
         <feature prerequisite="true">jax-rs-provider-security</feature>
+        <feature prerequisite="true">aries-blueprint</feature>
+        <feature prerequisite="true">camel</feature>
         <feature prerequisite="true">matonto-deps</feature>
         <bundle start-level="80">mvn:org.matonto/api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/rest.util/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/etl.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/etl.delimited/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/etl.rdf/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/etl.workflows/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/ontology.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/ontology.core.impl.owlapi/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/ontology.utils/${project.version}</bundle>

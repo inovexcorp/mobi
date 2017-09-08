@@ -78,6 +78,7 @@
         <ehcache.version>3.3.1</ehcache.version>
         <javax.cache.version>1.0.0</javax.cache.version>
         <hazelcast.version>3.8.4</hazelcast.version>
+        <camel.version>2.18.4</camel.version>
     </properties>
 
     <dependencyManagement>
@@ -271,6 +272,21 @@
                 <groupId>javax.cache</groupId>
                 <artifactId>cache-api</artifactId>
                 <version>${javax.cache.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.camel</groupId>
+                <artifactId>camel-core</artifactId>
+                <version>${camel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.camel</groupId>
+                <artifactId>camel-blueprint</artifactId>
+                <version>${camel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.camel</groupId>
+                <artifactId>camel-core-osgi</artifactId>
+                <version>${camel.version}</version>
             </dependency>
 
             <!-- Test Dependencies -->
