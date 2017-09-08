@@ -24,18 +24,20 @@ package org.matonto.etl.service.workflows;
  */
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.apache.camel.CamelContext;
+import org.apache.camel.Route;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.core.osgi.OsgiDefaultCamelContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.matonto.etl.api.ontologies.etl.SubRouteFactory;
 import org.matonto.etl.api.ontologies.etl.Workflow;
 import org.matonto.etl.api.ontologies.etl.WorkflowFactory;
@@ -63,13 +65,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
-import org.osgi.framework.BundleContext;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(WorkflowManagerImpl.class)
+import java.util.Optional;
+
 public class WorkflowManagerImplTest {
     private WorkflowManagerImpl service;
 
@@ -80,7 +78,6 @@ public class WorkflowManagerImplTest {
     private WorkflowFactory workflowFactory = new WorkflowFactory();
     private SubRouteFactory subRouteFactory= new SubRouteFactory();
 
-    private final String CONTEXT_NAME = "context";
     private final Resource ROUTE1_ID = vf.createIRI("http://test.com/id1");
     private final Resource ROUTE2_ID = vf.createIRI("http://test.com/id2");
     private final Resource WORKFLOW1_ID = vf.createIRI("http://test.com/workflow1");
@@ -89,10 +86,10 @@ public class WorkflowManagerImplTest {
     private Workflow workflow2;
 
     @Mock
-    private BundleContext bundleContext;
+    private CamelContext camelContext;
 
     @Mock
-    private OsgiDefaultCamelContext context;
+    private Route route;
 
     @Mock
     private WorkflowConverter converterService;
@@ -130,15 +127,8 @@ public class WorkflowManagerImplTest {
         workflow2 = workflowFactory.createNew(WORKFLOW2_ID);
         subRouteFactory.createNew(ROUTE2_ID, workflow2.getModel());
 
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.clear();
-            conn.add(workflow2.getModel(), WORKFLOW2_ID);
-        }
-
         MockitoAnnotations.initMocks(this);
 
-        when(context.getName()).thenReturn(CONTEXT_NAME);
-        PowerMockito.whenNew(OsgiDefaultCamelContext.class).withAnyArguments().thenReturn(context);
         when(converterService.convert(any(Workflow.class))).thenReturn(routeBuilder);
 
         service = new WorkflowManagerImpl();
@@ -147,9 +137,14 @@ public class WorkflowManagerImplTest {
         service.setMf(mf);
         service.setRepository(repo);
         service.setWorkflowFactory(workflowFactory);
+        service.setCamelContext(camelContext);
 
-        // Initialization of CamelContext
-        service.start(bundleContext);
+        // Start out with workflow2
+        service.workflows.add(WORKFLOW2_ID);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
+            conn.add(workflow2.getModel(), WORKFLOW2_ID);
+        }
     }
 
     @After
@@ -158,29 +153,31 @@ public class WorkflowManagerImplTest {
     }
 
     @Test
-    public void startTest() throws Exception {
-        verify(context).start();
+    public void startWithDeployedRoutesTest() throws Exception {
+        // Setup
+        when(camelContext.getRoute(anyString())).thenReturn(route);
+
+        service.start();
         assertTrue(service.workflows.contains(WORKFLOW2_ID));
-        verify(context).addRoutes(routeBuilder);
+        verify(camelContext).getRoute(ROUTE2_ID.stringValue());
+        verify(camelContext, times(0)).removeRoute(anyString());
+        verify(camelContext, times(0)).addRoutes(routeBuilder);
     }
 
     @Test
-    public void stopTest() throws Exception {
-        service.stop();
-        verify(context).stop();
-    }
-
-    @Test
-    public void getContextNameTest() throws Exception {
-        assertEquals(CONTEXT_NAME, service.getContextName());
-        verify(context).getName();
+    public void startWithMissingRoutesTest() throws Exception {
+        service.start();
+        assertTrue(service.workflows.contains(WORKFLOW2_ID));
+        verify(camelContext).getRoute(ROUTE2_ID.stringValue());
+        verify(camelContext).removeRoute(ROUTE2_ID.stringValue());
+        verify(camelContext).addRoutes(routeBuilder);
     }
 
     @Test
     public void addWorkflowTest() throws Exception {
         service.addWorkflow(workflow1);
         assertTrue(service.workflows.contains(WORKFLOW1_ID));
-        verify(context, atLeastOnce()).addRoutes(routeBuilder);
+        verify(camelContext).addRoutes(routeBuilder);
         try (RepositoryConnection conn = repo.getConnection()) {
             workflow1.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject(), WORKFLOW1_ID)));
         }
@@ -191,15 +188,46 @@ public class WorkflowManagerImplTest {
         service.addWorkflow(workflow2);
     }
 
+    @Test
+    public void getWorkflowThatDoesNotExistTest() throws Exception {
+        Optional<Workflow> result = service.getWorkflow(WORKFLOW1_ID);
+        assertFalse(result.isPresent());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void getMissingWorkflowTest() throws Exception {
+        // Setup:
+        service.workflows.add(WORKFLOW1_ID);
+
+        service.getWorkflow(WORKFLOW1_ID);
+    }
+
+    @Test
+    public void getWorkflowTest() throws Exception {
+        Optional<Workflow> result = service.getWorkflow(WORKFLOW2_ID);
+        assertTrue(result.isPresent());
+        Workflow workflow = result.get();
+        assertEquals(WORKFLOW2_ID, workflow.getResource());
+        workflow2.getModel().forEach(statement -> assertTrue(workflow.getModel().contains(statement.getSubject(), statement.getPredicate(), statement.getObject())));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void startWorkflowThatDoesNotExistTest() throws Exception {
+        service.startWorkflow(WORKFLOW1_ID);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void startMissingWorkflowTest() throws Exception {
+        // Setup:
+        service.workflows.add(WORKFLOW1_ID);
+
         service.startWorkflow(WORKFLOW1_ID);
     }
 
     @Test
     public void startWorkflowTest() throws Exception {
         service.startWorkflow(WORKFLOW2_ID);
-        verify(context).startRoute(ROUTE2_ID.stringValue());
+        verify(camelContext).startRoute(ROUTE2_ID.stringValue());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -207,9 +235,17 @@ public class WorkflowManagerImplTest {
         service.stopWorkflow(WORKFLOW1_ID);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void stopMissingWorkflowTest() throws Exception {
+        // Setup:
+        service.workflows.add(WORKFLOW1_ID);
+
+        service.stopWorkflow(WORKFLOW1_ID);
+    }
+
     @Test
     public void stopWorkflowTest() throws Exception {
         service.stopWorkflow(WORKFLOW2_ID);
-        verify(context).stopRoute(ROUTE2_ID.stringValue());
+        verify(camelContext).stopRoute(ROUTE2_ID.stringValue());
     }
 }
