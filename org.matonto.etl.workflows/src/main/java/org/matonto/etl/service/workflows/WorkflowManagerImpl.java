@@ -103,6 +103,7 @@ public class WorkflowManagerImpl implements WorkflowManager {
     @Activate
     protected void start() {
         try {
+            workflows = new HashSet<>();
             Set<Workflow> workflowSet = getWorkflowsFromRepo();
             for (Workflow workflow: workflowSet) {
                 Set<Resource> routeIds = getRouteIds(workflow);
@@ -114,8 +115,8 @@ public class WorkflowManagerImpl implements WorkflowManager {
                     }
                     deployWorkflow(workflow);
                 }
+                workflows.add(workflow.getResource());
             }
-            workflows = workflowSet.stream().map(Workflow::getResource).collect(Collectors.toSet());
         } catch (Exception e) {
             throw new MatOntoException("Error in starting WorkflowManager", e);
         }
