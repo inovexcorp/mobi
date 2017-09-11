@@ -1,4 +1,4 @@
-@Version("8.4.2.${build}")
+@Version("8.4.3.${build}")
 
 package org.matonto.etl.rest;
 

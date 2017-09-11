@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.9.3-SNAPSHOT</version>
+        <version>1.9.10-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -45,7 +45,7 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>api</artifactId>
-            <version>1.8.40</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-io</groupId>

@@ -47,6 +47,7 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.CatalogProvUtils;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.builder.Difference;
@@ -63,6 +64,8 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
+import org.matonto.ontologies.provo.Activity;
+import org.matonto.ontologies.provo.ActivityFactory;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Individual;
 import org.matonto.ontology.core.api.NamedIndividual;
@@ -88,6 +91,8 @@ import org.matonto.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProp
 import org.matonto.ontology.core.utils.MatontoOntologyException;
 import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -183,15 +188,20 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @Mock
     private Cache<String, Ontology> mockCache;
 
+    @Mock
+    private CatalogProvUtils provUtils;
+
+    private ModelFactory mf;
+    private ValueFactory vf;
     private ValueConverterRegistry vcr;
-    private ModelFactory modelFactory;
-    private ValueFactory valueFactory;
     private CatalogFactory catalogFactory;
     private CommitFactory commitFactory;
     private BranchFactory branchFactory;
     private OntologyRecordFactory ontologyRecordFactory;
     private InProgressCommitFactory inProgressCommitFactory;
     private UserFactory userFactory;
+    private CreateActivityFactory createActivityFactory;
+    private CreateActivity activity;
     private IRI catalogId;
     private IRI recordId;
     private OntologyRecord record;
@@ -253,45 +263,51 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         MockitoAnnotations.initMocks(this);
 
         vcr = new DefaultValueConverterRegistry();
-        modelFactory = LinkedHashModelFactory.getInstance();
-        valueFactory = SimpleValueFactory.getInstance();
+        mf = LinkedHashModelFactory.getInstance();
+        vf = SimpleValueFactory.getInstance();
+
         catalogFactory = new CatalogFactory();
-        commitFactory = new CommitFactory();
-        branchFactory = new BranchFactory();
-        ontologyRecordFactory = new OntologyRecordFactory();
-        inProgressCommitFactory = new InProgressCommitFactory();
-        userFactory = new UserFactory();
-
-        catalogFactory.setModelFactory(modelFactory);
-        catalogFactory.setValueFactory(valueFactory);
+        catalogFactory.setModelFactory(mf);
+        catalogFactory.setValueFactory(vf);
         catalogFactory.setValueConverterRegistry(vcr);
-
-        commitFactory.setModelFactory(modelFactory);
-        commitFactory.setValueFactory(valueFactory);
-        commitFactory.setValueConverterRegistry(vcr);
-
-        branchFactory.setModelFactory(modelFactory);
-        branchFactory.setValueFactory(valueFactory);
-        branchFactory.setValueConverterRegistry(vcr);
-
-        ontologyRecordFactory.setModelFactory(modelFactory);
-        ontologyRecordFactory.setValueFactory(valueFactory);
-        ontologyRecordFactory.setValueConverterRegistry(vcr);
-
-        inProgressCommitFactory.setModelFactory(modelFactory);
-        inProgressCommitFactory.setValueFactory(valueFactory);
-        inProgressCommitFactory.setValueConverterRegistry(vcr);
-
-        userFactory.setModelFactory(modelFactory);
-        userFactory.setValueFactory(valueFactory);
-        userFactory.setValueConverterRegistry(vcr);
-
         vcr.registerValueConverter(catalogFactory);
+
+        commitFactory = new CommitFactory();
+        commitFactory.setModelFactory(mf);
+        commitFactory.setValueFactory(vf);
+        commitFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(commitFactory);
+
+        branchFactory = new BranchFactory();
+        branchFactory.setModelFactory(mf);
+        branchFactory.setValueFactory(vf);
+        branchFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(branchFactory);
+
+        ontologyRecordFactory = new OntologyRecordFactory();
+        ontologyRecordFactory.setModelFactory(mf);
+        ontologyRecordFactory.setValueFactory(vf);
+        ontologyRecordFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(ontologyRecordFactory);
+
+        inProgressCommitFactory = new InProgressCommitFactory();
+        inProgressCommitFactory.setModelFactory(mf);
+        inProgressCommitFactory.setValueFactory(vf);
+        inProgressCommitFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(inProgressCommitFactory);
+
+        userFactory = new UserFactory();
+        userFactory.setModelFactory(mf);
+        userFactory.setValueFactory(vf);
+        userFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(userFactory);
+
+        createActivityFactory = new CreateActivityFactory();
+        createActivityFactory.setModelFactory(mf);
+        createActivityFactory.setValueFactory(vf);
+        createActivityFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(createActivityFactory);
+
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -303,38 +319,39 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         vcr.registerValueConverter(new LiteralValueConverter());
 
         rest = new OntologyRestImpl();
-        rest.setModelFactory(modelFactory);
-        rest.setValueFactory(valueFactory);
+        rest.setModelFactory(mf);
+        rest.setValueFactory(vf);
         rest.setOntologyManager(ontologyManager);
         rest.setCatalogManager(catalogManager);
         rest.setEngineManager(engineManager);
         rest.setSesameTransformer(sesameTransformer);
         rest.setOntologyCache(ontologyCache);
         rest.setVersioningManager(versioningManager);
+        rest.setProvUtils(provUtils);
 
         simpleOntologyManager = new SimpleOntologyManager();
-        simpleOntologyManager.setModelFactory(modelFactory);
-        simpleOntologyManager.setValueFactory(valueFactory);
+        simpleOntologyManager.setModelFactory(mf);
+        simpleOntologyManager.setValueFactory(vf);
         simpleOntologyManager.setRepositoryManager(repoManager);
 
-        catalogId = valueFactory.createIRI("http://matonto.org/catalog");
-        recordId = valueFactory.createIRI("http://matonto.org/record");
+        catalogId = vf.createIRI("http://matonto.org/catalog");
+        recordId = vf.createIRI("http://matonto.org/record");
         record = ontologyRecordFactory.createNew(recordId);
-        inProgressCommitId = valueFactory.createIRI("http://matonto.org/in-progress-commit");
+        inProgressCommitId = vf.createIRI("http://matonto.org/in-progress-commit");
         inProgressCommit = inProgressCommitFactory.createNew(inProgressCommitId);
-        commitId = valueFactory.createIRI("http://matonto.org/commit");
+        commitId = vf.createIRI("http://matonto.org/commit");
         commit = commitFactory.createNew(commitId);
-        branchId = valueFactory.createIRI("http://matonto.org/branch");
+        branchId = vf.createIRI("http://matonto.org/branch");
         branch = branchFactory.createNew(branchId);
-        userId = valueFactory.createIRI("http://matonto.org/users/" + UsernameTestFilter.USERNAME);
+        userId = vf.createIRI("http://matonto.org/users/" + UsernameTestFilter.USERNAME);
         user = userFactory.createNew(userId);
         record.setMasterBranch(branch);
-        classId = valueFactory.createIRI("http://matonto.org/ontology#Class1a");
-        IRI titleIRI = valueFactory.createIRI(DCTERMS.TITLE.stringValue());
-        additions = modelFactory.createModel();
-        additions.add(catalogId, titleIRI, valueFactory.createLiteral("Addition"));
-        deletions = modelFactory.createModel();
-        deletions.add(catalogId, titleIRI, valueFactory.createLiteral("Deletion"));
+        classId = vf.createIRI("http://matonto.org/ontology#Class1a");
+        IRI titleIRI = vf.createIRI(DCTERMS.TITLE.stringValue());
+        additions = mf.createModel();
+        additions.add(catalogId, titleIRI, vf.createLiteral("Addition"));
+        deletions = mf.createModel();
+        deletions.add(catalogId, titleIRI, vf.createLiteral("Deletion"));
         difference = new Difference.Builder()
                 .additions(additions)
                 .deletions(deletions)
@@ -342,37 +359,37 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         WriterConfig config = new WriterConfig();
         config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
         InputStream testOntology = getClass().getResourceAsStream("/test-ontology.ttl");
-        ontologyModel = modelFactory.createModel(Values.matontoModel(Rio.parse(testOntology, "", RDFFormat.TURTLE)));
+        ontologyModel = mf.createModel(Values.matontoModel(Rio.parse(testOntology, "", RDFFormat.TURTLE)));
         ontologyJsonLd = new ByteArrayOutputStream();
         Rio.write(Values.sesameModel(ontologyModel), ontologyJsonLd, RDFFormat.JSONLD, config);
         InputStream testVocabulary = getClass().getResourceAsStream("/test-vocabulary.ttl");
-        importedOntologyModel = modelFactory.createModel(Values.matontoModel(Rio.parse(testVocabulary, "",
+        importedOntologyModel = mf.createModel(Values.matontoModel(Rio.parse(testVocabulary, "",
                 RDFFormat.TURTLE)));
         importedOntologyJsonLd = new ByteArrayOutputStream();
         Rio.write(Values.sesameModel(importedOntologyModel), importedOntologyJsonLd, RDFFormat.JSONLD, config);
-        IRI annotationPropertyIRI = valueFactory.createIRI("http://matonto.org/annotation-property");
+        IRI annotationPropertyIRI = vf.createIRI("http://matonto.org/annotation-property");
         annotationProperties = Collections.singleton(new SimpleAnnotationProperty(annotationPropertyIRI));
-        IRI annotationIRI = valueFactory.createIRI("http://matonto.org/annotation");
+        IRI annotationIRI = vf.createIRI("http://matonto.org/annotation");
         AnnotationProperty annotationProperty = new SimpleAnnotationProperty(annotationIRI);
-        annotations = Collections.singleton(new SimpleAnnotation(annotationProperty, valueFactory.createLiteral("word"),
+        annotations = Collections.singleton(new SimpleAnnotation(annotationProperty, vf.createLiteral("word"),
                 Collections.emptySet()));
-        classIRI = valueFactory.createIRI("http://matonto.org/ontology#Class1a");
+        classIRI = vf.createIRI("http://matonto.org/ontology#Class1a");
         classes = Collections.singleton(new SimpleClass(classIRI));
-        datatypeIRI = valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#langString");
+        datatypeIRI = vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#langString");
         datatypes = Collections.singleton(new SimpleDatatype(datatypeIRI));
-        objectPropertyIRI = valueFactory.createIRI("http://matonto.org/ontology#objectProperty1a");
+        objectPropertyIRI = vf.createIRI("http://matonto.org/ontology#objectProperty1a");
         objectProperties = Collections.singleton(new SimpleObjectProperty(objectPropertyIRI));
-        dataPropertyIRI = valueFactory.createIRI("http://matonto.org/ontology#dataProperty1a");
+        dataPropertyIRI = vf.createIRI("http://matonto.org/ontology#dataProperty1a");
         dataProperties = Collections.singleton(new SimpleDataProperty(dataPropertyIRI));
-        individualIRI = valueFactory.createIRI("http://matonto.org/ontology#Individual1a");
+        individualIRI = vf.createIRI("http://matonto.org/ontology#Individual1a");
         individuals = Collections.singleton(new SimpleNamedIndividual(individualIRI));
-        derivedConceptIri = valueFactory.createIRI("https://matonto.org/vocabulary#ConceptSubClass");
+        derivedConceptIri = vf.createIRI("https://matonto.org/vocabulary#ConceptSubClass");
         derivedConcepts = Collections.singleton(derivedConceptIri);
-        derivedConceptSchemeIri = valueFactory.createIRI("https://matonto.org/vocabulary#ConceptSchemeSubClass");
+        derivedConceptSchemeIri = vf.createIRI("https://matonto.org/vocabulary#ConceptSchemeSubClass");
         derivedConceptSchemes = Collections.singleton(derivedConceptSchemeIri);
         importedOntologies = Stream.of(ontology, importedOntology).collect(Collectors.toSet());
-        ontologyIRI = valueFactory.createIRI("http://matonto.org/ontology-id");
-        importedOntologyIRI = valueFactory.createIRI("http://matonto.org/imported-ontology-id");
+        ontologyIRI = vf.createIRI("http://matonto.org/ontology-id");
+        importedOntologyIRI = vf.createIRI("http://matonto.org/imported-ontology-id");
         entityUsagesResult = getResource("/entity-usages-results.json");
         subClassesOfResult = getResource("/sub-classes-of-results.json");
         individualsOfResult = getResource("/individuals-of-results.json");
@@ -383,15 +400,16 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         conceptSchemeHierarchyResult = getResource("/concept-scheme-hierarchy-results.json");
         searchResults = getResource("/search-results.json");
         importedOntologyResults = getResourceArray("/imported-ontology-results.json");
-        missingIRI = valueFactory.createIRI("http://matonto.org/missing");
-        Resource class1b = valueFactory.createIRI("http://matonto.org/ontology#Class1b");
-        IRI subClassOf = valueFactory.createIRI("http://www.w3.org/2000/01/rdf-schema#subClassOf");
-        Value class1a = valueFactory.createIRI("http://matonto.org/ontology#Class1a");
-        Resource individual1a = valueFactory.createIRI("http://matonto.org/ontology#Individual1a");
-        IRI type = valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
-        constructs = modelFactory.createModel(Stream.of(valueFactory.createStatement(class1b, subClassOf, class1a),
-                valueFactory.createStatement(individual1a, type, class1a)).collect(Collectors.toSet()));
+        missingIRI = vf.createIRI("http://matonto.org/missing");
+        Resource class1b = vf.createIRI("http://matonto.org/ontology#Class1b");
+        IRI subClassOf = vf.createIRI("http://www.w3.org/2000/01/rdf-schema#subClassOf");
+        Value class1a = vf.createIRI("http://matonto.org/ontology#Class1a");
+        Resource individual1a = vf.createIRI("http://matonto.org/ontology#Individual1a");
+        IRI type = vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
+        constructs = mf.createModel(Stream.of(vf.createStatement(class1b, subClassOf, class1a),
+                vf.createStatement(individual1a, type, class1a)).collect(Collectors.toSet()));
         failedImports = Collections.singleton(importedOntologyIRI);
+        activity = createActivityFactory.createNew(vf.createIRI("http://test.org/activity"));
 
         return new ResourceConfig()
                 .register(rest)
@@ -407,10 +425,10 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     @BeforeMethod
     public void setupMocks() {
         reset(engineManager, versioningManager, ontologyId, ontology, importedOntologyId, importedOntology, catalogManager,
-                ontologyManager, sesameTransformer, results, mockCache, ontologyCache);
+                ontologyManager, sesameTransformer, results, mockCache, ontologyCache, provUtils);
 
-        final IRI skosConcept = valueFactory.createIRI(SKOS.CONCEPT.stringValue());
-        final IRI skosConceptScheme = valueFactory.createIRI(SKOS.CONCEPT_SCHEME.stringValue());
+        final IRI skosConcept = vf.createIRI(SKOS.CONCEPT.stringValue());
+        final IRI skosConceptScheme = vf.createIRI(SKOS.CONCEPT_SCHEME.stringValue());
 
         when(results.getPage()).thenReturn(Collections.emptyList());
         when(results.getPageNumber()).thenReturn(0);
@@ -419,13 +437,13 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         when(versioningManager.commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), any(Model.class))).thenReturn(commitId);
 
-        when(engineManager.retrieveUser(anyString(), anyString())).thenReturn(Optional.of(user));
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
 
         when(ontologyId.getOntologyIdentifier()).thenReturn(ontologyIRI);
         when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
 
         when(ontology.getOntologyId()).thenReturn(ontologyId);
-        when(ontology.asModel(modelFactory)).thenReturn(ontologyModel);
+        when(ontology.asModel(mf)).thenReturn(ontologyModel);
         when(ontology.getAllAnnotations()).thenReturn(annotations);
         when(ontology.getAllAnnotationProperties()).thenReturn(annotationProperties);
         when(ontology.getAllClasses()).thenReturn(classes);
@@ -441,7 +459,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(importedOntologyId.getOntologyIRI()).thenReturn(Optional.of(importedOntologyIRI));
 
         when(importedOntology.getOntologyId()).thenReturn(importedOntologyId);
-        when(importedOntology.asModel(modelFactory)).thenReturn(importedOntologyModel);
+        when(importedOntology.asModel(mf)).thenReturn(importedOntologyModel);
         when(importedOntology.getAllAnnotations()).thenReturn(annotations);
         when(importedOntology.getAllAnnotationProperties()).thenReturn(annotationProperties);
         when(importedOntology.getAllClasses()).thenReturn(classes);
@@ -459,7 +477,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(catalogManager.getInProgressCommit(catalogId, recordId, user)).thenReturn(Optional.of(inProgressCommit));
         when(catalogManager.getInProgressCommit(catalogId, recordId, inProgressCommitId)).thenReturn(Optional.of(inProgressCommit));
         when(catalogManager.createCommit(eq(inProgressCommit), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
-        when(catalogManager.applyInProgressCommit(eq(inProgressCommitId), any(Model.class))).thenReturn(modelFactory
+        when(catalogManager.applyInProgressCommit(eq(inProgressCommitId), any(Model.class))).thenReturn(mf
                 .createModel());
         when(catalogManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
 
@@ -522,6 +540,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         entityUsagesConstruct = modelToJsonld(constructs, sesameTransformer);
 
         when(ontologyCache.getOntologyCache()).thenReturn(Optional.of(mockCache));
+
+        when(provUtils.startCreateActivity(any(User.class))).thenReturn(activity);
     }
 
     private JSONObject getResource(String path) throws Exception {
@@ -542,7 +562,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     }
 
     private void assertGetUserFromContext() {
-        verify(engineManager, atLeastOnce()).retrieveUser(anyString(), anyString());
+        verify(engineManager, atLeastOnce()).retrieveUser(anyString());
     }
 
     private void assertGetOntology(boolean hasInProgressCommit) {
@@ -689,6 +709,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).addRecord(catalogId, record);
         verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
         verify(mockCache).put(anyString(), any(Ontology.class));
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).endCreateActivity(activity, record.getResource());
     }
 
     @Test
@@ -702,6 +724,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), 400);
+        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
@@ -715,6 +738,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), 400);
+        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
@@ -733,6 +757,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), 500);
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(activity);
     }
 
     @Test
@@ -750,6 +776,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies").request().post(Entity.entity(fd,
                 MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(activity);
     }
 
     // Test upload ontology json
@@ -772,6 +800,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).addRecord(catalogId, record);
         verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
         verify(mockCache).put(anyString(), any(Ontology.class));
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).endCreateActivity(activity, record.getResource());
     }
 
     @Test
@@ -781,6 +811,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies").queryParam("description", "description")
                 .queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
@@ -788,6 +819,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
                 "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(""));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
@@ -798,6 +830,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
                 "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
         assertEquals(response.getStatus(), 500);
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(activity);
     }
 
     @Test
@@ -811,6 +845,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         Response response = target().path("ontologies").queryParam("title", "title").queryParam("description",
                 "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(ontologyJson));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(activity);
     }
 
     // Test get ontology

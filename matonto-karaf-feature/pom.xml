@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.9.3-SNAPSHOT</version>
+        <version>1.9.10-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -250,6 +250,11 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>clustering.cli</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>etl.workflows</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

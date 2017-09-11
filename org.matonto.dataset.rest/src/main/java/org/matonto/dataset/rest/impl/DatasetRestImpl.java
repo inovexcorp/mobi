@@ -36,6 +36,7 @@ import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.CatalogProvUtils;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.dataset.api.DatasetManager;
@@ -47,8 +48,10 @@ import org.matonto.dataset.rest.DatasetRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.ontologies.provo.Activity;
 import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
@@ -74,40 +77,46 @@ public class DatasetRestImpl implements DatasetRest {
     private BNodeService bNodeService;
     private ValueFactory vf;
     private ModelFactory mf;
+    private CatalogProvUtils provUtils;
 
     @Reference
-    public void setManager(DatasetManager manager) {
+    void setManager(DatasetManager manager) {
         this.manager = manager;
     }
 
     @Reference
-    public void setEngineManager(EngineManager engineManager) {
+    void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
     }
 
     @Reference
-    public void setCatalogManager(CatalogManager catalogManager) {
+    void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
     }
 
     @Reference
-    public void setTransformer(SesameTransformer transformer) {
+    void setTransformer(SesameTransformer transformer) {
         this.transformer = transformer;
     }
 
     @Reference
-    public void setBNodeService(BNodeService bNodeService) {
+    void setBNodeService(BNodeService bNodeService) {
         this.bNodeService = bNodeService;
     }
 
     @Reference
-    public void setVf(ValueFactory vf) {
+    void setVf(ValueFactory vf) {
         this.vf = vf;
     }
 
     @Reference
-    public void setMf(ModelFactory mf) {
+    void setMf(ModelFactory mf) {
         this.mf = mf;
+    }
+
+    @Reference
+    void setProvUtils(CatalogProvUtils provUtils) {
+        this.provUtils = provUtils;
     }
 
     @Override
@@ -155,28 +164,36 @@ public class DatasetRestImpl implements DatasetRest {
         checkStringParam(title, "Title is required");
         checkStringParam(repositoryId, "Repository id is required");
         User activeUser = getActiveUser(context, engineManager);
-        DatasetRecordConfig.DatasetRecordBuilder builder = new DatasetRecordConfig.DatasetRecordBuilder(title,
-                Collections.singleton(activeUser), repositoryId);
-        if (datasetIRI != null && !datasetIRI.isEmpty()) {
-            builder.dataset(datasetIRI);
-        }
-        if (description != null && !description.isEmpty()) {
-            builder.description(description);
-        }
-        if (keywords != null && !keywords.isEmpty()) {
-            builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
-        }
+        CreateActivity createActivity = null;
         try {
+            createActivity = provUtils.startCreateActivity(activeUser);
+            DatasetRecordConfig.DatasetRecordBuilder builder = new DatasetRecordConfig.DatasetRecordBuilder(title,
+                    Collections.singleton(activeUser), repositoryId);
+            if (datasetIRI != null && !datasetIRI.isEmpty()) {
+                builder.dataset(datasetIRI);
+            }
+            if (description != null && !description.isEmpty()) {
+                builder.description(description);
+            }
+            if (keywords != null && !keywords.isEmpty()) {
+                builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
+            }
             if (ontologies != null) {
                 ontologies.forEach(formDataBodyPart -> builder.ontology(
                         getOntologyIdentifer(vf.createIRI(formDataBodyPart.getValue()))));
             }
             DatasetRecord record = manager.createDataset(builder.build());
+            provUtils.endCreateActivity(createActivity, record.getResource());
             return Response.status(201).entity(record.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
+            provUtils.removeActivity(createActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MatOntoException ex) {
+            provUtils.removeActivity(createActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (Exception ex) {
+            provUtils.removeActivity(createActivity);
+            throw ex;
         }
     }
 

@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.9.3-SNAPSHOT</version>
+        <version>1.9.10-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -88,6 +88,10 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-core</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -125,6 +129,11 @@
                                     <ontologyFile>${project.basedir}/src/main/resources/delimited.ttl</ontologyFile>
                                     <outputPackage>org.matonto.etl.api.ontologies.delimited</outputPackage>
                                     <ontologyName>Delimited</ontologyName>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/etl.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.etl.api.ontologies.etl</outputPackage>
+                                    <ontologyName>ETL</ontologyName>
                                 </ontology>
                             </generates>
                             <references>

@@ -116,30 +116,49 @@ public class MatOntoImpl implements MatOnto {
      * @return The MAC id of the current server
      * @throws MatOntoException If there is an issue fetching the MAC id
      */
-    private static byte[] getMacId() {
+    private static byte[] getMacId() throws MatOntoException {
         try {
-            InetAddress ip = InetAddress.getLocalHost();
-            final Enumeration<NetworkInterface> networkInterfaceEnumeration = NetworkInterface.getNetworkInterfaces();
-            while (networkInterfaceEnumeration.hasMoreElements()) {
-                final NetworkInterface n = networkInterfaceEnumeration.nextElement();
-                final Enumeration<InetAddress> inetAddresses = n.getInetAddresses();
-                while (inetAddresses.hasMoreElements()) {
-                    final InetAddress i = inetAddresses.nextElement();
-                    if (!i.isLoopbackAddress() && !i.isLinkLocalAddress() && i.isSiteLocalAddress()) {
-                        ip = i;
-                    }
-                }
-            }
-            NetworkInterface network = NetworkInterface.getByInetAddress(ip);
-            byte[] mac_byte = network.getHardwareAddress();
+            final InetAddress ip = getLocalhost();
+            final NetworkInterface network = NetworkInterface.getByInetAddress(ip);
+            final byte[] mac_byte = network.getHardwareAddress();
             if (mac_byte == null) {
                 //TODO - use something else generated...?
                 throw new MatOntoException("No MAC ID could be found for this server");
             }
             return mac_byte;
-        } catch (SocketException | UnknownHostException e) {
+        } catch (SocketException e) {
             throw new MatOntoException("Issue determining MAC ID of server to generate our unique server ID", e);
         }
+    }
 
+
+    private static InetAddress getLocalhost() throws MatOntoException, SocketException {
+        InetAddress ip = null;
+        // Try and identify the local network interface to get the mac address from via network interfaces.
+        final Enumeration<NetworkInterface> networkInterfaceEnumeration = NetworkInterface.getNetworkInterfaces();
+        while (networkInterfaceEnumeration.hasMoreElements()) {
+            final NetworkInterface n = networkInterfaceEnumeration.nextElement();
+            final Enumeration<InetAddress> inetAddresses = n.getInetAddresses();
+            while (inetAddresses.hasMoreElements()) {
+                final InetAddress i = inetAddresses.nextElement();
+                if (!i.isLoopbackAddress() && !i.isLinkLocalAddress() && i.isSiteLocalAddress()) {
+                    ip = i;
+                }
+            }
+        }
+        // Try and identify the localhost network interface if unsuccessful above.
+        if (ip == null) {
+            LOGGER.warn("Couldn't identify local network address via the network interfaces... " +
+                    "Going to look up via the hosts database mechanism");
+            try {
+                ip = InetAddress.getLocalHost();
+            } catch (UnknownHostException e) {
+                throw new MatOntoException("Issue identifying localhost network interface... Please check your " +
+                        "network configuration.", e);
+            }
+        } else {
+            LOGGER.debug("Successfully identified local network address via the network interfaces.");
+        }
+        return ip;
     }
 }
