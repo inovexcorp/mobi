@@ -29,10 +29,27 @@ import org.matonto.rdf.api.Resource;
 
 public interface DataSourceRouteFactory<T extends DataSource> {
 
+    /**
+     * The Resource IRI of the type of DataSource this DataSourceRouteFactory supports.
+     *
+     * @return An IRI Resource of a DataSource type
+     */
     Resource getTypeIRI();
 
+    /**
+     * The class of the type of DataSource this DataSourceRouteFactory supports.
+     *
+     * @return A DataSource type
+     */
     Class<T> getType();
 
+    /**
+     * A Camel Endpoint that represents the configuration within the provided DataSource RDF. Endpoint will need
+     * the CamelContext and Component set. Endpoint should produce MobiMessages with RDF.
+     *
+     * @param dataSource An ORM DataSource with configurations
+     * @return A Camel Endpoint configured by the provided DataSource
+     */
     Endpoint getEndpoint(T dataSource);
 
 

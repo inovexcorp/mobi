@@ -29,9 +29,26 @@ import org.matonto.rdf.api.Resource;
 
 public interface DestinationRouteFactory<T extends Destination> {
 
+    /**
+     * The Resource IRI of the type of Destination this DestinationRouteFactory supports.
+     *
+     * @return An IRI Resource of a Destination type
+     */
     Resource getTypeIRI();
 
+    /**
+     * The class of the type of Destination this DestinationRouteFactory supports.
+     *
+     * @return A Destination type
+     */
     Class<T> getType();
 
+    /**
+     * A Camel Endpoint that represents the configuration within the provided Destination RDF. Endpoint will need
+     * the CamelContext and Component set. Endpoint should receive MobiMessages with RDF.
+     *
+     * @param destination An ORM Destination with configurations
+     * @return A Camel Endpoint configured by the provided Destination
+     */
     Endpoint getEndpoint(T destination);
 }

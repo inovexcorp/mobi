@@ -228,8 +228,11 @@ public class WorkflowConverterImplTest {
 
     @Test
     public void convertWithNoRoutesTest() {
-        RouteBuilder result = converter.convert(workflow);
-        assertEquals(0, result.getRouteCollection().getRoutes().size());
+        // Setup:
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Workflow must have at least one Route");
+
+        converter.convert(workflow);
     }
 
     @Test
@@ -240,7 +243,7 @@ public class WorkflowConverterImplTest {
         List route = listFactory.createNew(vf.createBNode(), workflow.getModel());
         workflow.addRoute(route);
         thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("DataSource " + DATASOURCE_ID + " is not supported");
+        thrown.expectMessage(DATASOURCE_ID + " type is not supported");
 
         converter.convert(workflow);
     }
@@ -253,7 +256,7 @@ public class WorkflowConverterImplTest {
         List route = listFactory.createNew(vf.createBNode(), workflow.getModel());
         workflow.addRoute(route);
         thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("Processor " + PROCESSOR_ID + " is not supported");
+        thrown.expectMessage(PROCESSOR_ID + " type is not supported");
 
         converter.convert(workflow);
     }
@@ -266,7 +269,7 @@ public class WorkflowConverterImplTest {
         List route = listFactory.createNew(vf.createBNode(), workflow.getModel());
         workflow.addRoute(route);
         thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("Destination " + DESTINATION_ID + " is not supported");
+        thrown.expectMessage(DESTINATION_ID + " type is not supported");
 
         converter.convert(workflow);
     }

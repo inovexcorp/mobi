@@ -28,9 +28,25 @@ import org.matonto.rdf.api.Resource;
 
 public interface ProcessorRouteFactory<T extends Processor> {
 
+    /**
+     * The Resource IRI of the type of Processor this ProcessorRouteFactory supports.
+     *
+     * @return An IRI Resource of a Processor type
+     */
     Resource getTypeIRI();
 
+    /**
+     * The class of the type of Processor this ProcessorRouteFactory supports.
+     *
+     * @return A Processor type
+     */
     Class<T> getType();
 
+    /**
+     * A Camel Processor that represents the configuration within the provided Processor RDF.
+     *
+     * @param processor An ORM Processor with configurations
+     * @return A Camel Processor configured by the provided Processor
+     */
     org.apache.camel.Processor getProcessor(T processor);
 }

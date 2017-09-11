@@ -131,47 +131,19 @@ public class WorkflowConverterImpl implements WorkflowConverter {
                 .collect(Collectors.toSet());
 
         if (routes.size() == 0) {
-            return new RouteBuilder() {
-                @Override
-                public void configure() throws Exception {
-
-                }
-            };
+            throw new IllegalArgumentException("Workflow must have at least one Route");
         }
 
         Map<Resource, Endpoint> dataSources = new HashMap<>();
-        workflow.getDataSource().forEach(dataSource -> {
-            OrmFactory<? extends DataSource> factory = getDataSourceFactory(dataSource);
-            if (dataSourceFactories.containsKey(factory.getTypeIRI())) {
-                DataSourceRouteFactory<DataSource> routeFactory = dataSourceFactories.get(factory.getTypeIRI());
-                Endpoint endpoint = routeFactory.getEndpoint(factory.getExisting(dataSource.getResource(), dataSource.getModel()).get());
-                dataSources.put(dataSource.getResource(), endpoint);
-            } else {
-                throw new IllegalArgumentException("DataSource " + dataSource.getResource() + " is not supported");
-            }
-        });
         Map<Resource, org.apache.camel.Processor> processors = new HashMap<>();
-        workflow.getProcessor().forEach(processor -> {
-            OrmFactory<? extends Processor> factory = getProcessorFactory(processor);
-            if (processorFactories.containsKey(factory.getTypeIRI())) {
-                ProcessorRouteFactory<Processor> routeFactory = processorFactories.get(factory.getTypeIRI());
-                org.apache.camel.Processor process = routeFactory.getProcessor(factory.getExisting(processor.getResource(), processor.getModel()).get());
-                processors.put(processor.getResource(), process);
-            } else {
-                throw new IllegalArgumentException("Processor " + processor.getResource() + " is not supported");
-            }
-        });
         Map<Resource, Endpoint> destinations = new HashMap<>();
-        workflow.getDestination().forEach(destination -> {
-            OrmFactory<? extends Destination> factory = getDestinationFactory(destination);
-            if (destinationFactories.containsKey(factory.getTypeIRI())) {
-                DestinationRouteFactory<Destination> routeFactory = destinationFactories.get(factory.getTypeIRI());
-                Endpoint endpoint = routeFactory.getEndpoint(factory.getExisting(destination.getResource(), destination.getModel()).get());
-                destinations.put(destination.getResource(), endpoint);
-            }  else {
-                throw new IllegalArgumentException("Destination " + destination.getResource() + " is not supported");
-            }
-        });
+
+        collectStuff(DataSource.class, workflow.getDataSource(), dataSources, (dataSource, iri) ->
+                getRouteFactory(iri, dataSourceFactories, dataSource).getEndpoint(dataSource));
+        collectStuff(Processor.class, workflow.getProcessor(), processors, (processor, iri) ->
+                getRouteFactory(iri, processorFactories, processor).getProcessor(processor));
+        collectStuff(Destination.class, workflow.getDestination(), destinations, (destination, iri) ->
+                getRouteFactory(iri, destinationFactories, destination).getEndpoint(destination));
 
         return new RouteBuilder() {
             @Override
@@ -189,7 +161,8 @@ public class WorkflowConverterImpl implements WorkflowConverter {
                     processRest(workflow, route, toProcess, start, this);
 
                     while (toProcess.size() > 0) {
-                        Pair<org.matonto.ontologies.rdfs.List, RouteDefinition> pair = toProcess.remove(toProcess.size() - 1);
+                        Pair<org.matonto.ontologies.rdfs.List, RouteDefinition> pair =
+                                toProcess.remove(toProcess.size() - 1);
                         org.matonto.ontologies.rdfs.List list = pair.getLeft();
                         RouteDefinition def = pair.getRight();
                         validateList(list);
@@ -292,18 +265,6 @@ public class WorkflowConverterImpl implements WorkflowConverter {
         }
     }
 
-    private OrmFactory<? extends DataSource> getDataSourceFactory(DataSource dataSource) {
-        return getFactory(dataSource, DataSource.class);
-    }
-
-    private OrmFactory<? extends Processor> getProcessorFactory(Processor processor) {
-        return getFactory(processor, Processor.class);
-    }
-
-    private OrmFactory<? extends Destination> getDestinationFactory(Destination destination) {
-        return getFactory(destination, Destination.class);
-    }
-
     private <T extends Thing> OrmFactory<? extends T> getFactory(T thing, Class<T> clazz) {
         IRI typeIRI = vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI);
         List<Resource> types = thing.getModel().filter(thing.getResource(), typeIRI, null)
@@ -319,5 +280,28 @@ public class WorkflowConverterImpl implements WorkflowConverter {
                         .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
                         .collect(Collectors.toList());
         return orderedFactories.get(0);
+    }
+
+    private <T extends Thing, R> void collectStuff(Class<T> clazz, Set<T> things, Map<Resource, R> map,
+                                                   MyFunction<T, R> function) {
+        things.forEach(thing -> {
+            OrmFactory<? extends T> factory = getFactory(thing, clazz);
+            T  correctThing = factory.getExisting(thing.getResource(), thing.getModel()).get();
+            R camelThing = function.apply(correctThing, factory.getTypeIRI());
+            map.put(thing.getResource(), camelThing);
+        });
+    }
+
+    @FunctionalInterface
+    interface MyFunction<T extends Thing, R> {
+        R apply(T thing, IRI iri);
+    }
+
+    private <T, S extends Thing> T getRouteFactory(Resource iri, Map<Resource, T> map, S thing) {
+        if (map.containsKey(iri)) {
+            return map.get(iri);
+        } else {
+            throw new IllegalArgumentException(thing.getResource() + " type is not supported");
+        }
     }
 }
