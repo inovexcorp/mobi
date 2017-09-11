@@ -139,6 +139,7 @@
         <bundle start-level="80">mvn:org.matonto/dataset.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/web.security/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/explorable.dataset.rest/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/prov.rest/${project.version}</bundle>
     </feature>
     <feature name="matonto-clustering" description="MatOnto Clustering API and implementations" version="${project.version}">
         <feature prerequisite="true">matonto-core</feature>

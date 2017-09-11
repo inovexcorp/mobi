@@ -13,3 +13,4 @@
 (&(service.pid=org.matonto.jaas.engines.RdfEngine))
 (&(objectClass=org.matonto.cache.config.CacheConfiguration)(id=ontologyCache))
 (&(objectClass=org.matonto.platform.config.api.server.MatOnto)(component.name=org.matonto.platform.server))
+(&(objectClass=org.matonto.prov.rest.ProvRest))
