@@ -21,17 +21,19 @@
  * #L%
  */
 describe('Explore Utils Service', function() {
-    var exploreUtilsSvc, utilSvc, allProperties, fewProperties, prefixes, regex;
+    var exploreUtilsSvc, utilSvc, allProperties, fewProperties, prefixes, regex, utilSvc;
 
     beforeEach(function() {
         module('exploreUtils');
         mockPrefixes();
         injectRegexConstant();
+        mockUtil();
 
-        inject(function(exploreUtilsService, _prefixes_, _REGEX_) {
+        inject(function(exploreUtilsService, _prefixes_, _REGEX_, _utilService_) {
             exploreUtilsSvc = exploreUtilsService;
             prefixes = _prefixes_;
             regex = _REGEX_;
+            utilSvc = _utilService_;
         });
 
         fewProperties = [{
@@ -81,25 +83,18 @@ describe('Explore Utils Service', function() {
     });
 
     it('getInputType should return the correct input type', function() {
-        _.forEach(['id1', 'id2'], function(id) {
-            expect(exploreUtilsSvc.getInputType(id, allProperties)).toBe('date');
-        });
-        _.forEach(['id3', 'id4', 'id5', 'id6', 'id7', 'id8', 'id9'], function(id) {
-            expect(exploreUtilsSvc.getInputType(id, allProperties)).toBe('number');
-        });
-        expect(exploreUtilsSvc.getInputType('id10', allProperties)).toBe('text');
+        utilSvc.getInputType.and.returnValue('type');
+        spyOn(exploreUtilsSvc, 'getRange').and.returnValue('iri');
+        expect(exploreUtilsSvc.getInputType('id', [])).toBe('type');
+        expect(exploreUtilsSvc.getRange).toHaveBeenCalledWith('id', []);
+        expect(utilSvc.getInputType).toHaveBeenCalledWith('iri');
     });
     it('getPattern should return the correct pattern', function() {
-        _.forEach(['id1', 'id2'], function(id) {
-            expect(exploreUtilsSvc.getPattern(id, allProperties)).toBe(regex.DATETIME);
-        });
-        _.forEach(['id3', 'id4', 'id5'], function(id) {
-            expect(exploreUtilsSvc.getPattern(id, allProperties)).toBe(regex.DECIMAL);
-        });
-        _.forEach(['id6', 'id7', 'id8', 'id9'], function(id) {
-            expect(exploreUtilsSvc.getPattern(id, allProperties)).toBe(regex.INTEGER);
-        });
-        expect(exploreUtilsSvc.getPattern('id10', allProperties)).toBe(regex.ANYTHING);
+        utilSvc.getPattern.and.returnValue(/[a-zA-Z]/);
+        spyOn(exploreUtilsSvc, 'getRange').and.returnValue('iri');
+        expect(exploreUtilsSvc.getPattern('id', [])).toEqual(/[a-zA-Z]/);
+        expect(exploreUtilsSvc.getRange).toHaveBeenCalledWith('id', []);
+        expect(utilSvc.getPattern).toHaveBeenCalledWith('iri');
     });
     it('isPropertyOfType should return the proper boolean based on the properties list', function() {
         expect(exploreUtilsSvc.isPropertyOfType('propertyId', 'Data', fewProperties)).toBe(true);

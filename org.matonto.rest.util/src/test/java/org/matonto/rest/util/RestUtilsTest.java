@@ -161,14 +161,14 @@ public class RestUtilsTest {
     public void modelToSkolemizedStringWithRDFFormatTest() throws Exception {
         assertEquals(expectedJsonld, RestUtils.modelToSkolemizedString(model, RDFFormat.JSONLD, transformer, service));
         assertEquals(expectedTurtle, RestUtils.modelToSkolemizedString(model, RDFFormat.TURTLE, transformer, service));
-        assertEquals(expectedRdfxml, RestUtils.modelToSkolemizedString(model, RDFFormat.RDFXML, transformer, service));
+        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToSkolemizedString(model, RDFFormat.RDFXML, transformer, service)));
     }
 
     @Test
     public void modelToSkolemizedStringTest() throws Exception {
         assertEquals(expectedJsonld, RestUtils.modelToSkolemizedString(model, "jsonld", transformer, service));
         assertEquals(expectedTurtle, RestUtils.modelToSkolemizedString(model, "turtle", transformer, service));
-        assertEquals(expectedRdfxml, RestUtils.modelToSkolemizedString(model, "rdf/xml", transformer, service));
+        assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToSkolemizedString(model, "rdf/xml", transformer, service)));
         assertEquals(expectedJsonld, RestUtils.modelToSkolemizedString(model, "something", transformer, service));
     }
 
@@ -191,14 +191,14 @@ public class RestUtilsTest {
     public void groupedModelToSkolemizedStringWithRDFFormatTest() throws Exception {
         assertEquals(expectedJsonld, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.JSONLD, transformer, service));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.TURTLE, transformer, service));
-        assertEquals(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.RDFXML, transformer, service));
+        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.RDFXML, transformer, service)));
     }
 
     @Test
     public void groupedModelToSkolemizedStringTest() throws Exception {
         assertEquals(expectedJsonld, RestUtils.groupedModelToSkolemizedString(model, "jsonld", transformer, service));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToSkolemizedString(model, "turtle", transformer, service));
-        assertEquals(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, "rdf/xml", transformer, service));
+        assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, "rdf/xml", transformer, service)));
         assertEquals(expectedJsonld, RestUtils.groupedModelToSkolemizedString(model, "something", transformer, service));
     }
 

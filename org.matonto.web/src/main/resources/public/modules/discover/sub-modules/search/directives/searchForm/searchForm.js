@@ -41,6 +41,7 @@
          * @requires search.service:searchService
          * @requires discoverState.service:discoverStateService
          * @requires explore.service:exploreService
+         * @requires util.service:utilService
          *
          * @description
          * HTML contents in the search form within the Search page for entering a keyword search combined
@@ -48,9 +49,9 @@
          */
         .directive('searchForm', searchForm);
 
-        searchForm.$inject = ['searchService', 'discoverStateService', 'exploreService'];
+        searchForm.$inject = ['searchService', 'discoverStateService', 'exploreService', 'utilService'];
 
-        function searchForm(searchService, discoverStateService, exploreService) {
+        function searchForm(searchService, discoverStateService, exploreService, utilService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/search/directives/searchForm/searchForm.html',
@@ -62,7 +63,7 @@
                     var s = searchService;
                     var es = exploreService;
                     dvm.ds = discoverStateService;
-                    dvm.typeObject = {};
+                    dvm.util = utilService;
                     dvm.typeSearch = '';
                     dvm.errorMessage = '';
 
@@ -81,16 +82,24 @@
                         dvm.ds.search.queryConfig.types = [];
                         es.getClassDetails(dvm.ds.search.datasetRecordId)
                             .then(details => {
-                                dvm.typeObject = _.groupBy(details, 'ontologyRecordTitle');
+                                dvm.ds.search.typeObject = _.groupBy(details, 'ontologyRecordTitle');
                                 dvm.errorMessage = '';
                             }, errorMessage => {
-                                dvm.typeObject = {};
+                                dvm.ds.search.typeObject = {};
                                 dvm.errorMessage = errorMessage;
                             });
                     }
 
                     dvm.getSelectedText = function() {
                         return _.join(_.map(dvm.ds.search.queryConfig.types, 'classTitle'), ', ');
+                    }
+                    
+                    dvm.removeFilter = function(index) {
+                        _.pullAt(dvm.ds.search.queryConfig.filters, index);
+                    }
+
+                    dvm.isSubmittable = function() {
+                         return dvm.ds.search.datasetRecordId && (dvm.ds.search.queryConfig.keywords.length || dvm.ds.search.queryConfig.types.length || dvm.ds.search.queryConfig.filters.length);
                     }
                 }
             }

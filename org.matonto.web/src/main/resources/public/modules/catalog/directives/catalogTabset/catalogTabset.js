@@ -42,7 +42,7 @@
          *
          * @description
          * `catalogTabset` is a directive which creates a {@link tabset.directive:tabset tabset} with a tab for
-         * each catalog in MatOnto: the {@link localTab.directive:localTab local catalog} and the
+         * each catalog in Mobi: the {@link localTab.directive:localTab local catalog} and the
          * {@link distributedTab.directive:distributedTab distributed catalog}. The directive is replaced by the
          * contents of its template.
          */

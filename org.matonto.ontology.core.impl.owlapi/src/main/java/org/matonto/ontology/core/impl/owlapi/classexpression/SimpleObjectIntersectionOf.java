@@ -23,11 +23,12 @@ package org.matonto.ontology.core.impl.owlapi.classexpression;
  * #L%
  */
 
-import java.util.Set;
-import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.ObjectIntersectionOf;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
+
+import java.util.Set;
+import javax.annotation.Nonnull;
 
 
 public class SimpleObjectIntersectionOf 

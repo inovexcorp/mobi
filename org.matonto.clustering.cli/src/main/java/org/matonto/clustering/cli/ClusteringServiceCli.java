@@ -22,6 +22,7 @@ package org.matonto.clustering.cli;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import org.apache.karaf.shell.api.action.Action;
@@ -44,6 +45,8 @@ import java.util.List;
 public class ClusteringServiceCli implements Action {
     public final static String VIEW_OPERATION = "view";
     public final static String RESTART_OPERATION = "restart";
+    public final static String START_OPERATION = "start";
+    public final static String STOP_OPERATION = "stop";
 
     private final static String clusterInfoFormatString = "(%s) %s\nid: %s\ndescription: %s\n\n";
     private final static String clusterNodeFormatString = "\t%s\n"; // In the future maybe more node information is available?
@@ -77,6 +80,12 @@ public class ClusteringServiceCli implements Action {
             case RESTART_OPERATION:
                 restartCluster(cluster);
                 break;
+            case START_OPERATION:
+                startCluster(cluster);
+                break;
+            case STOP_OPERATION:
+                stopCluster(cluster);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown operation: " + operation);
         }
@@ -85,7 +94,7 @@ public class ClusteringServiceCli implements Action {
 
     private void viewClusters() {
         StringBuilder sb = new StringBuilder();
-        clusteringServices.stream().map(service -> service.getClusteringServiceConfig()).forEach(config -> {
+        clusteringServices.stream().map(ClusteringService::getClusteringServiceConfig).forEach(config -> {
             sb.append(String.format(clusterInfoFormatString, config.enabled() ? "ENABLED" : "DISABLED", config.title(),
                     config.id(), config.description()));
         });
@@ -95,7 +104,7 @@ public class ClusteringServiceCli implements Action {
     private void viewClusterNodes(final String cluster) {
         StringBuilder sb = new StringBuilder(String.format("Cluster (%s) Connected Nodes\n", cluster));
         clusteringServices.stream().filter(service -> service.getClusteringServiceConfig().id().equals(cluster))
-                .map(service -> service.getClusteredNodeIds())
+                .map(ClusteringService::getClusteredNodeIds)
                 .forEach(ids -> ids.forEach(id -> sb.append(String.format(clusterNodeFormatString, id))));
         System.out.print(sb.toString());
     }
@@ -105,6 +114,24 @@ public class ClusteringServiceCli implements Action {
             throw new IllegalArgumentException("Cluster identifier is required for restart.");
         }
         clusteringServices.stream().filter(service -> service.getClusteringServiceConfig().id().equals(cluster))
-                .forEach(service -> service.restart());
+                .forEach(ClusteringService::restart);
     }
+
+    private void startCluster(final String cluster) {
+        if (isBlank(cluster)) {
+            throw new IllegalArgumentException("Cluster identifier is required for restart.");
+        }
+        clusteringServices.stream().filter(service -> service.getClusteringServiceConfig().id().equals(cluster))
+                .forEach(ClusteringService::start);
+    }
+
+    private void stopCluster(final String cluster) {
+        if (isBlank(cluster)) {
+            throw new IllegalArgumentException("Cluster identifier is required for restart.");
+        }
+        clusteringServices.stream().filter(service -> service.getClusteringServiceConfig().id().equals(cluster))
+                .forEach(ClusteringService::stop);
+    }
+
+
 }

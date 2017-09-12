@@ -99,6 +99,7 @@ public interface OntologyRest {
     /**
      * Returns the ontology associated with the requested record ID in the requested format.
      *
+     * @param context     the context of the request
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -109,6 +110,8 @@ public interface OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @param rdfFormat   the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @param clearCache  whether or not the cached version of the identified Ontology should be cleared before retrieval
+     * @param skolemize   whether or not the JSON-LD of the ontology should be skolemized
      * @return a Response with the ontology in the requested format.
      */
     @GET
@@ -121,7 +124,8 @@ public interface OntologyRest {
                          @QueryParam("branchId") String branchIdStr,
                          @QueryParam("commitId") String commitIdStr,
                          @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
-                         @DefaultValue("false") @QueryParam("clearCache") boolean clearCache);
+                         @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
+                         @DefaultValue("false") @QueryParam("skolemize") boolean skolemize);
 
     /**
      * Deletes the ontology associated with the requested record ID in the requested format. Unless a branch is
@@ -145,6 +149,7 @@ public interface OntologyRest {
     /**
      * Streams the ontology associated with the requested record ID to an OutputStream.
      *
+     * @param context     the context of the request
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
      * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
@@ -155,6 +160,7 @@ public interface OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @param rdfFormat   the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @param fileName    the file name for the ontology file
      * @return the ontology associated with requested record ID to download.
      */
     @GET
@@ -256,7 +262,7 @@ public interface OntologyRest {
                                @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns annotation properties in the ontology identified by the provided IDs.
+     * Returns annotation property IRIs in the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -329,7 +335,7 @@ public interface OntologyRest {
                                           @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns classes in the ontology identified by the provided IDs.
+     * Returns class IRIs in the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -402,7 +408,7 @@ public interface OntologyRest {
                                      @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns datatypes in the ontology identified by the provided IDs.
+     * Returns datatype IRIs in the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -475,7 +481,7 @@ public interface OntologyRest {
                                         @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns object properties in the ontology identified by the provided IDs.
+     * Returns object property IRIs in the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -621,7 +627,7 @@ public interface OntologyRest {
                                             @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns named individuals in the ontology identified by the provided IDs.
+     * Returns named individual IRIs in the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -747,7 +753,7 @@ public interface OntologyRest {
                                @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns annotation properties in the imports closure for the ontology identified by the provided IDs.
+     * Returns annotation property IRIs in the imports closure for the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -772,7 +778,7 @@ public interface OntologyRest {
                                                 @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns classes in the imports closure for the ontology identified by the provided IDs.
+     * Returns class IRIs in the imports closure for the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -797,7 +803,7 @@ public interface OntologyRest {
                                             @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns datatypes in the imports closure for the ontology identified by the provided IDs.
+     * Returns datatype IRIs in the imports closure for the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -822,7 +828,7 @@ public interface OntologyRest {
                                               @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns object properties in the imports closure for the ontology identified by the provided IDs.
+     * Returns object property IRIs in the imports closure for the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -847,7 +853,7 @@ public interface OntologyRest {
                                                      @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns data properties in the imports closure for the ontology identified by the provided IDs.
+     * Returns data property IRIs in the imports closure for the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
@@ -872,7 +878,7 @@ public interface OntologyRest {
                                                    @QueryParam("commitId") String commitIdStr);
 
     /**
-     * Returns named individuals in the imports closure for the ontology identified by the provided IDs.
+     * Returns named individual IRIs in the imports closure for the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.
      * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless

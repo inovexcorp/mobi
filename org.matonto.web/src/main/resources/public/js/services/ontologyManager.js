@@ -30,7 +30,7 @@
          *
          * @description
          * The `ontologyManager` module only provides the `ontologyManagerService` service which
-         * provides access to the MatOnto ontology REST endpoints and utility functions for
+         * provides access to the Mobi ontology REST endpoints and utility functions for
          * manipulating ontologies
          */
         .module('ontologyManager', [])
@@ -46,17 +46,17 @@
          * @requires httpService
          *
          * @description
-         * `ontologyManagerService` is a service that provides access to the MatOnto ontology REST
+         * `ontologyManagerService` is a service that provides access to the Mobi ontology REST
          * endpoints and utility functions for editing/creating ontologies and accessing
          * various entities within the ontology.
          */
         .service('ontologyManagerService', ontologyManagerService);
 
-        ontologyManagerService.$inject = ['$http', '$q', '$window', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService'];
+        ontologyManagerService.$inject = ['$http', '$q', '$window', 'prefixes', 'catalogManagerService', 'utilService', '$httpParamSerializer', 'httpService', 'REST_PREFIX'];
 
-        function ontologyManagerService($http, $q, $window, prefixes, catalogManagerService, utilService, $httpParamSerializer, httpService) {
+        function ontologyManagerService($http, $q, $window, prefixes, catalogManagerService, utilService, $httpParamSerializer, httpService, REST_PREFIX) {
             var self = this;
-            var prefix = '/matontorest/ontologies';
+            var prefix = REST_PREFIX + 'ontologies';
             var cm = catalogManagerService;
             var util = utilService;
             var catalogId = '';
@@ -193,7 +193,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the POST /matontorest/ontologies endpoint which uploads an ontology to the MatOnto repository
+             * Calls the POST /mobirest/ontologies endpoint which uploads an ontology to the Mobi repository
              * with the file provided. This creates a new OntologyRecord associated with this ontology. Returns a
              * promise indicating whether the ontology was persisted.
              *
@@ -228,7 +228,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the PUT /matontorest/ontologies/{recordId} endpoint which will return a new in-progress commit
+             * Calls the PUT /mobirest/ontologies/{recordId} endpoint which will return a new in-progress commit
              * object to be applied to the ontology.
              *
              * @param {File} file The updated ontology file.
@@ -261,7 +261,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the POST /matontorest/ontologies endpoint which uploads an ontology to the MatOnto repository
+             * Calls the POST /mobirest/ontologies endpoint which uploads an ontology to the Mobi repository
              * with the JSON-LD ontology string provided. Creates a new OntologyRecord for the associated ontology.
              * Returns a promise with the entityIRI and ontologyId for the state of the newly created ontology.
              *
@@ -297,7 +297,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{recordId} endpoint which retrieves an ontology in the provided
+             * Calls the GET /mobirest/ontologies/{recordId} endpoint which retrieves an ontology in the provided
              * RDF format.
              *
              * @param {string} recordId The id of the Record the Branch should be part of
@@ -305,9 +305,11 @@
              * @param {string} commitId The id of the Commit to retrieve the ontology from
              * @param {string} [rdfFormat='jsonld'] The RDF format to return the ontology in
              * @param {boolean} [clearCache=false] Boolean indicating whether or not you should clear the cache
+             * @param {boolen} [preview=false] Boolean indicating whether or not this ontology is inteded to be
+             * previewed, not edited
              * @return {Promise} A promise with the ontology at the specified commit in the specified RDF format
              */
-            self.getOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld', clearCache = false) {
+            self.getOntology = function(recordId, branchId, commitId, rdfFormat = 'jsonld', clearCache = false, preview = false) {
                 var config = {
                     headers: {
                         'Accept': 'text/plain'
@@ -316,7 +318,8 @@
                         branchId,
                         commitId,
                         rdfFormat,
-                        clearCache
+                        clearCache,
+                        skolemize: !preview
                     }
                 };
                 return $http.get(prefix + '/' + encodeURIComponent(recordId), config)
@@ -328,7 +331,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/ontologies/{recordId} endpoint which deletes the ontology unless the
+             * Calls the DELETE /mobirest/ontologies/{recordId} endpoint which deletes the ontology unless the
              * branchId is provided. In which case just the branch is removed.
              *
              * @param {string} recordId The id of the Record to be deleted if no branchId is provided.
@@ -353,7 +356,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{recordId} endpoint using the `window.location` variable which will
+             * Calls the GET /mobirest/ontologies/{recordId} endpoint using the `window.location` variable which will
              * start a download of the ontology starting at the identified Commit.
              *
              * @param {string} recordId The id of the Record the Branch should be part of
@@ -377,7 +380,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{recordId}/iris endpoint and retrieves an object with all the IRIs
+             * Calls the GET /mobirest/ontologies/{recordId}/iris endpoint and retrieves an object with all the IRIs
              * defined in the ontology for various entity types.
              *
              * @param {string} recordId The id of the Record the Branch should be part of
@@ -399,7 +402,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{recordId}/imported-iris endpoint and retrieves an array of objects
+             * Calls the GET /mobirest/ontologies/{recordId}/imported-iris endpoint and retrieves an array of objects
              * with IRIs for various entity types for each imported ontology of the identified ontology.
              *
              * @param {string} recordId The id of the Record the Branch should be part of
@@ -421,7 +424,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{recordId}/class-hierarchies endpoint and retrieves an object with the
+             * Calls the GET /mobirest/ontologies/{recordId}/class-hierarchies endpoint and retrieves an object with the
              * hierarchy of classes in the ontology organized by the subClassOf property and with an index of each IRI and
              * its parent IRIs.
              *
@@ -439,11 +442,30 @@
             }
             /**
              * @ngdoc method
+             * @name getDataProperties
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/ontologies/{recordId}/data-properties endpoint and retrieves an array of data properties
+             * within the ontology.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @return {Promise} A promise with an array containing a list of data properties.
+             */
+            self.getDataProperties = function(recordId, branchId, commitId) {
+                var config = { params: { branchId, commitId } };
+                return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/data-properties', config)
+                    .then(response => response.data, util.rejectError);
+            }
+            /**
+             * @ngdoc method
              * @name getClassesWithIndividuals
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{recordId}/classes-with-individuals endpoint and retrieves an object
+             * Calls the GET /mobirest/ontologies/{recordId}/classes-with-individuals endpoint and retrieves an object
              * with the hierarchy of classes with individuals in the ontology organized by the subClassOf property and with
              * an index of each IRI and its parent IRIs.
              *
@@ -466,7 +488,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{recordId}/data-property-hierarchies endpoint and retrieves an object
+             * Calls the GET /mobirest/ontologies/{recordId}/data-property-hierarchies endpoint and retrieves an object
              * with the hierarchy of data properties in the ontology organized by the subPropertyOf property and with an
              * index of each IRI and its parent IRIs.
              *
@@ -489,7 +511,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{recordId}/object-property-hierarchies endpoint and retrieves an object
+             * Calls the GET /mobirest/ontologies/{recordId}/object-property-hierarchies endpoint and retrieves an object
              * with the hierarchy of object properties in the ontology organized by the subPropertyOf property and with an
              * index of each IRI and its parent IRIs.
              *
@@ -512,7 +534,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{recordId}/annotation-property-hierarchies endpoint and retrieves an object
+             * Calls the GET /mobirest/ontologies/{recordId}/annotation-property-hierarchies endpoint and retrieves an object
              * with the hierarchy of annotation properties in the ontology organized by the subPropertyOf property and
              * with an index of each IRI and its parent IRIs.
              *
@@ -535,7 +557,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{recordId}/concept-hierarchies endpoint and retrieves an object
+             * Calls the GET /mobirest/ontologies/{recordId}/concept-hierarchies endpoint and retrieves an object
              * with the hierarchy of concepts in the ontology organized by the broader and narrower properties and with
              * an index of each IRI and its parent IRIs.
              *
@@ -558,7 +580,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{recordId}/concept-scheme-hierarchies endpoint and retrieves an object
+             * Calls the GET /mobirest/ontologies/{recordId}/concept-scheme-hierarchies endpoint and retrieves an object
              * with the hierarchy of concept schemes and concepts in the ontology organized by the inScheme, hasTopConcept,
              * and topConceptOf properties and with an index of each IRI and its parent IRIs.
              *
@@ -581,7 +603,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{recordId}/imported-ontologies endpoint which gets the list of
+             * Calls the GET /mobirest/ontologies/{recordId}/imported-ontologies endpoint which gets the list of
              * all ontologies imported by the ontology with the requested ontology ID.
              *
              * @param {string} recordId The record ID of the ontology you want to get from the repository.
@@ -610,7 +632,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Calls the GET /matontorest/ontologies/{recordId}/entity-usages/{entityIRI} endpoint which gets the
+             * Calls the GET /mobirest/ontologies/{recordId}/entity-usages/{entityIRI} endpoint which gets the
              * JSON SPARQL query results for all statements which have the provided entityIRI as an object.
              *
              * @param {string} recordId The record ID of the ontology you want to get from the repository.
@@ -1347,7 +1369,7 @@
              * @methodOf ontologyManager.service:ontologyManagerService
              *
              * @description
-             * Gets entity with the provided IRI from the provided ontologies in the MatOnto repository. Returns the
+             * Gets entity with the provided IRI from the provided ontologies in the Mobi repository. Returns the
              * entity Object.
              *
              * @param {Object[]} ontologies The array of ontologies you want to check.

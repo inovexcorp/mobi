@@ -23,16 +23,17 @@ package org.matonto.ontology.core.impl.owlapi.classexpression;
  * #L%
  */
 
-import java.util.HashSet;
-import java.util.Set;
-import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.ClassExpression;
 import org.matonto.ontology.core.api.classexpression.DataExactCardinality;
 import org.matonto.ontology.core.api.classexpression.DataMaxCardinality;
 import org.matonto.ontology.core.api.classexpression.DataMinCardinality;
-import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.datarange.DataRange;
+import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
+
+import java.util.HashSet;
+import java.util.Set;
+import javax.annotation.Nonnull;
 
 
 public class SimpleDataExactCardinality 

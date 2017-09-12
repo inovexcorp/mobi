@@ -29,6 +29,7 @@ describe('Search Form directive', function() {
         mockDiscoverState();
         mockSearch();
         mockExplore();
+        mockUtil();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _searchService_, _discoverStateService_, _exploreService_) {
             $compile = _$compile_;
@@ -38,6 +39,12 @@ describe('Search Form directive', function() {
             discoverStateSvc = _discoverStateService_;
             exploreSvc = _exploreService_;
         });
+
+        discoverStateSvc.search.queryConfig.filters = [{
+            title: 'title',
+            range: 'range',
+            display: 'display'
+        }];
 
         element = $compile(angular.element('<search-form></search-form>'))(scope);
         scope.$digest();
@@ -69,7 +76,7 @@ describe('Search Form directive', function() {
         describe('getTypes calls the proper method when getClassDetails', function() {
             beforeEach(function() {
                 discoverStateSvc.search.datasetRecordId = 'id';
-                controller.typeObject = {key: []};
+                discoverStateSvc.search.typeObject = {key: []};
             });
             it('resolves', function() {
                 exploreSvc.getClassDetails.and.returnValue($q.when([{ontologyRecordTitle: 'title', prop: 'details'}]));
@@ -77,7 +84,7 @@ describe('Search Form directive', function() {
                 scope.$apply();
                 expect(discoverStateSvc.search.queryConfig.types).toEqual([]);
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('id');
-                expect(angular.copy(controller.typeObject)).toEqual({title: [{ontologyRecordTitle: 'title', prop: 'details'}]});
+                expect(angular.copy(discoverStateSvc.search.typeObject)).toEqual({title: [{ontologyRecordTitle: 'title', prop: 'details'}]});
                 expect(controller.errorMessage).toBe('');
             });
             it('rejects', function() {
@@ -86,7 +93,7 @@ describe('Search Form directive', function() {
                 scope.$apply();
                 expect(discoverStateSvc.search.queryConfig.types).toEqual([]);
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('id');
-                expect(controller.typeObject).toEqual({});
+                expect(discoverStateSvc.search.typeObject).toEqual({});
                 expect(controller.errorMessage).toBe('error');
             });
         });
@@ -97,6 +104,50 @@ describe('Search Form directive', function() {
             it('has values', function() {
                 discoverStateSvc.search.queryConfig.types = [{classTitle: 'title1'}, {classTitle: 'title2'}];
                 expect(controller.getSelectedText()).toBe('title1, title2');
+            });
+        });
+        it('removeFilter should remove the filter associated with the provided index', function() {
+            var data = [{
+                prop: 'removed'
+            }, {
+                prop: 'saved'
+            }];
+            var expected = [{
+                prop: 'saved'
+            }];
+            discoverStateSvc.search.queryConfig.filters = angular.copy(data);
+            controller.removeFilter(0);
+            expect(discoverStateSvc.search.queryConfig.filters).toEqual(expected);
+        });
+        describe('isSubmittable should return the correct boolean value when', function() {
+            it('dataset is not selected', function() {
+                discoverStateSvc.search.datasetRecordId = undefined;
+                expect(controller.isSubmittable()).toBeFalsy();
+            });
+            describe('dataset is selected and', function() {
+                beforeEach(function() {
+                    discoverStateSvc.search.datasetRecordId = 'id';
+                    discoverStateSvc.search.queryConfig = {
+                        filters: [],
+                        keywords: [],
+                        types: []
+                    };
+                });
+                it('nothing else', function() {
+                    expect(controller.isSubmittable()).toBeFalsy();
+                });
+                it('a keyword is set', function() {
+                    discoverStateSvc.search.queryConfig.keywords = ['keyword'];
+                    expect(controller.isSubmittable()).toBeTruthy();
+                });
+                it('a type is set', function() {
+                    discoverStateSvc.search.queryConfig.types = ['type'];
+                    expect(controller.isSubmittable()).toBeTruthy();
+                });
+                it('a filter is set', function() {
+                    discoverStateSvc.search.queryConfig.filters = [{prop: 'filter'}];
+                    expect(controller.isSubmittable()).toBeTruthy();
+                });
             });
         });
     });
@@ -112,7 +163,7 @@ describe('Search Form directive', function() {
             expect(element.find('block-content').length).toEqual(1);
         });
         it('with a .strike', function() {
-            expect(element.querySelectorAll('.strike').length).toEqual(2);
+            expect(element.querySelectorAll('.strike').length).toEqual(3);
         });
         it('with a dataset-form-group', function() {
             expect(element.find('dataset-form-group').length).toEqual(1);
@@ -121,15 +172,45 @@ describe('Search Form directive', function() {
             expect(element.find('block-footer').length).toEqual(1);
         });
         it('with a custom-label', function() {
-            expect(element.find('custom-label').length).toEqual(2);
+            expect(element.find('custom-label').length).toEqual(3);
         });
         it('with a md-chips', function() {
             expect(element.find('md-chips').length).toEqual(1);
         });
+        it('with a .properties-container', function() {
+            expect(element.querySelectorAll('.properties-container').length).toEqual(1);
+        });
+        it('with a .header-wrapper', function() {
+            expect(element.querySelectorAll('.header-wrapper').length).toEqual(1);
+        });
+        it('with a .property-link', function() {
+            expect(element.querySelectorAll('.property-link').length).toEqual(1);
+        });
+        it('with a md-list', function() {
+            expect(element.find('md-list').length).toEqual(1);
+        });
+        it('with a md-list-item', function() {
+            expect(element.find('md-list-item').length).toEqual(1);
+        });
+        it('with a .md-list-item-text', function() {
+            expect(element.querySelectorAll('.md-list-item-text').length).toEqual(1);
+        });
+        it('with a .md-list-item-text h3', function() {
+            expect(element.querySelectorAll('.md-list-item-text h3').length).toEqual(1);
+        });
+        it('with .md-list-item-text ps', function() {
+            expect(element.querySelectorAll('.md-list-item-text p').length).toEqual(2);
+        });
+        it('with a .md-list-item-text md-icon', function() {
+            expect(element.querySelectorAll('.md-list-item-text md-icon').length).toEqual(1);
+        });
         it('with a button to submit', function() {
-            var buttons = element.find('button');
+            var buttons = element.querySelectorAll('[type="submit"]');
             expect(buttons.length).toEqual(1);
             expect(buttons.text()).toContain('Submit');
+        });
+        it('with a .reset-link', function() {
+            expect(element.querySelectorAll('.reset-link').length).toBe(1);
         });
         it('depending on whether an error has occurred', function() {
             expect(element.find('error-display').length).toEqual(0);

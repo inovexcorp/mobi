@@ -50,17 +50,36 @@
                   </div>
                   <md-select ng-model="dvm.ds.search.queryConfig.types" md-on-close="dvm.typeSearch = ''" md-selected-text="dvm.getSelectedText()" multiple ng-disabled="!dvm.ds.search.datasetRecordId">
                       <md-select-header>
-                          <input ng-model="dvm.typeSearch" type="search" class="search-form-searchbox" ng-keydown="$event.stopPropagation()">
+                          <input ng-model="dvm.typeSearch" type="search" class="search-form-searchbox" ng-keydown="$event.stopPropagation()" placeholder="Search...">
                       </md-select-header>
-                      <md-optgroup ng-repeat="(key, value) in dvm.typeObject" label="{{key}}">
+                      <md-optgroup ng-repeat="(key, value) in dvm.ds.search.typeObject" label="{{key}}">
                           <md-option ng-value="item" ng-repeat="item in value | filter:dvm.typeSearch">{{item.classTitle}} :: {{item.classIRI}}</md-option>
                       </md-optgroup>
                   </md-select>
               </div>
+              <div class="strike">AND</div>
+              <div class="properties-container">
+                  <div class="header-wrapper">
+                      <custom-label class="property-label">Properties</custom-label>
+                      <button type="button" ng-disabled="!dvm.ds.search.datasetRecordId" class="pull-right btn btn-link property-link" ng-click="dvm.showPropertyFilterOverlay = true"><i class="fa fa-fw fa-plus"></i>Property</button>
+                  </div>
+                  <md-list>
+                      <md-list-item ng-repeat="meta in dvm.ds.search.queryConfig.filters" class="md-3-line">
+                          <div class="md-list-item-text">
+                              <h3>{{meta.title}}</h3>
+                              <p>Range: {{dvm.util.getBeautifulIRI(meta.range)}}</p>
+                              <p>Filter: {{meta.display}}</p>
+                              <md-icon class="md-secondary fa fa-trash-o" ng-click="dvm.removeFilter($index)"></md-icon>
+                          </div>
+                      </md-list-item>
+                  </md-list>
+              </div>
           </form>
       </block-content>
-      <block-footer>
-          <button class="btn btn-primary" ng-disabled="!dvm.ds.search.datasetRecordId" ng-click="dvm.submit()">Submit</button>
+      <block-footer class="btn-container clearfix">
+          <button type="submit" class="btn btn-primary" ng-disabled="!dvm.isSubmittable()" ng-click="dvm.submit()">Submit</button>
+          <a class="btn btn-link reset-link" ng-click="dvm.ds.resetSearchQueryConfig()">Reset</a>
       </block-footer>
   </block>
+  <property-filter-overlay ng-if="dvm.showPropertyFilterOverlay" close-overlay="dvm.showPropertyFilterOverlay = false"></property-filter-overlay>
 </div>

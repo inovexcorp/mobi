@@ -23,11 +23,12 @@ package org.matonto.ontology.core.impl.owlapi.classexpression;
  * #L%
  */
 
-import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.classexpression.DataMinCardinality;
-import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.datarange.DataRange;
+import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
+
+import javax.annotation.Nonnull;
 
 
 public class SimpleDataMinCardinality 

@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.65-SNAPSHOT</version>
+        <version>1.9.10-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -41,22 +41,22 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm</artifactId>
-            <version>${orm.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm.ontologies</artifactId>
-            <version>1.8.59</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>api</artifactId>
-            <version>1.7.20</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas.api</artifactId>
-            <version>1.8.59</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>

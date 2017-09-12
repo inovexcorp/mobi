@@ -31,7 +31,7 @@
          * @description
          * The `editGroupInfoOverlay` module only provides the `editGroupInfoOverlay` directive which creates
          * an overlay for changing the {@link userState.service:userStateService#selectedGroup selected group's}
-         * information in MatOnto.
+         * information in Mobi.
          */
         .module('editGroupInfoOverlay', [])
         /**

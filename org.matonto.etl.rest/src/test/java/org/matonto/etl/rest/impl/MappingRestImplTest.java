@@ -26,10 +26,13 @@ package org.matonto.etl.rest.impl;
 import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import net.sf.json.JSONArray;
@@ -41,12 +44,23 @@ import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.CatalogProvUtils;
+import org.matonto.catalog.api.ontologies.mcat.Branch;
+import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
+import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.catalog.api.versioning.VersioningManager;
+import org.matonto.etl.api.config.delimited.MappingRecordConfig;
 import org.matonto.etl.api.delimited.MappingId;
 import org.matonto.etl.api.delimited.MappingManager;
 import org.matonto.etl.api.delimited.MappingWrapper;
+import org.matonto.etl.api.ontologies.delimited.MappingRecord;
+import org.matonto.etl.api.ontologies.delimited.MappingRecordFactory;
 import org.matonto.jaas.api.engines.EngineManager;
+import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
 import org.matonto.persistence.utils.impl.SimpleSesameTransformer;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -54,7 +68,19 @@ import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
+import org.matonto.rdf.orm.conversion.ValueConverterRegistry;
+import org.matonto.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
+import org.matonto.rdf.orm.conversion.impl.DoubleValueConverter;
+import org.matonto.rdf.orm.conversion.impl.FloatValueConverter;
+import org.matonto.rdf.orm.conversion.impl.IRIValueConverter;
+import org.matonto.rdf.orm.conversion.impl.IntegerValueConverter;
+import org.matonto.rdf.orm.conversion.impl.LiteralValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ResourceValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
+import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
+import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.rest.util.MatontoRestTestNg;
+import org.matonto.rest.util.UsernameTestFilter;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.rio.RDFFormat;
@@ -70,12 +96,24 @@ import javax.ws.rs.core.Response;
 
 public class MappingRestImplTest extends MatontoRestTestNg {
     private MappingRestImpl rest;
+    private static final String CATALOG_IRI = "http://test.org/catalog";
     private static final String MAPPING_IRI = "http://test.org/test";
+    private static final String MAPPING_RECORD_IRI = "http://test.org/record";
+    private static final String BRANCH_IRI = "http://test.org/branch";
     private static final String ERROR_IRI = "http://test.org/error";
     private String mappingJsonld;
     private ValueFactory vf;
     private ModelFactory mf;
+    private ValueConverterRegistry vcr;
+    private MappingRecordFactory mappingRecordFactory;
+    private BranchFactory branchFactory;
+    private UserFactory userFactory;
+    private CreateActivityFactory createActivityFactory;
     private Model fakeModel;
+    private User user;
+    private CreateActivity activity;
+    private MappingRecord record;
+    private Branch branch;
 
     @Mock
     private MappingManager manager;
@@ -95,12 +133,56 @@ public class MappingRestImplTest extends MatontoRestTestNg {
     @Mock
     private VersioningManager versioningManager;
 
+    @Mock
+    private CatalogProvUtils provUtils;
+
     @Override
     protected Application configureApp() throws Exception {
         vf = SimpleValueFactory.getInstance();
         mf = LinkedHashModelFactory.getInstance();
+        vcr = new DefaultValueConverterRegistry();
+
+        mappingRecordFactory = new MappingRecordFactory();
+        mappingRecordFactory.setValueFactory(vf);
+        mappingRecordFactory.setModelFactory(mf);
+        mappingRecordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(mappingRecordFactory);
+
+        branchFactory = new BranchFactory();
+        branchFactory.setValueFactory(vf);
+        branchFactory.setModelFactory(mf);
+        branchFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(branchFactory);
+
+        userFactory = new UserFactory();
+        userFactory.setValueFactory(vf);
+        userFactory.setModelFactory(mf);
+        userFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(userFactory);
+
+        createActivityFactory = new CreateActivityFactory();
+        createActivityFactory.setValueFactory(vf);
+        createActivityFactory.setModelFactory(mf);
+        createActivityFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(createActivityFactory);
+
+        vcr.registerValueConverter(new ResourceValueConverter());
+        vcr.registerValueConverter(new IRIValueConverter());
+        vcr.registerValueConverter(new DoubleValueConverter());
+        vcr.registerValueConverter(new IntegerValueConverter());
+        vcr.registerValueConverter(new FloatValueConverter());
+        vcr.registerValueConverter(new ShortValueConverter());
+        vcr.registerValueConverter(new StringValueConverter());
+        vcr.registerValueConverter(new ValueValueConverter());
+        vcr.registerValueConverter(new LiteralValueConverter());
+
         fakeModel = mf.createModel();
         fakeModel.add(vf.createIRI(MAPPING_IRI), vf.createIRI("http://test.org/isTest"), vf.createLiteral(true));
+        branch = branchFactory.createNew(vf.createIRI(BRANCH_IRI));
+        record = mappingRecordFactory.createNew(vf.createIRI(MAPPING_RECORD_IRI));
+        record.setMasterBranch(branch);
+        user = userFactory.createNew(vf.createIRI("http://test.org/" + UsernameTestFilter.USERNAME));
+        activity = createActivityFactory.createNew(vf.createIRI("http://test.org/activity"));
 
         MockitoAnnotations.initMocks(this);
 
@@ -111,12 +193,14 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         rest.setEngineManager(engineManager);
         rest.setCatalogManager(catalogManager);
         rest.setVersioningManager(versioningManager);
+        rest.setProvUtils(provUtils);
 
         mappingJsonld = IOUtils.toString(getClass().getResourceAsStream("/mapping.jsonld"));
 
         return new ResourceConfig()
-            .register(rest)
-            .register(MultiPartFeature.class);
+                .register(rest)
+                .register(UsernameTestFilter.class)
+                .register(MultiPartFeature.class);
     }
 
     @Override
@@ -126,11 +210,16 @@ public class MappingRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() throws Exception {
-        reset(mappingId, mappingWrapper, manager);
+        reset(mappingId, mappingWrapper, manager, provUtils, catalogManager, versioningManager);
+
+        when(catalogManager.getLocalCatalogIRI()).thenReturn(vf.createIRI(CATALOG_IRI));
+
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
 
         when(mappingId.getMappingIdentifier()).thenReturn(vf.createIRI(MAPPING_IRI));
         when(mappingWrapper.getModel()).thenReturn(fakeModel);
         when(mappingWrapper.getId()).thenReturn(mappingId);
+        when(manager.createMappingRecord(any(MappingRecordConfig.class))).thenReturn(record);
         when(manager.createMapping(any(InputStream.class), any(RDFFormat.class))).thenReturn(mappingWrapper);
         when(manager.createMapping(anyString())).thenReturn(mappingWrapper);
         when(manager.retrieveMapping(vf.createIRI(ERROR_IRI))).thenReturn(Optional.empty());
@@ -151,91 +240,60 @@ public class MappingRestImplTest extends MatontoRestTestNg {
                 return vf.createIRI(i.getArguments()[0].toString());
             }
         });
+
+        when(provUtils.startCreateActivity(any(User.class))).thenReturn(activity);
     }
 
     @Test
     public void uploadEitherFileOrStringTest() {
         FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "Title");
         InputStream content = getClass().getResourceAsStream("/mapping.jsonld");
         fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("mapping.jsonld").build(),
                 content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
         fd.field("jsonld", mappingJsonld);
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils, times(0)).startCreateActivity(user);
 
         response = target().path("mappings").request().post(Entity.entity(null, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
-    /*@Test
-    public void uploadFileTest() {
+    @Test
+    public void uploadFileTest() throws Exception {
         FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "Title");
         InputStream content = getClass().getResourceAsStream("/mapping.jsonld");
         fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("mapping.jsonld").build(),
                 content, MediaType.APPLICATION_OCTET_STREAM_TYPE));
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
-        assertTrue(response.readEntity(String.class).contains(MAPPING_IRI));
+        assertTrue(response.readEntity(String.class).equals(MAPPING_RECORD_IRI));
+        verify(manager).createMapping(any(InputStream.class), eq(RDFFormat.JSONLD));
+        verify(manager).createMappingRecord(any(MappingRecordConfig.class));
+        verify(catalogManager).addRecord(eq(vf.createIRI(CATALOG_IRI)), any(Record.class));
+        verify(versioningManager).commit(eq(vf.createIRI(CATALOG_IRI)), eq(vf.createIRI(MAPPING_RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(user), anyString(), any(Model.class), eq(null));
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).endCreateActivity(activity, vf.createIRI(MAPPING_RECORD_IRI));
     }
 
     @Test
-    public void uploadStringTest() {
+    public void uploadStringTest() throws Exception {
         FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("title", "Title");
         fd.field("jsonld", mappingJsonld);
         Response response = target().path("mappings").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
-        assertTrue(response.readEntity(String.class).contains(MAPPING_IRI));
-    }*/
-
-    /*@Test
-    public void getMappingNamesTest() {
-        Response response = target().path("mappings").request().get();
-        assertEquals(response.getStatus(), 200);
-        try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(result.size(), manager.getMappingRegistry().size());
-        } catch (Exception e) {
-            fail("Expected no exception, but got: " + e.getMessage());
-        }
+        assertTrue(response.readEntity(String.class).equals(MAPPING_RECORD_IRI));
+        verify(manager).createMapping(mappingJsonld);
+        verify(manager).createMappingRecord(any(MappingRecordConfig.class));
+        verify(catalogManager).addRecord(eq(vf.createIRI(CATALOG_IRI)), any(Record.class));
+        verify(versioningManager).commit(eq(vf.createIRI(CATALOG_IRI)), eq(vf.createIRI(MAPPING_RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(user), anyString(), any(Model.class), eq(null));
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).endCreateActivity(activity, vf.createIRI(MAPPING_RECORD_IRI));
     }
-
-    @Test
-    public void getMappingsByIdsTest() {
-        List<String> ids = Arrays.asList("http://test.org/test1", "http://test.org/test2");
-        WebTarget wt = target().path("mappings");
-        for (String id : ids) {
-            wt = wt.queryParam("ids", id);
-        }
-        Response response = wt.request().get();
-        assertEquals(response.getStatus(), 200);
-        ids.forEach(s -> verify(manager).retrieveMapping(vf.createIRI(s)));
-        try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(result.size(), ids.size());
-        } catch (Exception e) {
-            fail("Expected no exception, but got: " + e.getMessage());
-        }
-
-
-    }
-
-    @Test
-    public void getMappingsByIdsWithIncorrectIdTest() {
-        List<String> ids = Arrays.asList("http://test.org/test1", "http://test.org/error");
-        WebTarget wt = target().path("mappings");
-        for (String id : ids) {
-            wt = wt.queryParam("ids", id);
-        }
-        Response response = wt.request().get();
-        assertEquals(response.getStatus(), 200);
-        ids.forEach(s -> verify(manager).retrieveMapping(vf.createIRI(s)));
-        try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertEquals(result.size(), ids.size() - 1);
-        } catch (Exception e) {
-            fail("Expected no exception, but got: " + e.getMessage());
-        }
-    }*/
 
     @Test
     public void getMappingTest() {

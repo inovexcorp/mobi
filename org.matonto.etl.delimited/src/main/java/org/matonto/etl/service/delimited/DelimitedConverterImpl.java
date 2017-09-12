@@ -23,10 +23,9 @@ package org.matonto.etl.service.delimited;
  * #L%
  */
 
-import com.google.common.base.CharMatcher;
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.google.common.base.CharMatcher;
 import com.opencsv.CSVReader;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
@@ -37,8 +36,8 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
-import org.matonto.etl.api.config.ExcelConfig;
-import org.matonto.etl.api.config.SVConfig;
+import org.matonto.etl.api.config.delimited.ExcelConfig;
+import org.matonto.etl.api.config.delimited.SVConfig;
 import org.matonto.etl.api.delimited.DelimitedConverter;
 import org.matonto.etl.api.exception.MatOntoETLException;
 import org.matonto.etl.api.ontologies.delimited.ClassMapping;

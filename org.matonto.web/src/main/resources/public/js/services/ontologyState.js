@@ -772,7 +772,7 @@
              *
              * @description
              * Adds the entity represented by the entityJSON to the ontology with the provided ontology ID in the
-             * MatOnto repository. Adds the new entity to the index.
+             * Mobi repository. Adds the new entity to the index.
              *
              * @param {Object} listItem The listItem linked to the ontology you want to add the entity to.
              * @param {string} entityJSON The JSON-LD representation for the entity you want to add to the ontology.
@@ -792,22 +792,51 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Removes the entity with the provided IRI from the ontology with the provided ontology ID in the MatOnto
-             * repository. Removes the entityIRI from the index. Returns the entity Object.
+             * Removes the entity with the provided IRI from the ontology with the provided ontology ID in the Mobi
+             * repository along with any referenced blank nodes. Removes the entityIRI and any reference blank nodes
+             * from the index.
              *
              * @param {Object} listItem The listItem linked to the ontology you want to remove the entity from.
-             * @returns {Object} An Object which represents the requested entity.
+             * @returns {Object[]} The list of JSON-LD entities that were removed.
              */
             self.removeEntity = function(listItem, entityIRI) {
-                var entityPosition = _.get(listItem.index, "['" + entityIRI + "'].position");
-                _.remove(listItem.iriList, (iri) => { return iri === entityIRI });
-                _.unset(listItem.index, entityIRI);
-                _.forOwn(listItem.index, (value, key) => {
-                    if (value.position > entityPosition) {
-                        listItem.index[key].position = value.position - 1;
-                    }
+                var toRemove = [];
+                var toTest = [];
+
+                // Helper method
+                function addToLists(iri) {
+                    var newObj = {entityIRI: iri, position: _.get(listItem.index, "['" + iri + "'].position")};
+                    toRemove.push(newObj);
+                    toTest.push(newObj);
+                }
+                addToLists(entityIRI);
+                while (toTest.length) {
+                    var obj = toTest.pop();
+                    var entity = listItem.ontology[obj.position];
+                    _.forOwn(_.omit(entity, ['@id', '@type']), (value, key) => {
+                        if (om.isBlankNodeId(key)) {
+                            addToLists(key);
+                        }
+                        _.forEach(value, valueObj => {
+                            var id = _.get(valueObj, '@id');
+                            if (om.isBlankNodeId(id)) {
+                                addToLists(id);
+                            }
+                        });
+                    });
+                }
+                var removed = _.pullAt(listItem.ontology, _.map(toRemove, 'position'));
+                _.forEach(toRemove, obj => {
+                    var newPosition = _.get(listItem.index, "['" + obj.entityIRI + "'].position");
+                    _.remove(listItem.iriList, obj.entityIRI);
+                    _.unset(listItem.index, obj.entityIRI);
+                    _.forOwn(listItem.index, (value, key) => {
+                        if (value.position > newPosition) {
+                            listItem.index[key].position = value.position - 1;
+                        }
+                    });
                 });
-                return _.remove(listItem.ontology, {'@id': entityIRI})[0];
+                return removed;
             }
             /**
              * @ngdoc method
@@ -846,7 +875,7 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Gets entity with the provided IRI from the ontology linked to the provided recordId in the MatOnto
+             * Gets entity with the provided IRI from the ontology linked to the provided recordId in the Mobi
              * repository. Returns the entity Object.
              *
              * @param {string} recordId The recordId linked to the ontology you want to check.
@@ -916,9 +945,9 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Used to open an ontology from the MatOnto repository. It calls
+             * Used to open an ontology from the Mobi repository. It calls
              * {@link ontologyState.service:ontologyStateService#getOntology getOntology} to get the specified
-             * ontology from the MatOnto repository. Returns a promise.
+             * ontology from the Mobi repository. Returns a promise.
              *
              * @param {string} recordId The record ID of the requested ontology.
              * @returns {Promise} A promise with the ontology ID or error message.
@@ -955,7 +984,7 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Used to close an ontology from the MatOnto application. It removes the ontology list item from the
+             * Used to close an ontology from the Mobi application. It removes the ontology list item from the
              * {@link ontologyState.service:ontologyStateService#list list}.
              *
              * @param {string} recordId The record ID of the requested ontology.
@@ -1314,11 +1343,13 @@
                     if (om.isProperty(entity)) {
                         setPropertyIcon(entity);
                     } else if (om.isBlankNode(entity)) {
-                        let id = _.get(entity, '@id');
-                        _.set(blankNodes, id, mc.jsonldToManchester(id, ontology, true));
+                        blankNodes[_.get(entity, '@id')] = undefined;
                     } else if (om.isIndividual(entity)) {
                         findValuesMissingDatatypes(entity);
                     }
+                });
+                _.forEach(blankNodes, (value, id) => {
+                    blankNodes[id] = mc.jsonldToManchester(id, ontology, index);
                 });
                 listItem.ontologyId = ontologyId;
                 listItem.editorTabStates.project.entityIRI = ontologyId;
@@ -1462,6 +1493,7 @@
             }
             function addImportedOntologyToListItem(listItem, importedOntObj, type) {
                 var index = {};
+                var blankNodes = {};
                 _.forEach(importedOntObj.ontology, (entity, i) => {
                     if (_.has(entity, '@id')) {
                         index[entity['@id']] = {
@@ -1469,15 +1501,23 @@
                             label: om.getEntityName(entity, type),
                             ontologyIri: importedOntObj.id
                         }
+                        if (om.isBlankNode(entity)) {
+                            blankNodes[entity['@id']] =  undefined;
+                        }
                     }
                     self.updatePropertyIcon(entity);
                     _.set(entity, 'matonto.imported', true);
+                    _.set(entity, 'matonto.importedIRI', importedOntObj.ontologyId);
+                });
+                _.forEach(blankNodes, (value, id) => {
+                    blankNodes[id] = mc.jsonldToManchester(id, importedOntObj.ontology, index);
                 });
                 var importedOntologyListItem = {
                     id: importedOntObj.id,
                     ontologyId: importedOntObj.ontologyId,
-                    index: index,
-                    ontology: importedOntObj.ontology
+                    ontology: importedOntObj.ontology,
+                    index,
+                    blankNodes
                 };
                 listItem.importedOntologyIds.push(importedOntObj.id);
                 listItem.importedOntologies.push(importedOntologyListItem);

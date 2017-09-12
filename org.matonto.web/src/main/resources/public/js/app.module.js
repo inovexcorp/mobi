@@ -151,6 +151,7 @@
             'ANYTHING': /^.+$/
         })
         .constant('INDENT', 1.28571429)
+        .constant('REST_PREFIX', '/mobirest/')
         .config(httpInterceptorConfig)
         .config(ariaConfig)
         .config(theming)

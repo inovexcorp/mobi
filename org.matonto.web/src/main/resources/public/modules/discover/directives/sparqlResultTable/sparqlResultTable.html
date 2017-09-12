@@ -23,7 +23,7 @@
 <table class="sparql-result-table table table-hover">
     <thead>
         <tr>
-            <th ng-repeat="binding in bindings track by binding">{{binding}}</th>
+            <th ng-repeat="binding in bindings track by binding">{{headers ? headers[binding] : binding}}</th>
         </tr>
     </thead>
     <tbody>

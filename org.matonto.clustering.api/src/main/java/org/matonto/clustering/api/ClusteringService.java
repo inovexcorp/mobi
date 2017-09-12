@@ -37,7 +37,17 @@ public interface ClusteringService {
     ClusteringServiceConfig getClusteringServiceConfig();
 
     /**
-     * Restart the clustering service.
+     * Start the clustering mechanisms of the service.
+     */
+    void start();
+
+    /**
+     * Stop the clustering mechanisms service.
+     */
+    void stop();
+
+    /**
+     * Restart the clustering mechanisms of the service.
      */
     void restart();
 

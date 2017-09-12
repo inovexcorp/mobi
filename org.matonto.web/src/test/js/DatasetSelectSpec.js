@@ -30,6 +30,7 @@ describe('Dataset Select directive', function() {
         injectHighlightFilter();
         mockUtil();
         mockDatasetManager();
+        mockPrefixes();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;

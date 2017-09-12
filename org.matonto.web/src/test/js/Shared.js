@@ -81,7 +81,7 @@ function injectRegexConstant() {
     module(function($provide) {
         $provide.constant('REGEX', {
             'IRI': /[a-zA-Z]/,
-            'LOCALNAME': /[a-zA-Z]/,
+            'LOCALNAME': /[a-zA-Z]+/,
             'FILENAME': /[a-zA-Z]/,
             'UUID': /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/,
             'DATETIME': /[a-zA-Z]/,
@@ -89,6 +89,12 @@ function injectRegexConstant() {
             'DECIMAL': /[a-zA-Z]/,
             'ANYTHING': /[a-zA-Z]/
         });
+    });
+}
+
+function injectRestPathConstant() {
+    module(function($provide) {
+        $provide.constant('REST_PREFIX', '/mobirest/');
     });
 }
 
@@ -285,6 +291,7 @@ function mockOntologyManager() {
             this.getAnnotationPropertyHierarchies = jasmine.createSpy('getAnnotationPropertyHierarchies');
             this.uploadChangesFile = jasmine.createSpy('uploadChangesFile').and.returnValue($q.when({}));
             this.getFailedImports = jasmine.createSpy('getFailedImports').and.returnValue($q.when([]));
+            this.getDataProperties = jasmine.createSpy('getDataProperties').and.returnValue($q.when([]));
         });
     });
 }
@@ -942,6 +949,8 @@ function mockUtil() {
             this.getPredicateLocalName = jasmine.createSpy('getPredicateLocalName');
             this.getIdForBlankNode = jasmine.createSpy('getIdForBlankNode').and.returnValue('');
             this.getSkolemizedIRI = jasmine.createSpy('getSkolemizedIRI').and.returnValue('');
+            this.getInputType = jasmine.createSpy('getInputType').and.returnValue('');
+            this.getPattern = jasmine.createSpy('getPattern').and.returnValue(/[a-zA-Z]/);
         });
     });
 }
@@ -988,7 +997,9 @@ function mockDatasetState() {
 function mockManchesterConverter() {
     module(function($provide) {
         $provide.service('manchesterConverterService', function() {
+            this.getKeywords = jasmine.createSpy('getKeywords').and.returnValue([]);
             this.jsonldToManchester = jasmine.createSpy('jsonldToManchester').and.returnValue('');
+            this.manchesterToJsonld = jasmine.createSpy('jsonldToManchester').and.returnValue({errorMessage: '', jsonld: []});
         });
     })
 }
@@ -1035,22 +1046,27 @@ function mockDiscoverState() {
                 active: false
             };
             this.search = {
-                targetedId: '',
                 active: false,
-                results: undefined,
+                datasetRecordId: '',
+                filterMeta: [],
+                noDomains: undefined,
+                properties: undefined,
                 queryConfig: {
                     isOrKeywords: false,
                     isOrTypes: false,
                     keywords: [],
-                    types: []
+                    types: [],
+                    filters: []
                 },
-                datasetRecordId: ''
+                results: undefined,
+                targetedId: 'discover-search-results'
             };
             this.resetPagedInstanceDetails = jasmine.createSpy('resetPagedInstanceDetails');
             this.cleanUpOnDatasetDelete = jasmine.createSpy('cleanUpOnDatasetDelete');
             this.cleanUpOnDatasetClear = jasmine.createSpy('cleanUpOnDatasetClear');
             this.clickCrumb = jasmine.createSpy('clickCrumb');
             this.getInstance = jasmine.createSpy('getInstance').and.returnValue({});
+            this.resetSearchQueryConfig = jasmine.createSpy('resetSearchQueryConfig');
         });
     });
 }
@@ -1091,8 +1107,15 @@ function mockExploreUtils() {
 function mockSearch() {
     module(function($provide) {
         $provide.service('searchService', function($q) {
+            this.getPropertiesForDataset = jasmine.createSpy('getPropertiesForDataset').and.returnValue($q.when([]));
             this.createQueryString = jasmine.createSpy("createQueryString").and.returnValue('');
             this.submitSearch = jasmine.createSpy('submitSearch').and.returnValue($q.when({}));
+            this.createExistenceQuery = jasmine.createSpy('createExistenceQuery').and.returnValue({});
+            this.createContainsQuery = jasmine.createSpy('createContainsQuery').and.returnValue({});
+            this.createExactQuery = jasmine.createSpy('createExactQuery').and.returnValue({});
+            this.createRegexQuery = jasmine.createSpy('createRegexQuery').and.returnValue({});
+            this.createRangeQuery = jasmine.createSpy('createRangeQuery').and.returnValue({});
+            this.createBooleanQuery = jasmine.createSpy('createBooleanQuery').and.returnValue({});
         });
     });
 }

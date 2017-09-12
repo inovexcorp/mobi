@@ -42,6 +42,7 @@ import org.matonto.ontology.core.impl.owlapi.classexpression.SimpleCardinalityRe
 import org.matonto.ontology.core.impl.owlapi.classexpression.SimpleClass;
 import org.matonto.ontology.core.utils.MatOntoStringUtils;
 import org.matonto.ontology.core.utils.MatontoOntologyException;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -54,12 +55,11 @@ import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.RDFParseException;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.WriterConfig;
-import org.openrdf.rio.helpers.JSONLDMode;
-import org.openrdf.rio.helpers.JSONLDSettings;
 import org.openrdf.rio.helpers.StatementCollector;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
+import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
 import org.semanticweb.owlapi.io.IRIDocumentSource;
 import org.semanticweb.owlapi.io.OWLOntologyDocumentSource;
 import org.semanticweb.owlapi.io.OWLParser;
@@ -97,6 +97,7 @@ import org.semanticweb.owlapi.model.OWLOntologyID;
 import org.semanticweb.owlapi.model.OWLOntologyLoaderConfiguration;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyStorageException;
+import org.semanticweb.owlapi.model.OWLOntologyWriterConfiguration;
 import org.semanticweb.owlapi.model.OWLPropertyDomainAxiom;
 import org.semanticweb.owlapi.model.parameters.Imports;
 import org.semanticweb.owlapi.model.parameters.Navigation;
@@ -108,6 +109,7 @@ import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.structural.StructuralReasonerFactory;
 import org.semanticweb.owlapi.rio.RioJsonLDParserFactory;
 import org.semanticweb.owlapi.rio.RioMemoryTripleSource;
+import org.semanticweb.owlapi.rio.RioParserImpl;
 import org.semanticweb.owlapi.rio.RioRenderer;
 import org.semanticweb.owlapi.util.OWLOntologyWalker;
 import org.semanticweb.owlapi.util.OWLOntologyWalkerVisitor;
@@ -139,6 +141,7 @@ public class SimpleOntology implements Ontology {
     private OntologyId ontologyId;
     private OntologyManager ontologyManager;
     private SesameTransformer transformer;
+    private BNodeService bNodeService;
     private Set<Annotation> ontoAnnotations;
     private Set<Annotation> annotations;
     private Set<AnnotationProperty> annotationProperties;
@@ -152,6 +155,8 @@ public class SimpleOntology implements Ontology {
     // Instance initialization block sets MissingImportListener for handling missing imports for an ontology.
     private final OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration()
             .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
+    private final OWLOntologyWriterConfiguration writerConfig = new OWLOntologyWriterConfiguration()
+            .withRemapAllAnonymousIndividualsIds(false).withSaveIdsForAllAnonymousIndividuals(true);
     private final OWLOntologyManager owlManager = OWLManager.createOWLOntologyManager();
 
     {
@@ -160,17 +165,28 @@ public class SimpleOntology implements Ontology {
             LOG.warn("Missing import {} ", arg0.getImportedOntologyURI());
         });
         owlManager.setOntologyLoaderConfiguration(config);
+        owlManager.setOntologyWriterConfiguration(writerConfig);
+        owlManager.setOntologyConfigurator(owlManager.getOntologyConfigurator()
+                .withRemapAllAnonymousIndividualsIds(false)
+                .withSaveIdsForAllAnonymousIndividuals(true));
     }
 
     /**
-     * .
+     * Creates a brand new SimpleOntology using an OntologyId.
+     *
+     * @param ontologyId The ID for the new ontology
+     * @param ontologyManager An OntologyManager
+     * @param transformer A SesameTransformer
+     * @param bNodeService A BNodeService
+     * @throws MatontoOntologyException If an error occurs during ontology creation
      */
-    public SimpleOntology(OntologyId ontologyId, OntologyManager ontologyManager, SesameTransformer transformer)
-            throws MatontoOntologyException {
+    public SimpleOntology(OntologyId ontologyId, OntologyManager ontologyManager, SesameTransformer transformer,
+                          BNodeService bNodeService) throws MatontoOntologyException {
         this.ontologyManager = ontologyManager;
         this.ontologyId = ontologyId;
         this.transformer = transformer;
-        setUpOwlManager(ontologyManager);
+        this.bNodeService = bNodeService;
+        setUpOwlManager(ontologyManager, transformer);
 
         try {
             Optional<org.semanticweb.owlapi.model.IRI> owlOntIRI = Optional.empty();
@@ -194,18 +210,25 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     * .
+     * Creates a SimpleOntology using the ontology data in an InputStream.
+     *
+     * @param inputStream An InputStream containing a serialized ontology
+     * @param ontologyManager An OntologyManager
+     * @param transformer A SesameTransformer
+     * @param bNodeService A BNodeService
+     * @throws MatontoOntologyException If an error occurs during ontology creation
      */
-    public SimpleOntology(InputStream inputStream, OntologyManager ontologyManager, SesameTransformer transformer)
-            throws MatontoOntologyException {
+    public SimpleOntology(InputStream inputStream, OntologyManager ontologyManager, SesameTransformer transformer,
+                          BNodeService bNodeService) throws MatontoOntologyException {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
-        setUpOwlManager(ontologyManager);
+        this.bNodeService = bNodeService;
+        setUpOwlManager(ontologyManager, transformer);
 
         try {
             owlOntology = owlManager.loadOntologyFromOntologyDocument(inputStream);
-            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
             createOntologyId(null);
+            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
         } catch (OWLOntologyCreationException e) {
             throw new MatontoOntologyException("Error in ontology creation", e);
         } finally {
@@ -214,41 +237,90 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     * .
+     * Creates a SimpleOntology using the ontology data in a File.
+     *
+     * @param file A File containing a serialized ontology
+     * @param ontologyManager An OntologyManager
+     * @param transformer A SesameTransformer
+     * @param bNodeService A BNodeService
+     * @throws MatontoOntologyException If an error occurs during ontology creation
+     * @throws FileNotFoundException If the provided File cannot be found
      */
-    public SimpleOntology(File file, OntologyManager ontologyManager, SesameTransformer transformer)
-            throws MatontoOntologyException,
+    public SimpleOntology(File file, OntologyManager ontologyManager, SesameTransformer transformer,
+                          BNodeService bNodeService) throws MatontoOntologyException,
             FileNotFoundException {
-        this(new FileInputStream(file), ontologyManager, transformer);
+        this(new FileInputStream(file), ontologyManager, transformer, bNodeService);
     }
 
     /**
-     * .
+     * Creates a SimpleOntology using the ontology data in a File.
+     *
+     * @param model A model containing statements that make up an ontology
+     * @param ontologyManager An OntologyManager
+     * @param transformer A SesameTransformer
+     * @param bNodeService A BNodeService
+     * @throws MatontoOntologyException If an error occurs during ontology creation
      */
-    public SimpleOntology(IRI iri, SimpleOntologyManager ontologyManager, SesameTransformer transformer)
-            throws MatontoOntologyException {
+    public SimpleOntology(Model model, OntologyManager ontologyManager, SesameTransformer transformer,
+                          BNodeService bNodeService) throws MatontoOntologyException {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
-        setUpOwlManager(ontologyManager);
+        this.bNodeService = bNodeService;
+        setUpOwlManager(ontologyManager, transformer);
 
         try {
-            OWLOntologyDocumentSource documentSource = new IRIDocumentSource(SimpleOntologyValues.owlapiIRI(iri));
-            owlOntology = owlManager.loadOntologyFromOntologyDocument(documentSource, config);
-            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
+            owlOntology = owlManager.createOntology();
+            sesameModel = this.transformer.sesameModel(model);
+            RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
+            parser.parse(new RioMemoryTripleSource(sesameModel), owlOntology, config);
             createOntologyId(null);
+            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
         } catch (OWLOntologyCreationException e) {
             throw new MatontoOntologyException("Error in ontology creation", e);
         }
     }
 
     /**
-     * .
+     * Creates a SimpleOntology using an IRI to collect the document.
+     *
+     * @param iri An IRI of an existing ontology
+     * @param ontologyManager An OntologyManager
+     * @param transformer A SesameTransformer
+     * @param bNodeService A BNodeService
+     * @throws MatontoOntologyException If an error occurs during ontology creation
      */
-    public SimpleOntology(String json, OntologyManager ontologyManager, SesameTransformer transformer)
-            throws MatontoOntologyException {
+    public SimpleOntology(IRI iri, SimpleOntologyManager ontologyManager, SesameTransformer transformer,
+                          BNodeService bNodeService) throws MatontoOntologyException {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
-        setUpOwlManager(ontologyManager);
+        this.bNodeService = bNodeService;
+        setUpOwlManager(ontologyManager, transformer);
+
+        try {
+            OWLOntologyDocumentSource documentSource = new IRIDocumentSource(SimpleOntologyValues.owlapiIRI(iri));
+            owlOntology = owlManager.loadOntologyFromOntologyDocument(documentSource, config);
+            createOntologyId(null);
+            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
+        } catch (OWLOntologyCreationException e) {
+            throw new MatontoOntologyException("Error in ontology creation", e);
+        }
+    }
+
+    /**
+     * Creates a SimpleOntology using the ontology data in a JSON-LD string.
+     *
+     * @param json A JSON-LD string with a serialized ontology
+     * @param ontologyManager An OntologyManager
+     * @param transformer A SesameTransformer
+     * @param bNodeService A BNodeService
+     * @throws MatontoOntologyException If an error occurs during ontology creation
+     */
+    public SimpleOntology(String json, OntologyManager ontologyManager, SesameTransformer transformer,
+                          BNodeService bNodeService) throws MatontoOntologyException {
+        this.ontologyManager = ontologyManager;
+        this.transformer = transformer;
+        this.bNodeService = bNodeService;
+        setUpOwlManager(ontologyManager, transformer);
 
         OWLParserFactory factory = new RioJsonLDParserFactory();
         OWLParser parser = factory.createParser();
@@ -257,9 +329,9 @@ public class SimpleOntology implements Ontology {
             OWLOntologyDocumentSource source = new RioMemoryTripleSource(
                     Rio.parse(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)), "", RDFFormat.JSONLD));
             owlOntology = owlManager.createOntology();
-            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
             parser.parse(source, owlOntology, config);
             createOntologyId(null);
+            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
         } catch (IOException | RDFParseException | OWLOntologyCreationException e) {
             throw new MatontoOntologyException("Error in ontology creation", e);
         }
@@ -267,14 +339,14 @@ public class SimpleOntology implements Ontology {
     }
 
     protected SimpleOntology(OWLOntology ontology, Resource resource, OntologyManager ontologyManager,
-                             SesameTransformer transformer) {
+                             SesameTransformer transformer, BNodeService bNodeService) {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
-        setUpOwlManager(ontologyManager);
+        this.bNodeService = bNodeService;
+        setUpOwlManager(ontologyManager, transformer);
 
         try {
             owlOntology = owlManager.copyOntology(ontology, OntologyCopy.DEEP);
-            owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
 
             // Copy Imports
             ontology.importsDeclarations().forEach(declaration -> {
@@ -286,6 +358,7 @@ public class SimpleOntology implements Ontology {
         }
 
         createOntologyId(resource);
+        owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
     }
 
     private void createOntologyId(Resource resource) {
@@ -331,7 +404,12 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<Ontology> getImportsClosure() {
         return owlOntology.importsClosure()
-                .map(SimpleOntologyValues::matontoOntology)
+                .map(ontology -> {
+                    if (ontology.equals(owlOntology)) {
+                        return this;
+                    }
+                    return SimpleOntologyValues.matontoOntology(ontology);
+                })
                 .collect(Collectors.toSet());
     }
 
@@ -485,7 +563,7 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<DataProperty> getAllDataProperties() {
-        return owlOntology.dataPropertiesInSignature()
+        return owlOntology.dataPropertiesInSignature(Imports.INCLUDED)
                 .map(SimpleOntologyValues::matontoDataProperty)
                 .collect(Collectors.toSet());
     }
@@ -654,12 +732,14 @@ public class SimpleOntology implements Ontology {
     }
 
     @Override
-    public @Nonnull OutputStream asJsonLD() throws MatontoOntologyException {
+    public @Nonnull OutputStream asJsonLD(boolean skolemize) throws MatontoOntologyException {
         OutputStream outputStream = new ByteArrayOutputStream();
         WriterConfig config = new WriterConfig();
-        config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
         try {
             org.openrdf.model.Model sesameModel = asSesameModel();
+            if (skolemize) {
+                sesameModel = transformer.sesameModel(bNodeService.skolemize(transformer.matontoModel(sesameModel)));
+            }
             Rio.write(sesameModel, outputStream, RDFFormat.JSONLD, config);
         } catch (RDFHandlerException e) {
             throw new MatontoOntologyException("Error while parsing Ontology.");
@@ -786,9 +866,10 @@ public class SimpleOntology implements Ontology {
         return stream.map(HasDomain::getDomain).count() == 0;
     }
 
-    private void setUpOwlManager(OntologyManager ontologyManager) {
+    private void setUpOwlManager(OntologyManager ontologyManager, SesameTransformer sesameTransformer) {
         owlManager.getIRIMappers().add(new MatOntoOntologyIRIMapper(ontologyManager));
         OWLOntologyFactory originalFactory = owlManager.getOntologyFactories().iterator().next();
-        owlManager.getOntologyFactories().add(new MatOntoOntologyFactory(ontologyManager, originalFactory));
+        owlManager.getOntologyFactories().add(new MatOntoOntologyFactory(ontologyManager, originalFactory,
+                sesameTransformer));
     }
 }

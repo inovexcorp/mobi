@@ -23,6 +23,16 @@ package org.matonto.ontology.core.impl.owlapi;
  * #L%
  */
 
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.isA;
+import static org.easymock.EasyMock.mock;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.powermock.api.easymock.PowerMock.mockStatic;
+import static org.powermock.api.easymock.PowerMock.mockStaticPartial;
+import static org.powermock.api.easymock.PowerMock.replay;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -38,6 +48,7 @@ import org.matonto.ontology.core.api.propertyexpression.ObjectProperty;
 import org.matonto.ontology.core.api.types.AxiomType;
 import org.matonto.ontology.core.api.types.ClassExpressionType;
 import org.matonto.ontology.core.api.types.EntityType;
+import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.ValueFactory;
@@ -61,16 +72,6 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.easymock.EasyMock.expect;
-import static org.easymock.EasyMock.isA;
-import static org.easymock.EasyMock.mock;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.powermock.api.easymock.PowerMock.mockStatic;
-import static org.powermock.api.easymock.PowerMock.mockStaticPartial;
-import static org.powermock.api.easymock.PowerMock.replay;
-
 
 
 @RunWith(PowerMockRunner.class)
@@ -81,6 +82,7 @@ import static org.powermock.api.easymock.PowerMock.replay;
 public class SimpleOntologyValuesTest {
 
     private ValueFactory factory;
+    private BNodeService bNodeService;
     private IRI ontologyIRI;
     private IRI versionIRI;
     private org.semanticweb.owlapi.model.IRI owlOntologyIRI;
@@ -88,12 +90,14 @@ public class SimpleOntologyValuesTest {
     @Before
     public void setUp() {
         factory = mock(ValueFactory.class);
+        bNodeService = mock(BNodeService.class);
         owlOntologyIRI = mock(org.semanticweb.owlapi.model.IRI.class);
         ontologyIRI = mock(IRI.class);
         versionIRI = mock(IRI.class);
 
         SimpleOntologyValues sov = new SimpleOntologyValues();
         sov.setValueFactory(factory);
+        sov.setbNodeService(bNodeService);
     }
     
     @Test

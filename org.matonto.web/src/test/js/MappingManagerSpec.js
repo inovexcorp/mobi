@@ -30,6 +30,7 @@ describe('Mapping Manager service', function() {
         injectSplitIRIFilter();
         mockOntologyManager();
         mockUtil();
+        injectRestPathConstant();
 
         module(function($provide) {
             $provide.service('$window', function() {
@@ -61,7 +62,7 @@ describe('Mapping Manager service', function() {
             params = $httpParamSerializer({sort: prefixes.dcterms + 'title'});
         });
         it('unless an error occors', function(done) {
-            $httpBackend.expectGET('/matontorest/mappings?' + params).respond(400, null, null, 'Error Message');
+            $httpBackend.expectGET('/mobirest/mappings?' + params).respond(400, null, null, 'Error Message');
             mappingManagerSvc.getMappingRecords().then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -72,7 +73,7 @@ describe('Mapping Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
-            $httpBackend.expectGET('/matontorest/mappings?' + params).respond(200, []);
+            $httpBackend.expectGET('/mobirest/mappings?' + params).respond(200, []);
             mappingManagerSvc.getMappingRecords().then(function(response) {
                 expect(response).toEqual([]);
                 done();
@@ -86,7 +87,7 @@ describe('Mapping Manager service', function() {
     describe('should upload a mapping', function() {
         var title = 'title', description = 'description', keywords = [];
         it('unless an error occurs', function(done) {
-            $httpBackend.expectPOST('/matontorest/mappings',
+            $httpBackend.expectPOST('/mobirest/mappings',
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
@@ -102,7 +103,7 @@ describe('Mapping Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
-            $httpBackend.expectPOST('/matontorest/mappings',
+            $httpBackend.expectPOST('/mobirest/mappings',
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
@@ -121,7 +122,7 @@ describe('Mapping Manager service', function() {
     describe('should retrieve a mapping by id', function() {
         var id = 'mapping-record';
         it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/matontorest/mappings/' + id).respond(400, null, null, 'Error Message');
+            $httpBackend.expectGET('/mobirest/mappings/' + id).respond(400, null, null, 'Error Message');
             mappingManagerSvc.getMapping(id).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -132,7 +133,7 @@ describe('Mapping Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
-            $httpBackend.expectGET('/matontorest/mappings/' + id).respond(200, []);
+            $httpBackend.expectGET('/mobirest/mappings/' + id).respond(200, []);
             mappingManagerSvc.getMapping(id).then(function(response) {
                 expect(response).toEqual([]);
                 done();
@@ -145,12 +146,12 @@ describe('Mapping Manager service', function() {
     });
     it('should download a mapping by id', function() {
         mappingManagerSvc.downloadMapping('mapping', 'jsonld');
-        expect(windowSvc.location).toBe('/matontorest/mappings/mapping?format=jsonld');
+        expect(windowSvc.location).toBe('/mobirest/mappings/mapping?format=jsonld');
     });
     describe('should delete a mapping by id', function() {
         var id = 'mappingname';
         it('unless an error occurs', function(done) {
-            $httpBackend.expectDELETE('/matontorest/mappings/' + id).respond(400, null, null, 'Error Message');
+            $httpBackend.expectDELETE('/mobirest/mappings/' + id).respond(400, null, null, 'Error Message');
             mappingManagerSvc.deleteMapping(id).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -161,7 +162,7 @@ describe('Mapping Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('successfully', function(done) {
-            $httpBackend.expectDELETE('/matontorest/mappings/' + id).respond(200, '');
+            $httpBackend.expectDELETE('/mobirest/mappings/' + id).respond(200, '');
             mappingManagerSvc.deleteMapping(id).then(function(response) {
                 expect(response).toEqual('');
                 done();

@@ -23,12 +23,12 @@ package org.matonto.catalog.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
 import static org.matonto.rest.util.RestUtils.getRDFFormatFileExtension;
 import static org.matonto.rest.util.RestUtils.getRDFFormatMimeType;
 import static org.matonto.rest.util.RestUtils.getTypedObjectFromJsonld;
 import static org.matonto.rest.util.RestUtils.jsonldToDeskolemizedModel;
-import static org.matonto.rest.util.RestUtils.jsonldToModel;
 import static org.matonto.rest.util.RestUtils.modelToSkolemizedString;
 
 import aQute.bnd.annotation.component.Component;
@@ -37,6 +37,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.CatalogProvUtils;
 import org.matonto.catalog.api.PaginatedSearchParams;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.builder.Conflict;
@@ -63,6 +64,7 @@ import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontologies.provo.InstantaneousEvent;
 import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Model;
@@ -113,6 +115,7 @@ public class CatalogRestImpl implements CatalogRest {
     private ValueFactory vf;
     private VersioningManager versioningManager;
     private BNodeService bNodeService;
+    private CatalogProvUtils provUtils;
 
     protected EngineManager engineManager;
     protected DistributionFactory distributionFactory;
@@ -128,53 +131,58 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Reference
-    protected void setEngineManager(EngineManager engineManager) {
+    void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
     }
 
     @Reference
-    protected void setTransformer(SesameTransformer transformer) {
+    void setTransformer(SesameTransformer transformer) {
         this.transformer = transformer;
     }
 
     @Reference
-    protected void setCatalogManager(CatalogManager catalogManager) {
+    void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
     }
 
     @Reference
-    protected void setVf(ValueFactory vf) {
+    void setVf(ValueFactory vf) {
         this.vf = vf;
     }
 
     @Reference
-    protected void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
+    void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
         this.factoryRegistry = factoryRegistry;
     }
 
     @Reference
-    protected void setDistributionFactory(DistributionFactory distributionFactory) {
+    void setDistributionFactory(DistributionFactory distributionFactory) {
         this.distributionFactory = distributionFactory;
     }
 
     @Reference
-    protected void setCommitFactory(CommitFactory commitFactory) {
+    void setCommitFactory(CommitFactory commitFactory) {
         this.commitFactory = commitFactory;
     }
 
     @Reference
-    protected void setInProgressCommitFactory(InProgressCommitFactory inProgressCommitFactory) {
+    void setInProgressCommitFactory(InProgressCommitFactory inProgressCommitFactory) {
         this.inProgressCommitFactory = inProgressCommitFactory;
     }
 
     @Reference
-    protected void setVersioningManager(VersioningManager versioningManager) {
+    void setVersioningManager(VersioningManager versioningManager) {
         this.versioningManager = versioningManager;
     }
 
     @Reference
-    protected void setbNodeService(BNodeService bNodeService) {
+    void setbNodeService(BNodeService bNodeService) {
         this.bNodeService = bNodeService;
+    }
+
+    @Reference
+    void setProvUtils(CatalogProvUtils provUtils) {
+        this.provUtils = provUtils;
     }
 
     @Override
@@ -249,16 +257,15 @@ public class CatalogRestImpl implements CatalogRest {
     @Override
     public Response createRecord(ContainerRequestContext context, String catalogId, String typeIRI, String title,
                                  String identifierIRI, String description, String keywords) {
+        checkStringParam(title, "Record title is required");
+        Map<String, OrmFactory<? extends Record>> recordFactories = getRecordFactories();
+        if (typeIRI == null || !recordFactories.keySet().contains(typeIRI)) {
+            throw ErrorUtils.sendError("Invalid Record type", Response.Status.BAD_REQUEST);
+        }
+        User activeUser = getActiveUser(context, engineManager);
+        CreateActivity createActivity = null;
         try {
-            Map<String, OrmFactory<? extends Record>> recordFactories = getRecordFactories();
-            if (typeIRI == null || !recordFactories.keySet().contains(typeIRI)) {
-                throw ErrorUtils.sendError("Invalid Record type", Response.Status.BAD_REQUEST);
-            }
-            if (title == null) {
-                throw ErrorUtils.sendError("Record title is required", Response.Status.BAD_REQUEST);
-            }
-
-            User activeUser = getActiveUser(context, engineManager);
+            createActivity = provUtils.startCreateActivity(activeUser);
             RecordConfig.Builder builder = new RecordConfig.Builder(title, Collections.singleton(activeUser));
             if (identifierIRI != null) {
                 builder.identifier(identifierIRI);
@@ -272,11 +279,17 @@ public class CatalogRestImpl implements CatalogRest {
 
             Record newRecord = catalogManager.createRecord(builder.build(), recordFactories.get(typeIRI));
             catalogManager.addRecord(vf.createIRI(catalogId), newRecord);
+            provUtils.endCreateActivity(createActivity, newRecord.getResource());
             return Response.status(201).entity(newRecord.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
+            provUtils.removeActivity(createActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MatOntoException ex) {
+            provUtils.removeActivity(createActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (Exception ex) {
+            provUtils.removeActivity(createActivity);
+            throw ex;
         }
     }
 
@@ -414,12 +427,10 @@ public class CatalogRestImpl implements CatalogRest {
     public Response createVersion(ContainerRequestContext context, String catalogId, String recordId, String typeIRI,
                                   String title, String description) {
         try {
+            checkStringParam(title, "Version title is required");
             Map<String, OrmFactory<? extends Version>> versionFactories = getVersionFactories();
             if (typeIRI == null || !versionFactories.keySet().contains(typeIRI)) {
                 throw ErrorUtils.sendError("Invalid Version type", Response.Status.BAD_REQUEST);
-            }
-            if (title == null) {
-                throw ErrorUtils.sendError("Version title is required", Response.Status.BAD_REQUEST);
             }
 
             Version newVersion = catalogManager.createVersion(title, description, versionFactories.get(typeIRI));
@@ -614,12 +625,10 @@ public class CatalogRestImpl implements CatalogRest {
     public Response createBranch(ContainerRequestContext context, String catalogId, String recordId,
                                  String typeIRI, String title, String description) {
         try {
+            checkStringParam(title, "Branch title is required");
             Map<String, OrmFactory<? extends Branch>> branchFactories = getBranchFactories();
             if (typeIRI == null || !branchFactories.keySet().contains(typeIRI)) {
                 throw ErrorUtils.sendError("Invalid Branch type", Response.Status.BAD_REQUEST);
-            }
-            if (title == null) {
-                throw ErrorUtils.sendError("Branch title is required", Response.Status.BAD_REQUEST);
             }
 
             Branch newBranch = catalogManager.createBranch(title, description, branchFactories.get(typeIRI));
@@ -717,9 +726,7 @@ public class CatalogRestImpl implements CatalogRest {
     public Response createBranchCommit(ContainerRequestContext context, String catalogId, String recordId,
                                        String branchId, String message) {
         try {
-            if (message == null) {
-                throw ErrorUtils.sendError("Commit message is required", Response.Status.BAD_REQUEST);
-            }
+            checkStringParam(message, "Commit message is required");
             User activeUser = getActiveUser(context, engineManager);
             Resource newCommitId = versioningManager.commit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId), activeUser, message);
@@ -1005,7 +1012,8 @@ public class CatalogRestImpl implements CatalogRest {
         return createPaginatedResponseWithJson(uriInfo, results, totalSize, limit, offset);
     }
 
-    private Response createPaginatedResponseWithJson(UriInfo uriInfo, JSONArray items, int totalSize, int limit, int offset) {
+    private Response createPaginatedResponseWithJson(UriInfo uriInfo, JSONArray items, int totalSize, int limit,
+                                                     int offset) {
         Links links = LinksUtils.buildLinks(uriInfo, items.size(), totalSize, limit, offset);
         Response.ResponseBuilder response = Response.ok(items).header("X-Total-Count", totalSize);
         if (links.getNext() != null) {
@@ -1162,9 +1170,7 @@ public class CatalogRestImpl implements CatalogRest {
      */
     private Distribution createDistribution(String title, String description, String format, String accessURL,
                                             String downloadURL, ContainerRequestContext context) {
-        if (title == null) {
-            throw ErrorUtils.sendError("Distribution title is required", Response.Status.BAD_REQUEST);
-        }
+        checkStringParam(title, "Distribution title is required");
         DistributionConfig.Builder builder = new DistributionConfig.Builder(title);
         if (description != null) {
             builder.description(description);
@@ -1195,7 +1201,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @return The new Thing if the JSON-LD contains the correct ID Resource; throws a 400 otherwise.
      */
     private <T extends Thing> T getNewThing(String newThingJson, Resource thingId, OrmFactory<T> factory) {
-        Model newThingModel = jsonldToDeskolemizedModel(newThingJson, transformer, bNodeService);
+        Model newThingModel = convertJsonld(newThingJson);
         return factory.getExisting(thingId, newThingModel).orElseThrow(() ->
                 ErrorUtils.sendError(factory.getTypeIRI().getLocalName() + " IDs must match",
                         Response.Status.BAD_REQUEST));
@@ -1257,7 +1263,7 @@ public class CatalogRestImpl implements CatalogRest {
      * @return A Model containing the statements from the JSON-LD string.
      */
     private Model convertJsonld(String jsonld) {
-        return jsonldToModel(jsonld, transformer);
+        return jsonldToDeskolemizedModel(jsonld, transformer, bNodeService);
     }
 
 
