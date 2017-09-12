@@ -1064,19 +1064,19 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
-//    @Override
-//    public Revision getRevision(Resource commitId) {
-//        try (RepositoryConnection conn = repository.getConnection()) {
-//            return utils.getRevision(commitId, conn);
-//        }
-//    }
-//
-//    @Override
-//    public Difference getRevisionChanges(Resource commitId) {
-//        try (RepositoryConnection conn = repository.getConnection()) {
-//            return utils.getRevision(commitId, conn);
-//        }
-//    }
+    @Override
+    public Revision getRevision(Resource commitId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            return utils.getRevision(commitId, conn);
+        }
+    }
+
+    @Override
+    public Difference getRevisionChanges(Resource commitId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            return utils.getRevisionChanges(commitId, conn);
+        }
+    }
 
     @Override
     public Difference getCommitDifference(Resource commitId) {

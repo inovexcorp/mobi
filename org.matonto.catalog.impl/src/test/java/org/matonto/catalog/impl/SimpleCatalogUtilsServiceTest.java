@@ -1779,6 +1779,36 @@ public class SimpleCatalogUtilsServiceTest {
         }
     }
 
+    /* getRevisionChanges */
+
+    @Test
+    public void getRevisionChangesTest() throws Exception {
+        // Setup
+        IRI commitId = vf.createIRI(COMMITS + "quad-test2");
+        IRI object1 = vf.createIRI("http://matonto.org/test/object1");
+        IRI object2 = vf.createIRI("http://matonto.org/test/object2");
+        IRI defaultAdds = getAdditionsResource(commitId);
+        IRI defaultDels = getDeletionsResource(commitId);
+        IRI graph1Adds = getQuadAdditionsResource(commitId, GRAPHS + "quad-graph1");
+        IRI graph1Dels = getQuadDeletionsResource(commitId, GRAPHS + "quad-graph1");
+
+        // Expected Data
+        Statement add1 = vf.createStatement(object1, titleIRI, vf.createLiteral("Test 2 Title"), defaultAdds);
+        Statement add2 = vf.createStatement(object2, titleIRI, vf.createLiteral("Test 2 Title"), graph1Adds);
+        Model adds = mf.createModel(Stream.of(add1, add2).collect(Collectors.toSet()));
+
+        Statement del1 = vf.createStatement(object1, titleIRI, vf.createLiteral("Test 1 Title"), defaultDels);
+        Statement del2 = vf.createStatement(object2, titleIRI, vf.createLiteral("Test 1 Title"), graph1Dels);
+        Model dels = mf.createModel(Stream.of(del1, del2).collect(Collectors.toSet()));
+
+        // Test
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Difference diff = service.getRevisionChanges(commitId, conn);
+            assertEquals(adds, diff.getAdditions());
+            assertEquals(dels, diff.getDeletions());
+        }
+    }
+
     /* getCommitDifference */
 
     @Test

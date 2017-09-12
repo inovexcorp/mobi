@@ -518,10 +518,23 @@ public interface CatalogUtilsService {
 
     /**
      * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference. The
+     * statements contained in the returned Difference will have a context that matches the storage quad. That is,
+     * tracked triples will have a context that matches the Revision additions and deletions contexts and tracked quads
+     * will have a context that matches the GraphRevision additions and deletions contexts.
+     *
+     * @param commitId The Resource identifying the Commit to retrieve the Difference from.
+     * @param conn The RepositoryConnection which contains the requested Commit.
+     * @return A Difference object containing the addition and deletion statements of a Commit.
+     */
+    Difference getRevisionChanges(Resource commitId, RepositoryConnection conn);
+
+    /**
+     * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference. The
      * statements contained in the returned Difference will have a context that matches the tracked quad. That is,
      * tracked triples will have no context and tracked quads will have a context that matches the data named graph.
      *
      * @param commitId The Resource identifying the Commit to retrieve the Difference from.
+     * @param conn The RepositoryConnection which contains the requested Commit.
      * @return A Difference object containing the addition and deletion statements of a Commit.
      */
     Difference getCommitDifference(Resource commitId, RepositoryConnection conn);

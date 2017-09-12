@@ -661,6 +661,33 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
+    public Difference getRevisionChanges(Resource commitId, RepositoryConnection conn) {
+        Revision revision = getRevision(commitId, conn);
+
+        Model addModel = mf.createModel();
+        Model deleteModel = mf.createModel();
+
+        IRI additionsGraph = revision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commitId.stringValue()));
+        IRI deletionsGraph = revision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commitId.stringValue()));
+
+        conn.getStatements(null, null, null, additionsGraph).forEach(addModel::add);
+        conn.getStatements(null, null, null, deletionsGraph).forEach(deleteModel::add);
+
+        revision.getGraphRevision().forEach(graphRevision -> {
+            IRI adds = graphRevision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commitId.stringValue()));
+            IRI dels = graphRevision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commitId.stringValue()));
+
+            conn.getStatements(null, null, null, adds).forEach(addModel::add);
+            conn.getStatements(null, null, null, dels).forEach(deleteModel::add);
+        });
+
+        return new Difference.Builder()
+            .additions(addModel)
+            .deletions(deleteModel)
+            .build();
+    }
+
+    @Override
     public Difference getCommitDifference(Resource commitId, RepositoryConnection conn) {
         Revision revision = getRevision(commitId, conn);
 
