@@ -37,8 +37,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@Path("/provenance")
-@Api( value = "/provenance" )
+@Path("/provenance-data")
+@Api( value = "/provenance-data" )
 public interface ProvRest {
     /**
      * Returns a JSON object with all the Activities sorted by date with latest first and all referenced Entities.

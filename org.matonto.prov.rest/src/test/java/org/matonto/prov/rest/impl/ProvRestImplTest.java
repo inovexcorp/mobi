@@ -221,7 +221,7 @@ public class ProvRestImplTest extends MatontoRestTestNg {
             conn.clear();
         }
 
-        Response response = target().path("provenance").request().get();
+        Response response = target().path("provenance-data").request().get();
         assertEquals(response.getStatus(), 200);
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "0");
@@ -244,7 +244,7 @@ public class ProvRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getActivitiesOnePageTest() throws Exception {
-        Response response = target().path("provenance").request().get();
+        Response response = target().path("provenance-data").request().get();
         assertEquals(response.getStatus(), 200);
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "10");
@@ -271,7 +271,7 @@ public class ProvRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getActivitiesWithLinksTest() throws Exception {
-        Response response = target().path("provenance").queryParam("limit", 2).queryParam("offset", 2).request().get();
+        Response response = target().path("provenance-data").queryParam("limit", 2).queryParam("offset", 2).request().get();
         assertEquals(response.getStatus(), 200);
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "10");
@@ -302,13 +302,13 @@ public class ProvRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void getActivitiesWithNegativeLimitTest() {
-        Response response = target().path("provenance").queryParam("limit", -1).request().get();
+        Response response = target().path("provenance-data").queryParam("limit", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
     public void getActivitiesWithNegativeOffsetTest() {
-        Response response = target().path("provenance").queryParam("offset", -1).request().get();
+        Response response = target().path("provenance-data").queryParam("offset", -1).request().get();
         assertEquals(response.getStatus(), 400);
     }
 
@@ -317,7 +317,7 @@ public class ProvRestImplTest extends MatontoRestTestNg {
         // Setup:
         doThrow(new MatOntoException()).when(provService).getConnection();
 
-        Response response = target().path("provenance").request().get();
+        Response response = target().path("provenance-data").request().get();
         assertEquals(response.getStatus(), 500);
     }
 
