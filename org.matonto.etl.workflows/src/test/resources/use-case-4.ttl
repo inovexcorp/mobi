@@ -1,0 +1,42 @@
+@prefix etl: <http://matonto.org/ontologies/etl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+<http://test.org/workflow> a etl:Workflow ;
+    etl:route _:b0, _:b3 ;
+    etl:dataSource <http://test.org/dataSource/0> ,
+                   <http://test.org/dataSource/1> ;
+    etl:processor <http://test.org/processor/0> ,
+                  <http://test.org/processor/1> ;
+    etl:destination <http://test.org/destination/0> ,
+                    <http://test.org/destination/1> .
+
+<http://test.org/dataSource/0> a etl:DataSource .
+<http://test.org/dataSource/1> a etl:DataSource .
+<http://test.org/processor/0> a etl:Processor .
+<http://test.org/processor/1> a etl:Processor .
+<http://test.org/destination/0> a etl:Destination .
+<http://test.org/destination/1> a etl:Destination .
+
+_:b0 a rdf:List ;
+    rdf:first <http://test.org/dataSource/0> ;
+    rdf:rest _:b1 .
+
+_:b1 a rdf:List ;
+    rdf:first <http://test.org/processor/0> ;
+    rdf:rest _:b2 .
+
+_:b2 a rdf:List ;
+    rdf:first <http://test.org/destination/0> ;
+    rdf:rest rdf:nil .
+
+_:b3 a rdf:List ;
+    rdf:first <http://test.org/dataSource/1> ;
+    rdf:rest _:b4 .
+
+_:b4 a rdf:List ;
+    rdf:first <http://test.org/processor/1> ;
+    rdf:rest _:b5 .
+
+_:b5 a rdf:List ;
+    rdf:first <http://test.org/destination/1> ;
+    rdf:rest rdf:nil .

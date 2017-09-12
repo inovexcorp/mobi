@@ -1,0 +1,30 @@
+@prefix etl: <http://matonto.org/ontologies/etl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+<http://test.org/workflow> a etl:Workflow ;
+    etl:route _:b0 ;
+    etl:dataSource <http://test.org/dataSource> ;
+    etl:processor <http://test.org/processor> ;
+    etl:destination <http://test.org/destination/0> ,
+                    <http://test.org/destination/1> .
+
+<http://test.org/dataSource> a etl:DataSource .
+<http://test.org/processor> a etl:Processor .
+<http://test.org/destination/0> a etl:Destination .
+<http://test.org/destination/1> a etl:Destination .
+
+_:b0 a rdf:List ;
+    rdf:first <http://test.org/dataSource> ;
+    rdf:rest _:b1 .
+
+_:b1 a rdf:List ;
+    rdf:first <http://test.org/processor> ;
+    rdf:rest _:b2, _:b3 .
+
+_:b2 a rdf:List ;
+    rdf:first <http://test.org/destination/0> ;
+    rdf:rest rdf:nil .
+
+_:b3 a rdf:List ;
+    rdf:first <http://test.org/destination/1> ;
+    rdf:rest rdf:nil .
