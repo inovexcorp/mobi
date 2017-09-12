@@ -664,18 +664,15 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     public Difference getRevisionChanges(Resource commitId, RepositoryConnection conn) {
         Revision revision = getRevision(commitId, conn);
 
-        Model addModel = mf.createModel();
-        Model deleteModel = mf.createModel();
-
         IRI additionsGraph = revision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commitId.stringValue()));
         IRI deletionsGraph = revision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commitId.stringValue()));
 
-        conn.getStatements(null, null, null, additionsGraph).forEach(addModel::add);
-        conn.getStatements(null, null, null, deletionsGraph).forEach(deleteModel::add);
+        Model addModel = RepositoryResults.asModel(conn.getStatements(null, null, null, additionsGraph), mf);
+        Model deleteModel = RepositoryResults.asModel(conn.getStatements(null, null, null, deletionsGraph), mf);
 
         revision.getGraphRevision().forEach(graphRevision -> {
-            IRI adds = graphRevision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commitId.stringValue()));
-            IRI dels = graphRevision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commitId.stringValue()));
+            IRI adds = graphRevision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on GraphRevision for Commit " + commitId.stringValue()));
+            IRI dels = graphRevision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on GraphRevision for Commit " + commitId.stringValue()));
 
             conn.getStatements(null, null, null, adds).forEach(addModel::add);
             conn.getStatements(null, null, null, dels).forEach(deleteModel::add);
