@@ -1064,6 +1064,20 @@ public class SimpleCatalogManager implements CatalogManager {
         }
     }
 
+//    @Override
+//    public Revision getRevision(Resource commitId) {
+//        try (RepositoryConnection conn = repository.getConnection()) {
+//            return utils.getRevision(commitId, conn);
+//        }
+//    }
+//
+//    @Override
+//    public Difference getRevisionChanges(Resource commitId) {
+//        try (RepositoryConnection conn = repository.getConnection()) {
+//            return utils.getRevision(commitId, conn);
+//        }
+//    }
+
     @Override
     public Difference getCommitDifference(Resource commitId) {
         long start = System.currentTimeMillis();
@@ -1163,8 +1177,8 @@ public class SimpleCatalogManager implements CatalogManager {
             leftCommits.removeAll(commonCommits);
             rightCommits.removeAll(commonCommits);
 
-            Difference leftDiff = utils.getRevisionChanges(leftCommits, conn);
-            Difference rightDiff = utils.getRevisionChanges(rightCommits, conn);
+            Difference leftDiff = utils.getCommitDifference(leftCommits, conn);
+            Difference rightDiff = utils.getCommitDifference(rightCommits, conn);
 
             Model left = leftDiff.getAdditions();
             Model right = rightDiff.getAdditions();

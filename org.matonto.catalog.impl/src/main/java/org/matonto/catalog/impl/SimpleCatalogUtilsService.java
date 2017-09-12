@@ -640,7 +640,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
-    public Difference getRevisionChanges(List<Resource> commits, RepositoryConnection conn) {
+    public Difference getCommitDifference(List<Resource> commits, RepositoryConnection conn) {
         Difference difference = new Difference.Builder()
                 .additions(mf.createModel())
                 .deletions(mf.createModel())
@@ -656,8 +656,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Model getCompiledResource(List<Resource> commits, RepositoryConnection conn) {
-        Difference revisionChanges = getRevisionChanges(commits, conn);
-        return revisionChanges.getAdditions();
+        Difference difference = getCommitDifference(commits, conn);
+        return difference.getAdditions();
     }
 
     @Override

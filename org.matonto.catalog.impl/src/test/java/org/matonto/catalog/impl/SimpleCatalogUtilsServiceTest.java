@@ -1712,7 +1712,7 @@ public class SimpleCatalogUtilsServiceTest {
             Model expectDel = mf.createModel();
             expectDel.add(vf.createStatement(subject, titleIRI, vf.createLiteral("Test 0 Title")));
 
-            Difference result = service.getRevisionChanges(commits, conn);
+            Difference result = service.getCommitDifference(commits, conn);
             result.getAdditions().forEach(statement -> assertTrue(expectAdd.contains(statement)));
             result.getDeletions().forEach(statement -> assertTrue(expectDel.contains(statement)));
         }
@@ -1739,7 +1739,7 @@ public class SimpleCatalogUtilsServiceTest {
             expectAdd.add(vf.createStatement(object2, titleIRI, vf.createLiteral("Test 2 Title"), graph1));
             Model expectDel = mf.createModel();
 
-            Difference result = service.getRevisionChanges(commits, conn);
+            Difference result = service.getCommitDifference(commits, conn);
             assertEquals(expectAdd.size(), result.getAdditions().size());
             result.getAdditions().forEach(statement -> assertTrue(expectAdd.contains(statement)));
             assertEquals(expectDel.size(), result.getDeletions().size());

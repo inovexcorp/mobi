@@ -2002,7 +2002,7 @@ public class SimpleCatalogManagerTest {
         verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getRevisionChanges(anyListOf(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
         assertEquals(1, result.size());
         result.forEach(conflict -> {
@@ -2058,7 +2058,7 @@ public class SimpleCatalogManagerTest {
         verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getRevisionChanges(anyListOf(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
         assertEquals(1, result.size());
         result.forEach(conflict -> {
@@ -2105,7 +2105,7 @@ public class SimpleCatalogManagerTest {
         verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getRevisionChanges(anyListOf(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
         assertEquals(0, result.size());
     }
@@ -2143,7 +2143,7 @@ public class SimpleCatalogManagerTest {
         verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getRevisionChanges(anyListOf(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
         assertEquals(0, result.size());
     }
@@ -2181,7 +2181,7 @@ public class SimpleCatalogManagerTest {
         verify(utilsService).validateResource(eq(rightId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(rightId), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getRevisionChanges(anyListOf(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
         assertEquals(1, result.size());
         result.forEach(conflict -> {
@@ -2228,7 +2228,7 @@ public class SimpleCatalogManagerTest {
         verify(utilsService, atLeastOnce()).validateResource(eq(COMMIT_IRI), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(leftId), eq(true), any(RepositoryConnection.class));
         verify(utilsService).getCommitChain(eq(COMMIT_IRI), eq(true), any(RepositoryConnection.class));
-        verify(utilsService, times(2)).getRevisionChanges(anyListOf(Resource.class), any(RepositoryConnection.class));
+        verify(utilsService, times(2)).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
         verify(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
         assertEquals(0, result.size());
     }
@@ -2317,7 +2317,7 @@ public class SimpleCatalogManagerTest {
             } else {
                 return mf.createModel();
             }
-        }).when(utilsService).getRevisionChanges(anyListOf(Resource.class), any(RepositoryConnection.class));
+        }).when(utilsService).getCommitDifference(anyListOf(Resource.class), any(RepositoryConnection.class));
         doReturn(originalModel).when(utilsService).getCompiledResource(eq(COMMIT_IRI), any(RepositoryConnection.class));
     }
 }
