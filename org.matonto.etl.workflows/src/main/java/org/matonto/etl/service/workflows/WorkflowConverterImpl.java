@@ -139,11 +139,11 @@ public class WorkflowConverterImpl implements WorkflowConverter {
         Map<Resource, Endpoint> destinations = new HashMap<>();
 
         collectStuff(DataSource.class, workflow.getDataSource(), dataSources, (dataSource, iri) ->
-                getRouteFactory(iri, dataSourceFactories, dataSource).getEndpoint(dataSource));
+                getRouteFactory(iri, dataSourceFactories).getEndpoint(dataSource));
         collectStuff(Processor.class, workflow.getProcessor(), processors, (processor, iri) ->
-                getRouteFactory(iri, processorFactories, processor).getProcessor(processor));
+                getRouteFactory(iri, processorFactories).getProcessor(processor));
         collectStuff(Destination.class, workflow.getDestination(), destinations, (destination, iri) ->
-                getRouteFactory(iri, destinationFactories, destination).getEndpoint(destination));
+                getRouteFactory(iri, destinationFactories).getEndpoint(destination));
 
         return new RouteBuilder() {
             @Override
@@ -298,11 +298,11 @@ public class WorkflowConverterImpl implements WorkflowConverter {
         R apply(T thing, IRI iri);
     }
 
-    private <T, S extends Thing> T getRouteFactory(Resource iri, Map<Resource, T> map, S thing) {
+    private <T, S extends Thing> T getRouteFactory(Resource iri, Map<Resource, T> map) {
         if (map.containsKey(iri)) {
             return map.get(iri);
         } else {
-            throw new IllegalArgumentException(thing.getResource() + " type is not supported");
+            throw new IllegalArgumentException(iri + " type is not supported");
         }
     }
 }

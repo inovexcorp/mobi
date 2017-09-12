@@ -114,6 +114,7 @@ public class WorkflowConverterImplTest {
     private final IRI FIRST_IRI = vf.createIRI(List.first_IRI);
     private final IRI REST_IRI = vf.createIRI(List.rest_IRI);
     private final IRI NIL = vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#nil");
+    private final IRI SUB_ROUTE = vf.createIRI("http://matonto.org/ontologies/etl#subRoute");
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -243,7 +244,7 @@ public class WorkflowConverterImplTest {
         List route = listFactory.createNew(vf.createBNode(), workflow.getModel());
         workflow.addRoute(route);
         thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage(DATASOURCE_ID + " type is not supported");
+        thrown.expectMessage(FileDataSource.TYPE + " type is not supported");
 
         converter.convert(workflow);
     }
@@ -256,7 +257,7 @@ public class WorkflowConverterImplTest {
         List route = listFactory.createNew(vf.createBNode(), workflow.getModel());
         workflow.addRoute(route);
         thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage(PROCESSOR_ID + " type is not supported");
+        thrown.expectMessage(MappingProcessor.TYPE + " type is not supported");
 
         converter.convert(workflow);
     }
@@ -269,7 +270,7 @@ public class WorkflowConverterImplTest {
         List route = listFactory.createNew(vf.createBNode(), workflow.getModel());
         workflow.addRoute(route);
         thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage(DESTINATION_ID + " type is not supported");
+        thrown.expectMessage(FileDestination.TYPE + " type is not supported");
 
         converter.convert(workflow);
     }
@@ -470,6 +471,31 @@ public class WorkflowConverterImplTest {
 
         RouteBuilder result = converter.convert(workflow);
         result.addRoutesToCamelContext(context);
+    }
+
+    @Test
+    public void convertWithExistingSubRouteTest() throws Exception {
+        // Setup:
+        List route = listFactory.createNew(vf.createBNode(), workflow.getModel());
+        List second = listFactory.createNew(vf.createBNode(), workflow.getModel());
+        DataSource dataSource = dataSourceFactory.createNew(DATASOURCE_ID, workflow.getModel());
+        Destination destination = destinationFactory.createNew(DESTINATION_ID, workflow.getModel());
+        SubRoute subRoute = subRouteFactory.createNew(vf.createIRI("http://test.org/subRoute"), workflow.getModel());
+        subRoute.setWorkflow(workflow);
+        route.addProperty(subRoute.getResource(), SUB_ROUTE);
+        workflow.addRoute(route);
+        workflow.addDataSource(dataSource);
+        workflow.addDestination(destination);
+        route.addProperty(DATASOURCE_ID, FIRST_IRI);
+        route.addProperty(second.getResource(), REST_IRI);
+        second.addProperty(destination.getResource(), FIRST_IRI);
+        second.addProperty(NIL, REST_IRI);
+
+        RouteBuilder result = converter.convert(workflow);
+        result.addRoutesToCamelContext(context);
+        assertTrue(workflow.getModel().contains(subRoute.getResource(), TYPE_IRI, vf.createIRI(SubRoute.TYPE)));
+        assertEquals(1, workflow.getModel().filter(null, TYPE_IRI, vf.createIRI(SubRoute.TYPE)).size());
+        assertEquals(1, result.getRouteCollection().getRoutes().size());
     }
 
     @Test
