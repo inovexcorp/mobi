@@ -171,7 +171,8 @@ public class WorkflowConverterImpl implements WorkflowConverter {
                         boolean isProcessor = isType(workflow, first, Processor.TYPE);
                         boolean isDestination = isType(workflow, first, Destination.TYPE);
                         if (!isProcessor && !isDestination) {
-                            throw new IllegalArgumentException("Invalid route");
+                            throw new IllegalArgumentException("Route must use Processors and Destinations "
+                                    + "after initial DataSource");
                         } else if (isProcessor) {
                             def.process(getProcessor(processors, first));
                             processRest(workflow, list, toProcess, def, this);
@@ -229,17 +230,18 @@ public class WorkflowConverterImpl implements WorkflowConverter {
     private void processRest(Workflow workflow, org.matonto.ontologies.rdfs.List list,
                              List<Pair<org.matonto.ontologies.rdfs.List, RouteDefinition>> toProcess,
                              RouteDefinition def, RouteBuilder builder) {
-        if (list.getRest_resource().contains(vf.createIRI(NIL))) {
+        Set<Resource> restSet = list.getRest_resource();
+        if (restSet.contains(vf.createIRI(NIL))) {
             throw new IllegalArgumentException("Route must end with a Destination");
         }
-        if (list.getRest_resource().size() == 1) {
-            Resource restId = list.getRest_resource().iterator().next();
+        if (restSet.size() == 1) {
+            Resource restId = restSet.iterator().next();
             org.matonto.ontologies.rdfs.List rest = listFactory.getExisting(restId, workflow.getModel())
                     .orElseThrow(() -> new IllegalArgumentException("List rest property value must be a rdf:List"));
             toProcess.add(Pair.of(rest, def));
         } else {
             Set<String> ids = new HashSet<>();
-            for (Resource restId : list.getRest_resource()) {
+            for (Resource restId : restSet) {
                 org.matonto.ontologies.rdfs.List subList = listFactory.getExisting(restId, workflow.getModel())
                         .orElseThrow(() -> new IllegalArgumentException("List rest property value must be a rdf:List"));
                 IRI routeId = getRouteId(workflow, subList);
@@ -274,12 +276,11 @@ public class WorkflowConverterImpl implements WorkflowConverter {
                 .map(Optional::get)
                 .collect(Collectors.toList());
 
-        List<OrmFactory<? extends T>> orderedFactories =
-                factoryRegistry.getSortedFactoriesOfType(clazz)
+        return factoryRegistry.getSortedFactoriesOfType(clazz)
                         .stream()
                         .filter(ormFactory -> types.contains(ormFactory.getTypeIRI()))
-                        .collect(Collectors.toList());
-        return orderedFactories.get(0);
+                        .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No factory found for " + thing.getResource()));
     }
 
     private <T extends Thing, R> void collectStuff(Class<T> clazz, Set<T> things, Map<Resource, R> map,

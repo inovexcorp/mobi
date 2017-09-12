@@ -405,7 +405,7 @@ public class WorkflowConverterImplTest {
         second.addProperty(vf.createIRI("http://test.org/test"), FIRST_IRI);
         second.addProperty(vf.createBNode(), REST_IRI);
         thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("Invalid route");
+        thrown.expectMessage("Route must use Processors and Destinations after initial DataSource");
 
         RouteBuilder result = converter.convert(workflow);
         result.addRoutesToCamelContext(context);

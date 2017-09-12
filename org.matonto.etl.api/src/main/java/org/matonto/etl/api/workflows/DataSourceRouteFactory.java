@@ -51,6 +51,4 @@ public interface DataSourceRouteFactory<T extends DataSource> {
      * @return A Camel Endpoint configured by the provided DataSource
      */
     Endpoint getEndpoint(T dataSource);
-
-
 }
