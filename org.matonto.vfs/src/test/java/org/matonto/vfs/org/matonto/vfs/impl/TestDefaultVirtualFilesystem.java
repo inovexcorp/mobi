@@ -38,7 +38,9 @@ import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
@@ -51,33 +53,26 @@ public class TestDefaultVirtualFilesystem extends TestCase {
 
     private static URI testResources;
 
-    private static URI targetDirectory;
-
     private static URI writeFile;
 
     private static BasicVirtualFilesystem fs;
 
 
     @BeforeClass
-    public static void initializeUri() {
-        try {
-            testFile = new java.io.File("src/test/resources/test.txt").toURI();
-            assertNotNull(testFile);
-            testResources = new java.io.File("src/test/resources").toURI();
-            assertNotNull(testResources);
-            targetDirectory = new java.io.File("target").toURI();
-            assertNotNull(targetDirectory);
-            writeFile = new java.io.File(new java.io.File(targetDirectory).getAbsolutePath() + "/testFile").toURI();
-            assertNotNull(writeFile);
-            fs = new BasicVirtualFilesystem();
-            Method m = fs.getClass().getDeclaredMethod("activate");
-            m.setAccessible(true);
-            m.invoke(fs);
-            assertNotNull(fs);
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail(e.getMessage());
-        }
+    public static void initializeUri() throws Exception {
+        testFile = TestDefaultVirtualFilesystem.class.getResource("/test.txt").toURI();
+        testResources = TestDefaultVirtualFilesystem.class.getResource("/").toURI();
+        writeFile = new File(testResources.toString() + "testFile").toURI();
+        fs = new BasicVirtualFilesystem();
+
+        Map<String, Object> config = new HashMap<>();
+        config.put("maxNumberOfTempFiles", 10000);
+        config.put("secondsBetweenTempCleanup", 60000);
+
+        Method m = fs.getClass().getDeclaredMethod("activate", Map.class);
+        m.setAccessible(true);
+        m.invoke(fs, config);
+        assertNotNull(fs);
     }
 
     @Test
