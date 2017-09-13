@@ -132,6 +132,7 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
         OffsetDateTime stop = OffsetDateTime.now();
         Entity recordEntity = entityFactory.createNew(recordIRI, deleteActivity.getModel());
         recordEntity.addProperty(vf.createLiteral(stop), vf.createIRI(Entity.generatedAtTime_IRI));
+        recordEntity.addProperty(vf.createLiteral(catalogManager.getRepositoryId()), vf.createIRI(atLocation));
 //        recordEntity.addProperty(vf.createLiteral(recordTitle), vf.createIRI(_Thing.title_IRI));
         deleteActivity.addProperty(vf.createLiteral(stop), vf.createIRI(Activity.endedAtTime_IRI));
         deleteActivity.addInvalidated(recordEntity);

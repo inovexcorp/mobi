@@ -181,6 +181,7 @@ public class CatalogProvUtilsImplTest {
         Entity entity = createActivity.getGenerated().iterator().next();
         assertEquals(recordIRI, entity.getResource());
         assertTrue(entity.getModel().contains(entity.getResource(), vf.createIRI(Entity.generatedAtTime_IRI), null));
+        assertTrue(entity.getModel().contains(entity.getResource(), vf.createIRI("http://www.w3.org/ns/prov#atLocation"), vf.createLiteral("system")));
     }
 
     @Test
