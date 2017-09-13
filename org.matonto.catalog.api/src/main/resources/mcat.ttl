@@ -4,13 +4,13 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix foaf: <http://xmlns.com/foaf/0.1/>.
 @prefix dct: <http://purl.org/dc/terms/>.
-@prefix prov: <http://www.w3.org/ns/prov-o#>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
 @prefix : <http://matonto.org/ontologies/catalog#>.
 @base <http://matonto.org/ontologies/catalog>.
 
 <http://matonto.org/ontologies/catalog> a owl:Ontology;
     owl:versionIRI <http://matonto.org/ontologies/catalog#2.0>;
-    owl:imports <http://www.w3.org/ns/prov-o#>;
+    owl:imports <http://www.w3.org/ns/prov#>;
     rdfs:label "The MatOnto Catalog Ontology"@en;
     rdfs:comment "The MatOnto catalog ontology is designed to facilitate interoperability between MatOnto catalogs published on the Web. By using the MatOnto catalog to describe resources, publishers increase discoverability and enable easy consumption of metadata from multiple catalogs. It further enables decentralized publishing of catalogs and facilitates federated resource search across sites. Aggregated MatOnto catalog metadata can serve as a manifest file to facilitate digital preservation."@en;
     dct:creator [foaf:name "Jordan Lewis"], [foaf:name "Megan Mercer"];
@@ -204,15 +204,34 @@
 
 :additions a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "additions"@en;
-    rdfs:comment "Links the IRI of a graph containing the statements that were added with the described Revision."@en;
+    rdfs:comment "Links the IRI of a graph containing the triples that were added with the described Revision."@en;
     rdfs:domain :Revision;
     rdfs:range xsd:anyURI.
 
 :deletions a owl:DatatypeProperty, owl:FunctionalProperty;
     rdfs:label "deletions"@en;
-    rdfs:comment "Links the IRI of a graph containing the statements that were deleted with the described Revision."@en;
+    rdfs:comment "Links the IRI of a graph containing the triples that were deleted with the described Revision."@en;
     rdfs:domain :Revision;
     rdfs:range xsd:anyURI.
+
+:graphRevision a owl:ObjectProperty ;
+    rdfs:label "graph revision"@en ;
+    rdfs:comment "A Revision to track changes to a named graph."@en ;
+    rdfs:domain :Revision ;
+    rdfs:range :GraphRevision .
+
+# Graph Revision
+
+:GraphRevision a owl:Class;
+    rdfs:subClassOf :Revision;
+    rdfs:label "Graph Revision"@en;
+    rdfs:comment "An entity created by a Commit to track changes to a named graph."@en.
+
+:revisionedGraph a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "revisioned graph"@en;
+    rdfs:comment "Links the Resource of the revisioned named graph."@en;
+    rdfs:domain :GraphRevision;
+    rdfs:range <http://matonto.org/ontologies/matonto#Identifier>.
 
 # Misc.
 

@@ -29,6 +29,7 @@ import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.Distribution;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.Record;
+import org.matonto.catalog.api.ontologies.mcat.Revision;
 import org.matonto.catalog.api.ontologies.mcat.Version;
 import org.matonto.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import org.matonto.rdf.api.IRI;
@@ -42,6 +43,7 @@ import org.matonto.repository.api.RepositoryConnection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 public interface CatalogUtilsService {
     /**
@@ -370,7 +372,7 @@ public interface CatalogUtilsService {
      * @param conn A RepositoryConnection to use for lookup.
      * @throws IllegalStateException Thrown if the Commit has no addition or deletion graph.
      */
-    void updateCommit(Resource commitId, Model additions, Model deletions, RepositoryConnection conn);
+    void updateCommit(Resource commitId, @Nullable Model additions, @Nullable Model deletions, RepositoryConnection conn);
 
     /**
      * Adds the provided addition and deletion Models to the provided Commit.
@@ -394,27 +396,18 @@ public interface CatalogUtilsService {
     void addCommit(Branch branch, Commit commit, RepositoryConnection conn);
 
     /**
-     * Gets the Resource identifying the graph that contains the additions statements of the Commit identified by the
-     * provided Resource.
+     * Gets the Revision associated with the provided commit Resource.
      *
-     * @param commitId The Resource identifying the Commit that has the additions.
-     * @param conn A RepositoryConnection to use for lookup.
-     * @return The Resource for the additions graph.
-     * @throws IllegalStateException Thrown if the Commit has no additions graph.
+     * @param commitId The Resource identifying the commit
+     * @param conn The connection to the repository
+     * @return The Revision associated with the provided commit Resource.
      */
-    Resource getAdditionsResource(Resource commitId, RepositoryConnection conn);
+    Revision getRevision(Resource commitId, RepositoryConnection conn);
 
     /**
-     * Gets the Resource identifying the graph that contains the additions statements of the provided Commit.
-     *
-     * @param commit The Commit with the additions.
-     * @return The Resource for the additions graph.
-     * @throws IllegalStateException Thrown if the Commit has no additions graph.
-     */
-    Resource getAdditionsResource(Commit commit);
-
-    /**
-     * Gets the Stream of addition statements from the Commit identified by the provided Resource.
+     * Gets the Stream of addition statements from the Commit identified by the provided Resource. The returned
+     * statements will have a context that matches the tracked quad. That is, tracked triples will have no context and
+     * tracked quads will have a context that matches the data named graph.
      *
      * @param commitId The Resource identifying the commit
      * @param conn The connection to the repository
@@ -423,7 +416,9 @@ public interface CatalogUtilsService {
     Stream<Statement> getAdditions(Resource commitId, RepositoryConnection conn);
 
     /**
-     * Gets the Stream of addition statements from the provided Commit.
+     * Gets the Stream of addition statements from the provided Commit. The returned statements will have a context that
+     * matches the tracked quad. That is, tracked triples will have no context and tracked quads will have a context
+     * that matches the data named graph.
      *
      * @param commit The Commit
      * @param conn The connection to the repository
@@ -432,27 +427,9 @@ public interface CatalogUtilsService {
     Stream<Statement> getAdditions(Commit commit, RepositoryConnection conn);
 
     /**
-     * Gets the Resource identifying the graph that contains the deletions statements of the Commit identified by the
-     * provided Resource.
-     *
-     * @param commitId The Resource identifying the Commit that has the deletions.
-     * @param conn A RepositoryConnection to use for lookup.
-     * @return The Resource for the deletions graph.
-     * @throws IllegalStateException Thrown if the Commit has no deletions graph.
-     */
-    Resource getDeletionsResource(Resource commitId, RepositoryConnection conn);
-
-    /**
-     * Gets the Resource identifying the graph that contains the additions statements of the provided Commit.
-     *
-     * @param commit The Commit with the deletions.
-     * @return The Resource for the deletions graph.
-     * @throws IllegalStateException Thrown if the Commit has no deletions graph.
-     */
-    Resource getDeletionsResource(Commit commit);
-
-    /**
-     * Gets the Stream of deletion statements from the Commit identified by the provided Resource.
+     * Gets the Stream of deletion statements from the Commit identified by the provided Resource. The returned
+     * statements will have a context that matches the tracked quad. That is, tracked triples will have no context and
+     * tracked quads will have a context that matches the data named graph.
      *
      * @param commitId The Resource identifying the commit
      * @param conn The connection to the repository
@@ -461,7 +438,9 @@ public interface CatalogUtilsService {
     Stream<Statement> getDeletions(Resource commitId, RepositoryConnection conn);
 
     /**
-     * Gets the Stream of deletion statements from the provided Commit.
+     * Gets the Stream of deletion statements from the provided Commit. The returned statements will have a context that
+     * matches the tracked quad. That is, tracked triples will have no context and tracked quads will have a context
+     * that matches the data named graph.
      *
      * @param commit The Commit
      * @param conn The connection to the repository
@@ -519,15 +498,6 @@ public interface CatalogUtilsService {
     List<Resource> getCommitChain(Resource commitId, boolean asc, RepositoryConnection conn);
 
     /**
-     * Builds the Difference based on the provided List of Commit ids.
-     *
-     * @param commits The List of Commit ids which are supposed to be contained in the Model in ascending order.
-     * @param conn     The RepositoryConnection which contains the requested Commits.
-     * @return The Difference containing the aggregation of all the Commit additions and deletions.
-     */
-    Difference getRevisionChanges(List<Resource> commits, RepositoryConnection conn);
-
-    /**
      * Gets the Model which represents the entity at the instance of theCommit identified by the first Resource in
      * the provided List using previous Commit data to construct it.
      *
@@ -547,12 +517,38 @@ public interface CatalogUtilsService {
     Model getCompiledResource(Resource commitId, RepositoryConnection conn);
 
     /**
-     * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference.
+     * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference. The
+     * statements contained in the returned Difference will have a context that matches the storage quad. That is,
+     * tracked triples will have a context that matches the Revision additions and deletions contexts and tracked quads
+     * will have a context that matches the GraphRevision additions and deletions contexts.
      *
      * @param commitId The Resource identifying the Commit to retrieve the Difference from.
+     * @param conn The RepositoryConnection which contains the requested Commit.
+     * @return A Difference object containing the addition and deletion statements of a Commit.
+     */
+    Difference getRevisionChanges(Resource commitId, RepositoryConnection conn);
+
+    /**
+     * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference. The
+     * statements contained in the returned Difference will have a context that matches the tracked quad. That is,
+     * tracked triples will have no context and tracked quads will have a context that matches the data named graph.
+     *
+     * @param commitId The Resource identifying the Commit to retrieve the Difference from.
+     * @param conn The RepositoryConnection which contains the requested Commit.
      * @return A Difference object containing the addition and deletion statements of a Commit.
      */
     Difference getCommitDifference(Resource commitId, RepositoryConnection conn);
+
+    /**
+     * Builds the Difference based on the provided List of Commit ids. The statements contained in the returned
+     * Difference will have a context that matches the tracked quad. That is, tracked triples will have no context and
+     * tracked quads will have a context that matches the data named graph.
+     *
+     * @param commits The List of Commit ids which are supposed to be contained in the Model in ascending order.
+     * @param conn The RepositoryConnection which contains the requested Commits.
+     * @return The Difference containing the aggregation of all the Commit additions and deletions.
+     */
+    Difference getCommitDifference(List<Resource> commits, RepositoryConnection conn);
 
     /**
      * Applies the additions and deletions in the provided Difference to the provided Model and returns the result.
