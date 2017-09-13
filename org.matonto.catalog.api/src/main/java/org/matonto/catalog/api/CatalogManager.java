@@ -33,6 +33,7 @@ import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.Distribution;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.Record;
+import org.matonto.catalog.api.ontologies.mcat.Revision;
 import org.matonto.catalog.api.ontologies.mcat.Version;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.rdf.api.IRI;
@@ -595,7 +596,8 @@ public interface CatalogManager {
 
     /**
      * Gets the Commit identified by the provided Resources. Returns an empty Optional if the Commit does not belong
-     * to the Branch.
+     * to the Branch. The Model backing the commit will contain all the data in the commit named graph. This includes
+     * the commit and revision metadata.
      *
      * @param catalogId The Resource identifying the Catalog which contains the Record.
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
@@ -653,7 +655,28 @@ public interface CatalogManager {
                                          Resource inProgressCommitId);
 
     /**
-     * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference.
+     * Gets the Revision associated with the provided commit Resource.
+     *
+     * @param commitId The Resource identifying the commit
+     * @return The Revision associated with the provided commit Resource.
+     */
+    Revision getRevision(Resource commitId);
+
+    /**
+     * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference. The
+     * statements contained in the returned Difference will have a context that matches the storage quad. That is,
+     * tracked triples will have a context that matches the Revision additions and deletions contexts and tracked quads
+     * will have a context that matches the GraphRevision additions and deletions contexts.
+     *
+     * @param commitId The Resource identifying the Commit to retrieve the Difference from.
+     * @return A Difference object containing the addition and deletion statements of a Commit.
+     */
+    Difference getRevisionChanges(Resource commitId);
+
+    /**
+     * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference. The
+     * statements contained in the returned Difference will have a context that matches the tracked quad. That is,
+     * tracked triples will have no context and tracked quads will have a context that matches the data named graph.
      *
      * @param commitId The Resource identifying the Commit to retrieve the Difference from.
      * @return A Difference object containing the addition and deletion statements of a Commit.

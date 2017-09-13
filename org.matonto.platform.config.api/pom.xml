@@ -105,8 +105,16 @@
                             </generates>
                             <references>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/matonto_user_management.ttl</ontologyFile>
+                                    <ontologyFile>${project.basedir}/../org.matonto.jaas.api/src/main/resources/matonto_user_management.ttl</ontologyFile>
                                     <outputPackage>org.matonto.jaas.api.ontologies.usermanagement</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../org.matonto.rdf.orm.ontologies/src/main/resources/foaf.owl</ontologyFile>
+                                    <outputPackage>org.matonto.ontologies.foaf</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../org.matonto.rdf.orm.ontologies/src/main/resources/prov-o.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.ontologies.provo</outputPackage>
                                 </ontology>
                             </references>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>

@@ -217,16 +217,6 @@ public class SimpleCatalogManager implements CatalogManager {
 
     private static final String PROV_AT_TIME = "http://www.w3.org/ns/prov#atTime";
 
-    private static final String RECORD_NAMESPACE = "https://matonto.org/records#";
-    private static final String DISTRIBUTION_NAMESPACE = "https://matonto.org/distributions#";
-    private static final String VERSION_NAMESPACE = "https://matonto.org/versions#";
-    private static final String BRANCH_NAMESPACE = "https://matonto.org/branches#";
-    private static final String IN_PROGRESS_COMMIT_NAMESPACE = "https://matonto.org/in-progress-commits#";
-    private static final String COMMIT_NAMESPACE = "https://matonto.org/commits#";
-    private static final String REVISION_NAMESPACE = "https://matonto.org/revisions#";
-    private static final String ADDITIONS_NAMESPACE = "https://matonto.org/additions#";
-    private static final String DELETIONS_NAMESPACE = "https://matonto.org/deletions#";
-
     private static final String FIND_RECORDS_QUERY;
     private static final String COUNT_RECORDS_QUERY;
     private static final String GET_NEW_LATEST_VERSION;
@@ -400,7 +390,7 @@ public class SimpleCatalogManager implements CatalogManager {
     @Override
     public <T extends Record> T createRecord(RecordConfig config, OrmFactory<T> factory) {
         OffsetDateTime now = OffsetDateTime.now();
-        return addPropertiesToRecord(factory.createNew(vf.createIRI(RECORD_NAMESPACE + UUID.randomUUID())), config, now,
+        return addPropertiesToRecord(factory.createNew(vf.createIRI(Catalogs.RECORD_NAMESPACE + UUID.randomUUID())), config, now,
                 now);
     }
 
@@ -476,7 +466,7 @@ public class SimpleCatalogManager implements CatalogManager {
     public Distribution createDistribution(DistributionConfig config) {
         OffsetDateTime now = OffsetDateTime.now();
 
-        Distribution distribution = distributionFactory.createNew(vf.createIRI(DISTRIBUTION_NAMESPACE
+        Distribution distribution = distributionFactory.createNew(vf.createIRI(Catalogs.DISTRIBUTION_NAMESPACE
                 + UUID.randomUUID()));
         distribution.setProperty(vf.createLiteral(config.getTitle()), vf.createIRI(_Thing.title_IRI));
         distribution.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
@@ -568,7 +558,7 @@ public class SimpleCatalogManager implements CatalogManager {
     public <T extends Version> T createVersion(@Nonnull String title, String description, OrmFactory<T> factory) {
         OffsetDateTime now = OffsetDateTime.now();
 
-        T version = factory.createNew(vf.createIRI(VERSION_NAMESPACE + UUID.randomUUID()));
+        T version = factory.createNew(vf.createIRI(Catalogs.VERSION_NAMESPACE + UUID.randomUUID()));
         version.setProperty(vf.createLiteral(title), vf.createIRI(_Thing.title_IRI));
         if (description != null) {
             version.setProperty(vf.createLiteral(description), vf.createIRI(_Thing.description_IRI));
@@ -757,7 +747,7 @@ public class SimpleCatalogManager implements CatalogManager {
     public <T extends Branch> T createBranch(@Nonnull String title, String description, OrmFactory<T> factory) {
         OffsetDateTime now = OffsetDateTime.now();
 
-        T branch = factory.createNew(vf.createIRI(BRANCH_NAMESPACE + UUID.randomUUID()));
+        T branch = factory.createNew(vf.createIRI(Catalogs.BRANCH_NAMESPACE + UUID.randomUUID()));
         branch.setProperty(vf.createLiteral(title), vf.createIRI(_Thing.title_IRI));
         branch.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
         branch.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
@@ -862,12 +852,21 @@ public class SimpleCatalogManager implements CatalogManager {
             Set<Resource> deltaIRIs = new HashSet<>();
             for (Resource commitId : chain) {
                 if (!commitIsReferenced(commitId, conn)) {
-                    deltaIRIs.add(utils.getAdditionsResource(commitId, conn));
-                    deltaIRIs.add(utils.getDeletionsResource(commitId, conn));
+                    // Get Additions/Deletions Graphs
+                    Revision revision = utils.getRevision(commitId, conn);
+                    revision.getAdditions().ifPresent(deltaIRIs::add);
+                    revision.getDeletions().ifPresent(deltaIRIs::add);
+                    revision.getGraphRevision().forEach(graphRevision -> {
+                        graphRevision.getAdditions().ifPresent(deltaIRIs::add);
+                        graphRevision.getDeletions().ifPresent(deltaIRIs::add);
+                    });
+
+                    // Remove Commit
                     utils.remove(commitId, conn);
-                    RepositoryResults.asModel(conn.getStatements(null, commitIRI, commitId), mf).subjects()
-                            .forEach(tagId -> removeObjectWithRelationship(tagId, recordId, VersionedRecord.version_IRI,
-                                    conn));
+
+                    // Remove Tags Referencing this Commit
+                    Set<Resource> tags = RepositoryResults.asModel(conn.getStatements(null, commitIRI, commitId), mf).subjects();
+                    tags.forEach(tagId -> removeObjectWithRelationship(tagId, recordId, VersionedRecord.version_IRI, conn));
                 } else {
                     break;
                 }
@@ -929,7 +928,7 @@ public class SimpleCatalogManager implements CatalogManager {
             metadata.append(auxCommit.getResource().stringValue());
             generatedParents.add(auxCommit.getProperty(generatedIRI).get());
         }
-        Commit commit = commitFactory.createNew(vf.createIRI(COMMIT_NAMESPACE
+        Commit commit = commitFactory.createNew(vf.createIRI(Catalogs.COMMIT_NAMESPACE
                 + DigestUtils.sha1Hex(metadata.toString())));
         commit.setProperty(revisionIRI, generatedIRI);
         commit.setProperty(vf.createLiteral(now), vf.createIRI(PROV_AT_TIME));
@@ -959,12 +958,12 @@ public class SimpleCatalogManager implements CatalogManager {
     public InProgressCommit createInProgressCommit(User user) {
         UUID uuid = UUID.randomUUID();
 
-        Revision revision = revisionFactory.createNew(vf.createIRI(REVISION_NAMESPACE + uuid));
-        revision.setAdditions(vf.createIRI(ADDITIONS_NAMESPACE + uuid));
-        revision.setDeletions(vf.createIRI(DELETIONS_NAMESPACE + uuid));
+        Revision revision = revisionFactory.createNew(vf.createIRI(Catalogs.REVISION_NAMESPACE + uuid));
+        revision.setAdditions(vf.createIRI(Catalogs.ADDITIONS_NAMESPACE + uuid));
+        revision.setDeletions(vf.createIRI(Catalogs.DELETIONS_NAMESPACE + uuid));
 
         InProgressCommit inProgressCommit = inProgressCommitFactory.createNew(vf.createIRI(
-                IN_PROGRESS_COMMIT_NAMESPACE + uuid));
+                Catalogs.IN_PROGRESS_COMMIT_NAMESPACE + uuid));
         inProgressCommit.setProperty(user.getResource(), vf.createIRI(Activity.wasAssociatedWith_IRI));
         inProgressCommit.setProperty(revision.getResource(), vf.createIRI(Activity.generated_IRI));
         inProgressCommit.getModel().addAll(revision.getModel());
@@ -1062,6 +1061,20 @@ public class SimpleCatalogManager implements CatalogManager {
                         new IllegalStateException("InProgressCommit " + inProgressCommitId + " has no Record set."));
                 return !onRecord.equals(versionedRDFRecordId) ? Optional.empty() : Optional.of(inProgressCommit);
             });
+        }
+    }
+
+    @Override
+    public Revision getRevision(Resource commitId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            return utils.getRevision(commitId, conn);
+        }
+    }
+
+    @Override
+    public Difference getRevisionChanges(Resource commitId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            return utils.getRevisionChanges(commitId, conn);
         }
     }
 
@@ -1164,8 +1177,8 @@ public class SimpleCatalogManager implements CatalogManager {
             leftCommits.removeAll(commonCommits);
             rightCommits.removeAll(commonCommits);
 
-            Difference leftDiff = utils.getRevisionChanges(leftCommits, conn);
-            Difference rightDiff = utils.getRevisionChanges(rightCommits, conn);
+            Difference leftDiff = utils.getCommitDifference(leftCommits, conn);
+            Difference rightDiff = utils.getCommitDifference(rightCommits, conn);
 
             Model left = leftDiff.getAdditions();
             Model right = rightDiff.getAdditions();
