@@ -25,6 +25,7 @@ package org.matonto.catalog.impl.versioning;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.CatalogUtilsService;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
@@ -43,6 +44,7 @@ import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.OrmFactoryRegistry;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.api.RepositoryManager;
 import org.openrdf.model.vocabulary.DCTERMS;
 
 import java.util.HashMap;
@@ -56,45 +58,53 @@ import java.util.stream.Collectors;
 )
 public class SimpleVersioningManager implements VersioningManager {
     static final String COMPONENT_NAME = "org.matonto.catalog.api.versioning.VersioningManager";
-    private Repository repository;
+    private RepositoryManager repositoryManager;
     private OrmFactoryRegistry factoryRegistry;
     private CatalogUtilsService catalogUtils;
+    private CatalogManager catalogManager;
     private Map<String, VersioningService<VersionedRDFRecord>> versioningServices = new HashMap<>();
     private ValueFactory vf;
 
-    @Reference(name = "repository")
-    protected void setRepository(Repository repository) {
-        this.repository = repository;
+    @Reference
+    void setRepositoryManager(RepositoryManager repositoryManager) {
+        this.repositoryManager = repositoryManager;
     }
 
     @Reference(type = '*', dynamic = true)
     @SuppressWarnings("unchecked")
-    protected void addVersioningService(VersioningService<? extends VersionedRDFRecord> versioningService) {
+    void addVersioningService(VersioningService<? extends VersionedRDFRecord> versioningService) {
         versioningServices.put(versioningService.getTypeIRI(),
                 (VersioningService<VersionedRDFRecord>) versioningService);
     }
 
-    protected void removeVersioningService(VersioningService<? extends VersionedRDFRecord> versioningService) {
+    void removeVersioningService(VersioningService<? extends VersionedRDFRecord> versioningService) {
         versioningServices.remove(versioningService.getTypeIRI());
     }
 
     @Reference
-    protected void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
+    void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
         this.factoryRegistry = factoryRegistry;
     }
 
     @Reference
-    protected void setCatalogUtils(CatalogUtilsService catalogUtils) {
+    void setCatalogUtils(CatalogUtilsService catalogUtils) {
         this.catalogUtils = catalogUtils;
     }
 
     @Reference
-    protected void setVf(ValueFactory vf) {
+    void setCatalogManager(CatalogManager catalogManager) {
+        this.catalogManager = catalogManager;
+    }
+
+    @Reference
+    void setVf(ValueFactory vf) {
         this.vf = vf;
     }
 
     @Override
     public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message) {
+        Repository repository = repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
+                new IllegalStateException("Catalog repository unavailable"));
         try (RepositoryConnection conn = repository.getConnection()) {
             OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
             VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
@@ -113,8 +123,10 @@ public class SimpleVersioningManager implements VersioningManager {
     }
 
     @Override
-    public Resource commit(Resource catalogId, Resource recordId, Resource branchId,
-                                                          User user, String message, Model additions, Model deletions) {
+    public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message,
+                           Model additions, Model deletions) {
+        Repository repository = repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
+                new IllegalStateException("Catalog repository unavailable"));
         try (RepositoryConnection conn = repository.getConnection()) {
             OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
             VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
@@ -130,9 +142,10 @@ public class SimpleVersioningManager implements VersioningManager {
     }
 
     @Override
-    public Resource merge(Resource catalogId, Resource recordId, Resource sourceBranchId,
-                                                        Resource targetBranchId, User user, Model additions,
-                                                        Model deletions) {
+    public Resource merge(Resource catalogId, Resource recordId, Resource sourceBranchId, Resource targetBranchId,
+                          User user, Model additions, Model deletions) {
+        Repository repository = repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
+                new IllegalStateException("Catalog repository unavailable"));
         try (RepositoryConnection conn = repository.getConnection()) {
             OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
             VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
@@ -172,8 +185,7 @@ public class SimpleVersioningManager implements VersioningManager {
      * @return The appropriate OrmFactory for the VersionedRDFRecord
      * @throws IllegalArgumentException if no appropriate OrmFactory is found.
      */
-    private OrmFactory<? extends VersionedRDFRecord> getFactory(Resource recordId,
-                                                                          RepositoryConnection conn) {
+    private OrmFactory<? extends VersionedRDFRecord> getFactory(Resource recordId, RepositoryConnection conn) {
         List<Resource> types = RepositoryResults.asList(
                 conn.getStatements(recordId, vf.createIRI(org.matonto.ontologies.rdfs.Resource.type_IRI), null))
                 .stream()

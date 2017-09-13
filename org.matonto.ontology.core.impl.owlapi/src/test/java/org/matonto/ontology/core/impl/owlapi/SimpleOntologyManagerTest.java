@@ -197,6 +197,7 @@ public class SimpleOntologyManagerTest {
         MockitoAnnotations.initMocks(this);
 
         Catalog catalog = catalogFactory.createNew(catalogIRI);
+        when(catalogManager.getRepositoryId()).thenReturn("system");
         when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogIRI);
         when(catalogManager.getLocalCatalog()).thenReturn(catalog);
         when(catalogManager.createRecord(any(RecordConfig.class), eq(ontologyRecordFactory))).thenReturn(record);

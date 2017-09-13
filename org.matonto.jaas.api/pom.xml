@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.9.11-SNAPSHOT</version>
+        <version>1.9.12-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -119,11 +119,11 @@
                             </generates>
                             <references>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/foaf.owl</ontologyFile>
+                                    <ontologyFile>${project.basedir}/../org.matonto.rdf.orm.ontologies/src/main/resources/foaf.owl</ontologyFile>
                                     <outputPackage>org.matonto.ontologies.foaf</outputPackage>
                                 </ontology>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/prov-o.ttl</ontologyFile>
+                                    <ontologyFile>${project.basedir}/../org.matonto.rdf.orm.ontologies/src/main/resources/prov-o.ttl</ontologyFile>
                                     <outputPackage>org.matonto.ontologies.provo</outputPackage>
                                 </ontology>
                             </references>

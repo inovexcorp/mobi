@@ -32,6 +32,7 @@ import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.matonto.catalog.api.CatalogManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
 import org.matonto.ontologies.provo.Activity;
@@ -88,6 +89,9 @@ public class CatalogProvUtilsImplTest {
     @Mock
     private ProvenanceService provenanceService;
 
+    @Mock
+    private CatalogManager catalogManager;
+
     @Before
     public void setUp() throws Exception {
         activityFactory.setModelFactory(mf);
@@ -134,6 +138,7 @@ public class CatalogProvUtilsImplTest {
         MockitoAnnotations.initMocks(this);
 
         when(matOnto.getServerIdentifier()).thenReturn(UUID.randomUUID());
+        when(catalogManager.getRepositoryId()).thenReturn("system");
 
         utils.setCreateActivityFactory(createActivityFactory);
         utils.setDeleteActivityFactory(deleteActivityFactory);
@@ -141,6 +146,7 @@ public class CatalogProvUtilsImplTest {
         utils.setVf(vf);
         utils.setMatOnto(matOnto);
         utils.setProvenanceService(provenanceService);
+        utils.setCatalogManager(catalogManager);
     }
 
     @Test
@@ -209,6 +215,7 @@ public class CatalogProvUtilsImplTest {
         Entity entity = deleteActivity.getInvalidated().iterator().next();
         assertEquals(recordIRI, entity.getResource());
         assertTrue(entity.getModel().contains(entity.getResource(), vf.createIRI(Entity.generatedAtTime_IRI), null));
+        assertTrue(entity.getModel().contains(entity.getResource(), vf.createIRI("http://www.w3.org/ns/prov#atLocation"), vf.createLiteral("system")));
     }
 
     @Test
