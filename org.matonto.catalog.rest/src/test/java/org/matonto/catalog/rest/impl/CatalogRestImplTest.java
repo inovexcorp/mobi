@@ -82,12 +82,12 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
-import org.matonto.ontologies.provo.Activity;
-import org.matonto.ontologies.provo.ActivityFactory;
 import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivity;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivityFactory;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
@@ -150,6 +150,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     private UserBranchFactory userBranchFactory;
     private UserFactory userFactory;
     private CreateActivityFactory createActivityFactory;
+    private DeleteActivityFactory deleteActivityFactory;
     private ValueFactory vf;
     private ModelFactory mf;
     private ValueConverterRegistry vcr;
@@ -168,7 +169,8 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     private Branch testBranch;
     private UserBranch testUserBranch;
     private User user;
-    private CreateActivity activity;
+    private CreateActivity createActivity;
+    private DeleteActivity deleteActivity;
     private Model compiledResource;
     private Model compiledResourceWithChanges;
     private static final String ERROR_IRI = "http://matonto.org/error";
@@ -313,6 +315,12 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         createActivityFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(createActivityFactory);
 
+        deleteActivityFactory = new DeleteActivityFactory();
+        deleteActivityFactory.setModelFactory(mf);
+        deleteActivityFactory.setValueFactory(vf);
+        deleteActivityFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(deleteActivityFactory);
+
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -355,7 +363,8 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         testVersionedRDFRecord.setBranch(Stream.of(testBranch, testUserBranch).collect(Collectors.toSet()));
         testMappingRecord = mappingRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         user = userFactory.createNew(vf.createIRI(USER_IRI));
-        activity = createActivityFactory.createNew(vf.createIRI(ACTIVITY_IRI));
+        createActivity = createActivityFactory.createNew(vf.createIRI(ACTIVITY_IRI + "/create"));
+        deleteActivity = deleteActivityFactory.createNew(vf.createIRI(ACTIVITY_IRI + "/delete"));
         compiledResource = mf.createModel();
         compiledResourceWithChanges = mf.createModel(compiledResource);
         compiledResourceWithChanges.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()),
@@ -494,7 +503,8 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.of(user.getResource().stringValue()));
 
-        when(provUtils.startCreateActivity(any(User.class))).thenReturn(activity);
+        when(provUtils.startCreateActivity(any(User.class))).thenReturn(createActivity);
+        when(provUtils.startDeleteActivity(any(User.class))).thenReturn(deleteActivity);
     }
 
     // GET catalogs
@@ -770,7 +780,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(activity);
+        verify(provUtils).removeActivity(createActivity);
     }
 
     @Test
@@ -785,7 +795,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(activity);
+        verify(provUtils).removeActivity(createActivity);
     }
 
     // GET catalogs/{catalogId}/records/{recordId}
@@ -852,6 +862,8 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .request().delete();
         assertEquals(response.getStatus(), 200);
         verify(catalogManager).removeRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI));
+        verify(provUtils).startDeleteActivity(user);
+        verify(provUtils).endDeleteActivity(deleteActivity, vf.createIRI(RECORD_IRI));
     }
 
     @Test
@@ -862,6 +874,8 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 400);
+        verify(provUtils).startDeleteActivity(user);
+        verify(provUtils).removeActivity(deleteActivity);
     }
 
     @Test
@@ -872,6 +886,8 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 500);
+        verify(provUtils).startDeleteActivity(user);
+        verify(provUtils).removeActivity(deleteActivity);
     }
 
     // PUT catalogs/{catalogId}/records/{recordId}
@@ -3187,7 +3203,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).createRecord(any(RecordConfig.class), eq(ormFactory));
         verify(catalogManager).addRecord(eq(vf.createIRI(LOCAL_IRI)), any(Record.class));
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(activity, vf.createIRI(RECORD_IRI));
+        verify(provUtils).endCreateActivity(createActivity, vf.createIRI(RECORD_IRI));
     }
 
     private <T extends Version> void testCreateVersionByType(OrmFactory<T> ormFactory) {

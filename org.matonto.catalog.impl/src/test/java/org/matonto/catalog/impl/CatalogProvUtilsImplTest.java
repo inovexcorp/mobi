@@ -43,6 +43,8 @@ import org.matonto.prov.api.ProvenanceService;
 import org.matonto.prov.api.builder.ActivityConfig;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivity;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivityFactory;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
@@ -72,10 +74,12 @@ public class CatalogProvUtilsImplTest {
     private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
     private ActivityFactory activityFactory= new ActivityFactory();
     private CreateActivityFactory createActivityFactory = new CreateActivityFactory();
+    private DeleteActivityFactory deleteActivityFactory;
     private EntityFactory entityFactory = new EntityFactory();
     private UserFactory userFactory = new UserFactory();
 
-    private CreateActivity activity;
+    private CreateActivity createActivity;
+    private DeleteActivity deleteActivity;
     private User user;
 
     @Mock
@@ -95,6 +99,12 @@ public class CatalogProvUtilsImplTest {
         createActivityFactory.setValueFactory(vf);
         createActivityFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(createActivityFactory);
+
+        deleteActivityFactory = new DeleteActivityFactory();
+        deleteActivityFactory.setModelFactory(mf);
+        deleteActivityFactory.setValueFactory(vf);
+        deleteActivityFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(deleteActivityFactory);
 
         entityFactory.setModelFactory(mf);
         entityFactory.setValueFactory(vf);
@@ -117,15 +127,16 @@ public class CatalogProvUtilsImplTest {
         vcr.registerValueConverter(new LiteralValueConverter());
         vcr.registerValueConverter(new DateValueConverter());
 
-        activity = createActivityFactory.createNew(vf.createIRI("http://test.org/activity"));
+        createActivity = createActivityFactory.createNew(vf.createIRI("http://test.org/activity/create"));
+        deleteActivity = deleteActivityFactory.createNew(vf.createIRI("http://test.org/activity/create"));
         user = userFactory.createNew(vf.createIRI("http://test.org/user"));
 
         MockitoAnnotations.initMocks(this);
 
-        when(provenanceService.createActivity(any(ActivityConfig.class))).thenReturn(activity);
         when(matOnto.getServerIdentifier()).thenReturn(UUID.randomUUID());
 
         utils.setCreateActivityFactory(createActivityFactory);
+        utils.setDeleteActivityFactory(deleteActivityFactory);
         utils.setEntityFactory(entityFactory);
         utils.setVf(vf);
         utils.setMatOnto(matOnto);
@@ -134,12 +145,13 @@ public class CatalogProvUtilsImplTest {
 
     @Test
     public void startCreateActivityTest() throws Exception {
+        when(provenanceService.createActivity(any(ActivityConfig.class))).thenReturn(createActivity);
         CreateActivity result = utils.startCreateActivity(user);
         verify(provenanceService).createActivity(any(ActivityConfig.class));
-        verify(provenanceService).addActivity(activity);
+        verify(provenanceService).addActivity(createActivity);
         verify(matOnto).getServerIdentifier();
-        assertTrue(result.getModel().contains(activity.getResource(), vf.createIRI(Activity.startedAtTime_IRI), null));
-        assertTrue(result.getModel().contains(activity.getResource(), vf.createIRI("http://www.w3.org/ns/prov#atLocation"), null));
+        assertTrue(result.getModel().contains(createActivity.getResource(), vf.createIRI(Activity.startedAtTime_IRI), null));
+        assertTrue(result.getModel().contains(createActivity.getResource(), vf.createIRI("http://www.w3.org/ns/prov#atLocation"), null));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -156,19 +168,53 @@ public class CatalogProvUtilsImplTest {
         // Setup:
         Resource recordIRI = vf.createIRI("http://test.org/record");
 
-        utils.endCreateActivity(activity, recordIRI);
-        verify(provenanceService).updateActivity(activity);
-        assertTrue(activity.getModel().contains(activity.getResource(), vf.createIRI(Activity.endedAtTime_IRI), null));
-        assertEquals(1, activity.getGenerated().size());
-        Entity entity = activity.getGenerated().iterator().next();
+        utils.endCreateActivity(createActivity, recordIRI);
+        verify(provenanceService).updateActivity(createActivity);
+        assertTrue(createActivity.getModel().contains(createActivity.getResource(), vf.createIRI(Activity.endedAtTime_IRI), null));
+        assertEquals(1, createActivity.getGenerated().size());
+        Entity entity = createActivity.getGenerated().iterator().next();
+        assertEquals(recordIRI, entity.getResource());
+        assertTrue(entity.getModel().contains(entity.getResource(), vf.createIRI(Entity.generatedAtTime_IRI), null));
+    }
+
+    @Test
+    public void startDeleteActivityTest() throws Exception {
+        when(provenanceService.createActivity(any(ActivityConfig.class))).thenReturn(deleteActivity);
+        DeleteActivity result = utils.startDeleteActivity(user);
+        verify(provenanceService).createActivity(any(ActivityConfig.class));
+        verify(provenanceService).addActivity(deleteActivity);
+        verify(matOnto).getServerIdentifier();
+        assertTrue(result.getModel().contains(deleteActivity.getResource(), vf.createIRI(Activity.startedAtTime_IRI), null));
+        assertTrue(result.getModel().contains(deleteActivity.getResource(), vf.createIRI("http://www.w3.org/ns/prov#atLocation"), null));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void startDeleteActivityWithNoDeleteActivityTest() {
+        // Setup:
+        Activity activity1 = activityFactory.createNew(vf.createIRI("http://test.org/activity"));
+        when(provenanceService.createActivity(any(ActivityConfig.class))).thenReturn(activity1);
+
+        utils.startDeleteActivity(user);
+    }
+
+    @Test
+    public void endDeleteActivityTest() throws Exception {
+        // Setup:
+        Resource recordIRI = vf.createIRI("http://test.org/record");
+
+        utils.endDeleteActivity(deleteActivity, recordIRI);
+        verify(provenanceService).updateActivity(deleteActivity);
+        assertTrue(deleteActivity.getModel().contains(deleteActivity.getResource(), vf.createIRI(Activity.endedAtTime_IRI), null));
+        assertEquals(1, deleteActivity.getInvalidated().size());
+        Entity entity = deleteActivity.getInvalidated().iterator().next();
         assertEquals(recordIRI, entity.getResource());
         assertTrue(entity.getModel().contains(entity.getResource(), vf.createIRI(Entity.generatedAtTime_IRI), null));
     }
 
     @Test
     public void removeActivityTest() throws Exception {
-        utils.removeActivity(activity);
-        verify(provenanceService).deleteActivity(activity.getResource());
+        utils.removeActivity(createActivity);
+        verify(provenanceService).deleteActivity(createActivity.getResource());
     }
 
     @Test

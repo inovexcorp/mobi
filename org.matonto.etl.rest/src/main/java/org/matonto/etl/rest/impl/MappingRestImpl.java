@@ -48,9 +48,9 @@ import org.matonto.etl.rest.MappingRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
-import org.matonto.ontologies.provo.Activity;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivity;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -257,14 +257,20 @@ public class MappingRestImpl implements MappingRest {
     }
 
     @Override
-    public Response deleteMapping(String recordId) {
+    public Response deleteMapping(ContainerRequestContext context, String recordId) {
+        User activeUser = getActiveUser(context, engineManager);
+        DeleteActivity deleteActivity = null;
         try {
             logger.info("Deleting mapping: " + recordId);
+            deleteActivity = provUtils.startDeleteActivity(activeUser);
             manager.deleteMapping(vf.createIRI(recordId));
+            provUtils.endDeleteActivity(deleteActivity, vf.createIRI(recordId));
             return Response.ok().build();
         } catch (IllegalArgumentException e) {
+            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MatOntoException e) {
+            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }

@@ -35,6 +35,8 @@ import org.matonto.prov.api.ProvenanceService;
 import org.matonto.prov.api.builder.ActivityConfig;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivity;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivityFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 
@@ -46,6 +48,7 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
     private ValueFactory vf;
     private ProvenanceService provenanceService;
     private CreateActivityFactory createActivityFactory;
+    private DeleteActivityFactory deleteActivityFactory;
     private EntityFactory entityFactory;
     private MatOnto matOnto;
 
@@ -64,6 +67,11 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
     @Reference
     void setCreateActivityFactory(CreateActivityFactory createActivityFactory) {
         this.createActivityFactory = createActivityFactory;
+    }
+
+    @Reference
+    void setDeleteActivityFactory(DeleteActivityFactory deleteActivityFactory) {
+        this.deleteActivityFactory = deleteActivityFactory;
     }
 
     @Reference
@@ -97,6 +105,29 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
         createActivity.addProperty(vf.createLiteral(stop), vf.createIRI(Activity.endedAtTime_IRI));
         createActivity.addGenerated(recordEntity);
         provenanceService.updateActivity(createActivity);
+    }
+
+    @Override
+    public DeleteActivity startDeleteActivity(User user) {
+        OffsetDateTime start = OffsetDateTime.now();
+        ActivityConfig config = new ActivityConfig.Builder(Collections.singleton(DeleteActivity.class), user).build();
+        Activity activity = provenanceService.createActivity(config);
+        activity.addProperty(vf.createLiteral(start), vf.createIRI(Activity.startedAtTime_IRI));
+        activity.addProperty(vf.createLiteral(matOnto.getServerIdentifier().toString()), vf.createIRI(atLocation));
+        provenanceService.addActivity(activity);
+        return deleteActivityFactory.getExisting(activity.getResource(), activity.getModel()).orElseThrow(() ->
+                new IllegalStateException("DeleteActivity not made correctly"));
+    }
+
+    @Override
+    public void endDeleteActivity(DeleteActivity deleteActivity, Resource recordIRI) {
+        OffsetDateTime stop = OffsetDateTime.now();
+        Entity recordEntity = entityFactory.createNew(recordIRI, deleteActivity.getModel());
+        recordEntity.addProperty(vf.createLiteral(stop), vf.createIRI(Entity.generatedAtTime_IRI));
+//        recordEntity.addProperty(vf.createLiteral(recordTitle), vf.createIRI(_Thing.title_IRI));
+        deleteActivity.addProperty(vf.createLiteral(stop), vf.createIRI(Activity.endedAtTime_IRI));
+        deleteActivity.addInvalidated(recordEntity);
+        provenanceService.updateActivity(deleteActivity);
     }
 
     @Override
