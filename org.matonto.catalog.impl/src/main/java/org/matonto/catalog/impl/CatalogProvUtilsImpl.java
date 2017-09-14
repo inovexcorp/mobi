@@ -27,10 +27,14 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.CatalogProvUtils;
+import org.matonto.catalog.api.ontologies.mcat.Record;
+import org.matonto.catalog.api.ontologies.mcat.RecordFactory;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontologies.provo.Entity;
 import org.matonto.ontologies.provo.EntityFactory;
+import org.matonto.persistence.utils.RepositoryResults;
 import org.matonto.platform.config.api.server.MatOnto;
 import org.matonto.prov.api.ProvenanceService;
 import org.matonto.prov.api.builder.ActivityConfig;
@@ -38,20 +42,27 @@ import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import org.matonto.prov.api.ontologies.mobiprov.DeleteActivity;
 import org.matonto.prov.api.ontologies.mobiprov.DeleteActivityFactory;
+import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 
+import org.matonto.repository.api.Repository;
+import org.matonto.repository.api.RepositoryManager;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 
 @Component
 public class CatalogProvUtilsImpl implements CatalogProvUtils {
     private ValueFactory vf;
+    private RepositoryManager repositoryManager;
     private CatalogManager catalogManager;
     private ProvenanceService provenanceService;
     private CreateActivityFactory createActivityFactory;
     private DeleteActivityFactory deleteActivityFactory;
+    private RecordFactory recordFactory;
     private EntityFactory entityFactory;
+    private ModelFactory modelFactory;
     private MatOnto matOnto;
 
     private final String atLocation = "http://www.w3.org/ns/prov#atLocation";
@@ -59,6 +70,11 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
     @Reference
     void setVf(ValueFactory vf) {
         this.vf = vf;
+    }
+
+    @Reference
+    void setRepositoryManager(RepositoryManager repositoryManager) {
+        this.repositoryManager = repositoryManager;
     }
 
     @Reference
@@ -82,8 +98,18 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
     }
 
     @Reference
+    void setRecordFactory(RecordFactory recordFactory) {
+        this.recordFactory = recordFactory;
+    }
+
+    @Reference
     void setEntityFactory(EntityFactory entityFactory) {
         this.entityFactory = entityFactory;
+    }
+
+    @Reference
+    void setModelFactory(ModelFactory modelFactory) {
+        this.modelFactory = modelFactory;
     }
 
     @Reference
@@ -116,26 +142,47 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
     }
 
     @Override
-    public DeleteActivity startDeleteActivity(User user) {
+    public DeleteActivity startDeleteActivity(User user, Resource recordIri) {
         OffsetDateTime start = OffsetDateTime.now();
+
+        Entity recordEntity = entityFactory.getExisting(recordIri, RepositoryResults.asModel(provenanceService.getConnection()
+                .getStatements(recordIri, null, null), modelFactory)).orElseThrow(() ->
+                        new IllegalStateException("No Entity found for record."));
+
         ActivityConfig config = new ActivityConfig.Builder(Collections.singleton(DeleteActivity.class), user).build();
+
         Activity activity = provenanceService.createActivity(config);
+
+        provenanceService.addActivity(activity);
+
         activity.addProperty(vf.createLiteral(start), vf.createIRI(Activity.startedAtTime_IRI));
         activity.addProperty(vf.createLiteral(matOnto.getServerIdentifier().toString()), vf.createIRI(atLocation));
-        provenanceService.addActivity(activity);
+
+        Value location = recordEntity.getProperty(vf.createIRI(atLocation)).orElseThrow(() ->
+                new IllegalStateException("Missing record location."));
+
+        Repository repo = repositoryManager.getRepository(location.stringValue()).orElseThrow(() ->
+                new IllegalStateException("Catalog repository unavailable"));
+
+        Record record = recordFactory.getExisting(recordIri, RepositoryResults.asModel(repo.getConnection()
+                .getStatements(recordIri, null, null), modelFactory)).orElseThrow(() ->
+                        new IllegalStateException("Attempting to delete record which does not exist."));
+
+        record.getProperty(vf.createIRI(_Thing.title_IRI)).ifPresent(v -> recordEntity.addProperty(v, vf.createIRI(_Thing.title_IRI)));
+
+        activity.addInvalidated(recordEntity);
+        activity.getModel().addAll(recordEntity.getModel());
+
+        provenanceService.updateActivity(activity);
+
         return deleteActivityFactory.getExisting(activity.getResource(), activity.getModel()).orElseThrow(() ->
                 new IllegalStateException("DeleteActivity not made correctly"));
     }
 
     @Override
-    public void endDeleteActivity(DeleteActivity deleteActivity, Resource recordIRI) {
+    public void endDeleteActivity(DeleteActivity deleteActivity, Resource recordIri) {
         OffsetDateTime stop = OffsetDateTime.now();
-        Entity recordEntity = entityFactory.createNew(recordIRI, deleteActivity.getModel());
-        recordEntity.addProperty(vf.createLiteral(stop), vf.createIRI(Entity.generatedAtTime_IRI));
-        recordEntity.addProperty(vf.createLiteral(catalogManager.getRepositoryId()), vf.createIRI(atLocation));
-//        recordEntity.addProperty(vf.createLiteral(recordTitle), vf.createIRI(_Thing.title_IRI));
         deleteActivity.addProperty(vf.createLiteral(stop), vf.createIRI(Activity.endedAtTime_IRI));
-        deleteActivity.addInvalidated(recordEntity);
         provenanceService.updateActivity(deleteActivity);
     }
 

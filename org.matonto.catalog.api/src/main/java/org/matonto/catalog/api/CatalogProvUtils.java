@@ -54,18 +54,19 @@ public interface CatalogProvUtils {
      * Creates a DeleteActivity started by the provided User to indicate beginning to delete a catalog Record.
      *
      * @param user The User who started the record deletion
+     * @param recordIri The IRI of the Record to be deleted
      * @return The DeleteActivity for the record deletion
      */
-    DeleteActivity startDeleteActivity(User user);
+    DeleteActivity startDeleteActivity(User user, Resource recordIri);
 
     /**
      * Updates the provided DeleteActivity with an end time and an Entity representing the Record identified by the
      * provided Resource IRI.
      *
      * @param deleteActivity The DeleteActivity to update
-     * @param recordIRI The IRI of the Record that was successfully deleted
+     * @param recordIri The IRI of the Record that was successfully deleted
      */
-    void endDeleteActivity(DeleteActivity deleteActivity, Resource recordIRI);
+    void endDeleteActivity(DeleteActivity deleteActivity, Resource recordIri);
 
     /**
      * Removes the provided Activity. Typical use case is if something goes wrong during a process and the Activity

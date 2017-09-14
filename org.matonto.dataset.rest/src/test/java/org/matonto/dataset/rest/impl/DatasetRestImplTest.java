@@ -26,6 +26,7 @@ package org.matonto.dataset.rest.impl;
 import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -262,6 +263,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
 
         when(catalogManager.getLocalCatalogIRI()).thenReturn(localIRI);
+        when(catalogManager.getRecord(eq(localIRI), eq(record1.getResource()), any(DatasetRecordFactory.class))).thenReturn(Optional.of(record1));
         when(catalogManager.getMasterBranch(localIRI, ontologyRecordIRI)).thenReturn(branch);
 
         when(results.getPage()).thenReturn(Stream.of(record1, record2, record3).collect(Collectors.toList()));
@@ -270,7 +272,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         when(results.getTotalSize()).thenReturn(3);
 
         when(provUtils.startCreateActivity(any(User.class))).thenReturn(createActivity);
-        when(provUtils.startDeleteActivity(any(User.class))).thenReturn(deleteActivity);
+        when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
     }
 
     /* GET datasets */
@@ -499,7 +501,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(datasetManager).deleteDataset(record1.getResource());
         verify(datasetManager, never()).safeDeleteDataset(any(Resource.class));
-        verify(provUtils).startDeleteActivity(user);
+        verify(provUtils).startDeleteActivity(user, record1.getResource());
         verify(provUtils).endDeleteActivity(deleteActivity, record1.getResource());
     }
 
@@ -510,7 +512,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(datasetManager).safeDeleteDataset(record1.getResource());
         verify(datasetManager, never()).deleteDataset(any(Resource.class));
-        verify(provUtils).startDeleteActivity(user);
+        verify(provUtils).startDeleteActivity(user, record1.getResource());
         verify(provUtils).endDeleteActivity(deleteActivity, record1.getResource());
     }
 
@@ -527,7 +529,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", true).request().delete();
         assertEquals(response.getStatus(), 400);
-        verify(provUtils, times(2)).startDeleteActivity(user);
+        verify(provUtils, times(2)).startDeleteActivity(user, record1.getResource());
         verify(provUtils, times(2)).removeActivity(deleteActivity);
     }
 
@@ -544,7 +546,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", true).request().delete();
         assertEquals(response.getStatus(), 500);
-        verify(provUtils, times(2)).startDeleteActivity(user);
+        verify(provUtils, times(2)).startDeleteActivity(user, record1.getResource());
         verify(provUtils, times(2)).removeActivity(deleteActivity);
     }
 

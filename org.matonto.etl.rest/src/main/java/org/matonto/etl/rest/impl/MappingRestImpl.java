@@ -259,12 +259,13 @@ public class MappingRestImpl implements MappingRest {
     @Override
     public Response deleteMapping(ContainerRequestContext context, String recordId) {
         User activeUser = getActiveUser(context, engineManager);
+        IRI recordIri = vf.createIRI(recordId);
         DeleteActivity deleteActivity = null;
         try {
             logger.info("Deleting mapping: " + recordId);
-            deleteActivity = provUtils.startDeleteActivity(activeUser);
-            manager.deleteMapping(vf.createIRI(recordId));
-            provUtils.endDeleteActivity(deleteActivity, vf.createIRI(recordId));
+            deleteActivity = provUtils.startDeleteActivity(activeUser, recordIri);
+            manager.deleteMapping(recordIri);
+            provUtils.endDeleteActivity(deleteActivity, recordIri);
             return Response.ok().build();
         } catch (IllegalArgumentException e) {
             provUtils.removeActivity(deleteActivity);
@@ -277,7 +278,7 @@ public class MappingRestImpl implements MappingRest {
 
     /**
      * Retrieves the actual JSON-LD of a mapping. Removes the wrapping JSON array from
-     * around the result of using Rio to parsethe mapping model into JSON-LD
+     * around the result of using Rio to parse the mapping model into JSON-LD
      *
      * @param jsonld a mapping serialized as JSON-LD with a wrapping JSON array
      * @return a JSONObject with a mapping serialized as JSON-LD

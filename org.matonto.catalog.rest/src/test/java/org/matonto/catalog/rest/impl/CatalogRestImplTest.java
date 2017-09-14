@@ -88,6 +88,7 @@ import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import org.matonto.prov.api.ontologies.mobiprov.DeleteActivity;
 import org.matonto.prov.api.ontologies.mobiprov.DeleteActivityFactory;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
@@ -504,7 +505,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.of(user.getResource().stringValue()));
 
         when(provUtils.startCreateActivity(any(User.class))).thenReturn(createActivity);
-        when(provUtils.startDeleteActivity(any(User.class))).thenReturn(deleteActivity);
+        when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
     }
 
     // GET catalogs
@@ -861,32 +862,35 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(catalogManager).removeRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI));
-        verify(provUtils).startDeleteActivity(user);
-        verify(provUtils).endDeleteActivity(deleteActivity, vf.createIRI(RECORD_IRI));
+        IRI recordIri = vf.createIRI(RECORD_IRI);
+        verify(catalogManager).removeRecord(vf.createIRI(LOCAL_IRI), recordIri);
+        verify(provUtils).startDeleteActivity(user, recordIri);
+        verify(provUtils).endDeleteActivity(deleteActivity, recordIri);
     }
 
     @Test
     public void removeRecordWithIncorrectPathTest() {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(catalogManager).removeRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(ERROR_IRI));
+        IRI recordIri = vf.createIRI(ERROR_IRI);
+        doThrow(new IllegalArgumentException()).when(catalogManager).removeRecord(vf.createIRI(LOCAL_IRI), recordIri);
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 400);
-        verify(provUtils).startDeleteActivity(user);
+        verify(provUtils).startDeleteActivity(user, recordIri);
         verify(provUtils).removeActivity(deleteActivity);
     }
 
     @Test
     public void removeRecordWithErrorTest() {
         // Setup:
-        doThrow(new MatOntoException()).when(catalogManager).removeRecord(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI));
+        IRI recordIri = vf.createIRI(RECORD_IRI);
+        doThrow(new MatOntoException()).when(catalogManager).removeRecord(vf.createIRI(LOCAL_IRI), recordIri);
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
                 .request().delete();
         assertEquals(response.getStatus(), 500);
-        verify(provUtils).startDeleteActivity(user);
+        verify(provUtils).startDeleteActivity(user, recordIri);
         verify(provUtils).removeActivity(deleteActivity);
     }
 

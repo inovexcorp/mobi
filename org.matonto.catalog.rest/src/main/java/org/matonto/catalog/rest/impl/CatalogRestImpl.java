@@ -311,11 +311,12 @@ public class CatalogRestImpl implements CatalogRest {
     @Override
     public Response deleteRecord(ContainerRequestContext context, String catalogId, String recordId) {
         User activeUser = getActiveUser(context, engineManager);
+        IRI recordIri = vf.createIRI(recordId);
         DeleteActivity deleteActivity = null;
         try {
-            deleteActivity = provUtils.startDeleteActivity(activeUser);
-            catalogManager.removeRecord(vf.createIRI(catalogId), vf.createIRI(recordId));
-            provUtils.endDeleteActivity(deleteActivity, vf.createIRI(recordId));
+            deleteActivity = provUtils.startDeleteActivity(activeUser, recordIri);
+            catalogManager.removeRecord(vf.createIRI(catalogId), recordIri);
+            provUtils.endDeleteActivity(deleteActivity, recordIri);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             provUtils.removeActivity(deleteActivity);

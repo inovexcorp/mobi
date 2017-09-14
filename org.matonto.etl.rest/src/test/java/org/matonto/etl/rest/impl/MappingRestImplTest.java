@@ -224,6 +224,8 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         reset(mappingId, mappingWrapper, manager, provUtils, catalogManager, versioningManager);
 
         when(catalogManager.getLocalCatalogIRI()).thenReturn(vf.createIRI(CATALOG_IRI));
+        when(catalogManager.getRecord(eq(vf.createIRI(CATALOG_IRI)), eq(record.getResource()), any(MappingRecordFactory.class)))
+                .thenReturn(Optional.of(record));
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
 
@@ -253,7 +255,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         });
 
         when(provUtils.startCreateActivity(any(User.class))).thenReturn(createActivity);
-        when(provUtils.startDeleteActivity(any(User.class))).thenReturn(deleteActivity);
+        when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
     }
 
     @Test
@@ -346,10 +348,12 @@ public class MappingRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void deleteMappingTest() {
-        Response response = target().path("mappings/" + encode(MAPPING_IRI)).request().delete();
+        Response response = target().path("mappings/" + encode(MAPPING_RECORD_IRI)).request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(manager).deleteMapping(vf.createIRI(MAPPING_IRI));
-        verify(provUtils).startDeleteActivity(user);
-        verify(provUtils).endDeleteActivity(deleteActivity, vf.createIRI(MAPPING_IRI));
+
+        IRI mrIri = vf.createIRI(MAPPING_RECORD_IRI);
+        verify(manager).deleteMapping(mrIri);
+        verify(provUtils).startDeleteActivity(user, mrIri);
+        verify(provUtils).endDeleteActivity(deleteActivity, mrIri);
     }
 }

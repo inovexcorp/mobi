@@ -219,7 +219,7 @@ public class DatasetRestImpl implements DatasetRest {
         User activeUser = getActiveUser(context, engineManager);
         DeleteActivity deleteActivity = null;
         try {
-            deleteActivity = provUtils.startDeleteActivity(activeUser);
+            deleteActivity = provUtils.startDeleteActivity(activeUser, recordIRI);
             if (force) {
                 manager.deleteDataset(recordIRI);
             } else {

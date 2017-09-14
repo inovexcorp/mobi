@@ -232,7 +232,7 @@ public class OntologyRestImpl implements OntologyRest {
         DeleteActivity deleteActivity = null;
         try {
             if (StringUtils.isBlank(branchIdStr)) {
-                deleteActivity = provUtils.startDeleteActivity(activeUser);
+                deleteActivity = provUtils.startDeleteActivity(activeUser, recordId);
                 ontologyManager.deleteOntology(recordId);
                 provUtils.endDeleteActivity(deleteActivity, recordId);
             } else {
