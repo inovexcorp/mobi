@@ -272,6 +272,11 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public String getRepositoryId() {
+        return repository.getConfig().id();
+    }
+
+    @Override
     public IRI getDistributedCatalogIRI() {
         return (IRI) distributedCatalogIRI;
     }

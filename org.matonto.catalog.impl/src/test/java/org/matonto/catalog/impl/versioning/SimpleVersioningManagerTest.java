@@ -33,6 +33,7 @@ import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.CatalogUtilsService;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
@@ -70,6 +71,7 @@ import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -80,6 +82,7 @@ import org.openrdf.rio.Rio;
 import org.openrdf.sail.memory.MemoryStore;
 
 import java.io.InputStream;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -117,6 +120,12 @@ public class SimpleVersioningManagerTest {
 
     @Mock
     private CatalogUtilsService catalogUtils;
+
+    @Mock
+    private CatalogManager catalogManager;
+
+    @Mock
+    private RepositoryManager repositoryManager;
 
     @Before
     public void setUp() throws Exception {
@@ -208,8 +217,13 @@ public class SimpleVersioningManagerTest {
         when(ontologyService.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
         when(ontologyService.addCommit(any(Branch.class), any(User.class), anyString(), any(Model.class), any(Model.class), any(Commit.class), any(Commit.class), any(RepositoryConnection.class))).thenReturn(commit.getResource());
 
+        when(catalogManager.getRepositoryId()).thenReturn("system");
+
+        when(repositoryManager.getRepository("system")).thenReturn(Optional.of(repo));
+
         manager = new SimpleVersioningManager();
-        manager.setRepository(repo);
+        manager.setRepositoryManager(repositoryManager);
+        manager.setCatalogManager(catalogManager);
         manager.setCatalogUtils(catalogUtils);
         manager.setVf(vf);
         manager.setFactoryRegistry(registry);
