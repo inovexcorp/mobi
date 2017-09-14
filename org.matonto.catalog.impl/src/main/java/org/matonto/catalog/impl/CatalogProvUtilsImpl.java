@@ -25,6 +25,7 @@ package org.matonto.catalog.impl;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.CatalogProvUtils;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.ontologies.provo.Activity;
@@ -44,6 +45,7 @@ import java.util.Collections;
 @Component
 public class CatalogProvUtilsImpl implements CatalogProvUtils {
     private ValueFactory vf;
+    private CatalogManager catalogManager;
     private ProvenanceService provenanceService;
     private CreateActivityFactory createActivityFactory;
     private EntityFactory entityFactory;
@@ -54,6 +56,11 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
     @Reference
     void setVf(ValueFactory vf) {
         this.vf = vf;
+    }
+
+    @Reference
+    void setCatalogManager(CatalogManager catalogManager) {
+        this.catalogManager = catalogManager;
     }
 
     @Reference
@@ -94,6 +101,7 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
         OffsetDateTime stop = OffsetDateTime.now();
         Entity recordEntity = entityFactory.createNew(recordIRI, createActivity.getModel());
         recordEntity.addProperty(vf.createLiteral(stop), vf.createIRI(Entity.generatedAtTime_IRI));
+        recordEntity.addProperty(vf.createLiteral(catalogManager.getRepositoryId()), vf.createIRI(atLocation));
         createActivity.addProperty(vf.createLiteral(stop), vf.createIRI(Activity.endedAtTime_IRI));
         createActivity.addGenerated(recordEntity);
         provenanceService.updateActivity(createActivity);
