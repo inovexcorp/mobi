@@ -12,12 +12,12 @@ package org.matonto.catalog.impl;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -144,25 +144,20 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
     @Override
     public DeleteActivity startDeleteActivity(User user, Resource recordIri) {
         OffsetDateTime start = OffsetDateTime.now();
-
-        Entity recordEntity = entityFactory.getExisting(recordIri, RepositoryResults.asModel(provenanceService.getConnection()
-                .getStatements(recordIri, null, null), modelFactory)).orElseThrow(() ->
-                        new IllegalStateException("No Entity found for record."));
-
         ActivityConfig config = new ActivityConfig.Builder(Collections.singleton(DeleteActivity.class), user).build();
-
         Activity activity = provenanceService.createActivity(config);
-
+        
+        // Must add activity before including the entity since the entity already exists.
         provenanceService.addActivity(activity);
 
         activity.addProperty(vf.createLiteral(start), vf.createIRI(Activity.startedAtTime_IRI));
         activity.addProperty(vf.createLiteral(matOnto.getServerIdentifier().toString()), vf.createIRI(atLocation));
 
-        Value location = recordEntity.getProperty(vf.createIRI(atLocation)).orElseThrow(() ->
-                new IllegalStateException("Missing record location."));
+        Entity recordEntity = entityFactory.getExisting(recordIri, RepositoryResults.asModel(provenanceService.getConnection()
+                .getStatements(recordIri, null, null), modelFactory)).orElseThrow(() ->
+                        new IllegalStateException("No Entity found for record."));
 
-        Repository repo = repositoryManager.getRepository(location.stringValue()).orElseThrow(() ->
-                new IllegalStateException("Catalog repository unavailable"));
+        Repository repo = getRepositoryFromEntity(recordEntity);
 
         Record record = recordFactory.getExisting(recordIri, RepositoryResults.asModel(repo.getConnection()
                 .getStatements(recordIri, null, null), modelFactory)).orElseThrow(() ->
@@ -191,5 +186,13 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
         if (activity != null) {
             provenanceService.deleteActivity(activity.getResource());
         }
+    }
+
+    private Repository getRepositoryFromEntity(Entity entity) {
+        Value location = entity.getProperty(vf.createIRI(atLocation)).orElseThrow(() ->
+                new IllegalStateException("Missing record location."));
+
+        return repositoryManager.getRepository(location.stringValue()).orElseThrow(() ->
+                new IllegalStateException("Catalog repository unavailable"));
     }
 }
