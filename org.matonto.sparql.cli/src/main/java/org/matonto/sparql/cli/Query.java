@@ -31,6 +31,7 @@ import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.table.ShellTable;
+import org.matonto.exception.MatOntoException;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.Value;
@@ -38,6 +39,9 @@ import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.api.RepositoryManager;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,13 +63,29 @@ public class Query implements Action {
     @Option(name = "-r", aliases = "--repository", description = "The id of the repository that data will be queried")
     private String repositoryParam = null;
 
-    @Argument(name = "Query", description = "The SPARQL query", required = true)
+    @Option(name = "-f", aliases = "--query-file", description = "The input query file")
+    private String queryFileParam = null;
+
+    @Argument(name = "Query", description = "The SPARQL query")
     private String queryParam = null;
 
     // Implementation
 
     @Override
     public Object execute() throws Exception {
+        // Get Query String
+        String queryString;
+        if (queryFileParam != null) {
+            try {
+                queryString = new String(Files.readAllBytes(Paths.get(queryFileParam)));
+            } catch (IOException e) {
+                throw new MatOntoException(e);
+            }
+        } else {
+            queryString = queryParam;
+        }
+
+        // Get Repo
         if (StringUtils.isEmpty(repositoryParam)) {
             repositoryParam = "system";
         }
@@ -77,8 +97,15 @@ public class Query implements Action {
             return null;
         }
 
-        try(RepositoryConnection conn = repoOpt.get().getConnection()) {
-            TupleQuery query = conn.prepareTupleQuery(queryParam);
+        // Execute Query
+        executeQuery(repoOpt.get(), queryString);
+        
+        return null;
+    }
+
+    private void executeQuery(Repository repository, String queryString) {
+        try(RepositoryConnection conn = repository.getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(queryString);
             TupleQueryResult result = query.evaluate();
 
             List<String> bindingNames = result.getBindingNames();
@@ -102,7 +129,5 @@ public class Query implements Action {
 
             table.print(System.out);
         }
-        
-        return null;
     }
 }
