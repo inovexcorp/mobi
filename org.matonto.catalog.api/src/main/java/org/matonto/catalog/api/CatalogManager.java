@@ -50,6 +50,13 @@ import javax.annotation.Nullable;
 public interface CatalogManager {
 
     /**
+     * Returns the ID of the Repository which should store all catalog data.
+     *
+     * @return The ID of the catalog Repository
+     */
+    String getRepositoryId();
+
+    /**
      * Returns the IRI for the distributed Catalog.
      *
      * @return The IRI which identifies the distributed Catalog.

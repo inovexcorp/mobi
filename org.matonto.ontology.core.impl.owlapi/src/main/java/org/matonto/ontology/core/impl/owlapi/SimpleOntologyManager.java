@@ -244,9 +244,9 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public boolean ontologyIriExists(Resource ontologyIRI) {
-        Repository system = repositoryManager.getRepository("system").orElseThrow(() ->
-                new IllegalStateException("System Repository unavailable"));
-        try (RepositoryConnection conn = system.getConnection()) {
+        Repository repo = repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
+                new IllegalStateException("Catalog Repository unavailable"));
+        try (RepositoryConnection conn = repo.getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(FIND_ONTOLOGY);
             query.setBinding(ONTOLOGY_IRI, ontologyIRI);
             query.setBinding(CATALOG, catalogManager.getLocalCatalogIRI());
@@ -257,9 +257,9 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Optional<Resource> getOntologyRecordResource(@Nonnull Resource ontologyIRI) {
-        Repository system = repositoryManager.getRepository("system").orElseThrow(() ->
-                new IllegalStateException("System Repository unavailable"));
-        try (RepositoryConnection conn = system.getConnection()) {
+        Repository repo = repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
+                new IllegalStateException("Catalog Repository unavailable"));
+        try (RepositoryConnection conn = repo.getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(FIND_ONTOLOGY);
             query.setBinding(ONTOLOGY_IRI, ontologyIRI);
             query.setBinding(CATALOG, catalogManager.getLocalCatalogIRI());

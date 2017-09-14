@@ -35,6 +35,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import aQute.bnd.annotation.metatype.Configurable;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -104,6 +105,7 @@ import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.rdf.orm.impl.ThingFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.config.RepositoryConfig;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -190,7 +192,12 @@ public class SimpleCatalogManagerTest {
 
     @Before
     public void setUp() throws Exception {
-        repo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        SesameRepositoryWrapper repositoryWrapper = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()));
+        Map<String, Object> repoProps = new HashMap<>();
+        repoProps.put("id", "system");
+        RepositoryConfig config = Configurable.createConfigurable(RepositoryConfig.class, repoProps);
+        repositoryWrapper.setConfig(config);
+        repo = repositoryWrapper;
         repo.initialize();
 
         catalogFactory.setModelFactory(mf);
@@ -357,6 +364,11 @@ public class SimpleCatalogManagerTest {
     @After
     public void tearDown() throws Exception {
         repo.shutDown();
+    }
+
+    @Test
+    public void testGetRepositoryId() throws Exception {
+        assertEquals("system", manager.getRepositoryId());
     }
 
     @Test
