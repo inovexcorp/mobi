@@ -12,8 +12,9 @@
 @prefix commits: <http://matonto.org/test/commits#> .
 @prefix revisions: <http://matonto.org/test/revisions#> .
 @prefix users: <http://matonto.org/test/users#> .
-@prefix additions: <http://matonto.org/test/additions#> .
-@prefix deletions: <http://matonto.org/test/deletions#> .
+@prefix additions: <https://matonto.org/additions#> .
+@prefix deletions: <https://matonto.org/deletions#> .
+@prefix graphs: <http://matonto.org/test/graphs#> .
 
 GRAPH <http://matonto.org/test#empty> { }
 
@@ -755,4 +756,141 @@ GRAPH <http://matonto.org/test/diff/additions> {
 
 GRAPH <http://matonto.org/test/diff/deletions> {
     <http://matonto.org/test/class0> dc:title "Class 1" .
+}
+
+# Basic Quad Revisioning
+
+GRAPH records:quad-versioned-rdf-record {
+    records:quad-versioned-rdf-record a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
+        mcat:catalog catalogs:catalog-distributed ;
+        dc:title "Quad Versioned RDF Record" ;
+        dc:description "Description" ;
+        dc:issued "2017-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2017-05-01T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        mcat:branch branches:quad-branch ;
+        mcat:branch branches:master ;
+        mcat:masterBranch branches:master .
+}
+
+GRAPH branches:quad-branch {
+    branches:quad-branch a mcat:Branch ;
+        mcat:head commits:quad-test2 .
+}
+
+GRAPH commits:quad-test0 {
+    commits:quad-test0 a mcat:Commit ;
+        dc:title "Quad Test 0" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:revision0 .
+
+    revisions:revision0 a mcat:Revision ;
+        mcat:additions additions:quad-test0 ;
+        mcat:deletions deletions:quad-test0 .
+}
+
+GRAPH additions:quad-test0 {
+    <http://matonto.org/test/object1> a owl:Thing ;
+        dc:title "Test 0 Title" .
+}
+
+GRAPH commits:quad-test1 {
+    commits:quad-test1 a mcat:Commit ;
+        dc:title "Quad Test 1" ;
+        prov:atTime "2016-03-02T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:quad-test0 ;
+        prov:generated revisions:revision1 .
+
+    revisions:revision1 a mcat:Revision ;
+        mcat:additions additions:quad-test1 ;
+        mcat:deletions deletions:quad-test1 ;
+        mcat:graphRevision [
+            a mcat:GraphRevision ;
+            mcat:revisionedGraph graphs:quad-graph1 ;
+            mcat:additions additions:quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1 ;
+            mcat:deletions deletions:quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1
+        ] .
+}
+
+GRAPH additions:quad-test1 {
+    <http://matonto.org/test/object1> dc:title "Test 1 Title" .
+}
+
+GRAPH deletions:quad-test1 {
+    <http://matonto.org/test/object1> dc:title "Test 0 Title" .
+}
+
+GRAPH additions:quad-test1%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1 {
+    <http://matonto.org/test/object2> a owl:Thing ;
+        dc:title "Test 1 Title" .
+}
+
+GRAPH commits:quad-test2 {
+    commits:quad-test2 a mcat:Commit ;
+        dc:title "Quad Test 2" ;
+        prov:atTime "2016-03-03T00:01:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:quad-test1 ;
+        prov:generated revisions:revision2 .
+
+    revisions:revision2 a mcat:Revision ;
+        mcat:additions additions:quad-test2 ;
+        mcat:deletions deletions:quad-test2 ;
+        mcat:graphRevision [
+            a mcat:GraphRevision ;
+            mcat:revisionedGraph graphs:quad-graph1 ;
+            mcat:additions additions:quad-test2%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1 ;
+            mcat:deletions deletions:quad-test2%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1
+        ] .
+}
+
+GRAPH additions:quad-test2 {
+    <http://matonto.org/test/object1> dc:title "Test 2 Title" .
+}
+
+GRAPH deletions:quad-test2 {
+    <http://matonto.org/test/object1> dc:title "Test 1 Title" .
+}
+
+GRAPH additions:quad-test2%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1 {
+    <http://matonto.org/test/object2> dc:title "Test 2 Title" .
+}
+
+GRAPH deletions:quad-test2%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1 {
+    <http://matonto.org/test/object2> dc:title "Test 1 Title" .
+}
+
+# Quad Revisioning - InProgressCommit
+
+GRAPH commits:quad-in-progress-commit {
+    commits:quad-in-progress-commit a mcat:Commit, mcat:InProgressCommit ;
+        dc:title "In Progress Commit" ;
+        prov:generated revisions:in-progress-commit ;
+        prov:wasAssociatedWith users:taken ;
+        mcat:onVersionedRDFRecord records:versioned-rdf-record .
+
+    revisions:in-progress-commit a mcat:Revision ;
+        mcat:additions additions:quad-in-progress-commit ;
+        mcat:deletions deletions:quad-in-progress-commit ;
+        mcat:graphRevision [
+            a mcat:GraphRevision ;
+            mcat:revisionedGraph graphs:quad-graph1 ;
+            mcat:additions additions:quad-in-progress-commit%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1 ;
+            mcat:deletions deletions:quad-in-progress-commit%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1
+        ] .
+}
+
+GRAPH additions:quad-in-progress-commit {
+    <http://matonto.org/test/add> dc:title "Add" ;
+}
+
+GRAPH deletions:quad-in-progress-commit {
+    <http://matonto.org/test/delete> dc:title "Delete" ;
+}
+
+GRAPH additions:quad-in-progress-commit%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1 {
+    <http://matonto.org/test/add> dc:title "Add" ;
+}
+
+GRAPH deletions:quad-in-progress-commit%00http%3A%2F%2Fmatonto.org%2Ftest%2Fgraphs%23quad-graph1 {
+    <http://matonto.org/test/delete> dc:title "Delete" ;
 }
