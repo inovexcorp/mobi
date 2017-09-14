@@ -46,9 +46,9 @@ import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
-
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryManager;
+
 import java.time.OffsetDateTime;
 import java.util.Collections;
 
