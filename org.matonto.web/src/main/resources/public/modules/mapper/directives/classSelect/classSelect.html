@@ -23,7 +23,7 @@
 <div class="class-select">
     <ui-select ng-model="dvm.selectedClass" on-select="onChange()" ng-disabled="isDisabledWhen" autofocus>
         <ui-select-match placeholder="Select a class">
-            <span ng-if="$select.selected !== undefined" title="{{$select.selected.classObj['@id']}}">{{dvm.om.getEntityName($select.selected.classObj)}}</span>
+            <span ng-if="$select.selected" title="{{$select.selected.classObj['@id']}}">{{dvm.om.getEntityName($select.selected.classObj)}}</span>
         </ui-select-match>
         <ui-select-choices group-by="dvm.getOntologyId" repeat="clazz in classes | filter:$select.search | orderBy:dvm.om.getEntityName track by $index" ui-disable-choice="dvm.om.isDeprecated(clazz.classObj)">
             <div title="{{clazz.classObj['@id']}}">
