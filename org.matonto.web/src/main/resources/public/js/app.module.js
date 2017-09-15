@@ -72,6 +72,8 @@
             'confirmationOverlay',
             'customHeader',
             'customLabel',
+            'dragMe',
+            'dropOnMe',
             'emailInput',
             'entityDates',
             'entityDescription',
@@ -99,6 +101,7 @@
             'valueDisplay',
 
             /* Custom Modules */
+            'analytics',
             'catalog',
             'datasets',
             'discover',
@@ -112,6 +115,7 @@
             'webtop',
 
             /* Custom Services */
+            'analyticState',
             'catalogManager',
             'catalogState',
             'datasetManager',
