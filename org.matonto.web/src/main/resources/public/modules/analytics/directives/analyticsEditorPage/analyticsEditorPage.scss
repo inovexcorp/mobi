@@ -1,0 +1,13 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.analytics-editor-page {
+    display: flex;
+    flex-direction: column;
+    
+    > .row {
+        flex: 1;
+        margin: 0;
+        padding: 15px 0;
+    }
+}

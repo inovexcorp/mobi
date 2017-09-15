@@ -160,6 +160,16 @@
                 data: {
                     title: 'Datasets'
                 }
+            }).state('root.analytics', {
+                url: '/analytics',
+                views: {
+                    'container@': {
+                        templateUrl: 'modules/analytics/analytics.html'
+                    }
+                },
+                data: {
+                    title: 'Analytics'
+                }
             });
 
         authenticate.$inject = ['loginManagerService'];

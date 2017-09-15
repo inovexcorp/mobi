@@ -494,6 +494,7 @@ function mockSparqlManager() {
             this.queryRdf = jasmine.createSpy('queryRdf');
             this.downloadResults = jasmine.createSpy('downloadResults');
             this.setResults = jasmine.createSpy('setResults');
+            this.pagedQuery = jasmine.createSpy('pagedQuery').and.returnValue($q.when({}));
         });
     });
 }
@@ -1116,6 +1117,40 @@ function mockSearch() {
             this.createRegexQuery = jasmine.createSpy('createRegexQuery').and.returnValue({});
             this.createRangeQuery = jasmine.createSpy('createRangeQuery').and.returnValue({});
             this.createBooleanQuery = jasmine.createSpy('createBooleanQuery').and.returnValue({});
+        });
+    });
+}
+
+function mockAnalyticState() {
+    module(function($provide) {
+        $provide.service('analyticStateService', function() {
+            this.landing = true;
+            this.editor = false;
+            this.datasets = [];
+            this.classes = [];
+            this.properties = [];
+            this.selectedClass = undefined;
+            this.enabledProperties = [];
+            this.selectedProperties = [];
+            this.results = undefined;
+            this.variables = {};
+            this.spinnerId = 'analytic-spinner';
+            this.queryError = '';
+            this.currentPage = 0;
+            this.totalSize = 0;
+            this.limit = 100;
+            this.links = {};
+            this.query = {};
+            this.showEditor = jasmine.createSpy('showEditor');
+            this.showLanding = jasmine.createSpy('showLanding');
+            this.resetSelected = jasmine.createSpy('resetSelected');
+            this.selectClass = jasmine.createSpy('selectClass');
+            this.selectProperty = jasmine.createSpy('selectProperty');
+            this.removeProperty = jasmine.createSpy('removeProperty');
+            this.createQueryString = jasmine.createSpy('createQueryString');
+            this.getPage = jasmine.createSpy('getPage');
+            this.sortResults = jasmine.createSpy('sortResults');
+            this.reorderColumns = jasmine.createSpy('reorderColumns');
         });
     });
 }

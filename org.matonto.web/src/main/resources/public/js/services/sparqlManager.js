@@ -210,13 +210,13 @@
              * @methodOf sparqlManager.service:sparqlManagerService
              *
              * @description
-             * Calls the GET /sparql/page REST endpoint to conduct a SPARQL query using the provided query
+             * Calls the GET /sparql REST endpoint to conduct a SPARQL query using the provided query
              * and optionally using the provided DatasetRecord IRI to limit the query to a dataset.
              *
              * @param {string} query The SPARQL query string to submit
              * @param {string} datasetRecordIRI The IRI of the DatasetRecord to restrict the query to
              * @param {string} id The identifier for this call
-             * @return {Promise} A Promise that resolves to the data from the response or rejects with an\
+             * @return {Promise} A Promise that resolves to the data from the response or rejects with an
              * error message.
              */
             self.query = function(query, datasetRecordIRI = '', id = '') {
@@ -226,6 +226,41 @@
                 }
                 var promise = id ? httpService.get(prefix, config, id) : $http.get(prefix, config);
                 return promise.then(response => response.data, util.rejectError);
+            }
+            /**
+             * @ngdoc method
+             * @name pagedQuery
+             * @methodOf sparqlManager.service:sparqlManagerService
+             *
+             * @description
+             * Calls the GET /sparql/page REST endpoint to conduct a SPARQL query using the provided query and
+             * optionally using the provided DatasetRecord IRI and pagination parameters to limit the query to
+             * a dataset.
+             *
+             * @param {string} query The SPARQL query string to submit
+             * @param {Object} paramObj The Object which contains all of the params to set
+             * @param {string} paramObj.datasetRecordIRI The IRI of the DatasetRecord to restrict the query to
+             * @param {string} paramObj.id The identifier for this call
+             * @param {number} [paramObj.limit=100] The number of results per page
+             * @param {number} [paramObj.page=0] The page of results that you want to retrieve
+             * @return {Promise} A Promise that resolves to the data from the response or rejects with an
+             * error message.
+             */
+            self.pagedQuery = function(query, paramObj) {
+                var limit = _.get(paramObj, 'limit', 100);
+                var config = {
+                    params: {
+                        query,
+                        limit,
+                        offset: _.get(paramObj, 'page', 0) * limit
+                    }
+                };
+                if (_.has(paramObj, 'datasetRecordIRI')) {
+                    config.params.dataset = paramObj.datasetRecordIRI;
+                }
+                var url = prefix + '/page';
+                var promise = _.has(paramObj, 'id') ? httpService.get(url, config, paramObj.id) : $http.get(url, config);
+                return promise.then(response => response, util.rejectError);
             }
             /**
              * @ngdoc method

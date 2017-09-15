@@ -1,0 +1,16 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.sortable-table {
+    th .fa {
+        line-height: 19px;
+        
+        &.fa-sort {
+            color: $gray-light;
+        }
+    }
+    
+    td {
+        height: 37px;
+    }
+}

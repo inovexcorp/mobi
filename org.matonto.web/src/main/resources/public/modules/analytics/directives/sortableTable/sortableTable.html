@@ -1,0 +1,34 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<table class="sortable-table sparql-result-table table table-hover">
+    <thead>
+        <tr>
+            <th ng-repeat="binding in dvm.bindings track by binding" ng-click="dvm.sort(binding)" drag-me drag-id="'table-header'" info="$index" drop-on-me drop-id="'table-header'" on-drop="dvm.state.reorderColumns(data, $index)">{{headers ? headers[binding] : binding}}<i class="fa fa-fw pull-right" ng-class="{'fa-sort-desc': dvm.descendingList[binding] === true, 'fa-sort-asc': dvm.descendingList[binding] === false, 'fa-sort': dvm.descendingList[binding] === undefined}"></i></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr ng-repeat="result in data track by $index">
+            <td ng-repeat="binding in dvm.bindings" ng-bind-html="result[binding].value | trusted"></td>
+        </tr>
+    </tbody>
+</table>

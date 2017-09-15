@@ -1,0 +1,99 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.analytics-editor {
+    .block-content {
+        display: flex;
+        flex-direction: column;
+        
+        > .row {
+            margin: 0;
+        }
+        
+        .property-row {
+            border-bottom: 1px solid $gray-light;
+            
+            .property-area {
+                border-left: 1px solid $gray-light;
+                min-height: 75px;
+                
+                &.empty:after {
+                    content: 'Drop Properties Here';
+                }
+            }
+        }
+
+        .class-row {
+            flex: 1;
+            
+            .class-area {
+                &.empty:after {
+                    content: 'Drop Class Here';
+                }
+                
+                &.empty:after,
+                .selected-class {
+                    left: 35%;
+                    position: absolute;
+                    text-align: center;
+                    top: 50%;
+                    transform: rotate(-90deg);
+                    transform-origin: left top;
+                    white-space: nowrap;
+                }
+            }
+            
+            .table-area {
+                border: 1px solid $gray-light;
+                border-top: 0;
+                display: flex;
+                flex-direction: column;
+                
+                .table-wrapper {
+                    flex: 1;
+                }
+            }
+        }
+        
+        .class-area,
+        .property-area {
+            &.empty:after {
+                color: $gray-light;
+                display: block;
+                left: 0;
+                padding: 0 15px;
+                position: absolute;
+                text-align: center;
+                top: 40%;
+                width: 100%;
+            }
+            
+            .md-chips {
+                box-shadow: none;
+                outline: none;
+                padding: 0;
+            }
+        }
+        
+        .class-row .class-area .selected-class,
+        .class-area.empty:after,
+        .property-area.empty:after {
+            font-size: 16px;
+        }
+        
+        .paging-wrapper {
+            border-top: 1px solid $gray-light;
+            margin: 0 -15px;
+            padding: 10px 15px;
+            
+            .paging-details p {
+                line-height: 34px;
+                margin: 0;
+            }
+            
+            .pagination {
+                vertical-align: bottom;
+            }
+        }
+    }
+}
