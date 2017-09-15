@@ -29,7 +29,7 @@
          * @name dropOnMe
          *
          * @description
-         * The `dropOnMe` module provides the `dropOnMe` directive which provides a way to drop on this element.
+         * The `dropOnMe` module provides the `dropOnMe` directive which provides a way to drop an element on this element.
          */
         .module('dropOnMe', [])
         /**
@@ -38,7 +38,10 @@
          * @restrict A
          *
          * @description
-         * `dropOnMe` is a directive that allows users to drop on this element.
+         * `dropOnMe` is a directive that allows users to drop on this element. This should be used in tandem with the `dragMe`
+         * directive. The "dropId" attribute is a unique identifier to match up to a "dragId" which allows dropping the dragged
+         * element on this element. The "onDrop" attribute is a function that will be executed with the "data" provided by the
+         * dragged element.
          */
         .directive('dropOnMe', dropOnMe);
         

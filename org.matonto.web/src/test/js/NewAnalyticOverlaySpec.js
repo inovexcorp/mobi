@@ -44,6 +44,12 @@ describe('Class And Property Block directive', function() {
         compileElement();
     });
 
+    describe('controller bound variables', function() {
+        it('onCancel to be called in parent scope', function() {
+            controller.onCancel();
+            expect(scope.onCancel).toHaveBeenCalled();
+        });
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.prop('tagName')).toBe('DIV');

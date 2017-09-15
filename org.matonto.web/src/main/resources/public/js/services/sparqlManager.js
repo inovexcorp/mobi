@@ -260,7 +260,7 @@
                 }
                 var url = prefix + '/page';
                 var promise = _.has(paramObj, 'id') ? httpService.get(url, config, paramObj.id) : $http.get(url, config);
-                return promise.then(response => response, util.rejectError);
+                return promise.then($q.when, util.rejectError);
             }
             /**
              * @ngdoc method

@@ -35,7 +35,7 @@
                     <md-chip ng-if="dvm.state.selectedClass" class="selected-class md-chip">{{dvm.state.selectedClass.title}}</md-chip>
                 </div>
                 <div class="col-xs-11 table-area full-height">
-                    <error-message ng-if="dvm.state.queryError" class="padding"></error-message>
+                    <error-display ng-if="dvm.state.queryError" class="padding">{{dvm.state.queryError}}</error-display>
                     <div class="table-wrapper">
                         <sortable-table bindings="dvm.state.results.bindings" data="dvm.state.results.data" headers="dvm.state.variables" targeted-spinner="dvm.state.spinnerId" on-sort="dvm.state.sortResults(binding, descending)"></sortable-table>
                     </div>

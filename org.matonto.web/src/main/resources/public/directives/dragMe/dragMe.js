@@ -38,7 +38,9 @@
          * @restrict A
          *
          * @description
-         * `dragMe` is a directive that allows users to drag the element.
+         * `dragMe` is a directive that allows users to drag the element. It expects attributes "info" and "dragId".
+         * The "info" attribute contains whatever you want to pass on when you drop this directive. The "dragId" attribute
+         * is a unique identifier to match up to a "dropId" where you can actually drop this directive.
          */
         .directive('dragMe', dragMe);
 

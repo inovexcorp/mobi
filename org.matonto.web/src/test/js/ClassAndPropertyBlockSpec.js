@@ -108,7 +108,6 @@ describe('Class And Property Block directive', function() {
             it('resolves', function() {
                 ontologyManagerSvc.getOntology.and.returnValue($q.when([]));
                 compileElement();
-                scope.$apply();
                 expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
                 expect(ontologyManagerSvc.getClasses).toHaveBeenCalledWith([]);
                 expect(ontologyManagerSvc.getObjectProperties).toHaveBeenCalledWith([]);
@@ -120,12 +119,9 @@ describe('Class And Property Block directive', function() {
                 expect(analyticStateSvc.properties).toEqual([{id: 'objectPropId', title: 'name', classes: ['domainId']}, {id: 'dataPropId', title: 'name', classes: ['classId']}]);
             });
             it('rejects', function() {
-                utilSvc.getErrorMessage.and.returnValue('error');
-                ontologyManagerSvc.getOntology.and.returnValue($q.reject({prop: 'error'}));
+                ontologyManagerSvc.getOntology.and.returnValue($q.reject('error'));
                 compileElement();
-                scope.$apply();
                 expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
-                expect(utilSvc.getErrorMessage).toHaveBeenCalledWith({prop: 'error'});
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
             });
         });

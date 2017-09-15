@@ -37,6 +37,10 @@
         /**
          * @ngdoc service
          * @name analyticState.service:analyticStateService
+         * @requires httpService.service:httpService
+         * @requires prefixes.service:prefixes
+         * @requires sparqlManager.service:sparqlManagerService
+         * @requires util.service:utilService
          *
          * @description
          * `analyticStateService` is a service which contains various variables to hold the
@@ -152,7 +156,14 @@
              * @type {Object}
              *
              * @description
-             * 'results' is an object containing the results of the generated SPARQL query
+             * 'results' is an object containing the results of the generated SPARQL query.
+             * The structure of the object is:
+             * ```
+             * {
+             *     bindings: [],
+             *     data: []
+             * }
+             * ```
              */
             self.results = undefined;
             
@@ -293,6 +304,8 @@
              * @description
              * Sets the selectedClass based on the provided data, removes that class from the list of available
              * classes, and resets the selectedProperties variable.
+             *
+             * @param {Object} data The data which corresponds to a class in the classes list.
              */
             self.selectClass = function(data) {
                 self.results = undefined;
@@ -313,6 +326,8 @@
              * @description
              * Adds the property based on the provided data to the selectedProperties array and gets the paged
              * results based on the selected entities.
+             *
+             * @param {Object} data The data which corresponds to a property in the properties list.
              */
             self.selectProperty = function(data) {
                 self.selectedProperties.push(_.remove(self.properties, data)[0]);
@@ -327,6 +342,8 @@
              * @description
              * Removes the property based on the provided data from the selectedProperties array and gets the paged
              * results based on the selected entities.
+             *
+             * @param {Object} data The data which corresponds to a property in the properties list.
              */
             self.removeProperty = function(data) {
                 self.properties.push(angular.copy(data));
@@ -340,6 +357,8 @@
              *
              * @description
              * Creates the query string based on the details of the state variables.
+             *
+             * @returns {string} The query string created from the state variables.
              */
             self.createQueryString = function() {
                 self.variables = {};
@@ -378,18 +397,24 @@
              * @description
              * Gets the next or previous page of results and updates the paginated variables to reflect
              * that change.
+             *
+             * @param {string} direction The direction, either next or prev, of the page that you want to get.
              */
             self.getPage = function(direction) {
                 var url;
+                var page = angular.copy(self.currentPage);
                 if (direction === 'next') {
-                    self.currentPage += 1;
+                    page += 1;
                     url = self.links.next;
                 } else {
-                    self.currentPage -= 1;
+                    page -= 1;
                     url = self.links.prev;
                 }
                 httpService.get(url, undefined, self.spinnerId)
-                    .then(onPagedSuccess, onPagedError);
+                    .then(response => {
+                        self.currentPage = page;
+                        onPagedSuccess(response);
+                    }, onPagedError);
             }
             
             /**
@@ -399,6 +424,10 @@
              *
              * @description
              * Adjusts the query to sort by a specific expression either ascending or descending.
+             *
+             * @param {string} expression The expression for the variable that you want to sort by (e.g. ?var0).
+             * @param {boolean} [descending=false] The variable indicating whether or not you want the results in
+             * descending order.
              */
             self.sortResults = function(expression, descending = false) {
                 self.query.order = [{expression, descending}];
@@ -413,6 +442,9 @@
              *
              * @description
              * Reorders the columns associated with the table in the analytic state.
+             *
+             * @param {number} from The index of the thing you want to move.
+             * @param {number} to The index of the place you want to move the thing to.
              */
             self.reorderColumns = function(from, to) {
                 if (to !== from && _.get(self.results, 'bindings', []).length && self.selectedProperties.length && _.get(self.query, 'variables', []).length) {

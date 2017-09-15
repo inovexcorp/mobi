@@ -73,11 +73,11 @@ describe('Analytics Editor directive', function() {
         it('with a .table-area', function() {
             expect(element.querySelectorAll('.table-area').length).toBe(1);
         });
-        it('with a error-message', function() {
-            expect(element.find('error-message').length).toBe(0);
+        it('with a error-display', function() {
+            expect(element.find('error-display').length).toBe(0);
             analyticStateSvc.queryError = 'error';
             scope.$apply();
-            expect(element.find('error-message').length).toBe(1);
+            expect(element.find('error-display').length).toBe(1);
         });
         it('with a .table-wrapper', function() {
             expect(element.querySelectorAll('.table-wrapper').length).toBe(1);
