@@ -30,10 +30,11 @@ import org.matonto.rdf.orm.conversion.AbstractValueConverter;
 import org.matonto.rdf.orm.conversion.ValueConversionException;
 import org.matonto.rdf.orm.conversion.ValueConverter;
 
+import java.time.OffsetDateTime;
+import java.util.GregorianCalendar;
+import java.util.TimeZone;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
-import java.util.Date;
-import java.util.GregorianCalendar;
 
 /**
  * {@link ValueConverter} for creating {@link Date} objects from statements.
@@ -41,7 +42,7 @@ import java.util.GregorianCalendar;
  * @author bdgould
  */
 @Component(provide = ValueConverter.class)
-public class DateValueConverter extends AbstractValueConverter<Date> {
+public class DateValueConverter extends AbstractValueConverter<OffsetDateTime> {
 
     private static final String XSD_DATETIME = XSD_PREFIX + "dateTime";
 
@@ -49,19 +50,19 @@ public class DateValueConverter extends AbstractValueConverter<Date> {
      * Default constructor.
      */
     public DateValueConverter() {
-        super(Date.class);
+        super(OffsetDateTime.class);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Date convertValue(final Value value, final Thing thing, final Class<? extends Date> desiredType)
-            throws ValueConversionException {
+    public OffsetDateTime convertValue(final Value value, final Thing thing,
+            final Class<? extends OffsetDateTime> desiredType) throws ValueConversionException {
         try {
             // Use the standard XMLGregorianCalendar object.
-            return DatatypeFactory.newInstance().newXMLGregorianCalendar(value.stringValue()).toGregorianCalendar()
-                    .getTime();
+            return DatatypeFactory.newInstance().newXMLGregorianCalendar(value.stringValue()).toGregorianCalendar().
+                    toZonedDateTime().toOffsetDateTime();
         } catch (DatatypeConfigurationException e) {
             throw new ValueConversionException("Environment issue: Cannot instantiate XML Gregorian Calendar data.", e);
         } catch (IllegalArgumentException e) {
@@ -70,10 +71,11 @@ public class DateValueConverter extends AbstractValueConverter<Date> {
     }
 
     @Override
-    public Value convertType(Date type, Thing thing) throws ValueConversionException {
+    public Value convertType(OffsetDateTime type, Thing thing) throws ValueConversionException {
         try {
             final GregorianCalendar gcal = new GregorianCalendar();
-            gcal.setTime(type);
+            gcal.setTimeInMillis(type.toEpochSecond() * 1000 + type.getNano() / 1000000);
+            gcal.setTimeZone(TimeZone.getTimeZone(type.getOffset().getId()));
             return getValueFactory(thing).createLiteral(
                     DatatypeFactory.newInstance().newXMLGregorianCalendar(gcal).toXMLFormat(), XSD_DATETIME);
         } catch (Exception e) {
