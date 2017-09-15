@@ -24,11 +24,12 @@ package org.matonto.ontology.core.impl.owlapi.propertyExpression;
  */
 
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
-import javax.annotation.Nonnull;
 import org.matonto.ontology.core.api.types.EntityType;
 import org.matonto.ontology.core.impl.owlapi.SimpleOntologyValues;
 import org.matonto.rdf.api.IRI;
 import org.semanticweb.owlapi.vocab.OWLRDFVocabulary;
+
+import javax.annotation.Nonnull;
 
 
 public class SimpleAnnotationProperty implements AnnotationProperty {

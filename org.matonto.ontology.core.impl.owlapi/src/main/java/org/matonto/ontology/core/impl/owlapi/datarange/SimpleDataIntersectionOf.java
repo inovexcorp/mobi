@@ -23,13 +23,14 @@ package org.matonto.ontology.core.impl.owlapi.datarange;
  * #L%
  */
 
+import org.matonto.ontology.core.api.datarange.DataIntersectionOf;
+import org.matonto.ontology.core.api.datarange.DataRange;
+import org.matonto.ontology.core.api.types.DataRangeType;
+
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 import javax.annotation.Nonnull;
-import org.matonto.ontology.core.api.datarange.DataIntersectionOf;
-import org.matonto.ontology.core.api.datarange.DataRange;
-import org.matonto.ontology.core.api.types.DataRangeType;
 
 
 public class SimpleDataIntersectionOf implements DataIntersectionOf {

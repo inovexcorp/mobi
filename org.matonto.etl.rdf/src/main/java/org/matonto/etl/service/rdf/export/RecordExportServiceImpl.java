@@ -157,20 +157,15 @@ public class RecordExportServiceImpl implements RecordExportService {
                     processedCommits.add(commitResource.stringValue());
                 }
 
+                // Write Commit/Revision Data
                 commit = catalogManager.getCommit(localCatalog, resource, branchResource, commitResource)
                         .orElseThrow(() -> new IllegalStateException("Could not retrieve expected commit " + commitResource.stringValue()));
                 commit.getModel().forEach(writer::handleStatement);
 
-                Resource additionsResource = catalogUtils.getAdditionsResource(commit);
-                Resource deletionsResource = catalogUtils.getDeletionsResource(commit);
-
-                Difference commitDifference = catalogManager.getCommitDifference(commit.getResource());
-                commitDifference.getAdditions().stream()
-                        .map(stmt -> vf.createStatement(stmt.getSubject(), stmt.getPredicate(), stmt.getObject(), additionsResource))
-                        .forEach(writer::handleStatement);
-                commitDifference.getDeletions().stream()
-                        .map(stmt -> vf.createStatement(stmt.getSubject(), stmt.getPredicate(), stmt.getObject(), deletionsResource))
-                        .forEach(writer::handleStatement);
+                // Write Additions/Deletions Graphs
+                Difference revisionChanges = catalogManager.getRevisionChanges(commitResource);
+                revisionChanges.getAdditions().forEach(writer::handleStatement);
+                revisionChanges.getDeletions().forEach(writer::handleStatement);
             }
         });
     }

@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.9.6-SNAPSHOT</version>
+        <version>1.9.13-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -65,7 +65,6 @@
             <classifier>features</classifier>
             <version>${karaf.version}</version>
             <type>xml</type>
-            <scope>runtime</scope>
         </dependency>
         <dependency>
             <!-- scope is runtime so the feature repo is listed in etc/org.apache.karaf.features.cfg file, and features will installed into the system directory if specify in the plugin configuration -->
@@ -80,7 +79,7 @@
             <groupId>org.apache.camel.karaf</groupId>
             <artifactId>apache-camel</artifactId>
             <classifier>features</classifier>
-            <version>2.16.1</version>
+            <version>${camel.version}</version>
             <type>xml</type>
             <scope>runtime</scope>
         </dependency>
@@ -187,6 +186,9 @@
                 <extensions>true</extensions>
                 <configuration>
                     <!-- no startupFeatures -->
+                    <startupFeatures>
+                        <feature>eventadmin</feature>
+                    </startupFeatures>
                     <bootFeatures>
                         <!-- Standard Features -->
                         <feature>jaas</feature>
@@ -218,6 +220,7 @@
                         <feature>jax-rs-provider-multipart</feature>
                         <feature>jax-rs-provider-gson</feature>
                         <feature>jax-rs-provider-security</feature>
+                        <feature>camel</feature>
 
                         <!-- MatOnto Features -->
                         <feature>matonto-deps</feature>

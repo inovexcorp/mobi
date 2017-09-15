@@ -244,9 +244,9 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public boolean ontologyIriExists(Resource ontologyIRI) {
-        Repository system = repositoryManager.getRepository("system").orElseThrow(() ->
-                new IllegalStateException("System Repository unavailable"));
-        try (RepositoryConnection conn = system.getConnection()) {
+        Repository repo = repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
+                new IllegalStateException("Catalog Repository unavailable"));
+        try (RepositoryConnection conn = repo.getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(FIND_ONTOLOGY);
             query.setBinding(ONTOLOGY_IRI, ontologyIRI);
             query.setBinding(CATALOG, catalogManager.getLocalCatalogIRI());
@@ -257,9 +257,9 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Optional<Resource> getOntologyRecordResource(@Nonnull Resource ontologyIRI) {
-        Repository system = repositoryManager.getRepository("system").orElseThrow(() ->
-                new IllegalStateException("System Repository unavailable"));
-        try (RepositoryConnection conn = system.getConnection()) {
+        Repository repo = repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
+                new IllegalStateException("Catalog Repository unavailable"));
+        try (RepositoryConnection conn = repo.getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(FIND_ONTOLOGY);
             query.setBinding(ONTOLOGY_IRI, ontologyIRI);
             query.setBinding(CATALOG, catalogManager.getLocalCatalogIRI());
@@ -273,41 +273,27 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Optional<Ontology> retrieveOntologyByIRI(@Nonnull Resource ontologyIRI) {
-        long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
+        long start = getStartTime();
         Optional<Ontology> ontology = getOntologyRecordResource(ontologyIRI)
                 .flatMap(this::retrieveOntologyWithRecordId);
-
-        if (log.isTraceEnabled()) {
-            log.trace(String.format("retrieveOntology(record) complete in %d ms",
-                    System.currentTimeMillis() - start));
-        }
-
+        logTrace("retrieveOntology(ontologyIRI)", start);
         return ontology;
     }
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId) {
-        long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
+        long start = getStartTime();
         Optional<Ontology> result = retrieveOntologyWithRecordId(recordId);
-
-        if (log.isTraceEnabled()) {
-            log.trace(String.format("retrieveOntology(record) complete in %d ms", System.currentTimeMillis() - start));
-        }
-
+        logTrace("retrieveOntology(recordId)", start);
         return result;
     }
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId) {
-        long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
+        long start = getStartTime();
         Optional<Ontology> result = catalogManager.getBranch(catalogManager.getLocalCatalogIRI(), recordId, branchId,
                 branchFactory).flatMap(branch -> getOntology(recordId, branch.getResource(), getHeadOfBranch(branch)));
-
-        if (log.isTraceEnabled()) {
-            log.trace(String.format("retrieveOntology(record, branch) complete in %d ms",
-                    System.currentTimeMillis() - start));
-        }
-
+        logTrace("retrieveOntology(recordId, branchId)", start);
         return result;
     }
 
@@ -315,41 +301,41 @@ public class SimpleOntologyManager implements OntologyManager {
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                                @Nonnull Resource commitId) {
         Optional<Ontology> result;
-        long start = log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
+        long start = getStartTime();
 
         Optional<Cache<String, Ontology>> optCache = ontologyCache.getOntologyCache();
         String key = ontologyCache.generateKey(recordId.stringValue(), branchId.stringValue(), commitId.stringValue());
 
         if (optCache.isPresent() && optCache.get().containsKey(key)) {
-            log.trace("cache hit");
+            if (log.isTraceEnabled()) log.trace("cache hit");
             result = Optional.ofNullable(optCache.get().get(key));
         } else {
             result = catalogManager.getCommit(catalogManager.getLocalCatalogIRI(), recordId, branchId, commitId)
                     .flatMap(commit -> getOntology(recordId, branchId, commitId));
         }
 
-        if (log.isTraceEnabled()) {
-            log.trace(String.format("retrieveOntology(record, branch, commit) complete in %d ms",
-                    System.currentTimeMillis() - start));
-        }
-
+        logTrace("retrieveOntology(recordId, branchId, commitId)", start);
         return result;
     }
 
     @Override
     public void deleteOntology(@Nonnull Resource recordId) {
+        long start = getStartTime();
         Resource catalogId = catalogManager.getLocalCatalog().getResource();
         OntologyRecord record = catalogManager.getRecord(catalogId, recordId, ontologyRecordFactory).orElseThrow(() ->
                 new IllegalArgumentException("Ontology Record " + recordId + " not found"));
         catalogManager.removeRecord(catalogManager.getLocalCatalog().getResource(), recordId);
         ontologyCache.clearCache(recordId, null);
         record.getOntologyIRI().ifPresent(ontologyCache::clearCacheImports);
+        logTrace("deleteOntology(recordId)", start);
     }
 
     @Override
     public void deleteOntologyBranch(@Nonnull Resource recordId, @Nonnull Resource branchId) {
+        long start = getStartTime();
         catalogManager.removeBranch(catalogManager.getLocalCatalogIRI(), recordId, branchId);
         ontologyCache.clearCache(recordId, branchId);
+        logTrace("deleteOntologyBranch(recordId, branchId)", start);
     }
 
     @Override
@@ -374,32 +360,35 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public TupleQueryResult getSubClassesOf(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_SUB_CLASSES_OF, null);
+        return runQueryOnOntology(ontology, GET_SUB_CLASSES_OF, null, "getSubClassesOf(ontology)");
     }
 
     @Override
     public TupleQueryResult getSubClassesFor(Ontology ontology, IRI iri) {
-        return runQueryOnOntology(ontology, String.format(GET_CLASSES_FOR, iri.stringValue()), null);
+        return runQueryOnOntology(ontology, String.format(GET_CLASSES_FOR, iri.stringValue()), null,
+                "getSubClassesFor(ontology, iri)");
     }
 
     @Override
     public TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_SUB_DATATYPE_PROPERTIES_OF, null);
+        return runQueryOnOntology(ontology, GET_SUB_DATATYPE_PROPERTIES_OF, null,
+                "getSubDatatypePropertiesOf(ontology)");
     }
 
     @Override
     public TupleQueryResult getSubAnnotationPropertiesOf(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_SUB_ANNOTATION_PROPERTIES_OF, null);
+        return runQueryOnOntology(ontology, GET_SUB_ANNOTATION_PROPERTIES_OF, null,
+                "getSubAnnotationPropertiesOf(ontology)");
     }
 
     @Override
     public TupleQueryResult getSubObjectPropertiesOf(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_SUB_OBJECT_PROPERTIES_OF, null);
+        return runQueryOnOntology(ontology, GET_SUB_OBJECT_PROPERTIES_OF, null, "getSubObjectPropertiesOf(ontology)");
     }
 
     @Override
     public TupleQueryResult getClassesWithIndividuals(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_CLASSES_WITH_INDIVIDUALS, null);
+        return runQueryOnOntology(ontology, GET_CLASSES_WITH_INDIVIDUALS, null, "getClassesWithIndividuals(ontology)");
     }
 
     @Override
@@ -407,11 +396,12 @@ public class SimpleOntologyManager implements OntologyManager {
         return runQueryOnOntology(ontology, SELECT_ENTITY_USAGES, tupleQuery -> {
             tupleQuery.setBinding(ENTITY_BINDING, entity);
             return tupleQuery;
-        });
+        }, "getEntityUsages(ontology, entity)");
     }
 
     @Override
     public Model constructEntityUsages(Ontology ontology, Resource entity) {
+        long start = getStartTime();
         Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -421,17 +411,19 @@ public class SimpleOntologyManager implements OntologyManager {
             return QueryResults.asModel(query.evaluate(), modelFactory);
         } finally {
             repo.shutDown();
+            logTrace("constructEntityUsages(ontology, entity)", start);
         }
     }
 
     @Override
     public TupleQueryResult getConceptRelationships(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_CONCEPT_RELATIONSHIPS, null);
+        return runQueryOnOntology(ontology, GET_CONCEPT_RELATIONSHIPS, null, "getConceptRelationships(ontology)");
     }
 
     @Override
     public TupleQueryResult getConceptSchemeRelationships(Ontology ontology) {
-        return runQueryOnOntology(ontology, GET_CONCEPT_SCHEME_RELATIONSHIPS, null);
+        return runQueryOnOntology(ontology, GET_CONCEPT_SCHEME_RELATIONSHIPS, null,
+                "getConceptSchemeRelationships(ontology)");
     }
 
     @Override
@@ -439,7 +431,12 @@ public class SimpleOntologyManager implements OntologyManager {
         return runQueryOnOntology(ontology, GET_SEARCH_RESULTS, tupleQuery -> {
             tupleQuery.setBinding(SEARCH_TEXT, valueFactory.createLiteral(searchText.toLowerCase()));
             return tupleQuery;
-        });
+        }, "getSearchResults(ontology, searchText)");
+    }
+
+    @Override
+    public Model getOntologyModel(Resource recordId) {
+        return catalogManager.getCompiledResource(getHeadOfBranch(getMasterBranch(recordId)));
     }
 
     private Optional<Ontology> getOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
@@ -484,7 +481,9 @@ public class SimpleOntologyManager implements OntologyManager {
      * @return the results of the query.
      */
     private TupleQueryResult runQueryOnOntology(Ontology ontology, String queryString,
-                                                @Nullable Function<TupleQuery, TupleQuery> addBinding) {
+                                                @Nullable Function<TupleQuery, TupleQuery> addBinding,
+                                                String methodName) {
+        long start = getStartTime();
         Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -499,11 +498,26 @@ public class SimpleOntologyManager implements OntologyManager {
             return query.evaluateAndReturn();
         } finally {
             repo.shutDown();
+            logTrace(methodName, start);
         }
     }
 
     private Optional<Ontology> retrieveOntologyWithRecordId(Resource recordId) {
-        Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
+        Branch masterBranch = getMasterBranch(recordId);
         return getOntology(recordId, masterBranch.getResource(), getHeadOfBranch(masterBranch));
+    }
+
+    private Branch getMasterBranch(Resource recordId) {
+        return catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
+    }
+
+    private long getStartTime() {
+        return log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
+    }
+
+    private void logTrace(String methodName, Long start) {
+        if (log.isTraceEnabled()) {
+            log.trace(String.format(methodName + " complete in %d ms", System.currentTimeMillis() - start));
+        }
     }
 }

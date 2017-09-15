@@ -279,7 +279,7 @@ public class CatalogRestImpl implements CatalogRest {
 
             Record newRecord = catalogManager.createRecord(builder.build(), recordFactories.get(typeIRI));
             catalogManager.addRecord(vf.createIRI(catalogId), newRecord);
-            provUtils.endCreateActivity(createActivity, newRecord);
+            provUtils.endCreateActivity(createActivity, newRecord.getResource());
             return Response.status(201).entity(newRecord.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
             provUtils.removeActivity(createActivity);

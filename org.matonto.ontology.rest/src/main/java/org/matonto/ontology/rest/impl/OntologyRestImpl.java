@@ -94,6 +94,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -1026,6 +1027,7 @@ public class OntologyRestImpl implements OntologyRest {
         Set<IRI> iris = new HashSet<>();
         iris.addAll(ontology.getAllAnnotations()
                 .stream()
+                .filter(Objects::nonNull)
                 .map(Annotation::getProperty)
                 .map(Entity::getIRI)
                 .collect(Collectors.toSet()));
@@ -1362,7 +1364,7 @@ public class OntologyRestImpl implements OntologyRest {
                 .element("recordId", record.getResource().stringValue())
                 .element("branchId", masterBranchId.stringValue())
                 .element("commitId", commitId.stringValue());
-        provUtils.endCreateActivity(createActivity, record);
+        provUtils.endCreateActivity(createActivity, record.getResource());
         return Response.status(Response.Status.CREATED).entity(response).build();
     }
 

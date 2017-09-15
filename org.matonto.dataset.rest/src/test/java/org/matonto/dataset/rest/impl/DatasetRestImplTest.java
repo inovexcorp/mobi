@@ -343,7 +343,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).getMasterBranch(localIRI, ontologyRecordIRI);
         assertEquals(response.readEntity(String.class), record1.getResource().stringValue());
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(activity, record1);
+        verify(provUtils).endCreateActivity(activity, record1.getResource());
     }
 
     @Test

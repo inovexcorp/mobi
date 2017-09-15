@@ -276,7 +276,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).addRecord(eq(vf.createIRI(CATALOG_IRI)), any(Record.class));
         verify(versioningManager).commit(eq(vf.createIRI(CATALOG_IRI)), eq(vf.createIRI(MAPPING_RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(user), anyString(), any(Model.class), eq(null));
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(activity, record);
+        verify(provUtils).endCreateActivity(activity, vf.createIRI(MAPPING_RECORD_IRI));
     }
 
     @Test
@@ -292,7 +292,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).addRecord(eq(vf.createIRI(CATALOG_IRI)), any(Record.class));
         verify(versioningManager).commit(eq(vf.createIRI(CATALOG_IRI)), eq(vf.createIRI(MAPPING_RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(user), anyString(), any(Model.class), eq(null));
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(activity, record);
+        verify(provUtils).endCreateActivity(activity, vf.createIRI(MAPPING_RECORD_IRI));
     }
 
     @Test

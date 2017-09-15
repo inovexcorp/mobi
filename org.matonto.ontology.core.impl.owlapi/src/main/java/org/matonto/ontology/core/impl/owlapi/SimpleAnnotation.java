@@ -27,9 +27,9 @@ import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.propertyexpression.AnnotationProperty;
 import org.matonto.rdf.api.Value;
 
-import javax.annotation.Nonnull;
 import java.util.HashSet;
 import java.util.Set;
+import javax.annotation.Nonnull;
 
 
 public class SimpleAnnotation implements Annotation {

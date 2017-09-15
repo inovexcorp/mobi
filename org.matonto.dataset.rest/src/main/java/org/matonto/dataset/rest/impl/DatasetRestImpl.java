@@ -183,7 +183,7 @@ public class DatasetRestImpl implements DatasetRest {
                         getOntologyIdentifer(vf.createIRI(formDataBodyPart.getValue()))));
             }
             DatasetRecord record = manager.createDataset(builder.build());
-            provUtils.endCreateActivity(createActivity, record);
+            provUtils.endCreateActivity(createActivity, record.getResource());
             return Response.status(201).entity(record.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
             provUtils.removeActivity(createActivity);
