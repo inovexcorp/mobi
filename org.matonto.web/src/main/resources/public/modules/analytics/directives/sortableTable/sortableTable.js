@@ -30,7 +30,7 @@
          *
          * @description
          * The `sortableTable` module only provides the `sortableTable` directive which
-         * creates a sortable table using the provided SPARQL spec JSON results.
+         * creates a sortable table using the provided SPARQL spec JSON results in the analytics module.
          */
         .module('sortableTable', [])
         /**
@@ -38,10 +38,12 @@
          * @name sortableTable.directive:sortableTable
          * @scope
          * @restrict E
+         * @requires analyticState.service:analyticStateService
          *
          * @description
          * HTML contents in the `sortableTable` which create a sortable table with a header row of binding names
-         * and rows of the SPARQL query results provided in the SPARQL spec JSON format.
+         * and rows of the SPARQL query results provided in the SPARQL spec JSON format. This directive should only
+         * be used in the analytics module.
          *
          * @param {string[]} bindings The array of binding names for the SPARQl results
          * @param {Object[]} data The actual SPARQL query results

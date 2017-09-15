@@ -78,7 +78,7 @@
                                     title: om.getEntityName(property),
                                     classes: _.has(property, prefixes.rdfs + 'domain') ? _.map(_.get(property, prefixes.rdfs + 'domain'), '@id') : _.map(dvm.state.classes, 'id')
                                 }));
-                            }, errorMessage => util.createErrorToast(errorMessage));
+                            }, util.createErrorToast);
                     }
                     
                     dvm.isDisabled = function(classes) {

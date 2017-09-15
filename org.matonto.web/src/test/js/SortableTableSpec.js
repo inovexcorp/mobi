@@ -78,7 +78,6 @@ describe('Sortable Table directive', function() {
             controller.onSort();
             expect(scope.onSort).toHaveBeenCalled();
         });
-        
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {

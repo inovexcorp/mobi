@@ -401,18 +401,11 @@
              * @param {string} direction The direction, either next or prev, of the page that you want to get.
              */
             self.getPage = function(direction) {
-                var url;
-                var page = angular.copy(self.currentPage);
-                if (direction === 'next') {
-                    page += 1;
-                    url = self.links.next;
-                } else {
-                    page -= 1;
-                    url = self.links.prev;
-                }
+                var isNext = direction === 'next';
+                var url = isNext ? self.links.next : self.links.prev;
                 httpService.get(url, undefined, self.spinnerId)
                     .then(response => {
-                        self.currentPage = page;
+                        self.currentPage = isNext ? self.currentPage + 1 : self.currentPage - 1;
                         onPagedSuccess(response);
                     }, onPagedError);
             }
