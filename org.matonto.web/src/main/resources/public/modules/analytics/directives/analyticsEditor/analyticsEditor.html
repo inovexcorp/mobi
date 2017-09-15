@@ -40,8 +40,8 @@
                         <sortable-table bindings="dvm.state.results.bindings" data="dvm.state.results.data" headers="dvm.state.variables" targeted-spinner="dvm.state.spinnerId" on-sort="dvm.state.sortResults(binding, descending)"></sortable-table>
                     </div>
                     <div ng-if="dvm.state.results" class="paging-wrapper">
-                        <paging-details class="pull-left" total-size="dvm.state.totalSize" page-index="dvm.state.currentPage" limit="dvm.state.limit"></paging-details>
-                        <pagination class="pull-right" links="dvm.state.links" current-page="dvm.state.currentPage" get-page="dvm.state.getPage(direction)"></pagination>
+                        <paging-details total-size="dvm.state.totalSize" page-index="dvm.state.currentPage" limit="dvm.state.limit"></paging-details>
+                        <pagination links="dvm.state.links" current-page="dvm.state.currentPage" get-page="dvm.state.getPage(direction)"></pagination>
                     </div>
                 </div>
             </div>

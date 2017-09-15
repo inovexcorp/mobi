@@ -53,6 +53,15 @@ describe('Class And Property Block directive', function() {
         it('with a block', function() {
             expect(element.find('block').length).toBe(1);
         });
+        it('with a block-header', function() {
+            expect(element.find('block-header').length).toBe(1);
+        });
+        it('with a .btn-link', function() {
+            expect(element.querySelectorAll('.btn-link').length).toBe(1);
+        });
+        it('with a .fa', function() {
+            expect(element.querySelectorAll('.fa').length).toBe(1);
+        });
         it('with a block-content', function() {
             expect(element.find('block-content').length).toBe(1);
         });

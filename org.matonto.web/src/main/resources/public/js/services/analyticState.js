@@ -296,9 +296,23 @@
              * @methodOf analyticState.service:analyticStateService
              *
              * @description
-             * Sets the correct variables to show the langing page.
+             * Sets the correct variables to show the langing page and resets the state.
              */
             self.showLanding = function() {
+                self.datasets = [];
+                self.classes = [];
+                self.properties = [];
+                self.selectedClass = undefined;
+                self.enabledProperties = [];
+                self.selectedProperties = [];
+                self.results = undefined;
+                self.variables = {};
+                self.queryError = '';
+                self.currentPage = 0;
+                self.totalSize = 0;
+                self.limit = 100;
+                self.links = {};
+                self.query = {};
                 self.landing = true;
                 self.editor = false;
             }

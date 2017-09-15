@@ -72,6 +72,20 @@ describe('Analytic State Service', function() {
     });
     it('showLanding sets the variables correctly', function() {
         analyticStateSvc.showLanding();
+        expect(analyticStateSvc.datasets).toEqual([]);
+        expect(analyticStateSvc.classes).toEqual([]);
+        expect(analyticStateSvc.properties).toEqual([]);
+        expect(analyticStateSvc.selectedClass).toBeUndefined();
+        expect(analyticStateSvc.enabledProperties).toEqual([]);
+        expect(analyticStateSvc.selectedProperties).toEqual([]);
+        expect(analyticStateSvc.results).toBeUndefined();
+        expect(analyticStateSvc.variables).toEqual({});
+        expect(analyticStateSvc.queryError).toEqual('');
+        expect(analyticStateSvc.currentPage).toEqual(0);
+        expect(analyticStateSvc.totalSize).toEqual(0);
+        expect(analyticStateSvc.limit).toEqual(100);
+        expect(analyticStateSvc.links).toEqual({});
+        expect(analyticStateSvc.query).toEqual({});
         expect(analyticStateSvc.landing).toBe(true);
         expect(analyticStateSvc.editor).toBe(false);
     });
