@@ -107,26 +107,36 @@ describe('Analytic State Service', function() {
             onPagedError();
         });
     });
-    describe('removeProperty sets the variables correctly when pagedQuery', function() {
+    describe('removeProperty sets the variables correctly when selectedProperties is', function() {
         beforeEach(function() {
             analyticStateSvc.properties = [];
             spyOn(analyticStateSvc, 'createQueryString').and.returnValue('query-string');
         });
-        it('resolves', function() {
-            sparqlManagerSvc.pagedQuery.and.returnValue($q.when(response));
-            removeProperty();
-            onPagedSuccess();
+        describe('populated and when pagedQuery', function() {
+            beforeEach(function() {
+                analyticStateSvc.selectedProperties = [{}];
+            });
+            it('resolves', function() {
+                sparqlManagerSvc.pagedQuery.and.returnValue($q.when(response));
+                removeProperty();
+                onPagedSuccess();
+            });
+            it('rejects', function() {
+                sparqlManagerSvc.pagedQuery.and.returnValue($q.reject('error'));
+                removeProperty();
+                onPagedError();
+            });
         });
-        it('rejects', function() {
-            sparqlManagerSvc.pagedQuery.and.returnValue($q.reject('error'));
-            removeProperty();
-            onPagedError();
+        it('empty', function() {
+            analyticStateSvc.removeProperty({id: 'propId'});
+            expect(analyticStateSvc.properties).toEqual([{id: 'propId'}]);
+            expect(analyticStateSvc.results).toBeUndefined();
         });
     });
     it('createQueryString sets the correct variables and returns the correct string', function() {
         analyticStateSvc.selectedClass = {id: 'classId'};
         analyticStateSvc.selectedProperties = [{id: 'propId', title: 'title'}];
-        expect(analyticStateSvc.createQueryString().replace(/\s/g, '')).toEqual(('SELECT DISTINCT (GROUP_CONCAT(DISTINCT ?var0; SEPARATOR = "<br>") AS ?var0s) WHERE { { ?s <rdf:type> undefined:classId. } UNION { ?s undefined:propId ?var0. } } GROUP BY ?s').replace(/\s/g, ''));
+        expect(analyticStateSvc.createQueryString().replace(/\s/g, '')).toEqual(('SELECT DISTINCT (GROUP_CONCAT(DISTINCT ?var0; SEPARATOR = "<br>") AS ?var0s) WHERE { ?s <rdf:type> undefined:classId. { ?s undefined:propId ?var0. } } GROUP BY ?s').replace(/\s/g, ''));
         expect(analyticStateSvc.query).toEqual({
             type: 'query',
             prefixes: {},
@@ -144,15 +154,15 @@ describe('Analytic State Service', function() {
                 variable: '?var0s'
             }],
             where: [{
+                type: 'bgp',
+                triples: [{
+                    subject: '?s',
+                    predicate: prefixes.rdf + 'type',
+                    object: 'classId'
+                }]
+            }, {
                 type: 'union',
                 patterns: [{
-                    type: 'bgp',
-                    triples: [{
-                        subject: '?s',
-                        predicate: prefixes.rdf + 'type',
-                        object: 'classId'
-                    }]
-                }, {
                     type: 'bgp',
                     triples: [{
                         subject: '?s',

@@ -73,7 +73,7 @@
                                     id: clazz['@id'],
                                     title: om.getEntityName(clazz)
                                 }));
-                                dvm.state.properties = _.map(_.concat(om.getObjectProperties(response), om.getDataTypeProperties(response)), property => ({
+                                dvm.state.properties = _.map(_.concat(dvm.state.defaultProperties, om.getObjectProperties(response), om.getDataTypeProperties(response)), property => ({
                                     id: property['@id'],
                                     title: om.getEntityName(property),
                                     classes: _.has(property, prefixes.rdfs + 'domain') ? _.map(_.get(property, prefixes.rdfs + 'domain'), '@id') : _.map(dvm.state.classes, 'id')

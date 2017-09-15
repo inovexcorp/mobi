@@ -2,11 +2,21 @@
 @import "./src/main/resources/public/css/variables";
 
 .sortable-table {
-    th .fa {
-        line-height: 19px;
+    &.table > thead > tr > th {
+        padding-right: 31px;
+        position: relative;
+        white-space: nowrap;
         
-        &.fa-sort {
-            color: $gray-light;
+        .fa {
+            line-height: 19px;
+            margin-left: 5px;
+            position: absolute;
+            right: 8px;
+            top: 8px;
+
+            &.fa-sort {
+                color: $gray-light;
+            }
         }
     }
     

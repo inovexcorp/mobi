@@ -1128,6 +1128,7 @@ function mockAnalyticState() {
             this.editor = false;
             this.datasets = [];
             this.classes = [];
+            this.defaultProperties = [];
             this.properties = [];
             this.selectedClass = undefined;
             this.enabledProperties = [];

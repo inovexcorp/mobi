@@ -103,6 +103,26 @@
             
             /**
              * @ngdoc property
+             * @name defaultProperties
+             * @propertyOf analyticState.service:analyticStateService
+             * @type {Object[]}
+             *
+             * @description
+             * 'defaultProperties' is an array containing the default properties that all
+             * analytics can use.
+             */
+            self.defaultProperties = [{
+                '@id': prefixes.dcterms + 'title'
+            }, {
+                '@id': prefixes.dcterms + 'description'
+            }, {
+                '@id': prefixes.rdfs + 'label'
+            }, {
+                '@id': prefixes.rdfs + 'comment'
+            }];
+
+            /**
+             * @ngdoc property
              * @name properties
              * @propertyOf analyticState.service:analyticStateService
              * @type {Object[]}
@@ -347,7 +367,11 @@
              */
             self.removeProperty = function(data) {
                 self.properties.push(angular.copy(data));
-                getPagedResults(self.createQueryString());
+                if (self.selectedProperties.length) {
+                    getPagedResults(self.createQueryString());
+                } else {
+                    self.results = undefined;
+                }
             }
             
             /**
@@ -362,20 +386,21 @@
              */
             self.createQueryString = function() {
                 self.variables = {};
-                var patterns = [createPattern(subject, prefixes.rdf + 'type', self.selectedClass.id)];
                 var query = {
                     type: 'query',
                     prefixes: {},
                     queryType: 'SELECT',
                     group: [{ expression: subject }],
                     distinct: true,
-                    variables: []
+                    variables: [],
+                    where: [createPattern(subject, prefixes.rdf + 'type', self.selectedClass.id)]
                 };
                 if (_.has(self.query, 'order')) {
                     query.order = angular.copy(self.query.order);
                 }
                 var variable;
                 var index = 0;
+                var patterns = [];
                 _.forEach(self.selectedProperties, property => {
                     variable = 'var' + index++;
                     _.set(self.variables, variable + 's', property.title);
@@ -383,7 +408,7 @@
                     query.variables.push(createVariableExpression(variable));
                     patterns.push(createPattern(subject, property.id, variable));
                 });
-                query.where = [{type: 'union', patterns}];
+                query.where.push({type: 'union', patterns});
                 self.query = query;
                 var generator = new sparqljs.Generator();
                 return generator.stringify(query);
