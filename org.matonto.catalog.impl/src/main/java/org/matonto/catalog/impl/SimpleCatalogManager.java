@@ -102,7 +102,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 @Component(
         configurationPolicy = ConfigurationPolicy.require,
@@ -302,7 +301,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public PaginatedSearchResults<Record> findRecord(@NotNull Resource catalogId, @NotNull PaginatedSearchParams searchParams) {
+    public PaginatedSearchResults<Record> findRecord(@Nonnull Resource catalogId, @Nonnull PaginatedSearchParams searchParams) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Optional<Resource> typeParam = searchParams.getTypeFilter();
             Optional<String> searchTextParam = searchParams.getSearchText();
@@ -383,7 +382,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Set<Resource> getRecordIds(@NotNull Resource catalogId) {
+    public Set<Resource> getRecordIds(@Nonnull Resource catalogId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(catalogId, vf.createIRI(Catalog.TYPE), conn);
             Set<Resource> results = new HashSet<>();
@@ -394,14 +393,14 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Record> T createRecord(@NotNull RecordConfig config, @NotNull OrmFactory<T> factory) {
+    public <T extends Record> T createRecord(@Nonnull RecordConfig config, @Nonnull OrmFactory<T> factory) {
         OffsetDateTime now = OffsetDateTime.now();
         return addPropertiesToRecord(factory.createNew(vf.createIRI(Catalogs.RECORD_NAMESPACE + UUID.randomUUID())), config, now,
                 now);
     }
 
     @Override
-    public <T extends Record> void addRecord(@NotNull Resource catalogId, @NotNull T record) {
+    public <T extends Record> void addRecord(@Nonnull Resource catalogId, @Nonnull T record) {
         try (RepositoryConnection conn = repository.getConnection()) {
             if (conn.containsContext(record.getResource())) {
                 throw utils.throwAlreadyExists(record.getResource(), recordFactory);
@@ -419,7 +418,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Record> void updateRecord(@NotNull Resource catalogId, @NotNull T newRecord) {
+    public <T extends Record> void updateRecord(@Nonnull Resource catalogId, @Nonnull T newRecord) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateRecord(catalogId, newRecord.getResource(), recordFactory.getTypeIRI(), conn);
             conn.begin();
@@ -429,7 +428,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Record> Optional<T> removeRecord(@NotNull Resource catalogId, @NotNull Resource recordId, @NotNull OrmFactory<T> factory) {
+    public <T extends Record> Optional<T> removeRecord(@Nonnull Resource catalogId, @Nonnull Resource recordId, @Nonnull OrmFactory<T> factory) {
         T record = null;
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(catalogId, catalogFactory.getTypeIRI(), conn);
@@ -460,7 +459,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Record> Optional<T> getRecord(@NotNull Resource catalogId, @NotNull Resource recordId, @NotNull OrmFactory<T> factory) {
+    public <T extends Record> Optional<T> getRecord(@Nonnull Resource catalogId, @Nonnull Resource recordId, @Nonnull OrmFactory<T> factory) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(catalogId, catalogFactory.getTypeIRI(), conn);
             return utils.optObject(recordId, factory, conn).flatMap(record -> {
@@ -472,7 +471,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Set<Distribution> getUnversionedDistributions(@NotNull Resource catalogId, @NotNull Resource unversionedRecordId) {
+    public Set<Distribution> getUnversionedDistributions(@Nonnull Resource catalogId, @Nonnull Resource unversionedRecordId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             UnversionedRecord record = utils.getRecord(catalogId, unversionedRecordId, unversionedRecordFactory, conn);
             return record.getUnversionedDistribution_resource().stream()
@@ -482,7 +481,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Distribution createDistribution(@NotNull DistributionConfig config) {
+    public Distribution createDistribution(@Nonnull DistributionConfig config) {
         OffsetDateTime now = OffsetDateTime.now();
 
         Distribution distribution = distributionFactory.createNew(vf.createIRI(Catalogs.DISTRIBUTION_NAMESPACE
@@ -508,8 +507,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void addUnversionedDistribution(@NotNull Resource catalogId, @NotNull Resource unversionedRecordId,
-            @NotNull Distribution distribution) {
+    public void addUnversionedDistribution(@Nonnull Resource catalogId, @Nonnull Resource unversionedRecordId,
+            @Nonnull Distribution distribution) {
         try (RepositoryConnection conn = repository.getConnection()) {
             UnversionedRecord record = utils.getRecord(catalogId, unversionedRecordId, unversionedRecordFactory, conn);
             if (conn.containsContext(distribution.getResource())) {
@@ -528,8 +527,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void updateUnversionedDistribution(@NotNull Resource catalogId, @NotNull Resource unversionedRecordId,
-            @NotNull Distribution newDistribution) {
+    public void updateUnversionedDistribution(@Nonnull Resource catalogId, @Nonnull Resource unversionedRecordId,
+            @Nonnull Distribution newDistribution) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateUnversionedDistribution(catalogId, unversionedRecordId, newDistribution.getResource(), conn);
             conn.begin();
@@ -539,8 +538,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void removeUnversionedDistribution(@NotNull Resource catalogId, @NotNull Resource unversionedRecordId,
-            @NotNull Resource distributionId) {
+    public void removeUnversionedDistribution(@Nonnull Resource catalogId, @Nonnull Resource unversionedRecordId,
+            @Nonnull Resource distributionId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Distribution distribution = utils.getUnversionedDistribution(catalogId, unversionedRecordId, distributionId,
                     conn);
@@ -552,8 +551,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Optional<Distribution> getUnversionedDistribution(@NotNull Resource catalogId, @NotNull Resource unversionedRecordId,
-            @NotNull Resource distributionId) {
+    public Optional<Distribution> getUnversionedDistribution(@Nonnull Resource catalogId, @Nonnull Resource unversionedRecordId,
+            @Nonnull Resource distributionId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             UnversionedRecord record = utils.getRecord(catalogId, unversionedRecordId, unversionedRecordFactory, conn);
             if (!record.getUnversionedDistribution_resource().contains(distributionId)) {
@@ -564,7 +563,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Set<Version> getVersions(@NotNull Resource catalogId, @NotNull Resource versionedRecordId) {
+    public Set<Version> getVersions(@Nonnull Resource catalogId, @Nonnull Resource versionedRecordId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             VersionedRecord record = utils.getRecord(catalogId, versionedRecordId, versionedRecordFactory, conn);
             return record.getVersion_resource().stream()
@@ -574,7 +573,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Version> T createVersion(@Nonnull String title, String description, @NotNull OrmFactory<T> factory) {
+    public <T extends Version> T createVersion(@Nonnull String title, String description, @Nonnull OrmFactory<T> factory) {
         OffsetDateTime now = OffsetDateTime.now();
 
         T version = factory.createNew(vf.createIRI(Catalogs.VERSION_NAMESPACE + UUID.randomUUID()));
@@ -589,7 +588,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Version> void addVersion(@NotNull Resource catalogId, @NotNull Resource versionedRecordId, @NotNull T version) {
+    public <T extends Version> void addVersion(@Nonnull Resource catalogId, @Nonnull Resource versionedRecordId, @Nonnull T version) {
         try (RepositoryConnection conn = repository.getConnection()) {
             VersionedRecord record = utils.getRecord(catalogId, versionedRecordId, versionedRecordFactory, conn);
             if (conn.containsContext(version.getResource())) {
@@ -609,7 +608,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Version> void updateVersion(@NotNull Resource catalogId, @NotNull Resource versionedRecordId, @NotNull T newVersion) {
+    public <T extends Version> void updateVersion(@Nonnull Resource catalogId, @Nonnull Resource versionedRecordId, @Nonnull T newVersion) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateVersion(catalogId, versionedRecordId, newVersion.getResource(), conn);
             conn.begin();
@@ -619,7 +618,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void removeVersion(@NotNull Resource catalogId, @NotNull Resource versionedRecordId, @NotNull Resource versionId) {
+    public void removeVersion(@Nonnull Resource catalogId, @Nonnull Resource versionedRecordId, @Nonnull Resource versionId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Version version = utils.getVersion(catalogId, versionedRecordId, versionId, versionFactory, conn);
             conn.begin();
@@ -651,8 +650,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Version> Optional<T> getVersion(@NotNull Resource catalogId, @NotNull Resource versionedRecordId,
-            @NotNull Resource versionId, @NotNull OrmFactory<T> factory) {
+    public <T extends Version> Optional<T> getVersion(@Nonnull Resource catalogId, @Nonnull Resource versionedRecordId,
+            @Nonnull Resource versionId, @Nonnull OrmFactory<T> factory) {
         try (RepositoryConnection conn = repository.getConnection()) {
             VersionedRecord record = utils.getRecord(catalogId, versionedRecordId, versionedRecordFactory, conn);
             if (!record.getVersion_resource().contains(versionId)) {
@@ -663,8 +662,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Version> Optional<T> getLatestVersion(@NotNull Resource catalogId, @NotNull Resource versionedRecordId,
-            @NotNull OrmFactory<T> factory) {
+    public <T extends Version> Optional<T> getLatestVersion(@Nonnull Resource catalogId, @Nonnull Resource versionedRecordId,
+            @Nonnull OrmFactory<T> factory) {
         try (RepositoryConnection conn = repository.getConnection()) {
             VersionedRecord record = utils.getRecord(catalogId, versionedRecordId, versionedRecordFactory, conn);
             return record.getLatestVersion_resource().flatMap(resource ->
@@ -673,7 +672,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Commit getTaggedCommit(@NotNull Resource catalogId, @NotNull Resource versionedRecordId, @NotNull Resource versionId) {
+    public Commit getTaggedCommit(@Nonnull Resource catalogId, @Nonnull Resource versionedRecordId, @Nonnull Resource versionId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateVersion(catalogId, versionedRecordId, versionId, conn);
             Tag tag = utils.getExpectedObject(versionId, tagFactory, conn);
@@ -684,8 +683,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Set<Distribution> getVersionedDistributions(@NotNull Resource catalogId, @NotNull Resource versionedRecordId,
-            @NotNull Resource versionId) {
+    public Set<Distribution> getVersionedDistributions(@Nonnull Resource catalogId, @Nonnull Resource versionedRecordId,
+            @Nonnull Resource versionId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Version version = utils.getVersion(catalogId, versionedRecordId, versionId, versionFactory, conn);
             return version.getVersionedDistribution_resource().stream()
@@ -696,8 +695,8 @@ public class SimpleCatalogManager implements CatalogManager {
 
 
     @Override
-    public void addVersionedDistribution(@NotNull Resource catalogId, @NotNull Resource versionedRecordId, @NotNull Resource versionId,
-            @NotNull Distribution distribution) {
+    public void addVersionedDistribution(@Nonnull Resource catalogId, @Nonnull Resource versionedRecordId, @Nonnull Resource versionId,
+            @Nonnull Distribution distribution) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Version version = utils.getVersion(catalogId, versionedRecordId, versionId, versionFactory, conn);
             if (conn.containsContext(distribution.getResource())) {
@@ -716,8 +715,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void updateVersionedDistribution(@NotNull Resource catalogId, @NotNull Resource versionedRecordId, @NotNull Resource versionId,
-            @NotNull Distribution newDistribution) {
+    public void updateVersionedDistribution(@Nonnull Resource catalogId, @Nonnull Resource versionedRecordId, @Nonnull Resource versionId,
+            @Nonnull Distribution newDistribution) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateVersionedDistribution(catalogId, versionedRecordId, versionId, newDistribution.getResource(), conn);
             conn.begin();
@@ -727,8 +726,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void removeVersionedDistribution(@NotNull Resource catalogId, @NotNull Resource versionedRecordId, @NotNull Resource versionId,
-            @NotNull Resource distributionId) {
+    public void removeVersionedDistribution(@Nonnull Resource catalogId, @Nonnull Resource versionedRecordId, @Nonnull Resource versionId,
+            @Nonnull Resource distributionId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Distribution distribution = utils.getVersionedDistribution(catalogId, versionedRecordId, versionId,
                     distributionId, conn);
@@ -741,8 +740,8 @@ public class SimpleCatalogManager implements CatalogManager {
 
 
     @Override
-    public Optional<Distribution> getVersionedDistribution(@NotNull Resource catalogId, @NotNull Resource recordId, @NotNull Resource versionId,
-            @NotNull Resource distributionId) {
+    public Optional<Distribution> getVersionedDistribution(@Nonnull Resource catalogId, @Nonnull Resource recordId, @Nonnull Resource versionId,
+            @Nonnull Resource distributionId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Version version = utils.getVersion(catalogId, recordId, versionId, versionFactory, conn);
             if (!version.getVersionedDistribution_resource().contains(distributionId)) {
@@ -753,7 +752,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Set<Branch> getBranches(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId) {
+    public Set<Branch> getBranches(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory, conn);
             return record.getBranch_resource().stream()
@@ -763,7 +762,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Branch> T createBranch(@Nonnull String title, String description, @NotNull OrmFactory<T> factory) {
+    public <T extends Branch> T createBranch(@Nonnull String title, String description, @Nonnull OrmFactory<T> factory) {
         OffsetDateTime now = OffsetDateTime.now();
 
         T branch = factory.createNew(vf.createIRI(Catalogs.BRANCH_NAMESPACE + UUID.randomUUID()));
@@ -778,7 +777,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Branch> void addBranch(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId, @NotNull T branch) {
+    public <T extends Branch> void addBranch(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId, @Nonnull T branch) {
         try (RepositoryConnection conn = repository.getConnection()) {
             VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory, conn);
             if (conn.containsContext(branch.getResource())) {
@@ -797,7 +796,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void addMasterBranch(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId) {
+    public void addMasterBranch(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory, conn);
             conn.begin();
@@ -822,7 +821,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Branch> void updateBranch(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId, @NotNull T newBranch) {
+    public <T extends Branch> void updateBranch(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId, @Nonnull T newBranch) {
         try (RepositoryConnection conn = repository.getConnection()) {
             IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
             utils.validateBranch(catalogId, versionedRDFRecordId, newBranch.getResource(), conn);
@@ -837,7 +836,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void updateHead(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId, @NotNull Resource branchId, @NotNull Resource commitId) {
+    public void updateHead(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId, @Nonnull Resource branchId, @Nonnull Resource commitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
             conn.begin();
@@ -849,7 +848,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void removeBranch(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId, @NotNull Resource branchId) {
+    public void removeBranch(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId, @Nonnull Resource branchId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
             IRI masterBranchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
@@ -902,8 +901,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Branch> Optional<T> getBranch(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId,
-            @NotNull Resource branchId, @NotNull OrmFactory<T> factory) {
+    public <T extends Branch> Optional<T> getBranch(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId,
+            @Nonnull Resource branchId, @Nonnull OrmFactory<T> factory) {
         try (RepositoryConnection conn = repository.getConnection()) {
             VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory, conn);
             if (!record.getBranch_resource().contains(branchId)) {
@@ -914,7 +913,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Branch getMasterBranch(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId) {
+    public Branch getMasterBranch(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             VersionedRDFRecord record = utils.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory,
                     conn);
@@ -974,7 +973,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public InProgressCommit createInProgressCommit(@NotNull User user) {
+    public InProgressCommit createInProgressCommit(@Nonnull User user) {
         UUID uuid = UUID.randomUUID();
 
         Revision revision = revisionFactory.createNew(vf.createIRI(Catalogs.REVISION_NAMESPACE + uuid));
@@ -991,7 +990,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void updateInProgressCommit(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId, @NotNull Resource commitId,                                       @Nullable Model additions, @Nullable Model deletions) {
+    public void updateInProgressCommit(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId, @Nonnull Resource commitId, @Nullable Model additions, @Nullable Model deletions) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateInProgressCommit(catalogId, versionedRDFRecordId, commitId, conn);
             conn.begin();
@@ -1001,7 +1000,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void updateInProgressCommit(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId, @NotNull User user,                                       @Nullable Model additions, @Nullable Model deletions) {
+    public void updateInProgressCommit(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId, @Nonnull User user, @Nullable Model additions, @Nullable Model deletions) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
             InProgressCommit commit = utils.getInProgressCommit(versionedRDFRecordId, user.getResource(), conn);
@@ -1012,8 +1011,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void addInProgressCommit(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId,
-            @NotNull InProgressCommit inProgressCommit) {
+    public void addInProgressCommit(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId,
+            @Nonnull InProgressCommit inProgressCommit) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Resource userIRI = (Resource) inProgressCommit.getProperty(vf.createIRI(Activity.wasAssociatedWith_IRI))
                     .orElseThrow(() -> new IllegalArgumentException("User not set on InProgressCommit "
@@ -1033,8 +1032,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Optional<Commit> getCommit(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId,
-            @NotNull Resource branchId, @NotNull Resource commitId) {
+    public Optional<Commit> getCommit(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId,
+            @Nonnull Resource branchId, @Nonnull Resource commitId) {
         long start = System.currentTimeMillis();
         Optional<Commit> rtn = Optional.empty();
         try (RepositoryConnection conn = repository.getConnection()) {
@@ -1049,7 +1048,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Commit getHeadCommit(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId, @NotNull Resource branchId) {
+    public Commit getHeadCommit(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId, @Nonnull Resource branchId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateBranch(catalogId, versionedRDFRecordId, branchId, conn);
             Branch branch = utils.getExpectedObject(branchId, branchFactory, conn);
@@ -1059,8 +1058,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Optional<InProgressCommit> getInProgressCommit(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId,
-            @NotNull User user) {
+    public Optional<InProgressCommit> getInProgressCommit(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId,
+            @Nonnull User user) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
             return utils.getInProgressCommitIRI(versionedRDFRecordId, user.getResource(), conn).flatMap(resource ->
@@ -1069,8 +1068,8 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Optional<InProgressCommit> getInProgressCommit(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId,
-            @NotNull Resource inProgressCommitId) {
+    public Optional<InProgressCommit> getInProgressCommit(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId,
+            @Nonnull Resource inProgressCommitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
             return utils.optObject(inProgressCommitId, inProgressCommitFactory, conn).flatMap(inProgressCommit -> {
@@ -1082,21 +1081,21 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Revision getRevision(@NotNull Resource commitId) {
+    public Revision getRevision(@Nonnull Resource commitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             return utils.getRevision(commitId, conn);
         }
     }
 
     @Override
-    public Difference getRevisionChanges(@NotNull Resource commitId) {
+    public Difference getRevisionChanges(@Nonnull Resource commitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             return utils.getRevisionChanges(commitId, conn);
         }
     }
 
     @Override
-    public Difference getCommitDifference(@NotNull Resource commitId) {
+    public Difference getCommitDifference(@Nonnull Resource commitId) {
         long start = System.currentTimeMillis();
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
@@ -1107,7 +1106,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void removeInProgressCommit(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId, @NotNull Resource            inProgressCommitId) {
+    public void removeInProgressCommit(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId, @Nonnull Resource inProgressCommitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             InProgressCommit commit = utils.getInProgressCommit(catalogId, versionedRDFRecordId, inProgressCommitId,
                     conn);
@@ -1118,7 +1117,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public void removeInProgressCommit(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId, @NotNull User user) {
+    public void removeInProgressCommit(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId, @Nonnull User user) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory.getTypeIRI(), conn);
             InProgressCommit commit = utils.getInProgressCommit(versionedRDFRecordId, user.getResource(), conn);
@@ -1129,7 +1128,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Model applyInProgressCommit(@NotNull Resource inProgressCommitId, @NotNull Model entity) {
+    public Model applyInProgressCommit(@Nonnull Resource inProgressCommitId, @Nonnull Model entity) {
         long start = System.currentTimeMillis();
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(inProgressCommitId, inProgressCommitFactory.getTypeIRI(), conn);
@@ -1140,7 +1139,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public List<Commit> getCommitChain(@NotNull Resource commitId) {
+    public List<Commit> getCommitChain(@Nonnull Resource commitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
             return utils.getCommitChain(commitId, false, conn).stream()
@@ -1150,7 +1149,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public List<Commit> getCommitChain(@NotNull Resource catalogId, @NotNull Resource versionedRDFRecordId, @NotNull Resource branchId) {
+    public List<Commit> getCommitChain(@Nonnull Resource catalogId, @Nonnull Resource versionedRDFRecordId, @Nonnull Resource branchId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             Branch branch = utils.getBranch(catalogId, versionedRDFRecordId, branchId, branchFactory, conn);
             Resource head = utils.getHeadCommitIRI(branch);
@@ -1161,7 +1160,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Model getCompiledResource(@NotNull Resource commitId) {
+    public Model getCompiledResource(@Nonnull Resource commitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(commitId, commitFactory.getTypeIRI(), conn);
             return utils.getCompiledResource(commitId, conn);
@@ -1169,7 +1168,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Model getCompiledResource(@NotNull Resource versionedRDFRecordId, @NotNull Resource branchId, @NotNull Resource commitId) {
+    public Model getCompiledResource(@Nonnull Resource versionedRDFRecordId, @Nonnull Resource branchId, @Nonnull Resource commitId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateCommitPath(localCatalogIRI, versionedRDFRecordId, branchId, commitId, conn);
             return utils.getCompiledResource(commitId, conn);
@@ -1177,7 +1176,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Set<Conflict> getConflicts(@NotNull Resource leftId, @NotNull Resource rightId) {
+    public Set<Conflict> getConflicts(@Nonnull Resource leftId, @Nonnull Resource rightId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(leftId, commitFactory.getTypeIRI(), conn);
             utils.validateResource(rightId, commitFactory.getTypeIRI(), conn);
@@ -1246,7 +1245,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public Difference getDiff(@NotNull Model original, @NotNull Model changed) {
+    public Difference getDiff(@Nonnull Model original, @Nonnull Model changed) {
         Model originalCopy = mf.createModel(original);
         Model changedCopy = mf.createModel(changed);
         original.forEach(statement -> {
