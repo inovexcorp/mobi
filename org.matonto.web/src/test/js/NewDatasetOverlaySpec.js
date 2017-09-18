@@ -21,28 +21,24 @@
  * #L%
  */
 describe('New Dataset Overlay directive', function() {
-    var $compile, scope, $q, element, controller, datasetManagerSvc, datasetStateSvc, catalogManagerSvc, utilSvc;
+    var $compile, scope, $q, element, controller, datasetManagerSvc, datasetStateSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
         module('newDatasetOverlay');
         mockDatasetManager();
         mockDatasetState();
-        mockCatalogManager();
         mockUtil();
-        mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_, _datasetManagerService_, _datasetStateService_, _catalogManagerService_, _utilService_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _datasetManagerService_, _datasetStateService_, _utilService_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             datasetStateSvc = _datasetStateService_;
             datasetManagerSvc = _datasetManagerService_;
-            catalogManagerSvc = _catalogManagerService_;
             utilSvc = _utilService_;
             $q = _$q_;
         });
 
-        catalogManagerSvc.localCatalog = {'@id': 'local'};
         scope.onClose = jasmine.createSpy('onClose')
         element = $compile(angular.element('<new-dataset-overlay on-close="onClose()"></new-dataset-overlay>'))(scope);
         scope.$digest();

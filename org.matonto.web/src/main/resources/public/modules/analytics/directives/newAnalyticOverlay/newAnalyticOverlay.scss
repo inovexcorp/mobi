@@ -1,0 +1,13 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.new-analytic-overlay {
+    h2 {
+        font-size: 20px;
+        margin: 0;
+    }
+    
+    md-list-item {
+        margin: 0;
+    }
+}

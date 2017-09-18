@@ -1,0 +1,34 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="analytics-landing-page full-height clearfix">
+    <div class="blue-bar"></div>
+    <div class="white-bar"></div>
+    <div class="row">
+        <div class="col-xs-8 col-xs-offset-2 full-height">
+            <block>
+                <block-header>Analytics<a class="btn btn-link pull-right" ng-click="dvm.showOverlay = true"><i class="fa fa-fw fa-plus"></i>Create New</a></block-header>
+            </block>
+        </div>
+    </div>
+    <new-analytic-overlay ng-if="dvm.showOverlay" on-cancel="dvm.showOverlay = false"></new-analytic-overlay>
+</div>
