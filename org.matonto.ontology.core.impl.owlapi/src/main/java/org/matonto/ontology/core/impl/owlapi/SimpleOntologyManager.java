@@ -319,15 +319,17 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
-    public void deleteOntology(@Nonnull Resource recordId) {
+    public Optional<OntologyRecord> deleteOntology(@Nonnull Resource recordId) {
         long start = getStartTime();
-        Resource catalogId = catalogManager.getLocalCatalog().getResource();
-        OntologyRecord record = catalogManager.getRecord(catalogId, recordId, ontologyRecordFactory).orElseThrow(() ->
-                new IllegalArgumentException("Ontology Record " + recordId + " not found"));
-        catalogManager.removeRecord(catalogManager.getLocalCatalog().getResource(), recordId);
+
+        OntologyRecord record = catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), recordId, ontologyRecordFactory).orElseThrow(()
+                -> new IllegalArgumentException("Ontology Record " + recordId + " not found"));
+
         ontologyCache.clearCache(recordId, null);
         record.getOntologyIRI().ifPresent(ontologyCache::clearCacheImports);
+
         logTrace("deleteOntology(recordId)", start);
+        return Optional.of(record);
     }
 
     @Override

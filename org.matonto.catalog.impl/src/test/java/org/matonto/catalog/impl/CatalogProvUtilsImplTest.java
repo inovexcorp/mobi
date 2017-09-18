@@ -27,7 +27,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,7 +36,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.ontologies.mcat.Record;
-import org.matonto.catalog.api.ontologies.mcat.RecordFactory;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
 import org.matonto.ontologies.dcterms._Thing;
@@ -74,7 +72,6 @@ import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
-import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.base.RepositoryResult;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -82,7 +79,6 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -111,9 +107,6 @@ public class CatalogProvUtilsImplTest {
     private MatOnto matOnto;
 
     @Mock
-    private RepositoryManager repositoryManager;
-
-    @Mock
     private Repository repository;
 
     @Mock
@@ -126,16 +119,7 @@ public class CatalogProvUtilsImplTest {
     private Record record;
 
     @Mock
-    private RecordFactory recordFactory;
-
-    @Mock
-    private RepositoryConnection connRepo;
-
-    @Mock
     private RepositoryConnection connProv;
-
-    @Mock
-    private RepositoryResult<Statement> resultRecord;
 
     @Mock
     private RepositoryResult<Statement> resultEntity;
@@ -181,7 +165,6 @@ public class CatalogProvUtilsImplTest {
         vcr.registerValueConverter(new ValueValueConverter());
         vcr.registerValueConverter(new LiteralValueConverter());
         vcr.registerValueConverter(new DateValueConverter());
-        vcr.registerValueConverter(recordFactory);
 
         createActivity = createActivityFactory.createNew(vf.createIRI("http://test.org/activity/create"));
         deleteActivity = deleteActivityFactory.createNew(vf.createIRI("http://test.org/activity/delete"));
@@ -199,11 +182,6 @@ public class CatalogProvUtilsImplTest {
         when(connProv.getStatements(recordIRI, null, null)).thenReturn(resultEntity);
         given(RepositoryResults.asModel(resultEntity, mf)).willReturn(entity.getModel());
 
-        when(repositoryManager.getRepository(any())).thenReturn(Optional.of(repository));
-        when(repository.getConnection()).thenReturn(connRepo);
-        when(connRepo.getStatements(recordIRI, null, null)).thenReturn(resultRecord);
-        when(resultRecord.iterator()).thenReturn(Collections.EMPTY_LIST.iterator());
-        when(recordFactory.getExisting(eq(recordIRI), any())).thenReturn(Optional.of(record));
         when(record.getResource()).thenReturn(recordIRI);
         when(record.getProperty(vf.createIRI(_Thing.title_IRI))).thenReturn(Optional.of(vf.createLiteral("Test Record")));
 
@@ -214,9 +192,7 @@ public class CatalogProvUtilsImplTest {
         utils.setMatOnto(matOnto);
         utils.setProvenanceService(provenanceService);
         utils.setCatalogManager(catalogManager);
-        utils.setRecordFactory(recordFactory);
         utils.setModelFactory(mf);
-        utils.setRepositoryManager(repositoryManager);
     }
 
     @Test
@@ -271,7 +247,6 @@ public class CatalogProvUtilsImplTest {
         Entity resultEntity = deleteActivity.getInvalidated().iterator().next();
         assertEquals(entity.getResource(), resultEntity.getResource());
         assertTrue(resultEntity.getModel().contains(resultEntity.getResource(), vf.createIRI(predAtLocation), vf.createLiteral("system")));
-        assertTrue(resultEntity.getModel().contains(resultEntity.getResource(), vf.createIRI(_Thing.title_IRI), vf.createLiteral("Test Record")));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -285,9 +260,17 @@ public class CatalogProvUtilsImplTest {
 
     @Test
     public void endDeleteActivityTest() throws Exception {
-        utils.endDeleteActivity(deleteActivity, vf.createIRI(recordIri));
+        // Setup
+        entity.addProperty(vf.createLiteral("system"), vf.createIRI(predAtLocation));
+        deleteActivity.addInvalidated(entity);
+        deleteActivity.getModel().addAll(entity.getModel());
+
+        utils.endDeleteActivity(deleteActivity, record);
         verify(provenanceService).updateActivity(deleteActivity);
         assertTrue(deleteActivity.getModel().contains(deleteActivity.getResource(), vf.createIRI(Activity.endedAtTime_IRI), null));
+        assertEquals(1, deleteActivity.getInvalidated().size());
+        Entity resultEntity = deleteActivity.getInvalidated().iterator().next();
+        assertTrue(resultEntity.getModel().contains(resultEntity.getResource(), vf.createIRI(_Thing.title_IRI), vf.createLiteral("Test Record")));
     }
 
     @Test

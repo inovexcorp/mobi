@@ -202,6 +202,7 @@ public class SimpleOntologyManagerTest {
         when(catalogManager.getLocalCatalog()).thenReturn(catalog);
         when(catalogManager.createRecord(any(RecordConfig.class), eq(ontologyRecordFactory))).thenReturn(record);
         when(catalogManager.getRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.removeRecord(catalogIRI, recordIRI, ontologyRecordFactory)).thenReturn(Optional.of(record));
         doThrow(new IllegalArgumentException()).when(catalogManager).getMasterBranch(catalogIRI, missingIRI);
         doThrow(new IllegalArgumentException()).when(catalogManager).getBranch(catalogIRI, recordIRI, missingIRI, branchFactory);
         doThrow(new IllegalArgumentException()).when(catalogManager).getCommit(catalogIRI, recordIRI, branchIRI, missingIRI);
@@ -548,7 +549,7 @@ public class SimpleOntologyManagerTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testDeleteOntologyRecordWithMissingIdentifier() {
-        doThrow(new IllegalArgumentException()).when(catalogManager).getRecord(catalogIRI, missingIRI, ontologyRecordFactory);
+        doThrow(new IllegalArgumentException()).when(catalogManager).removeRecord(catalogIRI, missingIRI, ontologyRecordFactory);
 
         manager.deleteOntology(missingIRI);
     }
@@ -559,8 +560,8 @@ public class SimpleOntologyManagerTest {
         IRI ontologyIRI = vf.createIRI("http://test.com/test-ontology");
         record.setOntologyIRI(ontologyIRI);
 
-        manager.deleteOntology(recordIRI);
-        verify(catalogManager).removeRecord(catalogIRI, recordIRI);
+        assertTrue(manager.deleteOntology(recordIRI).isPresent());
+        verify(catalogManager).removeRecord(catalogIRI, recordIRI, ontologyRecordFactory);
         verify(ontologyCache).clearCache(recordIRI, null);
         verify(ontologyCache).clearCacheImports(ontologyIRI);
     }

@@ -72,6 +72,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
@@ -264,8 +265,9 @@ public class MappingRestImpl implements MappingRest {
         try {
             logger.info("Deleting mapping: " + recordId);
             deleteActivity = provUtils.startDeleteActivity(activeUser, recordIri);
-            manager.deleteMapping(recordIri);
-            provUtils.endDeleteActivity(deleteActivity, recordIri);
+            Optional<MappingRecord> record = manager.deleteMapping(recordIri);
+            provUtils.endDeleteActivity(deleteActivity, record.orElseThrow(()
+                    -> new MatOntoException("Error removing record from catalog")));
             return Response.ok().build();
         } catch (IllegalArgumentException e) {
             provUtils.removeActivity(deleteActivity);

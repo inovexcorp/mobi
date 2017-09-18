@@ -482,6 +482,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogId);
         when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(results);
         when(catalogManager.getRecord(eq(catalogId), eq(recordId), any(OntologyRecordFactory.class))).thenReturn(Optional.of(record));
+        when(catalogManager.removeRecord(catalogId, recordId, ontologyRecordFactory)).thenReturn(Optional.of(record));
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
         when(catalogManager.getInProgressCommit(catalogId, recordId, user)).thenReturn(Optional.of(inProgressCommit));
         when(catalogManager.getInProgressCommit(catalogId, recordId, inProgressCommitId)).thenReturn(Optional.of(inProgressCommit));
@@ -494,6 +495,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(ontologyManager.createOntology(any(FileInputStream.class))).thenReturn(ontology);
         when(ontologyManager.createOntology(anyString())).thenReturn(ontology);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
+        when(ontologyManager.deleteOntology(eq(recordId))).thenReturn(Optional.of(record));
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class), any(Resource.class)))
                 .thenReturn(Optional.of(ontology));
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class))).thenReturn(Optional.of(ontology));
@@ -3980,7 +3982,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).deleteOntology(recordId);
         verify(provUtils).startDeleteActivity(user, recordId);
-        verify(provUtils).endDeleteActivity(deleteActivity, recordId);
+        verify(provUtils).endDeleteActivity(deleteActivity, record);
     }
 
     @Test

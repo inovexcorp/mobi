@@ -489,6 +489,7 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
         when(catalogManager.applyInProgressCommit(any(Resource.class), any(Model.class))).thenReturn(compiledResourceWithChanges);
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(testInProgressCommit);
         when(catalogManager.getCommitDifference(any(Resource.class))).thenReturn(difference);
+        when(catalogManager.removeRecord(any(Resource.class), eq(vf.createIRI(RECORD_IRI)), any(OrmFactory.class))).thenReturn(Optional.of(testRecord));
 
         when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString())).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
         when(versioningManager.merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(Model.class), any(Model.class))).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
@@ -863,16 +864,17 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
                 .request().delete();
         assertEquals(response.getStatus(), 200);
         IRI recordIri = vf.createIRI(RECORD_IRI);
-        verify(catalogManager).removeRecord(vf.createIRI(LOCAL_IRI), recordIri);
+        verify(catalogManager).removeRecord(vf.createIRI(LOCAL_IRI), recordIri, recordFactory);
         verify(provUtils).startDeleteActivity(user, recordIri);
-        verify(provUtils).endDeleteActivity(deleteActivity, recordIri);
+        verify(provUtils).endDeleteActivity(eq(deleteActivity), any(Record.class));
     }
 
     @Test
     public void removeRecordWithIncorrectPathTest() {
         // Setup:
         IRI recordIri = vf.createIRI(ERROR_IRI);
-        doThrow(new IllegalArgumentException()).when(catalogManager).removeRecord(vf.createIRI(LOCAL_IRI), recordIri);
+        doThrow(new IllegalArgumentException()).when(catalogManager)
+                .removeRecord(vf.createIRI(LOCAL_IRI), recordIri, recordFactory);
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(ERROR_IRI))
                 .request().delete();
@@ -885,7 +887,8 @@ public class CatalogRestImplTest extends MatontoRestTestNg {
     public void removeRecordWithErrorTest() {
         // Setup:
         IRI recordIri = vf.createIRI(RECORD_IRI);
-        doThrow(new MatOntoException()).when(catalogManager).removeRecord(vf.createIRI(LOCAL_IRI), recordIri);
+        doThrow(new MatOntoException()).when(catalogManager)
+                .removeRecord(vf.createIRI(LOCAL_IRI), recordIri, recordFactory);
 
         Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI))
                 .request().delete();

@@ -62,6 +62,7 @@ import org.matonto.rest.util.jaxb.Links;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
@@ -220,12 +221,13 @@ public class DatasetRestImpl implements DatasetRest {
         DeleteActivity deleteActivity = null;
         try {
             deleteActivity = provUtils.startDeleteActivity(activeUser, recordIRI);
-            if (force) {
-                manager.deleteDataset(recordIRI);
-            } else {
-                manager.safeDeleteDataset(recordIRI);
-            }
-            provUtils.endDeleteActivity(deleteActivity, recordIRI);
+
+            Optional<DatasetRecord> record = (force
+                    ? manager.deleteDataset(recordIRI)
+                    : manager.safeDeleteDataset(recordIRI));
+
+            provUtils.endDeleteActivity(deleteActivity, record.orElseThrow(()
+                    -> new MatOntoException("Error removing record from catalog")));
         } catch (IllegalArgumentException ex) {
             provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
