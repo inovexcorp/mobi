@@ -24,6 +24,7 @@ package org.matonto.prov.rest.impl;
  */
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -66,6 +67,7 @@ import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.api.RepositoryManager;
 import org.matonto.repository.impl.sesame.SesameRepositoryWrapper;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.matonto.rest.util.UsernameTestFilter;
@@ -117,6 +119,9 @@ public class ProvRestImplTest extends MatontoRestTestNg {
 
     @Mock
     private SesameTransformer transformer;
+
+    @Mock
+    private RepositoryManager repositoryManager;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -179,12 +184,14 @@ public class ProvRestImplTest extends MatontoRestTestNg {
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, org.matonto.rdf.api.Model.class)));
         when(transformer.sesameStatement(any(Statement.class)))
                 .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
+        when(repositoryManager.getRepository(anyString())).thenReturn(Optional.of(repo));
 
         rest = new ProvRestImpl();
         rest.setMf(mf);
         rest.setVf(vf);
         rest.setProvService(provService);
         rest.setTransformer(transformer);
+        rest.setRepositoryManager(repositoryManager);
 
         return new ResourceConfig()
                 .register(rest)
@@ -225,6 +232,7 @@ public class ProvRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "0");
+        verify(provService, times(0)).getActivity(any(Resource.class));
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
 

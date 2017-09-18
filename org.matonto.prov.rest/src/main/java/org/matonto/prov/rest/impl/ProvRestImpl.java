@@ -34,24 +34,31 @@ import org.apache.commons.io.IOUtils;
 import org.matonto.exception.MatOntoException;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.persistence.utils.Bindings;
+import org.matonto.persistence.utils.QueryResults;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.prov.api.ProvenanceService;
 import org.matonto.prov.rest.ProvRest;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.BindingSet;
+import org.matonto.query.api.GraphQuery;
 import org.matonto.query.api.TupleQuery;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
+import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
+import org.matonto.repository.api.RepositoryManager;
 import org.matonto.rest.util.ErrorUtils;
 import org.matonto.rest.util.LinksUtils;
 import org.matonto.rest.util.jaxb.Links;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -62,9 +69,12 @@ public class ProvRestImpl implements ProvRest {
     private ValueFactory vf;
     private ModelFactory mf;
     private SesameTransformer transformer;
+    private RepositoryManager repositoryManager;
 
     private static final String GET_ACTIVITIES_QUERY;
     private static final String GET_ACTIVITIES_COUNT_QUERY;
+    private static final String ACTIVITIES_ENTITIES_QUERY;
+    private static final String GET_ENTITIES_QUERY;
     private static final String ACTIVITY_COUNT_BINDING = "count";
     private static final String ACTIVITY_BINDING = "activity";
 
@@ -76,6 +86,14 @@ public class ProvRestImpl implements ProvRest {
             );
             GET_ACTIVITIES_QUERY = IOUtils.toString(
                     ProvRestImpl.class.getResourceAsStream("/get-activities.rq"),
+                    "UTF-8"
+            );
+            ACTIVITIES_ENTITIES_QUERY = IOUtils.toString(
+                    ProvRestImpl.class.getResourceAsStream("/test.rq"),
+                    "UTF-8"
+            );
+            GET_ENTITIES_QUERY = IOUtils.toString(
+                    ProvRestImpl.class.getResourceAsStream("/get-entities.rq"),
                     "UTF-8"
             );
         } catch (IOException e) {
@@ -101,6 +119,11 @@ public class ProvRestImpl implements ProvRest {
     @Reference
     void setTransformer(SesameTransformer transformer) {
         this.transformer = transformer;
+    }
+
+    @Reference
+    void setRepositoryManager(RepositoryManager repositoryManager) {
+        this.repositoryManager = repositoryManager;
     }
 
     @Override
@@ -130,6 +153,44 @@ public class ProvRestImpl implements ProvRest {
             Links links = LinksUtils.buildLinks(uriInfo, activityList.size(), totalCount, limit, offset);
             Response.ResponseBuilder response = Response.ok(createReturnObj(activityList))
                     .header("X-Total-Count", totalCount);
+            /*String request = ACTIVITIES_ENTITIES_QUERY.replace("#LIMIT#", "" + limit);
+            request = request.replace("#OFFSET#", "" + offset);
+            TupleQuery query = conn.prepareTupleQuery(request);
+            TupleQueryResult result = query.evaluateAndReturn();
+            JSONArray activities = new JSONArray();
+            org.matonto.rdf.api.Model entityModel = mf.createModel();
+            Map<String, List<String>> repoToEntities = new HashMap<>();
+            result.forEach(bindings -> {
+                Resource activityIRI = Bindings.requiredResource(bindings, "activity");
+                RepositoryResult<Statement> activity = conn.getStatements(activityIRI, null, null);
+                StringWriter sw = new StringWriter();
+                Rio.write(new StatementIterable(activity, transformer), sw, RDFFormat.JSONLD);
+                activities.add(getObjectFromJsonld(sw.toString()));
+                Stream.of(StringUtils.split(Bindings.requiredLiteral(bindings, "entities").stringValue(), ","))
+                        .forEach(s -> {
+                            String[] entityAndRepo = StringUtils.split(s, " ");
+                            Resource entityIRI = vf.createIRI(entityAndRepo[0]);
+                            String repoId = entityAndRepo[1];
+                            if (repoToEntities.containsKey(repoId)) {
+                                repoToEntities.get(repoId).add("<" + entityAndRepo[0] + ">");
+                            } else {
+                                repoToEntities.put(repoId, new ArrayList<>(Collections.singletonList("<" + entityAndRepo[0] + ">")));
+                            }
+                            entityModel.addAll(RepositoryResults.asModel(conn.getStatements(entityIRI, null, null), mf));
+                        });
+            });
+            repoToEntities.keySet().forEach(repoId -> {
+                Repository repo = repositoryManager.getRepository(repoId).orElseThrow(() ->
+                        new IllegalStateException("Repository " + repoId + " could not be found"));
+                try (RepositoryConnection entityConn = repo.getConnection()) {
+                    String entityQueryStr = GET_ENTITIES_QUERY.replace("#ENTITIES#", String.join(", ", repoToEntities.get(repoId)));
+                    GraphQuery entityQuery = entityConn.prepareGraphQuery(entityQueryStr);
+                    entityModel.addAll(QueryResults.asModel(entityQuery.evaluate(), mf));
+                }
+            });
+            Links links = LinksUtils.buildLinks(uriInfo, activities.size(), totalCount, limit, offset);
+            Response.ResponseBuilder response = Response.ok(createReturnObj(activities, entityModel))
+                    .header("X-Total-Count", totalCount);*/
             if (links.getNext() != null) {
                 response = response.link(links.getBase() + links.getNext(), "next");
             }
@@ -142,15 +203,41 @@ public class ProvRestImpl implements ProvRest {
         }
     }
 
+    private JSONObject createReturnObj(JSONArray activities, Model entities) {
+        JSONObject object = new JSONObject();
+        object.element("activities", activities);
+        object.element("entities", modelToJsonld(entities, transformer));
+        return object;
+    }
+
     private JSONObject createReturnObj(List<Activity> activities) {
         JSONArray activityArr = new JSONArray();
         Model entitiesModel = mf.createModel();
+        Map<String, List<String>> repoToEntities = new HashMap<>();
         activities.forEach(activity -> {
             Model activityModel = mf.createModel(activity.getModel()).filter(activity.getResource(), null, null);
             Model entityModel = mf.createModel(activity.getModel());
             entityModel.remove(activity.getResource(), null, null);
             entitiesModel.addAll(entityModel);
+            entityModel.filter(null, vf.createIRI("http://www.w3.org/ns/prov#atLocation"), null).forEach(statement -> {
+                Resource entityIRI = statement.getSubject();
+                String repoId = statement.getObject().stringValue();
+                if (repoToEntities.containsKey(repoId)) {
+                    repoToEntities.get(repoId).add("<" + entityIRI + ">");
+                } else {
+                    repoToEntities.put(repoId, new ArrayList<>(Collections.singletonList("<" + entityIRI + ">")));
+                }
+            });
             activityArr.add(getObjectFromJsonld(modelToJsonld(activityModel, transformer)));
+        });
+        repoToEntities.keySet().forEach(repoId -> {
+            Repository repo = repositoryManager.getRepository(repoId).orElseThrow(() ->
+                    new IllegalStateException("Repository " + repoId + " could not be found"));
+            try (RepositoryConnection entityConn = repo.getConnection()) {
+                String entityQueryStr = GET_ENTITIES_QUERY.replace("#ENTITIES#", String.join(", ", repoToEntities.get(repoId)));
+                GraphQuery entityQuery = entityConn.prepareGraphQuery(entityQueryStr);
+                entitiesModel.addAll(QueryResults.asModel(entityQuery.evaluate(), mf));
+            }
         });
         JSONObject object = new JSONObject();
         object.element("activities", activityArr);

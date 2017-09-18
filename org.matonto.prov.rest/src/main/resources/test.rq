@@ -1,0 +1,21 @@
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT
+    ?activity
+    (GROUP_CONCAT(?entityAndRepo ; separator = ",") as ?entities)
+WHERE {
+    {
+        SELECT ?activity
+        WHERE {
+            ?activity a prov:Activity ;
+                      prov:endedAtTime ?date .
+        }
+        ORDER BY DESC(?date)
+        LIMIT #LIMIT#
+        OFFSET #OFFSET#
+    }
+	?activity prov:used | prov:generated | prov:invalidated ?entity .
+    ?entity prov:atLocation ?repoId .
+    BIND(CONCAT(str(?entity), " ", ?repoId) as ?entityAndRepo)
+}
+GROUP BY ?activity

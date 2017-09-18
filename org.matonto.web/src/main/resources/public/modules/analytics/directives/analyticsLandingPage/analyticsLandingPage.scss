@@ -1,0 +1,17 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.analytics-landing-page {
+    display: flex;
+    flex-direction: column;
+    
+    .row {
+        flex: 1;
+        padding: 15px 0;
+        
+        .block-header {
+            font-size: 18px;
+            line-height: 34px;
+        }
+    }
+}
