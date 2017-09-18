@@ -26,7 +26,7 @@
 	<parent>
 		<artifactId>rdf-orm</artifactId>
 		<groupId>org.matonto</groupId>
-		<version>1.9.14</version>
+		<version>1.9.15</version>
 	</parent>
 	<artifactId>rdf.orm</artifactId>
     <name>${project.groupId}.${project.artifactId}</name>
