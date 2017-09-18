@@ -40,9 +40,7 @@
          * @restrict E
          * @requires datasetManager.service:datasetManagerService
          * @requires datasetState.service:datasetStateService
-         * @requires catalogManager.service:catalogManagerService
          * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
          *
          * @description
          * `newDatasetOverlay` is a directive that creates overlays with form containing fields for creating
