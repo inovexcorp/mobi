@@ -39,8 +39,6 @@
          * @requires $filter
          * @requires $http
          * @requires $q
-         * @requires toaster
-         * @requires REGEX
          * @requires uuid
          * @requires prefixes.service:prefixes
          * @requires httpService.service:httpService
@@ -50,9 +48,9 @@
          */
         .service('utilService', utilService);
 
-        utilService.$inject = ['$filter', 'prefixes', 'toastr', '$http', '$q', 'REGEX', 'uuid', 'httpService'];
+        utilService.$inject = ['$filter', '$http', '$q', 'uuid', 'prefixes', 'httpService', 'toastr', 'REGEX'];
 
-        function utilService($filter, prefixes, toastr, $http, $q, REGEX, uuid, httpService) {
+        function utilService($filter, $http, $q, uuid, prefixes, httpService, toastr, REGEX) {
             var self = this;
 
             /**
