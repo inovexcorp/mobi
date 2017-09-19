@@ -459,6 +459,8 @@ function mockPrefixes() {
             this.xsd = 'xsd:';
             this.ontologyEditor = 'ontEdit:';
             this.dataset = 'dataset:';
+            this.matprov = 'matprov:';
+            this.prov = 'prov:';
         });
     });
 }
@@ -1152,6 +1154,15 @@ function mockAnalyticState() {
             this.getPage = jasmine.createSpy('getPage');
             this.sortResults = jasmine.createSpy('sortResults');
             this.reorderColumns = jasmine.createSpy('reorderColumns');
+        });
+    });
+}
+
+function mockProvManager() {
+    module(function($provide) {
+        $provide.service('provManagerService', function($q) {
+            this.activityTypes = {};
+            this.getActivities = jasmine.createSpy('getActivities').and.returnValue($q.when({}));
         });
     });
 }
