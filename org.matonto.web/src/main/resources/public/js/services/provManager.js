@@ -40,6 +40,7 @@
          * @requires $q
          * @requires util.service:utilService
          * @requires prefixes.service:prefixes
+         * @requires httpService.service:httpService
          *
          * @description
          * `provManagerService` is a service that provides access to the Mobi Provenance REST endpoints and variables

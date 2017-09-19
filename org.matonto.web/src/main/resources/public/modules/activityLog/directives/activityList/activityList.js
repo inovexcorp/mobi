@@ -38,10 +38,10 @@
          * @name activityList.directive:activityList
          * @scope
          * @restrict E
-         * @requires $q
          * @requires provManager.service:provManagerService
          * @requires util.service:utilService
          * @requires prefixes.service:prefixes
+         * @requires httpService.service:httpService
          *
          * @description
          * `activityList` is a directive which creates a Bootstrap row with a {@link block.directive:block block}
@@ -49,9 +49,9 @@
          */
         .directive('activityList', activityList);
 
-        activityList.$inject = ['$q', 'provManagerService', 'utilService', 'prefixes', 'httpService'];
+        activityList.$inject = ['provManagerService', 'utilService', 'prefixes', 'httpService'];
 
-        function activityList($q, provManagerService, utilService, prefixes, httpService) {
+        function activityList(provManagerService, utilService, prefixes, httpService) {
             return {
                 restrict: 'E',
                 replace: true,

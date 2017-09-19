@@ -37,6 +37,13 @@
          * @ngdoc service
          * @name util.service:utilService
          * @requires $filter
+         * @requires $http
+         * @requires $q
+         * @requires toaster
+         * @requires REGEX
+         * @requires uuid
+         * @requires prefixes.service:prefixes
+         * @requires httpService.service:httpService
          *
          * @description
          * `utilService` is a service that provides various utility methods for use across Mobi.
