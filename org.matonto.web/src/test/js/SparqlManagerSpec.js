@@ -141,6 +141,86 @@ describe('SPARQL Manager service', function() {
             });
         });
     });
+    describe('pagedQuery should call the correct method', function() {
+        var url, paramsObj, config;
+        beforeEach(function() {
+            paramsObj = {
+                limit: 10,
+                page: 1
+            };
+            config = {
+                query: 'query',
+                limit: 10,
+                offset: 10
+            };
+            url = '/mobirest/sparql/page?';
+        });
+        it('with a dataset', function() {
+            paramsObj.datasetRecordIRI = 'record-id';
+            config.dataset = 'record-id';
+            url += $httpParamSerializer(config);
+            $httpBackend.expectGET(url).respond(200);
+            sparqlManagerSvc.pagedQuery('query', paramsObj)
+                .then(function(response) {
+                    expect(response).toEqual(jasmine.objectContaining({status: 200}));
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        describe('when $http.get', function() {
+            beforeEach(function() {
+                url += $httpParamSerializer(config);
+            });
+            it('resolves', function() {
+                $httpBackend.expectGET(url).respond(200);
+                sparqlManagerSvc.pagedQuery('query', paramsObj)
+                    .then(function(response) {
+                        expect(response).toEqual(jasmine.objectContaining({status: 200}));
+                    }, function() {
+                        fail('Promise should have resolved');
+                    });
+                flushAndVerify($httpBackend);
+            });
+            it('rejects', function() {
+                $httpBackend.expectGET(url).respond(400);
+                sparqlManagerSvc.pagedQuery('query', paramsObj)
+                    .then(function() {
+                        fail('Promise should have rejected');
+                    }, function() {
+                        expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400}));
+                    });
+                flushAndVerify($httpBackend);
+            });
+        });
+        describe('with an id and httpService.get', function() {
+            beforeEach(function() {
+                paramsObj.id = 'id';
+            });
+            it('resolves', function() {
+                httpSvc.get.and.returnValue($q.when({status: 200}));
+                sparqlManagerSvc.pagedQuery('query', paramsObj)
+                    .then(function(response) {
+                        expect(response).toEqual({status: 200});
+                        expect(httpSvc.get).toHaveBeenCalledWith(url.slice(0, -1), {params: config}, 'id');
+                    }, function() {
+                        fail('Promise should have resolved');
+                    });
+                scope.$apply();
+            });
+            it('rejects', function() {
+                httpSvc.get.and.returnValue($q.reject({status: 400}));
+                sparqlManagerSvc.pagedQuery('query', paramsObj)
+                    .then(function() {
+                        fail('Promise should have rejected');
+                    }, function() {
+                        expect(httpSvc.get).toHaveBeenCalledWith(url.slice(0, -1), {params: config}, 'id');
+                        expect(utilSvc.rejectError).toHaveBeenCalledWith({status: 400});
+                    });
+                scope.$apply();
+            });
+        });
+    });
     describe('should retrieve a page of a query against the repository', function() {
         var url;
         beforeEach(function() {

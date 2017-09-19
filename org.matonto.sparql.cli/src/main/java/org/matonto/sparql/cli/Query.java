@@ -67,7 +67,7 @@ public class Query implements Action {
     @Option(name = "-f", aliases = "--query-file", description = "The input query file")
     private String queryFileParam = null;
 
-    @Argument(name = "Query", description = "The SPARQL query")
+    @Argument(name = "Query", description = "The SPARQL query (ignored if query file provided)")
     private String queryParam = null;
 
     // Implementation

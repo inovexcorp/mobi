@@ -43,8 +43,13 @@ activities:Activity0 a prov:Activity ;
     prov:endedAtTime "2016-02-08T00:29:34Z"^^xsd:dateTime ;
     prov:generated entities:Entity0 .
 
-entities:Entity0 a prov:Entity .
-entities:Entity1 a prov:Entity .
-entities:Entity2 a prov:Entity .
-entities:Entity3 a prov:Entity .
-entities:Entity4 a prov:Entity .
+entities:Entity0 a prov:Entity ;
+    prov:atLocation "repo1" .
+entities:Entity1 a prov:Entity ;
+    prov:atLocation "repo2" .
+entities:Entity2 a prov:Entity ;
+    prov:atLocation "repo2" .
+entities:Entity3 a prov:Entity ;
+    prov:atLocation "repo1" .
+entities:Entity4 a prov:Entity ;
+    prov:atLocation "repo2" .

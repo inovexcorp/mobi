@@ -1,0 +1,26 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.sortable-table {
+    &.table > thead > tr > th {
+        padding-right: 31px;
+        position: relative;
+        white-space: nowrap;
+        
+        .fa {
+            line-height: 19px;
+            margin-left: 5px;
+            position: absolute;
+            right: 8px;
+            top: 8px;
+
+            &.fa-sort {
+                color: $gray-light;
+            }
+        }
+    }
+    
+    td {
+        height: 37px;
+    }
+}

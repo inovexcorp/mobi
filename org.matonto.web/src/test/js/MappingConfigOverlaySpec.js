@@ -62,7 +62,7 @@ describe('Mapping Config Overlay directive', function() {
 
     describe('should initialize with the correct values', function() {
         it('for the configuration for getting ontology records', function() {
-            var sortOption = {field: prefixes.dcterms + 'title', ascending: true};
+            var sortOption = {field: prefixes.dcterms + 'title', asc: true};
             catalogManagerSvc.sortOptions = [sortOption];
             element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
             scope.$digest();
