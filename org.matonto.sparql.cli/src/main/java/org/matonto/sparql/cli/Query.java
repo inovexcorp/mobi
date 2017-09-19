@@ -118,18 +118,16 @@ public class Query implements Action {
             String[] content = new String[bindingNames.size()];
 
             result.forEach(bindings -> {
-                IntStream.range(0, bindingNames.size()).forEach(index
-                        -> buildRow(index, bindings.getValue(bindingNames.get(index)), content));
+                IntStream.range(0, bindingNames.size()).forEach(index -> {
+                    Optional<Value> valueOpt = bindings.getValue(bindingNames.get(index));
+                    String value = valueOpt.isPresent() ? valueOpt.get().stringValue() : "";
+                    content[index] = value;
+                });
 
                 table.addRow().addContent(content);
             });
 
             table.print(System.out);
         }
-    }
-
-    private void buildRow(final int index, final Optional<Value> valueOpt, final String[] content) {
-        final String value = valueOpt.isPresent() ? valueOpt.get().stringValue() : "";
-        content[index] = value;
     }
 }
