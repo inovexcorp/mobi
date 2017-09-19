@@ -44,6 +44,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 @Command(scope = "mobi", name = "query", description = "Queries a repository")
 @Service
@@ -117,17 +118,18 @@ public class Query implements Action {
             String[] content = new String[bindingNames.size()];
 
             result.forEach(bindings -> {
-                for (int i = 0; i < bindingNames.size(); i++) {
-                    String name = bindingNames.get(i);
-                    Optional<Value> valueOpt = bindings.getValue(name);
-                    String value = valueOpt.isPresent() ? valueOpt.get().stringValue() : "";
-                    content[i] = value;
-                }
+                IntStream.range(0, bindingNames.size()).forEach(index
+                        -> buildRow(index, bindings.getValue(bindingNames.get(index)), content));
 
                 table.addRow().addContent(content);
             });
 
             table.print(System.out);
         }
+    }
+
+    private void buildRow(final int index, final Optional<Value> valueOpt, final String[] content) {
+        final String value = valueOpt.isPresent() ? valueOpt.get().stringValue() : "";
+        content[index] = value;
     }
 }
