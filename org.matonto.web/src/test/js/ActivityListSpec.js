@@ -39,6 +39,7 @@ describe('Activity List directive', function() {
         mockProvManager();
         mockUtil();
         mockPrefixes();
+        mockHttpService();
 
         inject(function(_$compile_, _$rootScope_, _$q_, _provManagerService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
@@ -64,7 +65,7 @@ describe('Activity List directive', function() {
             element = $compile(angular.element('<activity-list></activity-list>'))(scope);
             scope.$digest();
             controller = element.controller('activityList');
-            expect(provManagerSvc.getActivities).toHaveBeenCalledWith(controller.paginatedConfig);
+            expect(provManagerSvc.getActivities).toHaveBeenCalledWith(controller.paginatedConfig, controller.id);
             expect(utilSvc.parseLinks).not.toHaveBeenCalled();
             expect(controller.activities).toEqual([]);
             expect(controller.entities).toEqual([]);
@@ -74,7 +75,7 @@ describe('Activity List directive', function() {
             expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
         });
         it('successfully', function() {
-            expect(provManagerSvc.getActivities).toHaveBeenCalledWith(controller.paginatedConfig);
+            expect(provManagerSvc.getActivities).toHaveBeenCalledWith(controller.paginatedConfig, controller.id);
             expect(utilSvc.parseLinks).toHaveBeenCalledWith(headers.link);
             expect(controller.activities).toEqual(response.data.activities);
             expect(controller.entities).toEqual(response.data.entities);
@@ -99,7 +100,7 @@ describe('Activity List directive', function() {
                 it('if the direction is previous', function() {
                     controller.getPage('prev');
                     scope.$apply();
-                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(prevLink, utilSvc.rejectError);
+                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(prevLink, utilSvc.rejectError, controller.id);
                     expect(utilSvc.parseLinks).toHaveBeenCalledWith(headers.link);
                     expect(controller.paginatedConfig.pageIndex).toBe(index - 1);
                     expect(controller.activities).toEqual(response.data.activities);
@@ -110,7 +111,7 @@ describe('Activity List directive', function() {
                 it('if the direction is next', function() {
                     controller.getPage('next');
                     scope.$apply();
-                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(nextLink, utilSvc.rejectError);
+                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(nextLink, utilSvc.rejectError, controller.id);
                     expect(utilSvc.parseLinks).toHaveBeenCalledWith(headers.link);
                     expect(controller.paginatedConfig.pageIndex).toBe(index + 1);
                     expect(controller.activities).toEqual(response.data.activities);
@@ -126,13 +127,13 @@ describe('Activity List directive', function() {
                 it('and the direction was previous', function() {
                     controller.getPage('prev');
                     scope.$apply();
-                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(prevLink, utilSvc.rejectError);
+                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(prevLink, utilSvc.rejectError, controller.id);
                     expect(utilSvc.parseLinks).not.toHaveBeenCalled();
                 });
                 it('and the direction was next', function() {
                     controller.getPage('next');
                     scope.$apply();
-                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(nextLink, utilSvc.rejectError);
+                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(nextLink, utilSvc.rejectError, controller.id);
                     expect(utilSvc.parseLinks).not.toHaveBeenCalled();
                 });
             });

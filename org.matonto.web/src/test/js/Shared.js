@@ -1161,7 +1161,7 @@ function mockAnalyticState() {
 function mockProvManager() {
     module(function($provide) {
         $provide.service('provManagerService', function($q) {
-            this.activityTypes = {};
+            this.activityTypes = [];
             this.getActivities = jasmine.createSpy('getActivities').and.returnValue($q.when({}));
         });
     });

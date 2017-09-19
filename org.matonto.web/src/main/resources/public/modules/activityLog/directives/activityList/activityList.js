@@ -49,19 +49,20 @@
          */
         .directive('activityList', activityList);
 
-        activityList.$inject = ['$q', 'provManagerService', 'utilService', 'prefixes'];
+        activityList.$inject = ['$q', 'provManagerService', 'utilService', 'prefixes', 'httpService'];
 
-        function activityList($q, provManagerService, utilService, prefixes) {
+        function activityList($q, provManagerService, utilService, prefixes, httpService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/activityLog/directives/activityList/activityList.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var util = utilService;
                     var pm = provManagerService;
+                    dvm.id = 'activity-log';
                     dvm.activities = [];
                     dvm.entities = [];
                     dvm.paginatedConfig = {
@@ -76,17 +77,17 @@
 
                     dvm.getPage = function(direction) {
                         if (direction === 'prev') {
-                            util.getResultsPage(dvm.links.prev, util.rejectError)
+                            util.getResultsPage(dvm.links.prev, util.rejectError, dvm.id)
                                 .then(response => {
                                     setActivities(response);
                                     dvm.paginatedConfig.pageIndex -= 1;
-                                }, util.createErrorToast);
+                                }, createToast);
                         } else {
-                            util.getResultsPage(dvm.links.next, util.rejectError)
+                            util.getResultsPage(dvm.links.next, util.rejectError, dvm.id)
                                 .then(response => {
                                     setActivities(response);
                                     dvm.paginatedConfig.pageIndex += 1;
-                                }, util.createErrorToast);
+                                }, createToast);
                         }
                     }
                     dvm.getTimeStamp = function(activity) {
@@ -103,9 +104,16 @@
                         dvm.links.prev = _.get(links, 'prev', '');
                         dvm.links.next = _.get(links, 'next', '');
                     }
+                    function createToast(errorMessage) {
+                        if (errorMessage) {
+                            util.createErrorToast(errorMessage);
+                        }
+                    }
 
-                    pm.getActivities(dvm.paginatedConfig).then(setActivities, util.createErrorToast);
-                }
+                    pm.getActivities(dvm.paginatedConfig, dvm.id).then(setActivities, createToast);
+
+                    $scope.$on('$destroy', () => httpService.cancel(dvm.id));
+                }]
             }
         }
 })();

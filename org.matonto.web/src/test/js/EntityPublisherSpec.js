@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Entity Publisher directive', function() {
+describe('Entity Publisher directive', function() {
     var $compile, scope, element, isolatedScope, controller, $q, userManagerSvc, utilSvc;
 
     beforeEach(function() {

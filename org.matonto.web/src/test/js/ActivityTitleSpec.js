@@ -41,7 +41,7 @@ describe('Activity Title directive', function() {
             prefixes = _prefixes_;
         });
 
-        provManagerSvc.activityTypes = {type: {word: 'word', pred: 'pred'}, type1: {word: 'word1', pred: 'pred'}};
+        provManagerSvc.activityTypes = [{type: 'type1', word: 'word1', pred: 'pred'}, {type: 'type', word: 'word', pred: 'pred'}];
         scope.activity = { '@type': [], pred: [{'@id': 'entity'}, {'@id': 'entity1'}] };
         scope.entities = [{'@id': 'entity'}, {'@id': 'entity1'}];
         rerender();

@@ -46,11 +46,11 @@
          * @description
          * `activityTitle` is a directive which creates a `div` containing a title for the provided `Activity` using
          * the username of the associated user, the word associated with the type of Activity, and the titles of the
-         * main associated `Entities`. The word the the predicate to retrieve `Entities` with are collected from the
+         * main associated `Entities`. The word and the predicate to retrieve `Entities` with are collected from the
          * {@link provManager.service:provManagerService provManagerService}. The directive is replaced by the
          * contents of its template.
          *
-         * @param {Object} activity A JSON-LD object of an `Activity
+         * @param {Object} activity A JSON-LD object of an `Activity`
          * @param {Object[]} entities An array of JSON-LD objects of `Entities`
          */
         .directive('activityTitle', activityTitle);
@@ -88,9 +88,10 @@
                 function setEntities(activity) {
                     var types = _.get(activity, '@type', []);
                     var pred = '';
-                    _.forEach(pm.activityTypes, (obj, key) => {
-                        if (_.includes(types, key)) {
+                    _.forEach(pm.activityTypes, obj => {
+                        if (_.includes(types, obj.type)) {
                             pred = obj.pred;
+                            return false;
                         }
                     });
                     var entityTitles = _.map(_.get(activity, "['" + pred + "']", []), idObj => {
@@ -108,9 +109,10 @@
                 }
                 function setWord(activity) {
                     var types = _.get(activity, '@type', []);
-                    _.forEach(pm.activityTypes, (obj, key) => {
-                        if (_.includes(types, key)) {
+                    _.forEach(pm.activityTypes, obj => {
+                        if (_.includes(types, obj.type)) {
                             dvm.word = obj.word;
+                            return false;
                         }
                     });
                 }

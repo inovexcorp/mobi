@@ -46,13 +46,13 @@ public interface ProvRest {
      *
      * @param uriInfo The URI information of the request to be used in creating links to other pages of Activities
      * @param offset The offset for the page.
-     * @param limit The number of Distributions to return in one page.
+     * @param limit The number of Activities to return in one page.
      * @return A JSON object with a key for activities and a key for entities
      */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
-    @ApiOperation("Retrieves a paginated list of provenance Activities and referenced Entities")
+    @ApiOperation("Retrieves a JSON object with a paginated list of provenance Activities and referenced Entities")
     Response getActivities(@Context UriInfo uriInfo,
                            @DefaultValue("0") @QueryParam("offset") int offset,
                            @DefaultValue("50") @QueryParam("limit") int limit);
