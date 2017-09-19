@@ -26,17 +26,9 @@ package org.matonto.prov.api.builder;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontologies.provo.Entity;
-import org.matonto.rdf.api.ModelFactory;
-import org.matonto.rdf.api.Resource;
-import org.matonto.rdf.api.ValueFactory;
-import org.matonto.rdf.orm.OrmFactory;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 public class ActivityConfig {
     private Set<Class<? extends Activity>> types;
