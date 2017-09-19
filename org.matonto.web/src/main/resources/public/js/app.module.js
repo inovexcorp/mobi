@@ -102,6 +102,7 @@
 
             /* Custom Modules */
             'analytics',
+            'activityLog',
             'catalog',
             'datasets',
             'discover',
@@ -131,6 +132,7 @@
             'ontologyState',
             'prefixes',
             'propertyManager',
+            'provManager',
             'responseObj',
             'settingsManager',
             'sparqlManager',
