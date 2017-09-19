@@ -239,7 +239,6 @@ public class CatalogProvUtilsImplTest {
         DeleteActivity result = utils.startDeleteActivity(user, vf.createIRI(recordIri));
         verify(provenanceService).createActivity(any(ActivityConfig.class));
         verify(provenanceService).addActivity(any(DeleteActivity.class));
-        verify(provenanceService).updateActivity(any(DeleteActivity.class));
         verify(matOnto).getServerIdentifier();
         assertTrue(result.getModel().contains(deleteActivity.getResource(), vf.createIRI(Activity.startedAtTime_IRI), null));
         assertTrue(result.getModel().contains(deleteActivity.getResource(), vf.createIRI(predAtLocation), vf.createLiteral(matOnto.getServerIdentifier().toString())));

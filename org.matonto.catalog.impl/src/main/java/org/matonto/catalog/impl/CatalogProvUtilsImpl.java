@@ -108,6 +108,8 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
 
         Activity activity = initializeActivity(config);
 
+        provenanceService.addActivity(activity);
+
         return createActivityFactory.getExisting(activity.getResource(), activity.getModel()).orElseThrow(()
                 -> new IllegalStateException("CreateActivity not made correctly"));
     }
@@ -135,7 +137,7 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
         activity.addInvalidated(recordEntity);
         activity.getModel().addAll(recordEntity.getModel());
 
-        provenanceService.updateActivity(activity);
+        provenanceService.addActivity(activity);
 
         return deleteActivityFactory.getExisting(activity.getResource(), activity.getModel()).orElseThrow(() ->
                 new IllegalStateException("DeleteActivity not made correctly"));
@@ -166,8 +168,6 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
         Activity activity = provenanceService.createActivity(config);
         activity.addProperty(vf.createLiteral(start), vf.createIRI(Activity.startedAtTime_IRI));
         activity.addProperty(vf.createLiteral(matOnto.getServerIdentifier().toString()), vf.createIRI(atLocation));
-
-        provenanceService.addActivity(activity);
 
         return activity;
     }
