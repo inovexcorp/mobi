@@ -187,7 +187,7 @@ public class SimpleMappingManager implements MappingManager {
     }
 
     @Override
-    public Optional<MappingRecord> deleteMapping(@Nonnull Resource recordId) throws MatOntoException {
+    public MappingRecord deleteMapping(@Nonnull Resource recordId) throws MatOntoException {
         return catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), recordId, mappingRecordFactory);
     }
 

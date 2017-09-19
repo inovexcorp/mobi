@@ -149,8 +149,7 @@ public interface MappingManager {
      * Delete a mapping from the repository.
      *
      * @param recordId the id for a mapping
-     * @return An {@link Optional} containing the MappingRecord that was removed or {@link Optional#EMPTY} if no record
-     *         was     *         removed.
+     * @return The MappingRecord that was removed.
      */
-    Optional<MappingRecord> deleteMapping(@Nonnull Resource recordId);
+    MappingRecord deleteMapping(@Nonnull Resource recordId);
 }

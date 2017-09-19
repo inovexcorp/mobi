@@ -36,7 +36,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import aQute.bnd.annotation.metatype.Configurable;
-import junit.framework.TestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -703,7 +702,8 @@ public class SimpleCatalogManagerTest {
         record.setCatalog(catalogFactory.createNew(distributedCatalogId));
         doReturn(Optional.of(record)).when(utilsService).optObject(eq(RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
 
-        TestCase.assertTrue(manager.removeRecord(distributedCatalogId, RECORD_IRI, recordFactory).isPresent());
+        Record result = manager.removeRecord(distributedCatalogId, RECORD_IRI, recordFactory);
+        assertEquals(record, result);
         verify(utilsService).optObject(eq(RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
         verify(utilsService).optObject(eq(RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
         verify(utilsService).removeObject(any(Record.class), any(RepositoryConnection.class));
@@ -718,7 +718,8 @@ public class SimpleCatalogManagerTest {
         record.setUnversionedDistribution(Collections.singleton(dist));
         doReturn(Optional.of(record)).when(utilsService).optObject(eq(UNVERSIONED_RECORD_IRI), eq(unversionedRecordFactory), any(RepositoryConnection.class));
 
-        TestCase.assertTrue(manager.removeRecord(distributedCatalogId, UNVERSIONED_RECORD_IRI, unversionedRecordFactory).isPresent());
+        Record result = manager.removeRecord(distributedCatalogId, UNVERSIONED_RECORD_IRI, unversionedRecordFactory);
+        assertEquals(record, result);
         record.getUnversionedDistribution_resource().forEach(resource -> verify(utilsService).remove(eq(resource), any(RepositoryConnection.class)));
         verify(utilsService).removeObject(any(UnversionedRecord.class), any(RepositoryConnection.class));
     }
@@ -736,7 +737,8 @@ public class SimpleCatalogManagerTest {
         doReturn(Optional.of(record)).when(utilsService).optObject(eq(VERSIONED_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
         doReturn(version).when(utilsService).getObject(eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
 
-        TestCase.assertTrue(manager.removeRecord(distributedCatalogId, VERSIONED_RECORD_IRI, versionedRecordFactory).isPresent());
+        Record result = manager.removeRecord(distributedCatalogId, VERSIONED_RECORD_IRI, versionedRecordFactory);
+        assertEquals(record, result);
         verify(utilsService).getObject(eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
         verify(utilsService).remove(eq(VERSION_IRI), any(RepositoryConnection.class));
         verify(utilsService).remove(eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
@@ -759,7 +761,8 @@ public class SimpleCatalogManagerTest {
         doReturn(tag).when(utilsService).getObject(eq(TAG_IRI), eq(versionFactory), any(RepositoryConnection.class));
         doReturn(branch).when(utilsService).getObject(eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
 
-        TestCase.assertTrue(manager.removeRecord(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, versionedRDFRecordFactory).isPresent());
+        Record result = manager.removeRecord(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, versionedRDFRecordFactory);
+        assertEquals(record, result);
         verify(utilsService).getObject(eq(TAG_IRI), eq(versionFactory), any(RepositoryConnection.class));
         verify(utilsService).remove(eq(TAG_IRI), any(RepositoryConnection.class));
         verify(utilsService).remove(eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));

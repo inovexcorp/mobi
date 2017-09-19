@@ -148,11 +148,11 @@ public interface CatalogManager {
      * @param recordId  The Resource identifying the Record which you want to remove.
      * @param factory   The OrmFactory of the Type of Record you want to get back.
      * @param <T>       An Object which extends Record.
-     * @return The Record object which was removed or {@link Optional#EMPTY} if the Record was unable to be removed.
+     * @return The Record object which was removed.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or
      *      the Record does not belong to the Catalog.
      */
-    <T extends Record> Optional<T> removeRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory);
+    <T extends Record> T removeRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory);
 
     /**
      * Gets the Record from the provided Catalog. The Record will be of type T which is determined by the provided

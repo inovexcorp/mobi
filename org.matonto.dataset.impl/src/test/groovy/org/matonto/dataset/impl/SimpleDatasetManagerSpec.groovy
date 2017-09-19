@@ -595,14 +595,14 @@ class SimpleDatasetManagerSpec extends Specification {
         def result = service.deleteDataset(datasetIRI, repo)
 
         then:
-        result.get() == record
-        1 * catalogManagerMock.removeRecord(localCatalog, recordIRI, dsRecFactory) >> Optional.of(record)
+        result == record
+        1 * catalogManagerMock.removeRecord(localCatalog, recordIRI, dsRecFactory) >> record
     }
 
     def "deleteDataset() correctly removes DatasetRecord, Dataset, and associated graphs in a #repo repository"() {
         setup:
         def testRecord = bootstrapCatalog(testDatasetIRI, testRecordIRI, repo)
-        1 * catalogManagerMock.removeRecord(!null, testRecordIRI, !null) >> Optional.of(testRecord)
+        1 * catalogManagerMock.removeRecord(!null, testRecordIRI, !null) >> testRecord
         testConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
         dynamicConn = repos.get(repo).getConnection()
 
@@ -611,7 +611,7 @@ class SimpleDatasetManagerSpec extends Specification {
 
         then:
         // Mock Verifications
-        result.get() == testRecord
+        result == testRecord
         repoManagerMock.getRepository("system") >> Optional.of(systemRepo)
         // Assertions
         !dynamicConn.getStatements(testDatasetIRI, null, null).hasNext()
@@ -634,7 +634,7 @@ class SimpleDatasetManagerSpec extends Specification {
     def "safeDeleteDataset() correctly removes DatasetRecord, Dataset, and associated graphs in a #repo repository for #datasetIRI"() {
         setup:
         def testRecord = bootstrapCatalog(testDatasetIRI, testRecordIRI, repo)
-        1 * catalogManagerMock.removeRecord(!null, testRecordIRI, !null) >> Optional.of(testRecord)
+        1 * catalogManagerMock.removeRecord(!null, testRecordIRI, !null) >> testRecord
         testConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
         dynamicConn = repos.get(repo).getConnection()
 
@@ -643,7 +643,7 @@ class SimpleDatasetManagerSpec extends Specification {
 
         then:
         // Mock Verifications
-        result.get() == testRecord
+        result == testRecord
         repoManagerMock.getRepository("system") >> Optional.of(systemRepo)
         // Assertions
         !dynamicConn.getStatements(testDatasetIRI, null, null).hasNext()

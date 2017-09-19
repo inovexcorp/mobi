@@ -237,7 +237,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         when(manager.createMapping(anyString())).thenReturn(mappingWrapper);
         when(manager.retrieveMapping(vf.createIRI(ERROR_IRI))).thenReturn(Optional.empty());
         when(manager.retrieveMapping(vf.createIRI(MAPPING_IRI))).thenReturn(Optional.of(mappingWrapper));
-        when(manager.deleteMapping(record.getResource())).thenReturn(Optional.of(record));
+        when(manager.deleteMapping(record.getResource())).thenReturn(record);
         when(manager.createMappingId(any(IRI.class))).thenAnswer(i -> new MappingId() {
             @Override
             public Optional<IRI> getMappingIRI() {

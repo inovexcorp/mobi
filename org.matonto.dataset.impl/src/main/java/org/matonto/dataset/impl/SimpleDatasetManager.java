@@ -201,16 +201,15 @@ public class SimpleDatasetManager implements DatasetManager {
     }
 
     @Override
-    public Optional<DatasetRecord> deleteDataset(Resource dataset, String repositoryId) {
+    public DatasetRecord deleteDataset(Resource dataset, String repositoryId) {
         Resource record = getRecordResource(dataset, repositoryId).orElseThrow(() ->
                 new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
         return deleteDataset(record);
     }
 
     @Override
-    public Optional<DatasetRecord> deleteDataset(Resource record) {
-        DatasetRecord datasetRecord = catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), record, dsRecFactory)
-                .orElseThrow(() -> new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
+    public DatasetRecord deleteDataset(Resource record) {
+        DatasetRecord datasetRecord = catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), record, dsRecFactory);
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
         Resource dataset = datasetRecord.getDataset_resource().orElseThrow(()
@@ -220,20 +219,19 @@ public class SimpleDatasetManager implements DatasetManager {
             deleteGraphs(conn, dataset);
             conn.remove(dataset, null, null);
         }
-        return Optional.of(datasetRecord);
+        return datasetRecord;
     }
 
     @Override
-    public Optional<DatasetRecord> safeDeleteDataset(Resource dataset, String repositoryId) {
+    public DatasetRecord safeDeleteDataset(Resource dataset, String repositoryId) {
         Resource record = getRecordResource(dataset, repositoryId).orElseThrow(() ->
                 new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
         return safeDeleteDataset(record);
     }
 
     @Override
-    public Optional<DatasetRecord> safeDeleteDataset(Resource record) {
-        DatasetRecord datasetRecord = catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), record, dsRecFactory)
-                .orElseThrow(() -> new IllegalArgumentException("Could not find the required DatasetRecord in the Catalog."));
+    public DatasetRecord safeDeleteDataset(Resource record) {
+        DatasetRecord datasetRecord = catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), record, dsRecFactory);
 
         Repository dsRepo = getDatasetRepo(datasetRecord);
         Resource dataset = datasetRecord.getDataset_resource().orElseThrow(()
@@ -243,7 +241,7 @@ public class SimpleDatasetManager implements DatasetManager {
             safeDeleteGraphs(conn, dataset);
             conn.remove(dataset, null, null);
         }
-        return Optional.of(datasetRecord);
+        return datasetRecord;
     }
 
     @Override

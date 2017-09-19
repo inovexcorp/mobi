@@ -428,7 +428,7 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
-    public <T extends Record> Optional<T> removeRecord(@Nonnull Resource catalogId, @Nonnull Resource recordId, @Nonnull OrmFactory<T> factory) {
+    public <T extends Record> T removeRecord(@Nonnull Resource catalogId, @Nonnull Resource recordId, @Nonnull OrmFactory<T> factory) {
         T record = null;
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(catalogId, catalogFactory.getTypeIRI(), conn);
@@ -455,7 +455,7 @@ public class SimpleCatalogManager implements CatalogManager {
                 record = null;
             }
         }
-        return Optional.ofNullable(record);
+        return record;
     }
 
     @Override

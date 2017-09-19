@@ -316,8 +316,7 @@ public class CatalogRestImpl implements CatalogRest {
         try {
             deleteActivity = provUtils.startDeleteActivity(activeUser, recordIri);
             Record record = catalogManager.removeRecord(vf.createIRI(catalogId), recordIri,
-                    factoryRegistry.getFactoryOfType(Record.class).get())
-                    .orElseThrow(() -> new MatOntoException("Error in removing record from catalog."));
+                    factoryRegistry.getFactoryOfType(Record.class).get());
             provUtils.endDeleteActivity(deleteActivity, record);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {

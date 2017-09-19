@@ -233,15 +233,17 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             if (StringUtils.isBlank(branchIdStr)) {
                 deleteActivity = provUtils.startDeleteActivity(activeUser, recordId);
-                Optional<OntologyRecord> record = ontologyManager.deleteOntology(recordId);
-                provUtils.endDeleteActivity(deleteActivity, record.orElseThrow(()
-                        -> new MatOntoException("Error removing record from catalog")));
+                OntologyRecord record = ontologyManager.deleteOntology(recordId);
+                provUtils.endDeleteActivity(deleteActivity, record);
             } else {
                 ontologyManager.deleteOntologyBranch(recordId, valueFactory.createIRI(branchIdStr));
             }
         } catch (MatOntoException e) {
             provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IllegalArgumentException e) {
+            provUtils.removeActivity(deleteActivity);
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
         return Response.ok().build();
     }

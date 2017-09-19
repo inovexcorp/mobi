@@ -259,8 +259,8 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         when(datasetManager.getDatasetRecord(any(Resource.class))).thenReturn(Optional.of(record1));
         when(datasetManager.getDatasetRecords(any(DatasetPaginatedSearchParams.class))).thenReturn(results);
         when(datasetManager.createDataset(any(DatasetRecordConfig.class))).thenReturn(record1);
-        when(datasetManager.deleteDataset(record1.getResource())).thenReturn(Optional.of(record1));
-        when(datasetManager.safeDeleteDataset(record1.getResource())).thenReturn(Optional.of(record1));
+        when(datasetManager.deleteDataset(record1.getResource())).thenReturn(record1);
+        when(datasetManager.safeDeleteDataset(record1.getResource())).thenReturn(record1);
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
 
         when(catalogManager.getLocalCatalogIRI()).thenReturn(localIRI);

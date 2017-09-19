@@ -169,7 +169,7 @@ public interface OntologyManager {
      * @return The OntologyRecord that was deleted.
      * @throws IllegalArgumentException - the OntologyRecord can't be retrieved.
      */
-    Optional<OntologyRecord> deleteOntology(@Nonnull Resource recordId);
+    OntologyRecord deleteOntology(@Nonnull Resource recordId);
 
     /**
      * Deletes a branch associated with an OntologyRecord.

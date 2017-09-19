@@ -149,7 +149,6 @@ public class CatalogProvUtilsImplTest {
         entityFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(entityFactory);
 
-
         userFactory.setModelFactory(mf);
         userFactory.setValueFactory(vf);
         userFactory.setValueConverterRegistry(vcr);
