@@ -37,15 +37,21 @@
          * @ngdoc service
          * @name util.service:utilService
          * @requires $filter
+         * @requires $http
+         * @requires $q
+         * @requires uuid
+         * @requires toastr
+         * @requires prefixes.service:prefixes
+         * @requires httpService.service:httpService
          *
          * @description
          * `utilService` is a service that provides various utility methods for use across Mobi.
          */
         .service('utilService', utilService);
 
-        utilService.$inject = ['$filter', 'prefixes', 'toastr', '$http', '$q', 'REGEX', 'uuid'];
+        utilService.$inject = ['$filter', '$http', '$q', 'uuid', 'toastr', 'prefixes', 'httpService', 'REGEX'];
 
-        function utilService($filter, prefixes, toastr, $http, $q, REGEX, uuid) {
+        function utilService($filter, $http, $q, uuid, toastr, prefixes, httpService, REGEX) {
             var self = this;
 
             /**
@@ -431,15 +437,17 @@
              * @description
              * Calls the passed URL which repesents a call to get paginated results and returns a Promise
              * that resolves to the HTTP response if successful and calls the provided function if it
-             * failed.
+             * failed. Can optionally be cancel-able if provided a request id.
              *
              * @param {string} url The URL to make a GET call to. Expects the response to be paginated
              * @param {Function} errorFunction The optional function to call if the request fails. Default
              * function rejects with the error message from the response.
+             * @param {string} [id=''] The identifier for this request
              * @return {Promise} A Promise that resolves to the HTTP response if successful
              */
-            self.getResultsPage = function(url, errorFunction = response => $q.reject(self.getErrorMessage(response))) {
-                return $http.get(url).then(response => response, errorFunction);
+            self.getResultsPage = function(url, errorFunction = self.rejectError, id = '') {
+                var promise = id ? httpService.get(url, undefined, id) : $http.get(url);
+                return promise.then($q.when, errorFunction);
             }
             /**
              * @ngdoc method
@@ -471,7 +479,7 @@
              * @return {Promise} A Promise that rejects with an error message
              */
             self.rejectError = function(error, defaultMessage) {
-                return $q.reject(self.getErrorMessage(error, defaultMessage));
+                return $q.reject(_.get(error, 'status') === -1 ? '' : self.getErrorMessage(error, defaultMessage));
             }
             /**
              * @ngdoc method

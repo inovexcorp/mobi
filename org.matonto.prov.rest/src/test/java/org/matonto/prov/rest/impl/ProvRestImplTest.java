@@ -214,9 +214,7 @@ public class ProvRestImplTest extends MatontoRestTestNg {
         when(provService.getConnection()).thenReturn(repo.getConnection());
         when(provService.getActivity(any(Resource.class))).thenAnswer(i -> {
             Activity activity = activityFactory.createNew(i.getArgumentAt(0, Resource.class));
-            entityMap.get(activity.getResource().stringValue()).forEach(entityIRI -> {
-                entityFactory.createNew(vf.createIRI(entityIRI), activity.getModel());
-            });
+            entityMap.get(activity.getResource().stringValue()).forEach(entityIRI -> entityFactory.createNew(vf.createIRI(entityIRI), activity.getModel()));
             return Optional.of(activity);
         });
     }
@@ -235,16 +233,8 @@ public class ProvRestImplTest extends MatontoRestTestNg {
         verify(provService, times(0)).getActivity(any(Resource.class));
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-
-            assertTrue(result.containsKey("activities"));
-            JSONArray activities = result.optJSONArray("activities");
-            assertNotNull(activities);
-            assertEquals(activities.size(), 0);
-
-            assertTrue(result.containsKey("entities"));
-            JSONArray entities = result.optJSONArray("entities");
-            assertNotNull(entities);
-            assertEquals(entities.size(), 0);
+            assertActivities(result, new ArrayList<>());
+            assertEntities(result, new ArrayList<>());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -259,19 +249,8 @@ public class ProvRestImplTest extends MatontoRestTestNg {
         verify(provService, times(10)).getActivity(any(Resource.class));
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-
-            assertTrue(result.containsKey("activities"));
-            JSONArray activities = result.optJSONArray("activities");
-            assertNotNull(activities);
-            assertEquals(activities.size(), 10);
-            assertResourceOrder(activities, activityIRIs);
-
-            assertTrue(result.containsKey("entities"));
-            JSONArray entities = result.optJSONArray("entities");
-            assertNotNull(entities);
-            assertEquals(entities.size(), 5);
-            List<String> resources = getResources(entities);
-            assertTrue(resources.containsAll(entityIRIs));
+            assertActivities(result, activityIRIs);
+            assertEntities(result, entityIRIs);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -290,19 +269,8 @@ public class ProvRestImplTest extends MatontoRestTestNg {
         verify(provService, times(2)).getActivity(any(Resource.class));
         try {
             JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-
-            assertTrue(result.containsKey("activities"));
-            JSONArray activities = result.optJSONArray("activities");
-            assertNotNull(activities);
-            assertEquals(activities.size(), 2);
-            assertResourceOrder(activities, activityIRIs.subList(2, 4));
-
-            assertTrue(result.containsKey("entities"));
-            JSONArray entities = result.optJSONArray("entities");
-            assertNotNull(entities);
-            assertEquals(entities.size(), 3);
-            List<String> resources = getResources(entities);
-            assertTrue(resources.containsAll(Stream.of(entityIRIs.get(1), entityIRIs.get(2), entityIRIs.get(3)).collect(Collectors.toList())));
+            assertActivities(result, activityIRIs.subList(2, 4));
+            assertEntities(result, Stream.of(entityIRIs.get(1), entityIRIs.get(2), entityIRIs.get(3)).collect(Collectors.toList()));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -344,5 +312,22 @@ public class ProvRestImplTest extends MatontoRestTestNg {
             resources.add(iri);
         }
         return resources;
+    }
+
+    private void assertActivities(JSONObject result, List<String> expected) {
+        assertTrue(result.containsKey("activities"));
+        JSONArray activities = result.optJSONArray("activities");
+        assertNotNull(activities);
+        assertEquals(activities.size(), expected.size());
+        assertResourceOrder(activities, expected);
+    }
+
+    private void assertEntities(JSONObject result, List<String> expected) {
+        assertTrue(result.containsKey("entities"));
+        JSONArray entities = result.optJSONArray("entities");
+        assertNotNull(entities);
+        assertEquals(entities.size(), expected.size());
+        List<String> resources = getResources(entities);
+        assertTrue(resources.containsAll(expected));
     }
 }
