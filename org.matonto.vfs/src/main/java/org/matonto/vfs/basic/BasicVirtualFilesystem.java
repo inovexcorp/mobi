@@ -149,7 +149,7 @@ public class BasicVirtualFilesystem implements VirtualFilesystem {
     @Deactivate
     void deactivate() {
         this.fsManager = null;
-        new CleanTempFilesRunnable(LOGGER, tempFiles).run();
+        new CleanTempFilesRunnable(LOGGER, tempFiles, true).run();
         if (this.scheduledExecutorService != null) {
             this.scheduledExecutorService.shutdownNow();
         }

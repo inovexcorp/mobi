@@ -34,11 +34,18 @@ public class CleanTempFilesRunnable implements Runnable {
 
     private final Logger LOGGER;
 
+    private final boolean destroyAll;
+
     private final BlockingQueue<TemporaryVirtualFile> tempFiles;
 
     public CleanTempFilesRunnable(Logger LOGGER, BlockingQueue<TemporaryVirtualFile> tempFiles) {
+        this(LOGGER, tempFiles, false);
+    }
+
+    public CleanTempFilesRunnable(Logger LOGGER, BlockingQueue<TemporaryVirtualFile> tempFiles, boolean destroyAll) {
         this.LOGGER = LOGGER;
         this.tempFiles = tempFiles;
+        this.destroyAll = destroyAll;
     }
 
     @Override
@@ -48,7 +55,7 @@ public class CleanTempFilesRunnable implements Runnable {
         tempFiles.stream().filter(TemporaryVirtualFile::isExpired).forEach(file -> {
             if (file.isExpired()) {
                 try {
-                    if (file.delete()) {
+                    if (destroyAll || file.delete()) {
                         delete.add(file);
                         LOGGER.debug("Deleted temporary file {}", file.getIdentifier());
                     }
