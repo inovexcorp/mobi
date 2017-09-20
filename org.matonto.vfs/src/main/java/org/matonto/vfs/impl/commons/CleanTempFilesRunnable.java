@@ -51,19 +51,28 @@ public class CleanTempFilesRunnable implements Runnable {
     @Override
     public void run() {
         LOGGER.trace("Temporary file cleanup initiated!");
-        final Set<TemporaryVirtualFile> delete = new HashSet<>();
-        tempFiles.stream().filter(TemporaryVirtualFile::isExpired).forEach(file -> {
-            if (file.isExpired()) {
+        if (destroyAll) {
+            tempFiles.forEach(file -> {
                 try {
-                    if (destroyAll || file.delete()) {
+                    file.delete();
+                    LOGGER.trace("Deleted temporary file {}", file.getIdentifier());
+                } catch (Exception e) {
+                    LOGGER.error("Issue deleting temporary virtual file.", e);
+                }
+            });
+        } else {
+            final Set<TemporaryVirtualFile> delete = new HashSet<>();
+            tempFiles.stream().filter(TemporaryVirtualFile::isExpired).forEach(file -> {
+                try {
+                    if (file.delete()) {
                         delete.add(file);
-                        LOGGER.debug("Deleted temporary file {}", file.getIdentifier());
+                        LOGGER.trace("Deleted temporary file {}", file.getIdentifier());
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Issue deleting temporary virtual file", e);
+                    LOGGER.error("Issue deleting temporary virtual file.", e);
                 }
-            }
-        });
-        delete.forEach(tempFiles::remove);
+            });
+            delete.forEach(tempFiles::remove);
+        }
     }
 }
