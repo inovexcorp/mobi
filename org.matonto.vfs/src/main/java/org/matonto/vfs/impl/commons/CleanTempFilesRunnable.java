@@ -1,4 +1,4 @@
-package org.matonto.vfs.basic;
+package org.matonto.vfs.impl.commons;
 
 /*-
  * #%L

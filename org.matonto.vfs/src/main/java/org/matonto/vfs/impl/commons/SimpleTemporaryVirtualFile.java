@@ -1,4 +1,4 @@
-package org.matonto.vfs.basic;
+package org.matonto.vfs.impl.commons;
 
 /*-
  * #%L
@@ -31,7 +31,7 @@ import java.time.Instant;
 import java.time.temporal.TemporalUnit;
 import java.util.Date;
 
-public class BasicTemporaryVirtualFile extends BasicVirtualFile implements TemporaryVirtualFile {
+public class SimpleTemporaryVirtualFile extends SimpleVirtualFile implements TemporaryVirtualFile {
 
     private final long duration;
 
@@ -39,7 +39,7 @@ public class BasicTemporaryVirtualFile extends BasicVirtualFile implements Tempo
 
     private final Date createDate;
 
-    BasicTemporaryVirtualFile(final FileObject fileObject, final long duration, final TemporalUnit durationUnit) {
+    SimpleTemporaryVirtualFile(final FileObject fileObject, final long duration, final TemporalUnit durationUnit) {
         super(fileObject);
         this.duration = duration;
         this.durationUnit = durationUnit;

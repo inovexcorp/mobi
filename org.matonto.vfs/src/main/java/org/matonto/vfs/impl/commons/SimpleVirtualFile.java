@@ -1,4 +1,4 @@
-package org.matonto.vfs.basic;
+package org.matonto.vfs.impl.commons;
 
 /*-
  * #%L
@@ -41,11 +41,11 @@ import java.util.stream.Stream;
 /**
  * This is a basic implementation of the {@link VirtualFile} interface backed by the commons-vfs implementation.
  */
-public class BasicVirtualFile extends AbstractVirtualFile implements VirtualFile {
+public class SimpleVirtualFile extends AbstractVirtualFile implements VirtualFile {
 
     private final FileObject file;
 
-    BasicVirtualFile(final FileObject file) {
+    SimpleVirtualFile(final FileObject file) {
         this.file = file;
     }
 
@@ -128,8 +128,8 @@ public class BasicVirtualFile extends AbstractVirtualFile implements VirtualFile
             return (children != null ?
                     // Return translated list.
                     Arrays.stream(children)
-                            // Convert to BasicVirtualFile.
-                            .map(BasicVirtualFile::new)
+                            // Convert to SimpleVirtualFile.
+                            .map(SimpleVirtualFile::new)
                             // Collect into a list.
                             .collect(Collectors.toList())
                     // Else an empty list.

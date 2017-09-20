@@ -30,7 +30,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.matonto.vfs.api.AbstractVirtualFile;
 import org.matonto.vfs.api.VirtualFile;
-import org.matonto.vfs.basic.BasicVirtualFilesystem;
+import org.matonto.vfs.impl.commons.SimpleVirtualFilesystem;
 
 import java.io.File;
 import java.io.InputStream;
@@ -55,7 +55,7 @@ public class TestDefaultVirtualFilesystem extends TestCase {
 
     private static URI writeFile;
 
-    private static BasicVirtualFilesystem fs;
+    private static SimpleVirtualFilesystem fs;
 
 
     @BeforeClass
@@ -63,7 +63,7 @@ public class TestDefaultVirtualFilesystem extends TestCase {
         testFile = TestDefaultVirtualFilesystem.class.getResource("/test.txt").toURI();
         testResources = TestDefaultVirtualFilesystem.class.getResource("/").toURI();
         writeFile = new File(testResources.toString() + "testFile").toURI();
-        fs = new BasicVirtualFilesystem();
+        fs = new SimpleVirtualFilesystem();
 
         Map<String, Object> config = new HashMap<>();
         config.put("maxNumberOfTempFiles", 10000);

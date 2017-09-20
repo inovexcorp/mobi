@@ -1,4 +1,4 @@
-package org.matonto.vfs.basic;
+package org.matonto.vfs.impl.commons;
 
 /*-
  * #%L
@@ -26,7 +26,7 @@ package org.matonto.vfs.basic;
 import aQute.bnd.annotation.metatype.Meta;
 
 @Meta.OCD
-public interface BasicVirtualFilesystemConfig {
+public interface SimpleVirtualFilesystemConfig {
 
     @Meta.AD(deflt = "60000")
     long secondsBetweenTempCleanup();

@@ -1,4 +1,4 @@
-package org.matonto.vfs.basic;
+package org.matonto.vfs.impl.commons;
 
 /*-
  * #%L
@@ -53,15 +53,15 @@ import java.util.concurrent.TimeUnit;
  * This is a basic implementation of the {@link VirtualFilesystem} backed by the commons-vfs api.
  */
 @Component(
-        name = BasicVirtualFilesystem.SERVICE_NAME,
+        name = SimpleVirtualFilesystem.SERVICE_NAME,
         immediate = true,
-        designateFactory = BasicVirtualFilesystemConfig.class
+        designateFactory = SimpleVirtualFilesystemConfig.class
 )
-public class BasicVirtualFilesystem implements VirtualFilesystem {
+public class SimpleVirtualFilesystem implements VirtualFilesystem {
 
     static final String SERVICE_NAME = "org.matonto.vfs.basic";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BasicVirtualFilesystem.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SimpleVirtualFilesystem.class);
 
     private FileSystemManager fsManager;
 
@@ -74,7 +74,7 @@ public class BasicVirtualFilesystem implements VirtualFilesystem {
     @Override
     public VirtualFile resolveVirtualFile(final URI uri) throws VirtualFilesystemException {
         try {
-            return new BasicVirtualFile(this.fsManager.resolveFile(uri));
+            return new SimpleVirtualFile(this.fsManager.resolveFile(uri));
         } catch (FileSystemException e) {
             throw new VirtualFilesystemException("Issue resolving file with URI: " + uri.toString(), e);
         }
@@ -83,7 +83,7 @@ public class BasicVirtualFilesystem implements VirtualFilesystem {
     @Override
     public VirtualFile resolveVirtualFile(String uri) throws VirtualFilesystemException {
         try {
-            return new BasicVirtualFile(this.fsManager.resolveFile(uri));
+            return new SimpleVirtualFile(this.fsManager.resolveFile(uri));
         } catch (FileSystemException e) {
             throw new VirtualFilesystemException("Issue resolving file with URI: " + uri, e);
         }
@@ -103,7 +103,7 @@ public class BasicVirtualFilesystem implements VirtualFilesystem {
                 try {
                     final String id = directory.getIdentifier();
                     final FileObject obj = this.fsManager.resolveFile(id.endsWith("/") ? id : id + "/" + UUID.randomUUID() + "-" + System.currentTimeMillis());
-                    final BasicTemporaryVirtualFile tvf = new BasicTemporaryVirtualFile(obj, timeToLive, timeToLiveUnit);
+                    final SimpleTemporaryVirtualFile tvf = new SimpleTemporaryVirtualFile(obj, timeToLive, timeToLiveUnit);
                     tempFiles.add(tvf);
                     return tvf;
                 } catch (FileSystemException e) {
@@ -119,7 +119,7 @@ public class BasicVirtualFilesystem implements VirtualFilesystem {
 
     @Activate
     void activate(Map<String, Object> configuration) throws VirtualFilesystemException {
-        BasicVirtualFilesystemConfig conf = Configurable.createConfigurable(BasicVirtualFilesystemConfig.class, configuration);
+        SimpleVirtualFilesystemConfig conf = Configurable.createConfigurable(SimpleVirtualFilesystemConfig.class, configuration);
         try {
             this.fsManager = VFS.getManager();
         } catch (FileSystemException e) {
