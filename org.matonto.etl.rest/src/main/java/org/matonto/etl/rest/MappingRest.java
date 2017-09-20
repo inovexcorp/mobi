@@ -126,5 +126,6 @@ public interface MappingRest {
     @Path("{recordId}")
     @RolesAllowed("user")
     @ApiOperation("Delete an uploaded mapping")
-    Response deleteMapping(@PathParam("recordId") String recordId);
+    Response deleteMapping(@Context ContainerRequestContext context,
+                           @PathParam("recordId") String recordId);
 }

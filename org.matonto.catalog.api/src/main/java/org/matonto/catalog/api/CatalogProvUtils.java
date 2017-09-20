@@ -23,9 +23,11 @@ package org.matonto.catalog.api;
  * #L%
  */
 
+import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivity;
 import org.matonto.rdf.api.Resource;
 
 import javax.annotation.Nullable;
@@ -48,6 +50,24 @@ public interface CatalogProvUtils {
      * @param recordIRI The IRI of the Record that was successfully created
      */
     void endCreateActivity(CreateActivity createActivity, Resource recordIRI);
+
+    /**
+     * Creates a DeleteActivity started by the provided User to indicate beginning to delete a catalog Record.
+     *
+     * @param user The User who started the record deletion
+     * @param recordIri The IRI of the Record to be deleted
+     * @return The DeleteActivity for the record deletion
+     */
+    DeleteActivity startDeleteActivity(User user, Resource recordIri);
+
+    /**
+     * Updates the provided DeleteActivity with an end time and an Entity representing the Record identified by the
+     * provided Resource IRI.
+     *
+     * @param deleteActivity The DeleteActivity to update
+     * @param record         The Record that was successfully deleted
+     */
+    void endDeleteActivity(DeleteActivity deleteActivity, Record record);
 
     /**
      * Removes the provided Activity. Typical use case is if something goes wrong during a process and the Activity

@@ -61,6 +61,8 @@ import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
 import org.matonto.persistence.utils.impl.SimpleSesameTransformer;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivity;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivityFactory;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -109,9 +111,11 @@ public class MappingRestImplTest extends MatontoRestTestNg {
     private BranchFactory branchFactory;
     private UserFactory userFactory;
     private CreateActivityFactory createActivityFactory;
+    private DeleteActivityFactory deleteActivityFactory;
     private Model fakeModel;
     private User user;
-    private CreateActivity activity;
+    private CreateActivity createActivity;
+    private DeleteActivity deleteActivity;
     private MappingRecord record;
     private Branch branch;
 
@@ -166,6 +170,12 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         createActivityFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(createActivityFactory);
 
+        deleteActivityFactory = new DeleteActivityFactory();
+        deleteActivityFactory.setValueFactory(vf);
+        deleteActivityFactory.setModelFactory(mf);
+        deleteActivityFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(deleteActivityFactory);
+
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -182,7 +192,8 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         record = mappingRecordFactory.createNew(vf.createIRI(MAPPING_RECORD_IRI));
         record.setMasterBranch(branch);
         user = userFactory.createNew(vf.createIRI("http://test.org/" + UsernameTestFilter.USERNAME));
-        activity = createActivityFactory.createNew(vf.createIRI("http://test.org/activity"));
+        createActivity = createActivityFactory.createNew(vf.createIRI("http://test.org/activity/create"));
+        deleteActivity = deleteActivityFactory.createNew(vf.createIRI("http://test.org/activity/delete"));
 
         MockitoAnnotations.initMocks(this);
 
@@ -213,6 +224,8 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         reset(mappingId, mappingWrapper, manager, provUtils, catalogManager, versioningManager);
 
         when(catalogManager.getLocalCatalogIRI()).thenReturn(vf.createIRI(CATALOG_IRI));
+        when(catalogManager.getRecord(eq(vf.createIRI(CATALOG_IRI)), eq(record.getResource()), any(MappingRecordFactory.class)))
+                .thenReturn(Optional.of(record));
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
 
@@ -224,6 +237,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         when(manager.createMapping(anyString())).thenReturn(mappingWrapper);
         when(manager.retrieveMapping(vf.createIRI(ERROR_IRI))).thenReturn(Optional.empty());
         when(manager.retrieveMapping(vf.createIRI(MAPPING_IRI))).thenReturn(Optional.of(mappingWrapper));
+        when(manager.deleteMapping(record.getResource())).thenReturn(record);
         when(manager.createMappingId(any(IRI.class))).thenAnswer(i -> new MappingId() {
             @Override
             public Optional<IRI> getMappingIRI() {
@@ -241,7 +255,8 @@ public class MappingRestImplTest extends MatontoRestTestNg {
             }
         });
 
-        when(provUtils.startCreateActivity(any(User.class))).thenReturn(activity);
+        when(provUtils.startCreateActivity(any(User.class))).thenReturn(createActivity);
+        when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
     }
 
     @Test
@@ -276,7 +291,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).addRecord(eq(vf.createIRI(CATALOG_IRI)), any(Record.class));
         verify(versioningManager).commit(eq(vf.createIRI(CATALOG_IRI)), eq(vf.createIRI(MAPPING_RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(user), anyString(), any(Model.class), eq(null));
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(activity, vf.createIRI(MAPPING_RECORD_IRI));
+        verify(provUtils).endCreateActivity(createActivity, vf.createIRI(MAPPING_RECORD_IRI));
     }
 
     @Test
@@ -292,7 +307,7 @@ public class MappingRestImplTest extends MatontoRestTestNg {
         verify(catalogManager).addRecord(eq(vf.createIRI(CATALOG_IRI)), any(Record.class));
         verify(versioningManager).commit(eq(vf.createIRI(CATALOG_IRI)), eq(vf.createIRI(MAPPING_RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(user), anyString(), any(Model.class), eq(null));
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(activity, vf.createIRI(MAPPING_RECORD_IRI));
+        verify(provUtils).endCreateActivity(createActivity, vf.createIRI(MAPPING_RECORD_IRI));
     }
 
     @Test
@@ -334,8 +349,12 @@ public class MappingRestImplTest extends MatontoRestTestNg {
 
     @Test
     public void deleteMappingTest() {
-        Response response = target().path("mappings/" + encode(MAPPING_IRI)).request().delete();
+        Response response = target().path("mappings/" + encode(MAPPING_RECORD_IRI)).request().delete();
         assertEquals(response.getStatus(), 200);
-        verify(manager).deleteMapping(vf.createIRI(MAPPING_IRI));
+
+        IRI mrIri = vf.createIRI(MAPPING_RECORD_IRI);
+        verify(manager).deleteMapping(mrIri);
+        verify(provUtils).startDeleteActivity(user, mrIri);
+        verify(provUtils).endDeleteActivity(deleteActivity, record);
     }
 }

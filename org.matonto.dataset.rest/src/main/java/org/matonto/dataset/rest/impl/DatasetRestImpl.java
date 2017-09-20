@@ -26,7 +26,6 @@ package org.matonto.dataset.rest.impl;
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
-import static org.matonto.rest.util.RestUtils.getTypedObjectFromJsonld;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 import static org.matonto.rest.util.RestUtils.modelToSkolemizedJsonld;
 
@@ -48,10 +47,10 @@ import org.matonto.dataset.rest.DatasetRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
-import org.matonto.ontologies.provo.Activity;
 import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivity;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
@@ -215,17 +214,23 @@ public class DatasetRestImpl implements DatasetRest {
     }
 
     @Override
-    public Response deleteDatasetRecord(String datasetRecordId, boolean force) {
+    public Response deleteDatasetRecord(ContainerRequestContext context, String datasetRecordId, boolean force) {
         Resource recordIRI = vf.createIRI(datasetRecordId);
+        User activeUser = getActiveUser(context, engineManager);
+        DeleteActivity deleteActivity = null;
         try {
-            if (force) {
-                manager.deleteDataset(recordIRI);
-            } else {
-                manager.safeDeleteDataset(recordIRI);
-            }
+            deleteActivity = provUtils.startDeleteActivity(activeUser, recordIRI);
+
+            DatasetRecord record = (force
+                    ? manager.deleteDataset(recordIRI)
+                    : manager.safeDeleteDataset(recordIRI));
+
+            provUtils.endDeleteActivity(deleteActivity, record);
         } catch (IllegalArgumentException ex) {
+            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (Exception ex) {
+            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
         return Response.ok().build();

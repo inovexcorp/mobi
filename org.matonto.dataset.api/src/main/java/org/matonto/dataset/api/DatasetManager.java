@@ -91,19 +91,21 @@ public interface DatasetManager {
      *
      * @param dataset The Dataset Resource to be removed along with associated DatasetRecord and data.
      * @param repositoryId The ID of the Repository where the Dataset is stored.
+     * @return The DatasetRecord that was removed.
      * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
      */
-    void deleteDataset(Resource dataset, String repositoryId);
+    DatasetRecord deleteDataset(Resource dataset, String repositoryId);
 
     /**
      * Deletes the DatasetRecord, Dataset, and data graphs associated with the DatasetRecord Resource. Note: This method
      * removes all graphs from the specified dataset even if they are associated with other datasets.
      *
      * @param record The Resource of the DatasetRecord to be removed along with associated Dataset and data.
+     * @return The DatasetRecord that was removed.
      * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
      * @throws IllegalStateException if the DatasetRecord does not point to a Dataset or a repository
      */
-    void deleteDataset(Resource record);
+    DatasetRecord deleteDataset(Resource record);
 
     /**
      * Deletes the DatasetRecord, Dataset, and data graphs associated with the Dataset Resource. Note: This method
@@ -111,19 +113,21 @@ public interface DatasetManager {
      *
      * @param dataset The Dataset Resource to be removed along with associated DatasetRecord and data.
      * @param repositoryId The ID of the Repository where the Dataset is stored.
+     * @return The DatasetRecord that was removed.
      * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
      */
-    void safeDeleteDataset(Resource dataset, String repositoryId);
+    DatasetRecord safeDeleteDataset(Resource dataset, String repositoryId);
 
     /**
      * Deletes the DatasetRecord, Dataset, and data graphs associated with the DatasetRecord Resource. Note: This method
      * removes all graphs from the specified dataset if and only if they are not associated with other datasets.
      *
      * @param record The Resource of DatasetRecord to be removed along with associated Dataset and data.
+     * @return The DatasetRecord that was removed.
      * @throws IllegalArgumentException if the DatasetRecord could not be found in the catalog.
      * @throws IllegalStateException if the DatasetRecord does not point to a Dataset or a repository
      */
-    void safeDeleteDataset(Resource record);
+    DatasetRecord safeDeleteDataset(Resource record);
 
     /**
      * Removes all data associated with the Dataset Resource. DatasetRecord and Dataset are not removed. Note:

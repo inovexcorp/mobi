@@ -116,11 +116,9 @@ public class SimpleProvenanceService implements ProvenanceService {
     @Override
     public void addActivity(Activity activity) {
         try (RepositoryConnection conn = repo.getConnection()) {
-            activity.getModel().subjects().forEach(resource -> {
-                if (conn.contains(resource, null, null)) {
-                    throw new IllegalArgumentException("Resource " + resource + " already exists");
-                }
-            });
+            if (conn.contains(activity.getResource(), null, null)) {
+                throw new IllegalArgumentException("Activity " + activity.getResource() + " already exists");
+            }
             conn.add(activity.getModel());
         }
     }
