@@ -49,7 +49,6 @@ import org.matonto.catalog.api.versioning.VersioningManager;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
-import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Entity;
 import org.matonto.ontology.core.api.NamedIndividual;
@@ -66,6 +65,7 @@ import org.matonto.persistence.utils.Bindings;
 import org.matonto.persistence.utils.JSONQueryResults;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivity;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.query.api.Binding;
 import org.matonto.rdf.api.BNode;
@@ -228,14 +228,22 @@ public class OntologyRestImpl implements OntologyRest {
     @Override
     public Response deleteOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr) {
         IRI recordId = valueFactory.createIRI(recordIdStr);
+        User activeUser = getActiveUser(context, engineManager);
+        DeleteActivity deleteActivity = null;
         try {
             if (StringUtils.isBlank(branchIdStr)) {
-                ontologyManager.deleteOntology(recordId);
+                deleteActivity = provUtils.startDeleteActivity(activeUser, recordId);
+                OntologyRecord record = ontologyManager.deleteOntology(recordId);
+                provUtils.endDeleteActivity(deleteActivity, record);
             } else {
                 ontologyManager.deleteOntologyBranch(recordId, valueFactory.createIRI(branchIdStr));
             }
         } catch (MatOntoException e) {
+            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (IllegalArgumentException e) {
+            provUtils.removeActivity(deleteActivity);
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         }
         return Response.ok().build();
     }

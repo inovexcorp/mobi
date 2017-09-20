@@ -145,11 +145,14 @@ public interface CatalogManager {
      * Removes the Record identified by the provided Resources from the repository.
      *
      * @param catalogId The Resource identifying the Catalog which contains the Record.
-     * @param recordId The Resource identifying the Record which you want to remove.
+     * @param recordId  The Resource identifying the Record which you want to remove.
+     * @param factory   The OrmFactory of the Type of Record you want to get back.
+     * @param <T>       An Object which extends Record.
+     * @return The Record object which was removed.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or
      *      the Record does not belong to the Catalog.
      */
-    void removeRecord(Resource catalogId, Resource recordId);
+    <T extends Record> T removeRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory);
 
     /**
      * Gets the Record from the provided Catalog. The Record will be of type T which is determined by the provided
