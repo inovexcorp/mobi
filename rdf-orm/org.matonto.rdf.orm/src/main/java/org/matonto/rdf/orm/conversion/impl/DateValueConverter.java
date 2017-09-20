@@ -32,7 +32,6 @@ import org.matonto.rdf.orm.conversion.ValueConverter;
 
 import java.time.OffsetDateTime;
 import java.util.GregorianCalendar;
-import java.util.TimeZone;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 
@@ -73,9 +72,7 @@ public class DateValueConverter extends AbstractValueConverter<OffsetDateTime> {
     @Override
     public Value convertType(OffsetDateTime type, Thing thing) throws ValueConversionException {
         try {
-            final GregorianCalendar gcal = new GregorianCalendar();
-            gcal.setTimeInMillis(type.toEpochSecond() * 1000 + type.getNano() / 1000000);
-            gcal.setTimeZone(TimeZone.getTimeZone(type.getOffset().getId()));
+            final GregorianCalendar gcal = GregorianCalendar.from(type.toZonedDateTime());
             return getValueFactory(thing).createLiteral(
                     DatatypeFactory.newInstance().newXMLGregorianCalendar(gcal).toXMLFormat(), XSD_DATETIME);
         } catch (Exception e) {
