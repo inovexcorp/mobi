@@ -58,7 +58,7 @@
                     }
                     
                     $scope.$watch('dvm.os.listItem', () => {
-                            dvm.newTabActive = !dvm.os.listItem.ontologyState.active;
+                        dvm.newTabActive = !dvm.os.listItem.ontologyState.active;
                     });
                 }]
             }
