@@ -638,7 +638,7 @@
              * @param {string} recordId The record ID of the ontology you want to get from the repository.
              * @param {string} entityIRI The entity IRI of the entity you want the usages for from the repository.
              * @param {string} queryType The type of query you want to perform (either 'select' or 'construct').
-             * @param {string} id The identifier for this
+             * @param {string} id The identifier for this request
              * @returns {Promise} A promise containing the JSON SPARQL query results bindings.
              */
             self.getEntityUsages = function(recordId, branchId, commitId, entityIRI, queryType = 'select', id = '') {
@@ -1405,7 +1405,7 @@
                     || utilService.getPropertyValue(entity, prefixes.dc + 'title')
                     || utilService.getPropertyValue(entity, prefixes.skos + 'prefLabel')
                     || utilService.getPropertyValue(entity, prefixes.skos + 'altLabel');
-                if (!result) {
+                if (!result && _.has(entity, '@id')) {
                     result = utilService.getBeautifulIRI(entity['@id']);
                 }
                 return result;

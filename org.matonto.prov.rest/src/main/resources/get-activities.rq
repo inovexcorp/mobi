@@ -1,0 +1,8 @@
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?activity
+WHERE {
+	?activity a prov:Activity ;
+        prov:endedAtTime ?end .
+}
+ORDER BY DESC(?end)

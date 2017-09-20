@@ -129,10 +129,10 @@
                     }
                     function createBlankNode(id, recordId, branchId, commitId) {
                         return {
-                                "@id": id,
-                                [prefixes.dataset + 'linksToRecord']: [{ "@id": recordId }],
-                                [prefixes.dataset + 'linksToBranch']: [{ "@id": branchId }],
-                                [prefixes.dataset + 'linksToCommit']: [{ "@id": commitId }]
+                                '@id': id,
+                                [prefixes.dataset + 'linksToRecord']: [{ '@id': recordId }],
+                                [prefixes.dataset + 'linksToBranch']: [{ '@id': branchId }],
+                                [prefixes.dataset + 'linksToCommit']: [{ '@id': commitId }]
                             }
                     }
                     function triggerUpdate(newRecord, newIdentifiers) {

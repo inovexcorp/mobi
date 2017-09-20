@@ -37,11 +37,14 @@ import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.Distribution;
 import org.matonto.catalog.api.ontologies.mcat.DistributionFactory;
+import org.matonto.catalog.api.ontologies.mcat.GraphRevision;
+import org.matonto.catalog.api.ontologies.mcat.GraphRevisionFactory;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.catalog.api.ontologies.mcat.RecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.Revision;
+import org.matonto.catalog.api.ontologies.mcat.RevisionFactory;
 import org.matonto.catalog.api.ontologies.mcat.UnversionedRecord;
 import org.matonto.catalog.api.ontologies.mcat.UnversionedRecordFactory;
 import org.matonto.catalog.api.ontologies.mcat.Version;
@@ -60,7 +63,6 @@ import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.Statement;
-import org.matonto.rdf.api.Value;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.Thing;
@@ -68,14 +70,20 @@ import org.matonto.repository.api.RepositoryConnection;
 import org.matonto.repository.base.RepositoryResult;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 
 @Component(
         immediate = true,
@@ -94,6 +102,8 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     private VersionFactory versionFactory;
     private BranchFactory branchFactory;
     private CommitFactory commitFactory;
+    private RevisionFactory revisionFactory;
+    private GraphRevisionFactory graphRevisionFactory;
     private InProgressCommitFactory inProgressCommitFactory;
 
     private static final String GET_IN_PROGRESS_COMMIT;
@@ -176,6 +186,16 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     @Reference
     protected void setCommitFactory(CommitFactory commitFactory) {
         this.commitFactory = commitFactory;
+    }
+
+    @Reference
+    protected void setRevisionFactory(RevisionFactory revisionFactory) {
+        this.revisionFactory = revisionFactory;
+    }
+
+    @Reference
+    protected void setGraphRevisionFactory(GraphRevisionFactory graphRevisionFactory) {
+        this.graphRevisionFactory = graphRevisionFactory;
     }
 
     @Override
@@ -363,31 +383,100 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public void removeInProgressCommit(InProgressCommit commit, RepositoryConnection conn) {
+        Revision revision = getRevision(commit.getResource(), conn);
         removeObject(commit, conn);
-        Resource additionsResource = getAdditionsResource(commit);
-        if (!conn.getStatements(null, null, additionsResource).hasNext()) {
-            remove(additionsResource, conn);
-        }
-        Resource deletionsResource = getDeletionsResource(commit);
-        if (!conn.getStatements(null, null, deletionsResource).hasNext()) {
-            remove(deletionsResource, conn);
-        }
+
+        Set<Resource> graphs = new HashSet<>();
+        revision.getAdditions().ifPresent(graphs::add);
+        revision.getDeletions().ifPresent(graphs::add);
+        revision.getGraphRevision().forEach(graphRevision -> {
+            graphRevision.getAdditions().ifPresent(graphs::add);
+            graphRevision.getDeletions().ifPresent(graphs::add);
+        });
+
+        graphs.forEach(resource -> {
+            if (!conn.contains(null, null, resource)) {
+                remove(resource, conn);
+            }
+        });
     }
 
     @Override
     public void updateCommit(Commit commit, Model additions, Model deletions, RepositoryConnection conn) {
-        Resource additionsResource = getAdditionsResource(commit);
-        Resource deletionsResource = getDeletionsResource(commit);
-        addChanges(additionsResource, deletionsResource, additions, conn);
-        addChanges(deletionsResource, additionsResource, deletions, conn);
+        Resource resource = commit.getGenerated_resource().stream().findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Commit does not have a Revision."));
+        Revision revision = revisionFactory.getExisting(resource, commit.getModel())
+                .orElseThrow(() -> new IllegalStateException("Could not retrieve expected Revision."));
+        updateCommit(commit.getResource(), revision, additions, deletions, conn);
     }
 
     @Override
     public void updateCommit(Resource commitId, Model additions, Model deletions, RepositoryConnection conn) {
-        Resource additionsResource = getAdditionsResource(commitId, conn);
-        Resource deletionsResource = getDeletionsResource(commitId, conn);
-        addChanges(additionsResource, deletionsResource, additions, conn);
-        addChanges(deletionsResource, additionsResource, deletions, conn);
+        Revision revision = getRevision(commitId, conn);
+        updateCommit(commitId, revision, additions, deletions, conn);
+    }
+
+    private void updateCommit(Resource commitId, Revision revision, @Nullable Model additions, @Nullable Model deletions, RepositoryConnection conn) {
+        // Map of revisionedGraph -> GraphRevision resources
+        Map<Resource, Resource> knownGraphs = new HashMap<>();
+        revision.getGraphRevision().forEach(graphRevision -> {
+            Resource graph = graphRevision.getRevisionedGraph()
+                    .orElseThrow(() -> new IllegalStateException("Could not retrieve expected RevisionedGraph."));
+            knownGraphs.put(graph, graphRevision.getResource());
+        });
+
+        IRI additionsGraph = revision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commitId.stringValue()));
+        IRI deletionsGraph = revision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commitId.stringValue()));
+
+        Model filteredAdditions = additions == null ? null : additions.filter(null, null, null, (Resource)null);
+        Model filteredDeletions = deletions == null ? null : deletions.filter(null, null, null, (Resource)null);
+        addChanges(additionsGraph, deletionsGraph, filteredAdditions, conn);
+        addChanges(deletionsGraph, additionsGraph, filteredDeletions, conn);
+
+        Set<Resource> graphs = new HashSet<>();
+        if (additions != null) graphs.addAll(additions.contexts());
+        if (deletions != null) graphs.addAll(deletions.contexts());
+        graphs.forEach(modifiedGraph -> {
+            if (knownGraphs.containsKey(modifiedGraph)) {
+                GraphRevision graphRevision = graphRevisionFactory
+                        .getExisting(knownGraphs.get(modifiedGraph), revision.getModel())
+                        .orElseThrow(() -> new IllegalStateException("Could not retrieve expected GraphRevision."));
+
+                IRI adds = graphRevision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commitId.stringValue() + " for graph " + modifiedGraph.stringValue()));
+                IRI dels = graphRevision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commitId.stringValue() + " for graph " + modifiedGraph.stringValue()));
+
+                Model filteredGraphAdditions = additions == null ? null : additions.filter(null, null, null, modifiedGraph);
+                Model filteredGraphDeletions = deletions == null ? null : deletions.filter(null, null, null, modifiedGraph);
+                addChanges(adds, dels, filteredGraphAdditions, conn);
+                addChanges(dels, adds, filteredGraphDeletions, conn);
+            } else {
+                Resource graphRevisionResource = vf.createBNode();
+                GraphRevision graphRevision = graphRevisionFactory.createNew(graphRevisionResource);
+                graphRevision.setRevisionedGraph(modifiedGraph);
+
+                String commitHash = vf.createIRI(commitId.stringValue()).getLocalName();
+                String changesContextLocalName;
+                try {
+                    changesContextLocalName = commitHash + "%00" + URLEncoder.encode(modifiedGraph.stringValue(), "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    throw new MatOntoException(e);
+                }
+
+                IRI additionsIRI = vf.createIRI(Catalogs.ADDITIONS_NAMESPACE + changesContextLocalName);
+                IRI deletionsIRI = vf.createIRI(Catalogs.DELETIONS_NAMESPACE + changesContextLocalName);
+
+                graphRevision.setAdditions(additionsIRI);
+                graphRevision.setDeletions(deletionsIRI);
+
+                conn.add(revision.getResource(), vf.createIRI(Revision.graphRevision_IRI), graphRevisionResource, commitId);
+                conn.add(graphRevision.getModel(), commitId);
+
+                Model filteredGraphAdditions = additions == null ? null : additions.filter(null, null, null, modifiedGraph);
+                Model filteredGraphDeletions = deletions == null ? null : deletions.filter(null, null, null, modifiedGraph);
+                addChanges(additionsIRI, deletionsIRI, filteredGraphAdditions, conn);
+                addChanges(deletionsIRI, additionsIRI, filteredGraphDeletions, conn);
+            }
+        });
     }
 
     @Override
@@ -399,88 +488,131 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
         updateObject(branch, conn);
         addObject(commit, conn);
     }
-    
-    @Override
-    public Resource getAdditionsResource(Resource commitId, RepositoryConnection conn) {
-        RepositoryResult<Statement> results = conn.getStatements(null, vf.createIRI(Revision.additions_IRI), null,
-                commitId);
-        if (!results.hasNext()) {
-            throw new IllegalStateException("Additions not set on Commit " + commitId);
-        }
-        return (Resource) results.next().getObject();
-    }
 
     @Override
-    public Resource getAdditionsResource(Commit commit) {
-        Set<Value> values = mf.createModel(commit.getModel()).filter(null, vf.createIRI(Revision.additions_IRI), null)
-                .objects();
-        if (values.isEmpty()) {
-            throw new IllegalStateException("Additions not set on Commit " + commit.getResource());
-        }
-        return (Resource) new ArrayList<>(values).get(0);
+    public Revision getRevision(Resource commitId, RepositoryConnection conn) {
+        Commit commit = getObject(commitId, commitFactory, conn);
+        Resource revisionResource = commit.getGenerated_resource().stream().findFirst()
+                .orElseThrow(() -> new IllegalStateException("Commit does not have a Revision"));
+        return revisionFactory.getExisting(revisionResource, commit.getModel())
+                .orElseThrow(() -> new IllegalStateException("Could not retrieve revision from Commit."));
     }
 
     @Override
     public Stream<Statement> getAdditions(Resource commitId, RepositoryConnection conn) {
-        Resource additionsId = getAdditionsResource(commitId, conn);
-        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, additionsId);
-        return StreamSupport.stream(statements.spliterator(), false);
+        return getAdditions(getRevision(commitId, conn), conn);
     }
 
     @Override
     public Stream<Statement> getAdditions(Commit commit, RepositoryConnection conn) {
-        Resource additionsId = getAdditionsResource(commit);
-        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, additionsId);
-        return StreamSupport.stream(statements.spliterator(), false);
+        Resource resource = commit.getGenerated_resource().stream().findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Commit does not have a Revision."));
+        Revision revision = revisionFactory.getExisting(resource, commit.getModel())
+                .orElseThrow(() -> new IllegalStateException("Could not retrieve expected Revision."));
+        return getAdditions(revision, conn);
     }
 
-    @Override
-    public Resource getDeletionsResource(Resource commitId, RepositoryConnection conn) {
-        RepositoryResult<Statement> results = conn.getStatements(null, vf.createIRI(Revision.deletions_IRI), null,
-                commitId);
-        if (!results.hasNext()) {
-            throw new IllegalStateException("Deletions not set on Commit " + commitId);
-        }
-        return (Resource) results.next().getObject();
-    }
+    /**
+     * Gets the addition statements for the provided Revision. Assumes additions are stored in the Repository.
+     *
+     * @param revision The Revision containing change statements.
+     * @param conn The RepositoryConnection used to query the Repository.
+     * @return A Stream of change Statements.
+     */
+    private Stream<Statement> getAdditions(Revision revision, RepositoryConnection conn) {
+        List<Stream<Statement>> streams =  new ArrayList<>();
 
-    @Override
-    public Resource getDeletionsResource(Commit commit) {
-        Set<Value> values = mf.createModel(commit.getModel()).filter(null, vf.createIRI(Revision.deletions_IRI), null)
-                .objects();
-        if (values.isEmpty()) {
-            throw new IllegalStateException("Deletions not set on Commit " + commit.getResource());
-        }
-        return (Resource) new ArrayList<>(values).get(0);
+        // Get Triples
+        revision.getAdditions().ifPresent(changesGraph -> collectChanges(streams, changesGraph, null, conn));
+
+        // Get Versioned Graphs
+        revision.getGraphRevision().forEach(graphRevision -> graphRevision.getAdditions()
+                .ifPresent(changesGraph -> collectRevisionedGraphChanges(streams, graphRevision, changesGraph, conn)));
+
+        // NOTE: Potential stack overflow with large number of streams
+        return streams.stream()
+                .reduce(Stream::concat)
+                .orElseGet(Stream::empty);
     }
 
     @Override
     public Stream<Statement> getDeletions(Resource commitId, RepositoryConnection conn) {
-        Resource deletionsId = getDeletionsResource(commitId, conn);
-        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, deletionsId);
-        return StreamSupport.stream(statements.spliterator(), false);
+        return getDeletions(getRevision(commitId, conn), conn);
     }
 
     @Override
     public Stream<Statement> getDeletions(Commit commit, RepositoryConnection conn) {
-        Resource deletionsId = getDeletionsResource(commit);
-        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, deletionsId);
-        return StreamSupport.stream(statements.spliterator(), false);
+        Resource resource = commit.getGenerated_resource().stream().findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Commit does not have a Revision."));
+        Revision revision = revisionFactory.getExisting(resource, commit.getModel())
+                .orElseThrow(() -> new IllegalStateException("Could not retrieve expected Revision."));
+        return getDeletions(revision, conn);
+    }
+
+    /**
+     * Gets the deletion statements for the provided Revision. Assumes deletions are stored in the Repository.
+     *
+     * @param revision The Revision containing change statements.
+     * @param conn The RepositoryConnection used to query the Repository.
+     * @return A Stream of change Statements.
+     */
+    private Stream<Statement> getDeletions(Revision revision, RepositoryConnection conn) {
+        List<Stream<Statement>> streams =  new ArrayList<>();
+
+        // Get Triples
+        revision.getDeletions().ifPresent(changesGraph -> collectChanges(streams, changesGraph, null, conn));
+
+        // Get Versioned Graphs
+        revision.getGraphRevision().forEach(graphRevision -> graphRevision.getDeletions()
+                .ifPresent(changesGraph -> collectRevisionedGraphChanges(streams, graphRevision, changesGraph, conn)));
+
+        // NOTE: Potential stack overflow with large number of streams
+        return streams.stream()
+                .reduce(Stream::concat)
+                .orElseGet(Stream::empty);
+    }
+
+    /**
+     * Collects the change statements from the provided GraphRevision and adds them to the provided List of Streams.
+     *
+     * @param streams The List of Streams that collects the change statements.
+     * @param graphRevision The GraphRevision from which to collect change statements.
+     * @param changesGraph The context that contains the change statements.
+     * @param conn The RepositoryConnection used to query the Repository.
+     */
+    private void collectRevisionedGraphChanges(List<Stream<Statement>> streams, GraphRevision graphRevision, IRI changesGraph, RepositoryConnection conn) {
+        Resource versionedGraph = graphRevision.getRevisionedGraph()
+                .orElseThrow(() -> new IllegalStateException("GraphRevision missing Revisioned Graph."));
+        collectChanges(streams, changesGraph, versionedGraph, conn);
+    }
+
+    /**
+     * Collects the change statements from the provided context and adds them to the provided List of Streams using the
+     * provided context. Note, the versionedGraph is optional with null representing a changed triple instead of quad.
+     *
+     * @param streams The List of Streams that collects the change statements.
+     * @param changesGraph The context that contains the change statements.
+     * @param versionedGraph The context to use for the collected statements.
+     * @param conn The RepositoryConnection used to query the Repository.
+     */
+    private void collectChanges(List<Stream<Statement>> streams, IRI changesGraph, Resource versionedGraph, RepositoryConnection conn) {
+        RepositoryResult<Statement> statements = conn.getStatements(null, null, null, changesGraph);
+        GraphRevisionIterator iterator = new GraphRevisionIterator(statements, versionedGraph);
+        streams.add(StreamSupport.stream(iterator.spliterator(), false));
     }
 
     @Override
     public void addChanges(Resource targetNamedGraph, Resource oppositeNamedGraph, Model changes,
                            RepositoryConnection conn) {
-        if (changes != null) {
-            changes.forEach(statement -> {
-                if (!conn.getStatements(statement.getSubject(), statement.getPredicate(), statement.getObject(),
-                        oppositeNamedGraph).hasNext()) {
-                    conn.add(statement, targetNamedGraph);
-                } else {
-                    conn.remove(statement, oppositeNamedGraph);
-                }
-            });
-        }
+        if (changes == null) return;
+
+        changes.forEach(statement -> {
+            if (!conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject(), oppositeNamedGraph)) {
+                conn.add(statement, targetNamedGraph);
+            } else {
+                conn.remove(statement, oppositeNamedGraph);
+            }
+        });
     }
 
     @Override
@@ -508,7 +640,7 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
     }
 
     @Override
-    public Difference getRevisionChanges(List<Resource> commits, RepositoryConnection conn) {
+    public Difference getCommitDifference(List<Resource> commits, RepositoryConnection conn) {
         Difference difference = new Difference.Builder()
                 .additions(mf.createModel())
                 .deletions(mf.createModel())
@@ -524,20 +656,60 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
 
     @Override
     public Model getCompiledResource(List<Resource> commits, RepositoryConnection conn) {
-        Difference revisionChanges = getRevisionChanges(commits, conn);
-        return revisionChanges.getAdditions();
+        Difference difference = getCommitDifference(commits, conn);
+        return difference.getAdditions();
+    }
+
+    @Override
+    public Difference getRevisionChanges(Resource commitId, RepositoryConnection conn) {
+        Revision revision = getRevision(commitId, conn);
+
+        IRI additionsGraph = revision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commitId.stringValue()));
+        IRI deletionsGraph = revision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commitId.stringValue()));
+
+        Model addModel = RepositoryResults.asModel(conn.getStatements(null, null, null, additionsGraph), mf);
+        Model deleteModel = RepositoryResults.asModel(conn.getStatements(null, null, null, deletionsGraph), mf);
+
+        revision.getGraphRevision().forEach(graphRevision -> {
+            IRI adds = graphRevision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on GraphRevision for Commit " + commitId.stringValue()));
+            IRI dels = graphRevision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on GraphRevision for Commit " + commitId.stringValue()));
+
+            conn.getStatements(null, null, null, adds).forEach(addModel::add);
+            conn.getStatements(null, null, null, dels).forEach(deleteModel::add);
+        });
+
+        return new Difference.Builder()
+            .additions(addModel)
+            .deletions(deleteModel)
+            .build();
     }
 
     @Override
     public Difference getCommitDifference(Resource commitId, RepositoryConnection conn) {
-        Resource additionsIRI = getAdditionsResource(commitId, conn);
-        Resource deletionsIRI = getDeletionsResource(commitId, conn);
+        Revision revision = getRevision(commitId, conn);
+
         Model addModel = mf.createModel();
         Model deleteModel = mf.createModel();
-        conn.getStatements(null, null, null, additionsIRI).forEach(statement ->
+
+        IRI additionsGraph = revision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commitId.stringValue()));
+        IRI deletionsGraph = revision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commitId.stringValue()));
+
+        conn.getStatements(null, null, null, additionsGraph).forEach(statement ->
                 addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
-        conn.getStatements(null, null, null, deletionsIRI).forEach(statement ->
+        conn.getStatements(null, null, null, deletionsGraph).forEach(statement ->
                 deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+
+        revision.getGraphRevision().forEach(graphRevision -> {
+            Resource graph = graphRevision.getRevisionedGraph().orElseThrow(() -> new IllegalStateException("GraphRevision missing Revisioned Graph."));
+            IRI adds = graphRevision.getAdditions().orElseThrow(() -> new IllegalStateException("Additions not set on Commit " + commitId.stringValue()));
+            IRI dels = graphRevision.getDeletions().orElseThrow(() -> new IllegalStateException("Deletions not set on Commit " + commitId.stringValue()));
+
+            conn.getStatements(null, null, null, adds).forEach(statement ->
+                    addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
+            conn.getStatements(null, null, null, dels).forEach(statement ->
+                    deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
+        });
+
         return new Difference.Builder()
                 .additions(addModel)
                 .deletions(deleteModel)
@@ -617,13 +789,36 @@ public class SimpleCatalogUtilsService implements CatalogUtilsService {
      * @param modelToRemove The Model to remove the statement from if it exists
      */
     private void updateModels(Statement statement, Model modelToAdd, Model modelToRemove) {
-        Resource subject = statement.getSubject();
-        IRI predicate = statement.getPredicate();
-        Value object = statement.getObject();
-        if (modelToRemove.contains(subject, predicate, object)) {
-            modelToRemove.remove(subject, predicate, object);
+        if (modelToRemove.contains(statement)) {
+            modelToRemove.remove(statement);
         } else {
-            modelToAdd.add(subject, predicate, object);
+            modelToAdd.add(statement);
+        }
+    }
+
+    private class GraphRevisionIterator implements Iterator<Statement>, Iterable<Statement> {
+        private final Iterator<Statement> delegate;
+        private final Resource graph;
+
+        GraphRevisionIterator(Iterator<Statement> delegate, Resource graph) {
+            this.delegate = delegate;
+            this.graph = graph;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return delegate.hasNext();
+        }
+
+        @Override
+        public Statement next() {
+            Statement statement = delegate.next();
+            return vf.createStatement(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph);
+        }
+
+        @Override
+        public Iterator<Statement> iterator() {
+            return this;
         }
     }
 }

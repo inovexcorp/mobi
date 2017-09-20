@@ -64,6 +64,17 @@
                     }
                 }
             })
+            .state('root.activity-log', {
+                url: '/activity-log',
+                views: {
+                    'container@': {
+                        templateUrl: 'modules/activityLog/activityLog.html'
+                    }
+                },
+                data: {
+                    title: 'Activity Log'
+                }
+            })
             .state('root.home', {
                 url: '/home',
                 views: {
@@ -159,6 +170,16 @@
                 },
                 data: {
                     title: 'Datasets'
+                }
+            }).state('root.analytics', {
+                url: '/analytics',
+                views: {
+                    'container@': {
+                        templateUrl: 'modules/analytics/analytics.html'
+                    }
+                },
+                data: {
+                    title: 'Analytics'
                 }
             });
 
