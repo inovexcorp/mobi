@@ -26,19 +26,19 @@ package org.matonto.rdf.orm.conversion.impl;
 import junit.framework.TestCase;
 import org.junit.Test;
 
-import java.time.OffsetDateTime;
+import java.util.Date;
 
-public class DateValueConverterTest extends ValueConverterTestCase<OffsetDateTime> {
+public class DateValueConverterTest extends ValueConverterTestCase<Date> {
 
     public DateValueConverterTest() {
-        super(new DateValueConverter(), OffsetDateTime.class);
+        super(new DateValueConverter(), Date.class);
     }
 
     @Test
     public void simpleTest() {
-        OffsetDateTime test = OffsetDateTime.now();
+        Date test = new Date();
         TestCase.assertEquals(test,
-                valueConverter.convertValue(valueConverter.convertType(test, null), null, OffsetDateTime.class));
+                valueConverter.convertValue(valueConverter.convertType(test, null), null, Date.class));
     }
 
 }

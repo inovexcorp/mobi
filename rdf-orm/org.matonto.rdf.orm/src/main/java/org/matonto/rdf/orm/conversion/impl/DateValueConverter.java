@@ -30,9 +30,8 @@ import org.matonto.rdf.orm.conversion.AbstractValueConverter;
 import org.matonto.rdf.orm.conversion.ValueConversionException;
 import org.matonto.rdf.orm.conversion.ValueConverter;
 
-import java.time.OffsetDateTime;
+import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.TimeZone;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 
@@ -42,7 +41,7 @@ import javax.xml.datatype.DatatypeFactory;
  * @author bdgould
  */
 @Component(provide = ValueConverter.class)
-public class DateValueConverter extends AbstractValueConverter<OffsetDateTime> {
+public class DateValueConverter extends AbstractValueConverter<Date> {
 
     private static final String XSD_DATETIME = XSD_PREFIX + "dateTime";
 
@@ -50,19 +49,19 @@ public class DateValueConverter extends AbstractValueConverter<OffsetDateTime> {
      * Default constructor.
      */
     public DateValueConverter() {
-        super(OffsetDateTime.class);
+        super(Date.class);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public OffsetDateTime convertValue(final Value value, final Thing thing,
-            final Class<? extends OffsetDateTime> desiredType) throws ValueConversionException {
+    public Date convertValue(final Value value, final Thing thing,
+            final Class<? extends Date> desiredType) throws ValueConversionException {
         try {
             // Use the standard XMLGregorianCalendar object.
             return DatatypeFactory.newInstance().newXMLGregorianCalendar(value.stringValue()).toGregorianCalendar().
-                    toZonedDateTime().toOffsetDateTime();
+                    getTime();
         } catch (DatatypeConfigurationException e) {
             throw new ValueConversionException("Environment issue: Cannot instantiate XML Gregorian Calendar data.", e);
         } catch (IllegalArgumentException e) {
@@ -71,11 +70,10 @@ public class DateValueConverter extends AbstractValueConverter<OffsetDateTime> {
     }
 
     @Override
-    public Value convertType(OffsetDateTime type, Thing thing) throws ValueConversionException {
+    public Value convertType(Date type, Thing thing) throws ValueConversionException {
         try {
             final GregorianCalendar gcal = new GregorianCalendar();
-            gcal.setTimeInMillis(type.toEpochSecond() * 1000 + type.getNano() / 1000000);
-            gcal.setTimeZone(TimeZone.getTimeZone(type.getOffset().getId()));
+            gcal.setTime(type);
             return getValueFactory(thing).createLiteral(
                     DatatypeFactory.newInstance().newXMLGregorianCalendar(gcal).toXMLFormat(), XSD_DATETIME);
         } catch (Exception e) {
