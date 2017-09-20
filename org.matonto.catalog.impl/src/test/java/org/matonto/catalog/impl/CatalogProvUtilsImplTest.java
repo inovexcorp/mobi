@@ -236,6 +236,8 @@ public class CatalogProvUtilsImplTest {
         // Setup
         when(provenanceService.createActivity(any(ActivityConfig.class))).thenReturn(deleteActivity);
         entity.addProperty(vf.createLiteral("system"), vf.createIRI(predAtLocation));
+        deleteActivity.addInvalidated(entity);
+        deleteActivity.getModel().addAll(entity.getModel());
 
         DeleteActivity result = utils.startDeleteActivity(user, vf.createIRI(recordIri));
         verify(provenanceService).createActivity(any(ActivityConfig.class));

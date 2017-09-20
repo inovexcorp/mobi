@@ -127,15 +127,12 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
 
     @Override
     public DeleteActivity startDeleteActivity(User user, Resource recordIri) {
-        ActivityConfig config = new ActivityConfig.Builder(Collections.singleton(DeleteActivity.class), user).build();
-        Activity activity = initializeActivity(config);
-
         Entity recordEntity = entityFactory.getExisting(recordIri, RepositoryResults.asModel(provenanceService.getConnection()
                 .getStatements(recordIri, null, null), modelFactory)).orElseThrow(() ->
                         new IllegalStateException("No Entity found for record."));
 
-        activity.addInvalidated(recordEntity);
-        activity.getModel().addAll(recordEntity.getModel());
+        ActivityConfig config = new ActivityConfig.Builder(Collections.singleton(DeleteActivity.class), user).invalidatedEntity(recordEntity).build();
+        Activity activity = initializeActivity(config);
 
         provenanceService.addActivity(activity);
 
