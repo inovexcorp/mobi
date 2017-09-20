@@ -1,0 +1,55 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix activities: <http://test.org/activities#> .
+@prefix entities: <http://test.org/entities#> .
+
+activities:Activity9 a prov:Activity ;
+    prov:endedAtTime "2016-10-12T16:44:42Z"^^xsd:dateTime ;
+    prov:invalidated entities:Entity2, entities:Entity3.
+
+activities:Activity8 a prov:Activity ;
+    prov:endedAtTime "2016-08-16T10:41:12Z"^^xsd:dateTime ;
+    prov:used entities:Entity4 .
+
+activities:Activity7 a prov:Activity ;
+    prov:endedAtTime "2016-07-27T09:05:10Z"^^xsd:dateTime ;
+    prov:generated entities:Entity4 .
+
+activities:Activity6 a prov:Activity ;
+    prov:endedAtTime "2016-07-22T22:43:42"^^xsd:dateTime ;
+    prov:used entities:Entity3 .
+
+activities:Activity5 a prov:Activity ;
+    prov:endedAtTime "2016-04-28T01:05:39Z"^^xsd:dateTime ;
+    prov:invalidated entities:Entity0 .
+
+activities:Activity4 a prov:Activity ;
+    prov:endedAtTime "2016-04-26T09:01:08Z"^^xsd:dateTime ;
+    prov:used entities:Entity1, entities:Entity2 .
+
+activities:Activity3 a prov:Activity ;
+    prov:endedAtTime "2016-03-29T03:24:51Z"^^xsd:dateTime ;
+    prov:generated entities:Entity2, entities:Entity3.
+
+activities:Activity2 a prov:Activity ;
+    prov:endedAtTime "2016-03-28T18:03:01Z"^^xsd:dateTime ;
+    prov:generated entities:Entity1 .
+
+activities:Activity1 a prov:Activity ;
+    prov:endedAtTime "2016-02-25T05:44:26Z"^^xsd:dateTime ;
+    prov:used entities:Entity0 .
+
+activities:Activity0 a prov:Activity ;
+    prov:endedAtTime "2016-02-08T00:29:34Z"^^xsd:dateTime ;
+    prov:generated entities:Entity0 .
+
+entities:Entity0 a prov:Entity ;
+    prov:atLocation "repo1" .
+entities:Entity1 a prov:Entity ;
+    prov:atLocation "repo2" .
+entities:Entity2 a prov:Entity ;
+    prov:atLocation "repo2" .
+entities:Entity3 a prov:Entity ;
+    prov:atLocation "repo1" .
+entities:Entity4 a prov:Entity ;
+    prov:atLocation "repo2" .
