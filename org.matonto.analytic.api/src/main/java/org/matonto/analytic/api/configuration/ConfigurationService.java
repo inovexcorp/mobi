@@ -1,4 +1,4 @@
-package org.matonto.analytic.api.builder;
+package org.matonto.analytic.api.configuration;
 
 /*-
  * #%L
@@ -23,32 +23,21 @@ package org.matonto.analytic.api.builder;
  * #L%
  */
 
-public class ConfigurationConfig {
+import org.matonto.analytic.ontologies.analytic.Configuration;
 
-    private String title;
+public interface ConfigurationService<T extends Configuration> {
+    /**
+     * Retrieves the IRI of the type of {@link Configuration} this service creates.
+     *
+     * @return A IRI string of a subclass of Configuration
+     */
+    String getTypeIRI();
 
-    private ConfigurationConfig(Builder builder) {
-        this.title = builder.title;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public static class Builder {
-        private String title;
-
-        /**
-         * The constructor for the ConfigurationBuilder.
-         *
-         * @param title The title of the Configuration.
-         */
-        public Builder(String title) {
-            this.title = title;
-        }
-
-        public ConfigurationConfig build() {
-            return new ConfigurationConfig(this);
-        }
-    }
+    /**
+     * Creates a {@link Configuration} using the key value pairs from the provided JSON.
+     *
+     * @param json The JSON string which contains key value pairs that should be set on the Configuration.
+     * @return The Configuration created using the provided JSON.
+     */
+    T create(String json);
 }

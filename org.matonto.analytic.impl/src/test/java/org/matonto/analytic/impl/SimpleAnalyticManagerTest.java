@@ -24,16 +24,19 @@ package org.matonto.analytic.impl;
  */
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import net.sf.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.matonto.analytic.api.builder.AnalyticRecordConfig;
-import org.matonto.analytic.api.builder.ConfigurationConfig;
+import org.matonto.analytic.api.configuration.ConfigurationService;
 import org.matonto.analytic.ontologies.analytic.AnalyticRecord;
 import org.matonto.analytic.ontologies.analytic.AnalyticRecordFactory;
 import org.matonto.analytic.ontologies.analytic.Configuration;
@@ -66,6 +69,7 @@ import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.openrdf.model.vocabulary.RDF;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -100,6 +104,9 @@ public class SimpleAnalyticManagerTest {
     @Mock
     private RepositoryConnection conn;
 
+    @Mock
+    private ConfigurationService<Configuration> baseService;
+
     @Before
     public void setUp() throws Exception {
         analyticRecordFactory.setModelFactory(mf);
@@ -122,17 +129,10 @@ public class SimpleAnalyticManagerTest {
         vcr.registerValueConverter(new ValueValueConverter());
         vcr.registerValueConverter(new LiteralValueConverter());
 
-        MockitoAnnotations.initMocks(this);
-        manager = new SimpleAnalyticManager();
-        manager.setRepository(repository);
-        manager.setAnalyticRecordFactory(analyticRecordFactory);
-        manager.setCatalogManager(catalogManager);
-        manager.setCatalogUtils(catalogUtils);
-        manager.setValueFactory(vf);
-
         record = analyticRecordFactory.createNew(RECORD_IRI);
         config = configurationFactory.createNew(CONFIG_IRI);
 
+        MockitoAnnotations.initMocks(this);
         when(repository.getConnection()).thenReturn(conn);
         when(catalogManager.getLocalCatalogIRI()).thenReturn(CATALOG_IRI);
         when(catalogManager.findRecord(eq(CATALOG_IRI), any(PaginatedSearchParams.class))).thenReturn(results);
@@ -143,6 +143,16 @@ public class SimpleAnalyticManagerTest {
         when(results.getTotalSize()).thenReturn(7);
         when(results.getPageSize()).thenReturn(10);
         when(catalogUtils.optObject(CONFIG_IRI, configurationFactory, conn)).thenReturn(Optional.of(config));
+        when(baseService.create(anyString())).thenReturn(config);
+        when(baseService.getTypeIRI()).thenReturn(Configuration.TYPE);
+
+        manager = new SimpleAnalyticManager();
+        manager.setRepository(repository);
+        manager.setAnalyticRecordFactory(analyticRecordFactory);
+        manager.setCatalogManager(catalogManager);
+        manager.setCatalogUtils(catalogUtils);
+        manager.setValueFactory(vf);
+        manager.addConfigurationService(baseService);
     }
 
     @Test
@@ -232,11 +242,16 @@ public class SimpleAnalyticManagerTest {
 
     @Test
     public void testCreateConfiguration() {
-        // Setup:
-        ConfigurationConfig config = new ConfigurationConfig.Builder("title").build();
+        manager.createConfiguration("", configurationFactory);
+        verify(baseService).create("");
+    }
 
-        Configuration result = manager.createConfiguration(config, configurationFactory);
-        assertEquals(result.getProperty(vf.createIRI(_Thing.title_IRI)).get().stringValue(), "title");
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreateConfigurationWithIllegalArgumentException() {
+        // Setup:
+        manager.removeConfigurationService(baseService);
+
+        manager.createConfiguration("", configurationFactory);
     }
 
     @Test

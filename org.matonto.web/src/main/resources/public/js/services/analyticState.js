@@ -278,6 +278,25 @@
             self.query = {};
             
             /**
+             * @ngdoc property
+             * @name record
+             * @propertyOf analyticState.service:analyticStateService
+             * @type {Object}
+             *
+             * @description
+             * 'record' is an object containing the metadata for the analytic record to create. The structure
+             * of the object is:
+             * ```
+             * {
+             *     title: '',
+             *     description: '',
+             *     keywords: []
+             * }
+             * ```
+             */
+            self.record = {};
+            
+            /**
              * @ngdoc method
              * @name showEditor
              * @methodOf analyticState.service:analyticStateService

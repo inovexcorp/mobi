@@ -100,6 +100,7 @@
         <module>org.matonto.prov.impl</module>
         <module>org.matonto.analytic.api</module>
         <module>org.matonto.analytic.impl</module>
+        <module>org.matonto.analytic.rest</module>
     </modules>
 
     <properties>

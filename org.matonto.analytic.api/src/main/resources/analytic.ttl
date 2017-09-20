@@ -4,13 +4,14 @@
 @prefix foaf: <http://xmlns.com/foaf/0.1/>.
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix mcat: <http://matonto.org/ontologies/catalog#>.
+@prefix dataset: <http://matonto.org/ontologies/dataset#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix : <http://matonto.org/ontologies/analytic#>.
 @base <http://matonto.org/ontologies/analytic>.
 
 <http://matonto.org/ontologies/analytic> a owl:Ontology;
     owl:versionIRI <http://matonto.org/ontologies/analytic#1.0>;
-    owl:imports <http://matonto.org/ontologies/catalog>;
+    owl:imports <http://matonto.org/ontologies/catalog>, <http://matonto.org/ontologies/dataset>;
     rdfs:label "The Mobi Analytic Ontology"@en;
     rdfs:comment "The Mobi Analytic ontology describes the structure of AnalyticRecords and how they relate to the Mobi Catalog."@en;
     dct:creator [foaf:name "Jordan Lewis"];
@@ -36,8 +37,26 @@
     rdfs:label "Configuration"@en;
     rdfs:comment "The data needed to create an analytic."@en.
 
+:datasetRecord a owl:ObjectProperty;
+    rdfs:label "Dataset"@en;
+    rdfs:comment "The DatasetRecord(s) used to produce the analytic."@en;
+    rdfs:domain :Configuration;
+    rdfs:range dataset:DatasetRecord.
+
 # TableConfiguration
 
 :TableConfiguration a owl:Class;
     rdfs:subClassOf :Configuration;
     rdfs:label "Table Configuration"@en.
+
+:row a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "Row"@en;
+    rdfs:comment "The type of thing in each row of the table analytic."@en;
+    rdfs:domain :TableConfiguration;
+    rdfs:range owl:Class.
+
+:column a owl:ObjectProperty;
+    rdfs:label "Column"@en;
+    rdfs:comment "The property to display in each column of the table analytic."@en;
+    rdfs:domain :TableConfiguration;
+    rdfs:range rdfs:Property.

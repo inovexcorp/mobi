@@ -23,8 +23,8 @@ package org.matonto.analytic.api;
  * #L%
  */
 
+import net.sf.json.JSONObject;
 import org.matonto.analytic.api.builder.AnalyticRecordConfig;
-import org.matonto.analytic.api.builder.ConfigurationConfig;
 import org.matonto.analytic.ontologies.analytic.AnalyticRecord;
 import org.matonto.analytic.ontologies.analytic.Configuration;
 import org.matonto.analytic.pagination.AnalyticPaginatedSearchParams;
@@ -98,12 +98,12 @@ public interface AnalyticManager {
      * Creates a Configuration according to the specified config. NOTE: This does not store the configuration in the
      * local catalog.
      *
-     * @param config  The ConfigurationConfig describing the details of the Configuration to create.
+     * @param json    The JSON with key value pairs of the details of the Configuration to create.
      * @param factory The OrmFactory for creating the Configuration.
      * @param <T>     An Object which extends Configuration.
      * @return The Configuration that has been created.
      */
-    <T extends Configuration> T createConfiguration(ConfigurationConfig config, OrmFactory<T> factory);
+    <T extends Configuration> T createConfiguration(String json, OrmFactory<T> factory);
 
     /**
      * Updates the Configuration with the matching IRI from the provided Configuration.

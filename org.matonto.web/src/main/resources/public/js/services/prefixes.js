@@ -60,5 +60,6 @@
         self.ontologyState = 'http://matonto.org/ontologies/state#';
         self.dataset = 'http://matonto.org/ontologies/dataset#';
         self.ontologyEditor = 'http://matonto.org/ontologies/ontology-editor#';
+        self.analytic = 'http://matonto.org/ontologies/analytic#';
     }
 })();

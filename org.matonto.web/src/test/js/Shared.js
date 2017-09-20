@@ -459,6 +459,7 @@ function mockPrefixes() {
             this.xsd = 'xsd:';
             this.ontologyEditor = 'ontEdit:';
             this.dataset = 'dataset:';
+            this.analytic = 'analytic:';
         });
     });
 }
@@ -1142,6 +1143,7 @@ function mockAnalyticState() {
             this.limit = 100;
             this.links = {};
             this.query = {};
+            this.record = {};
             this.showEditor = jasmine.createSpy('showEditor');
             this.showLanding = jasmine.createSpy('showLanding');
             this.resetSelected = jasmine.createSpy('resetSelected');
@@ -1152,6 +1154,17 @@ function mockAnalyticState() {
             this.getPage = jasmine.createSpy('getPage');
             this.sortResults = jasmine.createSpy('sortResults');
             this.reorderColumns = jasmine.createSpy('reorderColumns');
+        });
+    });
+}
+
+function mockAnalyticManager() {
+    module(function($provide) {
+        $provide.service('analyticManagerService', function($q) {
+            this.configurationTypes = [];
+            this.initialize = jasmine.createSpy('initialize').and.returnValue($q.when());
+            this.getConfigurationTypes = jasmine.createSpy('getConfigurationTypes').and.returnValue($q.when([]));
+            this.createAnalytic = jasmine.createSpy('createAnalytic').and.returnValue($q.when(''));
         });
     });
 }

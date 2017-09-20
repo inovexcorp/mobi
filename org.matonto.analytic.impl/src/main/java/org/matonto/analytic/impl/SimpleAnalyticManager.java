@@ -27,7 +27,7 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.matonto.analytic.api.AnalyticManager;
 import org.matonto.analytic.api.builder.AnalyticRecordConfig;
-import org.matonto.analytic.api.builder.ConfigurationConfig;
+import org.matonto.analytic.api.configuration.ConfigurationService;
 import org.matonto.analytic.ontologies.analytic.AnalyticRecord;
 import org.matonto.analytic.ontologies.analytic.AnalyticRecordFactory;
 import org.matonto.analytic.ontologies.analytic.Configuration;
@@ -37,27 +37,36 @@ import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.CatalogUtilsService;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Record;
-import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.repository.api.Repository;
 import org.matonto.repository.api.RepositoryConnection;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 @Component(name = SimpleAnalyticManager.COMPONENT_NAME)
 public class SimpleAnalyticManager implements AnalyticManager {
 
     static final String COMPONENT_NAME = "org.matonto.analytic.api.AnalyticManager";
-    private static final String CONFIG_NAMESPACE = "https://matonto.org/configurations#";
 
     private CatalogManager catalogManager;
     private CatalogUtilsService catalogUtils;
     private Repository repository;
     private AnalyticRecordFactory analyticRecordFactory;
     private ValueFactory vf;
+    private Map<String, ConfigurationService<? extends Configuration>> configurationServices = new HashMap<>();
+
+    @Reference(type = '*', dynamic = true)
+    void addConfigurationService(ConfigurationService<? extends Configuration> configurationService) {
+        configurationServices.put(configurationService.getTypeIRI(), configurationService);
+    }
+
+    void removeConfigurationService(ConfigurationService<? extends Configuration> configurationService) {
+        configurationServices.remove(configurationService.getTypeIRI());
+    }
 
     @Reference
     void setCatalogManager(CatalogManager catalogManager) {
@@ -120,7 +129,8 @@ public class SimpleAnalyticManager implements AnalyticManager {
     }
 
     @Override
-    public <T extends Configuration> Optional<T> getConfigurationByAnalyticRecord(Resource recordId, OrmFactory<T> factory) {
+    public <T extends Configuration> Optional<T> getConfigurationByAnalyticRecord(Resource recordId,
+                                                                                  OrmFactory<T> factory) {
         AnalyticRecord record = getAnalyticRecord(recordId).orElseThrow(() ->
                 new IllegalArgumentException("Could not find the required AnalyticRecord in the Catalog."));
         Resource configId = record.getHasConfig_resource().orElseThrow(() ->
@@ -136,10 +146,14 @@ public class SimpleAnalyticManager implements AnalyticManager {
     }
 
     @Override
-    public <T extends Configuration> T createConfiguration(ConfigurationConfig config, OrmFactory<T> factory) {
-        T configuration = factory.createNew(vf.createIRI(CONFIG_NAMESPACE + UUID.randomUUID()));
-        configuration.setProperty(vf.createLiteral(config.getTitle()), vf.createIRI(_Thing.title_IRI));
-        return configuration;
+    @SuppressWarnings("unchecked")
+    public <T extends Configuration> T createConfiguration(String json, OrmFactory<T> factory) {
+        String typeIRI = factory.getTypeIRI().stringValue();
+        if (configurationServices.keySet().contains(typeIRI)) {
+            return (T) configurationServices.get(typeIRI).create(json);
+        } else {
+            throw new IllegalArgumentException("The provided typeIRI is not supported.");
+        }
     }
 
     @Override
