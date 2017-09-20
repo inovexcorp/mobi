@@ -129,7 +129,7 @@ public class BasicVirtualFile extends AbstractVirtualFile implements VirtualFile
                     // Return translated list.
                     Arrays.stream(children)
                             // Convert to BasicVirtualFile.
-                            .map(obj -> new BasicVirtualFile(obj))
+                            .map(BasicVirtualFile::new)
                             // Collect into a list.
                             .collect(Collectors.toList())
                     // Else an empty list.
