@@ -25,7 +25,6 @@ package org.matonto.vfs.impl.commons;
 
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
-import org.matonto.vfs.api.AbstractVirtualFile;
 import org.matonto.vfs.api.VirtualFile;
 import org.matonto.vfs.api.VirtualFilesystemException;
 
@@ -41,7 +40,7 @@ import java.util.stream.Stream;
 /**
  * This is a basic implementation of the {@link VirtualFile} interface backed by the commons-vfs implementation.
  */
-public class SimpleVirtualFile extends AbstractVirtualFile implements VirtualFile {
+public class SimpleVirtualFile implements VirtualFile {
 
     private final FileObject file;
 

@@ -28,8 +28,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
-import org.matonto.vfs.api.AbstractVirtualFile;
 import org.matonto.vfs.api.VirtualFile;
+import org.matonto.vfs.api.VirtualFileUtilities;
 import org.matonto.vfs.impl.commons.SimpleVirtualFilesystem;
 
 import java.io.File;
@@ -167,7 +167,7 @@ public class TestDefaultVirtualFilesystem extends TestCase {
             Set<Throwable> issues = new HashSet<>();
             VirtualFile f = fs.resolveVirtualFile("zip://" + new File("src/test/resources/test.zip").getAbsolutePath());
             Set<VirtualFile> files = new HashSet<>();
-            AbstractVirtualFile.asynchronouslyProcessAllFiles(pool, vf -> {
+            VirtualFileUtilities.asynchronouslyProcessAllFiles(pool, vf -> {
                 assertNotNull(vf);
                 files.add(vf);
             }, f, issues, true);

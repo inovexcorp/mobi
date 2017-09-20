@@ -34,12 +34,12 @@ import java.util.function.Consumer;
 /**
  * Abstract class providing some shared features on the {@link VirtualFilesystem} API.
  */
-public abstract class AbstractVirtualFile implements VirtualFile {
+public abstract class VirtualFileUtilities {
 
     /**
      * Logging utility object for this implementation.
      */
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractVirtualFile.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(VirtualFileUtilities.class);
 
     /**
      * Process all of the files in a virtual directory asynchronously.
