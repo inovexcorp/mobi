@@ -25,7 +25,6 @@ package org.matonto.catalog.impl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -36,6 +35,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.ontologies.mcat.Record;
+import org.matonto.catalog.api.ontologies.mcat.RecordFactory;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
 import org.matonto.ontologies.dcterms._Thing;
@@ -79,7 +79,6 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @RunWith(PowerMockRunner.class)
@@ -97,7 +96,8 @@ public class CatalogProvUtilsImplTest {
     private DeleteActivityFactory deleteActivityFactory = new DeleteActivityFactory();
     private EntityFactory entityFactory = new EntityFactory();
     private UserFactory userFactory = new UserFactory();
-
+    private RecordFactory recordFactory = new RecordFactory();
+    private Record record;
     private CreateActivity createActivity;
     private DeleteActivity deleteActivity;
     private Entity entity;
@@ -116,9 +116,6 @@ public class CatalogProvUtilsImplTest {
     private CatalogManager catalogManager;
 
     @Mock
-    private Record record;
-
-    @Mock
     private RepositoryConnection connProv;
 
     @Mock
@@ -127,6 +124,11 @@ public class CatalogProvUtilsImplTest {
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
+
+        recordFactory.setModelFactory(mf);
+        recordFactory.setValueFactory(vf);
+        recordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(recordFactory);
 
         activityFactory.setModelFactory(mf);
         activityFactory.setValueFactory(vf);
@@ -179,10 +181,10 @@ public class CatalogProvUtilsImplTest {
 
         when(provenanceService.getConnection()).thenReturn(connProv);
         when(connProv.getStatements(recordIRI, null, null)).thenReturn(resultEntity);
-        given(RepositoryResults.asModel(resultEntity, mf)).willReturn(entity.getModel());
+        when(RepositoryResults.asModel(resultEntity, mf)).thenReturn(entity.getModel());
 
-        when(record.getResource()).thenReturn(recordIRI);
-        when(record.getProperty(vf.createIRI(_Thing.title_IRI))).thenReturn(Optional.of(vf.createLiteral("Test Record")));
+        record = recordFactory.createNew(recordIRI);
+        record.setProperty(vf.createLiteral("Test Record"), vf.createIRI(_Thing.title_IRI));
 
         utils.setCreateActivityFactory(createActivityFactory);
         utils.setDeleteActivityFactory(deleteActivityFactory);
