@@ -27,15 +27,21 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.CatalogProvUtils;
+import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.ontologies.dcterms._Thing;
 import org.matonto.ontologies.provo.Activity;
 import org.matonto.ontologies.provo.Entity;
 import org.matonto.ontologies.provo.EntityFactory;
+import org.matonto.persistence.utils.RepositoryResults;
 import org.matonto.platform.config.api.server.MatOnto;
 import org.matonto.prov.api.ProvenanceService;
 import org.matonto.prov.api.builder.ActivityConfig;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivity;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivityFactory;
+import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 
@@ -48,7 +54,9 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
     private CatalogManager catalogManager;
     private ProvenanceService provenanceService;
     private CreateActivityFactory createActivityFactory;
+    private DeleteActivityFactory deleteActivityFactory;
     private EntityFactory entityFactory;
+    private ModelFactory modelFactory;
     private MatOnto matOnto;
 
     private final String atLocation = "http://www.w3.org/ns/prov#atLocation";
@@ -74,8 +82,18 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
     }
 
     @Reference
+    void setDeleteActivityFactory(DeleteActivityFactory deleteActivityFactory) {
+        this.deleteActivityFactory = deleteActivityFactory;
+    }
+
+    @Reference
     void setEntityFactory(EntityFactory entityFactory) {
         this.entityFactory = entityFactory;
+    }
+
+    @Reference
+    void setModelFactory(ModelFactory modelFactory) {
+        this.modelFactory = modelFactory;
     }
 
     @Reference
@@ -85,15 +103,15 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
 
     @Override
     public CreateActivity startCreateActivity(User user) {
-        OffsetDateTime start = OffsetDateTime.now();
         ActivityConfig config = new ActivityConfig.Builder(Collections.singleton(CreateActivity.class), user)
                 .build();
-        Activity activity = provenanceService.createActivity(config);
-        activity.addProperty(vf.createLiteral(start), vf.createIRI(Activity.startedAtTime_IRI));
-        activity.addProperty(vf.createLiteral(matOnto.getServerIdentifier().toString()), vf.createIRI(atLocation));
+
+        Activity activity = initializeActivity(config);
+
         provenanceService.addActivity(activity);
-        return createActivityFactory.getExisting(activity.getResource(), activity.getModel()).orElseThrow(() ->
-                new IllegalStateException("CreateActivity not made correctly"));
+
+        return createActivityFactory.getExisting(activity.getResource(), activity.getModel()).orElseThrow(()
+                -> new IllegalStateException("CreateActivity not made correctly"));
     }
 
     @Override
@@ -102,9 +120,36 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
         Entity recordEntity = entityFactory.createNew(recordIRI, createActivity.getModel());
         recordEntity.addProperty(vf.createLiteral(stop), vf.createIRI(Entity.generatedAtTime_IRI));
         recordEntity.addProperty(vf.createLiteral(catalogManager.getRepositoryId()), vf.createIRI(atLocation));
-        createActivity.addProperty(vf.createLiteral(stop), vf.createIRI(Activity.endedAtTime_IRI));
         createActivity.addGenerated(recordEntity);
+        finalizeActivity(createActivity);
         provenanceService.updateActivity(createActivity);
+    }
+
+    @Override
+    public DeleteActivity startDeleteActivity(User user, Resource recordIri) {
+        Entity recordEntity = entityFactory.getExisting(recordIri, RepositoryResults.asModel(provenanceService.getConnection()
+                .getStatements(recordIri, null, null), modelFactory)).orElseThrow(() ->
+                        new IllegalStateException("No Entity found for record."));
+
+        ActivityConfig config = new ActivityConfig.Builder(Collections.singleton(DeleteActivity.class), user).invalidatedEntity(recordEntity).build();
+        Activity activity = initializeActivity(config);
+
+        provenanceService.addActivity(activity);
+
+        return deleteActivityFactory.getExisting(activity.getResource(), activity.getModel()).orElseThrow(() ->
+                new IllegalStateException("DeleteActivity not made correctly"));
+    }
+
+    @Override
+    public void endDeleteActivity(DeleteActivity deleteActivity, Record record) {
+        Entity recordEntity = entityFactory.createNew(record.getResource(), deleteActivity.getModel());
+
+        finalizeActivity(deleteActivity);
+
+        record.getProperty(vf.createIRI(_Thing.title_IRI))
+                .ifPresent(v -> recordEntity.addProperty(v, vf.createIRI(_Thing.title_IRI)));
+
+        provenanceService.updateActivity(deleteActivity);
     }
 
     @Override
@@ -112,5 +157,20 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
         if (activity != null) {
             provenanceService.deleteActivity(activity.getResource());
         }
+    }
+
+    private Activity initializeActivity(ActivityConfig config) {
+        OffsetDateTime start = OffsetDateTime.now();
+
+        Activity activity = provenanceService.createActivity(config);
+        activity.addProperty(vf.createLiteral(start), vf.createIRI(Activity.startedAtTime_IRI));
+        activity.addProperty(vf.createLiteral(matOnto.getServerIdentifier().toString()), vf.createIRI(atLocation));
+
+        return activity;
+    }
+
+    private void finalizeActivity(Activity activity) {
+        OffsetDateTime stop = OffsetDateTime.now();
+        activity.addProperty(vf.createLiteral(stop), vf.createIRI(Activity.endedAtTime_IRI));
     }
 }

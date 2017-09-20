@@ -29,6 +29,7 @@ import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
+import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.Record;
 import org.matonto.etl.api.config.delimited.MappingRecordConfig;
 import org.matonto.etl.api.delimited.MappingId;
@@ -174,21 +175,20 @@ public class SimpleMappingManager implements MappingManager {
 
     @Override
     public Optional<MappingWrapper> retrieveMapping(@Nonnull Resource recordId, @Nonnull Resource branchId) {
-        return catalogManager.getBranch(catalogManager.getLocalCatalogIRI(), recordId, branchId, branchFactory)
-                .flatMap(branch ->
-                        Optional.of(getWrapperFromModel(catalogManager.getCompiledResource(getHeadOfBranch(branch)))));
+        Commit commit = catalogManager.getHeadCommit(catalogManager.getLocalCatalogIRI(), recordId, branchId);
+        return Optional.of(getWrapperFromModel(catalogManager.getCompiledResource(commit.getResource())));
     }
 
     @Override
     public Optional<MappingWrapper> retrieveMapping(@Nonnull Resource recordId, @Nonnull Resource branchId,
-                                                    @Nonnull Resource commitId) {
-        return catalogManager.getCommit(catalogManager.getLocalCatalogIRI(), recordId, branchId, commitId)
-                .flatMap(commit -> Optional.of(getWrapperFromModel(catalogManager.getCompiledResource(commitId))));
+            @Nonnull Resource commitId) {
+
+        return Optional.of(getWrapperFromModel(catalogManager.getCompiledResource(recordId, branchId, commitId)));
     }
 
     @Override
-    public void deleteMapping(@Nonnull Resource recordId) throws MatOntoException {
-        catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), recordId);
+    public MappingRecord deleteMapping(@Nonnull Resource recordId) throws MatOntoException {
+        return catalogManager.removeRecord(catalogManager.getLocalCatalogIRI(), recordId, mappingRecordFactory);
     }
 
     private Resource getHeadOfBranch(Branch branch) {

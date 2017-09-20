@@ -27,7 +27,7 @@
         /**
          * @ngdoc overview
          * @name prefixes
-         * 
+         *
          * @description
          * The `prefixes` module only provides the `prefixes` service which
          * simply provides standard strings for common IRIs.
@@ -37,9 +37,8 @@
          * @ngdoc service
          * @name prefixes.service:prefixes
          *
-         * @description 
-         * `prefixes` is a service that simply provides a series of common IRI 
-         * strings.
+         * @description
+         * `prefixes` is a service that simply provides a series of common IRI strings.
          */
         .service('prefixes', prefixes);
 
@@ -60,6 +59,8 @@
         self.ontologyState = 'http://matonto.org/ontologies/state#';
         self.dataset = 'http://matonto.org/ontologies/dataset#';
         self.ontologyEditor = 'http://matonto.org/ontologies/ontology-editor#';
+        self.prov = 'http://www.w3.org/ns/prov#';
+        self.matprov = 'http://matonto.org/ontologies/prov#';
         self.analytic = 'http://matonto.org/ontologies/analytic#';
     }
 })();

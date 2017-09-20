@@ -128,6 +128,7 @@
         <bundle start-level="80">mvn:org.matonto/etl.cli/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/persistence.cli/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/clustering.cli/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/sparql.cli/${project.version}</bundle>
     </feature>
     <feature name="matonto-web" description="MatOnto Web Bundles" version="${project.version}">
         <feature prerequisite="true">matonto-core</feature>
@@ -142,6 +143,7 @@
         <bundle start-level="80">mvn:org.matonto/dataset.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/web.security/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/explorable.dataset.rest/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/prov.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/analytic.rest/${project.version}</bundle>
     </feature>
     <feature name="matonto-clustering" description="MatOnto Clustering API and implementations" version="${project.version}">

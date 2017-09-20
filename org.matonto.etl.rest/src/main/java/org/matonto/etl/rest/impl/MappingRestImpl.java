@@ -48,9 +48,9 @@ import org.matonto.etl.rest.MappingRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
-import org.matonto.ontologies.provo.Activity;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivity;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -257,21 +257,28 @@ public class MappingRestImpl implements MappingRest {
     }
 
     @Override
-    public Response deleteMapping(String recordId) {
+    public Response deleteMapping(ContainerRequestContext context, String recordId) {
+        User activeUser = getActiveUser(context, engineManager);
+        IRI recordIri = vf.createIRI(recordId);
+        DeleteActivity deleteActivity = null;
         try {
             logger.info("Deleting mapping: " + recordId);
-            manager.deleteMapping(vf.createIRI(recordId));
+            deleteActivity = provUtils.startDeleteActivity(activeUser, recordIri);
+            MappingRecord record = manager.deleteMapping(recordIri);
+            provUtils.endDeleteActivity(deleteActivity, record);
             return Response.ok().build();
         } catch (IllegalArgumentException e) {
+            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MatOntoException e) {
+            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 
     /**
      * Retrieves the actual JSON-LD of a mapping. Removes the wrapping JSON array from
-     * around the result of using Rio to parsethe mapping model into JSON-LD
+     * around the result of using Rio to parse the mapping model into JSON-LD
      *
      * @param jsonld a mapping serialized as JSON-LD with a wrapping JSON array
      * @return a JSONObject with a mapping serialized as JSON-LD

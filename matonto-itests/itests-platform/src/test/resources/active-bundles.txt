@@ -40,6 +40,7 @@ org.matonto.platform.config.impl
 org.matonto.platform.config.rest
 org.matonto.prov.api
 org.matonto.prov.impl
+org.matonto.prov.rest
 org.matonto.analytic.api
 org.matonto.analytic.impl
 org.matonto.cache

@@ -29,7 +29,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.9.14-SNAPSHOT</version>
+    <version>1.9.18-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -101,6 +101,8 @@
         <module>org.matonto.analytic.api</module>
         <module>org.matonto.analytic.impl</module>
         <module>org.matonto.analytic.rest</module>
+        <module>org.matonto.prov.rest</module>
+        <module>org.matonto.sparql.cli</module>
     </modules>
 
     <properties>

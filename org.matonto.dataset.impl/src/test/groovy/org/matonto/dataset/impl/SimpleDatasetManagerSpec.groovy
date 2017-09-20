@@ -81,13 +81,17 @@ class SimpleDatasetManagerSpec extends Specification {
     def namedGraphPred = vf.createIRI(Dataset.namedGraph_IRI)
     def defNamedGraphPred = vf.createIRI(Dataset.defaultNamedGraph_IRI)
     def sysDefNgPred = vf.createIRI(Dataset.systemDefaultNamedGraph_IRI)
+    def recordIRI = vf.createIRI("http://test.com/record1")
     def systemRepo
     def testRepo
     def systemConn
     def testConn
     def dynamicConn
     def repos = [ : ]
-
+    def datasetIRI
+    def dataset
+    def record
+    
     @Shared
     numSystemDS = 5
 
@@ -158,7 +162,7 @@ class SimpleDatasetManagerSpec extends Specification {
             [ vf.createIRI("http://matonto.org/dataset/test7_system_dng") ],
             []
     ]
-
+    
     def setup() {
         systemRepo = new SesameRepositoryWrapper(new SailRepository(new MemoryStore()))
         systemRepo.initialize()
@@ -194,6 +198,10 @@ class SimpleDatasetManagerSpec extends Specification {
         vcr.registerValueConverter(new ValueValueConverter())
         vcr.registerValueConverter(new LiteralValueConverter())
 
+        datasetIRI = datasetsInFile[1]
+        dataset = dsFactory.createNew(datasetIRI)
+        record = dsRecFactory.createNew(recordIRI)
+        
         // Set Services
         service.setDatasetRecordFactory(dsRecFactory)
         service.setDatasetFactory(dsFactory)
@@ -208,9 +216,12 @@ class SimpleDatasetManagerSpec extends Specification {
         connMock.getStatements(*_) >> resultsMock
 
         catalogManagerMock.getLocalCatalogIRI() >> localCatalog
-
+        
         repoManagerMock.getRepository("system") >> Optional.of(repositoryMock)
         repoManagerMock.getRepository("test") >> Optional.of(testRepo)
+        
+        record.setDataset(dataset)
+        record.setRepository("system")
     }
 
     def cleanup() {
@@ -570,50 +581,44 @@ class SimpleDatasetManagerSpec extends Specification {
         service.deleteDataset(datasetIRI, repo)
 
         then:
-        0 * catalogManagerMock.getRecord(*_)
         thrown(IllegalArgumentException)
     }
 
     def "deleteDataset() calls removeRecord() to delete the DatasetRecord"() {
         setup:
         def repo = "system"
-        def datasetIRI = datasetsInFile[1]
-        def dataset = dsFactory.createNew(datasetIRI)
-        def recordIRI = vf.createIRI("http://test.com/record1")
         resultsMock.hasNext() >> true
         resultsMock.next() >> vf.createStatement(recordIRI, datasetPred, datasetIRI)
 
-        def record = dsRecFactory.createNew(recordIRI)
-        record.setDataset(dataset)
-        record.setRepository("system")
 
         when:
-        service.deleteDataset(datasetIRI, repo)
+        def result = service.deleteDataset(datasetIRI, repo)
 
         then:
-        1 * catalogManagerMock.getRecord(!null, recordIRI, !null) >> Optional.of(record)
-        1 * catalogManagerMock.removeRecord(localCatalog, recordIRI)
+        result == record
+        1 * catalogManagerMock.removeRecord(localCatalog, recordIRI, dsRecFactory) >> record
     }
 
     def "deleteDataset() correctly removes DatasetRecord, Dataset, and associated graphs in a #repo repository"() {
         setup:
-        bootstrapCatalog(datasetIRI, recordIRI, repo)
+        def testRecord = bootstrapCatalog(testDatasetIRI, testRecordIRI, repo)
+        1 * catalogManagerMock.removeRecord(!null, testRecordIRI, !null) >> testRecord
         testConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
         dynamicConn = repos.get(repo).getConnection()
 
         when:
-        service.deleteDataset(datasetIRI, repo)
+        def result = service.deleteDataset(testDatasetIRI, repo)
 
         then:
         // Mock Verifications
+        result == testRecord
         repoManagerMock.getRepository("system") >> Optional.of(systemRepo)
-        1 * catalogManagerMock.removeRecord(localCatalog, recordIRI)
         // Assertions
-        !dynamicConn.getStatements(datasetIRI, null, null).hasNext()
+        !dynamicConn.getStatements(testDatasetIRI, null, null).hasNext()
         deletedGraphs.forEach { assert !dynamicConn.getStatements(null, null, null, it).hasNext() }
 
         where:
-        repo | datasetIRI | recordIRI
+        repo | testDatasetIRI | testRecordIRI
         "system" | datasetsInFile[1] | recordsInFile[1]
         "system" | datasetsInFile[2] | recordsInFile[2]
         "test" | datasetsInFile[5] | recordsInFile[5]
@@ -628,24 +633,25 @@ class SimpleDatasetManagerSpec extends Specification {
 
     def "safeDeleteDataset() correctly removes DatasetRecord, Dataset, and associated graphs in a #repo repository for #datasetIRI"() {
         setup:
-        bootstrapCatalog(datasetIRI, recordIRI, repo)
+        def testRecord = bootstrapCatalog(testDatasetIRI, testRecordIRI, repo)
+        1 * catalogManagerMock.removeRecord(!null, testRecordIRI, !null) >> testRecord
         testConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
         dynamicConn = repos.get(repo).getConnection()
 
         when:
-        service.safeDeleteDataset(datasetIRI, repo)
+        def result = service.safeDeleteDataset(testDatasetIRI, repo)
 
         then:
         // Mock Verifications
+        result == testRecord
         repoManagerMock.getRepository("system") >> Optional.of(systemRepo)
-        1 * catalogManagerMock.removeRecord(localCatalog, recordIRI)
         // Assertions
-        !dynamicConn.getStatements(datasetIRI, null, null).hasNext()
+        !dynamicConn.getStatements(testDatasetIRI, null, null).hasNext()
         deletedGraphs.forEach   { assert !dynamicConn.getStatements(null, null, null, it).hasNext() }
         remainingGraphs.forEach { assert dynamicConn.getStatements(null, null, null, it).hasNext() }
 
         where:
-        repo | datasetIRI | recordIRI
+        repo | testDatasetIRI | testRecordIRI
         "system" | datasetsInFile[1] | recordsInFile[1]
         "system" | datasetsInFile[2] | recordsInFile[2]
         "system" | datasetsInFile[3] | recordsInFile[3]
@@ -673,26 +679,27 @@ class SimpleDatasetManagerSpec extends Specification {
 
     def "clearDataset() correctly removes associated graphs in a #repo repository"() {
         setup:
-        bootstrapCatalog(datasetIRI, recordIRI, repo)
+        def testRecord = bootstrapCatalog(testDatasetIRI, testRecordIRI, repo)
+        1 * catalogManagerMock.getRecord(!null, testRecordIRI, !null) >> Optional.of(testRecord)
         testConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
         dynamicConn = repos.get(repo).getConnection()
 
         when:
-        service.clearDataset(datasetIRI, repo)
+        service.clearDataset(testDatasetIRI, repo)
 
         then:
         // Mock Verification
         repoManagerMock.getRepository("system") >> Optional.of(systemRepo)
-        0 * catalogManagerMock.removeRecord(localCatalog, recordIRI)
+        0 * catalogManagerMock.removeRecord(localCatalog, testRecordIRI)
         // Assertions
-        dynamicConn.getStatements(datasetIRI, null, null).hasNext()
-        dynamicConn.getStatements(datasetIRI, sysDefNgPred, null).hasNext()
-        !dynamicConn.getStatements(datasetIRI, defNamedGraphPred, null).hasNext()
-        !dynamicConn.getStatements(datasetIRI, namedGraphPred, null).hasNext()
+        dynamicConn.getStatements(testDatasetIRI, null, null).hasNext()
+        dynamicConn.getStatements(testDatasetIRI, sysDefNgPred, null).hasNext()
+        !dynamicConn.getStatements(testDatasetIRI, defNamedGraphPred, null).hasNext()
+        !dynamicConn.getStatements(testDatasetIRI, namedGraphPred, null).hasNext()
         deletedGraphs.forEach { assert !dynamicConn.getStatements(null, null, null, it).hasNext() }
 
         where:
-        repo | datasetIRI | recordIRI
+        repo | testDatasetIRI | testRecordIRI
         "system" | datasetsInFile[1] | recordsInFile[1]
         "system" | datasetsInFile[2] | recordsInFile[2]
         "test" | datasetsInFile[5] | recordsInFile[5]
@@ -707,27 +714,28 @@ class SimpleDatasetManagerSpec extends Specification {
 
     def "safeClearDataset() correctly removes associated graphs in a #repo repository for #datasetIRI"() {
         setup:
-        bootstrapCatalog(datasetIRI, recordIRI, repo)
+        def testRecord = bootstrapCatalog(testDatasetIRI, testRecordIRI, repo)
+        1 * catalogManagerMock.getRecord(!null, testRecordIRI, !null) >> Optional.of(testRecord)
         testConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
         dynamicConn = repos.get(repo).getConnection()
 
         when:
-        service.safeClearDataset(datasetIRI, repo)
+        service.safeClearDataset(testDatasetIRI, repo)
 
         then:
         // Mock Verifications
         repoManagerMock.getRepository("system") >> Optional.of(systemRepo)
-        0 * catalogManagerMock.removeRecord(localCatalog, recordIRI)
+        0 * catalogManagerMock.removeRecord(localCatalog, testRecordIRI)
         // Assertions
-        dynamicConn.getStatements(datasetIRI, null, null).hasNext()
-        dynamicConn.getStatements(datasetIRI, sysDefNgPred, null).hasNext()
-        !dynamicConn.getStatements(datasetIRI, defNamedGraphPred, null).hasNext()
-        !dynamicConn.getStatements(datasetIRI, namedGraphPred, null).hasNext()
+        dynamicConn.getStatements(testDatasetIRI, null, null).hasNext()
+        dynamicConn.getStatements(testDatasetIRI, sysDefNgPred, null).hasNext()
+        !dynamicConn.getStatements(testDatasetIRI, defNamedGraphPred, null).hasNext()
+        !dynamicConn.getStatements(testDatasetIRI, namedGraphPred, null).hasNext()
         deletedGraphs.forEach   { assert !dynamicConn.getStatements(null, null, null, it).hasNext() }
         remainingGraphs.forEach { assert dynamicConn.getStatements(null, null, null, it).hasNext() }
 
         where:
-        repo | datasetIRI | recordIRI
+        repo | testDatasetIRI | testRecordIRI
         "system" | datasetsInFile[1] | recordsInFile[1]
         "system" | datasetsInFile[2] | recordsInFile[2]
         "system" | datasetsInFile[3] | recordsInFile[3]
@@ -795,7 +803,7 @@ class SimpleDatasetManagerSpec extends Specification {
         thrown(IllegalArgumentException)
     }
 
-    private void bootstrapCatalog(IRI datasetIRI, IRI recordIRI, String repo = "system") {
+    private bootstrapCatalog(IRI datasetIRI, IRI recordIRI, String repo = "system") {
         def dataset = dsFactory.createNew(datasetIRI)
         def record = dsRecFactory.createNew(recordIRI)
         record.setDataset(dataset)
@@ -805,8 +813,8 @@ class SimpleDatasetManagerSpec extends Specification {
 
         systemConn.add(Values.matontoModel(
                 Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
-
-        1 * catalogManagerMock.getRecord(!null, recordIRI, !null) >> Optional.of(record)
+        
+        return record
     }
 
     private mockRetrieveRecord(datasetIRI, repo, recordIRI) {

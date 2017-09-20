@@ -64,8 +64,6 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
-import org.matonto.ontologies.provo.Activity;
-import org.matonto.ontologies.provo.ActivityFactory;
 import org.matonto.ontology.core.api.Annotation;
 import org.matonto.ontology.core.api.Individual;
 import org.matonto.ontology.core.api.NamedIndividual;
@@ -93,6 +91,8 @@ import org.matonto.ontology.utils.cache.OntologyCache;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivity;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivityFactory;
 import org.matonto.query.TupleQueryResult;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
@@ -201,7 +201,9 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
     private InProgressCommitFactory inProgressCommitFactory;
     private UserFactory userFactory;
     private CreateActivityFactory createActivityFactory;
-    private CreateActivity activity;
+    private DeleteActivityFactory deleteActivityFactory;
+    private CreateActivity createActivity;
+    private DeleteActivity deleteActivity;
     private IRI catalogId;
     private IRI recordId;
     private OntologyRecord record;
@@ -308,6 +310,12 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         createActivityFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(createActivityFactory);
 
+        deleteActivityFactory = new DeleteActivityFactory();
+        deleteActivityFactory.setModelFactory(mf);
+        deleteActivityFactory.setValueFactory(vf);
+        deleteActivityFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(deleteActivityFactory);
+
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -409,7 +417,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         constructs = mf.createModel(Stream.of(vf.createStatement(class1b, subClassOf, class1a),
                 vf.createStatement(individual1a, type, class1a)).collect(Collectors.toSet()));
         failedImports = Collections.singleton(importedOntologyIRI);
-        activity = createActivityFactory.createNew(vf.createIRI("http://test.org/activity"));
+        createActivity = createActivityFactory.createNew(vf.createIRI("http://test.org/activity/create"));
+        deleteActivity = deleteActivityFactory.createNew(vf.createIRI("http://test.org/activity/delete"));
 
         return new ResourceConfig()
                 .register(rest)
@@ -472,7 +481,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         when(catalogManager.getLocalCatalogIRI()).thenReturn(catalogId);
         when(catalogManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class))).thenReturn(results);
-        when(catalogManager.getRecord(catalogId, recordId, ontologyRecordFactory)).thenReturn(Optional.of(record));
+        when(catalogManager.getRecord(eq(catalogId), eq(recordId), any(OntologyRecordFactory.class))).thenReturn(Optional.of(record));
+        when(catalogManager.removeRecord(catalogId, recordId, ontologyRecordFactory)).thenReturn(record);
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
         when(catalogManager.getInProgressCommit(catalogId, recordId, user)).thenReturn(Optional.of(inProgressCommit));
         when(catalogManager.getInProgressCommit(catalogId, recordId, inProgressCommitId)).thenReturn(Optional.of(inProgressCommit));
@@ -485,6 +495,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         when(ontologyManager.createOntology(any(FileInputStream.class))).thenReturn(ontology);
         when(ontologyManager.createOntology(anyString())).thenReturn(ontology);
         when(ontologyManager.createOntology(any(Model.class))).thenReturn(ontology);
+        when(ontologyManager.deleteOntology(eq(recordId))).thenReturn(record);
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class), any(Resource.class)))
                 .thenReturn(Optional.of(ontology));
         when(ontologyManager.retrieveOntology(eq(recordId), any(Resource.class))).thenReturn(Optional.of(ontology));
@@ -541,7 +552,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         when(ontologyCache.getOntologyCache()).thenReturn(Optional.of(mockCache));
 
-        when(provUtils.startCreateActivity(any(User.class))).thenReturn(activity);
+        when(provUtils.startCreateActivity(any(User.class))).thenReturn(createActivity);
+        when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
     }
 
     private JSONObject getResource(String path) throws Exception {
@@ -710,7 +722,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
         verify(mockCache).put(anyString(), any(Ontology.class));
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(activity, record.getResource());
+        verify(provUtils).endCreateActivity(createActivity, record.getResource());
     }
 
     @Test
@@ -758,7 +770,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         assertEquals(response.getStatus(), 500);
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(activity);
+        verify(provUtils).removeActivity(createActivity);
     }
 
     @Test
@@ -777,7 +789,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(activity);
+        verify(provUtils).removeActivity(createActivity);
     }
 
     // Test upload ontology json
@@ -801,7 +813,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(versioningManager).commit(eq(catalogId), eq(recordId), eq(branchId), eq(user), anyString(), any(Model.class), eq(null));
         verify(mockCache).put(anyString(), any(Ontology.class));
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(activity, record.getResource());
+        verify(provUtils).endCreateActivity(createActivity, record.getResource());
     }
 
     @Test
@@ -831,7 +843,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(entity));
         assertEquals(response.getStatus(), 500);
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(activity);
+        verify(provUtils).removeActivity(createActivity);
     }
 
     @Test
@@ -846,7 +858,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
                 "description").queryParam("keywords", "keyword1,keyword2").request().post(Entity.json(ontologyJson));
         assertEquals(response.getStatus(), 400);
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).removeActivity(activity);
+        verify(provUtils).removeActivity(createActivity);
     }
 
     // Test get ontology
@@ -3969,6 +3981,8 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
 
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).deleteOntology(recordId);
+        verify(provUtils).startDeleteActivity(user, recordId);
+        verify(provUtils).endDeleteActivity(deleteActivity, record);
     }
 
     @Test

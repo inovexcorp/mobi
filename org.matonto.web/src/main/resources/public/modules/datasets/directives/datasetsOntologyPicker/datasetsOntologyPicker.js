@@ -65,13 +65,12 @@
                 controller: function() {
                     var dvm = this;
                     var cm = catalogManagerService;
-                    var ds = datasetStateService;
-
+                    var state = datasetStateService;
                     dvm.util = utilService;
-                    
+
                     dvm.ontologySearchConfig = {
                         pageIndex: 0,
-                        sortOption: _.find(cm.sortOptions, {field: prefixes.dcterms + 'title', ascending: true}),
+                        sortOption: _.find(cm.sortOptions, {field: prefixes.dcterms + 'title', asc: true}),
                         recordType: prefixes.ontologyEditor + 'OntologyRecord',
                         limit: 10,
                         searchText: ''
@@ -132,10 +131,10 @@
                     }
                     // Begin Initialization...
                     dvm.getOntologies();
-                    
-                    if (ds.selectedDataset) {
+
+                    if (state.selectedDataset) {
                         dvm.selectedOntologies = [];
-                        var selectedOntologies = _.map(ds.selectedDataset.identifiers, 
+                        var selectedOntologies = _.map(state.selectedDataset.identifiers,
                                 identifier => dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
                         _.forEach(selectedOntologies, id => {
                             var ontology = _.find(dvm.ontologies, {'@id': id});

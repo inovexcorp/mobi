@@ -21,12 +21,7 @@
  * #L%
  */
 describe('Entity Publisher directive', function() {
-    var $compile,
-        scope,
-        userManagerSvc,
-        utilSvc,
-        $q,
-        controller;
+    var $compile, scope, element, isolatedScope, controller, $q, userManagerSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
@@ -43,16 +38,15 @@ describe('Entity Publisher directive', function() {
         });
 
         scope.entity = {};
-        this.element = $compile(angular.element('<entity-publisher entity="entity"></entity-publisher>'))(scope);
+        element = $compile(angular.element('<entity-publisher entity="entity"></entity-publisher>'))(scope);
         scope.$digest();
+        isolatedScope = element.isolateScope();
+        controller = element.controller('entityPublisher');
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            this.isolatedScope = this.element.isolateScope();
-        });
         it('entity should be one way bound', function() {
-            this.isolatedScope.entity = {a: 'b'};
+            isolatedScope.entity = {a: 'b'};
             scope.$digest();
             expect(scope.entity).toEqual({});
         });
@@ -65,11 +59,10 @@ describe('Entity Publisher directive', function() {
             beforeEach(function() {
                 this.iri = 'iri';
                 utilSvc.getDctermsId.and.returnValue(this.iri);
-                controller = this.element.controller('entityPublisher');
             });
             it('unless an error occurs', function() {
                 userManagerSvc.getUsername.and.returnValue($q.reject('Error message'));
-                this.element = $compile(angular.element('<entity-publisher entity="entity"></entity-publisher>'))(scope);
+                element = $compile(angular.element('<entity-publisher entity="entity"></entity-publisher>'))(scope);
                 scope.$apply();
                 expect(userManagerSvc.getUsername).toHaveBeenCalledWith(this.iri);
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
@@ -77,7 +70,7 @@ describe('Entity Publisher directive', function() {
             });
             it('successfully', function() {
                 userManagerSvc.getUsername.and.returnValue($q.when('username'));
-                this.element = $compile(angular.element('<entity-publisher entity="entity"></entity-publisher>'))(scope);
+                element = $compile(angular.element('<entity-publisher entity="entity"></entity-publisher>'))(scope);
                 scope.$apply();
                 expect(userManagerSvc.getUsername).toHaveBeenCalledWith(this.iri);
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
@@ -87,7 +80,6 @@ describe('Entity Publisher directive', function() {
     });
     describe('should update when', function() {
         it('the publisher changes', function() {
-            controller = this.element.controller('entityPublisher');
             var iri = 'iri';
             scope.entity.test = true;
             utilSvc.getDctermsId.and.callFake(function(obj) {
@@ -100,17 +92,14 @@ describe('Entity Publisher directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            controller = this.element.controller('entityPublisher');
-        });
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('entity-publisher')).toBe(true);
-            expect(this.element.querySelectorAll('.field-name').length).toBe(1);
+            expect(element.hasClass('entity-publisher')).toBe(true);
+            expect(element.querySelectorAll('.field-name').length).toBe(1);
         });
         it('with the entity publisher username', function() {
             controller.username = 'username';
             scope.$digest();
-            expect(this.element.html()).toContain(controller.username);
+            expect(element.html()).toContain(controller.username);
         });
     });
 });

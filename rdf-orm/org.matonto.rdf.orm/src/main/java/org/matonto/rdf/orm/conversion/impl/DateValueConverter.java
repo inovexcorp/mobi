@@ -30,10 +30,10 @@ import org.matonto.rdf.orm.conversion.AbstractValueConverter;
 import org.matonto.rdf.orm.conversion.ValueConversionException;
 import org.matonto.rdf.orm.conversion.ValueConverter;
 
-import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 
 /**
  * {@link ValueConverter} for creating {@link Date} objects from statements.
@@ -56,12 +56,12 @@ public class DateValueConverter extends AbstractValueConverter<Date> {
      * {@inheritDoc}
      */
     @Override
-    public Date convertValue(final Value value, final Thing thing, final Class<? extends Date> desiredType)
-            throws ValueConversionException {
+    public Date convertValue(final Value value, final Thing thing,
+            final Class<? extends Date> desiredType) throws ValueConversionException {
         try {
             // Use the standard XMLGregorianCalendar object.
-            return DatatypeFactory.newInstance().newXMLGregorianCalendar(value.stringValue()).toGregorianCalendar()
-                    .getTime();
+            return DatatypeFactory.newInstance().newXMLGregorianCalendar(value.stringValue()).toGregorianCalendar().
+                    getTime();
         } catch (DatatypeConfigurationException e) {
             throw new ValueConversionException("Environment issue: Cannot instantiate XML Gregorian Calendar data.", e);
         } catch (IllegalArgumentException e) {

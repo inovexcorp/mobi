@@ -459,6 +459,8 @@ function mockPrefixes() {
             this.xsd = 'xsd:';
             this.ontologyEditor = 'ontEdit:';
             this.dataset = 'dataset:';
+            this.matprov = 'matprov:';
+            this.prov = 'prov:';
             this.analytic = 'analytic:';
         });
     });
@@ -1157,7 +1159,6 @@ function mockAnalyticState() {
         });
     });
 }
-
 function mockAnalyticManager() {
     module(function($provide) {
         $provide.service('analyticManagerService', function($q) {
@@ -1165,6 +1166,15 @@ function mockAnalyticManager() {
             this.initialize = jasmine.createSpy('initialize').and.returnValue($q.when());
             this.getConfigurationTypes = jasmine.createSpy('getConfigurationTypes').and.returnValue($q.when([]));
             this.createAnalytic = jasmine.createSpy('createAnalytic').and.returnValue($q.when(''));
+        });
+    });
+}
+
+function mockProvManager() {
+    module(function($provide) {
+        $provide.service('provManagerService', function($q) {
+            this.activityTypes = [];
+            this.getActivities = jasmine.createSpy('getActivities').and.returnValue($q.when({}));
         });
     });
 }
