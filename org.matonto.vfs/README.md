@@ -8,8 +8,8 @@ easily allow the development of a distributed framework of services that
 can act upon a shared set of files without requiring developers to build
 the same file reading/writing code over and over again.
 
-##Basic Implementation
-The org.matonto.vfs.basic package exported by this bundle will provide
+##Simple Implementation
+The org.matonto.vfs.impl.commons package exported by this bundle will provide
 a basic implementation of the VFS API built on top of the Apache 
 Commons VFS library.  
 
