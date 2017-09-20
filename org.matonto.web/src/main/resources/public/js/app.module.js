@@ -72,6 +72,8 @@
             'confirmationOverlay',
             'customHeader',
             'customLabel',
+            'dragMe',
+            'dropOnMe',
             'emailInput',
             'entityDates',
             'entityDescription',
@@ -99,6 +101,8 @@
             'valueDisplay',
 
             /* Custom Modules */
+            'analytics',
+            'activityLog',
             'catalog',
             'datasets',
             'discover',
@@ -112,6 +116,7 @@
             'webtop',
 
             /* Custom Services */
+            'analyticState',
             'catalogManager',
             'catalogState',
             'datasetManager',
@@ -127,6 +132,7 @@
             'ontologyState',
             'prefixes',
             'propertyManager',
+            'provManager',
             'responseObj',
             'settingsManager',
             'sparqlManager',

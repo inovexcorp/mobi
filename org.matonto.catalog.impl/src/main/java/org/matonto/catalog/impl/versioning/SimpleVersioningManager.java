@@ -103,9 +103,7 @@ public class SimpleVersioningManager implements VersioningManager {
 
     @Override
     public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message) {
-        Repository repository = repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
-                new IllegalStateException("Catalog repository unavailable"));
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = getCatalogRepoConnection()) {
             OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
             VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
             VersioningService<VersionedRDFRecord> service =
@@ -125,9 +123,7 @@ public class SimpleVersioningManager implements VersioningManager {
     @Override
     public Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message,
                            Model additions, Model deletions) {
-        Repository repository = repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
-                new IllegalStateException("Catalog repository unavailable"));
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = getCatalogRepoConnection()) {
             OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
             VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
             VersioningService<VersionedRDFRecord> service =
@@ -144,9 +140,7 @@ public class SimpleVersioningManager implements VersioningManager {
     @Override
     public Resource merge(Resource catalogId, Resource recordId, Resource sourceBranchId, Resource targetBranchId,
                           User user, Model additions, Model deletions) {
-        Repository repository = repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
-                new IllegalStateException("Catalog repository unavailable"));
-        try (RepositoryConnection conn = repository.getConnection()) {
+        try (RepositoryConnection conn = getCatalogRepoConnection()) {
             OrmFactory<? extends VersionedRDFRecord> correctFactory = getFactory(recordId, conn);
             VersionedRDFRecord record = catalogUtils.getRecord(catalogId, recordId, correctFactory, conn);
             VersioningService<VersionedRDFRecord> service =
@@ -207,5 +201,10 @@ public class SimpleVersioningManager implements VersioningManager {
         }
 
         throw new IllegalArgumentException("No known factories for this record type.");
+    }
+
+    private RepositoryConnection getCatalogRepoConnection() {
+        return repositoryManager.getRepository(catalogManager.getRepositoryId()).orElseThrow(() ->
+                new IllegalStateException("Catalog repository unavailable")).getConnection();
     }
 }
