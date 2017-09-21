@@ -272,6 +272,7 @@ public class CatalogProvUtilsImplTest {
         assertTrue(deleteActivity.getModel().contains(deleteActivity.getResource(), vf.createIRI(Activity.endedAtTime_IRI), null));
         assertEquals(1, deleteActivity.getInvalidated().size());
         Entity resultEntity = deleteActivity.getInvalidated().iterator().next();
+        assertTrue(resultEntity.getModel().contains(resultEntity.getResource(), vf.createIRI(Entity.invalidatedAtTime_IRI), null));
         assertTrue(resultEntity.getModel().contains(resultEntity.getResource(), vf.createIRI(_Thing.title_IRI), vf.createLiteral("Test Record")));
     }
 
