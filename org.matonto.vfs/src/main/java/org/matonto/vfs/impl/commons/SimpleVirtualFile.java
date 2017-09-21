@@ -184,6 +184,7 @@ public class SimpleVirtualFile implements VirtualFile {
         }
     }
 
+    @Override
     public Collection<VirtualFile> getChildren() throws VirtualFilesystemException {
         try {
             final FileObject[] children = this.file.getChildren();
