@@ -27,8 +27,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.util.Collection;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
@@ -64,4 +62,21 @@ public interface VirtualFile extends AutoCloseable {
 
     void createFolder() throws VirtualFilesystemException;
 
+    /**
+     * Determines the size of the file, in bytes.
+     *
+     * @return The size of the file, in bytes.
+     * @throws VirtualFilesystemException If the file does not exist, or is being written to, or on error
+     *                                    determining the size.
+     */
+    long getSize() throws VirtualFilesystemException;
+
+    /**
+     * Determines the last-modified timestamp of the file.
+     *
+     * @return The last-modified timestamp.
+     * @throws VirtualFilesystemException If the file does not exist, or is being written to, or on error
+     *                                    determining the last-modified timestamp.
+     */
+    long getLastModifiedTime() throws VirtualFilesystemException;
 }

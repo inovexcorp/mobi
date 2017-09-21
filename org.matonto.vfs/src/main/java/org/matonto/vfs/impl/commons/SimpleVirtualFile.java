@@ -121,24 +121,6 @@ public class SimpleVirtualFile implements VirtualFile {
         return getChildren().stream();
     }
 
-    public Collection<VirtualFile> getChildren() throws VirtualFilesystemException {
-        try {
-            final FileObject[] children = this.file.getChildren();
-            return (children != null ?
-                    // Return translated list.
-                    Arrays.stream(children)
-                            // Convert to SimpleVirtualFile.
-                            .map(SimpleVirtualFile::new)
-                            // Collect into a list.
-                            .collect(Collectors.toList())
-                    // Else an empty list.
-                    : Collections.EMPTY_LIST);
-        } catch (FileSystemException e) {
-            throw new VirtualFilesystemException(e);
-        }
-    }
-
-
     @Override
     public boolean delete() throws VirtualFilesystemException {
         try {
@@ -175,14 +157,47 @@ public class SimpleVirtualFile implements VirtualFile {
         }
     }
 
-
     @Override
     public void close() throws VirtualFilesystemException {
         try {
             this.file.close();
-        } catch (Exception e) {
+        } catch (FileSystemException e) {
             throw new VirtualFilesystemException(e);
         }
     }
 
+    @Override
+    public long getSize() throws VirtualFilesystemException {
+        try {
+            return this.file.getContent().getSize();
+        } catch (FileSystemException e) {
+            throw new VirtualFilesystemException(e);
+        }
+    }
+
+    @Override
+    public long getLastModifiedTime() throws VirtualFilesystemException {
+        try {
+            return this.file.getContent().getLastModifiedTime();
+        } catch (FileSystemException e) {
+            throw new VirtualFilesystemException(e);
+        }
+    }
+
+    public Collection<VirtualFile> getChildren() throws VirtualFilesystemException {
+        try {
+            final FileObject[] children = this.file.getChildren();
+            return (children != null ?
+                    // Return translated list.
+                    Arrays.stream(children)
+                            // Convert to SimpleVirtualFile.
+                            .map(SimpleVirtualFile::new)
+                            // Collect into a list.
+                            .collect(Collectors.toList())
+                    // Else an empty list.
+                    : Collections.EMPTY_LIST);
+        } catch (FileSystemException e) {
+            throw new VirtualFilesystemException(e);
+        }
+    }
 }
