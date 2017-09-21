@@ -67,9 +67,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -682,7 +682,7 @@ public class SourceGenerator {
             } else if (rangeIri.equals(XMLSchema.BYTE)) {
                 return codeModel.ref(Byte.class);
             } else if (rangeIri.equals(XMLSchema.DATE) || rangeIri.equals(XMLSchema.DATETIME)) {
-                return codeModel.ref(Date.class);
+                return codeModel.ref(OffsetDateTime.class);
             } else if (rangeIri.equals(XMLSchema.FLOAT)) {
                 return codeModel.ref(Float.class);
             } else if (rangeIri.equals(XMLSchema.DOUBLE)) {
