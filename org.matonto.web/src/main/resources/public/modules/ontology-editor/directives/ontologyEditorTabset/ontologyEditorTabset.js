@@ -58,11 +58,7 @@
                     }
                     
                     $scope.$watch('dvm.os.listItem', () => {
-                        if (dvm.os.listItem) {
-                            dvm.newTabActive = !(_.some(dvm.os.listItem.editorTabStates, 'active'));
-                        } else {
-                            dvm.newTabActive = true;
-                        }
+                        dvm.newTabActive = !dvm.os.listItem.ontologyState.active;
                     });
                 }]
             }
