@@ -57,7 +57,6 @@ public class TestDefaultVirtualFilesystem extends TestCase {
 
     private static SimpleVirtualFilesystem fs;
 
-
     @BeforeClass
     public static void initializeUri() throws Exception {
         testFile = TestDefaultVirtualFilesystem.class.getResource("/test.txt").toURI();
@@ -183,7 +182,6 @@ public class TestDefaultVirtualFilesystem extends TestCase {
         }
     }
 
-
     @Test
     public void testZip() {
         try {
@@ -195,6 +193,4 @@ public class TestDefaultVirtualFilesystem extends TestCase {
             fail(e.getMessage());
         }
     }
-
-
 }
