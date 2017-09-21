@@ -116,9 +116,7 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
 
     @Override
     public void endCreateActivity(CreateActivity createActivity, Resource recordIRI) {
-        OffsetDateTime stop = OffsetDateTime.now();
         Entity recordEntity = entityFactory.createNew(recordIRI, createActivity.getModel());
-        recordEntity.addProperty(vf.createLiteral(stop), vf.createIRI(Entity.generatedAtTime_IRI));
         recordEntity.addProperty(vf.createLiteral(catalogManager.getRepositoryId()), vf.createIRI(atLocation));
         createActivity.addGenerated(recordEntity);
         finalizeActivity(createActivity);
@@ -163,7 +161,7 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
         OffsetDateTime start = OffsetDateTime.now();
 
         Activity activity = provenanceService.createActivity(config);
-        activity.addProperty(vf.createLiteral(start), vf.createIRI(Activity.startedAtTime_IRI));
+        activity.addStartedAtTime(start);
         activity.addProperty(vf.createLiteral(matOnto.getServerIdentifier().toString()), vf.createIRI(atLocation));
 
         return activity;
@@ -171,6 +169,6 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
 
     private void finalizeActivity(Activity activity) {
         OffsetDateTime stop = OffsetDateTime.now();
-        activity.addProperty(vf.createLiteral(stop), vf.createIRI(Activity.endedAtTime_IRI));
+        activity.addEndedAtTime(stop);
     }
 }
