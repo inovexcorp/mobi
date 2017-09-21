@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collection;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
  * Abstract class providing some shared features on the {@link VirtualFilesystem} API.
@@ -83,5 +84,4 @@ public abstract class VirtualFileUtilities {
             }
         });
     }
-
 }
