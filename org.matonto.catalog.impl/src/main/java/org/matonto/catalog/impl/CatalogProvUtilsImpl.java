@@ -116,9 +116,8 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
 
     @Override
     public void endCreateActivity(CreateActivity createActivity, Resource recordIRI) {
-        OffsetDateTime stop = OffsetDateTime.now();
         Entity recordEntity = entityFactory.createNew(recordIRI, createActivity.getModel());
-        recordEntity.addProperty(vf.createLiteral(stop), vf.createIRI(Entity.generatedAtTime_IRI));
+        recordEntity.addGeneratedAtTime(OffsetDateTime.now());
         recordEntity.addProperty(vf.createLiteral(catalogManager.getRepositoryId()), vf.createIRI(atLocation));
         createActivity.addGenerated(recordEntity);
         finalizeActivity(createActivity);
@@ -142,7 +141,9 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
 
     @Override
     public void endDeleteActivity(DeleteActivity deleteActivity, Record record) {
-        Entity recordEntity = entityFactory.createNew(record.getResource(), deleteActivity.getModel());
+        Entity recordEntity = entityFactory.getExisting(record.getResource(), deleteActivity.getModel()).orElseThrow(()
+                -> new IllegalStateException("No Entity found for record."));;
+        recordEntity.addInvalidatedAtTime(OffsetDateTime.now());
 
         finalizeActivity(deleteActivity);
 
@@ -160,17 +161,14 @@ public class CatalogProvUtilsImpl implements CatalogProvUtils {
     }
 
     private Activity initializeActivity(ActivityConfig config) {
-        OffsetDateTime start = OffsetDateTime.now();
-
         Activity activity = provenanceService.createActivity(config);
-        activity.addProperty(vf.createLiteral(start), vf.createIRI(Activity.startedAtTime_IRI));
+        activity.addStartedAtTime(OffsetDateTime.now());
         activity.addProperty(vf.createLiteral(matOnto.getServerIdentifier().toString()), vf.createIRI(atLocation));
 
         return activity;
     }
 
     private void finalizeActivity(Activity activity) {
-        OffsetDateTime stop = OffsetDateTime.now();
-        activity.addProperty(vf.createLiteral(stop), vf.createIRI(Activity.endedAtTime_IRI));
+        activity.addEndedAtTime(OffsetDateTime.now());
     }
 }
