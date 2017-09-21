@@ -211,6 +211,9 @@
                         <feature>aries-blueprint</feature>
                         <feature>wrap</feature>
                         <feature>service-wrapper</feature>
+                        <feature>transaction-api</feature>
+                        <feature>transaction</feature>
+                        <feature>eclipselink</feature>
 
                         <!-- Additional Features -->
                         <feature>http</feature>

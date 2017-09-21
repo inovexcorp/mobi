@@ -53,10 +53,10 @@
     rdfs:label "Row"@en;
     rdfs:comment "The type of thing in each row of the table analytic."@en;
     rdfs:domain :TableConfiguration;
-    rdfs:range owl:Class.
+    rdfs:range xsd:anyURI.
 
 :column a owl:ObjectProperty;
     rdfs:label "Column"@en;
     rdfs:comment "The property to display in each column of the table analytic."@en;
     rdfs:domain :TableConfiguration;
-    rdfs:range rdfs:Property.
+    rdfs:range xsd:anyURI.

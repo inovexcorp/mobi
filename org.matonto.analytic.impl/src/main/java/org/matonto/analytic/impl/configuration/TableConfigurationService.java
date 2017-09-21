@@ -37,14 +37,13 @@ import org.matonto.rdf.orm.impl.ThingFactory;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component(
         immediate = true,
         provide = { ConfigurationService.class, TableConfigurationService.class }
 )
 public class TableConfigurationService extends BaseConfigurationService<TableConfiguration> {
-    ThingFactory thingFactory;
-
     @Reference
     protected void setValueFactory(ValueFactory vf) {
         this.vf = vf;
@@ -60,11 +59,6 @@ public class TableConfigurationService extends BaseConfigurationService<TableCon
         this.datasetRecordFactory = datasetRecordFactory;
     }
 
-    @Reference
-    void setThingFactory(ThingFactory thingFactory) {
-        this.thingFactory = thingFactory;
-    }
-
     @Override
     public String getTypeIRI() {
         return TableConfiguration.TYPE;
@@ -74,14 +68,8 @@ public class TableConfigurationService extends BaseConfigurationService<TableCon
     public TableConfiguration create(String json) {
         TableDetails details = unmarshal(json, TableDetails.class);
         TableConfiguration configuration = super.create(json);
-        configuration.setRow(createThing(details.getRow()));
-        Set<Thing> columns = new HashSet<>(details.getColumns().size());
-        details.getColumns().forEach(column -> columns.add(createThing(column)));
-        configuration.setColumn(columns);
+        configuration.setRow(vf.createIRI(details.getRow()));
+        configuration.setColumn(details.getColumns().stream().map(vf::createIRI).collect(Collectors.toSet()));
         return configuration;
-    }
-
-    private Thing createThing(String iri) {
-        return thingFactory.createNew(vf.createIRI(iri));
     }
 }

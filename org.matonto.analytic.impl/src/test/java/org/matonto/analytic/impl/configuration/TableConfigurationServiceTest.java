@@ -61,7 +61,6 @@ public class TableConfigurationServiceTest {
     private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
     private TableConfigurationFactory tableConfigurationFactory = new TableConfigurationFactory();
     private DatasetRecordFactory datasetRecordFactory = new DatasetRecordFactory();
-    private ThingFactory thingFactory = new ThingFactory();
 
     private static final String DATASET = "https://matonto.org/test/datasets#1";
     private static final String ROW = "https://matonto.org/test/rows#1";
@@ -80,11 +79,6 @@ public class TableConfigurationServiceTest {
         datasetRecordFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(datasetRecordFactory);
 
-        thingFactory.setModelFactory(mf);
-        thingFactory.setValueFactory(vf);
-        thingFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(thingFactory);
-
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -99,7 +93,6 @@ public class TableConfigurationServiceTest {
         service.setTableConfigurationFactory(tableConfigurationFactory);
         service.setDatasetRecordFactory(datasetRecordFactory);
         service.setValueFactory(vf);
-        service.setThingFactory(thingFactory);
     }
 
     @Test

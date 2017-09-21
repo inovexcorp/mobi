@@ -69,14 +69,13 @@ describe('Save Analytic Overlay directive', function() {
         it('with a keyword-select', function() {
             expect(element.find('keyword-select').length).toBe(1);
         });
-        // it('depending on the validity of the form', function() {
-        //     var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
-        //     expect(button.attr('disabled')).toBeTruthy();
-        // 
-        //     analyticStateSvc.record.title = 'title';
-        //     scope.$digest();
-        //     expect(button.attr('disabled')).toBeFalsy();
-        // });
+        it('depending on the validity of the form', function() {
+            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
+            controller.config.title = 'title';
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
+        });
         it('with buttons to cancel and submit', function() {
             var buttons = element.querySelectorAll('.btn-container button');
             expect(buttons.length).toBe(2);
@@ -97,7 +96,7 @@ describe('Save Analytic Overlay directive', function() {
                 analyticStateSvc.datasets = [{id: 'datasetId'}];
                 analyticStateSvc.selectedClass = {id: 'classId'};
                 analyticStateSvc.selectedProperties = [{id: 'propId1'}, {id: 'propId2'}];
-                analyticStateSvc.record = {
+                controller.config = {
                     title: 'title',
                     description: 'description',
                     keywords: ['keyword1', 'keyword2']
@@ -107,11 +106,11 @@ describe('Save Analytic Overlay directive', function() {
                     description: 'description',
                     keywords: ['keyword1', 'keyword2'],
                     type: prefixes.analytic + 'TableConfiguration',
-                    json: {
+                    json: JSON.stringify({
                         datasetRecordId: 'datasetId',
                         row: 'classId',
                         columns: ['propId1', 'propId2']
-                    }
+                    })
                 };
             });
             it('resolves', function() {

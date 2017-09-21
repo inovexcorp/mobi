@@ -4,7 +4,7 @@ package org.matonto.analytic.api.jaxb;
 
 /*-
  * #%L
- * org.matonto.catalog.api
+ * org.matonto.analytic.api
  * $Id:$
  * $HeadURL:$
  * %%

@@ -406,7 +406,21 @@
                     self.results = undefined;
                 }
             }
-            
+
+            /**
+             * @ngdoc method
+             * @name isSaveable
+             * @methodOf analyticState.service:analyticStateService
+             *
+             * @description
+             * Checks to see if the analytic state is saveable.
+             *
+             * @returns {boolean} True if the state is saveable; otherwise, false.
+             */
+            self.isSaveable = function() {
+                return self.selectedClass && self.selectedProperties.length;
+            }
+
             /**
              * @ngdoc method
              * @name createQueryString

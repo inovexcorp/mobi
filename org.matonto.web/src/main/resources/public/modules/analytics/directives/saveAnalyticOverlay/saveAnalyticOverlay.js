@@ -65,6 +65,7 @@
                     var manager = analyticManagerService;
                     var state = analyticStateService;
                     dvm.error = '';
+                    dvm.config = {};
                     
                     dvm.cancel = function() {
                         state.record = {};
@@ -72,17 +73,15 @@
                     }
                     
                     dvm.submit = function() {
-                        var config = angular.copy(state.record);
-                        config.type = prefixes.analytic + 'TableConfiguration';
-                        config.json = {
+                        dvm.config.type = prefixes.analytic + 'TableConfiguration';
+                        dvm.config.json = JSON.stringify({
                             datasetRecordId: state.datasets[0].id,
                             row: state.selectedClass.id,
                             columns: _.map(state.selectedProperties, 'id')
-                        };
-                        manager.createAnalytic(config)
+                        });
+                        manager.createAnalytic(dvm.config)
                             .then(analyticRecordId => {
                                 dvm.close();
-                                state.record = {};
                                 state.showLanding();
                             }, errorMessage => dvm.error = errorMessage);
                     }

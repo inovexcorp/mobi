@@ -109,6 +109,7 @@ public class SimpleAnalyticManager implements AnalyticManager {
     public AnalyticRecord createAnalytic(AnalyticRecordConfig config) {
         AnalyticRecord record = catalogManager.createRecord(config, analyticRecordFactory);
         record.setHasConfig(config.getConfiguration());
+        record.getModel().addAll(config.getConfiguration().getModel());
         catalogManager.addRecord(catalogManager.getLocalCatalogIRI(), record);
         return record;
     }

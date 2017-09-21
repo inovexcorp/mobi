@@ -26,10 +26,10 @@
         <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
         <div class="form-group">
             <custom-label>Title</custom-label>
-            <input class="form-control" type="text" name="title" ng-model="dvm.state.record.title" required focus-me>
+            <input class="form-control" type="text" name="title" ng-model="dvm.config.title" required focus-me>
         </div>
-        <text-area ng-model="dvm.state.record.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
-        <keyword-select ng-model="dvm.state.record.keywords"></keyword-select>
+        <text-area ng-model="dvm.config.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
+        <keyword-select ng-model="dvm.config.keywords"></keyword-select>
         <div class="btn-container">
             <button type="submit" class="btn btn-primary pull-right" ng-click="dvm.submit()" ng-disabled="dvm.form.$invalid">Submit</button>
             <button class="btn btn-default pull-right" ng-click="dvm.cancel()">Cancel</button>
