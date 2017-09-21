@@ -155,6 +155,7 @@ public interface CatalogRest {
      * Deletes a Record from the repository. Returns a Response which indicates whether or not the requested Record was
      * deleted.
      *
+     * @param context The context of the request
      * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId The String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
@@ -166,7 +167,8 @@ public interface CatalogRest {
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
     @ApiOperation("Deletes the Catalog Record by its ID.")
-    Response deleteRecord(@PathParam("catalogId") String catalogId,
+    Response deleteRecord(@Context ContainerRequestContext context,
+                          @PathParam("catalogId") String catalogId,
                           @PathParam("recordId") String recordId);
 
     /**

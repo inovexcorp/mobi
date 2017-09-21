@@ -697,8 +697,15 @@ public class SimpleCatalogManagerTest {
 
     @Test
     public void testRemoveRecord() throws Exception {
-        manager.removeRecord(distributedCatalogId, RECORD_IRI);
-        verify(utilsService).getRecord(eq(distributedCatalogId), eq(RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
+        // Setup:
+        Record record = unversionedRecordFactory.createNew(RECORD_IRI);
+        record.setCatalog(catalogFactory.createNew(distributedCatalogId));
+        doReturn(Optional.of(record)).when(utilsService).optObject(eq(RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
+
+        Record result = manager.removeRecord(distributedCatalogId, RECORD_IRI, recordFactory);
+        assertEquals(record, result);
+        verify(utilsService).optObject(eq(RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
+        verify(utilsService).optObject(eq(RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
         verify(utilsService).removeObject(any(Record.class), any(RepositoryConnection.class));
     }
 
@@ -706,11 +713,13 @@ public class SimpleCatalogManagerTest {
     public void testRemoveUnversionedRecord() throws Exception {
         // Setup:
         UnversionedRecord record = unversionedRecordFactory.createNew(UNVERSIONED_RECORD_IRI);
+        record.setCatalog(catalogFactory.createNew(distributedCatalogId));
         Distribution dist = distributionFactory.createNew(DISTRIBUTION_IRI);
         record.setUnversionedDistribution(Collections.singleton(dist));
-        doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(UNVERSIONED_RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
+        doReturn(Optional.of(record)).when(utilsService).optObject(eq(UNVERSIONED_RECORD_IRI), eq(unversionedRecordFactory), any(RepositoryConnection.class));
 
-        manager.removeRecord(distributedCatalogId, UNVERSIONED_RECORD_IRI);
+        Record result = manager.removeRecord(distributedCatalogId, UNVERSIONED_RECORD_IRI, unversionedRecordFactory);
+        assertEquals(record, result);
         record.getUnversionedDistribution_resource().forEach(resource -> verify(utilsService).remove(eq(resource), any(RepositoryConnection.class)));
         verify(utilsService).removeObject(any(UnversionedRecord.class), any(RepositoryConnection.class));
     }
@@ -719,15 +728,17 @@ public class SimpleCatalogManagerTest {
     public void testRemoveVersionedRecord() throws Exception {
         // Setup:
         VersionedRecord record = versionedRecordFactory.createNew(VERSIONED_RECORD_IRI);
+        record.setCatalog(catalogFactory.createNew(distributedCatalogId));
         Version version = versionFactory.createNew(VERSION_IRI);
         record.setVersion(Collections.singleton(version));
         record.setLatestVersion(version);
         Distribution dist = distributionFactory.createNew(DISTRIBUTION_IRI);
         version.setVersionedDistribution(Collections.singleton(dist));
-        doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
+        doReturn(Optional.of(record)).when(utilsService).optObject(eq(VERSIONED_RECORD_IRI), eq(versionedRecordFactory), any(RepositoryConnection.class));
         doReturn(version).when(utilsService).getObject(eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
 
-        manager.removeRecord(distributedCatalogId, VERSIONED_RECORD_IRI);
+        Record result = manager.removeRecord(distributedCatalogId, VERSIONED_RECORD_IRI, versionedRecordFactory);
+        assertEquals(record, result);
         verify(utilsService).getObject(eq(VERSION_IRI), eq(versionFactory), any(RepositoryConnection.class));
         verify(utilsService).remove(eq(VERSION_IRI), any(RepositoryConnection.class));
         verify(utilsService).remove(eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));
@@ -737,6 +748,7 @@ public class SimpleCatalogManagerTest {
     public void testRemoveVersionedRDFRecord() throws Exception {
         // Setup:
         VersionedRDFRecord record = versionedRDFRecordFactory.createNew(VERSIONED_RDF_RECORD_IRI);
+        record.setCatalog(catalogFactory.createNew(distributedCatalogId));
         Tag tag = tagFactory.createNew(TAG_IRI);
         Distribution dist = distributionFactory.createNew(DISTRIBUTION_IRI);
         Branch branch = branchFactory.createNew(MASTER_BRANCH_IRI);
@@ -745,11 +757,12 @@ public class SimpleCatalogManagerTest {
         record.setLatestVersion(tag);
         record.setBranch(Collections.singleton(branch));
         record.setMasterBranch(branch);
-        doReturn(record).when(utilsService).getRecord(eq(distributedCatalogId), eq(VERSIONED_RDF_RECORD_IRI), eq(recordFactory), any(RepositoryConnection.class));
+        doReturn(Optional.of(record)).when(utilsService).optObject(eq(VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
         doReturn(tag).when(utilsService).getObject(eq(TAG_IRI), eq(versionFactory), any(RepositoryConnection.class));
         doReturn(branch).when(utilsService).getObject(eq(BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
 
-        manager.removeRecord(distributedCatalogId, VERSIONED_RDF_RECORD_IRI);
+        Record result = manager.removeRecord(distributedCatalogId, VERSIONED_RDF_RECORD_IRI, versionedRDFRecordFactory);
+        assertEquals(record, result);
         verify(utilsService).getObject(eq(TAG_IRI), eq(versionFactory), any(RepositoryConnection.class));
         verify(utilsService).remove(eq(TAG_IRI), any(RepositoryConnection.class));
         verify(utilsService).remove(eq(DISTRIBUTION_IRI), any(RepositoryConnection.class));

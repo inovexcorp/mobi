@@ -65,6 +65,7 @@ import org.matonto.ontologies.provo.InstantaneousEvent;
 import org.matonto.persistence.utils.api.BNodeService;
 import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivity;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Literal;
 import org.matonto.rdf.api.Model;
@@ -308,13 +309,21 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
-    public Response deleteRecord(String catalogId, String recordId) {
+    public Response deleteRecord(ContainerRequestContext context, String catalogId, String recordId) {
+        User activeUser = getActiveUser(context, engineManager);
+        IRI recordIri = vf.createIRI(recordId);
+        DeleteActivity deleteActivity = null;
         try {
-            catalogManager.removeRecord(vf.createIRI(catalogId), vf.createIRI(recordId));
+            deleteActivity = provUtils.startDeleteActivity(activeUser, recordIri);
+            Record record = catalogManager.removeRecord(vf.createIRI(catalogId), recordIri,
+                    factoryRegistry.getFactoryOfType(Record.class).get());
+            provUtils.endDeleteActivity(deleteActivity, record);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
+            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MatOntoException ex) {
+            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
