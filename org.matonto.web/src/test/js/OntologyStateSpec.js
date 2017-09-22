@@ -743,6 +743,9 @@ describe('Ontology State Service', function() {
                 beforeEach(function() {
                     getDeferred.resolve(getResponse);
                     ontologyManagerSvc.getOntologyIRI.and.returnValue(ontologyId);
+                    spyOn(ontologyStateSvc, 'setSelected');
+                    spyOn(ontologyStateSvc, 'getActiveEntityIRI').and.returnValue('entityId');
+                    spyOn(ontologyStateSvc, 'setPageTitle');
                 });
                 describe('and type is "ontology"', function() {
                     var addDeferred;
@@ -751,6 +754,7 @@ describe('Ontology State Service', function() {
                         spyOn(ontologyStateSvc, 'addOntologyToList').and.returnValue(addDeferred.promise);
                     });
                     it('and addOntologyToList resolves', function() {
+                        listItem.ontologyRecord.type = 'ontology';
                         addDeferred.resolve(listItem);
                         ontologyStateSvc.uploadThenGet({}, title, description, keywords, ontologyType)
                             .then(function(response) {
@@ -758,6 +762,9 @@ describe('Ontology State Service', function() {
                                 expect(ontologyStateSvc.addOntologyToList).toHaveBeenCalledWith(ontologyId, recordId,
                                     branchId, commitId, ontology, inProgressCommit, title);
                                 expect(response).toEqual(recordId);
+                                expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith('entityId', false);
+                                expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+                                expect(ontologyStateSvc.setPageTitle).toHaveBeenCalledWith('ontology');
                             }, function() {
                                 fail('Promise should have resolved');
                             });
@@ -783,12 +790,16 @@ describe('Ontology State Service', function() {
                         spyOn(ontologyStateSvc, 'addVocabularyToList').and.returnValue(addDeferred.promise);
                     });
                     it('and addOntologyToList resolves', function() {
+                        listItem.ontologyRecord.type = 'vocabulary';
                         addDeferred.resolve(listItem);
                         ontologyStateSvc.uploadThenGet({}, title, description, keywords, vocabularyType)
                             .then(function(response) {
                                 expect(ontologyStateSvc.addVocabularyToList).toHaveBeenCalledWith(ontologyId,
                                     recordId, branchId, commitId, ontology, inProgressCommit, title);
                                 expect(response).toEqual(recordId);
+                                expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith('entityId', false);
+                                expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+                                expect(ontologyStateSvc.setPageTitle).toHaveBeenCalledWith('vocabulary');
                             }, function() {
                                 fail('Promise should have resolved');
                             });

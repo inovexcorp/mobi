@@ -397,9 +397,10 @@
                             return self.addVocabularyToList(ontologyId, recordId, response.branchId, response.commitId, response.ontology, response.inProgressCommit, title);
                         }
                     }, $q.reject)
-                    .then(response => { 
+                    .then(response => {
                         self.listItem = response;
                         self.setSelected(self.getActiveEntityIRI(), false);
+                        self.setPageTitle(response.ontologyRecord.type);
                         return recordId; 
                     }, $q.reject);
             }
