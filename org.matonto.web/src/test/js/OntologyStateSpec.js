@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology State Service', function() {
-    var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc, $document, responseObj;
+    var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc, $document, responseObj, $state;
     var error = 'error';
     var format = 'jsonld';
     var title = 'title';
@@ -160,7 +160,17 @@ describe('Ontology State Service', function() {
             });
         });
 
-        inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_, _$document_, _responseObj_) {
+        module(function($provide) {
+            $provide.value('$state', function() {
+                this.current = {
+                    data: {
+                        title: 'title'
+                    }
+                };
+            });
+        });
+
+        inject(function(ontologyStateService, _updateRefsService_, _ontologyManagerService_, _catalogManagerService_, _$q_, _$rootScope_, _utilService_, _stateManagerService_, _prefixes_, _httpService_, _$document_, _responseObj_, _$state_) {
             ontologyStateSvc = ontologyStateService;
             updateRefsSvc = _updateRefsService_;
             ontologyManagerSvc = _ontologyManagerService_;
@@ -173,6 +183,7 @@ describe('Ontology State Service', function() {
             prefixes = _prefixes_;
             httpSvc = _httpService_;
             $document = _$document_;
+            $state = _$state_;
         });
 
         catalogManagerSvc.localCatalog = {'@id': catalogId};
@@ -934,6 +945,9 @@ describe('Ontology State Service', function() {
         beforeEach(function() {
             getDeferred = $q.defer();
             spyOn(ontologyStateSvc, 'getOntology').and.returnValue(getDeferred.promise);
+            spyOn(ontologyStateSvc, 'setSelected');
+            spyOn(ontologyStateSvc, 'getActiveEntityIRI').and.returnValue('entityId');
+            spyOn(ontologyStateSvc, 'setPageTitle');
         });
         describe('and getOntology resolves', function() {
             var branchDeferred;
@@ -954,6 +968,7 @@ describe('Ontology State Service', function() {
                         spyOn(ontologyStateSvc, 'addOntologyToList').and.returnValue(addDeferred.promise);
                     });
                     it('and addOntologyToList resolves', function() {
+                        listItem.ontologyRecord.type = 'ontology';
                         addDeferred.resolve(listItem);
                         ontologyStateSvc.openOntology(recordId, title, ontologyType)
                             .then(function(response) {
@@ -962,6 +977,9 @@ describe('Ontology State Service', function() {
                                 expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(ontology);
                                 expect(ontologyStateSvc.addOntologyToList).toHaveBeenCalledWith(ontologyId, recordId,
                                     branchId, commitId, ontology, inProgressCommit, title, true);
+                                expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+                                expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith('entityId', false);
+                                expect(ontologyStateSvc.setPageTitle).toHaveBeenCalledWith('ontology');
                                 expect(response).toEqual(ontologyId);
                             }, function() {
                                 fail('Promise should have resolved');
@@ -991,6 +1009,7 @@ describe('Ontology State Service', function() {
                         spyOn(ontologyStateSvc, 'addVocabularyToList').and.returnValue(addDeferred.promise);
                     });
                     it('and addVocabularyToList resolves', function() {
+                        listItem.ontologyRecord.type = 'vocabulary';
                         addDeferred.resolve(listItem);
                         ontologyStateSvc.openOntology(recordId, title, vocabularyType)
                             .then(function(response) {
@@ -998,6 +1017,9 @@ describe('Ontology State Service', function() {
                                     catalogId);
                                 expect(ontologyStateSvc.addVocabularyToList).toHaveBeenCalledWith(ontologyId,
                                     recordId, branchId, commitId, ontology, inProgressCommit, title, true);
+                                expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+                                expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith('entityId', false);
+                                expect(ontologyStateSvc.setPageTitle).toHaveBeenCalledWith('vocabulary');
                                 expect(response).toEqual(ontologyId);
                             }, function() {
                                 fail('Promise should have resolved');
@@ -1045,9 +1067,11 @@ describe('Ontology State Service', function() {
         });
     });
     it('closeOntology removes the correct object from the list', function() {
+        spyOn(ontologyStateSvc, 'setPageTitle');
         ontologyStateSvc.list = [{ontologyRecord: {recordId: recordId}}];
         ontologyStateSvc.closeOntology(recordId);
         expect(ontologyStateSvc.list).toEqual([]);
+        expect(ontologyStateSvc.setPageTitle).toHaveBeenCalled();
     });
     it('removeBranch removes the correct object from the branches list', function() {
         spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
@@ -1225,6 +1249,9 @@ describe('Ontology State Service', function() {
                 catalogManagerSvc.getRecordBranch.and.returnValue(getDeferred.promise);
                 uploadDeferred.resolve({ontologyId: ontologyId, recordId: recordId, branchId: branchId, commitId: commitId});
                 ontologyStateSvc.list = [];
+                spyOn(ontologyStateSvc, 'setSelected');
+                spyOn(ontologyStateSvc, 'getActiveEntityIRI').and.returnValue('entityId');
+                spyOn(ontologyStateSvc, 'setPageTitle');
             });
             it('and getRecordBranch resolves', function() {
                 getDeferred.resolve(branch);
@@ -1233,6 +1260,8 @@ describe('Ontology State Service', function() {
                         expect(response).toEqual({entityIRI: ontologyObj['@id'], recordId: recordId, branchId: branchId,
                             commitId: commitId});
                         expect(ontologyStateSvc.list.length).toBe(1);
+                        expect(ontologyStateSvc.setSelected).toHaveBeenCalledWith('entityId', false);
+                        expect(ontologyStateSvc.setPageTitle).toHaveBeenCalledWith('ontology');
                     }, function() {
                         fail('Promise should have resolved');
                     });
@@ -3196,6 +3225,16 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.hasInProgressCommit(listItem)).toBe(true);
             listItem.inProgressCommit = {additions: ['a'], deletions: ['b']};
             expect(ontologyStateSvc.hasInProgressCommit(listItem)).toBe(true);
+        });
+    });
+    describe('setPageTitle sets the variable to the correct value with the type is', function() {
+        it('ontology', function() {
+            ontologyStateSvc.setPageTitle('ontology');
+            expect($state.current.data.title).toBe('Ontology Editor');
+        });
+        it('vocabulary', function() {
+            ontologyStateSvc.setPageTitle('vocabulary');
+            expect($state.current.data.title).toBe('Vocabulary Editor');
         });
     });
 });

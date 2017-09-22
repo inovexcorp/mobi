@@ -36,6 +36,7 @@
          * @requires $q
          * @requires $filter
          * @requires $document
+         * @requires $state
          * @requires ontologyManager.service:ontologyManagerService
          * @requires updateRefs.service:updateRefsService
          * @requires stateManager.service:stateManagerService
@@ -46,9 +47,9 @@
          */
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$timeout', '$q', '$filter', '$document', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'httpService', 'responseObj'];
+        ontologyStateService.$inject = ['$timeout', '$q', '$filter', '$document', '$state', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'httpService', 'responseObj'];
 
-        function ontologyStateService($timeout, $q, $filter, $document, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, httpService, responseObj) {
+        function ontologyStateService($timeout, $q, $filter, $document, $state, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, httpService, responseObj) {
             var self = this;
             var om = ontologyManagerService;
             var sm = stateManagerService;
@@ -355,7 +356,8 @@
                         listItem.branches = [branch];
                         self.list.push(listItem);
                         self.listItem = listItem
-                        self.setSelected(self.getActiveEntityIRI(), self.getActiveKey() === 'project' ? false : getUsages);
+                        self.setSelected(self.getActiveEntityIRI(), false);
+                        self.setPageTitle(listItem.ontologyRecord.type);
                         return {
                             entityIRI: ontologyJson['@id'],
                             recordId: listItem.ontologyRecord.recordId,
@@ -972,9 +974,10 @@
                             return self.addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, recordTitle, upToDate);
                         }
                     }, $q.reject)
-                    .then(response => { 
+                    .then(response => {
                         self.listItem = response;
                         self.setSelected(self.getActiveEntityIRI(), false);
+                        self.setPageTitle(self.listItem.ontologyRecord.type);
                         return ontologyId; 
                     }, $q.reject);
             }
@@ -992,6 +995,7 @@
             self.closeOntology = function(recordId) {
                 if (self.listItem && self.listItem.ontologyRecord.recordId == recordId) {
                    self.listItem = undefined;
+                   self.setPageTitle();
                 }
                 _.remove(self.list, { ontologyRecord: { recordId }});
             }
@@ -1295,6 +1299,10 @@
                 return listItem.inProgressCommit !== undefined 
                         && ((listItem.inProgressCommit.additions !== undefined && listItem.inProgressCommit.additions.length > 0) 
                         || (listItem.inProgressCommit.deletions !== undefined && listItem.inProgressCommit.deletions.length > 0));
+            }
+
+            self.setPageTitle = function(type) {
+                _.set($state, 'current.data.title', type === 'vocabulary' ? 'Vocabulary Editor' : 'Ontology Editor');
             }
 
             /* Private helper functions */
