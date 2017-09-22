@@ -94,5 +94,19 @@ describe('Ontology Editor Tabset directive', function() {
                 expect(ontologyStateSvc.closeOntology).toHaveBeenCalledWith('B');
             });
         });
+        describe('onClick should set the listItem and page title correctly if recordId is', function() {
+            it('defined', function() {
+                ontologyStateSvc.getListItemByRecordId.and.returnValue({ontologyRecord: {type: 'type'}});
+                controller.onClick('recordId');
+                expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith('recordId');
+                expect(ontologyStateSvc.listItem).toEqual({ontologyRecord: {type: 'type'}});
+                expect(ontologyStateSvc.setPageTitle).toHaveBeenCalledWith('type');
+            });
+            it('undefined', function() {
+                controller.onClick(undefined);
+                expect(ontologyStateSvc.getListItemByRecordId).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.setPageTitle).toHaveBeenCalled();
+            });
+        });
     });
 });
