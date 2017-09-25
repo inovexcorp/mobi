@@ -67,32 +67,17 @@ describe('Analytics Landing Page directive', function() {
         it('with a .form-inline', function() {
             expect(element.querySelectorAll('.form-inline').length).toBe(1);
         });
-        it('with a .form-group', function() {
-            expect(element.querySelectorAll('.form-group').length).toBe(1);
-        });
-        it('with a .input-group', function() {
-            expect(element.querySelectorAll('.input-group').length).toBe(1);
-        });
         it('with a .form-control', function() {
             expect(element.querySelectorAll('.form-control').length).toBe(1);
         });
-        it('with a .input-group-btn', function() {
-            expect(element.querySelectorAll('.input-group-btn').length).toBe(1);
-        });
-        it('with a .btn-primary', function() {
-            expect(element.querySelectorAll('.btn-primary').length).toBe(1);
+        it('with .btn-primarys', function() {
+            expect(element.querySelectorAll('.btn-primary').length).toBe(2);
         });
         it('with a .row', function() {
             expect(element.querySelectorAll('.row').length).toBe(1);
         });
         it('with a .col-xs-8', function() {
             expect(element.querySelectorAll('.col-xs-8').length).toBe(1);
-        });
-        it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
-        });
-        it('with a block-header', function() {
-            expect(element.find('block-header').length).toBe(1);
         });
         it('with a block-content', function() {
             expect(element.find('block-content').length).toBe(1);
