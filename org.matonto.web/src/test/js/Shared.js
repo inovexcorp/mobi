@@ -681,6 +681,7 @@ function mockOntologyState() {
             this.isDerivedConcept = jasmine.createSpy('isDerivedConcept');
             this.isDerivedConceptScheme = jasmine.createSpy('isDerivedConceptScheme');
             this.hasInProgressCommit = jasmine.createSpy('hasInProgressCommit').and.returnValue(false);
+            this.setPageTitle = jasmine.createSpy('setPageTitle');
         });
     });
 }
