@@ -23,7 +23,6 @@ package org.matonto.analytic.api;
  * #L%
  */
 
-import net.sf.json.JSONObject;
 import org.matonto.analytic.api.builder.AnalyticRecordConfig;
 import org.matonto.analytic.ontologies.analytic.AnalyticRecord;
 import org.matonto.analytic.ontologies.analytic.Configuration;

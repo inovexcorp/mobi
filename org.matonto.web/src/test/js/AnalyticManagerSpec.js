@@ -43,12 +43,13 @@ describe('Analytic Manager service', function() {
     describe('should set the correct initial state when getConfigurationTypes', function() {
         it('resolves', function() {
             var types = ['type1', 'type2'];
-            spyOn(analyticManagerSvc, 'getConfigurationTypes').and.returnValue($q.when(this.types));
+            spyOn(analyticManagerSvc, 'getConfigurationTypes').and.returnValue($q.when(types));
             analyticManagerSvc.initialize().then(function(response) {
                 expect(analyticManagerSvc.configurationTypes).toEqual(types);
             }, function(response) {
                 fail('Promise should have resolved');
             });
+            scope.$apply();
         });
         it('rejects', function() {
             spyOn(analyticManagerSvc, 'getConfigurationTypes').and.returnValue($q.reject());
