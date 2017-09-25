@@ -66,12 +66,14 @@
                     dvm.records = [];
                     dvm.paging = {
                         current: 0,
-                        links: {},
+                        links: {
+                            next: '',
+                            prev: ''
+                        },
                         total: 0
                     };
                     dvm.config = {
                         limit: 50,
-                        pageIndex: 0,
                         recordType: prefixes.analytic + 'AnalyticRecord',
                         searchText: '',
                         sortOption: {
