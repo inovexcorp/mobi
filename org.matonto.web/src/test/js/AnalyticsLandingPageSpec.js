@@ -136,7 +136,7 @@ describe('Analytics Landing Page directive', function() {
             scope.$apply();
             expect(element.find('new-analytic-overlay').length).toBe(1);
         });
-        it('with a new-analytic-overlay', function() {
+        it('with a confirmation-overlay', function() {
             expect(element.find('confirmation-overlay').length).toBe(0);
             controller.showDeleteOverlay = true;
             scope.$apply();
@@ -227,23 +227,11 @@ describe('Analytics Landing Page directive', function() {
                                         {'@id': 'two', 'title': 'two'}, 
                                         {'@id': 'three', 'title': 'three'}];
             });
-            it('when passed an invalid index.', function() {
-                controller.showDeleteConfirmation(-3);
-                scope.$apply();
-                expect(utilSvc.createErrorToast).toHaveBeenCalledWith("Invalid record index: -3");
-                expect(controller.recordIndex).toEqual(-1);
-                expect(controller.showDeleteOverlay).toBe(false);
-
-                controller.showDeleteConfirmation(4);
-                scope.$apply();
-                expect(utilSvc.createErrorToast).toHaveBeenCalledWith("Invalid record index: 4");
-                expect(controller.recordIndex).toEqual(-1);
-                expect(controller.showDeleteOverlay).toBe(false);
-            }); 
             it('when passed a valid index.', function() {
                 controller.showDeleteConfirmation(2);
                 scope.$apply();
                 expect(controller.recordIndex).toEqual(2)
+                expect(controller.errorMessage).toBe('');
                 expect(controller.showDeleteOverlay).toBe(true);
             }); 
         });
@@ -260,8 +248,9 @@ describe('Analytics Landing Page directive', function() {
                 catalogManagerSvc.deleteRecord.and.returnValue($q.reject('error'));
                 controller.deleteRecord();
                 scope.$apply();
-                expect(utilSvc.createErrorToast).toHaveBeenCalled();
                 expect(controller.recordIndex).toEqual(3);
+                expect(controller.errorMessage).toBe('error');
+                expect(element.find('error-display').length).toBe(1);
                 expect(controller.showDeleteOverlay).toBe(true);
             }); 
             it('when record deletion succeeds.', function() {
@@ -271,6 +260,7 @@ describe('Analytics Landing Page directive', function() {
                 expect(catalogManagerSvc.deleteRecord).toHaveBeenCalledWith('three', 'catalogId');
                 expect(_.includes(controller.records, {'@id': 'three', 'title': 'three'})).toBe(false);
                 expect(controller.recordIndex).toEqual(-1);
+                expect(controller.errorMessage).toBeFalsy();
                 expect(controller.showDeleteOverlay).toBe(false);
             }); 
         });

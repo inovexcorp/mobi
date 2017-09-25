@@ -101,12 +101,9 @@
                     }
 
                     dvm.showDeleteConfirmation = function(index) {
-                        if (index >= 0 && index < dvm.records.length) {
-                            dvm.recordIndex = index;
-                            dvm.showDeleteOverlay = true;
-                        } else {
-                            dvm.util.createErrorToast("Invalid record index: " + index);
-                        }
+                        dvm.recordIndex = index;
+                        dvm.errorMessage = '';
+                        dvm.showDeleteOverlay = true;
                     }
 
                     dvm.deleteRecord = function() {
@@ -115,7 +112,7 @@
                                     _.pullAt(dvm.records, dvm.recordIndex);
                                     dvm.recordIndex = -1;
                                     dvm.showDeleteOverlay = false;
-                        }, dvm.util.createErrorToast);
+                                }, errorMessage => dvm.errorMessage = errorMessage);
                     }
                     
                     function setPagination(response) {

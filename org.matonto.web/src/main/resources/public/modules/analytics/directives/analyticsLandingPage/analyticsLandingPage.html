@@ -57,6 +57,7 @@
     </div>
     <new-analytic-overlay ng-if="dvm.showCreateOverlay" on-cancel="dvm.showCreateOverlay = false"></new-analytic-overlay>
     <confirmation-overlay ng-if="dvm.showDeleteOverlay" header-text="'Delete Analytic'" confirm-click="dvm.deleteRecord()" cancel-click="dvm.showDeleteOverlay = false" confirm-text="'Yes'" cancel-text="'No'">
+        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
         <p>Are you sure that you want to delete <strong>{{dvm.util.getDctermsValue(dvm.records[dvm.index], 'title')}}</strong>?</p>
     </confirmation-overlay>
 </div>
