@@ -37,13 +37,14 @@
     <div class="row">
         <div class="col-xs-8 col-xs-offset-2 full-height">
             <block>
-                <block-header>Analytics<a class="btn btn-link pull-right" ng-click="dvm.showOverlay = true"><i class="fa fa-fw fa-plus"></i>Create New</a></block-header>
+                <block-header>Analytics<a class="btn btn-link pull-right" ng-click="dvm.showCreateOverlay = true"><i class="fa fa-fw fa-plus"></i>Create New</a></block-header>
                 <block-content>
                     <info-message ng-if="!dvm.records.length" class="padding">No analytics found.</info-message>
                     <md-list>
                         <md-list-item ng-repeat="record in dvm.records track by record['@id']" class="analytic">
                             <p class="title">{{dvm.util.getDctermsValue(record, 'title')}}</p>
                             <p class="time">{{dvm.util.getDate(dvm.util.getDctermsValue(record, 'modified'), 'short')}}</p>
+                            <md-icon class="md-secondary fa fa-trash-o" ng-click="dvm.showDeleteConfirmation($index)"></md-icon>
                         </md-list-item>
                     </md-list>
                 </block-content>
@@ -54,5 +55,8 @@
             </block>
         </div>
     </div>
-    <new-analytic-overlay ng-if="dvm.showOverlay" on-cancel="dvm.showOverlay = false"></new-analytic-overlay>
+    <new-analytic-overlay ng-if="dvm.showCreateOverlay" on-cancel="dvm.showCreateOverlay = false"></new-analytic-overlay>
+    <confirmation-overlay ng-if="dvm.showDeleteOverlay" header-text="'Delete Analytic'" confirm-click="dvm.deleteRecord()" cancel-click="dvm.showDeleteOverlay = false" confirm-text="'Yes'" cancel-text="'No'">
+        <p>Are you sure that you want to delete <strong>{{dvm.util.getDctermsValue(dvm.records[dvm.index], 'title')}}</strong>?</p>
+    </confirmation-overlay>
 </div>
