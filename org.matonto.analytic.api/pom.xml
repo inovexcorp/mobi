@@ -46,12 +46,21 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
+            <artifactId>dataset.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
             <artifactId>rdf.orm</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.persistence</groupId>
+            <artifactId>org.eclipse.persistence.moxy</artifactId>
         </dependency>
     </dependencies>
 
@@ -99,6 +108,11 @@
                                     <ontologyFile>${project.basedir}/../org.matonto.catalog.api/src/main/resources/mcat.ttl</ontologyFile>
                                     <outputPackage>org.matonto.catalog.api.ontologies.mcat</outputPackage>
                                     <ontologyName>MCAT</ontologyName>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../org.matonto.dataset.api/src/main/resources/dataset.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.dataset.ontology.dataset</outputPackage>
+                                    <ontologyName>Dataset</ontologyName>
                                 </ontology>
                                 <ontology>
                                     <ontologyFile>${project.basedir}/../org.matonto.rdf.orm.ontologies/src/main/resources/prov-o.ttl</ontologyFile>

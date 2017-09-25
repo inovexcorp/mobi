@@ -26,12 +26,14 @@
     angular
         .module('analytics', [
             /* Custom Directives */
+            'analyticsButtonStack',
             'analyticsEditor',
             'analyticsEditorPage',
             'analyticsPageContent',
             'analyticsLandingPage',
             'classAndPropertyBlock',
             'newAnalyticOverlay',
+            'saveAnalyticOverlay',
             'sortableTable'
         ]);
 })();

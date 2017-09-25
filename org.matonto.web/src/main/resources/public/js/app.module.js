@@ -116,6 +116,7 @@
             'webtop',
 
             /* Custom Services */
+            'analyticManager',
             'analyticState',
             'catalogManager',
             'catalogState',

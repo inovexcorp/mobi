@@ -147,6 +147,21 @@ describe('Analytic State Service', function() {
             expect(analyticStateSvc.results).toBeUndefined();
         });
     });
+    describe('isSaveable returns the correct value when', function() {
+        it('selectedClass is defined and selectedProperties is empty', function() {
+            analyticStateSvc.selectedClass = {id: 'classId'};
+            expect(analyticStateSvc.isSaveable()).toBeFalsy();
+        });
+        it('selectedClass is undefined and selectedProperties is populated', function() {
+            analyticStateSvc.selectedProperties = [{id: 'propId'}];
+            expect(analyticStateSvc.isSaveable()).toBeFalsy();
+        });
+        it('selectedClass is defined and selectedProperties is populated', function() {
+            analyticStateSvc.selectedClass = {id: 'classId'};
+            analyticStateSvc.selectedProperties = [{id: 'propId'}];
+            expect(analyticStateSvc.isSaveable()).toBeTruthy();
+        });
+    });
     it('createQueryString sets the correct variables and returns the correct string', function() {
         analyticStateSvc.selectedClass = {id: 'classId'};
         analyticStateSvc.selectedProperties = [{id: 'propId', title: 'title'}];

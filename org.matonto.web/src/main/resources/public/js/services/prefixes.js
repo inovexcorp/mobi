@@ -61,5 +61,6 @@
         self.ontologyEditor = 'http://matonto.org/ontologies/ontology-editor#';
         self.prov = 'http://www.w3.org/ns/prov#';
         self.matprov = 'http://matonto.org/ontologies/prov#';
+        self.analytic = 'http://matonto.org/ontologies/analytic#';
     }
 })();

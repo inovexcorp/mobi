@@ -74,6 +74,14 @@
         <bundle start-level="80">mvn:org.matonto.bundles/trove4j/3.0.3_1</bundle>
         <bundle start-level="80">mvn:com.github.ben-manes.caffeine/caffeine/2.1.0</bundle>
         <bundle start-level="80">mvn:org.apache.commons/commons-rdf-api/${commons-rdf-api.version}</bundle>
+
+        <!-- Analytic Dependencies -->
+        <feature prerequisite="true">transaction-api</feature>
+        <feature prerequisite="true">transaction</feature>
+        <feature prerequisite="true">eclipselink</feature>
+        <bundle start-level="80">mvn:org.glassfish/javax.json/1.0.4</bundle>
+        <bundle start-level="80">mvn:org.apache.servicemix.specs/org.apache.servicemix.specs.jsr303-api-1.1.0/2.9.0</bundle>
+        <bundle start-level="80">mvn:org.eclipse.persistence/org.eclipse.persistence.moxy/${eclipse.persistence.version}</bundle>
     </feature>
     <feature name="matonto-core" description="MatOnto Core Platform Bundles" version="${project.version}">
         <feature prerequisite="true">jaas</feature>
@@ -141,6 +149,7 @@
         <bundle start-level="80">mvn:org.matonto/web.security/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/explorable.dataset.rest/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/prov.rest/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/analytic.rest/${project.version}</bundle>
     </feature>
     <feature name="matonto-clustering" description="MatOnto Clustering API and implementations" version="${project.version}">
         <feature prerequisite="true">matonto-core</feature>
