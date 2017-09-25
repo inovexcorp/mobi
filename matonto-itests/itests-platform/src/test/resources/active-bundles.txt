@@ -1,3 +1,6 @@
+org.matonto.analytic.api
+org.matonto.analytic.impl
+org.matonto.analytic.rest
 org.matonto.api
 org.matonto.rest.util
 org.matonto.etl.api

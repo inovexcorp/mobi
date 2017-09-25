@@ -24,6 +24,7 @@
     <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
         <h1>Create Analytic</h1>
         <h2>Datasets</h2>
+        <info-message ng-if="!dvm.datasets.length" class="padding">No datasets found.</info-message>
         <md-list>
             <md-list-item class="md-2-line md-long-text" ng-repeat="dataset in dvm.datasets track by dataset.id">
                 <div class="md-list-item-text">
@@ -34,7 +35,7 @@
             </md-list-item>
         </md-list>
         <div class="btn-container">
-            <button type="submit" class="btn btn-primary pull-right" ng-click="dvm.submit()" ng-disabled="!dvm.isSubmittable()">Submit</button>
+            <button type="button" class="btn btn-primary pull-right" ng-click="dvm.submit()" ng-disabled="!dvm.isSubmittable()">Submit</button>
             <button class="btn btn-default pull-right" ng-click="dvm.onCancel()">Cancel</button>
         </div>
     </form>
