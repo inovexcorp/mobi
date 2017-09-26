@@ -74,6 +74,7 @@
                     };
                     dvm.config = {
                         limit: 50,
+                        pageIndex: 0,
                         recordType: prefixes.analytic + 'AnalyticRecord',
                         searchText: '',
                         sortOption: {
