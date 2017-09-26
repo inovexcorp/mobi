@@ -91,13 +91,21 @@
         .paging-wrapper {
             border-top: 1px solid $gray-light;
             padding: 10px 15px;
+            position: relative;
             
-            .paging-details p {
-                line-height: 34px;
-                margin: 0;
+            .paging-details {
+                left: 15px;
+                position: absolute;
+                top: 10px;
+
+                p {
+                    line-height: 34px;
+                    margin: 0;
+                }
             }
             
             .pagination {
+                margin: 0;
                 vertical-align: bottom;
             }
         }

@@ -35,7 +35,7 @@
         .module('newAnalyticOverlay', [])
         /**
          * @ngdoc directive
-         * @name analyticsEditorPage.directive:analyticsEditorPage
+         * @name newAnalyticOverlay.directive:newAnalyticOverlay
          * @scope
          * @restrict E
          * @requires analyticState.service:analyticStateService

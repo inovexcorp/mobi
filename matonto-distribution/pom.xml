@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.9.22-SNAPSHOT</version>
+        <version>1.9.23-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -211,6 +211,9 @@
                         <feature>aries-blueprint</feature>
                         <feature>wrap</feature>
                         <feature>service-wrapper</feature>
+                        <feature>transaction-api</feature>
+                        <feature>transaction</feature>
+                        <feature>eclipselink</feature>
 
                         <!-- Additional Features -->
                         <feature>http</feature>

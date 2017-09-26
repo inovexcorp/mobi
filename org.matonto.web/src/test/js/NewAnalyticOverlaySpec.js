@@ -65,6 +65,12 @@ describe('Class And Property Block directive', function() {
         it('with a h2', function() {
             expect(element.find('h2').length).toBe(1);
         });
+        it('with a info-message', function() {
+            expect(element.find('info-message').length).toBe(1);
+            controller.datasets = [{id: 'datasetId'}];
+            scope.$apply();
+            expect(element.find('info-message').length).toBe(0);
+        });
         it('with a md-list', function() {
             expect(element.find('md-list').length).toBe(1);
         });

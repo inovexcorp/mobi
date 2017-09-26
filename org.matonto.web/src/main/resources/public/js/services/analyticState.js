@@ -278,6 +278,25 @@
             self.query = {};
             
             /**
+             * @ngdoc property
+             * @name record
+             * @propertyOf analyticState.service:analyticStateService
+             * @type {Object}
+             *
+             * @description
+             * 'record' is an object containing the metadata for the analytic record to create. The structure
+             * of the object is:
+             * ```
+             * {
+             *     title: '',
+             *     description: '',
+             *     keywords: []
+             * }
+             * ```
+             */
+            self.record = {};
+            
+            /**
              * @ngdoc method
              * @name showEditor
              * @methodOf analyticState.service:analyticStateService
@@ -387,7 +406,21 @@
                     self.results = undefined;
                 }
             }
-            
+
+            /**
+             * @ngdoc method
+             * @name isSaveable
+             * @methodOf analyticState.service:analyticStateService
+             *
+             * @description
+             * Checks to see if the analytic state is saveable.
+             *
+             * @returns {boolean} True if the state is saveable; otherwise, false.
+             */
+            self.isSaveable = function() {
+                return self.selectedClass && self.selectedProperties.length;
+            }
+
             /**
              * @ngdoc method
              * @name createQueryString
