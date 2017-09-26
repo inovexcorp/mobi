@@ -214,20 +214,17 @@ describe('Analytics Landing Page directive', function() {
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
             });
         });
-        describe('showDeleteConfirmation should set the correct variables', function() {
-            beforeEach(function() {
-                controller.records = [{'@id': 'zero', 'title': 'zero'}, 
-                                        {'@id': 'one', 'title': 'one'}, 
-                                        {'@id': 'two', 'title': 'two'}, 
-                                        {'@id': 'three', 'title': 'three'}];
-            });
-            it('when passed a valid index.', function() {
-                controller.showDeleteConfirmation(2);
-                scope.$apply();
-                expect(controller.recordIndex).toEqual(2)
-                expect(controller.errorMessage).toBe('');
-                expect(controller.showDeleteOverlay).toBe(true);
-            }); 
+        it('showDeleteConfirmation should set the correct variables when passed a valid index.', function() {
+            controller.records = [{'@id': 'zero', 'title': 'zero'}, 
+                                    {'@id': 'one', 'title': 'one'}, 
+                                    {'@id': 'two', 'title': 'two'}, 
+                                    {'@id': 'three', 'title': 'three'}];
+
+            controller.showDeleteConfirmation(2);
+            scope.$apply();
+            expect(controller.recordIndex).toEqual(2)
+            expect(controller.errorMessage).toBe('');
+            expect(controller.showDeleteOverlay).toBe(true);
         });
         describe('deleteRecord should set the correct variables', function() {
             beforeEach(function() {

@@ -108,11 +108,11 @@
 
                     dvm.deleteRecord = function() {
                         cm.deleteRecord(_.get(dvm.records[dvm.recordIndex], '@id'), catalogId)
-                                .then(() => {
-                                    _.pullAt(dvm.records, dvm.recordIndex);
-                                    dvm.recordIndex = -1;
-                                    dvm.showDeleteOverlay = false;
-                                }, errorMessage => dvm.errorMessage = errorMessage);
+                            .then(() => {
+                                _.pullAt(dvm.records, dvm.recordIndex);
+                                dvm.recordIndex = -1;
+                                dvm.showDeleteOverlay = false;
+                            }, errorMessage => dvm.errorMessage = errorMessage);
                     }
                     
                     function setPagination(response) {
