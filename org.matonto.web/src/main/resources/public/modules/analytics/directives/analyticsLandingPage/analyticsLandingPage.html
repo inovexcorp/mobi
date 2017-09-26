@@ -24,8 +24,14 @@
     <div class="blue-bar"></div>
     <div class="white-bar">
         <form name="dvm.form" class="form-inline">
-            <input type="text" class="form-control" placeholder="Search for..." ng-model="dvm.config.searchText" />
-            <button class="btn btn-primary" type="submit" ng-click="dvm.getAnalyticRecords()">Search</button>
+            <div class="form-group">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search for..." ng-model="dvm.config.searchText" />
+                    <span class="input-group-btn">
+                        <button class="btn btn-primary" type="submit" ng-click="dvm.getAnalyticRecords()">Search</button>
+                    </span>
+                </div>
+            </div>
             <button class="btn btn-primary" ng-click="dvm.showOverlay = true">Create New</button>
         </form>
     </div>
