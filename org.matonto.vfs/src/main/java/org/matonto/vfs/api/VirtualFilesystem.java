@@ -25,6 +25,7 @@ package org.matonto.vfs.api;
 
 import java.net.URI;
 import java.time.temporal.TemporalUnit;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This service provides a hook to abstract the file system away from service implementations.
@@ -38,7 +39,15 @@ public interface VirtualFilesystem {
     TemporaryVirtualFile createTemporaryVirtualFile(long timeToLive, TemporalUnit timeToLiveUnit)
             throws VirtualFilesystemException;
 
+    TemporaryVirtualFile createTemporaryVirtualFile(VirtualFile directory, long timeToLive, TemporalUnit timeToLiveUnit)
+            throws VirtualFilesystemException;
+
+    TemporaryVirtualFile createTemporaryVirtualFile(long timeToLive, TemporalUnit timeToLiveUnit,
+                                                    long createDuration, TimeUnit createTimeUnit)
+            throws VirtualFilesystemException;
+
     TemporaryVirtualFile createTemporaryVirtualFile(VirtualFile directory, long timeToLive,
-                                                    TemporalUnit timeToLiveUnit) throws VirtualFilesystemException;
+                                                    TemporalUnit timeToLiveUnit,
+                                                    long createDuration, TimeUnit createTimeUnit) throws VirtualFilesystemException;
 
 }
