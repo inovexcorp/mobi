@@ -44,7 +44,7 @@
                         <md-list-item ng-repeat="record in dvm.records track by record['@id']" class="analytic">
                             <p class="title">{{dvm.util.getDctermsValue(record, 'title')}}</p>
                             <p class="time">{{dvm.util.getDate(dvm.util.getDctermsValue(record, 'modified'), 'short')}}</p>
-                            <i class="md-secondary fa fa-trash-o" ng-click="dvm.showDeleteConfirmation($index)" aria-abel='Delete'></i>
+                            <i class="md-secondary fa fa-trash-o" ng-click="dvm.showDeleteConfirmation($index)" aria-label="Delete"></i>
                         </md-list-item>
                     </md-list>
                 </block-content>
