@@ -26,7 +26,7 @@
     angular
         /**
          * @ngdoc overview
-         * @name newAnalyticOverlay
+         * @name saveAnalyticOverlay
          *
          * @description
          * The `saveAnalyticOverlay` module only provides the `saveAnalyticOverlay` directive which creates

@@ -11,6 +11,7 @@
 
     .row {
         flex: 1;
+        min-height: 0;
         padding: 15px 0;
         
         .block-header {

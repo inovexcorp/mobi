@@ -79,20 +79,14 @@ describe('Analytics Landing Page directive', function() {
         it('with a .input-group-btn', function() {
             expect(element.querySelectorAll('.input-group-btn').length).toBe(1);
         });
-        it('with a .btn-primary', function() {
-            expect(element.querySelectorAll('.btn-primary').length).toBe(1);
+        it('with .btn-primarys', function() {
+            expect(element.querySelectorAll('.btn-primary').length).toBe(2);
         });
         it('with a .row', function() {
             expect(element.querySelectorAll('.row').length).toBe(1);
         });
         it('with a .col-xs-8', function() {
             expect(element.querySelectorAll('.col-xs-8').length).toBe(1);
-        });
-        it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
-        });
-        it('with a block-header', function() {
-            expect(element.find('block-header').length).toBe(1);
         });
         it('with a block-content', function() {
             expect(element.find('block-content').length).toBe(1);
@@ -154,11 +148,11 @@ describe('Analytics Landing Page directive', function() {
                     })
                 }));
                 utilSvc.parseLinks.and.returnValue({next: 'next', prev: 'prev'});
-                controller.paging.current = 1;
+                controller.config.pageIndex = 1;
                 controller.getAnalyticRecords();
                 scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith('catalogId', controller.config);
-                expect(controller.paging.current).toEqual(0);
+                expect(controller.config.pageIndex).toEqual(0);
                 expect(controller.records).toEqual([{'@id': 'recordId'}]);
                 expect(controller.paging.total).toBe(10);
                 expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
@@ -174,7 +168,7 @@ describe('Analytics Landing Page directive', function() {
         });
         describe('getPage should set the correct variables when getResultsPage', function() {
             beforeEach(function() {
-                controller.paging.current = 1;
+                controller.config.pageIndex = 1;
                 controller.paging.links = {
                     next: 'next',
                     prev: 'prev'
@@ -195,7 +189,7 @@ describe('Analytics Landing Page directive', function() {
                     controller.getPage('next');
                     scope.$apply();
                     expect(utilSvc.getResultsPage).toHaveBeenCalledWith('next');
-                    expect(controller.paging.current).toEqual(2);
+                    expect(controller.config.pageIndex).toEqual(2);
                     expect(controller.records).toEqual([{'@id': 'recordId'}]);
                     expect(controller.paging.total).toBe(10);
                     expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
@@ -205,7 +199,7 @@ describe('Analytics Landing Page directive', function() {
                     controller.getPage('prev');
                     scope.$apply();
                     expect(utilSvc.getResultsPage).toHaveBeenCalledWith('prev');
-                    expect(controller.paging.current).toEqual(0);
+                    expect(controller.config.pageIndex).toEqual(0);
                     expect(controller.records).toEqual([{'@id': 'recordId'}]);
                     expect(controller.paging.total).toBe(10);
                     expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
