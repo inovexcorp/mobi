@@ -25,6 +25,7 @@ package org.matonto.vfs.impl.commons;
 
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.ConfigurationPolicy;
 import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.metatype.Configurable;
@@ -55,7 +56,8 @@ import java.util.concurrent.TimeUnit;
 @Component(
         name = SimpleVirtualFilesystem.SERVICE_NAME,
         immediate = true,
-        designateFactory = SimpleVirtualFilesystemConfig.class
+        designateFactory = SimpleVirtualFilesystemConfig.class,
+        configurationPolicy = ConfigurationPolicy.require
 )
 public class SimpleVirtualFilesystem implements VirtualFilesystem {
 
