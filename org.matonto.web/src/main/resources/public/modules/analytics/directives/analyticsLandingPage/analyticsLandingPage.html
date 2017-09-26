@@ -22,11 +22,35 @@
   -->
 <div class="analytics-landing-page full-height clearfix">
     <div class="blue-bar"></div>
-    <div class="white-bar"></div>
+    <div class="white-bar">
+        <form name="dvm.form" class="form-inline">
+            <div class="form-group">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search for..." ng-model="dvm.config.searchText" />
+                    <span class="input-group-btn">
+                        <button class="btn btn-primary" type="submit" ng-click="dvm.getAnalyticRecords()">Search</button>
+                    </span>
+                </div>
+            </div>
+            <button class="btn btn-primary" ng-click="dvm.showOverlay = true">Create New</button>
+        </form>
+    </div>
     <div class="row">
         <div class="col-xs-8 col-xs-offset-2 full-height">
             <block>
-                <block-header>Analytics<a class="btn btn-link pull-right" ng-click="dvm.showOverlay = true"><i class="fa fa-fw fa-plus"></i>Create New</a></block-header>
+                <block-content>
+                    <info-message ng-if="!dvm.records.length" class="padding">No analytics found.</info-message>
+                    <md-list>
+                        <md-list-item ng-repeat="record in dvm.records track by record['@id']" class="analytic">
+                            <p class="title">{{dvm.util.getDctermsValue(record, 'title')}}</p>
+                            <p class="time">{{dvm.util.getDate(dvm.util.getDctermsValue(record, 'modified'), 'short')}}</p>
+                        </md-list-item>
+                    </md-list>
+                </block-content>
+                <block-footer ng-if="dvm.records.length" class="pagination-wrapper">
+                    <paging-details total-size="dvm.paging.total" page-index="dvm.config.pageIndex" limit="dvm.config.limit"></paging-details>
+                    <pagination links="dvm.paging.links" current-page="dvm.config.pageIndex" get-page="dvm.getPage(direction)"></pagination>
+                </block-footer>
             </block>
         </div>
     </div>

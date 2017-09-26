@@ -21,17 +21,31 @@
  * #L%
  */
 describe('Analytics Landing Page directive', function() {
-    var $compile, scope, element, controller;
+    var $compile, $q, scope, element, controller, catalogManagerSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
         module('analyticsLandingPage');
+        mockCatalogManager();
+        mockPrefixes();
+        mockUtil();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _$q_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            catalogManagerSvc = _catalogManagerService_;
+            $q = _$q_;
+            utilSvc = _utilService_;
         });
         
+        catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
+        catalogManagerSvc.getRecords.and.returnValue($q.when({
+            data: [],
+            headers: jasmine.createSpy('headers').and.returnValue({
+                'x-total-count': 10,
+                link: 'link'
+            })
+        }));
         element = $compile(angular.element('<analytics-landing-page></analytics-landing-page>'))(scope);
         scope.$digest();
         controller = element.controller('analyticsLandingPage');
@@ -50,23 +64,149 @@ describe('Analytics Landing Page directive', function() {
         it('with a .white-bar', function() {
             expect(element.querySelectorAll('.white-bar').length).toBe(1);
         });
+        it('with a .form-inline', function() {
+            expect(element.querySelectorAll('.form-inline').length).toBe(1);
+        });
+        it('with a .form-group', function() {
+            expect(element.querySelectorAll('.form-group').length).toBe(1);
+        });
+        it('with a .input-group', function() {
+            expect(element.querySelectorAll('.input-group').length).toBe(1);
+        });
+        it('with a .form-control', function() {
+            expect(element.querySelectorAll('.form-control').length).toBe(1);
+        });
+        it('with a .input-group-btn', function() {
+            expect(element.querySelectorAll('.input-group-btn').length).toBe(1);
+        });
+        it('with .btn-primarys', function() {
+            expect(element.querySelectorAll('.btn-primary').length).toBe(2);
+        });
         it('with a .row', function() {
             expect(element.querySelectorAll('.row').length).toBe(1);
         });
         it('with a .col-xs-8', function() {
             expect(element.querySelectorAll('.col-xs-8').length).toBe(1);
         });
-        it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
+        it('with a block-content', function() {
+            expect(element.find('block-content').length).toBe(1);
         });
-        it('with a block-header', function() {
-            expect(element.find('block-header').length).toBe(1);
+        it('with a info-message', function() {
+            expect(element.find('info-message').length).toBe(1);
+            controller.records = [{'@id': 'recordId'}];
+            scope.$apply();
+            expect(element.find('info-message').length).toBe(0);
+        });
+        it('with a md-list', function() {
+            expect(element.find('md-list').length).toBe(1);
+        });
+        it('with md-list-items', function() {
+            expect(element.find('md-list-item').length).toBe(0);
+            controller.records = [{'@id': 'recordId'}, {'@id': 'recordId2'}];
+            scope.$apply();
+            expect(element.find('md-list-item').length).toBe(2);
+        });
+        it('with a block-footer', function() {
+            expect(element.find('block-footer').length).toBe(0);
+            controller.records = [{'@id': 'recordId'}, {'@id': 'recordId2'}];
+            scope.$apply();
+            expect(element.find('block-footer').length).toBe(1);
+        });
+        it('with a paging-details', function() {
+            expect(element.find('paging-details').length).toBe(0);
+            controller.records = [{'@id': 'recordId'}, {'@id': 'recordId2'}];
+            scope.$apply();
+            expect(element.find('paging-details').length).toBe(1);
+        });
+        it('with a pagination', function() {
+            expect(element.find('pagination').length).toBe(0);
+            controller.records = [{'@id': 'recordId'}, {'@id': 'recordId2'}];
+            scope.$apply();
+            expect(element.find('pagination').length).toBe(1);
         });
         it('with a new-analytic-overlay', function() {
             expect(element.find('new-analytic-overlay').length).toBe(0);
             controller.showOverlay = true;
             scope.$apply();
             expect(element.find('new-analytic-overlay').length).toBe(1);
+        });
+    });
+    describe('controller methods', function() {
+        describe('getAnalyticRecords should set the correct variables when getRecords', function() {
+            it('resolves', function() {
+                catalogManagerSvc.getRecords.and.returnValue($q.when({
+                    data: [{'@id': 'recordId'}],
+                    headers: jasmine.createSpy('headers').and.returnValue({
+                        'x-total-count': 10,
+                        link: 'link'
+                    })
+                }));
+                utilSvc.parseLinks.and.returnValue({next: 'next', prev: 'prev'});
+                controller.config.pageIndex = 1;
+                controller.getAnalyticRecords();
+                scope.$apply();
+                expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith('catalogId', controller.config);
+                expect(controller.config.pageIndex).toEqual(0);
+                expect(controller.records).toEqual([{'@id': 'recordId'}]);
+                expect(controller.paging.total).toBe(10);
+                expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
+                expect(controller.paging.links).toEqual({next: 'next', prev: 'prev'});
+            });
+            it('rejects', function() {
+                catalogManagerSvc.getRecords.and.returnValue($q.reject('error'));
+                controller.getAnalyticRecords();
+                scope.$apply();
+                expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith('catalogId', controller.config);
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+            });
+        });
+        describe('getPage should set the correct variables when getResultsPage', function() {
+            beforeEach(function() {
+                controller.config.pageIndex = 1;
+                controller.paging.links = {
+                    next: 'next',
+                    prev: 'prev'
+                };
+            });
+            describe('resolves and direction is', function() {
+                beforeEach(function() {
+                    utilSvc.getResultsPage.and.returnValue($q.when({
+                        data: [{'@id': 'recordId'}],
+                        headers: jasmine.createSpy('headers').and.returnValue({
+                            'x-total-count': 10,
+                            link: 'link'
+                        })
+                    }));
+                    utilSvc.parseLinks.and.returnValue({next: 'next', prev: 'prev'});
+                });
+                it('next', function() {
+                    controller.getPage('next');
+                    scope.$apply();
+                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith('next');
+                    expect(controller.config.pageIndex).toEqual(2);
+                    expect(controller.records).toEqual([{'@id': 'recordId'}]);
+                    expect(controller.paging.total).toBe(10);
+                    expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
+                    expect(controller.paging.links).toEqual({next: 'next', prev: 'prev'});
+                });
+                it('prev', function() {
+                    controller.getPage('prev');
+                    scope.$apply();
+                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith('prev');
+                    expect(controller.config.pageIndex).toEqual(0);
+                    expect(controller.records).toEqual([{'@id': 'recordId'}]);
+                    expect(controller.paging.total).toBe(10);
+                    expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
+                    expect(controller.paging.links).toEqual({next: 'next', prev: 'prev'});
+                });
+            });
+            it('rejects', function() {
+                utilSvc.getResultsPage.and.returnValue($q.reject('error'));
+                controller.getPage('next');
+                scope.$apply();
+                expect(utilSvc.getResultsPage).toHaveBeenCalledWith('next');
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+            });
         });
     });
 });
