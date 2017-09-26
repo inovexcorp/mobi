@@ -32,7 +32,7 @@
                     </span>
                 </div>
             </div>
-            <button class="btn btn-primary" ng-click="dvm.showOverlay = true">Create New</button>
+            <button class="btn btn-primary" ng-click="dvm.showCreateOverlay = true">Create New</button>
         </form>
     </div>
     <div class="row">
@@ -44,6 +44,7 @@
                         <md-list-item ng-repeat="record in dvm.records track by record['@id']" class="analytic">
                             <p class="title">{{dvm.util.getDctermsValue(record, 'title')}}</p>
                             <p class="time">{{dvm.util.getDate(dvm.util.getDctermsValue(record, 'modified'), 'short')}}</p>
+                            <i class="md-secondary fa fa-trash-o" ng-click="dvm.showDeleteConfirmation($index)" aria-label="Delete"></i>
                         </md-list-item>
                     </md-list>
                 </block-content>
@@ -54,5 +55,9 @@
             </block>
         </div>
     </div>
-    <new-analytic-overlay ng-if="dvm.showOverlay" on-cancel="dvm.showOverlay = false"></new-analytic-overlay>
+    <new-analytic-overlay ng-if="dvm.showCreateOverlay" on-cancel="dvm.showCreateOverlay = false"></new-analytic-overlay>
+    <confirmation-overlay ng-if="dvm.showDeleteOverlay" header-text="'Delete Analytic'" confirm-click="dvm.deleteRecord()" cancel-click="dvm.showDeleteOverlay = false" confirm-text="'Yes'" cancel-text="'No'">
+        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
+        <p>Are you sure that you want to delete <strong>{{dvm.util.getDctermsValue(dvm.records[dvm.recordIndex], 'title')}}</strong>?</p>
+    </confirmation-overlay>
 </div>

@@ -60,7 +60,9 @@
                 controller: function() {
                     var dvm = this;
                     var cm = catalogManagerService;
-                    dvm.showOverlay = false;
+                    dvm.showCreateOverlay = false;
+                    dvm.showDeleteOverlay = false;
+                    dvm.recordIndex = -1;
                     dvm.util = utilService;
                     var catalogId = cm.localCatalog['@id'];
                     dvm.records = [];
@@ -98,6 +100,21 @@
                             }, dvm.util.createErrorToast);
                     }
 
+                    dvm.showDeleteConfirmation = function(index) {
+                        dvm.recordIndex = index;
+                        dvm.errorMessage = '';
+                        dvm.showDeleteOverlay = true;
+                    }
+
+                    dvm.deleteRecord = function() {
+                        cm.deleteRecord(_.get(dvm.records[dvm.recordIndex], '@id'), catalogId)
+                            .then(() => {
+                                _.pullAt(dvm.records, dvm.recordIndex);
+                                dvm.recordIndex = -1;
+                                dvm.showDeleteOverlay = false;
+                            }, errorMessage => dvm.errorMessage = errorMessage);
+                    }
+                    
                     function setPagination(response) {
                         dvm.records = response.data;
                         var headers = response.headers();
