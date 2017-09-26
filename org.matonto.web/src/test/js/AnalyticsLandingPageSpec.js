@@ -142,11 +142,11 @@ describe('Analytics Landing Page directive', function() {
                     })
                 }));
                 utilSvc.parseLinks.and.returnValue({next: 'next', prev: 'prev'});
-                controller.paging.current = 1;
+                controller.config.pageIndex = 1;
                 controller.getAnalyticRecords();
                 scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith('catalogId', controller.config);
-                expect(controller.paging.current).toEqual(0);
+                expect(controller.config.pageIndex).toEqual(0);
                 expect(controller.records).toEqual([{'@id': 'recordId'}]);
                 expect(controller.paging.total).toBe(10);
                 expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
@@ -162,7 +162,7 @@ describe('Analytics Landing Page directive', function() {
         });
         describe('getPage should set the correct variables when getResultsPage', function() {
             beforeEach(function() {
-                controller.paging.current = 1;
+                controller.config.pageIndex = 1;
                 controller.paging.links = {
                     next: 'next',
                     prev: 'prev'
@@ -183,7 +183,7 @@ describe('Analytics Landing Page directive', function() {
                     controller.getPage('next');
                     scope.$apply();
                     expect(utilSvc.getResultsPage).toHaveBeenCalledWith('next');
-                    expect(controller.paging.current).toEqual(2);
+                    expect(controller.config.pageIndex).toEqual(2);
                     expect(controller.records).toEqual([{'@id': 'recordId'}]);
                     expect(controller.paging.total).toBe(10);
                     expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
@@ -193,7 +193,7 @@ describe('Analytics Landing Page directive', function() {
                     controller.getPage('prev');
                     scope.$apply();
                     expect(utilSvc.getResultsPage).toHaveBeenCalledWith('prev');
-                    expect(controller.paging.current).toEqual(0);
+                    expect(controller.config.pageIndex).toEqual(0);
                     expect(controller.records).toEqual([{'@id': 'recordId'}]);
                     expect(controller.paging.total).toBe(10);
                     expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');

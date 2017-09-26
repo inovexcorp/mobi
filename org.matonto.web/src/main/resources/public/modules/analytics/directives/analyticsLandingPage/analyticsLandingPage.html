@@ -48,8 +48,8 @@
                     </md-list>
                 </block-content>
                 <block-footer ng-if="dvm.records.length" class="pagination-wrapper">
-                    <paging-details total-size="dvm.paging.total" page-index="dvm.paging.current" limit="dvm.config.limit"></paging-details>
-                    <pagination links="dvm.paging.links" current-page="dvm.paging.current" get-page="dvm.getPage(direction)"></pagination>
+                    <paging-details total-size="dvm.paging.total" page-index="dvm.config.pageIndex" limit="dvm.config.limit"></paging-details>
+                    <pagination links="dvm.paging.links" current-page="dvm.config.pageIndex" get-page="dvm.getPage(direction)"></pagination>
                 </block-footer>
             </block>
         </div>
