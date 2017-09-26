@@ -74,6 +74,11 @@
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
+            <artifactId>vfs</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
             <version>${project.version}</version>
         </dependency>

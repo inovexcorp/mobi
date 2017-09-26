@@ -58,6 +58,7 @@
         <module>org.matonto.ontology.rest</module>
         <module>org.matonto.web</module>
         <module>org.matonto.api</module>
+        <module>org.matonto.vfs</module>
         <module>org.matonto.repository.impl.sesame</module>
         <module>org.matonto.semantic.service</module>
         <module>matonto-distribution</module>
