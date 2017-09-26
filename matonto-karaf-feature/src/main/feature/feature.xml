@@ -74,6 +74,11 @@
         <bundle start-level="80">mvn:org.matonto.bundles/trove4j/3.0.3_1</bundle>
         <bundle start-level="80">mvn:com.github.ben-manes.caffeine/caffeine/2.1.0</bundle>
         <bundle start-level="80">mvn:org.apache.commons/commons-rdf-api/${commons-rdf-api.version}</bundle>
+        <bundle start-level="80">mvn:org.apache.commons/commons-vfs2/2.1</bundle>
+        <bundle start-level="80">mvn:org.apache.commons/commons-compress/1.9</bundle>
+        <bundle start-level="80">mvn:commons-net/commons-net/3.3</bundle>
+        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.commons-httpclient/3.1_7</bundle>
+        <bundle start-level="80">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.jsch/0.1.51_1</bundle>
 
         <!-- Analytic Dependencies -->
         <feature prerequisite="true">transaction-api</feature>
@@ -101,6 +106,7 @@
         <bundle start-level="80">mvn:org.matonto/etl.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/etl.delimited/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/etl.rdf/${project.version}</bundle>
+        <bundle start-level="80">mvn:org.matonto/vfs/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/etl.workflows/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/ontology.api/${project.version}</bundle>
         <bundle start-level="80">mvn:org.matonto/ontology.core.impl.owlapi/${project.version}</bundle>

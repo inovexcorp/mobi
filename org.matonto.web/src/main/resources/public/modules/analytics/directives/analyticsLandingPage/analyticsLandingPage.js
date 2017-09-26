@@ -65,7 +65,9 @@
                     var cm = catalogManagerService;
                     var am = analyticManagerService;
                     var state = analyticStateService;
-                    dvm.showOverlay = false;
+                    dvm.showCreateOverlay = false;
+                    dvm.showDeleteOverlay = false;
+                    dvm.recordIndex = -1;
                     dvm.util = utilService;
                     var catalogId = cm.localCatalog['@id'];
                     dvm.records = [];
@@ -78,6 +80,7 @@
                     };
                     dvm.config = {
                         limit: 50,
+                        pageIndex: 0,
                         recordType: prefixes.analytic + 'AnalyticRecord',
                         searchText: '',
                         sortOption: {
@@ -87,9 +90,9 @@
                     };
 
                     dvm.getAnalyticRecords = function() {
+                        dvm.config.pageIndex = 0;
                         cm.getRecords(catalogId, dvm.config)
                             .then(response => {
-                                dvm.paging.current = 0;
                                 setPagination(response);
                             }, dvm.util.createErrorToast);
                     }
@@ -97,7 +100,7 @@
                     dvm.getPage = function(direction) {
                         dvm.util.getResultsPage(dvm.paging.links[direction])
                             .then(response => {
-                                dvm.paging.current = direction === 'next' ? dvm.paging.current + 1 : dvm.paging.current - 1;
+                                dvm.config.pageIndex = direction === 'next' ? dvm.config.pageIndex + 1 : dvm.config.pageIndex - 1;
                                 setPagination(response);
                             }, dvm.util.createErrorToast);
                     }
@@ -108,6 +111,21 @@
                             .then(state.showEditor, dvm.util.createErrorToast);
                     }
 
+                    dvm.showDeleteConfirmation = function(index) {
+                        dvm.recordIndex = index;
+                        dvm.errorMessage = '';
+                        dvm.showDeleteOverlay = true;
+                    }
+
+                    dvm.deleteRecord = function() {
+                        cm.deleteRecord(_.get(dvm.records[dvm.recordIndex], '@id'), catalogId)
+                            .then(() => {
+                                _.pullAt(dvm.records, dvm.recordIndex);
+                                dvm.recordIndex = -1;
+                                dvm.showDeleteOverlay = false;
+                            }, errorMessage => dvm.errorMessage = errorMessage);
+                    }
+                    
                     function setPagination(response) {
                         dvm.records = response.data;
                         var headers = response.headers();

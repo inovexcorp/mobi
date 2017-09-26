@@ -130,9 +130,15 @@ describe('Analytics Landing Page directive', function() {
         });
         it('with a new-analytic-overlay', function() {
             expect(element.find('new-analytic-overlay').length).toBe(0);
-            controller.showOverlay = true;
+            controller.showCreateOverlay = true;
             scope.$apply();
             expect(element.find('new-analytic-overlay').length).toBe(1);
+        });
+        it('with a confirmation-overlay', function() {
+            expect(element.find('confirmation-overlay').length).toBe(0);
+            controller.showDeleteOverlay = true;
+            scope.$apply();
+            expect(element.find('confirmation-overlay').length).toBe(1);
         });
     });
     describe('controller methods', function() {
@@ -146,11 +152,11 @@ describe('Analytics Landing Page directive', function() {
                     })
                 }));
                 utilSvc.parseLinks.and.returnValue({next: 'next', prev: 'prev'});
-                controller.paging.current = 1;
+                controller.config.pageIndex = 1;
                 controller.getAnalyticRecords();
                 scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith('catalogId', controller.config);
-                expect(controller.paging.current).toEqual(0);
+                expect(controller.config.pageIndex).toEqual(0);
                 expect(controller.records).toEqual([{'@id': 'recordId'}]);
                 expect(controller.paging.total).toBe(10);
                 expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
@@ -166,7 +172,7 @@ describe('Analytics Landing Page directive', function() {
         });
         describe('getPage should set the correct variables when getResultsPage', function() {
             beforeEach(function() {
-                controller.paging.current = 1;
+                controller.config.pageIndex = 1;
                 controller.paging.links = {
                     next: 'next',
                     prev: 'prev'
@@ -187,7 +193,7 @@ describe('Analytics Landing Page directive', function() {
                     controller.getPage('next');
                     scope.$apply();
                     expect(utilSvc.getResultsPage).toHaveBeenCalledWith('next');
-                    expect(controller.paging.current).toEqual(2);
+                    expect(controller.config.pageIndex).toEqual(2);
                     expect(controller.records).toEqual([{'@id': 'recordId'}]);
                     expect(controller.paging.total).toBe(10);
                     expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
@@ -197,7 +203,7 @@ describe('Analytics Landing Page directive', function() {
                     controller.getPage('prev');
                     scope.$apply();
                     expect(utilSvc.getResultsPage).toHaveBeenCalledWith('prev');
-                    expect(controller.paging.current).toEqual(0);
+                    expect(controller.config.pageIndex).toEqual(0);
                     expect(controller.records).toEqual([{'@id': 'recordId'}]);
                     expect(controller.paging.total).toBe(10);
                     expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
@@ -241,6 +247,39 @@ describe('Analytics Landing Page directive', function() {
                 expect(analyticManagerSvc.getAnalytic).toHaveBeenCalledWith('recordId');
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
             });
+        });
+        it('showDeleteConfirmation should set the correct variables when passed a valid index.', function() {
+            controller.showDeleteConfirmation(2);
+            scope.$apply();
+            expect(controller.recordIndex).toEqual(2)
+            expect(controller.errorMessage).toBe('');
+            expect(controller.showDeleteOverlay).toBe(true);
+        });
+        describe('deleteRecord should set the correct variables', function() {
+            beforeEach(function() {
+                controller.records = [{'@id': 'zero', title: 'zero'}];
+                controller.recordIndex = 0;
+                controller.showDeleteOverlay = true;                
+            });
+            it('when record deletion fails.', function() {
+                catalogManagerSvc.deleteRecord.and.returnValue($q.reject('error'));
+                controller.deleteRecord();
+                scope.$apply();
+                expect(controller.recordIndex).toEqual(0);
+                expect(controller.errorMessage).toBe('error');
+                expect(element.find('error-display').length).toBe(1);
+                expect(controller.showDeleteOverlay).toBe(true);
+            }); 
+            it('when record deletion succeeds.', function() {
+                catalogManagerSvc.deleteRecord.and.returnValue($q.when({}));
+                controller.deleteRecord();
+                scope.$apply();
+                expect(catalogManagerSvc.deleteRecord).toHaveBeenCalledWith('zero', 'catalogId');
+                expect(controller.records).not.toContain({'@id': 'zero', title: 'zero'});
+                expect(controller.recordIndex).toEqual(-1);
+                expect(controller.errorMessage).toBeFalsy();
+                expect(controller.showDeleteOverlay).toBe(false);
+            }); 
         });
     });
 });

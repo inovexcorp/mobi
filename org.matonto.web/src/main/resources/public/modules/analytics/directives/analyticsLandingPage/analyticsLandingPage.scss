@@ -11,6 +11,7 @@
 
     .row {
         flex: 1;
+        min-height: 0;
         padding: 15px 0;
         
         .block-header {
@@ -45,6 +46,10 @@
                     .time {
                         line-height: 22px;
                     }
+                }
+                i {
+                    line-height: 24px;
+                    font-size: 1.5em;
                 }
             }
         }

@@ -569,10 +569,10 @@
                 var datasetRecord = {};
                 var dataset = _.find(dm.datasetRecords, arr => {
                     datasetRecord = _.find(arr, '@type');
-                    return _.get(record, '@id') === datasetRecordId;
+                    return _.get(datasetRecord, '@id') === datasetRecordId;
                 });
                 var ontologies = self.getOntologies(dataset, datasetRecord);
-                self.datasets = [{id: record['@id'], ontologies}];
+                self.datasets = [{id: datasetRecord['@id'], ontologies}];
                 var classId = util.getPropertyId(configuration, prefixes.analytic + 'row');
                 var propertyIds = _.map(_.get(configuration, prefixes.analytic + 'column', []), '@id');
                 return self.setClassesAndProperties()
