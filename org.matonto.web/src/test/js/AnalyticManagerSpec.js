@@ -129,4 +129,29 @@ describe('Analytic Manager service', function() {
             flushAndVerify($httpBackend);
         });
     });
+    describe('should retrieve an AnalyticRecord', function() {
+        it('unless an error occurs', function() {
+            $httpBackend.whenGET('/mobirest/analytics/recordId').respond(400, null, null, 'error');
+            analyticManagerSvc.getAnalytic('recordId')
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual(jasmine.objectContaining({
+                        status: 400,
+                        statusText: 'error'
+                    }));
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('when resolved', function() {
+            $httpBackend.whenGET('/mobirest/analytics/recordId').respond(200, {});
+            analyticManagerSvc.getAnalytic('recordId')
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
 });

@@ -23,25 +23,28 @@
 
             .analytic {
                 border-bottom: 1px solid $gray-custom;
-                display: flex;
 
                 &:hover {
                     background-color: $gray-lighter;
                 }
 
-                .title {
-                    flex: 1;
-                    font-size: 16px;
-                }
+                .meta-container {
+                    display: flex;
+                    
+                    .title {
+                        flex: 1;
+                        font-size: 16px;
+                    }
 
-                .time {
-                    color: $gray-light;
-                    flex: none;
-                }
+                    .time {
+                        color: $gray-light;
+                        flex: none;
+                    }
 
-                .title,
-                .time {
-                    line-height: 22px;
+                    .title,
+                    .time {
+                        line-height: 22px;
+                    }
                 }
             }
         }

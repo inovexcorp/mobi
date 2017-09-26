@@ -41,7 +41,7 @@
                 <block-content>
                     <info-message ng-if="!dvm.records.length" class="padding">No analytics found.</info-message>
                     <md-list>
-                        <md-list-item ng-repeat="record in dvm.records track by record['@id']" class="analytic">
+                        <md-list-item ng-repeat="record in dvm.records track by record['@id']" class="analytic" ng-click="dvm.open(record['@id'])">
                             <p class="title">{{dvm.util.getDctermsValue(record, 'title')}}</p>
                             <p class="time">{{dvm.util.getDate(dvm.util.getDctermsValue(record, 'modified'), 'short')}}</p>
                         </md-list-item>

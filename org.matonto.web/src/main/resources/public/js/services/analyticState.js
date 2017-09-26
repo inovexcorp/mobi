@@ -37,7 +37,10 @@
         /**
          * @ngdoc service
          * @name analyticState.service:analyticStateService
+         * @requires $q
+         * @requires datasetManager.service:datasetManagerService
          * @requires httpService.service:httpService
+         * @requires ontologyManager.service:ontologyManagerService
          * @requires prefixes.service:prefixes
          * @requires sparqlManager.service:sparqlManagerService
          * @requires util.service:utilService
@@ -48,13 +51,15 @@
          */
         .service('analyticStateService', analyticStateService);
         
-        analyticStateService.$inject = ['httpService', 'prefixes', 'sparqlManagerService', 'utilService'];
+        analyticStateService.$inject = ['$q', 'datasetManagerService', 'httpService', 'ontologyManagerService', 'prefixes', 'sparqlManagerService', 'utilService'];
         
-        function analyticStateService(httpService, prefixes, sparqlManagerService, utilService) {
+        function analyticStateService($q, datasetManagerService, httpService, ontologyManagerService, prefixes, sparqlManagerService, utilService) {
             var self = this;
             var subject = '?s';
             var sm = sparqlManagerService;
             var util = utilService;
+            var om = ontologyManagerService;
+            var dm = datasetManagerService;
             
             /**
              * @ngdoc property
@@ -517,6 +522,88 @@
                     move(self.results.bindings, from, to);
                     move(self.query.variables, from, to);
                 }
+            }
+            
+            /**
+             * @ngdoc method
+             * @name setClassesAndProperties
+             * @methodOf analyticState.service:analyticStateService
+             *
+             * @description
+             * Sets the classes and properties array based on selected dataset.
+             *
+             * @return {Promise} A promise that indicates the success of the function
+             */
+            self.setClassesAndProperties = function() {
+                var allOntologies = _.flatten(_.map(self.datasets, dataset => dataset.ontologies));
+                return $q.all(_.map(allOntologies, ontology => om.getOntology(ontology.recordId, ontology.branchId, ontology.commitId)))
+                    .then(response => {
+                        self.classes = _.map(om.getClasses(response), clazz => ({
+                            id: clazz['@id'],
+                            title: om.getEntityName(clazz)
+                        }));
+                        self.properties = _.map(_.concat(self.defaultProperties, om.getObjectProperties(response), om.getDataTypeProperties(response)), property => ({
+                            id: property['@id'],
+                            title: om.getEntityName(property),
+                            classes: _.has(property, prefixes.rdfs + 'domain') ? _.map(_.get(property, prefixes.rdfs + 'domain'), '@id') : _.map(self.classes, 'id')
+                        }));
+                        return $q.resolve();
+                    }, $q.reject);
+            }
+            
+            /**
+             * @ngdoc method
+             * @name populateEditor
+             * @methodOf analyticState.service:analyticStateService
+             *
+             * @description
+             * Populates the correct state variables to prepare for editing the identified analyticRecord.
+             *
+             * @param {Object[]} analyticRecord The analytic's JSON-LD which contains an AnalyticRecord
+             * and Configuration.
+             * @return {Promise} A promise indicating the success of the state setup
+             */
+            self.populateEditor = function(analyticRecord) {
+                var configuration = _.find(analyticRecord, obj => _.includes(_.get(obj, '@type', []), prefixes.analytic + 'Configuration'));
+                var datasetRecordId = util.getPropertyId(configuration, prefixes.analytic + 'datasetRecord');
+                var datasetRecord = {};
+                var dataset = _.find(dm.datasetRecords, arr => {
+                    datasetRecord = _.find(arr, '@type');
+                    return _.get(record, '@id') === datasetRecordId;
+                });
+                var ontologies = self.getOntologies(dataset, datasetRecord);
+                self.datasets = [{id: record['@id'], ontologies}];
+                var classId = util.getPropertyId(configuration, prefixes.analytic + 'row');
+                var propertyIds = _.map(_.get(configuration, prefixes.analytic + 'column', []), '@id');
+                return self.setClassesAndProperties()
+                    .then(() => {
+                        self.selectedClass = _.remove(self.classes, {id: classId})[0];
+                        _.forEach(propertyIds, propertyId => {
+                            self.selectedProperties.push(_.remove(self.properties, {id: propertyId})[0]);
+                        });
+                        getPagedResults(self.createQueryString());
+                        return $q.resolve();
+                    }, $q.reject);
+            }
+            
+            /**
+             * @ngdoc method
+             * @name getOntologies
+             * @methodOf analyticState.service:analyticStateService
+             *
+             * @description
+             * Gets a simplified ontologies list from the provided dataset.
+             *
+             * @param {Object[]} dataset The dataset's JSON-LD which contains a DatasetRecord and OntologyIdentifiers.
+             * @param {Object} record The record within the dataset's JSON-LD to be excluded from the operation.
+             * @return {Object[]} An Array of ontologies with recordId, branchId, and commitId properties
+             */
+            self.getOntologies = function(dataset, record) {
+                return _.map(_.without(dataset, record), identifier => ({
+                    recordId: util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'),
+                    branchId: util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch'),
+                    commitId: util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit')
+                }));
             }
             
             function move(arr, from, to) {

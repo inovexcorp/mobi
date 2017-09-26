@@ -135,5 +135,22 @@
                 }
                 return $http.post(prefix, fd, config).then(response => response.data, util.rejectError);
             }
+            
+            /**
+             * @ngdoc method
+             * @name getAnalytic
+             * @methodOf analyticManager.service:analyticManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/analytics/{analyticRecordId} endpoint to get the AnalyticRecord and associated Configuration
+             * for the provided ID.
+             *
+             * @param {string} analyticRecordId A string identifying the  A configuration object containing metadata for the new Record
+             * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an error message
+             */
+            self.getAnalytic = function(analyticRecordId) {
+                return $http.get(prefix + '/' + encodeURIComponent(analyticRecordId))
+                    .then(response => response.data, $q.reject);
+            }
         }
 })();

@@ -21,21 +21,25 @@
  * #L%
  */
 describe('Analytics Landing Page directive', function() {
-    var $compile, $q, scope, element, controller, catalogManagerSvc, utilSvc;
+    var $compile, $q, scope, element, controller, catalogManagerSvc, utilSvc, analyticStateSvc, analyticManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('analyticsLandingPage');
+        mockAnalyticManager();
+        mockAnalyticState();
         mockCatalogManager();
         mockPrefixes();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _$q_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _$q_, _utilService_, _analyticStateService_, _analyticManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             catalogManagerSvc = _catalogManagerService_;
             $q = _$q_;
             utilSvc = _utilService_;
+            analyticStateSvc = _analyticStateService_;
+            analyticManagerSvc = _analyticManagerService_;
         });
         
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
@@ -205,6 +209,36 @@ describe('Analytics Landing Page directive', function() {
                 controller.getPage('next');
                 scope.$apply();
                 expect(utilSvc.getResultsPage).toHaveBeenCalledWith('next');
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+            });
+        });
+        describe('open should call the correct functions when getAnalytic', function() {
+            describe('resolves and populateEditor', function() {
+                beforeEach(function() {
+                    analyticManagerSvc.getAnalytic.and.returnValue($q.when([]));
+                });
+                it('resolves', function() {
+                    analyticStateSvc.populateEditor.and.returnValue($q.when());
+                    controller.open('recordId');
+                    scope.$apply();
+                    expect(analyticManagerSvc.getAnalytic).toHaveBeenCalledWith('recordId');
+                    expect(analyticStateSvc.populateEditor).toHaveBeenCalled();
+                    expect(analyticStateSvc.showEditor).toHaveBeenCalled();
+                });
+                it('rejects', function() {
+                    analyticStateSvc.populateEditor.and.returnValue($q.reject('error'));
+                    controller.open('recordId');
+                    scope.$apply();
+                    expect(analyticManagerSvc.getAnalytic).toHaveBeenCalledWith('recordId');
+                    expect(analyticStateSvc.populateEditor).toHaveBeenCalled();
+                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+                });
+            });
+            it('rejects', function() {
+                analyticManagerSvc.getAnalytic.and.returnValue($q.reject('error'));
+                controller.open('recordId');
+                scope.$apply();
+                expect(analyticManagerSvc.getAnalytic).toHaveBeenCalledWith('recordId');
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
             });
         });

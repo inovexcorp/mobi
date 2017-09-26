@@ -38,9 +38,7 @@
          * @name classAndPropertyBlock.directive:classAndPropertyBlock
          * @scope
          * @restrict E
-         * @requires $q
          * @requires analyticState.service:analyticStateService
-         * @requires ontologyManager.service:ontologyManagerService
          * @requires prefixes.service:prefixes
          * @requires util.service:utilService
          *
@@ -50,9 +48,9 @@
          */
         .directive('classAndPropertyBlock', classAndPropertyBlock);
         
-        classAndPropertyBlock.$inject = ['$q', 'analyticStateService', 'ontologyManagerService', 'prefixes', 'utilService'];
+        classAndPropertyBlock.$inject = ['analyticStateService', 'prefixes', 'utilService'];
         
-        function classAndPropertyBlock($q, analyticStateService, ontologyManagerService, prefixes, utilService) {
+        function classAndPropertyBlock(analyticStateService, prefixes, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -61,24 +59,12 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var om = ontologyManagerService;
                     var util = utilService;
                     dvm.state = analyticStateService;
                     
                     if (!dvm.state.classes.length && !dvm.state.properties.length) {
-                        var allOntologies = _.flatten(_.map(dvm.state.datasets, dataset => dataset.ontologies));
-                        $q.all(_.map(allOntologies, ontology => om.getOntology(ontology.recordId, ontology.branchId, ontology.commitId)))
-                            .then(response => {
-                                dvm.state.classes = _.map(om.getClasses(response), clazz => ({
-                                    id: clazz['@id'],
-                                    title: om.getEntityName(clazz)
-                                }));
-                                dvm.state.properties = _.map(_.concat(dvm.state.defaultProperties, om.getObjectProperties(response), om.getDataTypeProperties(response)), property => ({
-                                    id: property['@id'],
-                                    title: om.getEntityName(property),
-                                    classes: _.has(property, prefixes.rdfs + 'domain') ? _.map(_.get(property, prefixes.rdfs + 'domain'), '@id') : _.map(dvm.state.classes, 'id')
-                                }));
-                            }, util.createErrorToast);
+                        dvm.state.setClassesAndProperties()
+                            .then(undefined, util.createErrorToast);
                     }
                     
                     dvm.isDisabled = function(classes) {

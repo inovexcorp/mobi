@@ -25,6 +25,7 @@ package org.matonto.analytic.rest.impl;
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
+import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -39,7 +40,12 @@ import org.matonto.catalog.api.CatalogProvUtils;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.OrmFactoryRegistry;
 import org.matonto.rest.util.ErrorUtils;
@@ -59,6 +65,9 @@ public class AnalyticRestImpl implements AnalyticRest {
     private EngineManager engineManager;
     private CatalogProvUtils provUtils;
     private OrmFactoryRegistry factoryRegistry;
+    private ValueFactory vf;
+    private ModelFactory mf;
+    private SesameTransformer transformer;
 
     @Reference
     void setAnalyticManager(AnalyticManager analyticManager) {
@@ -78,6 +87,21 @@ public class AnalyticRestImpl implements AnalyticRest {
     @Reference
     void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
         this.factoryRegistry = factoryRegistry;
+    }
+
+    @Reference
+    void setValueFactory(ValueFactory vf) {
+        this.vf = vf;
+    }
+
+    @Reference
+    void setModelFactory(ModelFactory mf) {
+        this.mf = mf;
+    }
+
+    @Reference
+    void setSesameTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
     }
 
     @Override
@@ -122,6 +146,23 @@ public class AnalyticRestImpl implements AnalyticRest {
         } catch (Exception ex) {
             provUtils.removeActivity(createActivity);
             throw ex;
+        }
+    }
+
+    @Override
+    public Response getAnalytic(String analyticRecordId) {
+        Resource recordIRI = vf.createIRI(analyticRecordId);
+        try {
+            AnalyticRecord analyticRecord = analyticManager.getAnalyticRecord(recordIRI).orElseThrow(() ->
+                    ErrorUtils.sendError("AnalyticRecord " + analyticRecordId + " could not be found",
+                            Response.Status.NOT_FOUND));
+            Model copy = mf.createModel();
+            analyticRecord.getModel().forEach(st -> copy.add(st.getSubject(), st.getPredicate(), st.getObject()));
+            return Response.ok(modelToJsonld(copy, transformer)).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MatOntoException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 

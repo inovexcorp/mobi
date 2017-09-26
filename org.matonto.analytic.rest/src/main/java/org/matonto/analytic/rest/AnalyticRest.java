@@ -32,6 +32,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Context;
@@ -80,4 +81,18 @@ public interface AnalyticRest {
                             @FormDataParam("description") String description,
                             @FormDataParam("keywords") String keywords,
                             @FormDataParam("json") String json);
+
+
+    /**
+     * Gets a specific AnalyticRecord and associated Configuration from the local Catalog.
+     *
+     * @param analyticRecordId The IRI of a AnalyticRecord
+     * @return A Response indicating the success of the request
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("{analyticRecordId}")
+    @RolesAllowed("user")
+    @ApiOperation("Gets a specific AnalyticRecord and associated Configuration from the local Catalog")
+    Response getAnalytic(@PathParam("analyticRecordId") String analyticRecordId);
 }
