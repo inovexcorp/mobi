@@ -28,7 +28,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>matonto-parent</artifactId>
-    <version>1.9.22</version>
+    <version>1.9.23</version>
 
     <packaging>pom</packaging>
 
@@ -273,6 +273,11 @@
                 <groupId>javax.cache</groupId>
                 <artifactId>cache-api</artifactId>
                 <version>${javax.cache.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-vfs2</artifactId>
+                <version>2.1</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.camel</groupId>

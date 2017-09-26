@@ -38,6 +38,9 @@
          * @name analyticsLandingPage.directive:analyticsLandingPage
          * @scope
          * @restrict E
+         * @requires catalogManager.service:catalogManagerService
+         * @requires prefixes.service:prefixes
+         * @requires util.service:utilService
          *
          * @description
          * HTML contents in the landing page of the analytics page which provides the users with a link to create
@@ -45,7 +48,9 @@
          */
         .directive('analyticsLandingPage', analyticsLandingPage);
         
-        function analyticsLandingPage() {
+        analyticsLandingPage.$inject = ['catalogManagerService', 'prefixes', 'utilService'];
+
+        function analyticsLandingPage(catalogManagerService, prefixes, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -54,7 +59,74 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.showOverlay = false;
+                    var cm = catalogManagerService;
+                    dvm.showCreateOverlay = false;
+                    dvm.showDeleteOverlay = false;
+                    dvm.recordIndex = -1;
+                    dvm.util = utilService;
+                    var catalogId = cm.localCatalog['@id'];
+                    dvm.records = [];
+                    dvm.paging = {
+                        links: {
+                            next: '',
+                            prev: ''
+                        },
+                        total: 0
+                    };
+                    dvm.config = {
+                        limit: 50,
+                        pageIndex: 0,
+                        recordType: prefixes.analytic + 'AnalyticRecord',
+                        searchText: '',
+                        sortOption: {
+                            asc: false,
+                            field: prefixes.dcterms + 'modified'
+                        }
+                    };
+
+                    dvm.getAnalyticRecords = function() {
+                        dvm.config.pageIndex = 0;
+                        cm.getRecords(catalogId, dvm.config)
+                            .then(response => {
+                                setPagination(response);
+                            }, dvm.util.createErrorToast);
+                    }
+
+                    dvm.getPage = function(direction) {
+                        dvm.util.getResultsPage(dvm.paging.links[direction])
+                            .then(response => {
+                                dvm.config.pageIndex = direction === 'next' ? dvm.config.pageIndex + 1 : dvm.config.pageIndex - 1;
+                                setPagination(response);
+                            }, dvm.util.createErrorToast);
+                    }
+
+                    dvm.showDeleteConfirmation = function(index) {
+                        dvm.recordIndex = index;
+                        dvm.errorMessage = '';
+                        dvm.showDeleteOverlay = true;
+                    }
+
+                    dvm.deleteRecord = function() {
+                        cm.deleteRecord(_.get(dvm.records[dvm.recordIndex], '@id'), catalogId)
+                            .then(() => {
+                                _.pullAt(dvm.records, dvm.recordIndex);
+                                dvm.recordIndex = -1;
+                                dvm.showDeleteOverlay = false;
+                            }, errorMessage => dvm.errorMessage = errorMessage);
+                    }
+                    
+                    function setPagination(response) {
+                        dvm.records = response.data;
+                        var headers = response.headers();
+                        dvm.paging.total = _.get(headers, 'x-total-count', 0);
+                        var links = dvm.util.parseLinks(_.get(headers, 'link', ''));
+                        dvm.paging.links = {
+                            next: _.get(links, 'next', ''),
+                            prev: _.get(links, 'prev', '')
+                        };
+                    }
+
+                    dvm.getAnalyticRecords();
                 }
             }
         }
