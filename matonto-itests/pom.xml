@@ -45,6 +45,7 @@
         <module>itests-etl</module>
         <module>itests-rest</module>
         <module>itests-clustering</module>
+        <module>itests-vfs</module>
     </modules>
 
     <properties>
