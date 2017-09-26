@@ -32,20 +32,82 @@ import java.util.concurrent.TimeUnit;
  */
 public interface VirtualFilesystem {
 
+    /**
+     * Resolve a virtual file representation based upon the provided URI.
+     *
+     * @param uri The {@link URI} to resolve to a file
+     * @return The {@link VirtualFile} representation of the file
+     * @throws VirtualFilesystemException If there is an issue resolving the virtual file abstraction
+     */
     VirtualFile resolveVirtualFile(URI uri) throws VirtualFilesystemException;
 
+    /**
+     * Resolve a virtual file representation based upon the provided URI.
+     *
+     * @param uri The {@link URI} (in string format) to resolve to a file
+     * @return The {@link VirtualFile} representation of the file
+     * @throws VirtualFilesystemException If there is an issue resolving the virtual file abstraction
+     */
     VirtualFile resolveVirtualFile(String uri) throws VirtualFilesystemException;
 
+    /**
+     * Create a temporary virtual file.  This file will be transient, meaning it will be removed upon system shutdown,
+     * and this service will only allow it to live for a specified amount of time.
+     *
+     * @param timeToLive     The duration of the time to live for this temporary file
+     * @param timeToLiveUnit The time unit defining how long this temporary file should live
+     * @return The {@link TemporaryVirtualFile} instance you created
+     * @throws VirtualFilesystemException If there is an issue creating the {@link TemporaryVirtualFile}
+     */
     TemporaryVirtualFile createTemporaryVirtualFile(long timeToLive, TemporalUnit timeToLiveUnit)
             throws VirtualFilesystemException;
 
+    /**
+     * Create a temporary virtual file.  This file will be transient, meaning it will be removed upon system shutdown,
+     * and this service will only allow it to live for a specified amount of time.
+     *
+     * @param directory      The base directory where this {@link TemporaryVirtualFile} will be created
+     * @param timeToLive     The duration of the time to live for this temporary file
+     * @param timeToLiveUnit The time unit defining how long this temporary file should live
+     * @return The {@link TemporaryVirtualFile} representation of this file
+     * @throws VirtualFilesystemException If there is an issue creating this {@link TemporaryVirtualFile}
+     */
     TemporaryVirtualFile createTemporaryVirtualFile(VirtualFile directory, long timeToLive, TemporalUnit timeToLiveUnit)
             throws VirtualFilesystemException;
 
+    /**
+     * Create a temporary virtual file.  This file will be transient, meaning it will be removed upon system shutdown,
+     * and this service will only allow it to live for a specified amount of time.  <br>
+     * <br>
+     * The service will limit the number of temporary files that it will create.  This method will allow the requesting
+     * process to await the release of used handles if the number is too high for the service.
+     *
+     * @param timeToLive     The duration of the time to live for this temporary file
+     * @param timeToLiveUnit The time unit defining how long this temporary file should live
+     * @param createDuration The duration for the amount of time we'll wait for a temporary file to be created
+     * @param createTimeUnit The unit for the amount of time we'll wait for a temporary file to be created
+     * @return The {@link TemporaryVirtualFile} representation of the temp file
+     * @throws VirtualFilesystemException If there is an issue creating the temporary file
+     */
     TemporaryVirtualFile createTemporaryVirtualFile(long timeToLive, TemporalUnit timeToLiveUnit,
                                                     long createDuration, TimeUnit createTimeUnit)
             throws VirtualFilesystemException;
 
+    /**
+     * Create a temporary virtual file.  This file will be transient, meaning it will be removed upon system shutdown,
+     * and this service will only allow it to live for a specified amount of time.  <br>
+     * <br>
+     * The service will limit the number of temporary files that it will create.  This method will allow the requesting
+     * process to await the release of used handles if the number is too high for the service.
+     *
+     * @param directory      The directory to create the {@link TemporaryVirtualFile} within
+     * @param timeToLive     The duration of the time to live for this temporary file
+     * @param timeToLiveUnit The time unit defining how long this temporary file should live
+     * @param createDuration The duration for the amount of time we'll wait for a temporary file to be created
+     * @param createTimeUnit The unit for the amount of time we'll wait for a temporary file to be created
+     * @return The {@link TemporaryVirtualFile} representation of the temp file
+     * @throws VirtualFilesystemException VirtualFilesystemException If there is an issue creating the temporary file
+     */
     TemporaryVirtualFile createTemporaryVirtualFile(VirtualFile directory, long timeToLive,
                                                     TemporalUnit timeToLiveUnit,
                                                     long createDuration, TimeUnit createTimeUnit) throws VirtualFilesystemException;
