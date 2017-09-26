@@ -23,8 +23,16 @@ package org.matonto.vfs.api;
  * #L%
  */
 
+/**
+ * Simple interface extending {@link VirtualFile} that will allow us to create temporary files that live for a certain
+ * period of time before automatically being cleaned up.  <br><br> These files should be treated as transient and be
+ * cleaned out upon server start/stop.
+ */
 public interface TemporaryVirtualFile extends VirtualFile {
 
+    /**
+     *
+     * @return Whether or not this {@link TemporaryVirtualFile} should be cleaned up (or is expired from the system)
+     */
     boolean isExpired();
-
 }
