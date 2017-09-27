@@ -24,32 +24,34 @@
 
             .analytic {
                 border-bottom: 1px solid $gray-custom;
+                display: flex;
 
                 &:hover {
                     background-color: $gray-lighter;
                 }
-
-                .meta-container {
-                    display: flex;
                     
-                    .title {
-                        flex: 1;
-                        font-size: 16px;
-                    }
-
-                    .time {
-                        color: $gray-light;
-                        flex: none;
-                    }
-
-                    .title,
-                    .time {
-                        line-height: 22px;
-                    }
+                .title {
+                    flex: 1;
+                    font-size: 16px;
                 }
-                i {
-                    line-height: 24px;
-                    font-size: 1.5em;
+
+                .time {
+                    color: $gray-light;
+                    flex: none;
+                }
+
+                .title,
+                .time {
+                    line-height: 22px;
+                }
+
+                .dropdown-toggle {
+                    margin-left: 15px;
+                }
+
+                .dropdown-menu {
+                    left: inherit;
+                    right: 0;
                 }
             }
         }

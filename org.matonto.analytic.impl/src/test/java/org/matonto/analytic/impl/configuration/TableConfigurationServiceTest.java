@@ -30,6 +30,8 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
+import org.matonto.analytic.ontologies.analytic.Column;
+import org.matonto.analytic.ontologies.analytic.ColumnFactory;
 import org.matonto.analytic.ontologies.analytic.Configuration;
 import org.matonto.analytic.ontologies.analytic.TableConfiguration;
 import org.matonto.analytic.ontologies.analytic.TableConfigurationFactory;
@@ -51,6 +53,7 @@ import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
 import org.matonto.rdf.orm.impl.ThingFactory;
 
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -61,11 +64,14 @@ public class TableConfigurationServiceTest {
     private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
     private TableConfigurationFactory tableConfigurationFactory = new TableConfigurationFactory();
     private DatasetRecordFactory datasetRecordFactory = new DatasetRecordFactory();
+    private ColumnFactory columnFactory = new ColumnFactory();
 
     private static final String DATASET = "https://matonto.org/test/datasets#1";
     private static final String ROW = "https://matonto.org/test/rows#1";
     private static final String COLUMN_1 = "https://matonto.org/test/columns#1";
     private static final String COLUMN_2 = "https://matonto.org/test/columns#2";
+    private static final Set<String> properties = Stream.of(COLUMN_1, COLUMN_2).collect(Collectors.toSet());
+    private static final Set<Integer> indexes = Stream.of(0, 1).collect(Collectors.toSet());
 
     @Before
     public void setUp() {
@@ -78,6 +84,11 @@ public class TableConfigurationServiceTest {
         datasetRecordFactory.setValueFactory(vf);
         datasetRecordFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(datasetRecordFactory);
+
+        columnFactory.setModelFactory(mf);
+        columnFactory.setValueFactory(vf);
+        columnFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(columnFactory);
 
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
@@ -93,6 +104,7 @@ public class TableConfigurationServiceTest {
         service.setTableConfigurationFactory(tableConfigurationFactory);
         service.setDatasetRecordFactory(datasetRecordFactory);
         service.setValueFactory(vf);
+        service.setColumnFactory(columnFactory);
     }
 
     @Test
@@ -104,23 +116,37 @@ public class TableConfigurationServiceTest {
     public void createTest() throws Exception {
         // SetUp:
         JSONArray columns = new JSONArray();
-        columns.add(COLUMN_1);
-        columns.add(COLUMN_2);
+        columns.add(new JSONObject().element("property", COLUMN_1).element("index", 0));
+        columns.add(new JSONObject().element("property", COLUMN_2).element("index", 1));
         JSONObject json = new JSONObject().element("datasetRecordId", DATASET).element("row", ROW).element("columns", columns);
 
         TableConfiguration result = service.create(json.toString());
         assertEquals(1, result.getDatasetRecord_resource().size());
         assertTrue(result.getDatasetRecord_resource().contains(vf.createIRI(DATASET)));
-        assertTrue(result.getRow_resource().isPresent());
-        assertEquals(ROW, result.getRow_resource().get().stringValue());
-        assertEquals(2, result.getColumn_resource().size());
-        assertTrue(result.getColumn_resource().containsAll(Stream.of(vf.createIRI(COLUMN_1), vf.createIRI(COLUMN_2)).collect(Collectors.toSet())));
+        assertTrue(result.getHasRow_resource().isPresent());
+        assertEquals(ROW, result.getHasRow_resource().get().stringValue());
+        assertEquals(2, result.getHasColumn_resource().size());
+        result.getHasColumn_resource().forEach(columnResource -> {
+            Column column = columnFactory.getExisting(columnResource, result.getModel()).get();
+            assertTrue(indexes.contains(column.getHasIndex().get()));
+            assertTrue(properties.contains(column.getHasProperty().get().stringValue()));
+        });
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void createWithWrongJsonTest() throws Exception {
         // SetUp:
-        JSONObject json = new JSONObject().element("datasetRecord", DATASET);
+        JSONObject json = new JSONObject().element("datasetRecordId", DATASET);
+
+        service.create(json.toString());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void createWithWrongColumnJsonTest() {
+        // SetUp:
+        JSONArray columns = new JSONArray();
+        columns.add(new JSONObject().element("property", COLUMN_1));
+        JSONObject json = new JSONObject().element("datasetRecordId", DATASET).element("row", ROW).element("columns", columns);
 
         service.create(json.toString());
     }
