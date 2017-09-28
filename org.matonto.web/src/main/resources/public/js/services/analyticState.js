@@ -293,6 +293,7 @@
              * of the object is:
              * ```
              * {
+             *     analyticRecordId: '',
              *     title: '',
              *     description: '',
              *     keywords: []
@@ -300,6 +301,17 @@
              * ```
              */
             self.record = {};
+            
+            /**
+             * @ngdoc property
+             * @name selectedConfigurationId
+             * @propertyOf analyticState.service:analyticStateService
+             * @type {string}
+             *
+             * @description
+             * 'selectedConfigurationId' is a string containing the selected Configuration's ID.
+             */
+            self.selectedConfigurationId = '';
             
             /**
              * @ngdoc method
@@ -337,6 +349,8 @@
                 self.limit = 100;
                 self.links = {};
                 self.query = {};
+                self.record = {};
+                self.selectedConfigurationId = '';
                 self.landing = true;
                 self.editor = false;
             }
@@ -559,24 +573,25 @@
              * @description
              * Populates the correct state variables to prepare for editing the identified analyticRecord.
              *
-             * @param {Object[]} analyticRecord The analytic's JSON-LD which contains an AnalyticRecord
+             * @param {Object[]} analyticRecordArray The analytic's JSON-LD which contains an AnalyticRecord
              * and Configuration.
              * @return {Promise} A promise indicating the success of the state setup
              */
-            self.populateEditor = function(analyticRecord) {
-                var configuration = _.find(analyticRecord, obj => _.includes(_.get(obj, '@type', []), prefixes.analytic + 'Configuration'));
-                var datasetRecordId = util.getPropertyId(configuration, prefixes.analytic + 'datasetRecord');
-                var datasetRecord = {};
-                var dataset = _.find(dm.datasetRecords, arr => {
-                    datasetRecord = _.find(arr, '@type');
-                    return _.get(datasetRecord, '@id') === datasetRecordId;
-                });
-                var ontologies = self.getOntologies(dataset, datasetRecord);
-                self.datasets = [{id: datasetRecord['@id'], ontologies}];
-                var classId = util.getPropertyId(configuration, prefixes.analytic + 'row');
-                var propertyIds = _.map(_.get(configuration, prefixes.analytic + 'column', []), '@id');
+            self.populateEditor = function(analyticRecordArray) {
+                var configuration = getByType(analyticRecordArray, 'Configuration');
+                self.datasets = [getDataset(configuration)];
+                var classId = util.getPropertyId(configuration, prefixes.analytic + 'hasRow');
+                var propertyIds = getPropertyIds(configuration, analyticRecordArray);
                 return self.setClassesAndProperties()
                     .then(() => {
+                        var analyticRecord = getByType(analyticRecordArray, 'AnalyticRecord');
+                        self.selectedConfigurationId = configuration['@id'];
+                        self.record = {
+                            analyticRecordId: analyticRecord['@id'],
+                            description: util.getDctermsValue(analyticRecord, 'description'),
+                            keywords: _.map(_.get(analyticRecord, prefixes.catalog + 'keyword'), '@value'),
+                            title: util.getDctermsValue(analyticRecord, 'title')
+                        };
                         self.selectedClass = _.remove(self.classes, {id: classId})[0];
                         _.forEach(propertyIds, propertyId => {
                             self.selectedProperties.push(_.remove(self.properties, {id: propertyId})[0]);
@@ -604,6 +619,57 @@
                     branchId: util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch'),
                     commitId: util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit')
                 }));
+            }
+            
+            /**
+             * @ngdoc method
+             * @name createTableConfigurationConfig
+             * @methodOf analyticState.service:analyticStateService
+             *
+             * @description
+             * Creates the table configuration to make the REST calls based on the state variables already set.
+             *
+             * @return {Object} An Object containing the correct type and json parameters
+             */
+            self.createTableConfigurationConfig = function() {
+                var json = {
+                    datasetRecordId: self.datasets[0].id,
+                    row: self.selectedClass.id,
+                    columns: _.map(self.selectedProperties, (obj, index) => ({index, property: obj.id}))
+                };
+                if (!_.isEmpty(self.selectedConfigurationId)) {
+                    json.configurationId = self.selectedConfigurationId;
+                }
+                return {
+                    json: JSON.stringify(json),
+                    type: prefixes.analytic + 'TableConfiguration'
+                };
+            }
+            
+            function getPropertyIds(configuration, analyticRecordArray) {
+                var columnIds = _.map(_.get(configuration, prefixes.analytic + 'hasColumn', []), '@id');
+                var result = _.fill(Array(columnIds.length));
+                _.forEach(columnIds, id => {
+                    var column = _.find(analyticRecordArray, {'@id': id});
+                    var index = util.getPropertyValue(column, prefixes.analytic + 'hasIndex');
+                    result[index] = util.getPropertyId(column, prefixes.analytic + 'hasProperty');
+                });
+                return result;
+            }
+            
+            function getDataset(configuration) {
+                var datasetRecordId = util.getPropertyId(configuration, prefixes.analytic + 'datasetRecord');
+                var datasetRecord = {};
+                var dataset = _.find(dm.datasetRecords, arr => {
+                    datasetRecord = _.find(arr, '@type');
+                    return _.get(datasetRecord, '@id') === datasetRecordId;
+                });
+                var ontologies = self.getOntologies(dataset, datasetRecord);
+                return {id: datasetRecord['@id'], ontologies};
+            }
+            
+            function getByType(recordArray, typeLocalName) {
+                return _.find(recordArray, obj => _.includes(_.get(obj, '@type', []), prefixes.analytic + typeLocalName));
             }
             
             function move(arr, from, to) {

@@ -99,7 +99,7 @@
             
             /**
              * @ngdoc method
-             * @name createAnalyticRecord
+             * @name createAnalytic
              * @methodOf analyticManager.service:analyticManagerService
              *
              * @description
@@ -113,8 +113,8 @@
              * @param {string[]} analyticConfig.keywords The optional keywords to associate with the new AnalyticRecord
              * @param {string} analyticConfig.type The required configuration type IRI string from the `configurationTypes` array
              * @param {Object} analyticConfig.json The required JSON associated with the new Configuration
-             * @return {Promise} A promise that resolves to the IRI of the new AnalyticRecord or is rejected with an error
-             * message
+             * @return {Promise} A Promise that resolves to an object with the IRIs of the AnalyticRecord and Configuration
+             * or is rejected with an error message
              */
             self.createAnalytic = function(analyticConfig) {
                 var fd = new FormData();
@@ -127,7 +127,7 @@
                 fd.append('title', analyticConfig.title);
                 fd.append('type', analyticConfig.type);
                 fd.append('json', analyticConfig.json);
-                if (_.has(analyticConfig, 'description')) {
+                if (!_.isEmpty(_.get(analyticConfig, 'description'))) {
                     fd.append('description', analyticConfig.description);
                 }
                 if (_.get(analyticConfig, 'keywords', []).length > 0) {
@@ -151,6 +151,35 @@
             self.getAnalytic = function(analyticRecordId) {
                 return $http.get(prefix + '/' + encodeURIComponent(analyticRecordId))
                     .then(response => response.data, $q.reject);
+            }
+            
+            /**
+             * @ngdoc method
+             * @name updateAnalytic
+             * @methodOf analyticManager.service:analyticManagerService
+             *
+             * @description
+             * Calls the POST /mobirest/analytics/{analyticRecordId} endpoint with the passed metadata and updates
+             * the AnalyticRecord's Configuration. Returns a Promise indicating the success of the call.
+             *
+             * @param {Object} analyticConfig A configuration object containing the changed metadata
+             * @param {string} analyticConfig.analyticRecordId The required analyticRecordId of the AnalyticRecord
+             * @param {string} analyticConfig.type The required configuration type IRI string from the `configurationTypes` array
+             * @param {Object} analyticConfig.json The required JSON associated with the new Configuration
+             * @return {Promise} A Promise that resolves is successful or is rejected with an error message
+             */
+            self.updateAnalytic = function(analyticConfig) {
+                var fd = new FormData();
+                var config = {
+                    transformRequest: _.identity,
+                    headers: {
+                        'Content-Type': undefined
+                    }
+                };
+                fd.append('type', analyticConfig.type);
+                fd.append('json', analyticConfig.json);
+                return $http.put(prefix + '/' + encodeURIComponent(analyticConfig.analyticRecordId), fd, config)
+                    .then($q.when, util.rejectError);
             }
         }
 })();

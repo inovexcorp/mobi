@@ -52,7 +52,9 @@ public abstract class BaseConfigurationService<T extends Configuration> implemen
     @Override
     public T create(String json) {
         BaseDetails details = unmarshal(json, BaseDetails.class);
-        T configuration = ormFactory.createNew(vf.createIRI(CONFIG_NAMESPACE + UUID.randomUUID()));
+        String iri = details.getConfigurationId() != null ? details.getConfigurationId()
+                : CONFIG_NAMESPACE + UUID.randomUUID();
+        T configuration = ormFactory.createNew(vf.createIRI(iri));
         DatasetRecord datasetRecord = datasetRecordFactory.createNew(vf.createIRI(details.getDatasetRecordId()));
         configuration.setDatasetRecord(Collections.singleton(datasetRecord));
         return configuration;

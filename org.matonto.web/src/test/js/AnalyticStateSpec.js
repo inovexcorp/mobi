@@ -90,8 +90,10 @@ describe('Analytic State Service', function() {
         expect(analyticStateSvc.limit).toEqual(100);
         expect(analyticStateSvc.links).toEqual({});
         expect(analyticStateSvc.query).toEqual({});
+        expect(analyticStateSvc.record).toEqual({});
         expect(analyticStateSvc.landing).toBe(true);
         expect(analyticStateSvc.editor).toBe(false);
+        expect(analyticStateSvc.selectedConfigurationId).toBe('');
     });
     it('resetSelected sets the variables correctly', function() {
         analyticStateSvc.resetSelected();
@@ -349,15 +351,34 @@ describe('Analytic State Service', function() {
     describe('populateEditor should set the values correctly if setClassesAndProperties', function() {
         var record = [];
         var configuration = {};
+        var analyticRecord = {};
+        var column1 = {};
+        var column2 = {};
         beforeEach(function() {
             spyOn(analyticStateSvc, 'getOntologies').and.returnValue([]);
-            configuration = {'@type': [prefixes.analytic + 'Configuration']};
+            configuration = {'@id': 'configId', '@type': [prefixes.analytic + 'Configuration']};
             configuration[prefixes.analytic + 'datasetRecord'] = [{'@id': 'datasetRecordId'}];
-            configuration[prefixes.analytic + 'row'] = [{'@id': 'rowId'}];
-            configuration[prefixes.analytic + 'column'] = [{'@id': 'columnId1'}, {'@id': 'columnId2'}];
-            record = [configuration];
+            configuration[prefixes.analytic + 'hasRow'] = [{'@id': 'rowId'}];
+            configuration[prefixes.analytic + 'hasColumn'] = [{'@id': 'columnId1'}, {'@id': 'columnId2'}];
+            analyticRecord = {'@id': 'recordId', '@type': [prefixes.analytic + 'AnalyticRecord']};
+            analyticRecord[prefixes.dcterms + 'title'] = [{'@value': 'title'}];
+            analyticRecord[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
+            analyticRecord[prefixes.catalog + 'keyword'] = [{'@value': 'keyword1'}, {'@value': 'keyword2'}];
+            column1 = {'@id': 'columnId1'};
+            column1[prefixes.analytic + 'hasIndex'] = [{'@value': 1}];
+            column1[prefixes.analytic + 'hasProperty'] = [{'@id': 'property1'}];
+            column2 = {'@id': 'columnId2'};
+            column2[prefixes.analytic + 'hasIndex'] = [{'@value': 0}];
+            column2[prefixes.analytic + 'hasProperty'] = [{'@id': 'property2'}];
+            record = [analyticRecord, configuration, column1, column2];
             utilSvc.getPropertyId.and.callFake(function(obj, prop) {
                 return obj[prop][0]['@id'];
+            });
+            utilSvc.getDctermsValue.and.callFake(function(obj, prop) {
+                return obj[prefixes.dcterms + prop][0]['@value'];
+            });
+            utilSvc.getPropertyValue.and.callFake(function(obj, prop) {
+                return obj[prop][0]['@value'];
             });
             datasetManagerSvc.datasetRecords = [[{'@id': 'datasetRecordId', '@type': 'type'}, {}]];
         });
@@ -366,13 +387,13 @@ describe('Analytic State Service', function() {
                 spyOn(analyticStateSvc, 'setClassesAndProperties').and.returnValue($q.when());
                 spyOn(analyticStateSvc, 'createQueryString').and.returnValue('query');
                 analyticStateSvc.classes = [{id: 'rowId'}];
-                analyticStateSvc.properties = [{id: 'columnId1'}, {id: 'columnId2'}];
+                analyticStateSvc.properties = [{id: 'property1'}, {id: 'property2'}];
             });
             it('resolves', function() {
                 sparqlManagerSvc.pagedQuery.and.returnValue($q.when(response));
                 analyticStateSvc.populateEditor(record)
                     .then(function() {
-                        populateEditor(configuration);
+                        populateEditor(configuration, analyticRecord);
                         onPagedSuccess();
                     }, function() {
                         fail('Promise should have resolved');
@@ -383,7 +404,7 @@ describe('Analytic State Service', function() {
                 sparqlManagerSvc.pagedQuery.and.returnValue($q.reject('error'));
                 analyticStateSvc.populateEditor(record)
                     .then(function() {
-                        populateEditor(configuration);
+                        populateEditor(configuration, analyticRecord);
                         onPagedError();
                     }, function() {
                         fail('Promise should have resolved');
@@ -399,7 +420,7 @@ describe('Analytic State Service', function() {
                 }, function(response) {
                     expect(utilSvc.getPropertyId).toHaveBeenCalledWith(configuration, prefixes.analytic + 'datasetRecord');
                     expect(analyticStateSvc.datasets).toEqual([{id: 'datasetRecordId', ontologies: []}]);
-                    expect(utilSvc.getPropertyId).toHaveBeenCalledWith(configuration, prefixes.analytic + 'row');
+                    expect(utilSvc.getPropertyId).toHaveBeenCalledWith(configuration, prefixes.analytic + 'hasRow');
                     expect(analyticStateSvc.setClassesAndProperties).toHaveBeenCalled();
                     expect(response).toBe('error');
                 });
@@ -415,16 +436,50 @@ describe('Analytic State Service', function() {
         expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.dataset + 'linksToBranch');
         expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.dataset + 'linksToCommit');
     });
+    describe('createTableConfigurationConfig should return the correct object when selectedConfigurationId is', function() {
+        beforeEach(function() {
+            analyticStateSvc.datasets = [{id: 'datasetId'}];
+            analyticStateSvc.selectedClass = {id: 'classId'};
+            analyticStateSvc.selectedProperties = [{id: 'propId1'}, {id: 'propId2'}];
+        });
+        it('empty', function() {
+            expect(analyticStateSvc.createTableConfigurationConfig()).toEqual({
+                json: JSON.stringify({
+                    datasetRecordId: 'datasetId',
+                    row: 'classId',
+                    columns: [{index: 0, property: 'propId1'}, {index: 1, property: 'propId2'}]
+                }),
+                type: prefixes.analytic + 'TableConfiguration'
+            });
+        });
+        it('populated', function() {
+            analyticStateSvc.selectedConfigurationId = 'configId';
+            expect(analyticStateSvc.createTableConfigurationConfig()).toEqual({
+                json: JSON.stringify({
+                    datasetRecordId: 'datasetId',
+                    row: 'classId',
+                    columns: [{index: 0, property: 'propId1'}, {index: 1, property: 'propId2'}],
+                    configurationId: 'configId'
+                }),
+                type: prefixes.analytic + 'TableConfiguration'
+            });
+        });
+    });
     
-    function populateEditor(configuration) {
+    function populateEditor(configuration, analyticRecord) {
         expect(utilSvc.getPropertyId).toHaveBeenCalledWith(configuration, prefixes.analytic + 'datasetRecord');
         expect(analyticStateSvc.datasets).toEqual([{id: 'datasetRecordId', ontologies: []}]);
-        expect(utilSvc.getPropertyId).toHaveBeenCalledWith(configuration, prefixes.analytic + 'row');
+        expect(utilSvc.getPropertyId).toHaveBeenCalledWith(configuration, prefixes.analytic + 'hasRow');
         expect(analyticStateSvc.setClassesAndProperties).toHaveBeenCalled();
+        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(analyticRecord, 'description');
+        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(analyticRecord, 'title');
+        expect(analyticStateSvc.selectedConfigurationId).toBe('configId');
+        expect(analyticStateSvc.record).toEqual({analyticRecordId: 'recordId', description: 'description', keywords: ['keyword1', 'keyword2'], title: 'title'});
         expect(analyticStateSvc.selectedClass).toEqual({id: 'rowId'});
         expect(analyticStateSvc.classes).toEqual([]);
-        expect(analyticStateSvc.selectedProperties).toEqual([{id: 'columnId1'}, {id: 'columnId2'}]);
+        expect(analyticStateSvc.selectedProperties).toEqual([{id: 'property2'}, {id: 'property1'}]);
         expect(analyticStateSvc.properties).toEqual([]);
+        expect(analyticStateSvc.createQueryString).toHaveBeenCalled();
     }
     
     function getPageResolves(direction) {

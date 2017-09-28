@@ -37,6 +37,7 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -351,21 +352,81 @@ public class AnalyticRestImplTest extends MatontoRestTestNg {
         verify(analyticManager).getAnalyticRecord(recordId);
     }
 
-    private <T extends Configuration> void testCreateAnalyticByType(OrmFactory<T> factory) {
+    @Test
+    public void updateAnalyticTest() {
+        testUpdateAnalyticByType(configurationFactory, config);
+    }
+
+    @Test
+    public void updateTableAnalyticTest() {
+        testUpdateAnalyticByType(tableConfigurationFactory, tableConfig);
+    }
+
+    @Test
+    public void updateAnalyticWithInvalidConfigurationTypeTest() {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("typeIRI", "INVALID");
+        fd.field("json", "{}");
+
+        verifyUpdateAnalytic(fd, 400);
+    }
+
+    @Test
+    public void updateAnalyticWithIllegalStateTest() {
+        // Setup:
+        FormDataMultiPart fd = getValidFormData(configurationFactory);
+        doThrow(new IllegalArgumentException()).when(analyticManager).updateConfiguration(recordId, config);
+
+        verifyUpdateAnalytic(fd, 400);
+    }
+
+    @Test
+    public void updateAnalyticWithFailedConnectionTest() {
+        // Setup:
+        FormDataMultiPart fd = getValidFormData(configurationFactory);
+        doThrow(new RepositoryException()).when(analyticManager).updateConfiguration(recordId, config);
+
+        verifyUpdateAnalytic(fd, 500);
+    }
+
+    private <T extends Configuration> FormDataMultiPart getValidFormData(OrmFactory<T> factory) {
+        FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("type", factory.getTypeIRI().stringValue());
+        fd.field("json", "{}");
+        return fd;
+    }
+
+    private <T extends Configuration> void testCreateAnalyticByType(OrmFactory<T> factory) {
+        // Setup:
+        FormDataMultiPart fd = getValidFormData(factory);
         fd.field("title", "Title");
         fd.field("description", "Description");
         fd.field("keywords", "keyword");
-        fd.field("json", "{}");
 
         Response response = target().path("analytics").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
-        assertEquals(response.readEntity(String.class), RECORD_IRI);
+        JSONObject object = response.readEntity(JSONObject.class);
+        assertEquals(object.get("analyticRecordId"), RECORD_IRI);
+        assertEquals(object.get("configurationId"), CONFIG_IRI);
         verify(analyticManager).createAnalytic(any(AnalyticRecordConfig.class));
         verify(provUtils).startCreateActivity(user);
         verify(provUtils).endCreateActivity(activity, recordId);
+    }
+
+    private <T extends Configuration> void testUpdateAnalyticByType(OrmFactory<T> factory, T config) {
+        // Setup:
+        FormDataMultiPart fd = getValidFormData(factory);
+
+        verifyUpdateAnalytic(fd, 200);
+        verify(analyticManager).createConfiguration("{}", factory);
+        verify(analyticManager).updateConfiguration(recordId, config);
+    }
+
+    private void verifyUpdateAnalytic(FormDataMultiPart fd, int status) {
+        Response response = target().path("analytics/" + encode(RECORD_IRI)).request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), status);
     }
 
     private void verifyCreateAnalyticFail(FormDataMultiPart fd, int status) {

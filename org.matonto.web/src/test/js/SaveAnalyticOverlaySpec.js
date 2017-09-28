@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Save Analytic Overlay directive', function() {
-    var $compile, scope, element, controller, $q, analyticManagerSvc, analyticStateSvc, prefixes;
+    var $compile, scope, element, controller, $q, analyticManagerSvc, analyticStateSvc, prefixes, utilSvc;
 
     beforeEach(function() {
         module('templates');
@@ -29,20 +29,20 @@ describe('Save Analytic Overlay directive', function() {
         mockAnalyticManager();
         mockAnalyticState();
         mockPrefixes();
+        mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _analyticManagerService_, _analyticStateService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _analyticManagerService_, _analyticStateService_, _prefixes_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             analyticManagerSvc = _analyticManagerService_;
             analyticStateSvc = _analyticStateService_;
             prefixes = _prefixes_;
+            utilSvc = _utilService_;
         });
         
         scope.close = jasmine.createSpy('close');
-        element = $compile(angular.element('<save-analytic-overlay close="close()"></save-analytic-overlay>'))(scope);
-        scope.$digest();
-        controller = element.controller('saveAnalyticOverlay');
+        compileElement();
     });
     
     describe('replaces the element with the correct html', function() {
@@ -84,50 +84,59 @@ describe('Save Analytic Overlay directive', function() {
         });
     });
     describe('controller methods', function() {
-        it('cancel sets and calls the correct method', function() {
-            analyticStateSvc.record = {title: 'title'};
-            controller.cancel();
-            expect(analyticStateSvc.record).toEqual({});
-            expect(scope.close).toHaveBeenCalled();
-        });
         describe('submit should call the correct methods if createAnalytic', function() {
             var expected;
             beforeEach(function() {
-                analyticStateSvc.datasets = [{id: 'datasetId'}];
-                analyticStateSvc.selectedClass = {id: 'classId'};
-                analyticStateSvc.selectedProperties = [{id: 'propId1'}, {id: 'propId2'}];
                 controller.config = {
                     title: 'title',
                     description: 'description',
                     keywords: ['keyword1', 'keyword2']
                 };
+                analyticStateSvc.createTableConfigurationConfig.and.returnValue({type: 'type', json: '{}'});
                 expected = {
                     title: 'title',
                     description: 'description',
                     keywords: ['keyword1', 'keyword2'],
-                    type: prefixes.analytic + 'TableConfiguration',
-                    json: JSON.stringify({
-                        datasetRecordId: 'datasetId',
-                        row: 'classId',
-                        columns: ['propId1', 'propId2']
-                    })
+                    type: 'type',
+                    json: '{}'
                 };
             });
             it('resolves', function() {
-                analyticManagerSvc.createAnalytic.and.returnValue($q.resolve('analyticId'));
+                analyticManagerSvc.createAnalytic.and.returnValue($q.resolve({analyticRecordId: 'analyticId', configurationId: 'configId'}));
                 controller.submit();
                 scope.$apply();
                 expect(analyticManagerSvc.createAnalytic).toHaveBeenCalledWith(expected);
+                expect(analyticManagerSvc.updateAnalytic).not.toHaveBeenCalled();
                 expect(scope.close).toHaveBeenCalled();
-                expect(analyticStateSvc.showLanding).toHaveBeenCalled();
+                expect(analyticStateSvc.record).toEqual(jasmine.objectContaining(controller.config));
+                expect(analyticStateSvc.record.analyticRecordId).toBe('analyticId');
+                expect(analyticStateSvc.selectedConfigurationId).toBe('configId');
+                expect(utilSvc.createSuccessToast).toHaveBeenCalledWith('Analytic successfully saved');
             });
             it('rejects', function() {
                 analyticManagerSvc.createAnalytic.and.returnValue($q.reject('error'));
                 controller.submit();
                 scope.$apply();
                 expect(analyticManagerSvc.createAnalytic).toHaveBeenCalledWith(expected);
+                expect(analyticManagerSvc.updateAnalytic).not.toHaveBeenCalled();
                 expect(controller.error).toBe('error');
             });
         });
     });
+    it('controller.config should be initialized correctly', function() {
+        var record = {
+            description: 'description',
+            keywords: ['keyword1', 'keyword2'],
+            title: 'title'
+        };
+        analyticStateSvc.record = record;
+        compileElement();
+        expect(controller.config).toEqual(record);
+    });
+    
+    function compileElement() {
+        element = $compile(angular.element('<save-analytic-overlay close="close()"></save-analytic-overlay>'))(scope);
+        scope.$digest();
+        controller = element.controller('saveAnalyticOverlay');
+    }
 });

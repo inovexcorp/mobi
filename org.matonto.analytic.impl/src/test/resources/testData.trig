@@ -1,0 +1,11 @@
+@prefix analytic: <http://matonto.org/ontologies/analytic#> .
+@prefix records: <https://matonto.org/test/records#> .
+@prefix configs: <https://matonto.org/test/configs#> .
+
+records:1 {
+	records:1 a analytic:AnalyticRecord ;
+		analytic:hasConfig configs:1 .
+
+	configs:1 a analytic:Configuration ;
+		analytic:datasetRecord records:2 .
+}

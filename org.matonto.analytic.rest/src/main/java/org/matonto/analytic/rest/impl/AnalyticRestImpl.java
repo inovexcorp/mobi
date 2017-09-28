@@ -27,9 +27,11 @@ import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
+import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.analytic.api.AnalyticManager;
 import org.matonto.analytic.api.builder.AnalyticRecordConfig;
@@ -117,15 +119,12 @@ public class AnalyticRestImpl implements AnalyticRest {
     public Response createAnalytic(ContainerRequestContext context, String typeIRI, String title, String description,
                                    String keywords, String json) {
         checkStringParam(title, "AnalyticRecord title is required");
-        Map<String, OrmFactory<? extends Configuration>> factories = getConfigurationFactories();
-        if (typeIRI == null || !factories.keySet().contains(typeIRI)) {
-            throw ErrorUtils.sendError("Invalid Configuration type", Response.Status.BAD_REQUEST);
-        }
+        OrmFactory<? extends Configuration> factory = getConfigurationFactoryOfType(typeIRI);
         User activeUser = getActiveUser(context, engineManager);
         CreateActivity createActivity = null;
         try {
             createActivity = provUtils.startCreateActivity(activeUser);
-            Configuration configuration = analyticManager.createConfiguration(json, factories.get(typeIRI));
+            Configuration configuration = analyticManager.createConfiguration(json, factory);
             AnalyticRecordConfig.AnalyticRecordBuilder builder = new AnalyticRecordConfig.AnalyticRecordBuilder(title,
                     Collections.singleton(activeUser), configuration);
             if (description != null) {
@@ -136,7 +135,9 @@ public class AnalyticRestImpl implements AnalyticRest {
             }
             AnalyticRecord newRecord = analyticManager.createAnalytic(builder.build());
             provUtils.endCreateActivity(createActivity, newRecord.getResource());
-            return Response.status(201).entity(newRecord.getResource().stringValue()).build();
+            JSONObject response = new JSONObject().element("analyticRecordId", newRecord.getResource().stringValue())
+                    .element("configurationId", configuration.getResource().stringValue());
+            return Response.status(201).entity(response).build();
         } catch (IllegalArgumentException ex) {
             provUtils.removeActivity(createActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -166,10 +167,32 @@ public class AnalyticRestImpl implements AnalyticRest {
         }
     }
 
+    @Override
+    public Response updateAnalytic(String analyticRecordId, String typeIRI, String json) {
+        OrmFactory<? extends Configuration> factory = getConfigurationFactoryOfType(typeIRI);
+        try {
+            analyticManager.updateConfiguration(vf.createIRI(analyticRecordId),
+                    analyticManager.createConfiguration(json, factory));
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MatOntoException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     private Map<String, OrmFactory<? extends Configuration>> getConfigurationFactories() {
         Map<String, OrmFactory<? extends Configuration>> factoryMap = new HashMap<>();
         factoryRegistry.getFactoriesOfType(Configuration.class).forEach(factory ->
                 factoryMap.put(factory.getTypeIRI().stringValue(), factory));
         return factoryMap;
+    }
+
+    private OrmFactory<? extends Configuration> getConfigurationFactoryOfType(String typeIRI) {
+        Map<String, OrmFactory<? extends Configuration>> factories = getConfigurationFactories();
+        if (typeIRI == null || !factories.keySet().contains(typeIRI)) {
+            throw ErrorUtils.sendError("Invalid Configuration type", Response.Status.BAD_REQUEST);
+        }
+        return factories.get(typeIRI);
     }
 }
