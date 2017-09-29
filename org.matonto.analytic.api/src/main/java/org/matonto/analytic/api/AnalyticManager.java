@@ -107,8 +107,9 @@ public interface AnalyticManager {
     /**
      * Updates the Configuration with the matching IRI from the provided Configuration.
      *
+     * @param recordId         The Resource of the AnalyticRecord.
      * @param newConfiguration The Configuration to replace the existing one in the system repository.
      * @param <T>              An Object which extends Configuration.
      */
-    <T extends Configuration> void updateConfiguration(T newConfiguration);
+    <T extends Configuration> void updateConfiguration(Resource recordId, T newConfiguration);
 }

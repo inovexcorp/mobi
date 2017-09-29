@@ -57,6 +57,7 @@ public class SimpleConfigurationServiceTest {
     private DatasetRecordFactory datasetRecordFactory = new DatasetRecordFactory();
 
     private static final String DATASET = "https://matonto.org/test/datasets#1";
+    private static final String CONFIG = "https://matonto.org/test/configs#1";
 
     @Before
     public void setUp() {
@@ -94,11 +95,12 @@ public class SimpleConfigurationServiceTest {
     @Test
     public void createTest() throws Exception {
         // SetUp:
-        JSONObject json = new JSONObject().element("datasetRecordId", DATASET);
+        JSONObject json = new JSONObject().element("datasetRecordId", DATASET).element("configurationId", CONFIG);
 
         Configuration result = service.create(json.toString());
         assertEquals(1, result.getDatasetRecord_resource().size());
         assertTrue(result.getDatasetRecord_resource().contains(vf.createIRI(DATASET)));
+        assertEquals(CONFIG, result.getResource().stringValue());
     }
 
     @Test(expected = IllegalArgumentException.class)

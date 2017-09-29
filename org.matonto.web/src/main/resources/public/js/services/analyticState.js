@@ -37,7 +37,10 @@
         /**
          * @ngdoc service
          * @name analyticState.service:analyticStateService
+         * @requires $q
+         * @requires datasetManager.service:datasetManagerService
          * @requires httpService.service:httpService
+         * @requires ontologyManager.service:ontologyManagerService
          * @requires prefixes.service:prefixes
          * @requires sparqlManager.service:sparqlManagerService
          * @requires util.service:utilService
@@ -48,13 +51,15 @@
          */
         .service('analyticStateService', analyticStateService);
         
-        analyticStateService.$inject = ['httpService', 'prefixes', 'sparqlManagerService', 'utilService'];
+        analyticStateService.$inject = ['$q', 'datasetManagerService', 'httpService', 'ontologyManagerService', 'prefixes', 'sparqlManagerService', 'utilService'];
         
-        function analyticStateService(httpService, prefixes, sparqlManagerService, utilService) {
+        function analyticStateService($q, datasetManagerService, httpService, ontologyManagerService, prefixes, sparqlManagerService, utilService) {
             var self = this;
             var subject = '?s';
             var sm = sparqlManagerService;
             var util = utilService;
+            var om = ontologyManagerService;
+            var dm = datasetManagerService;
             
             /**
              * @ngdoc property
@@ -288,6 +293,7 @@
              * of the object is:
              * ```
              * {
+             *     analyticRecordId: '',
              *     title: '',
              *     description: '',
              *     keywords: []
@@ -295,6 +301,17 @@
              * ```
              */
             self.record = {};
+            
+            /**
+             * @ngdoc property
+             * @name selectedConfigurationId
+             * @propertyOf analyticState.service:analyticStateService
+             * @type {string}
+             *
+             * @description
+             * 'selectedConfigurationId' is a string containing the selected Configuration's ID.
+             */
+            self.selectedConfigurationId = '';
             
             /**
              * @ngdoc method
@@ -332,6 +349,8 @@
                 self.limit = 100;
                 self.links = {};
                 self.query = {};
+                self.record = {};
+                self.selectedConfigurationId = '';
                 self.landing = true;
                 self.editor = false;
             }
@@ -517,6 +536,169 @@
                     move(self.results.bindings, from, to);
                     move(self.query.variables, from, to);
                 }
+            }
+            
+            /**
+             * @ngdoc method
+             * @name setClassesAndProperties
+             * @methodOf analyticState.service:analyticStateService
+             *
+             * @description
+             * Sets the classes and properties array based on selected dataset.
+             *
+             * @return {Promise} A promise that indicates the success of the function
+             */
+            self.setClassesAndProperties = function() {
+                var allOntologies = _.flatten(_.map(self.datasets, 'ontologies'));
+                if (_.isEmpty(allOntologies)) {
+                    return $q.reject('The Dataset does not have any associated ontologies');
+                }
+                return $q.all(_.map(allOntologies, ontology => om.getOntology(ontology.recordId, ontology.branchId, ontology.commitId)))
+                    .then(response => {
+                        if (_.isEmpty(_.flattenDeep(response))) {
+                            return $q.reject('The Dataset ontologies could not be retrieved');
+                        }
+                        self.classes = _.map(om.getClasses(response), clazz => ({
+                            id: clazz['@id'],
+                            title: om.getEntityName(clazz)
+                        }));
+                        self.properties = _.map(_.concat(self.defaultProperties, om.getObjectProperties(response), om.getDataTypeProperties(response)), property => ({
+                            id: property['@id'],
+                            title: om.getEntityName(property),
+                            classes: _.has(property, prefixes.rdfs + 'domain') ? _.map(_.get(property, prefixes.rdfs + 'domain'), '@id') : _.map(self.classes, 'id')
+                        }));
+                        return $q.resolve();
+                    }, () => $q.reject('The Dataset ontologies could not be found'));
+            }
+            
+            /**
+             * @ngdoc method
+             * @name populateEditor
+             * @methodOf analyticState.service:analyticStateService
+             *
+             * @description
+             * Populates the correct state variables to prepare for editing the identified analyticRecord.
+             *
+             * @param {Object[]} analyticRecordArray The analytic's JSON-LD which contains an AnalyticRecord
+             * and Configuration.
+             * @return {Promise} A promise indicating the success of the state setup
+             */
+            self.populateEditor = function(analyticRecordArray) {
+                var configuration = getByType(analyticRecordArray, 'Configuration');
+                var dataset = getDataset(configuration);
+                if (_.isEmpty(dataset)) {
+                    return $q.reject('Dataset could not be found');
+                }
+                self.datasets = [dataset];
+                var classId = util.getPropertyId(configuration, prefixes.analytic + 'hasRow');
+                var propertyIds = getPropertyIds(configuration, analyticRecordArray);
+                return self.setClassesAndProperties()
+                    .then(() => {
+                        var message = '';
+                        var analyticRecord = getByType(analyticRecordArray, 'AnalyticRecord');
+                        self.selectedConfigurationId = configuration['@id'];
+                        self.record = {
+                            analyticRecordId: analyticRecord['@id'],
+                            description: util.getDctermsValue(analyticRecord, 'description'),
+                            keywords: _.map(_.get(analyticRecord, prefixes.catalog + 'keyword'), '@value'),
+                            title: util.getDctermsValue(analyticRecord, 'title')
+                        };
+                        self.selectedClass = _.remove(self.classes, {id: classId})[0];
+                        if (self.selectedClass) {
+                            var property;
+                            _.forEach(propertyIds, propertyId => {
+                                property = _.remove(self.properties, {id: propertyId})[0];
+                                if (!_.isEmpty(property)) {
+                                    self.selectedProperties.push(property);
+                                }
+                            });
+                            if (self.selectedProperties.length) {
+                                getPagedResults(self.createQueryString());
+                            } else {
+                                message = 'The Properties could not be found in the Dataset ontologies';
+                            }
+                        } else {
+                            message = 'The Class could not be found in the Dataset ontologies';
+                        }
+                        return $q.resolve(message);
+                    }, errorMessage => {
+                        self.datasets = [];
+                        return $q.reject(errorMessage);
+                    });
+            }
+            
+            /**
+             * @ngdoc method
+             * @name getOntologies
+             * @methodOf analyticState.service:analyticStateService
+             *
+             * @description
+             * Gets a simplified ontologies list from the provided dataset.
+             *
+             * @param {Object[]} dataset The dataset's JSON-LD which contains a DatasetRecord and OntologyIdentifiers.
+             * @param {Object} record The record within the dataset's JSON-LD to be excluded from the operation.
+             * @return {Object[]} An Array of ontologies with recordId, branchId, and commitId properties
+             */
+            self.getOntologies = function(dataset, record) {
+                return _.map(_.without(dataset, record), identifier => ({
+                    recordId: util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'),
+                    branchId: util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch'),
+                    commitId: util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit')
+                }));
+            }
+            
+            /**
+             * @ngdoc method
+             * @name createTableConfigurationConfig
+             * @methodOf analyticState.service:analyticStateService
+             *
+             * @description
+             * Creates the table configuration to make the REST calls based on the state variables already set.
+             *
+             * @return {Object} An Object containing the correct type and json parameters
+             */
+            self.createTableConfigurationConfig = function() {
+                var json = {
+                    datasetRecordId: self.datasets[0].id,
+                    row: self.selectedClass.id,
+                    columns: _.map(self.selectedProperties, (obj, index) => ({index, property: obj.id}))
+                };
+                if (!_.isEmpty(self.selectedConfigurationId)) {
+                    json.configurationId = self.selectedConfigurationId;
+                }
+                return {
+                    json: JSON.stringify(json),
+                    type: prefixes.analytic + 'TableConfiguration'
+                };
+            }
+            
+            function getPropertyIds(configuration, analyticRecordArray) {
+                var columnIds = _.map(_.get(configuration, prefixes.analytic + 'hasColumn', []), '@id');
+                var result = _.fill(Array(columnIds.length));
+                _.forEach(columnIds, id => {
+                    var column = _.find(analyticRecordArray, {'@id': id});
+                    var index = util.getPropertyValue(column, prefixes.analytic + 'hasIndex');
+                    result[index] = util.getPropertyId(column, prefixes.analytic + 'hasProperty');
+                });
+                return result;
+            }
+            
+            function getDataset(configuration) {
+                var datasetRecordId = util.getPropertyId(configuration, prefixes.analytic + 'datasetRecord');
+                var datasetRecord = {};
+                var dataset = _.find(dm.datasetRecords, arr => {
+                    datasetRecord = _.find(arr, '@type');
+                    return _.get(datasetRecord, '@id') === datasetRecordId;
+                });
+                if (_.isEmpty(dataset)) {
+                    return {};
+                }
+                var ontologies = self.getOntologies(dataset, datasetRecord);
+                return {id: datasetRecord['@id'], ontologies};
+            }
+            
+            function getByType(recordArray, typeLocalName) {
+                return _.find(recordArray, obj => _.includes(_.get(obj, '@type', []), prefixes.analytic + typeLocalName));
             }
             
             function move(arr, from, to) {
