@@ -549,7 +549,7 @@
              * @return {Promise} A promise that indicates the success of the function
              */
             self.setClassesAndProperties = function() {
-                var allOntologies = _.flatten(_.map(self.datasets, dataset => dataset.ontologies));
+                var allOntologies = _.flatten(_.map(self.datasets, 'ontologies'));
                 return $q.all(_.map(allOntologies, ontology => om.getOntology(ontology.recordId, ontology.branchId, ontology.commitId)))
                     .then(response => {
                         self.classes = _.map(om.getClasses(response), clazz => ({

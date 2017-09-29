@@ -64,7 +64,7 @@
                     
                     if (!dvm.state.classes.length && !dvm.state.properties.length) {
                         dvm.state.setClassesAndProperties()
-                            .then(undefined, util.createErrorToast);
+                            .then(_.noop, util.createErrorToast);
                     }
                     
                     dvm.isDisabled = function(classes) {

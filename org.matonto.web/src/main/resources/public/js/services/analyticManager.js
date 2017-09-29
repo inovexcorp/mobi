@@ -90,7 +90,7 @@
              * Calls the GET /mobirest/catalogs/record-types endpoint and returns the
              * array of record type IRIs.
              *
-             * @returns {Promise} A promise that resolves to an array of the IRIs for all
+             * @returns {Promise} A Promise that resolves to an array of the IRIs for all
              * record types in the catalog
              */
             self.getConfigurationTypes = function() {
@@ -145,8 +145,8 @@
              * Calls the GET /mobirest/analytics/{analyticRecordId} endpoint to get the AnalyticRecord and associated Configuration
              * for the provided ID.
              *
-             * @param {string} analyticRecordId A string identifying the  A configuration object containing metadata for the new Record
-             * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an error message
+             * @param {string} analyticRecordId The ID of the AnalyticRecord
+             * @return {Promise} A Promise that either resolves with the response of the endpoint or is rejected with an error message
              */
             self.getAnalytic = function(analyticRecordId) {
                 return $http.get(prefix + '/' + encodeURIComponent(analyticRecordId))
@@ -163,10 +163,10 @@
              * the AnalyticRecord's Configuration. Returns a Promise indicating the success of the call.
              *
              * @param {Object} analyticConfig A configuration object containing the changed metadata
-             * @param {string} analyticConfig.analyticRecordId The required analyticRecordId of the AnalyticRecord
+             * @param {string} analyticConfig.analyticRecordId The required ID of the AnalyticRecord
              * @param {string} analyticConfig.type The required configuration type IRI string from the `configurationTypes` array
              * @param {Object} analyticConfig.json The required JSON associated with the new Configuration
-             * @return {Promise} A Promise that resolves is successful or is rejected with an error message
+             * @return {Promise} A Promise that resolves if successful or is rejected with an error message
              */
             self.updateAnalytic = function(analyticConfig) {
                 var fd = new FormData();

@@ -461,7 +461,7 @@ function mockPrefixes() {
             this.dataset = 'dataset:';
             this.matprov = 'matprov:';
             this.prov = 'prov:';
-            this.analytic = 'analytic:';
+            this.analytic = 'https://matonto.org/analytic#';
         });
     });
 }
@@ -1147,7 +1147,7 @@ function mockAnalyticState() {
             this.links = {};
             this.query = {};
             this.record = {};
-            self.selectedConfigurationId = '';
+            this.selectedConfigurationId = '';
             this.showEditor = jasmine.createSpy('showEditor');
             this.showLanding = jasmine.createSpy('showLanding');
             this.resetSelected = jasmine.createSpy('resetSelected');

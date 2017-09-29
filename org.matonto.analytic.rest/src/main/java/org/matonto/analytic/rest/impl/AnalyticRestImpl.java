@@ -27,7 +27,6 @@ import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
-import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;

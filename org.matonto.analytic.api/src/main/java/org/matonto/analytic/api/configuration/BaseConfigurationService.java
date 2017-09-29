@@ -79,7 +79,7 @@ public abstract class BaseConfigurationService<T extends Configuration> implemen
             JaxbValidator.validateRequired(details, clazz);
             return details;
         } catch (JAXBException | ValidationException ex) {
-            throw new IllegalArgumentException(ex.getMessage());
+            throw new IllegalArgumentException(ex.getMessage(), ex);
         }
     }
 }

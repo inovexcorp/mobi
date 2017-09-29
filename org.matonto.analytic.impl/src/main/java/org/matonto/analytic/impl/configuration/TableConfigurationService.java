@@ -35,6 +35,7 @@ import org.matonto.analytic.ontologies.analytic.ColumnFactory;
 import org.matonto.analytic.ontologies.analytic.TableConfiguration;
 import org.matonto.analytic.ontologies.analytic.TableConfigurationFactory;
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory;
+import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ValueFactory;
 
 import java.util.UUID;
@@ -80,11 +81,7 @@ public class TableConfigurationService extends BaseConfigurationService<TableCon
         TableConfiguration configuration = super.create(json);
         configuration.setHasRow(vf.createIRI(details.getRow()));
         configuration.setHasColumn(details.getColumns().stream()
-                .map(columnDetails -> {
-                    Column column = createColumn(columnDetails);
-                    configuration.getModel().addAll(column.getModel());
-                    return column;
-                })
+                .map(columnDetails ->  createColumn(columnDetails, configuration.getModel()))
                 .collect(Collectors.toSet()));
         return configuration;
     }
@@ -93,17 +90,18 @@ public class TableConfigurationService extends BaseConfigurationService<TableCon
      * Creates a {@link Column} using the provided {@link ColumnDetails}.
      *
      * @param details The {@link ColumnDetails} containing needed metadata.
+     * @param model   The Configuration's {@link Model} to add the statements to.
      * @return A {@link Column} created using the provided {@link ColumnDetails}.
      */
-    private Column createColumn(ColumnDetails details) {
+    private Column createColumn(ColumnDetails details, Model model) {
         try {
             JaxbValidator.validateRequired(details, ColumnDetails.class);
-            Column column = columnFactory.createNew(vf.createIRI(COLUMN_NAMESPACE + UUID.randomUUID()));
+            Column column = columnFactory.createNew(vf.createIRI(COLUMN_NAMESPACE + UUID.randomUUID()), model);
             column.setHasIndex(details.getIndex());
             column.setHasProperty(vf.createIRI(details.getProperty()));
             return column;
         } catch (JaxbValidator.ValidationException ex) {
-            throw new IllegalArgumentException(ex.getMessage());
+            throw new IllegalArgumentException(ex.getMessage(), ex);
         }
     }
 }
