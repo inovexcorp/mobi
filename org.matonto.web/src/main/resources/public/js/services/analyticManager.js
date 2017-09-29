@@ -150,7 +150,7 @@
              */
             self.getAnalytic = function(analyticRecordId) {
                 return $http.get(prefix + '/' + encodeURIComponent(analyticRecordId))
-                    .then(response => response.data, $q.reject);
+                    .then(response => response.data, util.rejectError);
             }
             
             /**

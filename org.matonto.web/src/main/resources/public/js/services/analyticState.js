@@ -550,8 +550,14 @@
              */
             self.setClassesAndProperties = function() {
                 var allOntologies = _.flatten(_.map(self.datasets, 'ontologies'));
+                if (_.isEmpty(allOntologies)) {
+                    return $q.reject('The Dataset does not have any associated ontologies');
+                }
                 return $q.all(_.map(allOntologies, ontology => om.getOntology(ontology.recordId, ontology.branchId, ontology.commitId)))
                     .then(response => {
+                        if (_.isEmpty(_.flattenDeep(response))) {
+                            return $q.reject('The Dataset ontologies could not be retrieved');
+                        }
                         self.classes = _.map(om.getClasses(response), clazz => ({
                             id: clazz['@id'],
                             title: om.getEntityName(clazz)
@@ -562,7 +568,7 @@
                             classes: _.has(property, prefixes.rdfs + 'domain') ? _.map(_.get(property, prefixes.rdfs + 'domain'), '@id') : _.map(self.classes, 'id')
                         }));
                         return $q.resolve();
-                    }, $q.reject);
+                    }, () => $q.reject('The Dataset ontologies could not be found'));
             }
             
             /**
@@ -579,11 +585,16 @@
              */
             self.populateEditor = function(analyticRecordArray) {
                 var configuration = getByType(analyticRecordArray, 'Configuration');
-                self.datasets = [getDataset(configuration)];
+                var dataset = getDataset(configuration);
+                if (_.isEmpty(dataset)) {
+                    return $q.reject('Dataset could not be found');
+                }
+                self.datasets = [dataset];
                 var classId = util.getPropertyId(configuration, prefixes.analytic + 'hasRow');
                 var propertyIds = getPropertyIds(configuration, analyticRecordArray);
                 return self.setClassesAndProperties()
                     .then(() => {
+                        var message = '';
                         var analyticRecord = getByType(analyticRecordArray, 'AnalyticRecord');
                         self.selectedConfigurationId = configuration['@id'];
                         self.record = {
@@ -593,12 +604,27 @@
                             title: util.getDctermsValue(analyticRecord, 'title')
                         };
                         self.selectedClass = _.remove(self.classes, {id: classId})[0];
-                        _.forEach(propertyIds, propertyId => {
-                            self.selectedProperties.push(_.remove(self.properties, {id: propertyId})[0]);
-                        });
-                        getPagedResults(self.createQueryString());
-                        return $q.resolve();
-                    }, $q.reject);
+                        if (self.selectedClass) {
+                            var property;
+                            _.forEach(propertyIds, propertyId => {
+                                property = _.remove(self.properties, {id: propertyId})[0];
+                                if (!_.isEmpty(property)) {
+                                    self.selectedProperties.push(property);
+                                }
+                            });
+                            if (self.selectedProperties.length) {
+                                getPagedResults(self.createQueryString());
+                            } else {
+                                message = 'The Properties could not be found in the Dataset ontologies';
+                            }
+                        } else {
+                            message = 'The Class could not be found in the Dataset ontologies';
+                        }
+                        return $q.resolve(message);
+                    }, errorMessage => {
+                        self.datasets = [];
+                        return $q.reject(errorMessage);
+                    });
             }
             
             /**
@@ -664,6 +690,9 @@
                     datasetRecord = _.find(arr, '@type');
                     return _.get(datasetRecord, '@id') === datasetRecordId;
                 });
+                if (_.isEmpty(dataset)) {
+                    return {};
+                }
                 var ontologies = self.getOntologies(dataset, datasetRecord);
                 return {id: datasetRecord['@id'], ontologies};
             }

@@ -132,15 +132,17 @@ describe('Analytic Manager service', function() {
     });
     describe('should retrieve an AnalyticRecord', function() {
         it('unless an error occurs', function() {
+            utilSvc.rejectError.and.returnValue($q.reject('error'));
             $httpBackend.whenGET('/mobirest/analytics/recordId').respond(400, null, null, 'error');
             analyticManagerSvc.getAnalytic('recordId')
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toEqual(jasmine.objectContaining({
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
                         status: 400,
                         statusText: 'error'
                     }));
+                    expect(response).toBe('error');
                 });
             flushAndVerify($httpBackend);
         });

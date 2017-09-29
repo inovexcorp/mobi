@@ -223,13 +223,25 @@ describe('Analytics Landing Page directive', function() {
                 beforeEach(function() {
                     analyticManagerSvc.getAnalytic.and.returnValue($q.when([]));
                 });
-                it('resolves', function() {
-                    analyticStateSvc.populateEditor.and.returnValue($q.when());
-                    controller.open('recordId');
-                    scope.$apply();
-                    expect(analyticManagerSvc.getAnalytic).toHaveBeenCalledWith('recordId');
-                    expect(analyticStateSvc.populateEditor).toHaveBeenCalled();
-                    expect(analyticStateSvc.showEditor).toHaveBeenCalled();
+                describe('resolves and the response is', function() {
+                    it('empty', function() {
+                        analyticStateSvc.populateEditor.and.returnValue($q.when());
+                        controller.open('recordId');
+                        scope.$apply();
+                        expect(analyticManagerSvc.getAnalytic).toHaveBeenCalledWith('recordId');
+                        expect(analyticStateSvc.populateEditor).toHaveBeenCalled();
+                        expect(analyticStateSvc.showEditor).toHaveBeenCalled();
+                        expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                    });
+                    it('populated', function() {
+                        analyticStateSvc.populateEditor.and.returnValue($q.when('message'));
+                        controller.open('recordId');
+                        scope.$apply();
+                        expect(analyticManagerSvc.getAnalytic).toHaveBeenCalledWith('recordId');
+                        expect(analyticStateSvc.populateEditor).toHaveBeenCalled();
+                        expect(analyticStateSvc.showEditor).toHaveBeenCalled();
+                        expect(utilSvc.createErrorToast).toHaveBeenCalledWith('message');
+                    });
                 });
                 it('rejects', function() {
                     analyticStateSvc.populateEditor.and.returnValue($q.reject('error'));

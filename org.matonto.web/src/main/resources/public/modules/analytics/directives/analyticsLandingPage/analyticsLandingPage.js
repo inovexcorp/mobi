@@ -108,7 +108,12 @@
                     dvm.open = function(analyticRecordId) {
                         am.getAnalytic(analyticRecordId)
                             .then(state.populateEditor, $q.reject)
-                            .then(state.showEditor, dvm.util.createErrorToast);
+                            .then(message => {
+                                if (!_.isEmpty(message)) {
+                                    dvm.util.createErrorToast(message);
+                                }
+                                state.showEditor();
+                            }, dvm.util.createErrorToast);
                     }
 
                     dvm.showDeleteConfirmation = function(index) {
