@@ -32,7 +32,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.matonto.analytic.ontologies.analytic.Column;
 import org.matonto.analytic.ontologies.analytic.ColumnFactory;
-import org.matonto.analytic.ontologies.analytic.Configuration;
 import org.matonto.analytic.ontologies.analytic.TableConfiguration;
 import org.matonto.analytic.ontologies.analytic.TableConfigurationFactory;
 import org.matonto.dataset.ontology.dataset.DatasetRecordFactory;
@@ -51,7 +50,6 @@ import org.matonto.rdf.orm.conversion.impl.ResourceValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
 import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
-import org.matonto.rdf.orm.impl.ThingFactory;
 
 import java.util.Set;
 import java.util.stream.Collectors;

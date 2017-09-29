@@ -51,17 +51,17 @@ public class TableConfigurationService extends BaseConfigurationService<TableCon
     private ColumnFactory columnFactory;
 
     @Reference
-    protected void setValueFactory(ValueFactory vf) {
+    void setValueFactory(ValueFactory vf) {
         this.vf = vf;
     }
 
     @Reference
-    protected void setTableConfigurationFactory(TableConfigurationFactory ormFactory) {
+    void setTableConfigurationFactory(TableConfigurationFactory ormFactory) {
         this.ormFactory = ormFactory;
     }
 
     @Reference
-    protected void setDatasetRecordFactory(DatasetRecordFactory datasetRecordFactory) {
+    void setDatasetRecordFactory(DatasetRecordFactory datasetRecordFactory) {
         this.datasetRecordFactory = datasetRecordFactory;
     }
 

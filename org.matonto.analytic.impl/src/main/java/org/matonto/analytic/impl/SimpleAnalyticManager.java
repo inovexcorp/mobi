@@ -169,8 +169,8 @@ public class SimpleAnalyticManager implements AnalyticManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             Resource configId = newConfiguration.getResource();
             if (!conn.getStatements(recordId, vf.createIRI(AnalyticRecord.hasConfig_IRI), configId).hasNext()) {
-                throw new IllegalArgumentException(String.format("Configuration %s does not belong to AnalyticRecord " +
-                        "%s", configId, recordId));
+                throw new IllegalArgumentException(String.format("Configuration %s does not belong to AnalyticRecord "
+                        + "%s", configId, recordId));
             }
             conn.begin();
             conn.remove(configId, null, null);

@@ -111,5 +111,5 @@ public interface AnalyticManager {
      * @param newConfiguration The Configuration to replace the existing one in the system repository.
      * @param <T>              An Object which extends Configuration.
      */
-    <T extends Configuration> void updateConfiguration(Resource analyticRecordId, T newConfiguration);
+    <T extends Configuration> void updateConfiguration(Resource recordId, T newConfiguration);
 }
