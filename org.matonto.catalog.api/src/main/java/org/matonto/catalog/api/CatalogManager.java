@@ -23,6 +23,8 @@ package org.matonto.catalog.api;
  * #L%
  */
 
+import org.matonto.catalog.api.builder.Conflict;
+import org.matonto.catalog.api.builder.Difference;
 import org.matonto.catalog.api.builder.DistributionConfig;
 import org.matonto.catalog.api.builder.RecordConfig;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
@@ -31,6 +33,7 @@ import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.Distribution;
 import org.matonto.catalog.api.ontologies.mcat.InProgressCommit;
 import org.matonto.catalog.api.ontologies.mcat.Record;
+import org.matonto.catalog.api.ontologies.mcat.Revision;
 import org.matonto.catalog.api.ontologies.mcat.Version;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.rdf.api.IRI;
@@ -45,6 +48,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public interface CatalogManager {
+
+    /**
+     * Returns the ID of the Repository which should store all catalog data.
+     *
+     * @return The ID of the catalog Repository
+     */
+    String getRepositoryId();
 
     /**
      * Returns the IRI for the distributed Catalog.
@@ -135,11 +145,14 @@ public interface CatalogManager {
      * Removes the Record identified by the provided Resources from the repository.
      *
      * @param catalogId The Resource identifying the Catalog which contains the Record.
-     * @param recordId The Resource identifying the Record which you want to remove.
+     * @param recordId  The Resource identifying the Record which you want to remove.
+     * @param factory   The OrmFactory of the Type of Record you want to get back.
+     * @param <T>       An Object which extends Record.
+     * @return The Record object which was removed.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, or
      *      the Record does not belong to the Catalog.
      */
-    void removeRecord(Resource catalogId, Resource recordId);
+    <T extends Record> T removeRecord(Resource catalogId, Resource recordId, OrmFactory<T> factory);
 
     /**
      * Gets the Record from the provided Catalog. The Record will be of type T which is determined by the provided
@@ -579,54 +592,6 @@ public interface CatalogManager {
                                 @Nullable Model deletions);
 
     /**
-     * Stores the provided Commit in the repository and adds it to the Branch identified by the provided Resources,
-     * updating the head of the Branch in the process.
-     *
-     * @param catalogId The Resource identifying the Catalog which contains the Record.
-     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
-     * @param branchId The Resource identifying the Branch which will get the new Commit.
-     * @param commit The Commit to add to the Branch.
-     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *      Record does not belong to the Catalog, the Branch could not be found, or the Commit already exists in the
-     *      repository.
-     */
-    void addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, Commit commit);
-
-    /**
-     * Creates a new Commit in the repository using the InProgressCommit identified by the provided Resources and User
-     * and adds it to the Branch identified by the provided Resources, updating the head of the Branch in the process.
-     * Removes the InProgressCommit after adding the new Commit successfully.
-     *
-     * @param catalogId The Resource identifying the Catalog which contains the Record.
-     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch and
-     *                             InProgressCommit.
-     * @param branchId The Resource identifying the Branch which will get the new Commit.
-     * @param user The User with the InProgressCommit.
-     * @param message The String with the message text associated with the new Commit.
-     * @return The Resource of the new Commit.
-     * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *      Record does not belong to the Catalog, the Branch could not be found, or the InProgress could not be found.
-     * @throws IllegalStateException Thrown if the Branch does not have a head Commit.
-     */
-    Resource addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, User user, String message);
-
-    /**
-     * Creates a new Commit for the provided User in the repository for the Branch identified by the provided Resources
-     * using the provided added and deleted statements, updating the head of the Branch in the process.
-     *
-     * @param catalogId The Resource identifying the Catalog which contains the Record.
-     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
-     * @param branchId The Resource identifying the Branch which will get the new Commit.
-     * @param user The User which will be associated with the new Commit.
-     * @param message The String with the message text associated with the new Commit.
-     * @param additions The statements which were added to the named graph.
-     * @param deletions The statements which were added to the named graph.
-     * @return The Resource of the new Commit.
-     */
-    Resource addCommit(Resource catalogId, Resource versionedRDFRecordId, Resource branchId, User user, String message,
-                       Model additions, Model deletions);
-
-    /**
      * Adds the provided InProgressCommit to the repository for the VersionedRDFRecord identified by the provided
      * Resources.
      *
@@ -641,7 +606,8 @@ public interface CatalogManager {
 
     /**
      * Gets the Commit identified by the provided Resources. Returns an empty Optional if the Commit does not belong
-     * to the Branch.
+     * to the Branch. The Model backing the commit will contain all the data in the commit named graph. This includes
+     * the commit and revision metadata.
      *
      * @param catalogId The Resource identifying the Catalog which contains the Record.
      * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branch.
@@ -699,7 +665,28 @@ public interface CatalogManager {
                                          Resource inProgressCommitId);
 
     /**
-     * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference.
+     * Gets the Revision associated with the provided commit Resource.
+     *
+     * @param commitId The Resource identifying the commit
+     * @return The Revision associated with the provided commit Resource.
+     */
+    Revision getRevision(Resource commitId);
+
+    /**
+     * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference. The
+     * statements contained in the returned Difference will have a context that matches the storage quad. That is,
+     * tracked triples will have a context that matches the Revision additions and deletions contexts and tracked quads
+     * will have a context that matches the GraphRevision additions and deletions contexts.
+     *
+     * @param commitId The Resource identifying the Commit to retrieve the Difference from.
+     * @return A Difference object containing the addition and deletion statements of a Commit.
+     */
+    Difference getRevisionChanges(Resource commitId);
+
+    /**
+     * Gets the addition and deletion statements of a Commit identified by the provided Resource as a Difference. The
+     * statements contained in the returned Difference will have a context that matches the tracked quad. That is,
+     * tracked triples will have no context and tracked quads will have a context that matches the data named graph.
      *
      * @param commitId The Resource identifying the Commit to retrieve the Difference from.
      * @return A Difference object containing the addition and deletion statements of a Commit.
@@ -784,6 +771,19 @@ public interface CatalogManager {
     Model getCompiledResource(Resource commitId);
 
     /**
+     * Gets the Model which represents the entity at the instance of the Commit identified by the provided Resource
+     * using previous Commit data to construct it.
+     *
+     * @param commitId The Resource identifying the Commit identifying the spot in the entity's history that you wish
+     *                 to retrieve.
+     * @param branchId The Resource identifying the Branch from where the Commit should originate.
+     * @param versionedRDFRecordId The Resource identifying the Record from where the Branch should originate.
+     * @return Model which represents the resource at the Commit's point in history.
+     * @throws IllegalArgumentException Thrown if the Commit could not be found.
+     */
+    Model getCompiledResource(Resource versionedRDFRecordId, Resource branchId, Resource commitId);
+
+    /**
      * Gets all of the conflicts between the Commits identified by the two provided Resources.
      *
      * @param leftId The left (first) Commit.
@@ -793,26 +793,6 @@ public interface CatalogManager {
      * @throws IllegalStateException Thrown if a Commit in either chain does not have the additions/deletions set.
      */
     Set<Conflict> getConflicts(Resource leftId, Resource rightId);
-
-    /**
-     * Merges a Branch identified by the provided Resources into another Branch identified by the provided Resources.
-     * Both Branches must belong to the same VersionedRDFRecord. The provided addition and deletion statements should
-     * resolve any conflicts and will be used to create the merge Commit along with the InProgressCommit identified by
-     * the provided Resources and User. The head of the target Branch will be the new merge Commit, but the head of the
-     * source Branch will not change.
-     *
-     * @param catalogId The Resource identifying the Catalog which contains the Record.
-     * @param versionedRDFRecordId The Resource identifying the VersionedRDFRecord which has the Branches and
-     *                             InProgressCommit.
-     * @param sourceBranchId The Resource identifying the source Branch which will merge into the target Branch.
-     * @param targetBranchId The Resource identifying the target Branch which will be merge into by the source Branch.
-     * @param user The User with the InProgressCommit.
-     * @param additions The statements which were added to the named graph.
-     * @param deletions The statements which were deleted from the named graph.
-     * @return The Resource of the new merge Commit.
-     */
-    Resource mergeBranches(Resource catalogId, Resource versionedRDFRecordId, Resource sourceBranchId,
-                       Resource targetBranchId, User user, Model additions, Model deletions);
 
     /**
      * Gets the Difference, consisting of Models of additions and deletions, made between the original and the changed

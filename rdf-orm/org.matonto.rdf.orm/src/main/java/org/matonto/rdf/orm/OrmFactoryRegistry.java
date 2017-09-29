@@ -24,64 +24,143 @@ package org.matonto.rdf.orm;
  */
 
 import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.Resource;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public interface OrmFactoryRegistry {
     /**
-     * Attempts to retrieve a registered OrmFactory of the passed type.
+     * Attempts to retrieve a registered {@link OrmFactory} of the passed type.
      *
-     * @param type A Class that extends Thing
-     * @param <T> A class that extends Thing
-     * @return A registered OrmFactory for the passed type if found
+     * @param type The {@link Class} of the {@link Thing} whose factory you want to find.
+     * @param <T> A {@link Class} that extends {@link Thing}.
+     * @return A registered {@link OrmFactory} for the passed type (or {@link Optional#EMPTY} if it doesn't exist).
      */
-    <T extends Thing> Optional<OrmFactory> getFactoryOfType(Class<T> type);
+    <T extends Thing> Optional<OrmFactory<T>> getFactoryOfType(Class<T> type);
 
     /**
-     * Attempts retrieve a registered OrmFactory of the type identified by the passed
-     * class IRI string.
+     * Attempts retrieve a registered {@link OrmFactory} of the type identified by the passed class IRI string.
      *
      * @param typeIRI An IRI string of a class
-     * @return A registered OrmFactory for the type identified by the passed IRI string
-     *      if found
+     * @return A registered {@link OrmFactory} for the type identified by the passed IRI string (or
+     * {@link Optional#EMPTY} if it doesn't exist).
      */
-    Optional<OrmFactory> getFactoryOfType(String typeIRI);
+    Optional<OrmFactory<? extends Thing>> getFactoryOfType(String typeIRI);
 
     /**
-     * Attempts retrieve a registered OrmFactory of the type identified by the passed class IRI.
+     * Attempts retrieve a registered {@link OrmFactory} of the type identified by the passed class IRI.
      *
-     * @param typeIRI An IRI of a class
-     * @return A registered OrmFactory for the type identified by the passed IRI if found
+     * @param typeIRI An {@link IRI} of a class
+     * @return A registered {@link OrmFactory} for the type identified by the passed IRI (or {@link Optional#EMPTY} if
+     *         it doesn't exist).
      */
-    Optional<OrmFactory> getFactoryOfType(IRI typeIRI);
+    Optional<OrmFactory<? extends Thing>> getFactoryOfType(IRI typeIRI);
 
     /**
-     * A List of OrmFactories of types that extend the passed type include the OrmFactory of the
-     * type itself.
+     * A {@link List} of OrmFactories of types that extend the passed type including the {@link OrmFactory} of the type
+     * itself.
      *
-     * @param type A Class that extends Thing
-     * @param <T> A class that extends Thing
-     * @return A List of OrmFactories of types that extend the passed type
+     * @param type The {@link Class} of the {@link Thing} whose factories you want to find.
+     * @param <T> A {@link Class} that extends {@link Thing}.
+     * @return A {@link List} of OrmFactories of types that extend the passed type
      */
-    <T extends Thing> List<OrmFactory> getFactoriesOfType(Class<T> type);
+    <T extends Thing> List<OrmFactory<? extends T>> getFactoriesOfType(Class<T> type);
 
     /**
-     * A List of OrmFactories of types that extend the type identified by the passed class IRI
-     * string including the OrmFactory of the type itself.
+     * A {@link List} of OrmFactories of types that extend the type identified by the passed class IRI string including
+     * the {@link OrmFactory} of the type itself.
      *
      * @param typeIRI An IRI string of a class
-     * @return A List of OrmFactories of types that extend the type identified by the passed IRI
-     *      string
+     * @return A {@link List} of OrmFactories of types that extend the type identified by the passed IRI string
      */
-    List<OrmFactory> getFactoriesOfType(String typeIRI);
+    List<OrmFactory<? extends Thing>> getFactoriesOfType(String typeIRI);
 
     /**
-     * A List of OrmFactories of types that extend the type identified by the passed class IRI
-     * including the OrmFactory of the type itself.
+     * A {@link List} of OrmFactories of types that extend the type identified by the passed class IRI including the
+     * {@link OrmFactory} of the type itself.
      *
-     * @param typeIRI An IRI of a class
-     * @return A List of OrmFactories of types that extend the type identified by the passed IRI
+     * @param typeIRI An {@link IRI} of a class
+     * @return A {@link List} of OrmFactories of types that extend the type identified by the passed IRI
      */
-    List<OrmFactory> getFactoriesOfType(IRI typeIRI);
+    List<OrmFactory<? extends Thing>> getFactoriesOfType(IRI typeIRI);
+
+    /**
+     * A sorted {@link List} of OrmFactories of types that extend the passed type including the {@link OrmFactory} of
+     * the type itself. The list is sorted so that factories of subclass types are first.
+     *
+     * @param type The {@link Class} of the {@link Thing} whose factory you want to find.
+     * @param <T> A {@link Class} that extends {@link Thing}.
+     * @return A sorted {@link List} of OrmFactories of types that extend the passed type
+     */
+    <T extends Thing> List<OrmFactory<? extends T>> getSortedFactoriesOfType(Class<T> type);
+
+    /**
+     * A sorted {@link List} of OrmFactories of types that extend the type identified by the passed class IRI string
+     * including the {@link OrmFactory} of the type itself. The list is sorted so that factories of subclass types are
+     * first.
+     *
+     * @param typeIRI An IRI string of a class
+     * @return A sorted {@link List} of OrmFactories of types that extend the type identified by the passed IRI string
+     */
+    List<OrmFactory<? extends Thing>> getSortedFactoriesOfType(String typeIRI);
+
+    /**
+     * A sorted {@link List} of OrmFactories of types that extend the type identified by the passed class {@link IRI}
+     * including the {@link OrmFactory} of the type itself. The list is sorted so that factories of subclass types are
+     * first.
+     *
+     * @param typeIRI An {@link IRI} of a class
+     * @return A sorted {@link List} of OrmFactories of types that extend the type identified by the passed {@link IRI}
+     */
+    List<OrmFactory<? extends Thing>> getSortedFactoriesOfType(IRI typeIRI);
+
+    /**
+     * Create a new instance of the specified type from the specified model.
+     *
+     * @param resource The {@link Resource} identifying your new instance
+     * @param model    The {@link Model} to write your new instance into
+     * @param type The {@link Class} of the {@link Thing} you want to create
+     * @param <T> A {@link Class} that extends {@link Thing}.
+     * @return The new instance of your thing
+     * @throws OrmException If the factory for your thing isn't found, or there is an issue creating it
+     */
+    <T extends Thing> T createNew(final Resource resource, final Model model, Class<T> type) throws OrmException;
+
+    /**
+     * Finds an existing instance of the specified type from the specified model.
+     *
+     * @param resource The {@link Resource} identifying your existing instance
+     * @param model    The {@link Model} to read your existing instance from
+     * @param type The {@link Class} of the {@link Thing} you want to find
+     * @param <T> A {@link Class} that extends {@link Thing}.
+     * @return The existing instance of your thing (or {@link Optional#EMPTY} if it doesn't exist)
+     * @throws OrmException If the factory for your thing isn't found, or there is an issue building it
+     */
+    <T extends Thing> Optional<T> getExisting(Resource resource, Model model, Class<T> type) throws OrmException;
+
+    /**
+     * Get all existing instances out of the given model.
+     *
+     * @param model The {@link Model} to read instances out of
+     * @param type The {@link Class} of the {@link Thing} you want to find
+     * @param <T> A {@link Class} that extends {@link Thing}.
+     * @return All the instances in the given model
+     * @throws OrmException If the factory for your thing isn't found, or there is an issue building instances
+     */
+    <T extends Thing> Collection<T> getAllExisting(final Model model, Class<T> type) throws OrmException;
+
+    /**
+     * Execute a process against a given model for each thing of a given type.
+     *
+     * @param model    The {@link Model} to read instances out of
+     * @param consumer The {@link Consumer} that will execute against each instance
+     * @param type The {@link Class} of the {@link Thing} you're trying to find
+     * @param <T> A {@link Class} that extends {@link Thing}.
+     */
+    <T extends Thing> void processAllExisting(final Model model, final Consumer<T> consumer, Class<T> type);
+
 }

@@ -27,25 +27,40 @@
         .module('discover', [
             /* Services */
             'explore',
-            
+            'exploreUtils',
+            'search',
+
             /* Common */
+            'datasetFormGroup',
             'datasetSelect',
             'discoverTabset',
-            
+            'sparqlResultTable',
+
             /* Explore tab */
             'classBlock',
             'classBlockHeader',
             'classCards',
             'exploreTab',
             'instanceBlock',
-            'instanceBlockHeader',
             'instanceCards',
+            'instanceCreator',
+            'instanceEditor',
+            'instanceForm',
             'instanceView',
-            
+            'newInstancePropertyOverlay',
+            'propertyValueOverlay',
+
+            /* Search tab */
+            'discoverSearchTab',
+            'filterSelector',
+            'propertyFilterOverlay',
+            'propertySelector',
+            'searchForm',
+
             /* Query tab */
             'downloadQueryOverlay',
             'queryTab',
             'sparqlEditor',
-            'sparqlResultTable'
+            'sparqlResultBlock'
         ]);
 })();

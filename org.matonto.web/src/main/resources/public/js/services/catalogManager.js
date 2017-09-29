@@ -30,7 +30,7 @@
          *
          * @description
          * The `catalogManager` module only provides the `catalogManagerService` service which
-         * provides access to the MatOnto catalog REST endpoints and utility functions for the
+         * provides access to the Mobi catalog REST endpoints and utility functions for the
          * results of those endpoints
          */
         .module('catalogManager', [])
@@ -43,18 +43,18 @@
          * @requires ontologyManager.service:ontologyManagerService
          *
          * @description
-         * `catalogManagerService` is a service that provides access to the MatOnto catalog REST
+         * `catalogManagerService` is a service that provides access to the Mobi catalog REST
          * endpoints and utility functions for the record, distribution, version, and branch objects
          * that are returned.
          */
         .service('catalogManagerService', catalogManagerService);
 
-        catalogManagerService.$inject = ['$window', '$http', '$q', 'prefixes', 'utilService'];
+        catalogManagerService.$inject = ['$window', '$http', 'httpService', '$q', 'prefixes', 'utilService', 'REST_PREFIX'];
 
-        function catalogManagerService($window, $http, $q, prefixes, utilService) {
+        function catalogManagerService($window, $http, httpService, $q, prefixes, utilService, REST_PREFIX) {
             var self = this,
                 util = utilService,
-                prefix = '/matontorest/catalogs';
+                prefix = REST_PREFIX + 'catalogs';
 
             /**
              * @ngdoc property
@@ -93,7 +93,7 @@
              * @type {Object}
              *
              * @description
-             * `localCatalog` contains the JSON-LD object for the local Catalog in MatOnto. It is populated by
+             * `localCatalog` contains the JSON-LD object for the local Catalog in Mobi. It is populated by
              * the `initialize` method.
              */
             self.localCatalog = undefined;
@@ -104,7 +104,7 @@
              * @type {Object}
              *
              * @description
-             * `distributedCatalog` contains the JSON-LD object for the distributed Catalog in MatOnto. It is
+             * `distributedCatalog` contains the JSON-LD object for the distributed Catalog in Mobi. It is
              * populated by the `initialize` method.
              */
             self.distributedCatalog = undefined;
@@ -117,7 +117,7 @@
              * @description
              * Initializes the `sortOptions`, `recordTypes`, `localCatalog`, and `distributedCatalog` of the
              * catalogManagerService using the `getSortOptions` and `getRecordTypes` methods along with the
-             * GET /matontorest/catalogs endpoint. If the local or distributed Catalog cannot be found, rejects
+             * GET /mobirest/catalogs endpoint. If the local or distributed Catalog cannot be found, rejects
              * with an error message.
              *
              * @returns {Promise} A promise that resolves if initialization was successful or is rejected
@@ -158,15 +158,14 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/record-types endpoint and returns the
+             * Calls the GET /mobirest/catalogs/record-types endpoint and returns the
              * array of record type IRIs.
              *
              * @returns {Promise} A promise that resolves to an array of the IRIs for all
              * record types in the catalog
              */
             self.getRecordTypes = function() {
-                return $http.get(prefix + '/record-types')
-                    .then(response => $q.resolve(response.data));
+                return $http.get(prefix + '/record-types').then(response => response.data, util.rejectError);
             }
 
             /**
@@ -175,15 +174,14 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/sort-options endpoint and returns the
+             * Calls the GET /mobirest/catalogs/sort-options endpoint and returns the
              * array of record property IRIs.
              *
              * @return {Promise} A promise that resolves to an array of the IRIs for all
              * supported record properties to sort by
              */
             self.getSortOptions = function() {
-                return $http.get(prefix + '/sort-options')
-                    .then(response => $q.resolve(response.data));
+                return $http.get(prefix + '/sort-options').then(response => response.data, util.rejectError);
             }
 
             /**
@@ -202,10 +200,7 @@
              * with a error message
              */
             self.getResultsPage = function(url) {
-                var deferred = $q.defer();
-                $http.get(url)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(url).then($q.resolve, util.rejectError);
             }
 
             /**
@@ -214,7 +209,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records endpoint and returns the paginated
+             * Calls the GET /mobirest/catalogs/{catalogId}/records endpoint and returns the paginated
              * response for the query using the passed page index, limit, sort option from the `sortOptions`
              * array, and Record type filter IRI from the `recordTypes` array. The data of the response will
              * be the array of Records, the "x-total-count" headers will contain the total number of Records
@@ -231,11 +226,10 @@
              * @returns {Promise} A promise that either resolves with the paginated response or is rejected
              * with a error message
              */
-            self.getRecords = function(catalogId, paginatedConfig) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: util.paginatedConfigToParams(paginatedConfig)
-                    };
+            self.getRecords = function(catalogId, paginatedConfig, id = '') {
+                var config = {
+                    params: util.paginatedConfigToParams(paginatedConfig)
+                };
                 setDefaultSort(config.params);
                 if (_.get(paginatedConfig, 'searchText')) {
                     config.params.searchText = paginatedConfig.searchText;
@@ -243,9 +237,9 @@
                 if (_.get(paginatedConfig, 'recordType')) {
                     config.params.type = paginatedConfig.recordType;
                 }
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records', config)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                var url = prefix + '/' + encodeURIComponent(catalogId) + '/records';
+                var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+                return promise.then($q.resolve, util.rejectError);
             }
 
             /**
@@ -254,7 +248,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId} endpoint with the passed
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId} endpoint with the passed
              * Catalog and Record ids and returns the matching Record object if it exists.
              *
              * @param {string} recordId The id of the Record to retrieve
@@ -263,10 +257,8 @@
              * an error message
              */
             self.getRecord = function(recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId))
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId))
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -275,7 +267,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records endpoint with the passed Catalog id and
+             * Calls the POST /mobirest/catalogs/{catalogId}/records endpoint with the passed Catalog id and
              * metadata and creates a new Record for the identified Catalog. Returns a Promise with the IRI of the
              * new Record if successful or rejects with an error message.
              *
@@ -290,8 +282,7 @@
              * message
              */
             self.createRecord = function(catalogId, recordConfig) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: _.identity,
                         headers: {
@@ -300,16 +291,14 @@
                     };
                 fd.append('type', recordConfig.recordType);
                 fd.append('title', recordConfig.title);
-                fd.append('identifier', recordConfig.identifier);
                 if (_.has(recordConfig, 'description')) {
                     fd.append('description', recordConfig.description);
                 }
                 if (_.get(recordConfig, 'keywords', []).length > 0) {
                     fd.append('keywords', _.join(recordConfig.keywords, ','));
                 }
-                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records', fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records', fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -318,7 +307,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the PUT /matontorest/catalogs/{catalogId}/records/{recordId} endpoint with the passed Catalog and
+             * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId} endpoint with the passed Catalog and
              * Record ids and updates the identified Record with the passed Record JSON-LD object.
              *
              * @param {string} recordId The id of the Record to update
@@ -327,10 +316,8 @@
              * @return {Promise} A promise that resolves if the update was successful or rejects with an error message
              */
             self.updateRecord = function(recordId, catalogId, newRecord) {
-                var deferred = $q.defer();
-                $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId), angular.toJson(newRecord))
-                    .then(response => deferred.resolve(recordId), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId), angular.toJson(newRecord))
+                    .then(response => recordId, util.rejectError);
             }
 
             /**
@@ -339,18 +326,16 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId} endpoint with the passed Catalog
-             * and Record ids and removes the identified Record and all associated entities from MatOnto.
+             * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId} endpoint with the passed Catalog
+             * and Record ids and removes the identified Record and all associated entities from Mobi.
              *
              * @param {string} recordId The id of the Record to delete
              * @param {string} catalogId The id of the Catalog the Record should be part of
              * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
              */
             self.deleteRecord = function(recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId))
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId))
+                    .then(response => $q.resolve(), util.rejectError);
             }
 
             /**
@@ -359,7 +344,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/distributions endpoint and
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/distributions endpoint and
              * returns the paginated response using the passed page index, limit, and sort option from the
              * `sortOption` array. The data of the response will be the array of Distributions, the
              * "x-total-count" headers will contain the total number of Distributions matching the query, and
@@ -375,14 +360,12 @@
              * with a error message
              */
             self.getRecordDistributions = function(recordId, catalogId, paginatedConfig) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: util.paginatedConfigToParams(paginatedConfig)
-                    };
+                var config = {
+                    params: util.paginatedConfigToParams(paginatedConfig)
+                };
                 setDefaultSort(config.params);
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', config)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', config)
+                    .then($q.resolve, util.rejectError);
             }
 
             /**
@@ -391,7 +374,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId}
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId}
              * endpoint and returns the matching Distribution JSON-LD object.
              *
              * @param {string} distributionId The id of the Distribution to retrieve
@@ -401,10 +384,8 @@
              * with an error message
              */
             self.getRecordDistribution = function(distributionId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId))
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId))
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -413,7 +394,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/distributions endpoint with the passed
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/distributions endpoint with the passed
              * Catalog and Record id and metadata and creates a new Distribution for the identified Record. Returns a
              * Promise with the IRI of the new Distribution if successful or rejects with an error message.
              *
@@ -429,8 +410,7 @@
              * message
              */
             self.createRecordDistribution = function(recordId, catalogId, distributionConfig) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: _.identity,
                         headers: {
@@ -450,9 +430,8 @@
                 if (_.has(distributionConfig, 'downloadURL')) {
                     fd.append('downloadURL', distributionConfig.downloadURL);
                 }
-                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions', fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -461,7 +440,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the PUT /matontorest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId} endpoint with
+             * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId} endpoint with
              * the passed Catalog, Record, and Distribution ids and updates the identified Distribution with the passed
              * Distribution JSON-LD object.
              *
@@ -472,10 +451,8 @@
              * @return {Promise} A promise that resolves if the update was successful or rejects with an error message
              */
             self.updateRecordDistribution = function(distributionId, recordId, catalogId, newDistribution) {
-                var deferred = $q.defer();
-                $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId), angular.toJson(newDistribution))
-                    .then(response => deferred.resolve(distributionId), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId), angular.toJson(newDistribution))
+                    .then(response => distributionId, util.rejectError);
             }
 
             /**
@@ -484,9 +461,9 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId} endpoint
+             * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/distributions/{distributionId} endpoint
              * with the passed Catalog, Record, and Distribution ids and removes the identified Distribution and all associated
-             * entities from MatOnto.
+             * entities from Mobi.
              *
              * @param {string} distributionId The id of the Distribution to delete
              * @param {string} recordId The id of the Record with the specified Distribution
@@ -494,10 +471,8 @@
              * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
              */
             self.deleteRecordDistribution = function(distributionId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId))
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId))
+                    .then(response => $q.resolve(), util.rejectError);
             }
 
             /**
@@ -506,7 +481,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/versions endpoint and
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions endpoint and
              * returns the paginated response using the passed page index, limit, and sort option from the
              * `sortOption` array. The data of the response will be the array of Versions, the
              * "x-total-count" headers will contain the total number of Versions matching the query, and
@@ -522,14 +497,12 @@
              * with a error message
              */
             self.getRecordVersions = function(recordId, catalogId, paginatedConfig) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: util.paginatedConfigToParams(paginatedConfig)
-                    };
+                var config = {
+                    params: util.paginatedConfigToParams(paginatedConfig)
+                };
                 setDefaultSort(config.params);
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', config)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', config)
+                    .then($q.resolve, util.rejectError);
             }
 
             /**
@@ -538,7 +511,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/versions/latest
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions/latest
              * endpoint and returns the matching Version JSON-LD object for the Record's latest Version.
              *
              * @param {string} recordId The id of the Record to retrieve the latest Version of
@@ -556,7 +529,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}
              * endpoint and returns the matching Version JSON-LD object.
              *
              * @param {string} versionId The id of the Version to retrieve
@@ -576,7 +549,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/versions endpoint with the passed
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/versions endpoint with the passed
              * Catalog and Record ids and metadata and creates a new Version for the identified Record. Returns a
              * Promise with the IRI of the new Version if successful or rejects with an error message.
              *
@@ -599,7 +572,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/versions endpoint with the passed
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/versions endpoint with the passed
              * Catalog and Record ids, metadata, and associated Commit id and creates a new Tag for the identified
              * Record. Returns a Promise with the IRI of the new Tag if successful or rejects with an error message.
              *
@@ -615,11 +588,11 @@
             self.createRecordTag = function(recordId, catalogId, versionConfig, commitId) {
                 versionConfig.type = prefixes.catalog + 'Tag';
                 return createVersion(recordId, catalogId, versionConfig)
-                    .then(iri => self.getRecordVersion(iri, recordId, catalogId), error => $q.reject(error))
+                    .then(iri => self.getRecordVersion(iri, recordId, catalogId), $q.reject)
                     .then(version => {
                         version[prefixes.catalog + 'commit'] = [{'@id': commitId}];
                         return self.updateRecordVersion(version['@id'], recordId, catalogId, version);
-                    }, error => $q.reject(error))
+                    }, $q.reject)
             }
 
             /**
@@ -628,7 +601,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the PUT /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId} endpoint with
+             * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId} endpoint with
              * the passed Catalog, Record, and Version ids and updates the identified Version with the passed
              * Version JSON-LD object.
              *
@@ -639,10 +612,8 @@
              * @return {Promise} A promise that resolves if the update was successful or rejects with an error message
              */
             self.updateRecordVersion = function(versionId, recordId, catalogId, newVersion) {
-                var deferred = $q.defer();
-                $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId), angular.toJson(newVersion))
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId), angular.toJson(newVersion))
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -651,9 +622,9 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId} endpoint
+             * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId} endpoint
              * with the passed Catalog, Record, and Version ids and removes the identified Version and all associated
-             * entities from MatOnto.
+             * entities from Mobi.
              *
              * @param {string} versionId The id of the Version to delete
              * @param {string} recordId The id of the Record with the specified Version
@@ -661,10 +632,8 @@
              * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
              */
             self.deleteRecordVersion = function(versionId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId))
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId))
+                    .then(response => $q.resolve(), util.rejectError);
             }
 
             /**
@@ -673,7 +642,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/commit endpoint
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/commit endpoint
              * with the passed Catalog, Record, and Version ids and retrieves the associated Commit for the identified
              * Version in the passed RDF format.
              *
@@ -684,13 +653,9 @@
              * @return {Promise} A promise that resolves to the Version's Commit if found or rejects with an error message
              */
             self.getVersionCommit = function(versionId, recordId, catalogId, format = 'jsonld') {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {format}
-                    };
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit', config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                var config = { params: {format} };
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit', config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -699,7 +664,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions
              * endpoint and returns the paginated response using the passed page index, limit, and sort option from the
              * `sortOption` array. The data of the response will be the array of Distributions, the
              * "x-total-count" headers will contain the total number of Distributions matching the query, and
@@ -716,14 +681,12 @@
              * with a error message
              */
             self.getVersionDistributions = function(versionId, recordId, catalogId, paginatedConfig) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: util.paginatedConfigToParams(paginatedConfig)
-                    };
+                var config = {
+                    params: util.paginatedConfigToParams(paginatedConfig)
+                };
                 setDefaultSort(config.params);
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', config)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', config)
+                    .then($q.resolve, util.rejectError);
             }
 
             /**
@@ -732,7 +695,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
              * endpoint and returns the matching Distribution JSON-LD object.
              *
              * @param {string} distributionId The id of the Distribution to retrieve
@@ -743,10 +706,8 @@
              * with an error message
              */
             self.getVersionDistribution = function(distributionId, versionId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId))
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId))
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -755,7 +716,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions
              * endpoint with the passed Catalog, Record, and Version ids and metadata and creates a new Distribution
              * for the identified Version. Returns a Promise with the IRI of the new Distribution if successful or
              * rejects with an error message.
@@ -773,8 +734,7 @@
              * message
              */
             self.createVersionDistribution = function(versionId, recordId, catalogId, distributionConfig) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: _.identity,
                         headers: {
@@ -794,9 +754,8 @@
                 if (_.has(distributionConfig, 'downloadURL')) {
                     fd.append('format', distributionConfig.downloadURL);
                 }
-                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions', fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -805,7 +764,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the PUT /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
+             * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
              * endpoint with the passed Catalog, Record, Version, and Distribution ids and updates the identified Distribution with
              * the passed Distribution JSON-LD object.
              *
@@ -817,10 +776,8 @@
              * @return {Promise} A promise that resolves if the update was successful or rejects with an error message
              */
             self.updateVersionDistribution = function(distributionId, versionId, recordId, catalogId, newDistribution) {
-                var deferred = $q.defer();
-                $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId), angular.toJson(newDistribution))
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId), angular.toJson(newDistribution))
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -829,9 +786,9 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
+             * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/versions/{versionId}/distributions/{distributionId}
              * endpoint with the passed Catalog, Record, Version, and Distribution ids and removes the identified Distribution and all
-             * associated entities from MatOnto.
+             * associated entities from Mobi.
              *
              * @param {string} distributionId The id of the Distribution to delete
              * @param {string} versionId The id of the Version with the specified Distribution
@@ -840,10 +797,8 @@
              * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
              */
             self.deleteVersionDistribution = function(distributionId, versionId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId))
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId))
+                    .then(response => $q.resolve(), util.rejectError);
             }
 
             /**
@@ -852,7 +807,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches endpoint and
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches endpoint and
              * returns the paginated response using the passed page index, limit, and sort option from the
              * `sortOption` array. The data of the response will be the array of Branches, the
              * "x-total-count" headers will contain the total number of Branches matching the query, and
@@ -870,15 +825,13 @@
              * with a error message
              */
             self.getRecordBranches = function(recordId, catalogId, paginatedConfig, applyUserFilter = false) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: util.paginatedConfigToParams(paginatedConfig)
-                    };
+                var config = {
+                    params: util.paginatedConfigToParams(paginatedConfig)
+                };
                 setDefaultSort(config.params);
                 config.params.applyUserFilter = applyUserFilter;
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', config)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', config)
+                    .then($q.resolve, util.rejectError);
             }
 
             /**
@@ -887,7 +840,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/master endpoint and
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/master endpoint and
              * returns the matching Branch JSON-LD object for the Record's master Branch.
              *
              * @param {string} recordId The id of the Record to retrieve the master Branch of
@@ -905,7 +858,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}
              * endpoint and returns the matching Branch JSON-LD object.
              *
              * @param {string} branchId The id of the Branch to retrieve
@@ -924,7 +877,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/branches endpoint with the passed
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/branches endpoint with the passed
              * Catalog and Record ids, metadata, and associated Commit id and creates a new Branch for the identified
              * Record. Returns a Promise with the IRI of the new Branch if successful or rejects with an error message.
              *
@@ -953,7 +906,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/branches endpoint with the passed
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/branches endpoint with the passed
              * Catalog and Record ids, metadata, and associated Commit id and creates a new UserBranch for the identified
              * Record. Returns a Promise with the IRI of the new UserBranch if successful or rejects with an error message.
              *
@@ -984,7 +937,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the PUT /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} endpoint with
+             * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} endpoint with
              * the passed Catalog, Record, and Branch ids and updates the identified Branch with the passed
              * Branch JSON-LD object.
              *
@@ -996,10 +949,8 @@
              * rejects with an error message
              */
             self.updateRecordBranch = function(branchId, recordId, catalogId, newBranch) {
-                var deferred = $q.defer();
-                $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId), angular.toJson(newBranch))
-                    .then(response => deferred.resolve(branchId), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId), angular.toJson(newBranch))
+                    .then(response => branchId, util.rejectError);
             }
 
             /**
@@ -1008,9 +959,9 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} endpoint
+             * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId} endpoint
              * with the passed Catalog, Record, and Branch ids and removes the identified Branch and all associated
-             * entities from MatOnto.
+             * entities from Mobi.
              *
              * @param {string} branchId The id of the Branch to delete
              * @param {string} recordId The id of the Record with the specified Branch
@@ -1018,10 +969,8 @@
              * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
              */
             self.deleteRecordBranch = function(branchId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId))
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId))
+                    .then(response => $q.resolve(), util.rejectError);
             }
 
             /**
@@ -1030,7 +979,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits endpoint
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits endpoint
              * with the passed Catalog, Record, and Branch ids and retrieves the list of Commits in that Branch.
              *
              * @param {string} branchId The id of the Branch to retrieve the Commits of
@@ -1039,10 +988,8 @@
              * @return {Promise} A promise that resolves with the list of Branch Commits or rejects with an error message
              */
             self.getBranchCommits = function(branchId, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits')
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits')
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1051,7 +998,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits endpoint
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits endpoint
              * with the passed Catalog, Record, and Branch ids and string message and creates a Commit on the identified
              * Branch using the logged in User's InProgressCommit with the passed message.
              *
@@ -1062,15 +1009,9 @@
              * @return {Promise} A promise that resolves to the if of the new Commit or rejects with an error message
              */
             self.createBranchCommit = function(branchId, recordId, catalogId, message) {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {
-                            message
-                        }
-                    };
-                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits', null, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                var config = { params: {message} };
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits', null, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1079,7 +1020,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/head endpoint
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/head endpoint
              * and returns the matching Commit JSON object of the Branch's head Commit in the passed RDF format.
              *
              * @param {string} branchId The id of the Branch to retrieve the head Commit of
@@ -1089,13 +1030,9 @@
              * @return {Promise} A promise that resolves to the Commit if found or rejects with an error message
              */
             self.getBranchHeadCommit = function(branchId, recordId, catalogId, format = 'jsonld') {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {format}
-                    };
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head', config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                var config = { params: {format} };
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head', config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1104,7 +1041,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId} endpoint
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId} endpoint
              * and returns the matching Commit JSON object in the passed RDF format.
              *
              * @param {string} commitId The id of the Commit to retrieve
@@ -1115,13 +1052,9 @@
              * @return {Promise} A promise that resolves to the Commit if found or rejects with an error message
              */
             self.getBranchCommit = function(commitId, branchId, recordId, catalogId, format = 'jsonld') {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {format}
-                    };
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId), config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                var config = { params: {format} };
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId), config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1130,7 +1063,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/conflicts endpoint
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/conflicts endpoint
              * and returns an array of conflicts between the identified source Branch and the target Branch identified by
              * the passed id.
              *
@@ -1142,16 +1075,14 @@
              * @return {Promise} A promise that resolves to the array of Conflict objects or rejects with an error message
              */
             self.getBranchConflicts = function(sourceId, targetId, recordId, catalogId, format = 'jsonld') {
-                var deferred = $q.defer(),
-                    config = {
-                        params: {
-                            format,
-                            targetId
-                        }
-                    };
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts', config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                var config = {
+                    params: {
+                        format,
+                        targetId
+                    }
+                };
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts', config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1160,7 +1091,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/conflicts/resolution endpoint
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/conflicts/resolution endpoint
              * and performs a merge between the two identified Branches, creating a Commit using the additions and deletions JSON-LD
              * provided in the passed difference object.
              *
@@ -1175,8 +1106,7 @@
              * message
              */
             self.mergeBranches = function(sourceId, targetId, recordId, catalogId, differenceObj) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: _.identity,
                         headers: {
@@ -1186,9 +1116,8 @@
                     };
                 fd.append('additions', _.has(differenceObj, 'additions') ? JSON.stringify(differenceObj.additions) : '[]');
                 fd.append('deletions', _.has(differenceObj, 'deletions') ? JSON.stringify(differenceObj.deletions) : '[]');
-                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts/resolution', fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/conflicts/resolution', fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1197,7 +1126,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource
              * endpoint and returns the resource compiled starting at the identified Commit.
              *
              * @param {string} commitId The id of the Commit to retrieve the compiled resource from
@@ -1210,20 +1139,18 @@
              * @return {Promise} A promise that resolves to the compiled resource or rejects with an error message.
              */
             self.getResource = function(commitId, branchId, recordId, catalogId, applyInProgressCommit, format = 'jsonld') {
-                var deferred = $q.defer(),
-                    config = {
-                        headers: {
-                            'Content-Type': undefined,
-                            'Accept': 'text/plain'
-                        },
-                        params: {
-                            format,
-                            applyInProgressCommit
-                        }
-                    };
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource', config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                var config = {
+                    headers: {
+                        'Content-Type': undefined,
+                        'Accept': 'text/plain'
+                    },
+                    params: {
+                        format,
+                        applyInProgressCommit
+                    }
+                };
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource', config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1232,7 +1159,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource
              * endpoint using the `window.location` variable which will start a download of the compiled resource starting at the
              * identified Commit.
              *
@@ -1254,7 +1181,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the POST /matontorest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and creates
+             * Calls the POST /mobirest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and creates
              * a new InProgressCommit for the logged-in User for the identified Record.
              *
              * @param {string} recordId The id of the Record to create an InProgressCommit for
@@ -1262,10 +1189,8 @@
              * @return {Promise} A promise that resolves if the creation was successful or rejects with an error message
              */
             self.createInProgressCommit = function(recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
+                    .then(response => $q.resolve(), util.rejectError);
             }
 
             /**
@@ -1274,7 +1199,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the GET /matontorest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and
              * retrieves the InProgressCommit for the logged-in User for the identified Record.
              *
              * @param {string} recordId The id of the Record to retrieve the InProgressCommit from
@@ -1282,10 +1207,8 @@
              * @return {Promise} A promise that resolves with the InProgessCommit or rejects with an error message
              */
             self.getInProgressCommit = function(recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -1294,7 +1217,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the PUT /matontorest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and
+             * Calls the PUT /mobirest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and
              * updates the InProgressCommit for the logged-in User for the identified Record using the additions and
              * deletions JSON-LD provided in the passed difference object.
              *
@@ -1306,8 +1229,7 @@
              * @return {Promise} A promise that resolves if the update was successful or rejects with an error message
              */
             self.updateInProgressCommit = function(recordId, catalogId, differenceObj) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: _.identity,
                         headers: {
@@ -1320,9 +1242,8 @@
                 if (_.has(differenceObj, 'deletions')) {
                     fd.append('deletions', JSON.stringify(differenceObj.deletions));
                 }
-                $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit', fd, config)
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.put(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit', fd, config)
+                    .then(response => $q.resolve(), util.rejectError);
             }
 
             /**
@@ -1331,7 +1252,7 @@
              * @methodOf catalogManager.service:catalogManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and deletes
+             * Calls the DELETE /mobirest/catalogs/{catalogId}/records/{recordId}/in-progress-commit endpoint and deletes
              * the InProgressCommit for the logged-in User for the identified Record.
              *
              * @param {string} recordId The id of the Record to delete the InProgressCommit from
@@ -1339,10 +1260,8 @@
              * @return {Promise} A promise that resolves if the deletion was successful or rejects with an error message
              */
             self.deleteInProgressCommit = function(recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
-                    .then(response => deferred.resolve(), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.delete(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit')
+                    .then(response => $q.resolve(), util.rejectError);
             }
 
             /**
@@ -1436,8 +1355,7 @@
             }
 
             function createVersion(recordId, catalogId, versionConfig) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: _.identity,
                         headers: {
@@ -1449,14 +1367,12 @@
                 if (_.has(versionConfig, 'description')) {
                     fd.append('description', versionConfig.description);
                 }
-                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions', fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             function createBranch(recordId, catalogId, branchConfig) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: _.identity,
                         headers: {
@@ -1468,23 +1384,18 @@
                 if (_.has(branchConfig, 'description')) {
                     fd.append('description', branchConfig.description);
                 }
-                $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches', fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             function getRecordVersion(versionIdentifier, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + versionIdentifier)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + versionIdentifier)
+                    .then(response => response.data, util.rejectError);
             }
 
             function getRecordBranch(branchIdentifier, recordId, catalogId) {
-                var deferred = $q.defer();
-                $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + branchIdentifier)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + branchIdentifier)
+                    .then(response => response.data, util.rejectError);
             }
 
             function setDefaultSort(configParams) {

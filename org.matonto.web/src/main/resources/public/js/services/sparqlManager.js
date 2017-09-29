@@ -27,12 +27,10 @@
         /**
          * @ngdoc overview
          * @name sparqlManager
-         * @requires ontologyManager
-         * @requires prefixes
          *
          * @description
          * The `sparqlManager` module only provides the `sparqlManagerService` service which
-         * provides access to the MatOnto SPARQL query REST endpoint and state variables for
+         * provides access to the Mobi SPARQL query REST endpoint and state variables for
          * the SPARQL Editor
          */
         .module('sparqlManager', [])
@@ -40,17 +38,22 @@
          * @ngdoc service
          * @name sparqlManager.service:sparqlManagerService
          * @requires $http
+         * @requires $q
+         * @requires $window
+         * @requires $httpParamSerializer
+         * @requires util.service:utilService
+         * @requires httpService.service:httpService
          *
          * @description
-         * `sparqlManagerService` is a service that provides access to the MatOnto SPARQL query
+         * `sparqlManagerService` is a service that provides access to the Mobi SPARQL query
          * REST endpoint and various state variables for the SPARQL Editor.
          */
         .service('sparqlManagerService', sparqlManagerService);
 
-        sparqlManagerService.$inject = ['$http', '$q', '$window', '$httpParamSerializer', 'utilService'];
+        sparqlManagerService.$inject = ['$http', '$q', '$window', '$httpParamSerializer', 'utilService', 'httpService', 'REST_PREFIX'];
 
-        function sparqlManagerService($http, $q, $window, $httpParamSerializer, utilService) {
-            var prefix = '/matontorest/sparql';
+        function sparqlManagerService($http, $q, $window, $httpParamSerializer, utilService, httpService, REST_PREFIX) {
+            var prefix = REST_PREFIX + 'sparql';
             var self = this;
             var util = utilService;
 
@@ -73,7 +76,7 @@
              *
              * @description
              * The query string from the {@link sparqlEditor.directive:sparqlEditor SPARQL editor} to
-             * be ran against the MatOnto repository.
+             * be ran against the Mobi repository.
              */
             self.queryString = '';
             /**
@@ -83,7 +86,7 @@
              * @type {string}
              *
              * @description
-             * The IRI of a DatasetRecord in the MatOnto repository to perform the query against.
+             * The IRI of a DatasetRecord in the Mobi repository to perform the query against.
              */
             self.datasetRecordIRI = '';
             /**
@@ -103,7 +106,7 @@
              * @type {string}
              *
              * @description
-             * An error message obtained from attempting to run a SPARQL query against the MatOnto repository.
+             * An error message obtained from attempting to run a SPARQL query against the Mobi repository.
              */
             self.errorMessage = '';
             /**
@@ -113,7 +116,7 @@
              * @type {string}
              *
              * @description
-             * Details about an error obtained from attempting to run a SPARQL query against the MatOnto repository.
+             * Details about an error obtained from attempting to run a SPARQL query against the Mobi repository.
              */
             self.errorDetails = '';
             /**
@@ -200,13 +203,72 @@
                 self.infoMessage = '';
                 self.currentPage = 0;
             }
+
+            /**
+             * @ngdoc method
+             * @name query
+             * @methodOf sparqlManager.service:sparqlManagerService
+             *
+             * @description
+             * Calls the GET /sparql REST endpoint to conduct a SPARQL query using the provided query
+             * and optionally using the provided DatasetRecord IRI to limit the query to a dataset.
+             *
+             * @param {string} query The SPARQL query string to submit
+             * @param {string} datasetRecordIRI The IRI of the DatasetRecord to restrict the query to
+             * @param {string} id The identifier for this call
+             * @return {Promise} A Promise that resolves to the data from the response or rejects with an
+             * error message.
+             */
+            self.query = function(query, datasetRecordIRI = '', id = '') {
+                var config = { params: { query } };
+                if (datasetRecordIRI) {
+                    config.params.dataset = datasetRecordIRI;
+                }
+                var promise = id ? httpService.get(prefix, config, id) : $http.get(prefix, config);
+                return promise.then(response => response.data, util.rejectError);
+            }
+            /**
+             * @ngdoc method
+             * @name pagedQuery
+             * @methodOf sparqlManager.service:sparqlManagerService
+             *
+             * @description
+             * Calls the GET /sparql/page REST endpoint to conduct a SPARQL query using the provided query and
+             * optionally using the provided DatasetRecord IRI and pagination parameters to limit the query to
+             * a dataset.
+             *
+             * @param {string} query The SPARQL query string to submit
+             * @param {Object} paramObj The Object which contains all of the params to set
+             * @param {string} paramObj.datasetRecordIRI The IRI of the DatasetRecord to restrict the query to
+             * @param {string} paramObj.id The identifier for this call
+             * @param {number} [paramObj.limit=100] The number of results per page
+             * @param {number} [paramObj.page=0] The page of results that you want to retrieve
+             * @return {Promise} A Promise that resolves to the data from the response or rejects with an
+             * error message.
+             */
+            self.pagedQuery = function(query, paramObj) {
+                var limit = _.get(paramObj, 'limit', 100);
+                var config = {
+                    params: {
+                        query,
+                        limit,
+                        offset: _.get(paramObj, 'page', 0) * limit
+                    }
+                };
+                if (_.has(paramObj, 'datasetRecordIRI')) {
+                    config.params.dataset = paramObj.datasetRecordIRI;
+                }
+                var url = prefix + '/page';
+                var promise = _.has(paramObj, 'id') ? httpService.get(url, config, paramObj.id) : $http.get(url, config);
+                return promise.then($q.when, util.rejectError);
+            }
             /**
              * @ngdoc method
              * @name downloadResults
              * @methodOf sparqlManager.service:sparqlManagerService
              *
              * @description
-             * Calls the GET /matontorest/sparql endpoint using the `window.location` variable which
+             * Calls the GET /mobirest/sparql endpoint using the `window.location` variable which
              * will start a download of the results of running the current
              * {@link sparqlManager.service:sparqlManagerService#queryString query} and
              * {@link sparqlManager.service:sparqlManagerService#prefixes prefixes}, optionally using

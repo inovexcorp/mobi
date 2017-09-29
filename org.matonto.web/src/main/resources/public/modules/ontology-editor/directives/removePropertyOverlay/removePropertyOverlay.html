@@ -25,8 +25,8 @@
         <h6>Remove</h6>
         <div class="main">
             <p>Are you sure you want to remove:<br><strong>{{dvm.key}}</strong></p>
-            <p>with value:<br><strong>{{dvm.os.selected[dvm.key][dvm.index]['@value'] || dvm.os.selected[dvm.key][0]['@id']}}</strong></p>
-            <p>from:<br><strong>{{dvm.os.selected['@id']}}</strong>?</p>
+            <p>with value:<br><strong>{{dvm.getValueDisplay()}}</strong></p>
+            <p>from:<br><strong>{{dvm.os.listItem.selected['@id']}}</strong>?</p>
         </div>
         <div class="btn-container clearfix">
             <button class="btn btn-primary pull-right" ng-click="dvm.removeProperty()">Yes</button>

@@ -97,5 +97,11 @@ describe('Class Preview directive', function() {
             expect(lastItem.hasClass('last')).toBe(true);
             expect(lastItem.hasClass('limited')).toBe(true);
         });
+        it('depending on whether a property is deprecated', function() {
+            controller.props = [{}];
+            ontologyManagerSvc.isDeprecated.and.returnValue(true);
+            scope.$digest();
+            expect(element.querySelectorAll('ul li span.deprecated').length).toBe(1);
+        });
     });
 });

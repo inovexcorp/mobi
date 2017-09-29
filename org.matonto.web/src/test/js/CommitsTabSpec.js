@@ -56,7 +56,7 @@ describe('Commits Tab directive', function() {
     describe('controller methods', function() {
         it('should get the currently selected branch', function() {
             var branch = {'@id': 'branchId'};
-            ontologyStateSvc.listItem = {branches: [branch], branchId: branch['@id']};
+            ontologyStateSvc.listItem = {branches: [branch], ontologyRecord: {branchId: branch['@id']}};
             expect(controller.getBranch()).toEqual(branch);
         });
     });

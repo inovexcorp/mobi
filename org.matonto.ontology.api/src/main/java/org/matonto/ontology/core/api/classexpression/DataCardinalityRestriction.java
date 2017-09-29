@@ -26,11 +26,10 @@ package org.matonto.ontology.core.api.classexpression;
 import org.matonto.ontology.core.api.datarange.DataRange;
 import org.matonto.ontology.core.api.propertyexpression.DataPropertyExpression;
 
-public interface DataCardinalityRestriction extends ClassExpression {
+public interface DataCardinalityRestriction extends CardinalityRestriction {
 
+    @Override
     DataPropertyExpression getProperty();
-
-    int getCardinality();
 
     DataRange getDataRange();
 }

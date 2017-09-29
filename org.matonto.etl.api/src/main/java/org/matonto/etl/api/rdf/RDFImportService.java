@@ -23,47 +23,37 @@ package org.matonto.etl.api.rdf;
  * #L%
  */
 
-import java.io.File;
-import java.io.IOException;
-
+import org.matonto.etl.api.config.rdf.ImportServiceConfig;
 import org.matonto.rdf.api.Model;
 import org.matonto.repository.exception.RepositoryException;
-import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFParseException;
+
+import java.io.File;
+import java.io.IOException;
 
 public interface RDFImportService {
 
     /**
-     * Imports a triple file to a specified repository.
-     * @param repositoryID The id of the repository to import triples to
-     * @param file The file to import triples from
-     * @param cont An option to continue import with next triple if error occurs. Warnings will be given.
+     * Imports an RDF File to a specific Repository or DatasetRecord depending on the provided configuration.
+     *
+     * @param config The configuration for the import specifying the target
+     * @param file An RDF file to import
      * @throws RDFParseException thrown if there is a problem parsing the RDF file
-     * @throws RepositoryException thrown if there is a problem connecting to the given repository
-     * @throws IOException thrown if there is a problem reading the file
-     * @throws IllegalArgumentException thrown if the repository does not exist
+     * @throws RepositoryException thrown if there is a problem connecting to the specified Repository or the
+     *      Dataset of the specified DatasetRecord
+     * @throws IOException thrown if there is a problem reading the File or the File could not be found
+     * @throws IllegalArgumentException thrown if the Repository or DatasetRecord does not exist
      */
-    void importFile(String repositoryID,  File file, Boolean cont) throws IOException, RepositoryException, RDFParseException;
+    void importFile(ImportServiceConfig config, File file) throws IOException;
 
     /**
-     * Imports a triple file to a specified repository.
-     * @param repositoryID The id of the repository to import triples to
-     * @param file The file to import triples from
-     * @param cont An option to continue import with next triple if error occurs. Warnings will be given.
-     * @param format The file format for the imported file
-     * @throws RDFParseException thrown if there is a problem parsing the RDF file
-     * @throws RepositoryException thrown if there is a problem connecting to the given repository
-     * @throws IOException thrown if there is a problem reading the file
-     * @throws IllegalArgumentException thrown if the repository does not exist
+     * Imports a Model into a specific Repository or DatasetRecord depending on the provided configuration.
+     *
+     * @param config The configuration for the import specifying the target
+     * @param model An RDF Model to import
+     * @throws IllegalArgumentException thrown if the Repository or DatasetRecord does not exist
+     * @throws RepositoryException thrown if there is a problem connecting to the specified Repository or the
+     *      Dataset of the specified DatasetRecord
      */
-    void importFile(String repositoryID,  File file, Boolean cont, RDFFormat format) throws IOException, RepositoryException, RDFParseException;
-
-    /**
-     * Import a model into a given repository
-     * @param repositoryID the ID of the repository to import the triples from a model
-     * @param m The rdf model to be imported
-     * @throws IllegalArgumentException thrown if the repository does not exist
-     * @throws RepositoryException thrown if there is a problem connecting to the given repository
-     */
-    void importModel(String repositoryID, Model m);
+    void importModel(ImportServiceConfig config, Model model);
 }

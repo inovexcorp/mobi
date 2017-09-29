@@ -56,12 +56,12 @@
 
                     dvm.changeBranch = function(item) {
                         var branchId = item['@id'];
-                        cm.getBranchHeadCommit(branchId, dvm.os.listItem.recordId, catalogId)
+                        cm.getBranchHeadCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                             .then(headCommit => {
                                 var commitId = _.get(headCommit, "commit['@id']", '');
                                 $q.all([
-                                    sm.updateOntologyState(dvm.os.listItem.recordId, branchId, commitId),
-                                    dvm.os.updateOntology(dvm.os.listItem.recordId, branchId, commitId)
+                                    sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId),
+                                    dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)
                                 ]).then(() => dvm.os.resetStateTabs());
                             });
                     }
@@ -79,9 +79,9 @@
                     }
 
                     dvm.delete = function() {
-                        om.deleteOntology(dvm.os.listItem.recordId, dvm.branch['@id'])
+                        om.deleteOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.branch['@id'])
                             .then(() => {
-                                dvm.os.removeBranch(dvm.os.listItem.recordId, dvm.branch['@id']);
+                                dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, dvm.branch['@id']);
                                 dvm.showDeleteConfirmation = false;
                             }, errorMessage => dvm.deleteError = errorMessage);
                     }

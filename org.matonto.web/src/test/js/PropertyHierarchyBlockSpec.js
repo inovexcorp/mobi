@@ -81,7 +81,7 @@ describe('Property Hierarchy Block directive', function() {
             var button = angular.element(element.querySelectorAll('block-footer button')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
@@ -118,7 +118,7 @@ describe('Property Hierarchy Block directive', function() {
             it('an object property', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 controller.deleteProperty();
-                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.selected);
+                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).not.toHaveBeenCalled();
@@ -127,8 +127,8 @@ describe('Property Hierarchy Block directive', function() {
             it('a datatype property', function() {
                 ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
                 controller.deleteProperty();
-                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.selected);
-                expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateSvc.selected);
+                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
+                expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).not.toHaveBeenCalled();
@@ -137,9 +137,9 @@ describe('Property Hierarchy Block directive', function() {
             it('an annotation property', function() {
                 ontologyManagerSvc.isAnnotation.and.returnValue(true);
                 controller.deleteProperty();
-                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.selected);
-                expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateSvc.selected);
-                expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(ontologyStateSvc.selected);
+                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
+                expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
+                expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).toHaveBeenCalled();
@@ -166,7 +166,7 @@ describe('Property Hierarchy Block directive', function() {
                 it('node does have an entityIRI property and areParentsOpen is true and node.get is true', function() {
                     node.entityIRI = 'iri';
                     expect(controller.isShown(node)).toBe(true);
-                    expect(get).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
+                    expect(get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                 });
             });
             describe('false when node does have an entityIRI and', function() {
@@ -181,7 +181,7 @@ describe('Property Hierarchy Block directive', function() {
                     ontologyStateSvc.areParentsOpen.and.returnValue(true);
                     get.and.returnValue(false);
                     expect(controller.isShown(node)).toBe(false);
-                    expect(get).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
+                    expect(get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                 });
             });
             it('make sure flatPropertyTree is populated correctly and $watch is working correctly', function() {

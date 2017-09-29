@@ -23,49 +23,84 @@ package org.matonto.etl.cli;
  * #L%
  */
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.matonto.etl.api.config.rdf.ImportServiceConfig;
 import org.matonto.etl.api.rdf.RDFImportService;
+import org.matonto.rdf.api.ValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 
-@Command(scope = "matonto", name = "import", description = "Imports objects to a repository")
+@Command(scope = "mobi", name = "import", description = "Imports objects to a repository or dataset")
 @Service
 public class CLIImporter implements Action {
 
-    //Command Line Arguments and Options
-
-
-    @Argument(index = 0, name = "ImportFile", description = "The file to be imported into the repository", required = true)
-    String file = null;
-
-    @Argument(index = 1, name = "RepositoryID", description = "The id of the repository the file will be imported to", required = true)
-    String repositoryId = null;
-
-    @Option( name = "-c", aliases = "--continueOnError", description = "If true, continue parsing even if there is an error on a line.")
-    boolean continueOnError = false;
     private static final Logger LOGGER = LoggerFactory.getLogger(CLIImporter.class);
 
     @Reference
     private RDFImportService importService;
 
-    public void setImportService(RDFImportService importService) {this.importService = importService;}
+    @Reference
+    private ValueFactory vf;
+
+    //Command Line Arguments and Options
+    @Argument(index = 0, name = "ImportFile", description = "The file to be imported into the repository",
+            required = true)
+    String file = null;
+
+    @Option(name = "-r", aliases = "--repository", description = "The id of the repository the file will be"
+            + " imported to")
+    String repositoryId = null;
+
+    @Option( name = "-d", aliases = "--dataset", description = "The id of the DatasetRecord the file will be "
+            + "imported to")
+    String datasetRecordId = null;
+
+    @Option( name = "-c", aliases = "--continueOnError", description = "If true, continue parsing even if there is an "
+            + "error on a line.")
+    boolean continueOnError = false;
+
+    public void setImportService(RDFImportService importService) {
+        this.importService = importService;
+    }
+
+    public void setVf(ValueFactory vf) {
+        this.vf = vf;
+    }
 
     @Override
     public Object execute() throws Exception {
+        if ((StringUtils.isEmpty(repositoryId) && StringUtils.isEmpty(datasetRecordId))
+                || (!StringUtils.isEmpty(repositoryId) && !StringUtils.isEmpty(datasetRecordId))) {
+            String msg = "Repository ID or DatasetRecord ID is required";
+            LOGGER.error(msg);
+            System.out.println(msg);
+            return null;
+        }
 
-        LOGGER.info("Importing RDF");
-        try{
+        try {
             File newFile = new File(file);
-            importService.importFile(repositoryId, newFile, continueOnError);
-        }catch(IOException e){
+            ImportServiceConfig.Builder builder = new ImportServiceConfig.Builder()
+                    .continueOnError(continueOnError)
+                    .logOutput(true)
+                    .printOutput(true);
+            if (repositoryId != null) {
+                LOGGER.info("Importing RDF into repository " + repositoryId);
+                builder.repository(repositoryId);
+            } else {
+                LOGGER.info("Importing RDF into dataset " + datasetRecordId);
+                builder.dataset(vf.createIRI(datasetRecordId));
+            }
+            importService.importFile(builder.build(), newFile);
+            System.out.println("Data successfully loaded");
+        } catch (Exception e) {
             System.out.println(e.getMessage());
             LOGGER.error(e.toString());
         }

@@ -4,212 +4,149 @@
 @prefix xml: <http://www.w3.org/XML/1998/namespace> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dct: <http://purl.org/dc/terms/>.
 @prefix mcat: <http://matonto.org/ontologies/catalog#> .
 
 <http://matonto.org/ontologies/delimited> a owl:Ontology ;
     owl:imports <http://matonto.org/ontologies/catalog> ;
-    owl:versionIRI <http://matonto.org/ontologies/delimited#1.1>;
-    rdfs:label "Delimited" ;
-    rdfs:comment "An ontology which defines MatOnto Mappings." .
+    owl:versionIRI <http://matonto.org/ontologies/delimited#1.2>;
+    rdfs:label "The MatOnto Delimited Ontology"@en ;
+    rdfs:comment "The MatOnto delimited ontology defines MatOnto Mappings and their records in the MatOnto catalog."@en ;
+    dct:creator [foaf:name "Bryan Miller"], [foaf:name "Megan Mercer"];
+    foaf:maker [foaf:name "MatOnto"; foaf:homepage <http://matonto.org>];
+    dct:modified "2017-06-23"^^xsd:date.
 
-#################################################################
-#
-#    Object Properties
-#
-#################################################################
+# MappingRecord
 
-###  http://matonto.org/ontologies/delimited#classMapping
+:MappingRecord a owl:Class;
+    rdfs:subClassOf mcat:VersionedRDFRecord;
+    rdfs:label "Mapping Record"@en;
+    rdfs:comment "A collection of RDF data that defines a mapping resource."@en.
 
-:classMapping a owl:ObjectProperty ;
-    rdfs:domain :ObjectMapping ;
-    rdfs:range :ClassMapping ;
-    rdfs:label "class mapping" ;
-    rdfs:comment "The ClassMapping that describes the target resource." .
+# Mapping
 
-###  http://matonto.org/ontologies/delimited#dataProperty
-
-:dataProperty a owl:ObjectProperty ;
-    rdfs:subPropertyOf :propertyMapping ;
-    rdfs:domain :ClassMapping ;
-    rdfs:range :DataMapping ;
-    rdfs:label "data property" ;
-    rdfs:comment "A data property mapping for a ClassMapping." .
-
-###  http://matonto.org/ontologies/delimited#hasProperty
-
-:hasProperty a owl:ObjectProperty ;
-	rdfs:domain :DataMapping , :ObjectMapping , :PropertyMapping ;
-	rdfs:range rdf:Property ;
-    rdfs:label "has property" ;
-	rdfs:comment "The Property defines the relationship for the PropertyMapping" .
-
-###  http://matonto.org/ontologies/delimited#mapsTo
-
-:mapsTo a owl:ObjectProperty ;
-    rdfs:domain :ClassMapping ;
-    rdfs:range owl:Thing ;
-    rdfs:label "maps to" ;
-    rdfs:comment "Defines the type that will be used when defining an object from this class mapping" .
-
-###  http://matonto.org/ontologies/delimited#objectProperty
-
-:objectProperty a owl:ObjectProperty ;
-    rdfs:subPropertyOf :propertyMapping ;
-    rdfs:domain :ClassMapping ;
-    rdfs:range :ObjectMapping ;
-    rdfs:label "object property" ;
-    rdfs:comment "An object property mapping for a ClassMapping." .
-
-###  http://matonto.org/ontologies/delimited#propertyMapping
-
-:propertyMapping a owl:ObjectProperty ;
-    rdfs:range :PropertyMapping ;
-    rdfs:label "property mapping" ;
-    rdfs:comment "A property mapping, either data or object, for a ClassMapping." .
-
-###  http://matonto.org/ontologies/delimited#sourceOntology
+:Mapping rdf:type owl:Class ;
+    rdfs:label "Mapping"@en ;
+    rdfs:comment "An object that represents a mapping configuration."@en .
 
 :sourceOntology a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain :Mapping ;
     rdfs:range owl:Ontology ;
-    rdfs:label "source ontology" ;
-    rdfs:comment "Defines the ontology that the Mapping is based on." .
-
-###  http://matonto.org/ontologies/delimited#sourceOntologyRecord
+    rdfs:label "source ontology"@en ;
+    rdfs:comment "Defines the ontology that the Mapping is based on."@en .
 
 :sourceRecord a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain :Mapping ;
     rdfs:range mcat:OntologyRecord ;
-    rdfs:label "source record" ;
-    rdfs:comment "Defines the OntologyRecord that the Mapping is based on." .
-
-###  http://matonto.org/ontologies/delimited#sourceBranch
+    rdfs:label "source record"@en ;
+    rdfs:comment "Defines the OntologyRecord that the Mapping is based on."@en .
 
 :sourceBranch a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain :Mapping ;
     rdfs:range mcat:Branch ;
-    rdfs:label "source branch" ;
-    rdfs:comment "Defines the Branch of the OntologyRecord that the Mapping is based on." .
-
-###  http://matonto.org/ontologies/delimited#sourceCommit
+    rdfs:label "source branch"@en ;
+    rdfs:comment "Defines the Branch of the OntologyRecord that the Mapping is based on."@en .
 
 :sourceCommit a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain :Mapping ;
     rdfs:range mcat:Commit ;
-    rdfs:label "source commit" ;
-    rdfs:comment "Defines the Commit of the OntologyRecord that the Mapping is based on." .
-
-###  http://matonto.org/ontologies/delimited#versionIRI
+    rdfs:label "source commit"@en ;
+    rdfs:comment "Defines the Commit of the OntologyRecord that the Mapping is based on."@en .
 
 :versionIRI a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain :Mapping ;
     rdfs:range xsd:anyURI ;
-    rdfs:label "version IRI" ;
-    rdfs:comment "The IRI of the current version of a Mapping." .
-
-#################################################################
-#
-#    Data properties
-#
-#################################################################
-
-###  http://matonto.org/ontologies/delimited#columnIndex
-
-:columnIndex a owl:DatatypeProperty ;
-    rdfs:domain :Cell , :DataMapping , :ObjectMapping ;
-    rdfs:range xsd:integer ;
-    rdfs:label "column index" ;
-    rdfs:comment "The cells column. Starting at 0." .
-
-###  http://matonto.org/ontologies/delimited#dataStart
-
-:dataStart a owl:DatatypeProperty ;
-    rdfs:domain :Document ;
-    rdfs:range xsd:integer ;
-    rdfs:label "data start" ;
-    rdfs:comment "The row that the data starts. Used to avoid parsing headers incorrectly" .
-
-###  http://matonto.org/ontologies/delimited#defaultPrefix
+    rdfs:label "version IRI"@en ;
+    rdfs:comment "The IRI of the current version of a Mapping."@en .
 
 :defaultPrefix a owl:DatatypeProperty ;
     rdfs:subPropertyOf owl:topDataProperty ;
     rdfs:domain :Mapping ;
     rdfs:range xsd:string ;
-    rdfs:label "default prefix" ;
-    rdfs:comment "The default prefix used for the Mapping" .
+    rdfs:label "default prefix"@en ;
+    rdfs:comment "The default prefix used for the Mapping"@en .
 
-###  http://matonto.org/ontologies/delimited#hasPrefix
+# ClassMapping
+
+:ClassMapping a owl:Class ;
+    rdfs:label "Class Mapping"@en ;
+    rdfs:comment "An object that represents the creation of a specific type of individual."@en .
+
+:dataProperty a owl:ObjectProperty ;
+    rdfs:subPropertyOf :propertyMapping ;
+    rdfs:domain :ClassMapping ;
+    rdfs:range :DataMapping ;
+    rdfs:label "data property"@en ;
+    rdfs:comment "A data property mapping for a ClassMapping."@en .
+
+:mapsTo a owl:ObjectProperty ;
+    rdfs:domain :ClassMapping ;
+    rdfs:range owl:Thing ;
+    rdfs:label "maps to"@en ;
+    rdfs:comment "Defines the type that will be used when defining an object from this class mapping"@en .
+
+:objectProperty a owl:ObjectProperty ;
+    rdfs:subPropertyOf :propertyMapping ;
+    rdfs:domain :ClassMapping ;
+    rdfs:range :ObjectMapping ;
+    rdfs:label "object property"@en ;
+    rdfs:comment "An object property mapping for a ClassMapping."@en .
 
 :hasPrefix a owl:DatatypeProperty ;
     rdfs:domain :ClassMapping ;
     rdfs:range xsd:string ;
-    rdfs:label "has prefix" ;
-    rdfs:comment "The prefix used if the Cell is an instance" .
-
-###  http://matonto.org/ontologies/delimited#localName
+    rdfs:label "has prefix"@en ;
+    rdfs:comment "The prefix used if the Cell is an instance"@en .
 
 :localName a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain :ClassMapping ;
     rdfs:range xsd:string ;
-    rdfs:label "local name" ;
-    rdfs:comment "The pattern specifying the local name of the generated instance. A value of \"${UUID}\" results in the generation of random UUID. A digit value results in the value for the cell in that column being inserted into the IRI (e.g. ${2} would be the value for the third column in the row)" .
+    rdfs:label "local name"@en ;
+    rdfs:comment "The pattern specifying the local name of the generated instance. A value of \"${UUID}\" results in the generation of random UUID. A digit value results in the value for the cell in that column being inserted into the IRI (e.g. ${2} would be the value for the third column in the row)"@en .
 
-###  http://matonto.org/ontologies/delimited#quoteCharacter
+# PropertyMapping
 
-:quoteCharacter a owl:DatatypeProperty ;
-    rdfs:domain :Mapping ;
-    rdfs:range xsd:string ;
-    rdfs:label "quote character" ;
-    rdfs:comment "The character used as quotes for cells" .
+:PropertyMapping a owl:Class ;
+    rdfs:label "Property Mapping"@en ;
+    rdfs:comment "An object used to relate a ClassMapping to a property on the generated instance."@en .
 
-###  http://matonto.org/ontologies/delimited#separator
-
-:separator a owl:DatatypeProperty ;
-    rdfs:domain :Mapping ;
-    rdfs:range xsd:string ;
-    rdfs:label "separator" ;
-    rdfs:comment "The character used as separator or delimiter between files columns" .
-
-
-#################################################################
-#
-#    Classes
-#
-#################################################################
-
-
-###  http://matonto.org/ontologies/delimited#ClassMapping
-
-:ClassMapping a owl:Class ;
-    rdfs:label "Class Mapping" ;
-    rdfs:comment "An object that represents the creation of a specific type of individual." .
-
-###  http://matonto.org/ontologies/delimited#DataMapping
-
-:DataMapping a owl:Class ;
-    rdfs:subClassOf :PropertyMapping ;
-    rdfs:label "Data Mapping" ;
-    rdfs:comment "An object used to relate a ClassMapping to a Datatype Property on the generated instance." .
-
-###  http://matonto.org/ontologies/delimited#Mapping
-
-:Mapping rdf:type owl:Class ;
-    rdfs:label "Mapping" ;
-    rdfs:comment "An object that represents a mapping configuration." .
-
-###  http://matonto.org/ontologies/delimited#ObjectMapping
+# ObjectMapping
 
 :ObjectMapping a owl:Class ;
     rdfs:subClassOf :PropertyMapping ;
-    rdfs:label "Object Mapping" ;
-    rdfs:comment "An object used to relate a ClassMapping to an Object Property on the generated instance." .
+    rdfs:label "Object Mapping"@en ;
+    rdfs:comment "An object used to relate a ClassMapping to an Object Property on the generated instance."@en .
 
-###  http://matonto.org/ontologies/delimited#PropertyMapping
+:classMapping a owl:ObjectProperty ;
+    rdfs:domain :ObjectMapping ;
+    rdfs:range :ClassMapping ;
+    rdfs:label "class mapping"@en ;
+    rdfs:comment "The ClassMapping that describes the target resource."@en .
 
-:PropertyMapping a owl:Class ;
-    rdfs:label "Property Mapping" ;
-    rdfs:comment "An object used to relate a ClassMapping to a property on the generated instance." .
+# DataMapping
 
-###  http://www.w3.org/1999/02/22-rdf-syntax-ns#Property
+:DataMapping a owl:Class ;
+    rdfs:subClassOf :PropertyMapping ;
+    rdfs:label "Data Mapping"@en ;
+    rdfs:comment "An object used to relate a ClassMapping to a Datatype Property on the generated instance."@en .
+
+# Misc.
+
+:hasProperty a owl:ObjectProperty ;
+	rdfs:domain :DataMapping , :ObjectMapping , :PropertyMapping ;
+	rdfs:range rdf:Property ;
+    rdfs:label "has property"@en ;
+	rdfs:comment "The Property defines the relationship for the PropertyMapping"@en .
+
+:columnIndex a owl:DatatypeProperty ;
+    rdfs:domain :Cell , :DataMapping , :ObjectMapping ;
+    rdfs:range xsd:integer ;
+    rdfs:label "column index"@en ;
+    rdfs:comment "The cells column. Starting at 0."@en .
+
+:propertyMapping a owl:ObjectProperty ;
+    rdfs:range :PropertyMapping ;
+    rdfs:label "property mapping"@en ;
+    rdfs:comment "A property mapping, either data or object, for a ClassMapping."@en .
 
 rdf:Property a owl:Class .

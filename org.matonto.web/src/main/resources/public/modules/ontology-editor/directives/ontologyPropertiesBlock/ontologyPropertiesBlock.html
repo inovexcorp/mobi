@@ -26,8 +26,8 @@
             <span>Properties</span><a class="pull-right" ng-click="dvm.openAddOverlay()"><i class="fa fa-fw fa-plus"></i>Add Property</a>
         </block-header>
         <block-content>
-            <property-values ng-repeat="property in dvm.os.selected | showProperties:dvm.properties | orderBy:dvm.ontoUtils.getLabelForIRI"
-                             property="property" entity="dvm.os.selected" remove="dvm.openRemoveOverlay(iri, index)"
+            <property-values ng-repeat="property in dvm.os.listItem.selected | showProperties:dvm.properties | orderBy:dvm.ontoUtils.getLabelForIRI"
+                             property="property" entity="dvm.os.listItem.selected" remove="dvm.openRemoveOverlay(iri, index)"
                              edit="dvm.editClicked(property, index)"></property-values>
         </block-content>
     </block>

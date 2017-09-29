@@ -30,7 +30,7 @@
             </div>
             <tree-item ng-if="!node.isClass" ng-style="{'padding-left': (dvm.indent * node.indent) + 'em'}"
                        is-active="dvm.os.getActiveEntityIRI() === node.entityIRI"
-                       current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.recordId, node.entityIRI)"
+                       current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, node.entityIRI)"
                        on-click="dvm.os.selectItem(node.entityIRI)" has-children="node.hasChildren"
                        path="node.path" data-path-to="{{dvm.os.joinPath(node.path)}}" is-opened="dvm.os.getIndividualsOpened(dvm.os.joinPath(node.path))"></tree-item>
         </div>

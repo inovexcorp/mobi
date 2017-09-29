@@ -47,22 +47,22 @@
                     dvm.error = '';
 
                     dvm.commit = function() {
-                        if (dvm.os.listItem.upToDate) {
-                            createCommit(dvm.os.listItem.branchId);
+                        if (dvm.os.listItem.ontologyState.upToDate) {
+                            createCommit(dvm.os.listItem.ontologyRecord.branchId);
                         } else {
-                            var branch = _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.branchId});
+                            var branch = _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId});
                             var branchConfig = {title: 'WIP:' +  util.getDctermsValue(branch, 'title')};
                             var description = util.getDctermsValue(branch, 'description');
                             if (description) {
                                 branchConfig.description = description;
                             }
-                            cm.createRecordUserBranch(dvm.os.listItem.recordId, catalogId, branchConfig,
-                                dvm.os.listItem.commitId, dvm.os.listItem.branchId).then(branchId =>
-                                    cm.getRecordBranch(branchId, dvm.os.listItem.recordId, catalogId)
+                            cm.createRecordUserBranch(dvm.os.listItem.ontologyRecord.recordId, catalogId, branchConfig,
+                                dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyRecord.branchId).then(branchId =>
+                                    cm.getRecordBranch(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                                         .then(branch => {
                                             dvm.os.listItem.branches.push(branch);
-                                            dvm.os.listItem.branchId = branch['@id'];
-                                            dvm.os.listItem.upToDate = true;
+                                            dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
+                                            dvm.os.listItem.ontologyState.upToDate = true;
                                             createCommit(branch['@id']);
                                         }, onError), onError);
                         }
@@ -73,11 +73,12 @@
                     }
 
                     function createCommit(branchId) {
-                        cm.createBranchCommit(branchId, dvm.os.listItem.recordId, catalogId, dvm.comment)
+                        cm.createBranchCommit(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.comment)
                             .then(commitId =>
-                                sm.updateOntologyState(dvm.os.listItem.recordId, branchId, commitId)
+                                sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)
                                     .then(() => {
-                                        dvm.os.listItem.commitId = commitId;
+                                        dvm.os.listItem.ontologyRecord.branchId = branchId;
+                                        dvm.os.listItem.ontologyRecord.commitId = commitId;
                                         dvm.os.clearInProgressCommit();
                                         dvm.os.showCommitOverlay = false;
                                     }, onError), onError);

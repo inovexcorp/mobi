@@ -21,11 +21,13 @@
  * #L%
  */
 describe('SPARQL Manager service', function() {
-    var $httpBackend, $httpParamSerializer, sparqlManagerSvc, windowSvc, utilSvc, params;
+    var sparqlManagerSvc, $q, scope, $httpBackend, $httpParamSerializer, windowSvc, utilSvc, params;
 
     beforeEach(function() {
         module('sparqlManager');
         mockUtil();
+        mockHttpService();
+        injectRestPathConstant();
 
         module(function($provide) {
             $provide.service('$window', function() {
@@ -33,51 +35,229 @@ describe('SPARQL Manager service', function() {
             });
         });
 
-        inject(function(sparqlManagerService, _$httpBackend_, _$httpParamSerializer_, _$window_, _utilService_) {
+        inject(function(sparqlManagerService, _$q_, _$rootScope_, _$httpBackend_, _$httpParamSerializer_, _$window_, _utilService_, _httpService_) {
             sparqlManagerSvc = sparqlManagerService;
+            $q = _$q_;
+            scope = _$rootScope_;
             $httpBackend = _$httpBackend_;
             $httpParamSerializer = _$httpParamSerializer_;
             windowSvc = _$window_;
             utilSvc = _utilService_;
+            httpSvc = _httpService_;
         });
 
         params = { query: sparqlManagerSvc.queryString };
     });
 
     describe('should query the repository', function() {
+        var query = 'query', url = '/mobirest/sparql', data = {head: {}}, id = 'id';
+        describe('with a dataset', function() {
+            var dataset = 'dataset';
+            describe('when id is set', function() {
+                it('unless an error occurs', function() {
+                    httpSvc.get.and.returnValue($q.reject({statusText: 'Error Message'}));
+                    sparqlManagerSvc.query(query, dataset, id).then(function() {
+                        fail('Promise should have rejected');
+                    }, function(response) {
+                        expect(httpSvc.get).toHaveBeenCalledWith(url, {params: {query: query, dataset: dataset}}, id);
+                        expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    });
+                    scope.$apply();
+                });
+                it('successfully', function() {
+                    httpSvc.get.and.returnValue($q.when({data: data}));
+                    sparqlManagerSvc.query(query, dataset, id).then(function(response) {
+                        expect(response).toEqual(data);
+                        expect(httpSvc.get).toHaveBeenCalledWith(url, {params: {query: query, dataset: dataset}}, id);
+                    }, function() {
+                        fail('Promise should have resolved');
+                    });
+                    scope.$apply();
+                });
+            });
+            describe('when id is not set', function() {
+                it('unless an error occurs', function() {
+                    $httpBackend.expectGET(url + '?' + $httpParamSerializer({query: query})).respond(400, null, null, 'Error Message');
+                    sparqlManagerSvc.query(query).then(function(response) {
+                        fail('Promise should have rejected');
+                    }, function(error) {
+                        expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    });
+                    flushAndVerify($httpBackend);
+                });
+                it('successfully', function() {
+                    $httpBackend.expectGET(url + '?' + $httpParamSerializer({query: query})).respond(200, data);
+                    sparqlManagerSvc.query(query).then(function(response) {
+                        expect(response).toEqual(data);
+                    }, function(error) {
+                        fail('Promise should have resolved');
+                    });
+                    flushAndVerify($httpBackend);
+                });
+            });
+        });
+        describe('without a dataset', function() {
+            describe('when id is set', function() {
+                it('unless an error occurs', function() {
+                    httpSvc.get.and.returnValue($q.reject({statusText: 'Error Message'}));
+                    sparqlManagerSvc.query(query, '', 'id').then(function() {
+                        fail('Promise should have rejected');
+                    }, function(response) {
+                        expect(httpSvc.get).toHaveBeenCalledWith(url, {params: {query: query}}, 'id');
+                        expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    });
+                    scope.$apply();
+                });
+                it('successfully', function() {
+                    httpSvc.get.and.returnValue($q.when({data: data}));
+                    sparqlManagerSvc.query(query, '', 'id').then(function(response) {
+                        expect(response).toEqual(data);
+                        expect(httpSvc.get).toHaveBeenCalledWith(url, {params: {query: query}}, 'id');
+                    }, function() {
+                        fail('Promise should have resolved');
+                    });
+                    scope.$apply();
+                });
+            });
+            describe('when id is not set', function() {
+                it('unless an error occurs', function() {
+                    $httpBackend.expectGET(url + '?' + $httpParamSerializer({query: query})).respond(400, null, null, 'Error Message');
+                    sparqlManagerSvc.query(query).then(function(response) {
+                        fail('Promise should have rejected');
+                    }, function(error) {
+                        expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    });
+                    flushAndVerify($httpBackend);
+                });
+                it('successfully', function() {
+                    $httpBackend.expectGET(url + '?' + $httpParamSerializer({query: query})).respond(200, data);
+                    sparqlManagerSvc.query(query).then(function(response) {
+                        expect(response).toEqual(data);
+                    }, function(error) {
+                        fail('Promise should have resolved');
+                    });
+                    flushAndVerify($httpBackend);
+                });
+            });
+        });
+    });
+    describe('pagedQuery should call the correct method', function() {
+        var url, paramsObj, config;
+        beforeEach(function() {
+            paramsObj = {
+                limit: 10,
+                page: 1
+            };
+            config = {
+                query: 'query',
+                limit: 10,
+                offset: 10
+            };
+            url = '/mobirest/sparql/page?';
+        });
+        it('with a dataset', function() {
+            paramsObj.datasetRecordIRI = 'record-id';
+            config.dataset = 'record-id';
+            url += $httpParamSerializer(config);
+            $httpBackend.expectGET(url).respond(200);
+            sparqlManagerSvc.pagedQuery('query', paramsObj)
+                .then(function(response) {
+                    expect(response).toEqual(jasmine.objectContaining({status: 200}));
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        describe('when $http.get', function() {
+            beforeEach(function() {
+                url += $httpParamSerializer(config);
+            });
+            it('resolves', function() {
+                $httpBackend.expectGET(url).respond(200);
+                sparqlManagerSvc.pagedQuery('query', paramsObj)
+                    .then(function(response) {
+                        expect(response).toEqual(jasmine.objectContaining({status: 200}));
+                    }, function() {
+                        fail('Promise should have resolved');
+                    });
+                flushAndVerify($httpBackend);
+            });
+            it('rejects', function() {
+                $httpBackend.expectGET(url).respond(400);
+                sparqlManagerSvc.pagedQuery('query', paramsObj)
+                    .then(function() {
+                        fail('Promise should have rejected');
+                    }, function() {
+                        expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400}));
+                    });
+                flushAndVerify($httpBackend);
+            });
+        });
+        describe('with an id and httpService.get', function() {
+            beforeEach(function() {
+                paramsObj.id = 'id';
+            });
+            it('resolves', function() {
+                httpSvc.get.and.returnValue($q.when({status: 200}));
+                sparqlManagerSvc.pagedQuery('query', paramsObj)
+                    .then(function(response) {
+                        expect(response).toEqual({status: 200});
+                        expect(httpSvc.get).toHaveBeenCalledWith(url.slice(0, -1), {params: config}, 'id');
+                    }, function() {
+                        fail('Promise should have resolved');
+                    });
+                scope.$apply();
+            });
+            it('rejects', function() {
+                httpSvc.get.and.returnValue($q.reject({status: 400}));
+                sparqlManagerSvc.pagedQuery('query', paramsObj)
+                    .then(function() {
+                        fail('Promise should have rejected');
+                    }, function() {
+                        expect(httpSvc.get).toHaveBeenCalledWith(url.slice(0, -1), {params: config}, 'id');
+                        expect(utilSvc.rejectError).toHaveBeenCalledWith({status: 400});
+                    });
+                scope.$apply();
+            });
+        });
+    });
+    describe('should retrieve a page of a query against the repository', function() {
+        var url;
         beforeEach(function() {
             params.limit = sparqlManagerSvc.limit;
             params.offset = sparqlManagerSvc.currentPage * sparqlManagerSvc.limit;
-            this.url = '/matontorest/sparql/page?';
+            url = '/mobirest/sparql/page?';
         });
-        it('with a dataset', function() {
+        it('with a dataset', function(done) {
             sparqlManagerSvc.datasetRecordIRI = 'dataset';
             params.dataset = sparqlManagerSvc.datasetRecordIRI;
-            this.url += $httpParamSerializer(params);
-            $httpBackend.expectGET(this.url).respond(200);
+            url += $httpParamSerializer(params);
+            $httpBackend.expectGET(url).respond(200);
             sparqlManagerSvc.queryRdf();
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
             expect(true).toBe(true);
+            done();
         });
-        it('unless an error occurs', function() {
-            this.url += $httpParamSerializer(params);
+        it('unless an error occurs', function(done) {
+            url += $httpParamSerializer(params);
             var statusMessage = 'Error message';
             var details = 'Details';
             utilSvc.getErrorMessage.and.returnValue(statusMessage);
-            $httpBackend.expectGET(this.url).respond(400, {details: details}, undefined, statusMessage);
+            $httpBackend.expectGET(url).respond(400, {details: details}, undefined, statusMessage);
             sparqlManagerSvc.queryRdf();
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
 
             expect(sparqlManagerSvc.errorMessage).toEqual(statusMessage);
             expect(sparqlManagerSvc.errorDetails).toEqual(details);
             expect(sparqlManagerSvc.currentPage).toBe(0);
             expect(sparqlManagerSvc.data).toBeUndefined();
+            done();
         });
         it('when returning no bindings', function(done) {
-            this.url += $httpParamSerializer(params);
-            $httpBackend.expectGET(this.url).respond(200, {bindings: [], data: []});
+            url += $httpParamSerializer(params);
+            $httpBackend.expectGET(url).respond(200, {bindings: [], data: []});
             sparqlManagerSvc.queryRdf();
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
 
             expect(sparqlManagerSvc.infoMessage).toEqual('There were no results for the submitted query.');
             expect(sparqlManagerSvc.currentPage).toBe(0);
@@ -85,16 +265,16 @@ describe('SPARQL Manager service', function() {
             done();
         });
         it('when returning bindings', function(done) {
-            this.url += $httpParamSerializer(params);
+            url += $httpParamSerializer(params);
             var nextLink = 'http://example.com/next';
             var prevLink = 'http://example.com/prev';
             var headers = {
                 'X-Total-Count': '10'
             };
             utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
-            $httpBackend.expectGET(this.url).respond(200, {bindings: [''], data: []}, headers);
+            $httpBackend.expectGET(url).respond(200, {bindings: [''], data: []}, headers);
             sparqlManagerSvc.queryRdf();
-            $httpBackend.flush();
+            flushAndVerify($httpBackend);
 
             expect(sparqlManagerSvc.data).toEqual([]);
             expect(sparqlManagerSvc.bindings).toEqual(['']);
@@ -112,20 +292,20 @@ describe('SPARQL Manager service', function() {
             sparqlManagerSvc.datasetRecordIRI = 'dataset';
             params.dataset = sparqlManagerSvc.datasetRecordIRI;
             sparqlManagerSvc.downloadResults(params.fileType);
-            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(params));
+            expect(windowSvc.location).toBe('/mobirest/sparql?' + $httpParamSerializer(params));
         });
         it('with a file name', function() {
             params.fileName = 'test';
             sparqlManagerSvc.downloadResults(params.fileType, params.fileName);
-            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(params));
+            expect(windowSvc.location).toBe('/mobirest/sparql?' + $httpParamSerializer(params));
         });
         it('without a file name', function() {
             sparqlManagerSvc.downloadResults(params.fileType);
-            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(params));
+            expect(windowSvc.location).toBe('/mobirest/sparql?' + $httpParamSerializer(params));
 
             windowSvc.location = '';
             sparqlManagerSvc.downloadResults(params.fileType, '');
-            expect(windowSvc.location).toBe('/matontorest/sparql?' + $httpParamSerializer(params));
+            expect(windowSvc.location).toBe('/mobirest/sparql?' + $httpParamSerializer(params));
         });
     });
 });

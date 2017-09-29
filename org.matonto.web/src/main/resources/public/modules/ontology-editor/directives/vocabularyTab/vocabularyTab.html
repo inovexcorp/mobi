@@ -21,27 +21,31 @@
   #L%
   -->
 <div class="vocabulary-tab ontology-tab">
-    <branch-select ng-model="dvm.sm.listItem.branchId"></branch-select>
+    <branch-select ng-model="dvm.sm.listItem.ontologyRecord.branchId"></branch-select>
     <tabset class="centered">
-        <tab heading="'Project'" active="dvm.sm.state.project.active"
-             on-click="dvm.sm.setSelected(dvm.sm.state.project.entityIRI)">
+        <tab heading="'Project'" active="dvm.sm.listItem.editorTabStates.project.active"
+             on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.project.entityIRI)">
             <project-tab></project-tab>
         </tab>
-        <tab heading="'Concepts'" active="dvm.sm.state.concepts.active"
-             on-click="dvm.sm.setSelected(dvm.sm.state.concepts.entityIRI)">
+        <tab heading="'Schemes'" active="dvm.sm.listItem.editorTabStates.schemes.active"
+             on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.schemes.entityIRI)">
+            <concept-schemes-tab></concept-schemes-tab>
+        </tab>
+        <tab heading="'Concepts'" active="dvm.sm.listItem.editorTabStates.concepts.active"
+             on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.concepts.entityIRI)">
             <concepts-tab></concepts-tab>
         </tab>
-        <tab heading="'Search'" active="dvm.sm.state.search.active"
-             on-click="dvm.sm.setSelected(dvm.sm.state.search.entityIRI)">
+        <tab heading="'Search'" active="dvm.sm.listItem.editorTabStates.search.active"
+             on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.search.entityIRI)">
             <search-tab></search-tab>
         </tab>
-        <tab heading="dvm.savedChanges" active="dvm.sm.state.savedChanges.active">
+        <tab heading="dvm.savedChanges" active="dvm.sm.listItem.editorTabStates.savedChanges.active">
             <saved-changes-tab></saved-changes-tab>
         </tab>
-        <tab heading="'Merge'" active="dvm.sm.state.merge.active">
+        <tab heading="'Merge'" active="dvm.sm.listItem.editorTabStates.merge.active">
             <merge-tab></merge-tab>
         </tab>
-        <tab heading="'Commits'" active="dvm.sm.state.commits.active">
+        <tab heading="'Commits'" active="dvm.sm.listItem.editorTabStates.commits.active">
             <commits-tab></commits-tab>
         </tab>
     </tabset>

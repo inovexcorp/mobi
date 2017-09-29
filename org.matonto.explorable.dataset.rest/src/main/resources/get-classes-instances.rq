@@ -1,23 +1,28 @@
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX dcterms: <http://purl.org/dc/terms/>
 
-SELECT ?inst ?title ?description ?label ?comment
+SELECT
+    ?inst
+    (SAMPLE(?title_value) as $title)
+    (SAMPLE(?description_value) as ?description)
+    (SAMPLE(?label_value) as ?label)
+    (SAMPLE(?comment_value) as ?comment)
 WHERE {
     ?inst a ?classIRI .
     OPTIONAL {
-        ?inst dcterms:title ?title .
-        FILTER(lang(?title) = "" || langMatches(lang(?title), "EN"))
+        ?inst dcterms:title ?title_value .
+        FILTER(lang(?title_value) = "" || langMatches(lang(?title_value), "EN"))
     }
     OPTIONAL {
-        ?inst dcterms:description ?description .
-        FILTER(lang(?description) = "" || langMatches(lang(?description), "EN"))
+        ?inst dcterms:description ?description_value .
+        FILTER(lang(?description_value) = "" || langMatches(lang(?description_value), "EN"))
     }
     OPTIONAL {
-        ?inst rdfs:label ?label .
-        FILTER(lang(?label) = "" || langMatches(lang(?label), "EN"))
+        ?inst rdfs:label ?label_value .
+        FILTER(lang(?label_value) = "" || langMatches(lang(?label_value), "EN"))
     }
     OPTIONAL {
-        ?inst rdfs:comment ?comment .
-        FILTER(lang(?comment) = "" || langMatches(lang(?comment), "EN"))
+        ?inst rdfs:comment ?comment_value .
+        FILTER(lang(?comment_value) = "" || langMatches(lang(?comment_value), "EN"))
     }
-}
+} GROUP BY ?inst

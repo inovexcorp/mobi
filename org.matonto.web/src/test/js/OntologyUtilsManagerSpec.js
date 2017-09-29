@@ -45,7 +45,7 @@ describe('Ontology Utils Manager service', function() {
             $q = _$q_;
             responseObj = _responseObj_;
         });
-        
+
         ontologyStateSvc.flattenHierarchy.and.returnValue([{entityIRI: 'iri'}]);
     });
 
@@ -61,14 +61,15 @@ describe('Ontology Utils Manager service', function() {
                 getDeferred.resolve([{'@id': 'id'}]);
                 ontologyStateSvc.getOntologiesArray.and.returnValue([{prop: 'ontology'}]);
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
+                ontologyStateSvc.removeEntity.and.returnValue([ontologyStateSvc.listItem.selected]);
             });
             it('and when updateEverythingTree is false', function() {
                 ontologyUtilsManagerSvc.commonDelete('iri');
                 scope.$apply();
-                expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, 'iri', 'construct');
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.selected);
+                expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'iri', 'construct');
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected);
                 expect(ontologyStateSvc.removeEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, 'iri');
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {'@id': 'id'});
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': 'id'});
                 expect(updateRefs.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, 'iri');
                 expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
@@ -79,10 +80,10 @@ describe('Ontology Utils Manager service', function() {
             it('and when updateEverythingTree is true', function() {
                 ontologyUtilsManagerSvc.commonDelete('iri', true);
                 scope.$apply();
-                expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, 'iri', 'construct');
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.selected);
+                expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'iri', 'construct');
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.selected);
                 expect(ontologyStateSvc.removeEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, 'iri');
-                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {'@id': 'id'});
+                expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': 'id'});
                 expect(updateRefs.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontology, 'iri');
                 expect(ontologyStateSvc.unSelectItem).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.saveCurrentChanges).toHaveBeenCalled();
@@ -95,7 +96,7 @@ describe('Ontology Utils Manager service', function() {
             getDeferred.reject('error');
             ontologyUtilsManagerSvc.commonDelete('iri');
             scope.$apply();
-            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, 'iri', 'construct');
+            expect(ontologyManagerSvc.getEntityUsages).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'iri', 'construct');
             expect(util.createErrorToast).toHaveBeenCalledWith('error');
         });
     });
@@ -133,7 +134,7 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
         expect(ontologyStateSvc.listItem.subClasses.length).toBe(0);
         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectPropertyHierarchy, 'begin/end', ontologyStateSvc.listItem.objectPropertyIndex);
-        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectPropertyHierarchy, ontologyStateSvc.listItem.recordId);
+        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectPropertyHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
         expect(ontologyStateSvc.listItem.flatObjectPropertyHierarchy).toEqual([{entityIRI: 'iri'}]);
         expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end', true);
     });
@@ -146,9 +147,9 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
         expect(ontologyStateSvc.listItem.subClasses.length).toBe(0);
         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, 'begin/end', ontologyStateSvc.listItem.dataPropertyIndex);
-        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.listItem.recordId);
+        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
         expect(ontologyStateSvc.listItem.flatDataPropertyHierarchy).toEqual([{entityIRI: 'iri'}]);
-        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
+        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end', true);
     });
     it('deleteAnnotationProperty should call the proper methods', function() {
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
@@ -159,7 +160,7 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
         expect(ontologyStateSvc.listItem.annotations.length).toBe(0);
         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotationPropertyHierarchy, 'begin/end', ontologyStateSvc.listItem.annotationPropertyIndex);
-        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotationPropertyHierarchy, ontologyStateSvc.listItem.recordId);
+        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotationPropertyHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
         expect(ontologyStateSvc.listItem.flatAnnotationPropertyHierarchy).toEqual([{entityIRI: 'iri'}]);
         expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
     });
@@ -170,7 +171,7 @@ describe('Ontology Utils Manager service', function() {
             'ClassA': ['IndivA1', 'IndivA2'],
             'ClassB': ['IndivB1']
         };
-        ontologyStateSvc.selected['@type'] = ['ClassB'];
+        ontologyStateSvc.listItem.selected['@type'] = ['ClassB'];
         ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('IndivB1');
@@ -188,31 +189,53 @@ describe('Ontology Utils Manager service', function() {
     it('deleteConcept should call the proper methods', function() {
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
-        splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
         ontologyUtilsManagerSvc.deleteConcept();
         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
         expect(ontologyStateSvc.listItem.subClasses.length).toBe(0);
         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, 'begin/end', ontologyStateSvc.listItem.conceptIndex);
-        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, ontologyStateSvc.listItem.recordId);
+        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
         expect(ontologyStateSvc.listItem.flatConceptHierarchy).toEqual([{entityIRI: 'iri'}]);
+        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, 'begin/end', ontologyStateSvc.listItem.conceptSchemeIndex);
+        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+        expect(ontologyStateSvc.listItem.flatConceptSchemeHierarchy).toEqual([{entityIRI: 'iri'}]);
         expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
     });
     it('deleteConceptScheme should call the proper method', function() {
-        spyOn(ontologyUtilsManagerSvc, 'deleteConcept');
+        ontologyStateSvc.listItem.conceptSchemeHierarchy = [{entityIRI: 'begin/end', subEntities: [{}]}, {entityIRI: 'iri'}];
+        spyOn(ontologyUtilsManagerSvc, 'commonDelete');
+        ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
         ontologyUtilsManagerSvc.deleteConceptScheme();
-        expect(ontologyUtilsManagerSvc.deleteConcept).toHaveBeenCalled();
+        expect(ontologyStateSvc.listItem.conceptSchemeHierarchy).toEqual([{entityIRI: 'iri'}]);
+        expect(updateRefs.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeIndex, 'begin/end');
+        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+        expect(ontologyStateSvc.listItem.flatConceptSchemeHierarchy).toEqual([{entityIRI: 'iri'}]);
+        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
     });
     describe('getBlankNodeValue returns', function() {
+        var importedOntology;
         beforeEach(function() {
+            importedOntology = {ontologyId: 'imported', blankNodes: {key1: 'importedValue1'}};
             ontologyStateSvc.listItem.blankNodes = {key1: 'value1'};
-        });
-        it('value for the key provided contained in the object', function() {
             ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
-            expect(ontologyUtilsManagerSvc.getBlankNodeValue('key1')).toEqual(ontologyStateSvc.listItem.blankNodes['key1']);
+            ontologyStateSvc.listItem.importedOntologies = [importedOntology];
         });
-        it('key for the key provided not contained in the object', function() {
-            ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
-            expect(ontologyUtilsManagerSvc.getBlankNodeValue('key2')).toEqual('key2');
+        describe('value for the key provided contained in the object', function() {
+            it('if selected is imported', function() {
+                ontologyStateSvc.listItem.selected.matonto = {imported: true, importedIRI: importedOntology.ontologyId};
+                expect(ontologyUtilsManagerSvc.getBlankNodeValue('key1')).toEqual(importedOntology.blankNodes['key1']);
+            });
+            it('if selected is not imported', function() {
+                expect(ontologyUtilsManagerSvc.getBlankNodeValue('key1')).toEqual(ontologyStateSvc.listItem.blankNodes['key1']);
+            });
+        });
+        describe('key for the key provided not contained in the object', function() {
+            it('if selected is imported', function() {
+                ontologyStateSvc.listItem.selected.matonto = {imported: true, importedIRI: importedOntology.ontologyId};
+                expect(ontologyUtilsManagerSvc.getBlankNodeValue('key2')).toEqual('key2');
+            });
+            it('if selected is not imported', function() {
+                expect(ontologyUtilsManagerSvc.getBlankNodeValue('key2')).toEqual('key2');
+            });
         });
         it('undefined if isBlankNodeId returns false', function() {
             ontologyManagerSvc.isBlankNodeId.and.returnValue(false);
@@ -224,28 +247,28 @@ describe('Ontology Utils Manager service', function() {
             ontologyStateSvc.getEntityByRecordId.and.returnValue({});
             ontologyManagerSvc.isBlankNodeId.and.returnValue(false);
             expect(ontologyUtilsManagerSvc.isLinkable('iri')).toEqual(true);
-            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, 'iri');
+            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, 'iri');
             expect(ontologyManagerSvc.isBlankNodeId).toHaveBeenCalledWith('iri');
         });
         it('when getEntityByRecordId is undefined and isBlankNodeId is false', function() {
             ontologyStateSvc.getEntityByRecordId.and.returnValue(undefined);
             ontologyManagerSvc.isBlankNodeId.and.returnValue(false);
             expect(ontologyUtilsManagerSvc.isLinkable('iri')).toEqual(false);
-            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, 'iri');
+            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, 'iri');
             expect(ontologyManagerSvc.isBlankNodeId).not.toHaveBeenCalled();
         });
         it('when getEntityByRecordId exists and isBlankNodeId is true', function() {
             ontologyStateSvc.getEntityByRecordId.and.returnValue({});
             ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
             expect(ontologyUtilsManagerSvc.isLinkable('iri')).toEqual(false);
-            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, 'iri');
+            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, 'iri');
             expect(ontologyManagerSvc.isBlankNodeId).toHaveBeenCalledWith('iri');
         });
         it('when getEntityByRecordId is undefined and isBlankNodeId is true', function() {
             ontologyStateSvc.getEntityByRecordId.and.returnValue(undefined);
             ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
             expect(ontologyUtilsManagerSvc.isLinkable('iri')).toEqual(false);
-            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, 'iri');
+            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, 'iri');
             expect(ontologyManagerSvc.isBlankNodeId).not.toHaveBeenCalled();
         });
     });
@@ -308,7 +331,7 @@ describe('Ontology Utils Manager service', function() {
             ontologyUtilsManagerSvc.saveCurrentChanges();
         });
         it('calls the correct manager function', function() {
-            expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
+            expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
         });
         describe('when resolved, sets the correct variable and calls correct manager function', function() {
             var afterDeferred;
@@ -330,7 +353,7 @@ describe('Ontology Utils Manager service', function() {
                     expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
                     expect(ontologyStateSvc.setEntityUsages).toHaveBeenCalledWith(id);
                     expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                    expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
+                    expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                     expect(ontologyStateSvc.listItem.isSaved).toBe(true);
                 });
                 it('if getActiveKey is project', function() {
@@ -339,7 +362,7 @@ describe('Ontology Utils Manager service', function() {
                     expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
                     expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                    expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
+                    expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                     expect(ontologyStateSvc.listItem.isSaved).toBe(true);
                 });
                 it('if getActiveKey is individuals', function() {
@@ -348,7 +371,7 @@ describe('Ontology Utils Manager service', function() {
                     expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
                     expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                    expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
+                    expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                     expect(ontologyStateSvc.listItem.isSaved).toBe(true);
                 });
                 it('if getActiveEntityIRI is undefined', function() {
@@ -357,7 +380,7 @@ describe('Ontology Utils Manager service', function() {
                     expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
                     expect(ontologyStateSvc.setEntityUsages).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                    expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId);
+                    expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                     expect(ontologyStateSvc.listItem.isSaved).toBe(true);
                 });
             });
@@ -384,6 +407,13 @@ describe('Ontology Utils Manager service', function() {
                     iri: {
                         label: 'old-value'
                     }
+                },
+                ontologyRecord: {
+                    title: '',
+                    recordId: '',
+                    branchId: '',
+                    commitId: '',
+                    type: ''
                 }
             };
             ontologyManagerSvc.getEntityName.and.returnValue('new-value');
@@ -395,51 +425,51 @@ describe('Ontology Utils Manager service', function() {
         });
         describe('when the listItem.index contains the selected @id', function() {
             beforeEach(function() {
-                ontologyStateSvc.selected = {
+                ontologyStateSvc.listItem.selected = {
                     '@id': 'iri',
                     matonto: {
                         originalIRI: ''
                     }
                 };
-            });            
-            it('and listItem.type is vocabulary', function() {
-                ontologyStateSvc.listItem.type = 'vocabulary';
+            });
+            it('and listItem.ontologyRecord.type is vocabulary', function() {
+                ontologyStateSvc.listItem.ontologyRecord.type = 'vocabulary';
                 ontologyUtilsManagerSvc.updateLabel();
                 expect(ontologyStateSvc.listItem.index.iri.label).toBe('new-value');
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.flatConceptHierarchy).toEqual([{prop: 'new-item'}]);
             });
             it('and isClass is true', function() {
                 ontologyManagerSvc.isClass.and.returnValue(true);
                 ontologyUtilsManagerSvc.updateLabel();
                 expect(ontologyStateSvc.listItem.index.iri.label).toBe('new-value');
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.flatClassHierarchy).toEqual([{prop: 'new-item'}]);
             });
             it('and isDataTypeProperty is true', function() {
                 ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
                 ontologyUtilsManagerSvc.updateLabel();
                 expect(ontologyStateSvc.listItem.index.iri.label).toBe('new-value');
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.flatDataPropertyHierarchy).toEqual([{prop: 'new-item'}]);
             });
             it('and isObjectProperty is true', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
                 ontologyUtilsManagerSvc.updateLabel();
                 expect(ontologyStateSvc.listItem.index.iri.label).toBe('new-value');
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectPropertyHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectPropertyHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.flatObjectPropertyHierarchy).toEqual([{prop: 'new-item'}]);
             });
             it('and isAnnotation is true', function() {
                 ontologyManagerSvc.isAnnotation.and.returnValue(true);
                 ontologyUtilsManagerSvc.updateLabel();
                 expect(ontologyStateSvc.listItem.index.iri.label).toBe('new-value');
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotationPropertyHierarchy, ontologyStateSvc.listItem.recordId);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotationPropertyHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.flatAnnotationPropertyHierarchy).toEqual([{prop: 'new-item'}]);
             });
         });
         it('when the listItem.index does not contain the selected @id', function() {
-            ontologyStateSvc.selected = {'@id': 'other-iri'};
+            ontologyStateSvc.listItem.selected = {'@id': 'other-iri'};
             ontologyUtilsManagerSvc.updateLabel();
             expect(ontologyStateSvc.listItem.index.iri.label).toBe('old-value');
         });
@@ -458,7 +488,7 @@ describe('Ontology Utils Manager service', function() {
         expect(responseObj.getItemIri).toHaveBeenCalledWith({});
         expect(ontologyStateSvc.getEntityNameByIndex).toHaveBeenCalledWith('iri', ontologyStateSvc.listItem);
     });
-    
+
     it('setSuperClasses should call the correct methods', function() {
         ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'flattened'}]);
         var classIRIs = ['classId1', 'classId2'];
@@ -466,7 +496,7 @@ describe('Ontology Utils Manager service', function() {
         _.forEach(classIRIs, function(value) {
             expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, 'iri', ontologyStateSvc.listItem.classIndex, value);
         });
-        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.recordId);
+        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
         expect(ontologyStateSvc.listItem.flatClassHierarchy).toEqual([{prop: 'flattened'}]);
     });
 
@@ -491,7 +521,7 @@ describe('Ontology Utils Manager service', function() {
             expect(ontologyStateSvc.createFlatIndividualTree).not.toHaveBeenCalled();
         });
     });
-    
+
     it('setSuperProperties should call the correct methods', function() {
         ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'flattened'}]);
         var propertyIRIs = ['classId1', 'classId2'];
@@ -499,10 +529,10 @@ describe('Ontology Utils Manager service', function() {
         _.forEach(propertyIRIs, function(value) {
             expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.hierarchy, 'iri', ontologyStateSvc.listItem.index, value);
         });
-        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.hierarchy, ontologyStateSvc.listItem.recordId);
+        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
         expect(ontologyStateSvc.listItem.flatHierarchy).toEqual([{prop: 'flattened'}]);
     });
-    
+
     describe('checkIri should return correct values when', function() {
         beforeEach(function() {
             ontologyStateSvc.listItem.iriList.push('id');
@@ -511,15 +541,15 @@ describe('Ontology Utils Manager service', function() {
             expect(ontologyUtilsManagerSvc.checkIri('newIri')).toBe(false);
         });
         it('the IRI is a duplicate and not selected.', function() {
-            ontologyStateSvc.selected = {'@id': 'newIri'};
+            ontologyStateSvc.listItem.selected = {'@id': 'newIri'};
             expect(ontologyUtilsManagerSvc.checkIri('id')).toBe(true);
         });
         it('the IRI is not a duplicate and there is an IRI selected.', function() {
-            ontologyStateSvc.selected = {'@id': 'id'};
+            ontologyStateSvc.listItem.selected = {'@id': 'id'};
             expect(ontologyUtilsManagerSvc.checkIri('newIri')).toBe(false);
         });
         it('the IRI is a duplicate and is selected.', function() {
-            ontologyStateSvc.selected = {'@id': 'id'};
+            ontologyStateSvc.listItem.selected = {'@id': 'id'};
             expect(ontologyUtilsManagerSvc.checkIri('id')).toBe(false);
         });
     });

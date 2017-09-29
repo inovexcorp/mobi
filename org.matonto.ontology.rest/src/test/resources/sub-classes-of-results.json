@@ -32,6 +32,9 @@
           "entityIRI": "http://matonto.org/ontology#Class1b"
         }
       ]
+    },
+    {
+      "entityIRI": "https://matonto.org/vocabulary#ConceptSchemeSubClass"
     }
   ],
   "index": {

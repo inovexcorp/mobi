@@ -97,9 +97,23 @@ public interface DatasetRest {
                                  @FormDataParam("ontologies") List<FormDataBodyPart> ontologies);
 
     /**
+     * Gets a specific DatasetRecord from the local Catalog.
+     *
+     * @param datasetRecordId The IRI of a DatasetRecord
+     * @return A Response indicating the success of the request
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("{datasetRecordId}")
+    @RolesAllowed("user")
+    @ApiOperation("Gets a specific DatasetRecord from the local Catalog")
+    Response getDatasetRecord(@PathParam("datasetRecordId") String datasetRecordId);
+
+    /**
      * Deletes a specific DatasetRecord and its Dataset from the local Catalog. By default only removes named graphs
      * that aren't used by another Dataset, but can be forced to delete them.
      *
+     * @param context The context of the request
      * @param datasetRecordId The IRI of a DatasetRecord
      * @param force Whether or not the delete should be forced
      * @return A Response indicating the success of the request
@@ -108,7 +122,8 @@ public interface DatasetRest {
     @Path("{datasetRecordId}")
     @RolesAllowed("user")
     @ApiOperation("Deletes a specific DatasetRecord in the local Catalog")
-    Response deleteDatasetRecord(@PathParam("datasetRecordId") String datasetRecordId,
+    Response deleteDatasetRecord(@Context ContainerRequestContext context,
+                                 @PathParam("datasetRecordId") String datasetRecordId,
                                  @DefaultValue("false") @QueryParam("force") boolean force);
 
     /**

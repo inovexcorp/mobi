@@ -69,11 +69,11 @@
                         var itemIri = dvm.getItemIri(item);
                         var result = itemIri;
                         if (!_.has(item, 'ontologyId')) {
-                            var selectedObject = os.getEntityByRecordId(os.listItem.recordId, itemIri);
+                            var selectedObject = os.getEntityByRecordId(os.listItem.ontologyRecord.recordId, itemIri);
                             if (dvm.tooltipDisplay === 'comment') {
                                 result = dvm.om.getEntityDescription(selectedObject) || itemIri;
                             } else if (dvm.tooltipDisplay === 'label') {
-                                result = dvm.om.getEntityName(selectedObject, os.state.type) || itemIri;
+                                result = dvm.om.getEntityName(selectedObject, os.listItem.ontologyRecord.type) || itemIri;
                             } else if (_.has(selectedObject, '@id')) {
                                 result = selectedObject['@id'];
                             }

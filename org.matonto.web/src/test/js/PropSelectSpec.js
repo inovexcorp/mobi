@@ -26,9 +26,9 @@ describe('Prop Select directive', function() {
     beforeEach(function() {
         module('templates');
         module('propSelect');
+        mockOntologyManager();
         injectHighlightFilter();
         injectTrustedFilter();
-        mockOntologyManager();
         injectSplitIRIFilter();
 
         inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _splitIRIFilter_) {

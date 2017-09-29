@@ -21,15 +21,7 @@
  * #L%
  */
 describe('Mapping Preview directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        utilSvc,
-        ontologyManagerSvc,
-        mapperStateSvc,
-        delimitedManagerSvc,
-        prefixes;
+    var $compile, scope, element, controller, utilSvc, ontologyManagerSvc, mapperStateSvc, delimitedManagerSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -50,7 +42,7 @@ describe('Mapping Preview directive', function() {
             prefixes = _prefixes_;
         });
 
-        mapperStateSvc.mapping = {jsonld: []};
+        mapperStateSvc.mapping = {jsonld: [], record: {description: ''}};
         element = $compile(angular.element('<mapping-preview></mapping-preview>'))(scope);
         scope.$digest();
         controller = element.controller('mappingPreview');
@@ -84,16 +76,6 @@ describe('Mapping Preview directive', function() {
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.hasClass('mapping-preview')).toBe(true);
-        });
-        it('with the correct classes based on whether the source ontology record was set', function() {
-            var sourceOntologyName = angular.element(element.querySelectorAll('.source-ontology')[0]);
-            expect(sourceOntologyName.hasClass('text-danger')).toBe(true);
-            expect(sourceOntologyName.find('span').length).toBe(1);
-
-            mapperStateSvc.mapping.record = {};
-            scope.$digest();
-            expect(sourceOntologyName.hasClass('text-danger')).toBe(false);
-            expect(sourceOntologyName.find('span').length).toBe(0);
         });
         it('with all class and property mappings displayed', function() {
             mappingManagerSvc.isDataMapping.and.returnValue(false);
@@ -129,11 +111,11 @@ describe('Mapping Preview directive', function() {
             mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
             scope.$digest();
             var propItem = angular.element(element.querySelectorAll('.props > li')[0]);
-            expect(propItem.hasClass('error-msg')).toBe(false);
+            expect(propItem.hasClass('error-display')).toBe(false);
 
             controller.isInvalid.and.returnValue(true);
             scope.$digest();
-            expect(propItem.hasClass('error-msg')).toBe(true);
+            expect(propItem.hasClass('error-display')).toBe(true);
         });
     });
 });

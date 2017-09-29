@@ -21,9 +21,9 @@
   #L%
   -->
 <div class="file-upload-page row">
-    <div class="col-xs-5">
+    <div class="col-xs-5 form-block full-height">
         <mapping-title></mapping-title>
-        <block has-header="true">
+        <block>
             <block-header>
                 <span>Upload File</span>
             </block-header>
@@ -31,7 +31,7 @@
                 <file-upload-form></file-upload-form>
                 <mapping-preview ng-if="!dvm.state.editMapping"></mapping-preview>
                 <div ng-if="dvm.state.editMapping && dvm.state.invalidProps.length" class="invalid-props">
-                    <h3 class="error-msg">Missing Columns</h3>
+                    <h3 class="error-display">Missing Columns</h3>
                     <ul>
                         <li ng-repeat="columnObj in dvm.state.invalidProps">
                             Column {{columnObj.index}} - {{dvm.getDataMappingName(columnObj['@id'])}}
@@ -46,7 +46,7 @@
             </block-footer>
         </block>
     </div>
-    <div class="col-xs-7">
+    <div class="col-xs-7 full-height">
         <block>
             <block-content>
                 <preview-data-grid></preview-data-grid>

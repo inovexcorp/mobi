@@ -127,50 +127,60 @@ describe('Commit History Table directive', function() {
                 spyOn(controller, 'drawGraph');
                 spyOn(controller, 'reset');
             });
-            describe('successfully', function() {
-                beforeEach(function() {
-                    getDeferred.resolve(commits);
-                });
-                it('drawing the graph', function() {
-                    isolatedScope.graph = true;
-                    controller.getCommits();
-                    scope.$apply();
-                    expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, catalogId);
-                    expect(controller.error).toEqual('');
-                    expect(controller.commits).toEqual(commits);
-                    expect(controller.drawGraph).toHaveBeenCalled();
-                });
-                it('without drawing a graph', function() {
-                    isolatedScope.graph = false;
-                    controller.getCommits();
-                    scope.$apply();
-                    expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, catalogId);
-                    expect(controller.error).toEqual('');
-                    expect(controller.commits).toEqual(commits);
-                    expect(controller.drawGraph).not.toHaveBeenCalled();
-                });
+            it('unless a branch has not been passed', function() {
+                catalogManagerSvc.getBranchCommits.calls.reset();
+                scope.branch = undefined;
+                scope.$digest();
+                controller.getCommits();
+                expect(catalogManagerSvc.getBranchCommits).not.toHaveBeenCalled();
+                expect(controller.commits).toEqual([]);
             });
-            describe('unless an error occurs', function() {
-                beforeEach(function() {
-                    getDeferred.reject(error);
+            describe('if a branch has been passed', function() {
+                describe('successfully', function() {
+                    beforeEach(function() {
+                        getDeferred.resolve(commits);
+                    });
+                    it('drawing the graph', function() {
+                        isolatedScope.graph = true;
+                        controller.getCommits();
+                        scope.$apply();
+                        expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, catalogId);
+                        expect(controller.error).toEqual('');
+                        expect(controller.commits).toEqual(commits);
+                        expect(controller.drawGraph).toHaveBeenCalled();
+                    });
+                    it('without drawing a graph', function() {
+                        isolatedScope.graph = false;
+                        controller.getCommits();
+                        scope.$apply();
+                        expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, catalogId);
+                        expect(controller.error).toEqual('');
+                        expect(controller.commits).toEqual(commits);
+                        expect(controller.drawGraph).not.toHaveBeenCalled();
+                    });
                 });
-                it('with a graph', function() {
-                    isolatedScope.graph = true;
-                    controller.getCommits();
-                    scope.$apply();
-                    expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, catalogId);
-                    expect(controller.error).toEqual(error);
-                    expect(controller.commits).toEqual([]);
-                    expect(controller.reset).toHaveBeenCalled();
-                });
-                it('with no graph', function() {
-                    isolatedScope.graph = false;
-                    controller.getCommits();
-                    scope.$apply();
-                    expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, catalogId);
-                    expect(controller.error).toEqual(error);
-                    expect(controller.commits).toEqual([]);
-                    expect(controller.reset).not.toHaveBeenCalled();
+                describe('unless an error occurs', function() {
+                    beforeEach(function() {
+                        getDeferred.reject(error);
+                    });
+                    it('with a graph', function() {
+                        isolatedScope.graph = true;
+                        controller.getCommits();
+                        scope.$apply();
+                        expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, catalogId);
+                        expect(controller.error).toEqual(error);
+                        expect(controller.commits).toEqual([]);
+                        expect(controller.reset).toHaveBeenCalled();
+                    });
+                    it('with no graph', function() {
+                        isolatedScope.graph = false;
+                        controller.getCommits();
+                        scope.$apply();
+                        expect(catalogManagerSvc.getBranchCommits).toHaveBeenCalledWith(scope.branch['@id'], scope.recordId, catalogId);
+                        expect(controller.error).toEqual(error);
+                        expect(controller.commits).toEqual([]);
+                        expect(controller.reset).not.toHaveBeenCalled();
+                    });
                 });
             });
         });

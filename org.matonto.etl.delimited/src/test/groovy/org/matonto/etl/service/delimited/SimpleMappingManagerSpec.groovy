@@ -22,21 +22,21 @@
  */
 package org.matonto.etl.service.delimited
 
+import org.matonto.catalog.api.CatalogManager
+import org.matonto.catalog.api.ontologies.mcat.BranchFactory
+import org.matonto.etl.api.config.delimited.MappingRecordConfig
 import org.matonto.etl.api.delimited.MappingId
 import org.matonto.etl.api.delimited.MappingWrapper
 import org.matonto.etl.api.ontologies.delimited.*
 import org.matonto.exception.MatOntoException
+import org.matonto.jaas.api.ontologies.usermanagement.UserFactory
 import org.matonto.ontologies.rdfs.Resource
-import org.matonto.ontology.utils.api.SesameTransformer
+import org.matonto.persistence.utils.api.SesameTransformer
 import org.matonto.rdf.api.Model
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
 import org.matonto.rdf.core.utils.Values
 import org.matonto.rdf.orm.conversion.impl.*
-import org.matonto.rdf.orm.impl.ThingFactory
-import org.matonto.repository.api.Repository
-import org.matonto.repository.api.RepositoryConnection
-import org.matonto.repository.config.RepositoryConfig
 import org.openrdf.rio.RDFFormat
 import org.openrdf.rio.Rio
 import spock.lang.Specification
@@ -45,48 +45,59 @@ import java.nio.file.Paths
 
 class SimpleMappingManagerSpec extends Specification {
 
-    def repository = Mock(Repository)
-    def connection = Mock(RepositoryConnection)
-    def model = Mock(Model)
+    def service = new SimpleMappingManager()
     def vf = SimpleValueFactory.getInstance()
     def mf = LinkedHashModelFactory.getInstance()
-    def mappingWrapper = Mock(MappingWrapper)
-    def mappingId = Mock(MappingId)
-    def mapping = Mock(Mapping)
-    def service = new SimpleMappingManager()
     def vcr = new DefaultValueConverterRegistry()
+    def userFactory = new UserFactory()
+    def mappingRecordFactory = new MappingRecordFactory()
     def mappingFactory = new MappingFactory()
     def classMappingFactory = new ClassMappingFactory()
     def dataMappingFactory = new DataMappingFactory()
+    def branchFactory = new BranchFactory()
     def propertyFactory = new PropertyFactory()
-    def objectFactory = new ObjectMappingFactory()
-    def thingFactory = new ThingFactory()
     def builder = new SimpleMappingId.Builder(vf)
-    def mappingIRI = vf.createIRI("http://test.com/mapping")
-    def versionIRI = vf.createIRI("http://test.com/mapping/1.0")
+
+    def catalogManager = Mock(CatalogManager)
+    def model = Mock(Model)
+    def mappingWrapper = Mock(MappingWrapper)
+    def mappingId = Mock(MappingId)
+    def mapping = Mock(Mapping)
     def transformer = Mock(SesameTransformer)
 
+    def mappingIRI = vf.createIRI("http://test.com/mapping")
+    def versionIRI = vf.createIRI("http://test.com/mapping/1.0")
+
     def setup() {
+        userFactory.setValueFactory(vf)
+        userFactory.setModelFactory(mf)
+        userFactory.setValueConverterRegistry(vcr)
+        vcr.registerValueConverter(userFactory)
+        mappingRecordFactory.setValueFactory(vf)
+        mappingRecordFactory.setModelFactory(mf)
+        mappingRecordFactory.setValueConverterRegistry(vcr)
+        vcr.registerValueConverter(mappingRecordFactory)
         mappingFactory.setValueFactory(vf)
         mappingFactory.setModelFactory(mf)
         mappingFactory.setValueConverterRegistry(vcr)
+        vcr.registerValueConverter(mappingFactory)
         classMappingFactory.setValueFactory(vf)
         classMappingFactory.setModelFactory(mf)
         classMappingFactory.setValueConverterRegistry(vcr)
-        dataMappingFactory.setValueFactory(vf)
-        dataMappingFactory.setValueConverterRegistry(vcr)
-        propertyFactory.setValueFactory(vf)
-        propertyFactory.setValueConverterRegistry(vcr)
-        objectFactory.setValueFactory(vf)
-        objectFactory.setValueConverterRegistry(vcr)
-        thingFactory.setValueFactory(vf)
-        thingFactory.setValueConverterRegistry(vcr)
-
         vcr.registerValueConverter(classMappingFactory)
+        dataMappingFactory.setValueFactory(vf)
+        dataMappingFactory.setModelFactory(mf)
+        dataMappingFactory.setValueConverterRegistry(vcr)
         vcr.registerValueConverter(dataMappingFactory)
+        propertyFactory.setValueFactory(vf)
+        propertyFactory.setModelFactory(mf)
+        propertyFactory.setValueConverterRegistry(vcr)
         vcr.registerValueConverter(propertyFactory)
-        vcr.registerValueConverter(objectFactory)
-        vcr.registerValueConverter(thingFactory)
+        branchFactory.setValueFactory(vf)
+        branchFactory.setModelFactory(mf)
+        branchFactory.setValueConverterRegistry(vcr)
+        vcr.registerValueConverter(branchFactory)
+
         vcr.registerValueConverter(new ResourceValueConverter())
         vcr.registerValueConverter(new IRIValueConverter())
         vcr.registerValueConverter(new DoubleValueConverter())
@@ -98,10 +109,12 @@ class SimpleMappingManagerSpec extends Specification {
         vcr.registerValueConverter(new LiteralValueConverter())
 
         service.setValueFactory(vf)
-        service.setRepository(repository)
-        service.setModelFactory(mf)
+        service.setCatalogManager(catalogManager)
+        service.setMappingRecordFactory(mappingRecordFactory)
+        service.setMappingFactory(mappingFactory)
         service.setMappingFactory(mappingFactory)
         service.setClassMappingFactory(classMappingFactory)
+        service.setBranchFactory(branchFactory)
         service.setSesameTransformer(transformer)
 
         mappingWrapper.getId() >> mappingId
@@ -116,73 +129,18 @@ class SimpleMappingManagerSpec extends Specification {
         transformer.matontoModel(_) >> { args -> Values.matontoModel(args[0])}
     }
 
-    def "storeMapping throws an exception when mapping exists"() {
+    def "Create a MappingRecord"() {
         setup:
-        def manager = [
-                mappingExists: { o -> return true }
-        ] as SimpleMappingManager
-        manager.setValueFactory(vf)
-        manager.setModelFactory(mf)
-        manager.setRepository(repository)
+        MappingRecord record = mappingRecordFactory.createNew(vf.createIRI("http://matonto.org/test/records#mapping-record"))
+        catalogManager.createRecord(_, mappingRecordFactory) >> record
+        def config = new MappingRecordConfig.MappingRecordBuilder("Title",
+                Collections.singleton(userFactory.createNew(vf.createIRI("http://matonto.org/test/users#user")))).build()
 
         when:
-        manager.storeMapping(mappingWrapper)
+        def result = service.createMappingRecord(config)
 
         then:
-        thrown(MatOntoException)
-    }
-
-    def "storeMapping stores a Mapping when mapping does not exist"() {
-        setup:
-        def manager = [
-                mappingExists: { o -> return false }
-        ] as SimpleMappingManager
-        manager.setValueFactory(vf)
-        manager.setModelFactory(mf)
-        manager.setRepository(repository)
-
-        when:
-        manager.storeMapping(mappingWrapper)
-
-        then:
-        repository.getConnection() >> connection
-        repository.getConfig() >> Mock(RepositoryConfig.class)
-        1 * connection.add(model, mappingIRI)
-    }
-
-    def "updateMapping throws an exception when mapping does not exist"() {
-        setup:
-        def manager = [
-                mappingExists: { o -> return false }
-        ] as SimpleMappingManager
-        manager.setValueFactory(vf)
-        manager.setModelFactory(mf)
-        manager.setRepository(repository)
-
-        when:
-        manager.updateMapping(mappingIRI, mappingWrapper)
-
-        then:
-        thrown(MatOntoException)
-    }
-
-    def "updateMapping updates a Mapping if mapping exists"() {
-        setup:
-        def manager = [
-                mappingExists: { o -> return true }
-        ] as SimpleMappingManager
-        manager.setValueFactory(vf)
-        manager.setModelFactory(mf)
-        manager.setRepository(repository)
-
-        when:
-        manager.updateMapping(mappingIRI, mappingWrapper)
-
-        then:
-        repository.getConnection() >> connection
-        repository.getConfig() >> Mock(RepositoryConfig.class)
-        1 * connection.clear(mappingIRI)
-        1 * connection.add(model, mappingIRI)
+        result == record
     }
 
     def "Create a Mapping using a MappingId with an id"() {

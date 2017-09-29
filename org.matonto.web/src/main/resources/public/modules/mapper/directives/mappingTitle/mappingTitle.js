@@ -31,8 +31,7 @@
          * @description
          * The `mappingTitle` module only provides the `mappingTitle` directive
          * which creates a div containing the name of the current
-         * {@link mapperState.service:mapperStateService#mapping mapping}
-         * and a button to edit the mapping name.
+         * {@link mapperState.service:mapperStateService#mapping mapping}.
          */
         .module('mappingTitle', [])
         /**
@@ -44,9 +43,7 @@
          *
          * @description
          * `mappingTitle` is a directive which creates a div with the name of the current
-         * {@link mapperState.service:mapperStateService#mapping mapping}. If the current mapping is
-         * a brand new mapping, there is also an edit button for changing the mapping name. The directive is
-         * replaced by the contents of its template.
+         * {@link mapperState.service:mapperStateService#mapping mapping}.
          */
         .directive('mappingTitle', mappingTitle);
 

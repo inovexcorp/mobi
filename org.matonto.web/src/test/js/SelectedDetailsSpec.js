@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Selected Details directive', function() {
-    var $compile, scope, element, ontologyStateSvc, $filter, controller, $q, ontoUtils;
+    var $compile, scope, element, ontologyStateSvc, ontologyManagerService, $filter, controller, $q, ontoUtils, manchesterConverterService;
 
     beforeEach(function() {
         module('templates');
@@ -30,11 +30,14 @@ describe('Selected Details directive', function() {
         mockOntologyState();
         injectPrefixationFilter();
         mockOntologyUtilsManager();
+        mockManchesterConverter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _$filter_, _ontologyUtilsManagerService_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyManagerService_, _$filter_, _ontologyUtilsManagerService_, _manchesterConverterService_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
+            ontologyManagerService = _ontologyManagerService_;
+            manchesterConverterService = _manchesterConverterService_;
             $filter = _$filter_;
             ontoUtils = _ontologyUtilsManagerService_;
             $q = _$q_;
@@ -54,7 +57,7 @@ describe('Selected Details directive', function() {
             expect(element.find('div').length).toBe(1);
             expect(element.find('static-iri').length).toBe(1);
 
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(element.find('div').length).toBe(0);
             expect(element.find('static-iri').length).toBe(0);
@@ -64,13 +67,19 @@ describe('Selected Details directive', function() {
     describe('controller methods', function() {
         describe('getTypes functions properly', function() {
             it('when @type is empty', function() {
-                ontologyStateSvc.selected = {};
+                ontologyStateSvc.listItem.selected = {};
                 expect(controller.getTypes()).toEqual('');
             });
             it('when @type has items', function() {
                 var expected = 'test, test2';
-                ontologyStateSvc.selected = {'@type': ['test', 'test2']};
+                ontologyStateSvc.listItem.selected = {'@type': ['test', 'test2']};
                 expect(controller.getTypes()).toEqual(expected);
+            });
+            it('when @type has blank node items', function() {
+                ontologyManagerService.isBlankNodeId.and.returnValue(true);
+                ontologyStateSvc.listItem.selected = {'@type': ['test', 'test2']};
+                controller.getTypes();
+                expect(manchesterConverterService.jsonldToManchester).toHaveBeenCalledWith(jasmine.any(String), ontologyStateSvc.listItem.ontology);
             });
         });
         describe('onEdit calls the proper functions', function() {

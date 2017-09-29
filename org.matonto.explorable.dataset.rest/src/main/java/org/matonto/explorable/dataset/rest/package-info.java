@@ -1,4 +1,4 @@
-@Version("1.0.0.${build}")
+@Version("1.2.3.${build}")
 
 package org.matonto.explorable.dataset.rest;
 

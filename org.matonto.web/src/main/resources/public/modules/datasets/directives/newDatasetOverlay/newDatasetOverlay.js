@@ -40,9 +40,7 @@
          * @restrict E
          * @requires datasetManager.service:datasetManagerService
          * @requires datasetState.service:datasetStateService
-         * @requires catalogManager.service:catalogManagerService
          * @requires util.service:utilService
-         * @requires prefixes.service:prefixes
          *
          * @description
          * `newDatasetOverlay` is a directive that creates overlays with form containing fields for creating
@@ -55,9 +53,9 @@
          */
         .directive('newDatasetOverlay', newDatasetOverlay);
 
-        newDatasetOverlay.$inject = ['datasetManagerService', 'datasetStateService', 'catalogManagerService', 'utilService', 'prefixes'];
+        newDatasetOverlay.$inject = ['datasetManagerService', 'datasetStateService', 'utilService'];
 
-        function newDatasetOverlay(datasetManagerService, datasetStateService, catalogManagerService, utilService, prefixes) {
+        function newDatasetOverlay(datasetManagerService, datasetStateService, utilService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/datasets/directives/newDatasetOverlay/newDatasetOverlay.html',
@@ -70,7 +68,6 @@
                     var dvm = this;
                     var state = datasetStateService;
                     var dm = datasetManagerService;
-                    var cm = catalogManagerService;
                     dvm.util = utilService;
                     dvm.error = '';
                     dvm.recordConfig = {
@@ -80,34 +77,10 @@
                         description: ''
                     };
                     dvm.keywords = [];
-                    dvm.ontologySearchConfig = {
-                        pageIndex: 0,
-                        sortOption: _.find(cm.sortOptions, {field: prefixes.dcterms + 'title', ascending: true}),
-                        recordType: prefixes.catalog + 'OntologyRecord',
-                        limit: 10,
-                        searchText: ''
-                    };
-                    dvm.totalSize = 0;
-                    dvm.links = {
-                        next: '',
-                        prev: ''
-                    };
                     dvm.ontologies = [];
                     dvm.selectedOntologies = [];
                     dvm.step = 0;
 
-                    dvm.getOntologies = function() {
-                        dvm.ontologySearchConfig.pageIndex = 0;
-                        cm.getRecords(cm.localCatalog['@id'], dvm.ontologySearchConfig).then(parseOntologyResults, errorMessage => {
-                            dvm.ontologies = [];
-                            dvm.links = {
-                                next: '',
-                                prev: ''
-                            };
-                            dvm.totalSize = 0;
-                            onError(errorMessage);
-                        });
-                    }
                     dvm.create = function() {
                         dvm.recordConfig.keywords = _.map(dvm.keywords, _.trim);
                         dvm.recordConfig.ontologies = _.map(dvm.selectedOntologies, '@id');
@@ -118,29 +91,9 @@
                                 dvm.onClose();
                             }, onError);
                     }
-                    dvm.isSelected = function(ontologyId) {
-                        return _.some(dvm.selectedOntologies, {'@id': ontologyId});
-                    }
-                    dvm.selectOntology = function(ontology) {
-                        if (!dvm.isSelected(ontology['@id'])) {
-                            dvm.selectedOntologies.push(ontology);
-                        }
-                    }
-                    dvm.unselectOntology = function(ontologyId) {
-                        _.remove(dvm.selectedOntologies, {'@id': ontologyId});
-                    }
 
                     function onError(errorMessage) {
                         dvm.error = errorMessage;
-                    }
-                    function parseOntologyResults(response) {
-                        dvm.ontologies = response.data;
-                        var headers = response.headers();
-                        dvm.totalSize = _.get(headers, 'x-total-count', 0);
-                        var links = dvm.util.parseLinks(_.get(headers, 'link', ''));
-                        dvm.links.prev = _.get(links, 'prev', '');
-                        dvm.links.next = _.get(links, 'next', '');
-                        dvm.error = '';
                     }
                 }
             }

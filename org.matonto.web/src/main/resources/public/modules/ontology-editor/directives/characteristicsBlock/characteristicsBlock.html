@@ -24,7 +24,7 @@
     <block>
         <block-header>Characteristics</block-header>
         <block-content class="padding">
-            <checkbox ng-if="dvm.os.selected" is-disabled-when="dvm.os.selected.matonto.imported" ng-model="dvm.functional" display-text="'Functional Property'" change-event="dvm.onChange($event)"></checkbox>
+            <checkbox ng-repeat="(key, obj) in dvm.characteristics | filter:dvm.filter" ng-if="dvm.os.listItem.selected" is-disabled-when="dvm.os.listItem.selected.matonto.imported" ng-model="obj.checked" display-text="obj.displayText" change-event="dvm.onChange(obj)"></checkbox>
         </block-content>
     </block>
 </div>

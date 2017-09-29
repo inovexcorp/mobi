@@ -21,16 +21,13 @@
   #L%
   -->
 <div class="mapping-preview">
-    <h3>Source Ontology</h3>
-    <p class="source-ontology" ng-class="{'text-danger': !dvm.state.mapping.record}">{{dvm.util.getDctermsValue(dvm.state.mapping.record, 'title')}} <span ng-if="!dvm.state.mapping.record" class="text-muted">(This ontology could not be found)</span></p>
-
     <h3>Mapped Classes and Properties</h3>
     <div class="class-list">
         <ul class="list">
             <li ng-repeat="classMapping in dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld) track by classMapping['@id']">
                 {{dvm.getClassName(classMapping)}}
                 <ul class="props">
-                    <li ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, classMapping['@id']) track by propMapping['@id']" ng-class="{'error-msg': dvm.isInvalid(propMapping['@id'])}">
+                    <li ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, classMapping['@id']) track by propMapping['@id']" ng-class="{'error-display': dvm.isInvalid(propMapping['@id'])}">
                         {{dvm.getPropName(propMapping)}}{{dvm.mm.isDataMapping(propMapping) ? ' - ' + dvm.dm.getHeader(dvm.getColumnIndex(propMapping)) : ''}}
                     </li>
                 </ul>

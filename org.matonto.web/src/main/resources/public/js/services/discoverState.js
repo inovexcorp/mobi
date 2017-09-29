@@ -29,7 +29,7 @@
          * @name discoverState
          *
          * @description
-         * The `discoverState` module only provides the `discoverStateService` service which 
+         * The `discoverState` module only provides the `discoverStateService` service which
          * contains various variables to hold the state of the discover module along with some
          * utility functions for those variables.
          */
@@ -43,10 +43,10 @@
          * state of the discover module along with some utility functions for those variables.
          */
         .service('discoverStateService', discoverStateService);
-    
+
     function discoverStateService() {
         var self = this;
-        
+
         /**
          * @ngdoc property
          * @name explore
@@ -60,9 +60,14 @@
         self.explore = {
             active: true,
             breadcrumbs: ['Classes'],
+            classDeprecated: false,
             classDetails: [],
+            classId: '',
+            creating: false,
+            editing: false,
             instance: {
-                entity: {},
+                changed: [],
+                entity: [{}],
                 metadata: {}
             },
             instanceDetails: {
@@ -77,7 +82,35 @@
             },
             recordId: ''
         };
-        
+
+        /**
+         * @ngdoc property
+         * @name search
+         * @propertyOf discoverState.service:discoverStateService
+         * @type {Object}
+         *
+         * @description
+         * 'search' is an object which holds properties associated with the search tab in the
+         * discover section of the application.
+         */
+        self.search = {
+            active: false,
+            datasetRecordId: '',
+            noDomains: undefined,
+            properties: undefined,
+            queryConfig: {
+                isOrKeywords: false,
+                isOrTypes: false,
+                keywords: [],
+                types: [],
+                filters: [],
+                variables: {}
+            },
+            results: undefined,
+            targetedId: 'discover-search-results',
+            typeObject: undefined
+        };
+
         /**
          * @ngdoc property
          * @name query
@@ -91,7 +124,7 @@
         self.query = {
             active: false
         };
-        
+
         /**
          * @ngdoc method
          * @name resetPagedInstanceDetails
@@ -112,7 +145,7 @@
                 total: 0
             };
         }
-        
+
         /**
          * @ngdoc method
          * @name cleanUpOnDatasetDelete
@@ -131,7 +164,7 @@
                 self.explore.recordId = '';
             }
         }
-        
+
         /**
          * @ngdoc method
          * @name cleanUpOnDatasetDelete
@@ -149,12 +182,64 @@
                 resetOnClear();
             }
         }
-        
+
+        /**
+         * @ngdoc method
+         * @name clickCrumb
+         * @methodOf discoverState.service:discoverStateService
+         *
+         * @description
+         * Removes the proper number of items from the breadcrumbs for the explore UI.
+         *
+         * @param {number} index The index of the breadcrumb clicked.
+         */
+        self.clickCrumb = function(index) {
+            self.explore.breadcrumbs = _.take(self.explore.breadcrumbs, index + 1);
+            self.explore.editing = false;
+            self.explore.creating = false;
+        }
+
+        /**
+         * @ngdoc method
+         * @name getInstance
+         * @methodOf discoverState.service:discoverStateService
+         *
+         * @description
+         * Gets the instance from the entity variable which contains the instance and reified statements.
+         *
+         * @returns {Object} An object which contains the instance's JSON-LD.
+         */
+        self.getInstance = function() {
+            return _.find(self.explore.instance.entity, {'@id': self.explore.instance.metadata.instanceIRI});
+        }
+
+        /**
+         * @ngdoc method
+         * @name resetSearchQueryConfig
+         * @methodOf discoverState.service:discoverStateService
+         *
+         * @description
+         * Resets the search query config to be the default values.
+         */
+        self.resetSearchQueryConfig = function() {
+            var variables = angular.copy(self.search.queryConfig.variables);
+            self.search.queryConfig = {
+                isOrKeywords: false,
+                isOrTypes: false,
+                keywords: [],
+                types: [],
+                filters: [],
+                variables
+            };
+        }
+
         function resetOnClear() {
             self.resetPagedInstanceDetails();
             self.explore.breadcrumbs = ['Classes'];
             self.explore.classDetails = [];
+            self.explore.classId = '';
             self.explore.instance = {
+                changed: [],
                 entity: {},
                 metadata: {}
             };

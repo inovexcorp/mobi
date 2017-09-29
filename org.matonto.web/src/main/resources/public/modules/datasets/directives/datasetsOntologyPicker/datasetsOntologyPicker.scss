@@ -1,0 +1,36 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.datasets-ontology-picker {
+    .ontology-records-list {
+        height: 100px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        overflow-y: auto;
+
+        .list-group-item {
+            outline: 0;
+            border-radius: 0;
+        }
+    }
+    .paging-wrapper {
+        overflow: hidden;
+        .paging-details {
+            float: left;
+        }
+        .page-nav {
+            float: right;
+
+            .pagination {
+                margin: 0;
+            }
+        }
+    }
+    .remove-ontology {
+        color: $brand-danger;
+
+        &:hover {
+            color: #C9302C;
+        }
+    }
+}

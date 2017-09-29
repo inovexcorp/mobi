@@ -43,11 +43,11 @@
                     dvm.utils = ontologyUtilsManagerService;
 
                     dvm.deleteEntity = function() {
-                        if (dvm.om.isClass(dvm.sm.selected)) {
+                        if (dvm.om.isClass(dvm.sm.listItem.selected)) {
                             dvm.utils.deleteClass();
-                        } else if (dvm.om.isObjectProperty(dvm.sm.selected)) {
+                        } else if (dvm.om.isObjectProperty(dvm.sm.listItem.selected)) {
                             dvm.utils.deleteObjectProperty();
-                        } else if (dvm.om.isDataTypeProperty(dvm.sm.selected)) {
+                        } else if (dvm.om.isDataTypeProperty(dvm.sm.listItem.selected)) {
                             dvm.utils.deleteDataTypeProperty();
                         }
                         dvm.showDeleteConfirmation = false;

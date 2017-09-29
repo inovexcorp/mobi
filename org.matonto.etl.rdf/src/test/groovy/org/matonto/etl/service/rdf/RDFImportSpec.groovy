@@ -1,32 +1,10 @@
-package org.matonto.etl.service.rdf
-
-import org.matonto.ontology.utils.api.SesameTransformer
-import org.matonto.rdf.core.utils.Values
-import org.matonto.repository.api.DelegatingRepository
-import org.matonto.repository.api.RepositoryConnection
-import org.springframework.core.io.ClassPathResource
-import spock.lang.Specification
-
-class RDFImportSpec extends Specification {
-
-    def transformer = Mock(SesameTransformer)
-
-    def setup() {
-        transformer.matontoModel(_) >> { args -> Values.matontoModel(args[0])}
-    }
-
-    def "Throws exception if repository ID does not exist"(){
-        setup:
-        RDFImportServiceImpl importService = new RDFImportServiceImpl()
-        File testFile = new ClassPathResource("importer/testFile.trig").getFile();
-
 /*-
  * #%L
  * org.matonto.etl.rdf
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -42,51 +20,168 @@ class RDFImportSpec extends Specification {
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-        importService.setTransformer(transformer)
+package org.matonto.etl.service.rdf
+
+import org.matonto.dataset.api.DatasetConnection
+import org.matonto.dataset.api.DatasetManager
+import org.matonto.etl.api.config.rdf.ImportServiceConfig
+import org.matonto.persistence.utils.api.SesameTransformer
+import org.matonto.rdf.core.impl.sesame.SimpleValueFactory
+import org.matonto.rdf.core.utils.Values
+import org.matonto.repository.api.DelegatingRepository
+import org.matonto.repository.api.RepositoryConnection
+import org.openrdf.rio.RDFFormat
+import org.openrdf.rio.Rio
+import org.springframework.core.io.ClassPathResource
+import spock.lang.Specification
+
+class RDFImportSpec extends Specification {
+    def service = new RDFImportServiceImpl()
+    def vf = SimpleValueFactory.getInstance()
+
+    def repoId = "test"
+    def datasetId = vf.createIRI("http://test.com/dataset-record")
+    def file = new ClassPathResource("importer/testFile.trig").getFile()
+    def model = Values.matontoModel(Rio.parse(new FileInputStream(file), "", RDFFormat.TRIG))
+
+    def transformer = Mock(SesameTransformer)
+    def datasetManager = Mock(DatasetManager)
+    def repo = Mock(DelegatingRepository)
+    def conn = Mock(RepositoryConnection)
+    def datasetConn = Mock(DatasetConnection)
+
+    def setup() {
+        transformer.matontoModel(_) >> { args -> Values.matontoModel(args[0])}
+        repo.getRepositoryID() >> repoId
+        repo.getConnection() >> conn
+        datasetManager.getConnection(datasetId) >> datasetConn
+        datasetManager.getConnection(!datasetId) >> {throw new IllegalArgumentException()}
+
+        service.setTransformer(transformer)
+        service.setDatasetManager(datasetManager)
+        service.addRepository(repo)
+    }
+
+    def "Imports trig file to repository without format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).build()
 
         when:
-        importService.importFile("test", testFile, true)
+        service.importFile(config, file)
+
+        then:
+        (1.._) * conn.add(*_)
+    }
+
+    def "Imports trig file to repository with format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).format(RDFFormat.TRIG).build()
+
+        when:
+        service.importFile(config, file)
+
+        then:
+        (1.._) * conn.add(*_)
+    }
+
+    def "Imports Model to repository"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).build()
+
+        when:
+        service.importModel(config, model)
+
+        then:
+        (1.._) * conn.add(*_)
+    }
+
+    def "Throws exception if repository ID does not exist"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(true).repository("missing").build()
+
+        when:
+        service.importFile(config, file)
 
         then:
         thrown IllegalArgumentException
     }
 
-    def "Test trig file"(){
+    def "Throws exception for repository if invalid file type"() {
         setup:
-        def repo = Mock(DelegatingRepository.class)
-        RepositoryConnection repoConn = Mock()
-        RDFImportServiceImpl importService = new RDFImportServiceImpl()
-        File testFile = new ClassPathResource("importer/testFile.trig").getFile();
-        importService.setTransformer(transformer)
+        def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).build()
+        File f = new ClassPathResource("importer/testFile.txt").getFile()
 
         when:
-        importService.addRepository(repo)
-        importService.importFile("test", testFile, true)
-
-        then:
-        1 * repo.getRepositoryID() >> "test"
-        1 * repo.getConnection() >> repoConn
-    }
-
-    def "Invalid file type causes error"(){
-        setup:
-        RDFImportServiceImpl importService = new RDFImportServiceImpl()
-        File f = new ClassPathResource("importer/testFile.txt").getFile();
-
-        when:
-        importService.importFile("test",f, true);
+        service.importFile(config, f)
 
         then:
         thrown IOException
     }
 
-    def "Nonexistent file throws exception"(){
+    def "Throws exception for repository if nonexistent file"() {
         setup:
-        RDFImportServiceImpl importService = new RDFImportServiceImpl()
-        File f = new File("importer/FakeFile.txt");
+        def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).build()
+        File f = new File("importer/FakeFile.trig")
 
         when:
-        importService.importFile("test",f,true);
+        service.importFile(config, f)
+
+        then:
+        thrown IOException
+    }
+
+    def "Imports trig file to dataset without format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(true).dataset(datasetId).build()
+
+        when:
+        service.importFile(config, file)
+
+        then:
+        (1.._) * datasetConn.add(*_)
+    }
+
+    def "Imports trig file to dataset with format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(true).dataset(datasetId).format(RDFFormat.TRIG).build()
+
+        when:
+        service.importFile(config, file)
+
+        then:
+        (1.._) * datasetConn.add(*_)
+    }
+
+    def "Throws exception if dataset record ID does not exist"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(true).dataset(vf.createIRI("http://test.com/missing")).build()
+
+        when:
+        service.importFile(config, file)
+
+        then:
+        thrown IllegalArgumentException
+    }
+
+    def "Throws exception for dataset if invalid file type"(){
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(true).dataset(datasetId).build()
+        File f = new ClassPathResource("importer/testFile.txt").getFile()
+
+        when:
+        service.importFile(config, f)
+
+        then:
+        thrown IOException
+    }
+
+    def "Throws exception for dataset if nonexistent file"(){
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(true).dataset(datasetId).build()
+        File f = new File("importer/FakeFile.trig")
+
+        when:
+        service.importFile(config, f)
 
         then:
         thrown IOException

@@ -74,9 +74,9 @@
                 transclude: true,
                 replace: true,
                 scope: {
-                    cancelText: '=',
+                    cancelText: '=?',
                     cancelClick: '&',
-                    confirmText: '=',
+                    confirmText: '=?',
                     confirmClick: '&',
                     headerText: '=',
                     size: '='

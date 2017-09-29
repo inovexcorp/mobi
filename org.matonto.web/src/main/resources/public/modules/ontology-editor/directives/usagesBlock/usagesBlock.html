@@ -34,8 +34,8 @@
                 <div class="value-container" ng-repeat="statement in value" ng-hide="isClosed">
                     <span class="value-display-wrapper">
                         <span ng-repeat="(key, value) in statement" class="{{key}}">
-                            <span ng-if="value === dvm.os.selected['@id']" class="selected">{{dvm.ontoUtils.getLabelForIRI(value)}}</span>
-                            <span ng-if="value !== dvm.os.selected['@id']">
+                            <span ng-if="value === dvm.os.listItem.selected['@id']" class="selected">{{dvm.ontoUtils.getLabelForIRI(value)}}</span>
+                            <span ng-if="value !== dvm.os.listItem.selected['@id']">
                                 <span ng-if="!dvm.ontoUtils.isLinkable(value)">{{(key === 'predicate') ? (value | splitIRI).end : value}}</span>
                                 <a ng-if="dvm.ontoUtils.isLinkable(value)" ng-click="dvm.os.goTo(value)">{{dvm.ontoUtils.getLabelForIRI(value)}}</a>
                             </span>

@@ -23,6 +23,10 @@ package org.matonto.etl.api.delimited;
  * #L%
  */
 
+import org.matonto.catalog.api.PaginatedSearchResults;
+import org.matonto.etl.api.config.delimited.MappingRecordConfig;
+import org.matonto.etl.api.ontologies.delimited.MappingRecord;
+import org.matonto.etl.api.pagination.MappingPaginatedSearchParams;
 import org.matonto.exception.MatOntoException;
 import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Resource;
@@ -32,10 +36,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
-import java.util.Set;
 import javax.annotation.Nonnull;
 
 public interface MappingManager {
+
+    MappingRecord createMappingRecord(MappingRecordConfig config);
 
     /**
      * Creates a MappingId using the passed Resource as the identifier.
@@ -61,14 +66,6 @@ public interface MappingManager {
      * @return a MappingId with the passed mapping and version IRIs
      */
     MappingId createMappingId(IRI mappingIRI, IRI versionIRI);
-
-    /**
-     * Retrieves the mapping registry.
-     *
-     * @return the mapping registry as a map between mapping IRIs and the name
-     *         of the repository they are in
-     */
-    Set<Resource> getMappingRegistry();
 
     /**
      * Creates an empty mapping with the passed in MappingId.
@@ -106,52 +103,53 @@ public interface MappingManager {
      * @param format the RDF format the mapping is in
      * @return a Mapping with the mapping RDF and id pulled from the data
      * @throws IOException thrown if an error occurs when parsing
-     * @throws MatOntoException if the file does not contain exactly one mapping resource
+     * @throws IllegalArgumentException if the file is not a valid RDF format
      */
     MappingWrapper createMapping(InputStream in, RDFFormat format) throws IOException, MatOntoException;
+
+    /**
+     * Retrieves a paginated list of MappingRecords in the local catalog based on the passed search and
+     * pagination parameters. Acceptable sort properties are http://purl.org/dc/terms/title,
+     * http://purl.org/dc/terms/modified, and http://purl.org/dc/terms/issued.
+     *
+     * @param searchParams Pagination configuration for MappingRecords
+     * @return The PaginatedSearchResults of MappingRecords in the local catalog
+     */
+    PaginatedSearchResults<MappingRecord> getMappingRecords(MappingPaginatedSearchParams searchParams);
 
     /**
      * Collects a mapping MatOnto Model specified by the passed mapping IRI Resource
      * from the repository if it exists.
      *
-     * @param mappingId the IRI Resource for a mapping
+     * @param recordId the IRI Resource for a mapping
      * @return an Optional with a Mapping with the mapping RDF if it was found
-     * @throws MatOntoException thrown if a connection to the repository could not be made
      */
-    Optional<MappingWrapper> retrieveMapping(@Nonnull Resource mappingId) throws MatOntoException;
+    Optional<MappingWrapper> retrieveMapping(@Nonnull Resource recordId);
 
     /**
-     * Persist a mapping in the repository.
+     * Collects a mapping MatOnto Model specified by the passed mapping IRI Resource
+     * from the repository if it exists.
      *
-     * @param mappingWrapper a MappingWrapper with an id and RDF data
-     * @throws MatOntoException thrown if a connection to the repository could not be made
+     * @param recordId the IRI Resource for a mapping
+     * @return an Optional with a Mapping with the mapping RDF if it was found
      */
-    void storeMapping(@Nonnull MappingWrapper mappingWrapper) throws MatOntoException;
+    Optional<MappingWrapper> retrieveMapping(@Nonnull Resource recordId, @Nonnull Resource branchId);
 
     /**
-     * Updates a mapping in the repository with the new passed mapping.
+     * Collects a mapping MatOnto Model specified by the passed mapping IRI Resource
+     * from the repository if it exists.
      *
-     * @param mappingId the id of a mapping
-     * @param newMapping a new mapping to replace the existing one with
-     * @throws MatOntoException thrown if the mapping does not exist or a connection to
-     *      the repository could not be made
+     * @param recordId the IRI Resource for a mapping
+     * @return an Optional with a Mapping with the mapping RDF if it was found
      */
-    void updateMapping(@Nonnull Resource mappingId, @Nonnull MappingWrapper newMapping) throws MatOntoException;
+    Optional<MappingWrapper> retrieveMapping(@Nonnull Resource recordId, @Nonnull Resource branchId,
+                                             @Nonnull Resource commitId);
 
     /**
      * Delete a mapping from the repository.
      *
-     * @param mappingId the id for a mapping
-     * @throws MatOntoException thrown if the mapping does not exist or a connection to
-     *      the repository could not be made
+     * @param recordId the id for a mapping
+     * @return The MappingRecord that was removed.
      */
-    void deleteMapping(@Nonnull Resource mappingId) throws MatOntoException;
-
-    /**
-     * Tests whether the passes mapping Resource IRI exists in the mapping registry.
-     *
-     * @param mappingId the mapping id to test for in the registry
-     * @return true if the registry contains the passed mapping IRI, false otherwise.
-     */
-    boolean mappingExists(@Nonnull Resource mappingId) throws MatOntoException;
+    MappingRecord deleteMapping(@Nonnull Resource recordId);
 }

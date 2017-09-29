@@ -31,7 +31,7 @@
          *
          * @description
          * The `loginManager` module only provides the `loginManagerService` service which
-         * provides utilities to log into and log out of MatOnto.
+         * provides utilities to log into and log out of Mobi.
          */
         .module('loginManager', [])
         /**
@@ -43,20 +43,20 @@
          * @requires catalogManager.service:catalogManagerService
          * @requires catalogState.service:catalogStateService
          * @requires ontologyManager.service:ontologyManagerService
-         * @requires mappingManager.service:mappingManagerService
          * @requires userManager.service:userManagerService
          *
          * @description
-         * `loginManagerService` is a service that provides access to the MatOnto login REST
-         * endpoints so users can log into and out of MatOnto.
+         * `loginManagerService` is a service that provides access to the Mobi login REST
+         * endpoints so users can log into and out of Mobi.
          */
         .service('loginManagerService', loginManagerService);
 
-        loginManagerService.$inject = ['$q', '$http', '$state', 'catalogManagerService', 'catalogStateService', 'ontologyManagerService', 'mappingManagerService', 'userManagerService', 'stateManagerService', 'ontologyStateService', 'datasetManagerService'];
+        loginManagerService.$inject = ['$q', '$http', '$state', 'catalogManagerService', 'catalogStateService', 'ontologyManagerService', 'userManagerService', 'stateManagerService', 'ontologyStateService', 'datasetManagerService', 'REST_PREFIX'];
 
-        function loginManagerService($q, $http, $state, catalogManagerService, catalogStateService, ontologyManagerService, mappingManagerService, userManagerService, stateManagerService, ontologyStateService, datasetManagerService) {
+        function loginManagerService($q, $http, $state, catalogManagerService, catalogStateService, ontologyManagerService, userManagerService, stateManagerService, ontologyStateService, datasetManagerService, REST_PREFIX) {
             var self = this,
-                anon = 'self anon';
+                anon = 'self anon',
+                prefix = REST_PREFIX + 'user/';
 
             /**
              * @ngdoc property
@@ -65,7 +65,7 @@
              * @type {string}
              *
              * @description
-             * `currentUser` holds the username of the user that is currenlty logged into MatOnto.
+             * `currentUser` holds the username of the user that is currenlty logged into Mobi.
              */
             self.currentUser = '';
 
@@ -75,7 +75,7 @@
              * @methodOf loginManager.service:loginManagerService
              *
              * @description
-             * Makes a call to GET /matontorest/user/login to attempt to log into MatOnto using the
+             * Makes a call to GET /mobirest/user/login to attempt to log into Mobi using the
              * passed credentials. Returns a Promise with the success of the log in attempt.
              * If failed, contains an appropriate error message.
              *
@@ -93,7 +93,7 @@
                     },
                     deferred = $q.defer();
 
-                $http.get('/matontorest/user/login', config)
+                $http.get(prefix + 'login', config)
                     .then(response => {
                         if (response.status === 200 && response.data.scope !== anon) {
                             self.currentUser = response.data.sub;
@@ -119,11 +119,11 @@
              * @methodOf loginManager.service:loginManagerService
              *
              * @description
-             * Makes a call to GET /matontorest/user/logout to log out of which ever user account
+             * Makes a call to GET /mobirest/user/logout to log out of which ever user account
              * is current. Navigates back to the login page.
              */
             self.logout = function() {
-                $http.get('/matontorest/user/logout')
+                $http.get(prefix + 'logout')
                     .then(response => {
                         self.currentUser = '';
                         $state.go('login');
@@ -141,7 +141,6 @@
              * is logged in, intitializes the {@link catalogManager.service:catalogManagerService catalogManagerService},
              * {@link catalogState.service:catalogStateService catalogStateService},
              * {@link ontologyManager.service:ontologyManagerService ontologyManagerService},
-             * {@link mappingManager.service:mappingManagerService mappingManagerService},
              * and the {@link userManager.service:userManagerService userManagerService}. Returns
              * a Promise with whether or not a user is logged in.
              *
@@ -162,7 +161,6 @@
                             ontologyManagerService.initialize();
                             ontologyStateService.initialize();
                         });
-                        mappingManagerService.initialize();
                         userManagerService.initialize();
                         stateManagerService.initialize();
                         datasetManagerService.initialize();
@@ -179,7 +177,7 @@
              * @methodOf loginManager.service:loginManagerService
              *
              * @description
-             * Makes a call to GET /matontorest/user/current to retrieve the user that is currently logged
+             * Makes a call to GET /mobirest/user/current to retrieve the user that is currently logged
              * in. Returns a Promise with the result of the call.
              *
              * @return {Promise} A Promise with the response data that resolves if the request was successful;
@@ -188,7 +186,7 @@
             self.getCurrentLogin = function () {
                 var deferred = $q.defer();
 
-                $http.get('/matontorest/user/current').then(response => {
+                $http.get(prefix + 'current').then(response => {
                     if (response.status === 200) {
                         deferred.resolve(response.data);
                     } else {

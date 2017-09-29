@@ -27,6 +27,7 @@ package org.matonto.dataset.rest.impl;
 import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
 import static org.matonto.rest.util.RestUtils.modelToJsonld;
+import static org.matonto.rest.util.RestUtils.modelToSkolemizedJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
@@ -34,11 +35,9 @@ import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.CatalogProvUtils;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
-import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.api.builder.OntologyIdentifier;
@@ -48,7 +47,10 @@ import org.matonto.dataset.rest.DatasetRest;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
-import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.api.BNodeService;
+import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivity;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
@@ -70,50 +72,50 @@ public class DatasetRestImpl implements DatasetRest {
     private DatasetManager manager;
     private EngineManager engineManager;
     private CatalogManager catalogManager;
-    private OntologyRecordFactory ontologyRecordFactory;
-    private BranchFactory branchFactory;
     private SesameTransformer transformer;
+    private BNodeService bNodeService;
     private ValueFactory vf;
     private ModelFactory mf;
+    private CatalogProvUtils provUtils;
 
     @Reference
-    public void setManager(DatasetManager manager) {
+    void setManager(DatasetManager manager) {
         this.manager = manager;
     }
 
     @Reference
-    public void setEngineManager(EngineManager engineManager) {
+    void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
     }
 
     @Reference
-    public void setCatalogManager(CatalogManager catalogManager) {
+    void setCatalogManager(CatalogManager catalogManager) {
         this.catalogManager = catalogManager;
     }
 
     @Reference
-    public void setOntologyRecordFactory(OntologyRecordFactory ontologyRecordFactory) {
-        this.ontologyRecordFactory = ontologyRecordFactory;
-    }
-
-    @Reference
-    public void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
-    }
-
-    @Reference
-    public void setTransformer(SesameTransformer transformer) {
+    void setTransformer(SesameTransformer transformer) {
         this.transformer = transformer;
     }
 
     @Reference
-    public void setVf(ValueFactory vf) {
+    void setBNodeService(BNodeService bNodeService) {
+        this.bNodeService = bNodeService;
+    }
+
+    @Reference
+    void setVf(ValueFactory vf) {
         this.vf = vf;
     }
 
     @Reference
-    public void setMf(ModelFactory mf) {
+    void setMf(ModelFactory mf) {
         this.mf = mf;
+    }
+
+    @Reference
+    void setProvUtils(CatalogProvUtils provUtils) {
+        this.provUtils = provUtils;
     }
 
     @Override
@@ -135,7 +137,7 @@ public class DatasetRestImpl implements DatasetRest {
             PaginatedSearchResults<DatasetRecord> results = manager.getDatasetRecords(params);
             JSONArray array = JSONArray.fromObject(results.getPage().stream()
                     .map(datasetRecord -> removeContext(datasetRecord.getModel()))
-                    .map(model -> modelToJsonld(transformer.sesameModel(model)))
+                    .map(model -> modelToSkolemizedJsonld(model, transformer, bNodeService))
                     .collect(Collectors.toList()));
 
             Links links = LinksUtils.buildLinks(uriInfo, array.size(), results.getTotalSize(), limit, offset);
@@ -161,24 +163,49 @@ public class DatasetRestImpl implements DatasetRest {
         checkStringParam(title, "Title is required");
         checkStringParam(repositoryId, "Repository id is required");
         User activeUser = getActiveUser(context, engineManager);
-        DatasetRecordConfig.DatasetRecordBuilder builder = new DatasetRecordConfig.DatasetRecordBuilder(title,
-                Collections.singleton(activeUser), repositoryId);
-        if (datasetIRI != null && !datasetIRI.isEmpty()) {
-            builder.dataset(datasetIRI);
-        }
-        if (description != null && !description.isEmpty()) {
-            builder.description(description);
-        }
-        if (keywords != null && !keywords.isEmpty()) {
-            builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
-        }
+        CreateActivity createActivity = null;
         try {
+            createActivity = provUtils.startCreateActivity(activeUser);
+            DatasetRecordConfig.DatasetRecordBuilder builder = new DatasetRecordConfig.DatasetRecordBuilder(title,
+                    Collections.singleton(activeUser), repositoryId);
+            if (datasetIRI != null && !datasetIRI.isEmpty()) {
+                builder.dataset(datasetIRI);
+            }
+            if (description != null && !description.isEmpty()) {
+                builder.description(description);
+            }
+            if (keywords != null && !keywords.isEmpty()) {
+                builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
+            }
             if (ontologies != null) {
                 ontologies.forEach(formDataBodyPart -> builder.ontology(
                         getOntologyIdentifer(vf.createIRI(formDataBodyPart.getValue()))));
             }
             DatasetRecord record = manager.createDataset(builder.build());
+            provUtils.endCreateActivity(createActivity, record.getResource());
             return Response.status(201).entity(record.getResource().stringValue()).build();
+        } catch (IllegalArgumentException ex) {
+            provUtils.removeActivity(createActivity);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MatOntoException ex) {
+            provUtils.removeActivity(createActivity);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (Exception ex) {
+            provUtils.removeActivity(createActivity);
+            throw ex;
+        }
+    }
+
+    @Override
+    public Response getDatasetRecord(String datasetRecordId) {
+        Resource recordIRI = vf.createIRI(datasetRecordId);
+        try {
+            DatasetRecord datasetRecord = manager.getDatasetRecord(recordIRI).orElseThrow(() ->
+                    ErrorUtils.sendError("DatasetRecord " + datasetRecordId + " could not be found",
+                            Response.Status.NOT_FOUND));
+            Model copy = mf.createModel();
+            datasetRecord.getModel().forEach(st -> copy.add(st.getSubject(), st.getPredicate(), st.getObject()));
+            return Response.ok(modelToJsonld(copy, transformer)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MatOntoException ex) {
@@ -187,17 +214,23 @@ public class DatasetRestImpl implements DatasetRest {
     }
 
     @Override
-    public Response deleteDatasetRecord(String datasetRecordId, boolean force) {
+    public Response deleteDatasetRecord(ContainerRequestContext context, String datasetRecordId, boolean force) {
         Resource recordIRI = vf.createIRI(datasetRecordId);
+        User activeUser = getActiveUser(context, engineManager);
+        DeleteActivity deleteActivity = null;
         try {
-            if (force) {
-                manager.deleteDataset(recordIRI);
-            } else {
-                manager.safeDeleteDataset(recordIRI);
-            }
+            deleteActivity = provUtils.startDeleteActivity(activeUser, recordIRI);
+
+            DatasetRecord record = (force
+                    ? manager.deleteDataset(recordIRI)
+                    : manager.safeDeleteDataset(recordIRI));
+
+            provUtils.endDeleteActivity(deleteActivity, record);
         } catch (IllegalArgumentException ex) {
+            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (Exception ex) {
+            provUtils.removeActivity(deleteActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
         return Response.ok().build();
@@ -223,7 +256,7 @@ public class DatasetRestImpl implements DatasetRest {
     private OntologyIdentifier getOntologyIdentifer(Resource recordId) {
         Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
         Resource commitId = masterBranch.getHead_resource().orElseThrow(() ->
-                ErrorUtils.sendError("Branch " + masterBranch.getResource().stringValue() + " has no head Commit set.",
+                ErrorUtils.sendError("Branch " + masterBranch.getResource() + " has no head Commit set.",
                         Response.Status.INTERNAL_SERVER_ERROR));
         return new OntologyIdentifier(recordId, masterBranch.getResource(), commitId, vf, mf);
     }

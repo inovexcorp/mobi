@@ -6,7 +6,7 @@ body.collapsed-nav {
         width: 50px;
 
         a span,
-        .version-details p {
+        .version-details {
 			opacity: 0;
 			overflow: hidden;
 			visibility: hidden;
@@ -58,8 +58,8 @@ body.collapsed-nav {
         }
 	}
 
-	a span,
-	.version-details p {
+    a span,
+	.version-details {
 	    transition: opacity .25s ease-in, visibility .25s ease-in;
 	}
 
@@ -68,20 +68,18 @@ body.collapsed-nav {
         color: white;
         padding: 7px 5px;
         position: absolute;
-        text-align: center;
         width: 200px;
 
         img {
-            height: 40px;
-           	float: left;
+            height: 30px;
+            padding-left: 10px;
         }
 
-        p {
-            margin: 0 0 0 38px;
+        .version-text {
+            display: inline-block;
+            line-height: 30px;
+            padding-left: 10px;
+            white-space: nowrap;
         }
-	}
-
-	.alpha {
-	    color: #e62a2a;
 	}
 }

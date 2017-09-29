@@ -160,8 +160,6 @@ describe('New Ontology Tab directive', function() {
                     expect(_.has(controller.ontology, prefixes.owl + 'imports')).toBe(false);
                     expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(controller.ontology, controller.title, controller.description, 'one,two', controller.type);
                     expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
-                    expect(ontologyStateSvc.addState).toHaveBeenCalledWith(this.response.recordId, this.response.entityIRI, controller.type);
-                    expect(ontologyStateSvc.setState).toHaveBeenCalledWith(this.response.recordId);
                     expect(ontologyStateSvc.showNewTab).toBe(false);
                 });
                 it('if it is a vocabulary', function() {
@@ -174,8 +172,6 @@ describe('New Ontology Tab directive', function() {
                     expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.ontology, controller.language);
                     expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(controller.ontology, controller.title, controller.description, 'one,two', controller.type);
                     expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
-                    expect(ontologyStateSvc.addState).toHaveBeenCalledWith(this.response.recordId, this.response.entityIRI, controller.type);
-                    expect(ontologyStateSvc.setState).toHaveBeenCalledWith(this.response.recordId);
                     expect(ontologyStateSvc.showNewTab).toBe(false);
                 });
             });

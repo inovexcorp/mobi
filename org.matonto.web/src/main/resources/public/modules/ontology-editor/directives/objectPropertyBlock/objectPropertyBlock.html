@@ -23,11 +23,11 @@
 <div class="object-property-block annotation-block">
     <block>
         <block-header>
-            <span>Object Properties</span><a ng-if="dvm.os.selected && !dvm.os.selected.matonto.imported" ng-click="dvm.openAddObjectPropOverlay()" class="pull-right"><i class="fa fa-fw fa-plus"></i>Add Object Property</a>
+            <span>Object Properties</span><a ng-if="dvm.os.listItem.selected && !dvm.os.listItem.selected.matonto.imported" ng-click="dvm.openAddObjectPropOverlay()" class="pull-right"><i class="fa fa-fw fa-plus"></i>Add Object Property</a>
         </block-header>
         <block-content>
-            <property-values ng-repeat="property in dvm.os.selected | showProperties:dvm.os.listItem.subObjectProperties | orderBy:dvm.ontoUtils.getLabelForIRI"
-                             property="property" entity="dvm.os.selected" edit="dvm.editObjectProp(property, index)"
+            <property-values ng-repeat="property in dvm.os.listItem.selected | showProperties:dvm.os.listItem.subObjectProperties | orderBy:dvm.ontoUtils.getLabelForIRI"
+                             property="property" entity="dvm.os.listItem.selected" edit="dvm.editObjectProp(property, index)"
                              remove="dvm.showRemovePropertyOverlay(iri, index)"></property-values>
         </block-content>
     </block>

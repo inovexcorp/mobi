@@ -1,0 +1,42 @@
+<!--
+  #%L
+  org.matonto.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="new-analytic-overlay overlay">
+    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
+        <h1>Create Analytic</h1>
+        <h2>Datasets</h2>
+        <info-message ng-if="!dvm.datasets.length" class="padding">No datasets found.</info-message>
+        <md-list>
+            <md-list-item class="md-2-line md-long-text" ng-repeat="dataset in dvm.datasets track by dataset.id">
+                <div class="md-list-item-text">
+                    <h3>{{dataset.title}}</h3>
+                    <p>{{dataset.datasetIRI}}</p>
+                </div>
+                <md-checkbox class="md-secondary" ng-model="dataset.selected" ng-change="dvm.change(dataset)"></md-checkbox>
+            </md-list-item>
+        </md-list>
+        <div class="btn-container">
+            <button type="button" class="btn btn-primary pull-right" ng-click="dvm.submit()" ng-disabled="!dvm.isSubmittable()">Submit</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.onCancel()">Cancel</button>
+        </div>
+    </form>
+</div>

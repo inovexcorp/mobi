@@ -43,7 +43,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.matonto.exception.MatOntoException;
-import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.platform.config.api.state.StateManager;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
@@ -99,9 +99,11 @@ public class StateRestImplTest extends MatontoRestTestNg {
         MockitoAnnotations.initMocks(this);
 
         when(transformer.matontoModel(any(org.openrdf.model.Model.class)))
-                .thenAnswer(i -> Values.matontoModel((org.openrdf.model.Model) i.getArguments()[0]));
+                .thenAnswer(i -> Values.matontoModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
         when(transformer.sesameModel(any(org.matonto.rdf.api.Model.class)))
-                .thenAnswer(i -> Values.sesameModel((org.matonto.rdf.api.Model) i.getArguments()[0]));
+                .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, org.matonto.rdf.api.Model.class)));
+        when(transformer.sesameStatement(any(org.matonto.rdf.api.Statement.class)))
+                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, org.matonto.rdf.api.Statement.class)));
 
         rest = new StateRestImpl();
         rest.setStateManager(stateManager);
@@ -364,6 +366,6 @@ public class StateRestImplTest extends MatontoRestTestNg {
     }
 
     private String modelToJsonld(Model model) {
-        return RestUtils.modelToJsonld(transformer.sesameModel(model));
+        return RestUtils.modelToJsonld(model, transformer);
     }
 }

@@ -1,0 +1,6 @@
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT (COUNT(distinct ?activity) as ?count)
+WHERE {
+	?activity a prov:Activity .
+}

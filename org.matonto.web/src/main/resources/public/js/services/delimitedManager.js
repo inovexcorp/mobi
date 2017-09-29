@@ -30,7 +30,7 @@
          *
          * @description
          * The `delimitedManager` module only provides the `delimitedManagerService` service which
-         * provides access to the MatOnto CSV REST endpoints and variable to hold data
+         * provides access to the Mobi CSV REST endpoints and variable to hold data
          * pertaining to the results of these endpoints.
          */
         .module('delimitedManager', [])
@@ -42,19 +42,18 @@
          * @requires $window
          *
          * @description
-         * `delimitedManagerService` is a service that provides access to the MatOnto CSV REST
+         * `delimitedManagerService` is a service that provides access to the Mobi CSV REST
          * endpoints and various variables to hold data pertaining to the parameters
          * passed to the endpoints and the results of the endpoints.
          */
         .service('delimitedManagerService', delimitedManagerService);
 
-        delimitedManagerService.$inject = ['$http', '$httpParamSerializer', '$q', '$window', 'utilService'];
+        delimitedManagerService.$inject = ['$http', '$httpParamSerializer', '$q', '$window', 'utilService', 'REST_PREFIX'];
 
-        function delimitedManagerService($http, $httpParamSerializer, $q, $window, utilService) {
+        function delimitedManagerService($http, $httpParamSerializer, $q, $window, utilService, REST_PREFIX) {
             var self = this,
                 util = utilService,
-                prefix = '/matontorest/delimited-files';
-
+                prefix = REST_PREFIX + 'delimited-files';
 
             /**
              * @ngdoc property
@@ -64,7 +63,7 @@
              *
              * @description
              * `dataRows` holds an array of a preview of delimited data. Set by the
-             * POST /matontorest/delimited-files endpoint
+             * POST /mobirest/delimited-files endpoint
              */
             self.dataRows = undefined;
             /**
@@ -75,7 +74,7 @@
              *
              * @description
              * `fileName` holds a string with the name of the uploaded delimited file given
-             * back from the POST /matontorest/delimited-files endpoint
+             * back from the POST /mobirest/delimited-files endpoint
              * endpoint calls.
              */
             self.fileName = '';
@@ -87,9 +86,9 @@
              *
              * @description
              * `separator` holds a string with the character separating columns in the uploaded
-             * delimited file if it is an SV file. It is used in the GET /matontorest/delimited-files/{fileName},
-             * the POST /matontorest/delimited-files/{fileName}/map, and the
-             * GET /matontorest/delimited-files/{fileName}/map
+             * delimited file if it is an SV file. It is used in the GET /mobirest/delimited-files/{fileName},
+             * the POST /mobirest/delimited-files/{fileName}/map, and the
+             * GET /mobirest/delimited-files/{fileName}/map
              * endpoints calls.
              */
             self.separator = ',';
@@ -101,9 +100,9 @@
              *
              * @description
              * `separator` holds a boolean indicating whether the uploaded delimited file contains a
-             * header row or not. It is used in the GET /matontorest/delimited-files/{fileName}, the POST
-             * /matontorest/delimited-files/{fileName}/map-preview, and the
-             * GET /matontorest/delimited-files/{fileName}/map
+             * header row or not. It is used in the GET /mobirest/delimited-files/{fileName}, the POST
+             * /mobirest/delimited-files/{fileName}/map-preview, and the
+             * GET /mobirest/delimited-files/{fileName}/map
              * endpoints calls.
              */
             self.containsHeaders = true;
@@ -136,7 +135,7 @@
              * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description
-             * Makes a call to POST /matontorest/delimited-files to upload the passed File object to the repository.
+             * Makes a call to POST /mobirest/delimited-files to upload the passed File object to the repository.
              * Returns the resulting file name is a promise.
              *
              * @param {object} file a File object to upload (should be a SV or Excel file)
@@ -144,8 +143,7 @@
              * error message otherwise
              */
             self.upload = function(file) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         headers: {
@@ -154,10 +152,8 @@
                         }
                     };
                 fd.append('delimitedFile', file);
-                $http.post(prefix, fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-
-                return deferred.promise;
+                return $http.post(prefix, fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -166,7 +162,7 @@
              * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description
-             * Makes a call to GET /matontorest/delimited-files/{fileName} to retrieve the passed in number of rows
+             * Makes a call to GET /mobirest/delimited-files/{fileName} to retrieve the passed in number of rows
              * of an uploaded delimited file. Uses {@link delimitedManager.delimitedManager#separator separator} and
              * {@link delimitedManager.delimitedManager#fileName fileName} to make the call. Depending on the value
              * of {@link delimitedManager.delimitedManager#containsHeaders containsHeaders}, either uses the first
@@ -179,28 +175,25 @@
              * or the call did not succeed
              */
             self.previewFile = function(rowEnd) {
-                var deferred = $q.defer(),
-                    config = {
+                var config = {
                         params: {
                             'rowCount': rowEnd ? rowEnd : 0,
                             'separator': self.separator
                         }
                     };
-                $http.get(prefix + '/' + encodeURIComponent(self.fileName), config)
+                return $http.get(prefix + '/' + encodeURIComponent(self.fileName), config)
                     .then(response => {
                         if (response.data.length === 0) {
                             self.dataRows = undefined;
-                            deferred.reject("No rows were found");
+                            return $q.reject("No rows were found");
                         } else {
                             self.dataRows = response.data;
-                            deferred.resolve();
+                            return;
                         }
                     }, error => {
                         self.dataRows = undefined;
-                        util.onError(error, deferred);
+                        return util.rejectError(error);
                     });
-
-                return deferred.promise;
             }
 
             /**
@@ -209,7 +202,7 @@
              * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description
-             * Makes a call to POST /matontorest/delimited-files/{fileName}/map-preview to retrieve the first 10 rows of
+             * Makes a call to POST /mobirest/delimited-files/{fileName}/map-preview to retrieve the first 10 rows of
              * delimited data mapped into RDF data using the passed in JSON-LD mapping and returns the RDF
              * data in the passed in format. Uses {@link delimitedManager.delimitedManager#separator separator},
              * {@link delimitedManager.delimitedManager#containsHeaders containsHeaders}, and
@@ -222,8 +215,7 @@
              * @return {Promise} A Promise that resolves with the mapped data in the specified RDF format
              */
             self.previewMap = function(jsonld, format) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         params: {
@@ -237,9 +229,8 @@
                         }
                     };
                 fd.append('jsonld', angular.toJson(jsonld));
-                $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map-preview', fd, config)
-                    .then(response => deferred.resolve(response.data), error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map-preview', fd, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**
@@ -248,7 +239,7 @@
              * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description
-             * Opens the current window to the location of GET /matontorest/delimited-files/{fileName}/map which
+             * Opens the current window to the location of GET /mobirest/delimited-files/{fileName}/map which
              * will start a file download of the complete mapped delimited data in the specified format
              * of an uploaded delimited file using a saved Mapping identified by the passed IRI. Uses
              * {@link delimitedManager.delimitedManager#separator separator},
@@ -256,16 +247,16 @@
              * {@link delimitedManager.delimitedManager#fileName fileName} to create the URL to set the window
              * location to.
              *
-             * @param {string} mappingIRI the IRI of a saved Mapping
+             * @param {string} mappingRecordIRI the IRI of a saved MappingRecord
              * @param {string} format the RDF format for the mapped data
              * @param {string} fileName the file name for the downloaded mapped data
              */
-            self.mapAndDownload = function(mappingIRI, format, fileName) {
+            self.mapAndDownload = function(mappingRecordIRI, format, fileName) {
                 var params = {
                     containsHeaders: self.containsHeaders,
                     separator: self.separator,
                     format,
-                    mappingIRI
+                    mappingRecordIRI
                 };
                 if (fileName) {
                     params.fileName = fileName;
@@ -279,7 +270,7 @@
              * @methodOf delimitedManager.service:delimitedManagerService
              *
              * @description
-             * Calls the POST /matontorest/delimited-files/{fileName}/map to map the data of an uploaded delimited file
+             * Calls the POST /mobirest/delimited-files/{fileName}/map to map the data of an uploaded delimited file
              * using a saved Mapping identified by the passed IRI into the Dataset associated with the DatasetRecord
              * identified by the passed IRI. Returns a Promise indicating the success of the request.
              *
@@ -287,19 +278,17 @@
              * @param {string} datasetRecordIRI the IRI of a DatasetRecord
              * @return {Promise} A Promise that resolves if the upload was successful; rejects with an error message otherwise
              */
-            self.mapAndUpload = function(mappingIRI, datasetRecordIRI) {
-                var deferred = $q.defer(),
-                    config = {
+            self.mapAndUpload = function(mappingRecordIRI, datasetRecordIRI) {
+                var config = {
                         params: {
-                            mappingIRI,
+                            mappingRecordIRI,
                             datasetRecordIRI,
                             containsHeaders: self.containsHeaders,
                             separator: self.separator
                         }
                     };
-                $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map', null, config)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.post(prefix + '/' + encodeURIComponent(self.fileName) + '/map', null, config)
+                    .then(response => response.data, util.rejectError);
             }
 
             /**

@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.4-SNAPSHOT</version>
+        <version>1.9.24-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -41,32 +41,32 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>ontology.api</artifactId>
-            <version>1.8.4-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>ontology.utils</artifactId>
-            <version>1.7.20</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>persistence.api</artifactId>
-            <version>1.7.20</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>persistence.utils</artifactId>
-            <version>1.7.20</version>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>persistence.api</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>catalog.api</artifactId>
-            <version>1.7.20</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>cache</artifactId>
-            <version>1.7.20</version>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>ontology.utils</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <dependency>
@@ -78,6 +78,22 @@
         <dependency>
             <groupId>org.openrdf.sesame</groupId>
             <artifactId>sesame-runtime-osgi</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.github.jsonld-java</groupId>
+                    <artifactId>jsonld-java</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>com.inovexcorp.mobi</groupId>
+            <artifactId>jsonld-java</artifactId>
+            <version>0.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient-osgi</artifactId>
+            <version>4.5.1</version>
         </dependency>
 
         <!-- Owlapi dependencies -->
@@ -101,18 +117,17 @@
             <artifactId>jackson-core</artifactId>
         </dependency>
 
-
-        <!--  Test dependencies -->  
+        <!--  Test dependencies -->
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.impl.sesame</artifactId>
-            <version>1.7.20</version>
+            <version>${project.version}</version>
 		    <scope>test</scope>
 	    </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>repository.impl.core</artifactId>
-            <version>1.7.20</version>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -145,17 +160,6 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>catalog.impl</artifactId>
-            <version>1.7.20</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.matonto</groupId>
-            <artifactId>ontology.utils</artifactId>
-            <version>1.7.20</version>
-        </dependency>
     </dependencies>
 
     <build>
@@ -177,7 +181,6 @@
                             org.matonto.ontology.core.api.datarange; provide:=true,
                             org.matonto.ontology.core.api.propertyexpression; provide:=true,
                             org.matonto.ontology.core.api.types; provide:=true,
-                            org.matonto.cache.config; provide:=true
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>

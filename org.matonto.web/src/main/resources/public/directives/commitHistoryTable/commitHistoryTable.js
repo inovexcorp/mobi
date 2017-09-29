@@ -113,20 +113,27 @@
                             }, errorMessage => dvm.error = errorMessage);
                     }
                     dvm.getCommits = function() {
-                        cm.getBranchCommits(dvm.branch['@id'], dvm.recordId, catalogId)
-                            .then(commits => {
-                                dvm.commits = commits;
-                                dvm.error = '';
-                                if ($scope.graph) {
-                                    dvm.drawGraph();
-                                }
-                            }, errorMessage => {
-                                dvm.error = errorMessage;
-                                dvm.commits = [];
-                                if ($scope.graph) {
-                                    dvm.reset();
-                                }
-                            });
+                        if (dvm.branch) {
+                            cm.getBranchCommits(dvm.branch['@id'], dvm.recordId, catalogId)
+                                .then(commits => {
+                                    dvm.commits = commits;
+                                    dvm.error = '';
+                                    if ($scope.graph) {
+                                        dvm.drawGraph();
+                                    }
+                                }, errorMessage => {
+                                    dvm.error = errorMessage;
+                                    dvm.commits = [];
+                                    if ($scope.graph) {
+                                        dvm.reset();
+                                    }
+                                });
+                        } else {
+                            dvm.commits = [];
+                            if ($scope.graph) {
+                                dvm.reset();
+                            }
+                        }
                     }
                     dvm.drawGraph = function() {
                         dvm.reset();

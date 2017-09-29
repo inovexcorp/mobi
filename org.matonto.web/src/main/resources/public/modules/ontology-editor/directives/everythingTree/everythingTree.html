@@ -24,8 +24,8 @@
     <div class="full-height repeater-container" vs-repeat="26" vs-offset-before="10" vs-offset-after="10">
         <div ng-repeat="entity in dvm.os.listItem.flatEverythingTree | filter:dvm.isShown" class="tree-item-wrapper">
             <div ng-if="!entity['@id']" class="tree-item">
-                <a ng-click="entity.set(dvm.os.listItem.recordId, !entity.get(dvm.os.listItem.recordId)); $event.stopPropagation()">
-                    <i class="fa fa-fw" ng-class="{'fa-folder-open-o': entity.get(dvm.os.listItem.recordId), 'fa-folder-o': !entity.get(dvm.os.listItem.recordId)}"></i><span>{{entity.title}}</span>
+                <a ng-click="entity.set(dvm.os.listItem.ontologyRecord.recordId, !entity.get(dvm.os.listItem.ontologyRecord.recordId)); $event.stopPropagation()">
+                    <i class="fa fa-fw" ng-class="{'fa-folder-open-o': entity.get(dvm.os.listItem.ontologyRecord.recordId), 'fa-folder-o': !entity.get(dvm.os.listItem.ontologyRecord.recordId)}"></i><span>{{entity.title}}</span>
                 </a>
             </div>
             <tree-item ng-if="entity['@id']" ng-style="{'padding-left': (dvm.indent * entity.indent) + 'em'}"

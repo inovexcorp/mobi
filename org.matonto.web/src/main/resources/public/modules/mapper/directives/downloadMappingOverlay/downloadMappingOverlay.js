@@ -39,8 +39,9 @@
          * @name downloadMappingOverlay.directive:downloadMappingOverlay
          * @scope
          * @restrict E
-         * @requires  mappingManager.service:mappingManagerService
-         * @requires  mapperState.service:mapperStateService
+         * @requires mappingManager.service:mappingManagerService
+         * @requires mapperState.service:mapperStateService
+         * @requires util.service:utilService
          *
          * @description
          * `downloadMappingOverlay` is a directive that creates an overlay with functionality to download
@@ -68,7 +69,7 @@
                         dvm.state.displayDownloadMappingOverlay = false;
                     }
                     dvm.download = function() {
-                        dvm.mm.downloadMapping(dvm.state.mapping.id, dvm.downloadFormat);
+                        dvm.mm.downloadMapping(dvm.state.mapping.record.id, dvm.downloadFormat);
                         dvm.state.displayDownloadMappingOverlay = false;
                     }
                 },

@@ -22,7 +22,7 @@
   -->
 <div class="download-mapping-overlay overlay">
     <form class="content" name="dvm.downloadForm">
-        <h6>Download {{(dvm.state.mapping.id | splitIRI).end}}</h6>
+        <h6>Download {{dvm.state.mapping.record.title}}</h6>
         <div class="form-group">
           <custom-label>Serialization</custom-label>
           <mapper-serialization-select format="dvm.downloadFormat" required></mapper-serialization-select>

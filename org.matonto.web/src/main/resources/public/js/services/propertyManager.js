@@ -27,11 +27,11 @@
         .module('propertyManager', [])
         .service('propertyManagerService', propertyManagerService);
 
-        propertyManagerService.$inject = ['$filter', '$q', '$http', 'prefixes'];
+        propertyManagerService.$inject = ['$filter', '$q', '$http', 'prefixes', 'REST_PREFIX'];
 
-        function propertyManagerService($filter, $q, $http, prefixes) {
+        function propertyManagerService($filter, $q, $http, prefixes, REST_PREFIX) {
             var self = this;
-            var prefix = '/matontorest/ontologies/';
+            var prefix = REST_PREFIX + 'ontologies/';
 
             var rdfsAnnotations = _.map(['comment', 'label', 'seeAlso', 'isDefinedBy'], item => {
                 return {
@@ -47,6 +47,7 @@
             });
             self.defaultAnnotations = _.concat(rdfsAnnotations, dcAnnotations);
 
+            self.owlAnnotations = [{namespace: prefixes.owl, localName: 'deprecated'}];
             self.skosAnnotations = _.map(['altLabel', 'changeNote', 'definition', 'editorialNote', 'example',
                 'hiddenLabel', 'historyNote', 'note', 'prefLabel', 'scopeNote'], item => {
                 return {

@@ -34,11 +34,13 @@
 
         vm.perspectives = [
             { icon: 'home', sref: 'root.home', isActive: $state.is('root.home'), name: 'Home' },
+            { icon: 'list-alt', sref: 'root.activity-log', isActive: $state.is('root.activity-log'), name: 'Activity Log' },
             { icon: 'pencil-square-o', sref: 'root.ontology-editor', isActive: $state.is('root.ontology-editor'), name: 'Ontology Editor'},
             { icon: 'map-o', sref: 'root.mapper', isActive: $state.is('root.mapper'), name: 'Mapping Tool' },
             { icon: 'database', sref: 'root.datasets', isActive: $state.is('root.datasets'), name: 'Datasets' },
             { icon: 'search', sref: 'root.discover', isActive: $state.is('root.discover'), name: 'Discover' },
-            { icon: 'book', sref: 'root.catalog', isActive: $state.is('root.catalog'), name: 'Catalog' }
+            { icon: 'book', sref: 'root.catalog', isActive: $state.is('root.catalog'), name: 'Catalog' },
+            { icon: 'bar-chart', sref: 'root.analytics', isActive: $state.is('root.analytics'), name: 'Analytics' }
         ];
 
         vm.toggle = function() {

@@ -40,9 +40,11 @@
          * @scope
          * @restrict E
          * @requires $http
+         * @requires $filter
          * @requires discoverState.service:discoverStateService
          * @requires explore.service:exploreService
          * @requires util.service:utilService
+         * @requires uuid
          *
          * @description
          * HTML contents in the instance block which shows the users the instances associated
@@ -51,9 +53,9 @@
          */
         .directive('instanceBlock', instanceBlock);
         
-        instanceBlock.$inject = ['$http', 'discoverStateService', 'exploreService', 'utilService'];
+        instanceBlock.$inject = ['$http', '$filter', 'discoverStateService', 'exploreService', 'utilService', 'uuid'];
 
-        function instanceBlock($http, discoverStateService, exploreService, utilService) {
+        function instanceBlock($http, $filter, discoverStateService, exploreService, utilService, uuid) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceBlock/instanceBlock.html',
@@ -80,6 +82,22 @@
                             }, response => {
                                 util.createErrorToast(response.statusText);
                             });
+                    }
+                    
+                    dvm.create = function() {
+                        dvm.ds.explore.creating = true;
+                        var split = $filter('splitIRI')(_.head(dvm.ds.explore.instanceDetails.data).instanceIRI);
+                        var iri = split.begin + split.then + uuid.v4();
+                        dvm.ds.explore.instance.entity = [{
+                            '@id': iri,
+                            '@type': [dvm.ds.explore.classId]
+                        }];
+                        dvm.ds.explore.instance.metadata.instanceIRI = iri;
+                        dvm.ds.explore.breadcrumbs.push('New Instance');
+                    }
+                    
+                    dvm.getClassName = function() {
+                        return _.last(dvm.ds.explore.breadcrumbs);
                     }
                 }
             }

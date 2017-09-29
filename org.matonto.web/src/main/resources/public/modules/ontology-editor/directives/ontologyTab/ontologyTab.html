@@ -21,39 +21,39 @@
   #L%
   -->
 <div class="ontology-tab">
-    <branch-select ng-model="dvm.sm.listItem.branchId"></branch-select>
+    <branch-select ng-model="dvm.sm.listItem.ontologyRecord.branchId"></branch-select>
     <tabset class="centered">
-        <tab heading="'Project'" active="dvm.sm.state.project.active"
-             on-click="dvm.sm.setSelected(dvm.sm.state.project.entityIRI, false)">
+        <tab heading="'Project'" active="dvm.sm.listItem.editorTabStates.project.active"
+             on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.project.entityIRI, false)">
             <project-tab></project-tab>
         </tab>
-        <tab heading="'Overview'" active="dvm.sm.state.overview.active"
-             on-click="dvm.sm.setSelected(dvm.sm.state.overview.entityIRI)">
+        <tab heading="'Overview'" active="dvm.sm.listItem.editorTabStates.overview.active"
+             on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.overview.entityIRI)">
             <overview-tab></overview-tab>
         </tab>
-        <tab heading="'Classes'" active="dvm.sm.state.classes.active"
-             on-click="dvm.sm.setSelected(dvm.sm.state.classes.entityIRI)">
+        <tab heading="'Classes'" active="dvm.sm.listItem.editorTabStates.classes.active"
+             on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.classes.entityIRI)">
             <classes-tab></classes-tab>
         </tab>
-        <tab heading="'Properties'" active="dvm.sm.state.properties.active"
-             on-click="dvm.sm.setSelected(dvm.sm.state.properties.entityIRI)">
+        <tab heading="'Properties'" active="dvm.sm.listItem.editorTabStates.properties.active"
+             on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.properties.entityIRI)">
             <properties-tab></properties-tab>
         </tab>
-        <tab heading="'Individuals'" active="dvm.sm.state.individuals.active"
-             on-click="dvm.sm.setSelected(dvm.sm.state.individuals.entityIRI, false)">
+        <tab heading="'Individuals'" active="dvm.sm.listItem.editorTabStates.individuals.active"
+             on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.individuals.entityIRI, false)">
             <individuals-tab></individuals-tab>
         </tab>
-        <tab heading="'Search'" active="dvm.sm.state.search.active"
-             on-click="dvm.sm.setSelected(dvm.sm.state.search.entityIRI, false)">
+        <tab heading="'Search'" active="dvm.sm.listItem.editorTabStates.search.active"
+             on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.search.entityIRI, false)">
             <search-tab></search-tab>
         </tab>
-        <tab heading="dvm.savedChanges" active="dvm.sm.state.savedChanges.active">
+        <tab heading="dvm.savedChanges" active="dvm.sm.listItem.editorTabStates.savedChanges.active">
             <saved-changes-tab></saved-changes-tab>
         </tab>
-        <tab heading="'Merge'" active="dvm.sm.state.merge.active">
+        <tab heading="'Merge'" active="dvm.sm.listItem.editorTabStates.merge.active">
             <merge-tab></merge-tab>
         </tab>
-        <tab heading="'Commits'" active="dvm.sm.state.commits.active">
+        <tab heading="'Commits'" active="dvm.sm.listItem.editorTabStates.commits.active">
             <commits-tab></commits-tab>
         </tab>
     </tabset>

@@ -27,30 +27,20 @@
         .module('conceptsTab', [])
         .directive('conceptsTab', conceptsTab);
 
-        conceptsTab.$inject = ['ontologyStateService', 'ontologyManagerService', 'responseObj'];
+        conceptsTab.$inject = ['ontologyStateService', 'ontologyManagerService'];
 
-        function conceptsTab(ontologyStateService, ontologyManagerService, responseObj) {
+        function conceptsTab(ontologyStateService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/conceptsTab/conceptsTab.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: function() {
                     var dvm = this;
-                    var resObj = responseObj;
                     dvm.sm = ontologyStateService;
                     dvm.om = ontologyManagerService;
-                    dvm.relationshipList = [];
-
-                    $scope.$watch('dvm.sm.selected', function(newValue) {
-                        if (dvm.om.isConcept(dvm.sm.selected, dvm.sm.listItem.derivedConcepts)) {
-                            dvm.relationshipList = dvm.om.conceptRelationshipList;
-                        } else if (dvm.om.isConceptScheme(dvm.sm.selected, dvm.sm.listItem.derivedConceptSchemes)) {
-                            dvm.relationshipList = dvm.om.schemeRelationshipList;
-                        }
-                    });
-                }]
+                }
             }
         }
 })();

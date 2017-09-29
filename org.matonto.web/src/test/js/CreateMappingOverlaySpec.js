@@ -21,150 +21,161 @@
  * #L%
  */
 describe('Create Mapping Overlay directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        $q,
-        mappingManagerSvc,
-        mapperStateSvc,
-        catalogManagerSvc,
-        prefixes;
+    var $compile, scope, element, controller, $q, mappingManagerSvc, mapperStateSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
         module('createMappingOverlay');
-        injectSplitIRIFilter();
         mockMappingManager();
         mockMapperState();
         mockPrefixes();
-        mockCatalogManager();
 
-        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _catalogManagerService_, _prefixes_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _mappingManagerService_, _mapperStateService_, _prefixes_, _$q_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             mapperStateSvc = _mapperStateService_;
             mappingManagerSvc = _mappingManagerService_;
-            catalogManagerSvc = _catalogManagerService_;
             prefixes = _prefixes_;
             $q = _$q_;
         });
 
-        mappingManagerSvc.mappingIds = [''];
+        mapperStateSvc.mapping = {record: {title: 'Record', description: 'description', keywords: ['keyword']}, ontology: [{}], jsonld: [{}], difference: {additions: []}};
         element = $compile(angular.element('<create-mapping-overlay></create-mapping-overlay>'))(scope);
         scope.$digest();
         controller = element.controller('createMappingOverlay');
     });
 
-    describe('should initialize with the correct values', function() {
-        it('for the selected saved mapping id', function() {
-            expect(controller.savedMappingId).toBe(mappingManagerSvc.mappingIds[0]);
+    describe('should initialize correctly', function() {
+        it('if a mapping is selected', function() {
+            expect(mapperStateSvc.createMapping).toHaveBeenCalled();
+            expect(controller.newMapping.record).toEqual(mapperStateSvc.mapping.record);
+            expect(controller.newMapping.ontology).toEqual(mapperStateSvc.mapping.ontology);
+            expect(controller.newMapping.jsonld).toEqual(mapperStateSvc.mapping.jsonld);
+        });
+        it('if a mapping is not selected', function() {
+            mapperStateSvc.mapping = undefined;
+            // For some reason, at this point createMapping is returning the original value newMapping so I had to reset the mock
+            mapperStateSvc.createMapping.and.returnValue({record: {}, ontology: undefined, jsonld: [], difference: {additions: [], deletions: []}});
+            element = $compile(angular.element('<create-mapping-overlay></create-mapping-overlay>'))(scope);
+            scope.$digest();
+            controller = element.controller('createMappingOverlay');
+            expect(mapperStateSvc.createMapping).toHaveBeenCalled();
+            expect(controller.newMapping.record).toEqual({});
+            expect(controller.newMapping.ontology).toBeUndefined();
+            expect(controller.newMapping.jsonld).toEqual([]);
         });
     });
     describe('controller methods', function() {
         describe('should set the correct state for continuing', function() {
+            var id = 'id', newMapping = [{}], step;
             beforeEach(function() {
-                mapperStateSvc.mapping = {id: 'mapping'};
-                controller.savedMappingId = '';
-                this.ontologies = [{}];
+                step = mapperStateSvc.step;
                 mappingManagerSvc.getSourceOntologies.and.returnValue(this.ontologies);
                 mapperStateSvc.displayCreateMappingOverlay = true;
+                mappingManagerSvc.getMappingId.and.returnValue(id);
+                mappingManagerSvc.createNewMapping.and.returnValue(newMapping);
             });
             it('if a brand new mapping is being created', function() {
                 var ontologies = [];
-                controller.mappingType = 'new';
+                controller.newMapping.jsonld = [];
                 controller.continue();
-                scope.$apply();
-                expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
-                expect(mappingManagerSvc.createNewMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.id);
-                expect(mappingManagerSvc.getMapping).not.toHaveBeenCalled();
+                expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newMapping.record.title);
+                expect(mappingManagerSvc.createNewMapping).toHaveBeenCalledWith(id);
                 expect(mappingManagerSvc.copyMapping).not.toHaveBeenCalled();
-                expect(catalogManagerSvc.getRecord).not.toHaveBeenCalled();
+                expect(mappingManagerSvc.getSourceOntologyInfo).not.toHaveBeenCalled();
                 expect(mappingManagerSvc.getSourceOntologies).not.toHaveBeenCalled();
                 expect(mappingManagerSvc.areCompatible).not.toHaveBeenCalled();
-                expect(mapperStateSvc.mappingSearchString).toBe('');
-                expect(mapperStateSvc.mapping.jsonld).toBeDefined();
+                expect(mappingManagerSvc.getAllClassMappings).not.toHaveBeenCalled();
+                expect(mapperStateSvc.getClasses).not.toHaveBeenCalled();
+                expect(controller.newMapping.jsonld).toEqual(newMapping);
                 expect(mapperStateSvc.sourceOntologies).toEqual([]);
+                expect(mapperStateSvc.availableClasses).toEqual([]);
+                expect(mapperStateSvc.mapping).toEqual(controller.newMapping);
+                expect(controller.newMapping.difference.additions).toEqual(newMapping);
+                expect(mapperStateSvc.mappingSearchString).toBe('');
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
                 expect(mapperStateSvc.displayCreateMappingOverlay).toBe(false);
             });
             describe('if a copy of a mapping is being created', function() {
+                var getDeferred,
+                    ontologies = [{id: 'ontology'}],
+                    sourceOntologyInfo = {},
+                    originalJsonld = [{'@id': 'original'}],
+                    copiedJsonld = [{'@id': 'copied'}];
                 beforeEach(function() {
-                    controller.mappingType = 'saved';
-                    this.savedMappingId = controller.savedMappingId;
-                    this.record = {
-                        '@id': 'record',
-                        '@type': []
-                    };
-                    this.record[prefixes.dcterms + 'title'] = [{'@value': ''}];
-                    this.record[prefixes.dcterms + 'description'] = [{'@value': ''}];
-                    this.record[prefixes.dcterms + 'issued'] = [{'@value': ''}];
-                    this.record[prefixes.dcterms + 'modified'] = [{'@value': ''}];
-                    this.record[prefixes.catalog + 'keyword'] = [{'@value': ''}];
-                    mappingManagerSvc.getSourceOntologyInfo.and.returnValue({recordId: this.record['@id']});
-                    catalogManagerSvc.getRecord.and.returnValue($q.when(this.record));
-                    catalogManagerSvc.localCatalog = {'@id': ''};
+                    getDeferred = $q.defer();
+                    mappingManagerSvc.getSourceOntologies.and.returnValue(getDeferred.promise);
+                    controller.newMapping.jsonld = angular.copy(originalJsonld);
+                    mappingManagerSvc.copyMapping.and.returnValue(copiedJsonld);
+                    mappingManagerSvc.getSourceOntologyInfo.and.returnValue(sourceOntologyInfo);
                     mapperStateSvc.mappingSearchString = 'test';
                 });
-                it('unless an error occurs', function() {
-                    mappingManagerSvc.getMapping.and.returnValue($q.reject('Error message'));
+                it('unless getSourceOntologies is rejected', function() {
+                    getDeferred.reject('Error message');
                     controller.continue();
                     scope.$apply();
-                    expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
+                    expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newMapping.record.title);
                     expect(mappingManagerSvc.createNewMapping).not.toHaveBeenCalled();
-                    expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith(this.savedMappingId);
-                    expect(mappingManagerSvc.copyMapping).not.toHaveBeenCalled();
-                    expect(catalogManagerSvc.getRecord).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.step).not.toBe(mapperStateSvc.fileUploadStep);
-                    expect(mappingManagerSvc.getSourceOntologies).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.sourceOntologies).not.toEqual(this.ontologies);
+                    expect(mappingManagerSvc.copyMapping).toHaveBeenCalledWith(originalJsonld, id);
+                    expect(mappingManagerSvc.getSourceOntologyInfo).toHaveBeenCalledWith(copiedJsonld);
+                    expect(mappingManagerSvc.getSourceOntologies).toHaveBeenCalledWith(sourceOntologyInfo);
+                    expect(mappingManagerSvc.areCompatible).not.toHaveBeenCalled();
+                    expect(mappingManagerSvc.getAllClassMappings).not.toHaveBeenCalled();
+                    expect(mapperStateSvc.getClasses).not.toHaveBeenCalled();
+                    expect(mapperStateSvc.sourceOntologies).not.toEqual(ontologies);
                     expect(mapperStateSvc.availableClasses).toEqual([]);
                     expect(mapperStateSvc.mappingSearchString).not.toBe('');
-                    expect(mapperStateSvc.step).not.toBe(mapperStateSvc.fileUploadStep);
+                    expect(mapperStateSvc.step).toBe(step);
                     expect(controller.errorMessage).toBe('Error retrieving mapping');
-                    expect(mapperStateSvc.mapping.jsonld).toEqual([]);
-                    expect(mapperStateSvc.mapping.record).toBeUndefined();
+                    expect(controller.newMapping.jsonld).toEqual(copiedJsonld);
+                    expect(mapperStateSvc.mapping).not.toEqual(controller.newMapping);
                     expect(mapperStateSvc.displayCreateMappingOverlay).toBe(true);
                 });
                 it('unless the source ontologies of the original mapping are not compatible', function() {
+                    getDeferred.resolve(ontologies);
                     mappingManagerSvc.areCompatible.and.returnValue(false);
                     controller.continue();
                     scope.$apply();
-                    expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
+                    expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newMapping.record.title);
                     expect(mappingManagerSvc.createNewMapping).not.toHaveBeenCalled();
-                    expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith(this.savedMappingId);
-                    expect(mappingManagerSvc.copyMapping).toHaveBeenCalled();
-                    expect(catalogManagerSvc.getRecord).toHaveBeenCalledWith(this.record['@id'], catalogManagerSvc.localCatalog['@id']);
-                    expect(mappingManagerSvc.getSourceOntologies).toHaveBeenCalledWith(jasmine.any(Object));
+                    expect(mappingManagerSvc.copyMapping).toHaveBeenCalledWith(originalJsonld, id);
+                    expect(mappingManagerSvc.getSourceOntologyInfo).toHaveBeenCalledWith(copiedJsonld);
+                    expect(mappingManagerSvc.getSourceOntologies).toHaveBeenCalledWith(sourceOntologyInfo);
+                    expect(mappingManagerSvc.areCompatible).toHaveBeenCalledWith(copiedJsonld, ontologies);
+                    expect(mappingManagerSvc.getAllClassMappings).not.toHaveBeenCalled();
+                    expect(mapperStateSvc.getClasses).not.toHaveBeenCalled();
                     expect(mapperStateSvc.sourceOntologies).not.toEqual(this.ontologies);
                     expect(mapperStateSvc.availableClasses).toEqual([]);
                     expect(mapperStateSvc.mappingSearchString).not.toBe('');
-                    expect(mapperStateSvc.step).not.toBe(mapperStateSvc.fileUploadStep);
-                    expect(controller.errorMessage).toBeTruthy();
-                    expect(mapperStateSvc.mapping.jsonld).toEqual([]);
-                    expect(mapperStateSvc.mapping.record).toBeUndefined();
+                    expect(mapperStateSvc.step).toBe(step);
+                    expect(controller.errorMessage).toBe('The selected mapping is incompatible with its source ontologies');
+                    expect(controller.newMapping.jsonld).toEqual(copiedJsonld);
+                    expect(mapperStateSvc.mapping).not.toEqual(controller.newMapping);
                     expect(mapperStateSvc.displayCreateMappingOverlay).toBe(true);
                 });
                 it('successfully', function() {
-                    var mapping = {};
-                    mappingManagerSvc.getMapping.and.returnValue($q.when(mapping));
+                    getDeferred.resolve(ontologies);
                     mappingManagerSvc.getAllClassMappings.and.returnValue([{}]);
                     mappingManagerSvc.getClassIdByMapping.and.returnValue('test');
-                    mapperStateSvc.getClasses.and.returnValue([{classObj: {'@id': 'test'}}, {classObj: {'@id': ''}}]);
+                    var unusedClass = {classObj: {'@id': ''}};
+                    mapperStateSvc.getClasses.and.returnValue([{classObj: {'@id': 'test'}}, unusedClass]);
                     controller.continue();
                     scope.$apply();
-                    expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newName);
+                    expect(mappingManagerSvc.getMappingId).toHaveBeenCalledWith(controller.newMapping.record.title);
                     expect(mappingManagerSvc.createNewMapping).not.toHaveBeenCalled();
-                    expect(mappingManagerSvc.getMapping).toHaveBeenCalledWith(this.savedMappingId);
-                    expect(mappingManagerSvc.copyMapping).toHaveBeenCalledWith(mapping, mapperStateSvc.mapping.id);
-                    expect(catalogManagerSvc.getRecord).toHaveBeenCalledWith(this.record['@id'], catalogManagerSvc.localCatalog['@id']);
-                    expect(mapperStateSvc.mapping.jsonld).toBeDefined();
-                    expect(mapperStateSvc.mapping.record).toEqual(this.record);
-                    expect(mappingManagerSvc.getSourceOntologies).toHaveBeenCalledWith(jasmine.any(Object));
-                    expect(mapperStateSvc.sourceOntologies).toEqual(this.ontologies);
-                    expect(mapperStateSvc.availableClasses).toEqual([{classObj: {'@id': ''}}]);
+                    expect(mappingManagerSvc.copyMapping).toHaveBeenCalledWith(originalJsonld, id);
+                    expect(mappingManagerSvc.getSourceOntologyInfo).toHaveBeenCalledWith(copiedJsonld);
+                    expect(mappingManagerSvc.getSourceOntologies).toHaveBeenCalledWith(sourceOntologyInfo);
+                    expect(mappingManagerSvc.areCompatible).toHaveBeenCalledWith(copiedJsonld, ontologies);
+                    expect(mappingManagerSvc.getAllClassMappings).toHaveBeenCalledWith(copiedJsonld);
+                    expect(mapperStateSvc.getClasses).toHaveBeenCalledWith(ontologies);
+                    expect(mapperStateSvc.sourceOntologies).toEqual(ontologies);
+                    expect(mapperStateSvc.availableClasses).toEqual([unusedClass]);
                     expect(mapperStateSvc.mappingSearchString).toBe('');
                     expect(mapperStateSvc.step).toBe(mapperStateSvc.fileUploadStep);
+                    expect(controller.errorMessage).toBe('');
+                    expect(controller.newMapping.jsonld).toEqual(copiedJsonld);
+                    expect(mapperStateSvc.mapping).toEqual(controller.newMapping);
                     expect(mapperStateSvc.displayCreateMappingOverlay).toBe(false);
                 });
             });
@@ -173,7 +184,6 @@ describe('Create Mapping Overlay directive', function() {
             controller.cancel();
             expect(mapperStateSvc.editMapping).toBe(false);
             expect(mapperStateSvc.newMapping).toBe(false);
-            expect(mapperStateSvc.mapping).toBeUndefined();
             expect(mapperStateSvc.displayCreateMappingOverlay).toBe(false);
         });
     });
@@ -182,11 +192,14 @@ describe('Create Mapping Overlay directive', function() {
             expect(element.hasClass('create-mapping-overlay')).toBe(true);
             expect(element.querySelectorAll('form.content').length).toBe(1);
         });
-        it('with a mapping name input', function() {
-            expect(element.find('mapping-name-input').length).toBe(1);
+        it('with a title field', function() {
+            expect(element.querySelectorAll('input[name="title"]').length).toBe(1);
         });
-        it('with two radio buttons', function() {
-            expect(element.find('radio-button').length).toBe(2);
+        it('with a text-area', function() {
+            expect(element.find('text-area').length).toBe(1);
+        });
+        it('with a keyword-select', function() {
+            expect(element.find('keyword-select').length).toBe(1);
         });
         it('depending on whether an error has occured', function() {
             expect(element.find('error-display').length).toBe(0);
@@ -195,36 +208,11 @@ describe('Create Mapping Overlay directive', function() {
             scope.$digest();
             expect(element.find('error-display').length).toBe(1);
         });
-        it('depending on how many saved mappings there are', function() {
-            mappingManagerSvc.mappingIds = [];
-            scope.$digest();
-            var select = element.find('select');
-            var options = select.querySelectorAll('option');
-            expect(select.attr('disabled')).toBeTruthy();
-            expect(options.length).toBe(1);
-            expect(angular.element(options[0]).hasClass('no-values')).toBe(true);
-
-            mappingManagerSvc.mappingIds = [''];
-            scope.$digest();
-            var options = select.querySelectorAll('option');
-            expect(select.attr('disabled')).toBeFalsy();
-            expect(options.length).toBe(mappingManagerSvc.mappingIds.length);
-        });
-        it('depending on the mapping type being created', function() {
-            controller.mappingType = 'new';
-            scope.$digest();
-            var select = element.find('select');
-            expect(select.attr('required')).toBeFalsy();
-
-            controller.mappingType = 'saved';
-            scope.$digest();
-            expect(select.attr('required')).toBeTruthy();
-        });
         it('depending on the validity of the form', function() {
             var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
-            controller.createMappingForm.$setValidity('test', false);
+            controller.newMapping.record.title = '';
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
@@ -234,10 +222,6 @@ describe('Create Mapping Overlay directive', function() {
             expect(['Cancel', 'Continue']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Continue']).toContain(angular.element(buttons[1]).text().trim());
         });
-    });
-    it('should change the mapping type being created if the saved mapping list is focused on', function() {
-        element.find('select').triggerHandler('focus');
-        expect(controller.mappingType).toBe('saved');
     });
     it('should call continue when the button is clicked', function() {
         spyOn(controller, 'continue');

@@ -122,10 +122,10 @@ describe('Branch Select directive', function() {
                     changeDeferred.resolve();
                     scope.$apply();
                     expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId,
-                        ontologyStateSvc.listItem.recordId, catalogId);
-                    expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                        ontologyStateSvc.listItem.ontologyRecord.recordId, catalogId);
+                    expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                         branchId, commitId);
-                    expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                    expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                         branchId, commitId);
                     expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalled();
                 });
@@ -160,7 +160,7 @@ describe('Branch Select directive', function() {
                 controller.delete();
                 deferred.resolve();
                 scope.$apply();
-                expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                     controller.branch['@id']);
                 expect(controller.showDeleteConfirmation).toBe(false);
             });

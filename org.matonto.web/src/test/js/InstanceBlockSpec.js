@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Instance Block directive', function() {
-    var $compile, scope, element, discoverStateSvc, $httpBackend, exploreSvc, controller, utilSvc;
+    var $compile, scope, element, discoverStateSvc, $httpBackend, exploreSvc, controller, utilSvc, uuid, splitIRI;
 
     beforeEach(function() {
         module('templates');
@@ -29,14 +29,23 @@ describe('Instance Block directive', function() {
         mockDiscoverState();
         mockExplore();
         mockUtil();
+        injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _discoverStateService_, _$httpBackend_, _exploreService_, _utilService_) {
+        module(function($provide) {
+            $provide.service('uuid', function() {
+                this.v4 = jasmine.createSpy('v4').and.returnValue('');
+            });
+        });
+
+        inject(function(_$compile_, _$rootScope_, _discoverStateService_, _$httpBackend_, _exploreService_, _utilService_, _uuid_, _splitIRIFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             discoverStateSvc = _discoverStateService_;
             $httpBackend = _$httpBackend_;
             exploreSvc = _exploreService_;
             utilSvc = _utilService_;
+            uuid = _uuid_;
+            splitIRI = _splitIRIFilter_;
         });
         
         element = $compile(angular.element('<instance-block></instance-block>'))(scope);
@@ -55,8 +64,11 @@ describe('Instance Block directive', function() {
         it('with a block-header', function() {
             expect(element.find('block-header').length).toBe(1);
         });
-        it('with a instance-tab-header', function() {
-            expect(element.find('instance-block-header').length).toBe(1);
+        it('with a breadcrumbs', function() {
+            expect(element.find('breadcrumbs').length).toBe(1);
+        });
+        it('with a button', function() {
+            expect(element.find('button').length).toBe(1);
         });
         it('with a block-content', function() {
             expect(element.querySelectorAll('block-content').length).toBe(1);
@@ -116,6 +128,30 @@ describe('Instance Block directive', function() {
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
                 });
             });
+        });
+        it('create should set the correct variables', function() {
+            discoverStateSvc.explore.creating = false;
+            discoverStateSvc.explore.instanceDetails.data = [{instanceIRI: 'instanceIRI'}];
+            discoverStateSvc.explore.classId = 'classId';
+            splitIRI.and.returnValue({begin: 'begin', then: '/', end: 'end'});
+            controller.create();
+            expect(discoverStateSvc.explore.creating).toBe(true);
+            expect(splitIRI).toHaveBeenCalledWith('instanceIRI');
+            expect(uuid.v4).toHaveBeenCalled();
+            expect(discoverStateSvc.explore.instance.entity[0]['@id']).toContain('begin/');
+            expect(discoverStateSvc.explore.instance.entity[0]['@type']).toEqual(['classId']);
+            expect(_.last(discoverStateSvc.explore.breadcrumbs)).toBe('New Instance');
+            expect(discoverStateSvc.explore.instance.metadata.instanceIRI).toEqual('begin/');
+        });
+        it('getClassName should return the correct value', function() {
+            discoverStateSvc.explore.breadcrumbs = ['not-this', 'class'];
+            expect(controller.getClassName()).toBe('class');
+        });
+        it('button should say [Deprecated] if the class is deprecated', function() {
+            expect(angular.element(element.find('button')[0]).text().trim()).not.toContain('[Deprecated]');
+            discoverStateSvc.explore.classDeprecated = true;
+            scope.$apply();
+            expect(angular.element(element.find('button')[0]).text().trim()).toContain('[Deprecated]');
         });
     });
 });

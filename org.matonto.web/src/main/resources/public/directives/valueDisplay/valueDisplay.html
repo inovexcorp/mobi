@@ -21,6 +21,6 @@
   #L%
   -->
 <span class="value-display">
-    <span ng-if="value['@id']" class="has-id">{{dvm.util.getBeautifulIRI(value['@id'])}} <small>&lt;{{value['@id']}}&gt;</small></span>
-    <span ng-if="value['@value']" class="has-value">{{value['@value']}}<small class="text-muted lang-display" ng-if="value['@language']">[language: {{value['@language']}}]</small><small ng-if="value['@type']" class="text-muted type-display">[type: {{value['@type'] | prefixation}}]</small></span>
+    <span ng-if="dvm.has(value, '@id')" class="has-id">{{dvm.util.getBeautifulIRI(value['@id'])}} <small>&lt;{{value['@id']}}&gt;</small></span>
+    <span ng-if="dvm.has(value, '@value')" class="has-value">{{value['@value']}}<small class="text-muted lang-display" ng-if="value['@language']">[language: {{value['@language']}}]</small><small ng-if="value['@type']" class="text-muted type-display">[type: {{value['@type'] | prefixation}}]</small></span>
 </span>

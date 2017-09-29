@@ -27,9 +27,9 @@
         .module('classAxioms', [])
         .directive('classAxioms', classAxioms);
 
-        classAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService'];
+        classAxioms.$inject = ['ontologyStateService', 'propertyManagerService', 'responseObj', 'prefixes', 'ontologyUtilsManagerService', 'ontologyManagerService'];
 
-        function classAxioms(ontologyStateService, propertyManagerService, responseObj, prefixes, ontologyUtilsManagerService) {
+        function classAxioms(ontologyStateService, propertyManagerService, responseObj, prefixes, ontologyUtilsManagerService, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,6 +38,7 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.pm = propertyManagerService;
                     dvm.ro = responseObj;
@@ -50,17 +51,17 @@
                     }
 
                     dvm.updateHierarchy = function(axiom, values) {
-                        if (_.get(axiom, 'localName') === 'subClassOf') {
+                        if (_.get(axiom, 'localName') === 'subClassOf' && values.length) {
                             var classIRIs = _.map(values, value => dvm.ro.getItemIri(value));
-                            dvm.ontoUtils.setSuperClasses(dvm.os.selected['@id'], classIRIs);
+                            dvm.ontoUtils.setSuperClasses(dvm.os.listItem.selected['@id'], classIRIs);
                             dvm.ontoUtils.updateflatIndividualsHierarchy(classIRIs);
                         }
                     }
 
                     dvm.removeFromHierarchy = function(axiomObject) {
-                        if (prefixes.rdfs + 'subClassOf' === dvm.key) {
-                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.classHierarchy, dvm.os.selected['@id'], axiomObject['@id'], dvm.os.listItem.classIndex);
-                            dvm.os.listItem.flatClassHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.classHierarchy, dvm.os.listItem.recordId);
+                        if (prefixes.rdfs + 'subClassOf' === dvm.key && !om.isBlankNodeId(axiomObject['@id'])) {
+                            dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.classHierarchy, dvm.os.listItem.selected['@id'], axiomObject['@id'], dvm.os.listItem.classIndex);
+                            dvm.os.listItem.flatClassHierarchy = dvm.os.flattenHierarchy(dvm.os.listItem.classHierarchy, dvm.os.listItem.ontologyRecord.recordId);
                             dvm.os.listItem.individualsParentPath = dvm.os.getIndividualsParentPath(dvm.os.listItem);
                             dvm.os.listItem.flatIndividualsHierarchy = dvm.os.createFlatIndividualTree(dvm.os.listItem);
                         }

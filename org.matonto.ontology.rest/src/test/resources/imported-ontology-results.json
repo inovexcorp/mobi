@@ -24,68 +24,70 @@
   {
     "documentFormat": "jsonld",
     "id": "http://matonto.org/imported-ontology-id",
-    "ontology": [
-      {
-        "@id": "https://matonto.org/vocabulary",
-        "@type": [
-          "http://www.w3.org/2002/07/owl#Ontology"
-        ],
-        "http://purl.org/dc/terms/title": [
-          {
-            "@value": "Vocabulary"
-          }
-        ],
-        "http://www.w3.org/2002/07/owl#imports": [
-          {
-            "@id": "http://www.w3.org/2004/02/skos/core#"
-          }
-        ]
-      },
-      {
-        "@id": "https://matonto.org/vocabulary#Concept1",
-        "@type": [
-          "http://www.w3.org/2002/07/owl#NamedIndividual",
-          "https://matonto.org/vocabulary#ConceptSubClass"
-        ],
-        "http://www.w3.org/2004/02/skos/core#narrower": [
-          {
-            "@id": "https://matonto.org/vocabulary#Concept2"
-          }
-        ],
-        "http://www.w3.org/2004/02/skos/core#prefLabel": [
-          {
-            "@value": "Concept 1"
-          }
-        ]
-      },
-      {
-        "@id": "https://matonto.org/vocabulary#Concept2",
-        "@type": [
-          "http://www.w3.org/2002/07/owl#NamedIndividual",
-          "https://matonto.org/vocabulary#ConceptSubClass"
-        ],
-        "http://www.w3.org/2004/02/skos/core#prefLabel": [
-          {
-            "@value": "Concept 2"
-          }
-        ]
-      },
-      {
-        "@id": "https://matonto.org/vocabulary#ConceptSubClass",
-        "@type": [
-          "http://www.w3.org/2002/07/owl#Class"
-        ],
-        "http://www.w3.org/2000/01/rdf-schema#subClassOf": [
-          {
-            "@id": "http://www.w3.org/2004/02/skos/core#Concept"
-          }
-        ],
-        "http://www.w3.org/2004/02/skos/core#prefLabel": [
-          {
-            "@value": "Concept Sub-Class"
-          }
-        ]
-      }
-    ]
+    "ontologyId": "http://matonto.org/imported-ontology-id",
+    "ontology": [{
+      "@id": "https://matonto.org/vocabulary",
+      "@type": ["http://www.w3.org/2002/07/owl#Ontology"],
+      "http://purl.org/dc/terms/title": [{
+        "@value": "Vocabulary"
+      }],
+      "http://www.w3.org/2002/07/owl#imports": [{
+        "@id": "http://www.w3.org/2004/02/skos/core#"
+      }]
+    }, {
+      "@id": "https://matonto.org/vocabulary#Concept1",
+      "@type": ["http://www.w3.org/2002/07/owl#NamedIndividual", "https://matonto.org/vocabulary#ConceptSubClass"],
+      "http://www.w3.org/2004/02/skos/core#narrower": [{
+        "@id": "https://matonto.org/vocabulary#Concept2"
+      }],
+      "http://www.w3.org/2004/02/skos/core#prefLabel": [{
+        "@value": "Concept 1"
+      }]
+    }, {
+      "@id": "https://matonto.org/vocabulary#Concept2",
+      "@type": ["https://matonto.org/vocabulary#ConceptSubClass", "http://www.w3.org/2002/07/owl#NamedIndividual"],
+      "http://www.w3.org/2004/02/skos/core#inScheme": [{
+        "@id": "https://matonto.org/vocabulary#ConceptScheme2"
+      }],
+      "http://www.w3.org/2004/02/skos/core#prefLabel": [{
+        "@value": "Concept 2"
+      }]
+    }, {
+      "@id": "https://matonto.org/vocabulary#Concept3",
+      "@type": ["http://www.w3.org/2002/07/owl#NamedIndividual", "http://www.w3.org/2004/02/skos/core#Concept"],
+      "http://www.w3.org/2004/02/skos/core#prefLabel": [{
+        "@value": "Concept 3"
+      }],
+      "http://www.w3.org/2004/02/skos/core#topConceptOf": [{
+        "@id": "https://matonto.org/vocabulary#ConceptScheme3"
+      }]
+    }, {
+      "@id": "https://matonto.org/vocabulary#ConceptScheme1",
+      "@type": ["https://matonto.org/vocabulary#ConceptSchemeSubClass"],
+      "http://www.w3.org/2004/02/skos/core#hasTopConcept": [{
+        "@id": "https://matonto.org/vocabulary#Concept1"
+      }]
+    }, {
+      "@id": "https://matonto.org/vocabulary#ConceptScheme2",
+      "@type": ["http://www.w3.org/2002/07/owl#NamedIndividual", "http://www.w3.org/2004/02/skos/core#ConceptScheme"]
+    }, {
+      "@id": "https://matonto.org/vocabulary#ConceptScheme3",
+      "@type": ["http://www.w3.org/2004/02/skos/core#ConceptScheme", "http://www.w3.org/2002/07/owl#NamedIndividual"]
+    }, {
+      "@id": "https://matonto.org/vocabulary#ConceptSchemeSubClass",
+      "@type": ["http://www.w3.org/2002/07/owl#Class"],
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf": [{
+        "@id": "http://www.w3.org/2004/02/skos/core#ConceptScheme"
+      }]
+    }, {
+      "@id": "https://matonto.org/vocabulary#ConceptSubClass",
+      "@type": ["http://www.w3.org/2002/07/owl#Class"],
+      "http://www.w3.org/2000/01/rdf-schema#subClassOf": [{
+        "@id": "http://www.w3.org/2004/02/skos/core#Concept"
+      }],
+      "http://www.w3.org/2004/02/skos/core#prefLabel": [{
+        "@value": "Concept Sub-Class"
+      }]
+    }]
   }
 ]

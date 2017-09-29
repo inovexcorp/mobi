@@ -1,0 +1,8 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.instance-creator {
+    .breadcrumb > .active {
+        font-style: italic;
+    }
+}

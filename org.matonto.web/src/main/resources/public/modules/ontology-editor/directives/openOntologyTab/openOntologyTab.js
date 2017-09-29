@@ -28,10 +28,10 @@
         .directive('openOntologyTab', openOntologyTab);
 
         openOntologyTab.$inject = ['$filter', 'ontologyManagerService', 'ontologyStateService', 'prefixes',
-            'stateManagerService', 'utilService'];
+            'stateManagerService', 'utilService', 'mapperStateService'];
 
         function openOntologyTab($filter, ontologyManagerService, ontologyStateService, prefixes,
-            stateManagerService, utilService) {
+            stateManagerService, utilService, mapperStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -45,19 +45,26 @@
                     var sm = stateManagerService;
                     var ontologyRecords = [];
 
+                    dvm.prefixes = prefixes;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
+                    dvm.ms = mapperStateService;
                     dvm.util = utilService;
                     dvm.begin = 0;
                     dvm.limit = 10;
                     dvm.filteredList = [];
                     dvm.type = 'ontology';
 
+                    dvm.openSelected = function(record) {
+                        dvm.recordId = record['@id'];
+                        dvm.recordTitle = dvm.util.getDctermsValue(record, 'title');
+                        dvm.showOpenOverlay = true
+                    }
+
                     dvm.open = function() {
-                        dvm.os.openOntology(dvm.recordId, dvm.type)
+                        dvm.os.openOntology(dvm.recordId, dvm.recordTitle, dvm.type)
                             .then(ontologyId => {
-                                dvm.os.addState(dvm.recordId, ontologyId, dvm.type);
-                                dvm.os.setState(dvm.recordId);
+                                dvm.showOpenOverlay = false;
                             }, errorMessage => dvm.errorMessage = errorMessage);
                     }
 
@@ -73,6 +80,13 @@
                         dvm.recordId = _.get(record, '@id', '');
                         dvm.recordTitle = dvm.util.getDctermsValue(record, 'title');
                         dvm.errorMessage = '';
+
+                        if (_.find(dvm.ms.sourceOntologies, {recordId: dvm.recordId})) {
+                            dvm.mappingErrorMessage = "Warning: The ontology you're about to delete is currently open in the mapping tool.";
+                        } else {
+                            dvm.mappingErrorMessage = '';
+                        }
+
                         dvm.showDeleteConfirmation = true;
                     }
 
@@ -111,7 +125,7 @@
                     dvm.getAllOntologyRecords();
 
                     function getFilteredRecords(records) {
-                        return _.reject(records, record => _.find(dvm.os.list, {recordId: record['@id']}));
+                        return _.reject(records, record => _.find(dvm.os.list, {ontologyRecord: {recordId: record['@id']}}));
                     }
                 }]
             }

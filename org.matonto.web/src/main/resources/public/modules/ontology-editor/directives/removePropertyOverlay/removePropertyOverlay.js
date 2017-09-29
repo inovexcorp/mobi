@@ -27,9 +27,9 @@
         .module('removePropertyOverlay', [])
         .directive('removePropertyOverlay', removePropertyOverlay);
 
-        removePropertyOverlay.$inject = ['ontologyStateService', 'propertyManagerService', 'ontologyUtilsManagerService', 'prefixes'];
+        removePropertyOverlay.$inject = ['ontologyStateService', 'propertyManagerService', 'ontologyUtilsManagerService', 'prefixes', 'ontologyManagerService'];
 
-        function removePropertyOverlay(ontologyStateService, propertyManagerService, ontologyUtilsManagerService, prefixes) {
+        function removePropertyOverlay(ontologyStateService, propertyManagerService, ontologyUtilsManagerService, prefixes, ontologyManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -44,24 +44,34 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var om = ontologyManagerService;
                     var ontoUtils = ontologyUtilsManagerService;
                     dvm.os = ontologyStateService;
                     dvm.pm = propertyManagerService;
 
+                    dvm.getValueDisplay = function() {
+                        return _.get(dvm.os.listItem.selected[dvm.key], '[' + dvm.index + ']["@value"]')
+                            || _.truncate(ontoUtils.getBlankNodeValue(_.get(dvm.os.listItem.selected[dvm.key], '[' + dvm.index + ']["@id"]')), {length: 150})
+                            || _.get(dvm.os.listItem.selected[dvm.key], '[' + dvm.index + ']["@id"]');
+                    }
                     dvm.removeProperty = function() {
                         if (dvm.onSubmit) {
-                            dvm.onSubmit({axiomObject: dvm.os.selected[dvm.key][dvm.index]});
+                            dvm.onSubmit({axiomObject: dvm.os.listItem.selected[dvm.key][dvm.index]});
                         }
                         var json = {
-                            '@id': dvm.os.selected['@id'],
-                            [dvm.key]: [angular.copy(dvm.os.selected[dvm.key][dvm.index])]
+                            '@id': dvm.os.listItem.selected['@id'],
+                            [dvm.key]: [angular.copy(dvm.os.listItem.selected[dvm.key][dvm.index])]
+                        };
+                        dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, json);
+                        if (om.isBlankNodeId(dvm.os.listItem.selected[dvm.key][dvm.index]['@id'])) {
+                            var removed = dvm.os.removeEntity(dvm.os.listItem, dvm.os.listItem.selected[dvm.key][dvm.index]['@id']);
+                            _.forEach(removed, entity => dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, entity));
                         }
-                        dvm.os.addToDeletions(dvm.os.listItem.recordId, json);
-                        dvm.pm.remove(dvm.os.selected, dvm.key, dvm.index);
-                        if (prefixes.rdfs + 'domain' === dvm.key) {
+                        dvm.pm.remove(dvm.os.listItem.selected, dvm.key, dvm.index);
+                        if (prefixes.rdfs + 'domain' === dvm.key && !om.isBlankNodeId(dvm.os.listItem.selected[dvm.key][dvm.index]['@id'])) {
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         } else if (prefixes.rdfs + 'range' === dvm.key) {
-                            dvm.os.updatePropertyIcon(dvm.os.selected);
+                            dvm.os.updatePropertyIcon(dvm.os.listItem.selected);
                         }
                         dvm.overlayFlag = false;
                         ontoUtils.saveCurrentChanges();

@@ -36,11 +36,9 @@ describe('Ontology Editor Tabset directive', function() {
             ontologyStateSvc = _ontologyStateService_;
         });
 
-        ontologyStateSvc.list = [{recordId: 'A', upToDate: false}, {recordId: 'B', upToDate: true}];
-        var types = {'A': 'ontology', 'B': 'vocabulary'};
-        ontologyStateSvc.getState.and.callFake(function(id) {
-            return {type: _.get(types, id)};
-        });
+        listItemA = { ontologyId: 'A', ontologyRecord: { recordId: 'A', recordTitle: 'A', type: 'ontology'}, ontologyState: { active: false, upToDate: false }};
+        listItemB = { ontologyId: 'B', ontologyRecord: { recordId: 'B', recordTitle: 'B', type: 'vocabulary'}, ontologyState: { active: false, upToDate: true }};
+        ontologyStateSvc.list = [listItemA, listItemB];
         element = $compile(angular.element('<ontology-editor-tabset></ontology-editor-tabset>'))(scope);
         scope.$digest();
     });
@@ -74,6 +72,7 @@ describe('Ontology Editor Tabset directive', function() {
     describe('controller methods', function() {
         beforeEach(function() {
             controller = element.controller('ontologyEditorTabset');
+            ontologyStateSvc.listItem = listItemA;
         });
         describe('should close a tab', function() {
             beforeEach(function() {
@@ -81,19 +80,32 @@ describe('Ontology Editor Tabset directive', function() {
                 ontologyStateSvc.showCloseOverlay = false;
             });
             it('if it has changes', function() {
-                controller.onClose('record');
-                expect(ontologyStateSvc.recordIdToClose).toBe('record');
+                controller.onClose('A');
+                expect(ontologyStateSvc.recordIdToClose).toBe('A');
                 expect(ontologyStateSvc.showCloseOverlay).toBe(true);
-                expect(ontologyStateSvc.deleteState).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.closeOntology).not.toHaveBeenCalled();
             });
             it('if it has no changes', function() {
+                ontologyStateSvc.listItem = listItemB;
                 ontologyStateSvc.hasChanges.and.returnValue(false);
-                controller.onClose('record');
+                controller.onClose('B');
                 expect(ontologyStateSvc.recordIdToClose).toBe('');
                 expect(ontologyStateSvc.showCloseOverlay).toBe(false);
-                expect(ontologyStateSvc.deleteState).toHaveBeenCalledWith('record');
-                expect(ontologyStateSvc.closeOntology).toHaveBeenCalledWith('record');
+                expect(ontologyStateSvc.closeOntology).toHaveBeenCalledWith('B');
+            });
+        });
+        describe('onClick should set the listItem and page title correctly if recordId is', function() {
+            it('defined', function() {
+                ontologyStateSvc.getListItemByRecordId.and.returnValue({ontologyRecord: {type: 'type'}});
+                controller.onClick('recordId');
+                expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith('recordId');
+                expect(ontologyStateSvc.listItem).toEqual({ontologyRecord: {type: 'type'}});
+                expect(ontologyStateSvc.setPageTitle).toHaveBeenCalledWith('type');
+            });
+            it('undefined', function() {
+                controller.onClick(undefined);
+                expect(ontologyStateSvc.getListItemByRecordId).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.setPageTitle).toHaveBeenCalled();
             });
         });
     });

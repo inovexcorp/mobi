@@ -28,6 +28,8 @@
             /* Custom Directives */
             'datasetsList',
             'datasetsTabset',
-            'newDatasetOverlay'
+            'editDatasetOverlay',
+            'newDatasetOverlay',
+            'datasetsOntologyPicker'
         ]);
 })();

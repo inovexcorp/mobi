@@ -1,0 +1,9 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.file-upload-page {
+    .form-block {
+        display: flex;
+        flex-direction: column;
+    }
+}

@@ -21,20 +21,7 @@
  * #L%
  */
 describe('Custom Header directive', function() {
-    var $compile,
-        scope,
-        catalogStateSvc,
-        catalogManagerSvc,
-        ontologyManagerSvc,
-        ontologyStateSvc,
-        mappingManagerSvc,
-        mapperStateSvc,
-        delimitedManagerSvc,
-        sparqlManagerSvc,
-        loginManagerSvc,
-        userStateSvc,
-        userManagerSvc,
-        controller;
+    var $compile, scope, element, controller, isolatedScope, catalogStateSvc, catalogManagerSvc, ontologyManagerSvc, ontologyStateSvc, mapperStateSvc, delimitedManagerSvc, sparqlManagerSvc, loginManagerSvc, userStateSvc, userManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -43,7 +30,6 @@ describe('Custom Header directive', function() {
         mockCatalogManager();
         mockOntologyManager();
         mockOntologyState();
-        mockMappingManager();
         mockMapperState();
         mockDelimitedManager();
         mockSparqlManager();
@@ -51,14 +37,13 @@ describe('Custom Header directive', function() {
         mockUserState();
         mockUserManager();
 
-        inject(function(_$compile_, _$rootScope_, _catalogStateService_, _catalogManagerService_, _ontologyManagerService_, _ontologyStateService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _sparqlManagerService_, _loginManagerService_, _userStateService_, _userManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _catalogStateService_, _catalogManagerService_, _ontologyManagerService_, _ontologyStateService_, _mapperStateService_, _delimitedManagerService_, _sparqlManagerService_, _loginManagerService_, _userStateService_, _userManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             catalogStateSvc = _catalogStateService_;
             catalogManagerSvc = _catalogManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
-            mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
             sparqlManagerSvc = _sparqlManagerService_;
@@ -68,24 +53,20 @@ describe('Custom Header directive', function() {
         });
 
         scope.pageTitle = '';
-        this.element = $compile(angular.element('<custom-header page-title="pageTitle"></custom-header>'))(scope);
+        element = $compile(angular.element('<custom-header page-title="pageTitle"></custom-header>'))(scope);
         scope.$digest();
+        isolatedScope = element.isolateScope();
+        controller = element.controller('customHeader');
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            this.isolatedScope = this.element.isolateScope();
-        });
         it('pageTitle should be one way bound', function() {
-            this.isolatedScope.pageTitle = 'Title';
+            isolatedScope.pageTitle = 'Title';
             scope.$digest();
             expect(scope.pageTitle).toEqual('');
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = this.element.controller('customHeader');
-        });
         it('should log out of the application', function() {
             controller.logout();
             expect(catalogStateSvc.reset).toHaveBeenCalled();
@@ -93,7 +74,6 @@ describe('Custom Header directive', function() {
             expect(ontologyManagerSvc.reset).toHaveBeenCalled();
             expect(mapperStateSvc.initialize).toHaveBeenCalled();
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(mappingManagerSvc.reset).toHaveBeenCalled();
             expect(delimitedManagerSvc.reset).toHaveBeenCalled();
             expect(sparqlManagerSvc.reset).toHaveBeenCalled();
             expect(loginManagerSvc.logout).toHaveBeenCalled();
@@ -103,17 +83,17 @@ describe('Custom Header directive', function() {
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('main-header')).toBe(true);
-            expect(this.element.querySelectorAll('.actions').length).toBe(1);
+            expect(element.hasClass('main-header')).toBe(true);
+            expect(element.querySelectorAll('.actions').length).toBe(1);
         });
         it('for user management item', function(){
             userManagerSvc.isAdmin.and.returnValue(false);
             scope.$digest();
-            expect(this.element.find('li').length).toBe(4);
-            
+            expect(element.find('li').length).toBe(4);
+
             userManagerSvc.isAdmin.and.returnValue(true);
             scope.$digest();
-            expect(this.element.find('li').length).toBe(6);
+            expect(element.find('li').length).toBe(6);
         });
     });
 });

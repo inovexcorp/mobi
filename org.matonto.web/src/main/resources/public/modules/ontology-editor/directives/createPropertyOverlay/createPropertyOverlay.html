@@ -40,7 +40,7 @@
             <radio-button ng-model="dvm.property['@type']" value="[dvm.prefixes.owl + 'AnnotationProperty']" display-text="'Annotation Property'" inline="true" change-event="dvm.typeChange()"></radio-button>
             <div ng-if="dvm.om.isObjectProperty(dvm.property) || dvm.om.isDataTypeProperty(dvm.property)">
                 <p class="identifier"><strong>Characteristics</strong></p>
-                <checkbox ng-model="dvm.checkbox" display-text="'Functional Property'"></checkbox>
+                <checkbox ng-repeat="obj in dvm.characteristics | filter:dvm.characteristicsFilter" ng-model="obj.checked" display-text="obj.displayText"></checkbox>
                 <object-select ng-model="dvm.property[dvm.prefixes.rdfs + 'domain']" display-text="'Domain'"
                                muted-text="'(Optional)'" select-list="dvm.os.listItem.subClasses"></object-select>
                 <object-select ng-if="dvm.om.isObjectProperty(dvm.property)" class="range-object" ng-model="dvm.property[dvm.prefixes.rdfs + 'range']"

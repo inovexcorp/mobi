@@ -46,7 +46,7 @@ describe('Ontology Properties Block directive', function() {
             resObj = _responseObj_;
         });
 
-        ontologyStateSvc.selected = {
+        ontologyStateSvc.listItem.selected = {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
@@ -72,7 +72,7 @@ describe('Ontology Properties Block directive', function() {
         });
         it('depending on how many ontology properties there are', function() {
             expect(element.find('property-values').length).toBe(2);
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(element.find('property-values').length).toBe(0);
         });
@@ -108,7 +108,7 @@ describe('Ontology Properties Block directive', function() {
         });
         it('should set the correct manager values when editing an ontology property', function() {
             var propertyIRI = 'prop1';
-            ontologyStateSvc.selected = {
+            ontologyStateSvc.listItem.selected = {
                 'prop1': [{'@value': 'value', '@type': 'type', '@id': 'id', '@language': 'lang'}]
             };
             ontologyStateSvc.listItem.dataPropertyRange = ['type'];

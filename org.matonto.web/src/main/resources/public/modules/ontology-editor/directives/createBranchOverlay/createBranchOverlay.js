@@ -54,14 +54,14 @@
                         if (dvm.branchConfig.description === '') {
                             _.unset(dvm.branchConfig, 'description');
                         }
-                        cm.createRecordBranch(dvm.os.listItem.recordId, catalogId, dvm.branchConfig,
-                            dvm.os.listItem.commitId).then(branchId =>
-                                cm.getRecordBranch(branchId, dvm.os.listItem.recordId, catalogId)
+                        cm.createRecordBranch(dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.branchConfig,
+                            dvm.os.listItem.ontologyRecord.commitId).then(branchId =>
+                                cm.getRecordBranch(branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                                     .then(branch => {
                                         dvm.os.listItem.branches.push(branch);
-                                        dvm.os.listItem.branchId = branch['@id'];
+                                        dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
                                         var commitId = branch[prefixes.catalog + 'head'][0]['@id'];
-                                        sm.updateOntologyState(dvm.os.listItem.recordId, branchId, commitId)
+                                        sm.updateOntologyState(dvm.os.listItem.ontologyRecord.recordId, branchId, commitId)
                                             .then(() => dvm.os.showCreateBranchOverlay = false, onError);
                                     }, onError), onError);
                     }

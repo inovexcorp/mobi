@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.8.4-SNAPSHOT</version>
+        <version>1.9.24-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -41,22 +41,22 @@
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm</artifactId>
-            <version>${orm.version}</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>rdf.orm.ontologies</artifactId>
-            <version>1.7.20</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>api</artifactId>
-            <version>1.7.20</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.matonto</groupId>
             <artifactId>jaas.api</artifactId>
-            <version>1.7.20</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>biz.aQute.bnd</groupId>
@@ -105,8 +105,16 @@
                             </generates>
                             <references>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/matonto_user_management.ttl</ontologyFile>
+                                    <ontologyFile>${project.basedir}/../org.matonto.jaas.api/src/main/resources/matonto_user_management.ttl</ontologyFile>
                                     <outputPackage>org.matonto.jaas.api.ontologies.usermanagement</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../org.matonto.rdf.orm.ontologies/src/main/resources/foaf.owl</ontologyFile>
+                                    <outputPackage>org.matonto.ontologies.foaf</outputPackage>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/../org.matonto.rdf.orm.ontologies/src/main/resources/prov-o.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.ontologies.provo</outputPackage>
                                 </ontology>
                             </references>
                             <outputLocation>${project.basedir}/src/main/java</outputLocation>

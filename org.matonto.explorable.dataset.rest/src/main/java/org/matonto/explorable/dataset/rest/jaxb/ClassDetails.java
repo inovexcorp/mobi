@@ -35,6 +35,7 @@ public class ClassDetails {
     private int instancesCount;
     private List<String> classExamples;
     private String ontologyRecordTitle;
+    private boolean deprecated;
 
     @XmlElement
     public String getClassIRI() {
@@ -88,5 +89,14 @@ public class ClassDetails {
 
     public void setOntologyRecordTitle(String ontologyRecordTitle) {
         this.ontologyRecordTitle = ontologyRecordTitle;
+    }
+
+    @XmlElement
+    public boolean isDeprecated() {
+        return deprecated;
+    }
+
+    public void setDeprecated(boolean deprecated) {
+        this.deprecated = deprecated;
     }
 }

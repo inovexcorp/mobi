@@ -29,11 +29,11 @@
             <hierarchy-tree hierarchy="dvm.os.listItem.flatClassHierarchy"></hierarchy-tree>
         </block-content>
         <block-footer class="centered">
-            <button class="btn btn-link" ng-disabled="!dvm.os.selected || dvm.os.selected.matonto.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Class</span></button>
+            <button class="btn btn-link" ng-disabled="!dvm.os.listItem.selected || dvm.os.listItem.selected.matonto.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Class</span></button>
         </block-footer>
     </block>
     <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Class'" confirm-click="dvm.deleteClass()"
                           cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
-        <p>Are you sure that you want to delete <strong>{{dvm.os.selected['@id']}}</strong>?</p>
+        <p>Are you sure that you want to delete <strong>{{dvm.os.listItem.selected['@id']}}</strong>?</p>
     </confirmation-overlay>
 </div>

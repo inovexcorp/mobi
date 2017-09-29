@@ -20,14 +20,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="mapper-tabset">
-    <tabset>
-        <tabset class="centered">
-            <tab heading="'Mappings'" active="true">
-                <mapping-select-page ng-if="dvm.state.step === dvm.state.selectMappingStep"></mapping-select-page>
-                <file-upload-page ng-if="dvm.state.step === dvm.state.fileUploadStep"></file-upload-page>
-                <edit-mapping-page ng-if="dvm.state.step === dvm.state.editMappingStep"></edit-mapping-page>
+<div class="mapper-tabset full-height">
+    <div class="blue-bar"></div>
+    <div class="mapper-page-content">
+        <div class="white-bar" ng-if="dvm.state.step !== dvm.state.editMappingStep"></div>
+        <mapping-select-page ng-if="dvm.state.step === dvm.state.selectMappingStep"></mapping-select-page>
+        <file-upload-page ng-if="dvm.state.step === dvm.state.fileUploadStep"></file-upload-page>
+        <tabset class="centered" ng-if="dvm.state.step === dvm.state.editMappingStep">
+            <tab heading="'Edit'" active="dvm.state.editTabs.edit">
+                <edit-mapping-page></edit-mapping-page>
+            </tab>
+            <tab heading="'Commits'" active="dvm.state.editTabs.commits">
+                <mapping-commits-page></mapping-commits-page>
             </tab>
         </tabset>
-    </tabset>
+    </div>
 </div>

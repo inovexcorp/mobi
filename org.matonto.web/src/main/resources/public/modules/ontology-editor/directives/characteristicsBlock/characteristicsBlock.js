@@ -27,9 +27,9 @@
         .module('characteristicsBlock', [])
         .directive('characteristicsBlock', characteristicsBlock);
 
-        characteristicsBlock.$inject = ['prefixes', 'ontologyStateService', 'ontologyUtilsManagerService'];
+        characteristicsBlock.$inject = ['prefixes', 'ontologyStateService', 'ontologyManagerService', 'ontologyUtilsManagerService'];
 
-        function characteristicsBlock(prefixes, ontologyStateService, ontologyUtilsManagerService) {
+        function characteristicsBlock(prefixes, ontologyStateService, ontologyManagerService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,26 +38,42 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    var functionalPropertyIRI = prefixes.owl + 'FunctionalProperty';
                     var ontoUtils = ontologyUtilsManagerService;
+                    var om = ontologyManagerService;
                     dvm.os = ontologyStateService;
-                    dvm.functional = false;
+                    dvm.characteristics = [
+                        {
+                            checked: false,
+                            typeIRI: prefixes.owl + 'FunctionalProperty',
+                            displayText: 'Functional Property',
+                            objectOnly: false
+                        },
+                        {
+                            checked: false,
+                            typeIRI: prefixes.owl + 'AsymmetricProperty',
+                            displayText: 'Asymmetric Property',
+                            objectOnly: true
+                        }
+                    ];
 
-                    dvm.onChange = function() {
-                        if (dvm.functional) {
-                            _.set(dvm.os.selected, '@type', _.concat(_.get(dvm.os.selected, '@type', []), functionalPropertyIRI));
-                            handleCase(dvm.os.listItem.deletions, dvm.os.addToAdditions);
+                    dvm.filter = function(obj) {
+                        return !obj.objectOnly || om.isObjectProperty(dvm.os.listItem.selected);
+                    }
+                    dvm.onChange = function(characteristicObj) {
+                        if (characteristicObj.checked) {
+                            _.set(dvm.os.listItem.selected, '@type', _.concat(_.get(dvm.os.listItem.selected, '@type', []), characteristicObj.typeIRI));
+                            handleCase(dvm.os.listItem.deletions, dvm.os.addToAdditions, characteristicObj.typeIRI);
                         } else {
-                            removeTypeFrom(dvm.os.selected, functionalPropertyIRI);
-                            handleCase(dvm.os.listItem.additions, dvm.os.addToDeletions);
+                            removeTypeFrom(dvm.os.listItem.selected, characteristicObj.typeIRI);
+                            handleCase(dvm.os.listItem.additions, dvm.os.addToDeletions, characteristicObj.typeIRI);
                         }
                         ontoUtils.saveCurrentChanges();
                     }
 
-                    function handleCase(array, method) {
-                        var match = _.find(array, item => _.includes(_.get(item, '@type', []), functionalPropertyIRI));
+                    function handleCase(array, method, typeIRI) {
+                        var match = _.find(array, item => _.includes(_.get(item, '@type', []), typeIRI));
                         if (match) {
-                            removeTypeFrom(match, functionalPropertyIRI);
+                            removeTypeFrom(match, typeIRI);
                             if (!_.get(match, '@type', []).length) {
                                 _.unset(match, '@type');
                             }
@@ -65,9 +81,9 @@
                                 _.remove(array, match);
                             }
                         } else {
-                            method(dvm.os.listItem.recordId, {
-                                '@id': dvm.os.selected['@id'],
-                                '@type': [functionalPropertyIRI]
+                            method(dvm.os.listItem.ontologyRecord.recordId, {
+                                '@id': dvm.os.listItem.selected['@id'],
+                                '@type': [typeIRI]
                             });
                         }
                     }
@@ -77,12 +93,14 @@
                     }
 
                     function setVariables() {
-                        dvm.functional = _.includes(_.get(dvm.os.selected, '@type', []), functionalPropertyIRI);
+                        _.forEach(dvm.characteristics, obj => {
+                            obj.checked = _.includes(_.get(dvm.os.listItem.selected, '@type', []), obj.typeIRI);
+                        });
                     }
 
                     setVariables();
 
-                    $scope.$watch('dvm.os.selected', setVariables);
+                    $scope.$watch('dvm.os.listItem.selected', setVariables);
                 }]
             }
         }

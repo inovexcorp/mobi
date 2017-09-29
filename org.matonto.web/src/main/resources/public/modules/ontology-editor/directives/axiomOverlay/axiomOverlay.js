@@ -27,9 +27,9 @@
         .module('axiomOverlay', [])
         .directive('axiomOverlay', axiomOverlay);
 
-        axiomOverlay.$inject = ['responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes'];
+        axiomOverlay.$inject = ['responseObj', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService', 'prefixes', 'manchesterConverterService', 'ontologyManagerService', '$filter'];
 
-        function axiomOverlay(responseObj, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes) {
+        function axiomOverlay(responseObj, ontologyStateService, utilService, ontologyUtilsManagerService, prefixes, manchesterConverterService, ontologyManagerService, $filter) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -41,26 +41,73 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var mc = manchesterConverterService;
+                    var om = ontologyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
+                    dvm.errorMessage = '';
+                    dvm.axiom = undefined;
+                    dvm.values = [];
+                    dvm.expression = '';
+                    dvm.tabs = {
+                        list: true,
+                        editor: false
+                    };
+                    var localNameMap = createLocalNameMap();
+                    dvm.editorOptions = {
+                        mode: 'text/omn',
+                        indentUnit: 4,
+                        lineWrapping: true,
+                        matchBrackets: true,
+                        readOnly: 'nocursor',
+                        noNewlines: true,
+                        localNames: _.keys(localNameMap)
+                    };
 
                     dvm.addAxiom = function() {
-                        var values = [];
-                        _.forEach(dvm.values, value => values.push({'@id': dvm.ro.getItemIri(value)}));
                         var axiom = dvm.ro.getItemIri(dvm.axiom);
-                        if (_.has(dvm.os.selected, axiom)) {
-                            dvm.os.selected[axiom] = _.union(dvm.os.selected[axiom], values);
+                        var values;
+                        // Collect values depending on current tab
+                        if (dvm.tabs.editor) {
+                            var result = mc.manchesterToJsonld(dvm.expression, localNameMap, om.isDataTypeProperty(dvm.os.listItem.selected));
+                            if (result.errorMessage) {
+                                dvm.errorMessage = result.errorMessage;
+                                return;
+                            } else if (result.jsonld.length === 0) {
+                                dvm.errorMessage = 'Expression resulted in no values. Please try again.';
+                                return;
+                            } else {
+                                var bnodeId = result.jsonld[0]['@id'];
+                                values = [{'@id': bnodeId}];
+                                _.forEach(result.jsonld, obj => {
+                                    dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, obj);
+                                    dvm.os.addEntity(dvm.os.listItem, obj);
+                                });
+                                dvm.os.listItem.blankNodes[bnodeId] = dvm.expression;
+                            }
+                        } else if (dvm.tabs.list) {
+                            values = _.map(dvm.values, value => ({'@id': dvm.ro.getItemIri(value)}));
+                        }
+                        if (_.has(dvm.os.listItem.selected, axiom)) {
+                            dvm.os.listItem.selected[axiom] = _.union(dvm.os.listItem.selected[axiom], values);
                         } else {
-                            dvm.os.selected[axiom] = values;
+                            dvm.os.listItem.selected[axiom] = values;
                         }
                         if (axiom === prefixes.rdfs + 'range') {
-                            dvm.os.updatePropertyIcon(dvm.os.selected);
+                            dvm.os.updatePropertyIcon(dvm.os.listItem.selected);
                         }
-                        dvm.os.addToAdditions(dvm.os.listItem.recordId, {'@id': dvm.os.selected['@id'], [axiom]: values});
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [axiom]: values});
                         dvm.os.showAxiomOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
+                    }
+                    function createLocalNameMap() {
+                        var map = {};
+                        _.forEach(dvm.os.listItem.iriList, iri => {
+                            map[($filter('splitIRI')(iri)).end] = iri;
+                        });
+                        return map;
                     }
                 }
             }

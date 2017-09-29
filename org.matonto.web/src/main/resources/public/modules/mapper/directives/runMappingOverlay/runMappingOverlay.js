@@ -38,10 +38,12 @@
          * @name runMappingOverlay.directive:runMappingOverlay
          * @scope
          * @restrict E
-         * @requires  $filter
-         * @requires  ontologyManager.service:ontologyManagerService
-         * @requires  mappingManager.service:mappingManagerService
-         * @requires  mapperState.service:mapperStateService
+         * @requires $filter
+         * @requires mapperState.service:mapperStateService
+         * @requires delimitedManager.service:delimitedManagerService
+         * @requires datasetManager.service:datasetManagerService
+         * @requires util.service:utilService
+         * @requires prefixes.service:prefixes
          *
          * @description
          * `runMappingOverlay` is a directive that creates an overlay containing a configuration settings
@@ -53,9 +55,9 @@
          */
         .directive('runMappingOverlay', runMappingOverlay);
 
-        runMappingOverlay.$inject = ['$filter', 'mapperStateService', 'mappingManagerService', 'delimitedManagerService', 'datasetManagerService', 'utilService', 'prefixes'];
+        runMappingOverlay.$inject = ['$filter', 'mapperStateService', 'delimitedManagerService', 'datasetManagerService', 'utilService', 'prefixes'];
 
-        function runMappingOverlay($filter, mapperStateService, mappingManagerService, delimitedManagerService, datasetManagerService, utilService, prefixes) {
+        function runMappingOverlay($filter, mapperStateService, delimitedManagerService, datasetManagerService, utilService, prefixes) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -64,11 +66,10 @@
                 controller: function() {
                     var dvm = this;
                     dvm.state = mapperStateService;
-                    dvm.mm = mappingManagerService;
                     dvm.dm = delimitedManagerService;
                     dvm.dam = datasetManagerService;
                     dvm.util = utilService;
-                    dvm.fileName = ($filter('splitIRI')(dvm.state.mapping.id)).end;
+                    dvm.fileName = $filter('camelCase')(dvm.state.mapping.record.title, 'class');
                     dvm.format = 'turtle';
                     dvm.errorMessage = '';
                     dvm.runMethod = 'download';
@@ -80,13 +81,9 @@
 
                     dvm.run = function() {
                         if (dvm.state.editMapping) {
-                            if (_.includes(dvm.mm.mappingIds, dvm.state.mapping.id)) {
-                                dvm.mm.updateMapping(dvm.state.mapping.id, dvm.state.mapping.jsonld).then(runMapping, onError);
-                            } else {
-                                dvm.mm.upload(dvm.state.mapping.jsonld, dvm.state.mapping.id).then(runMapping, onError);
-                            }
+                            dvm.state.saveMapping().then(runMapping, onError);
                         } else {
-                            runMapping();
+                            runMapping(dvm.state.mapping.record.id);
                         }
                     }
                     dvm.cancel = function() {
@@ -96,17 +93,16 @@
                     function onError(errorMessage) {
                         dvm.errorMessage = errorMessage;
                     }
-                    function runMapping() {
+                    function runMapping(id) {
+                        dvm.state.mapping.record.id = id;
                         if (dvm.runMethod === 'download') {
-                            dvm.state.changedMapping = false;
-                            dvm.dm.mapAndDownload(dvm.state.mapping.id, dvm.format, dvm.fileName);
+                            dvm.dm.mapAndDownload(id, dvm.format, dvm.fileName);
                             reset();
                         } else {
-                            dvm.dm.mapAndUpload(dvm.state.mapping.id, dvm.datasetRecordIRI).then(reset, onError);
+                            dvm.dm.mapAndUpload(id, dvm.datasetRecordIRI).then(reset, onError);
                         }
                     }
                     function reset() {
-                        dvm.state.changedMapping = false;
                         dvm.state.step = dvm.state.selectMappingStep;
                         dvm.state.initialize();
                         dvm.state.resetEdit();

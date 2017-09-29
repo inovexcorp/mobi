@@ -62,7 +62,7 @@ describe('Axiom Block directive', function() {
         it('based on whether something is selected', function() {
             expect(element.querySelectorAll('block-header a').length).toBe(1);
 
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
             expect(element.querySelectorAll('block-header a').length).toBe(0);
         });

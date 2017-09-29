@@ -87,6 +87,7 @@ describe('Saved Changes Tab directive', function() {
         it('with statement-display dependent on how many additions/deletions there are', function() {
             expect(element.find('statement-display').length).toBe(0);
             ontologyStateSvc.listItem.inProgressCommit.additions = [{'@id': 'id', 'value': ['stuff']}];
+            ontologyStateSvc.listItem.ontologyState.upToDate = false;
             utilSvc.getChangesById.and.returnValue([{}]);
             scope.$apply();
             expect(element.find('statement-display').length).toBe(2);
@@ -95,7 +96,7 @@ describe('Saved Changes Tab directive', function() {
             expect(element.querySelectorAll('block-content .text-center info-message').length).toBe(1);
             expect(element.querySelectorAll('block-content .text-center error-display').length).toBe(0);
 
-            ontologyStateSvc.listItem.upToDate = false;
+            ontologyStateSvc.listItem.ontologyState.upToDate = false;
             scope.$digest();
             expect(element.querySelectorAll('block-content .text-center info-message').length).toBe(0);
             expect(element.querySelectorAll('block-content .text-center error-display').length).toBe(1);
@@ -104,7 +105,7 @@ describe('Saved Changes Tab directive', function() {
             scope.$digest();
             expect(element.querySelectorAll('block-header error-display').length).toBe(1);
 
-            ontologyStateSvc.listItem.upToDate = true;
+            ontologyStateSvc.listItem.ontologyState.upToDate = true;
             scope.$digest();
             expect(element.querySelectorAll('block-header error-display').length).toBe(0);
         });
@@ -127,8 +128,8 @@ describe('Saved Changes Tab directive', function() {
                 ontologyStateSvc.updateOntology.and.returnValue($q.reject('Error message'));
                 controller.update();
                 scope.$apply();
-                expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.recordId, jasmine.any(String));
-                expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, this.commitId, ontologyStateSvc.listItem.type);
+                expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(String));
+                expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, this.commitId, ontologyStateSvc.listItem.ontologyRecord.type);
                 expect(utilSvc.createSuccessToast).not.toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
             });
@@ -136,8 +137,8 @@ describe('Saved Changes Tab directive', function() {
                 ontologyStateSvc.updateOntology.and.returnValue($q.when());
                 controller.update();
                 scope.$apply();
-                expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.recordId, jasmine.any(String));
-                expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, this.commitId, ontologyStateSvc.listItem.type);
+                expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(String));
+                expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, this.commitId, ontologyStateSvc.listItem.ontologyRecord.type);
                 expect(utilSvc.createSuccessToast).toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
@@ -161,14 +162,14 @@ describe('Saved Changes Tab directive', function() {
                 it('and updateOntology resolves', function() {
                     updateDeferred.resolve();
                     scope.$digest();
-                    expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, catalogId);
-                    expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.state.type, ontologyStateSvc.listItem.upToDate);
+                    expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, catalogId);
+                    expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate);
                     expect(ontologyStateSvc.clearInProgressCommit).toHaveBeenCalled();
                 });
                 it('and updateOntology rejects', function() {
                     updateDeferred.reject('error');
                     scope.$digest();
-                    expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, catalogId);
+                    expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, catalogId);
                     expect(controller.error).toEqual('error');
                 });
             });
@@ -176,7 +177,7 @@ describe('Saved Changes Tab directive', function() {
                 deleteDeferred.reject('error');
                 controller.removeChanges();
                 scope.$digest();
-                expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, catalogId);
+                expect(catalogManagerSvc.deleteInProgressCommit).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, catalogId);
                 expect(controller.error).toBe('error');
             });
         });
@@ -309,18 +310,18 @@ describe('Saved Changes Tab directive', function() {
                         updateDeferred.resolve();
                         controller.removeChecked();
                         scope.$apply();
-                        expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+                        expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.listItem.type, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
+                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit);
                         expect(utilSvc.createSuccessToast).toHaveBeenCalledWith('Checked changes removed');
                     });
                     it('and updateOntology rejects', function() {
                         updateDeferred.reject('error');
                         controller.removeChecked();
                         scope.$apply();
-                        expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+                        expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, ontologyStateSvc.listItem.branchId, ontologyStateSvc.listItem.commitId, ontologyStateSvc.listItem.type, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
+                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit);
                         expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
                     });
                 });
@@ -328,7 +329,7 @@ describe('Saved Changes Tab directive', function() {
                     afterDeferred.reject('error');
                     controller.removeChecked();
                     scope.$apply();
-                    expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+                    expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
                 });
@@ -337,7 +338,7 @@ describe('Saved Changes Tab directive', function() {
                 saveDeferred.reject('error');
                 controller.removeChecked();
                 scope.$apply();
-                expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId, jasmine.any(Object));
+                expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
             });
         });
@@ -356,7 +357,7 @@ describe('Saved Changes Tab directive', function() {
         });
     });
     it('should call update when the link is clicked', function() {
-        ontologyStateSvc.listItem.upToDate = false;
+        ontologyStateSvc.listItem.ontologyState.upToDate = false;
         scope.$digest();
         spyOn(controller, 'update');
         var link = angular.element(element.querySelectorAll('block-content .text-center error-display a')[0]);

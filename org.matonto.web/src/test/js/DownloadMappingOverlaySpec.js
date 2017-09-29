@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Download Mapping Overlay directive', function() {
-    var $compile,
-        scope,
-        mappingManagerSvc,
-        mapperStateSvc,
-        controller;
+    var $compile, scope, element, controller, mappingManagerSvc, mapperStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -42,18 +38,16 @@ describe('Download Mapping Overlay directive', function() {
             mappingManagerSvc = _mappingManagerService_;
         });
 
-        mapperStateSvc.mapping = {id: ''};
-        this.element = $compile(angular.element('<download-mapping-overlay></download-mapping-overlay>'))(scope);
+        mapperStateSvc.mapping = {record: {id: '', title: ''}};
+        element = $compile(angular.element('<download-mapping-overlay></download-mapping-overlay>'))(scope);
         scope.$digest();
+        controller = element.controller('downloadMappingOverlay');
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = this.element.controller('downloadMappingOverlay');
-        });
         it('should download a mapping', function() {
             controller.download();
-            expect(mappingManagerSvc.downloadMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.id, controller.downloadFormat);
+            expect(mappingManagerSvc.downloadMapping).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, controller.downloadFormat);
             expect(mapperStateSvc.displayDownloadMappingOverlay).toBe(false);
         });
         it('should set the correct state for canceling', function() {
@@ -63,15 +57,14 @@ describe('Download Mapping Overlay directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.element.hasClass('download-mapping-overlay')).toBe(true);
-            expect(this.element.querySelectorAll('form.content').length).toBe(1);
+            expect(element.hasClass('download-mapping-overlay')).toBe(true);
+            expect(element.querySelectorAll('form.content').length).toBe(1);
         });
         it('with a mapper serialization select', function() {
-            expect(this.element.find('mapper-serialization-select').length).toBe(1);
+            expect(element.find('mapper-serialization-select').length).toBe(1);
         });
         it('depending on the validity of the form', function() {
-            controller = this.element.controller('downloadMappingOverlay');
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
             controller.downloadForm.$setValidity('test', false);
@@ -79,25 +72,21 @@ describe('Download Mapping Overlay directive', function() {
             expect(button.attr('disabled')).toBeTruthy();
         });
         it('with buttons to cancel and download', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
+            var buttons = element.querySelectorAll('.btn-container button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Download']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Download']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
     it('should call download when the button is clicked', function() {
-        controller = this.element.controller('downloadMappingOverlay');
         spyOn(controller, 'download');
-
-        var downloadButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var downloadButton = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
         downloadButton.triggerHandler('click');
         expect(controller.download).toHaveBeenCalled();
     });
     it('should call cancel when the button is clicked', function() {
-        controller = this.element.controller('downloadMappingOverlay');
         spyOn(controller, 'cancel');
-
-        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var continueButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
         continueButton.triggerHandler('click');
         expect(controller.cancel).toHaveBeenCalled();
     });

@@ -53,7 +53,7 @@
                     }
 
                     dvm.editDataProp = function(property, index) {
-                        var propertyObj = dvm.os.selected[dvm.ro.getItemIri(property)][index];
+                        var propertyObj = dvm.os.listItem.selected[dvm.ro.getItemIri(property)][index];
                         var type = _.find(dvm.os.listItem.dataPropertyRange, datatype => dvm.ro.getItemIri(datatype) === propertyObj['@type']);
                         dvm.os.editingProperty = true;
                         dvm.os.propertySelect = property;

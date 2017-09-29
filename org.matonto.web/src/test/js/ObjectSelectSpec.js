@@ -192,13 +192,13 @@ describe('Object Select directive', function() {
                 it('when getEntityName is undefined', function() {
                     ontologyManagerSvc.getEntityName.and.returnValue(undefined);
                     var result = controller.getTooltipDisplay();
-                    expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({}, ontologyStateSvc.state.type); // The value of getEntity
+                    expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({}, ontologyStateSvc.listItem.ontologyRecord.type); // The value of getEntity
                     expect(result).toEqual('test'); // The value of getItemIri
                 });
                 it('when getEntityName is defined', function() {
                     ontologyManagerSvc.getEntityName.and.returnValue('new');
                     var result = controller.getTooltipDisplay();
-                    expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({}, ontologyStateSvc.state.type); // The value of getEntity
+                    expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({}, ontologyStateSvc.listItem.ontologyRecord.type); // The value of getEntity
                     expect(result).toEqual('new'); // The value of getItemIri
                 });
             });

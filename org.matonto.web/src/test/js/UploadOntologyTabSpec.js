@@ -59,7 +59,7 @@ describe('Upload Ontology Tab directive', function() {
             it('with a ' + tag, function() {
                 expect(element.find(tag).length).toBe(1);
             });
-        })
+        });
         it('with a .btn-container', function() {
             expect(element.querySelectorAll('.btn-container').length).toBe(1);
         });
@@ -99,17 +99,13 @@ describe('Upload Ontology Tab directive', function() {
                 controller.description = '';
                 controller.keywords = ['one', 'two'];
                 ontologyStateSvc.showUploadTab = true;
-                ontologyStateSvc.getListItemByRecordId.and.returnValue(this.listItem)
             });
             it('unless an error occurs', function() {
                 ontologyStateSvc.uploadThenGet.and.returnValue($q.reject('Error message'));
                 controller.upload();
                 scope.$apply();
                 expect(ontologyStateSvc.uploadThenGet).toHaveBeenCalledWith(controller.file, controller.title, controller.description, 'one,two', controller.type);
-                expect(ontologyStateSvc.getListItemByRecordId).not.toHaveBeenCalled();
                 expect(ontologyManagerSvc.getOntologyIRI).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.addState).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.setState).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.showUploadTab).toBe(true);
                 expect(controller.error).toBe('Error message');
             });
@@ -117,10 +113,6 @@ describe('Upload Ontology Tab directive', function() {
                 controller.upload();
                 scope.$apply();
                 expect(ontologyStateSvc.uploadThenGet).toHaveBeenCalledWith(controller.file, controller.title, controller.description, 'one,two', controller.type);
-                expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith(jasmine.any(String));
-                expect(ontologyManagerSvc.getOntologyIRI).toHaveBeenCalledWith(this.listItem.ontology);
-                expect(ontologyStateSvc.addState).toHaveBeenCalledWith(jasmine.any(String), jasmine.any(String), controller.type);
-                expect(ontologyStateSvc.setState).toHaveBeenCalledWith(jasmine.any(String));
                 expect(ontologyStateSvc.showUploadTab).toBe(false);
                 expect(controller.error).toBeUndefined();
             });

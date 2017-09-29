@@ -23,19 +23,17 @@
 <div class="concept-hierarchy-block">
     <block>
         <block-header>
-            <span>Concepts</span><a class="pull-right" ng-click="dvm.sm.unSelectItem(); dvm.sm.showCreateConceptOverlay = true"><i class="fa fa-plus"></i><span>Concept</span></a><a class="pull-right" ng-click="dvm.sm.showCreateConceptSchemeOverlay = true"><i class="fa fa-plus"></i><span>Scheme</span></a>
+            <span>Concepts</span><a class="pull-right" ng-click="dvm.os.unSelectItem(); dvm.os.showCreateConceptOverlay = true"><i class="fa fa-plus"></i><span>Concept</span></a>
         </block-header>
         <block-content>
-            <hierarchy-tree hierarchy="dvm.sm.listItem.flatConceptHierarchy"></hierarchy-tree>
+            <hierarchy-tree hierarchy="dvm.os.listItem.flatConceptHierarchy"></hierarchy-tree>
         </block-content>
         <block-footer class="centered">
-            <button class="btn btn-link" ng-disabled="!dvm.sm.selected || dvm.sm.selected.matonto.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Entity</span></button>
+            <button class="btn btn-link" ng-disabled="!dvm.os.listItem.selected || dvm.os.listItem.selected.matonto.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Concept</span></button>
         </block-footer>
     </block>
-    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Entity'" confirm-click="dvm.deleteEntity()"
-                          cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
-        <p>Are you sure that you want to delete <strong>{{dvm.sm.selected['@id']}}</strong>?</p>
+    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Concept'" confirm-click="dvm.deleteEntity()" cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
+        <p>Are you sure that you want to delete <strong>{{dvm.os.listItem.selected['@id']}}</strong>?</p>
     </confirmation-overlay>
-    <create-concept-scheme-overlay ng-if="dvm.sm.showCreateConceptSchemeOverlay"></create-concept-scheme-overlay>
-    <create-concept-overlay ng-if="dvm.sm.showCreateConceptOverlay"></create-concept-overlay>
+    <create-concept-overlay ng-if="dvm.os.showCreateConceptOverlay"></create-concept-overlay>
 </div>

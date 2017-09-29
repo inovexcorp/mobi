@@ -41,11 +41,11 @@ describe('Custom Label directive', function() {
             this.element = $compile(angular.element('<custom-label muted-text="mutedText"></custom-label>'))(scope);
             scope.$digest();
         });
-        it('mutedText should be two way bound', function() {
+        it('mutedText should be one way bound', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.mutedText = 'Muted';
             scope.$digest();
-            expect(scope.mutedText).toEqual('Muted');
+            expect(scope.mutedText).toEqual('');
         });
     });
     describe('contains the correct html', function() {

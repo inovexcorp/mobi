@@ -194,6 +194,25 @@ public class SesameRepositoryConnectionWrapper implements RepositoryConnection {
     }
 
     @Override
+    public boolean contains(Resource subject, IRI predicate, Value object, Resource... contexts) {
+        try {
+            return sesameConn.getStatements(Values.sesameResource(subject), Values.sesameIRI(predicate),
+                    Values.sesameValue(object), Values.sesameResources(contexts)).hasNext();
+        } catch (org.openrdf.repository.RepositoryException e) {
+            throw new RepositoryException(e);
+        }
+    }
+
+    @Override
+    public boolean containsContext(Resource context) {
+        try {
+            return sesameConn.getStatements(null, null, null, Values.sesameResources(context)).hasNext();
+        } catch (org.openrdf.repository.RepositoryException e) {
+            throw new RepositoryException(e);
+        }
+    }
+
+    @Override
     public RepositoryResult<Resource> getContextIDs() throws RepositoryException {
         try {
             return new SesameRepositoryResult<>(sesameConn.getContextIDs(), new ResourceValueFactory());

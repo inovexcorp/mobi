@@ -131,7 +131,7 @@ describe('Usages Block directive', function() {
                 subject: 'B', predicate: 'A', object: 'test'
             }]
         };
-        ontologyStateSvc.selected = {'@id': 'test'};
+        ontologyStateSvc.listItem.selected = {'@id': 'test'};
         scope.$digest();
         expect(angular.copy(controller.results)).toEqual(expected);
         expect(controller.total).toBe(ontologyStateSvc.getActivePage().usages.length);

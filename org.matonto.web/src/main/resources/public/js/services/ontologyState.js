@@ -36,6 +36,7 @@
          * @requires $q
          * @requires $filter
          * @requires $document
+         * @requires $state
          * @requires ontologyManager.service:ontologyManagerService
          * @requires updateRefs.service:updateRefsService
          * @requires stateManager.service:stateManagerService
@@ -46,9 +47,9 @@
          */
         .service('ontologyStateService', ontologyStateService);
 
-        ontologyStateService.$inject = ['$timeout', '$q', '$filter', '$document', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'httpService', 'responseObj'];
+        ontologyStateService.$inject = ['$timeout', '$q', '$filter', '$document', '$state', 'ontologyManagerService', 'updateRefsService', 'stateManagerService', 'utilService', 'catalogManagerService', 'propertyManagerService', 'prefixes', 'manchesterConverterService', 'httpService', 'responseObj'];
 
-        function ontologyStateService($timeout, $q, $filter, $document, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, httpService, responseObj) {
+        function ontologyStateService($timeout, $q, $filter, $document, $state, ontologyManagerService, updateRefsService, stateManagerService, utilService, catalogManagerService, propertyManagerService, prefixes, manchesterConverterService, httpService, responseObj) {
             var self = this;
             var om = ontologyManagerService;
             var sm = stateManagerService;
@@ -58,12 +59,80 @@
             var mc = manchesterConverterService;
             var catalogId = '';
 
+            var ontologyEditorTabStates = {
+                project: {
+                    entityIRI: '',
+                    active: true
+                },
+                overview: {
+                    active: false
+                },
+                classes: {
+                    active: false
+                },
+                properties: {
+                    active: false
+                },
+                individuals: {
+                    active: false
+                },
+                search: {
+                    active: false
+                },
+                savedChanges: {
+                    active: false
+                },
+                merge: {
+                    active: false
+                },
+                commits: {
+                    active: false
+                }
+            };
+
+            var vocabularyEditorTabStates = {
+                project: {
+                    active: true,
+                    entityIRI: ''
+                },
+                schemes: {
+                    active: false
+                },
+                concepts: {
+                    active: false
+                },
+                search: {
+                    active: false
+                },
+                savedChanges: {
+                    active: false
+                },
+                merge: {
+                    active: false
+                },
+                commits: {
+                    active: false
+                }
+            };
+
             var ontologyListItemTemplate = {
-                ontology: [],
+                ontologyState: {
+                    active: true,
+                    upToDate: true
+                },
+                editorTabStates: angular.copy(ontologyEditorTabStates),
+                ontologyRecord: {
+                    title: '',
+                    recordId: '',
+                    branchId: '',
+                    commitId: '',
+                    type: 'ontology'
+                },
                 ontologyId: '',
+                ontology: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
-                annotations: angular.copy(propertyManagerService.defaultAnnotations),
+                annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.owlAnnotations)),
                 dataPropertyRange: om.defaultDatatypes,
                 subClasses: [],
                 subDataProperties: [],
@@ -84,8 +153,6 @@
                     deletions: []
                 },
                 branches: [],
-                upToDate: true,
-                isSaved: false,
                 flatClassHierarchy: [],
                 flatDataPropertyHierarchy: [],
                 flatObjectPropertyHierarchy: [],
@@ -95,19 +162,36 @@
                 classesAndIndividuals: {},
                 classesWithIndividuals: [],
                 individualsParentPath: [],
-                iriList: []
+                iriList: [],
+                selected: {},
+                failedImports: []
             };
             var vocabularyListItemTemplate = {
-                ontology: [],
+                ontologyState: {
+                    active: true,
+                    upToDate: true
+                },
+                editorTabStates: angular.copy(vocabularyEditorTabStates),
+                ontologyRecord: {
+                    title: '',
+                    recordId: '',
+                    branchId: '',
+                    commitId: '',
+                    type: 'vocabulary'
+                },
                 ontologyId: '',
+                ontology: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
-                annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations,
-                    propertyManagerService.skosAnnotations)),
+                annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.skosAnnotations, propertyManagerService.owlAnnotations)),
                 derivedConcepts: [],
                 derivedConceptSchemes: [],
                 conceptHierarchy: [],
                 conceptIndex: {},
+                flatConceptHierarchy: [],
+                conceptSchemeHierarchy: [],
+                conceptSchemeIndex: {},
+                flatConceptSchemeHierarchy: [],
                 index: {},
                 additions: [],
                 deletions: [],
@@ -116,15 +200,16 @@
                     deletions: []
                 },
                 branches: [],
-                upToDate: true,
-                isSaved: false,
-                flatConceptHierarchy: [],
-                iriList: []
+                iriList: [],
+                selected: {},
+                failedImports: []
             };
+            
             var emptyInProgressCommit = {
                 additions: [],
                 deletions: []
             };
+
             /**
              * @ngdoc property
              * @name list
@@ -155,10 +240,6 @@
              */
             self.list = [];
 
-            self.states = [];
-            self.newState = {active: true};
-            self.state = self.newState;
-            self.selected = {};
             self.listItem = {};
 
             /**
@@ -174,11 +255,7 @@
             }
             self.reset = function() {
                 self.list = [];
-                self.states = [];
-                self.selected = {};
-                self.state = self.newState;
-                self.state.active = true;
-                self.listItem = {};
+                self.listItem = {selected: {}};
             }
             /**
              * @ngdoc method
@@ -272,17 +349,20 @@
                 var listItem;
                 return om.uploadJson(ontologyJson, title, description, keywords)
                     .then(data => {
-                        listItem = setupListItem(data.ontologyId, data.recordId, data.branchId, data.commitId, [ontologyJson], emptyInProgressCommit, type);
+                        listItem = setupListItem(data.ontologyId, data.recordId, data.branchId, data.commitId, [ontologyJson], emptyInProgressCommit, true, type, title);
                         return cm.getRecordBranch(data.branchId, data.recordId, catalogId);
                     }, $q.reject)
                     .then(branch => {
                         listItem.branches = [branch];
                         self.list.push(listItem);
+                        self.listItem = listItem
+                        self.setSelected(self.getActiveEntityIRI(), false);
+                        self.setPageTitle(listItem.ontologyRecord.type);
                         return {
                             entityIRI: ontologyJson['@id'],
-                            recordId: listItem.recordId,
-                            branchId: listItem.branchId,
-                            commitId: listItem.commitId
+                            recordId: listItem.ontologyRecord.recordId,
+                            branchId: listItem.ontologyRecord.branchId,
+                            commitId: listItem.ontologyRecord.commitId
                         };
                     }, $q.reject);
             }
@@ -303,21 +383,47 @@
              * @returns {Promise} A promise with the ontology record ID or error message.
              */
             self.uploadThenGet = function(file, title, description, keywords, type = 'ontology') {
-                var recordId, ontologyId;
+                var recordId;
                 return om.uploadFile(file, title, description, keywords)
                     .then(data => {
                         recordId = data.recordId;
-                        ontologyId = data.ontologyId;
                         return self.getOntology(recordId);
                     }, $q.reject)
                     .then(response => {
+                        var ontologyId = om.getOntologyIRI(response.ontology);
                         if (type === 'ontology') {
-                            return self.addOntologyToList(ontologyId, recordId, response.branchId, response.commitId, response.ontology, response.inProgressCommit);
+                            return self.addOntologyToList(ontologyId, recordId, response.branchId, response.commitId, response.ontology, response.inProgressCommit, title);
                         } else if (type === 'vocabulary') {
-                            return self.addVocabularyToList(ontologyId, recordId, response.branchId, response.commitId, response.ontology, response.inProgressCommit);
+                            return self.addVocabularyToList(ontologyId, recordId, response.branchId, response.commitId, response.ontology, response.inProgressCommit, title);
                         }
                     }, $q.reject)
-                    .then(() => recordId, $q.reject);
+                    .then(response => {
+                        self.listItem = response;
+                        self.setSelected(self.getActiveEntityIRI(), false);
+                        self.setPageTitle(response.ontologyRecord.type);
+                        return recordId; 
+                    }, $q.reject);
+            }
+            /**
+             * @ngdoc method
+             * @name uploadChanges
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Uploads the provided file as an ontology and uses it as a basis for updating the existing ontology .
+             *
+             * @param {File} file The updated ontology file.
+             * @param {string} the ontology record ID.
+             * @param {string} the ontology branch ID.
+             * @param {string} the ontology commit ID.
+             */
+            self.uploadChanges = function(file, recordId, branchId, commitId) {
+                return om.uploadChangesFile(file, recordId, branchId, commitId)
+                    .then(() => cm.getInProgressCommit(recordId, catalogId), $q.reject)
+                    .then(commit => {
+                        var listItem = self.getListItemByRecordId(recordId);
+                        return self.updateOntology(recordId, branchId, commitId, listItem.ontologyRecord.type, listItem.ontologyState.upToDate, commit);
+                    }, $q.reject);
             }
             /**
              * @ngdoc method
@@ -335,37 +441,57 @@
              * @param {string} [type='ontology'] The type of listItem that needs to be updated.
              * @param {boolean} [upToDate=true] The flag indicating whether the ontology is upToDate or not.
              * @param {boolean} [inProgressCommit=emptyInProgressCommit] The Object containing the saved changes to apply.
+             * @param {boolean} [clearCache=false] Boolean indicating whether or not you should clear the cache.
              * @returns {Promise} A promise indicating the success or failure of the update.
              */
-            self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, inProgressCommit = emptyInProgressCommit) {
+            self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, inProgressCommit = emptyInProgressCommit, clearCache = false) {
                 var listItem;
-                return om.getOntology(recordId, branchId, commitId)
+                var oldListItem = self.getListItemByRecordId(recordId);
+                
+                return om.getOntology(recordId, branchId, commitId, 'jsonld', clearCache)
                     .then(ontology => {
-                        var ontologyId = self.getListItemByRecordId(recordId).ontologyId;
+                        var ontologyId = om.getOntologyIRI(ontology);
                         if (type === 'ontology') {
-                            return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate);
+                            return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, oldListItem.ontologyRecord.title);
                         } else if (type === 'vocabulary') {
-                            return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate);
+                            return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, oldListItem.ontologyRecord.title);
                         }
                     }, $q.reject)
                     .then(response => {
                         listItem = response;
-                        return sm.updateOntologyState(recordId, branchId, commitId)
+                        listItem.editorTabStates = oldListItem.editorTabStates;
+                        if (listItem.ontologyId !== oldListItem.ontologyId) {
+                            self.setSelected(listItem.ontologyId, true, listItem);
+                            self.resetStateTabs(listItem);
+                        } else {
+                            listItem.selected = oldListItem.selected;
+                        }
+                        return sm.updateOntologyState(recordId, branchId, commitId);
                     }, $q.reject)
-                    .then(() => updateListItem(recordId, listItem), $q.reject);
+                    .then(() => {
+                        var activeKey = self.getActiveKey(oldListItem);
+                        _.assign(oldListItem, listItem);
+                        self.setActivePage(activeKey, oldListItem);
+                    }, $q.reject);
             }
-            self.addOntologyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate = true) {
-                return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate)
-                    .then(listItem => self.list.push(listItem), $q.reject);
+            self.addOntologyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, title, upToDate = true) {
+                return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title)
+                    .then(listItem => { 
+                        self.list.push(listItem); 
+                        return listItem; 
+                    }, $q.reject);
             }
-            self.addVocabularyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate = true) {
-                return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate)
-                    .then(listItem => self.list.push(listItem), $q.reject);
+            self.addVocabularyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, title, upToDate = true) {
+                return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title)
+                    .then(listItem => { 
+                        self.list.push(listItem); 
+                        return listItem; 
+                    }, $q.reject);
             }
             self.createOntologyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
-                upToDate = true) {
+                upToDate = true, title) {
                 var deferred = $q.defer();
-                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, 'ontology');
+                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, 'ontology', title);
                 $q.all([
                     om.getIris(recordId, branchId, commitId),
                     om.getImportedIris(recordId, branchId, commitId),
@@ -375,13 +501,15 @@
                     om.getObjectPropertyHierarchies(recordId, branchId, commitId),
                     cm.getRecordBranches(recordId, catalogId),
                     om.getAnnotationPropertyHierarchies(recordId, branchId, commitId),
-                    om.getImportedOntologies(recordId, branchId, commitId)
+                    om.getImportedOntologies(recordId, branchId, commitId),
+                    om.getFailedImports(recordId, branchId, commitId)
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
                     listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri))
                     listItem.annotations = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
                         propertyManagerService.defaultAnnotations,
+                        propertyManagerService.owlAnnotations,
                         _.isMatch
                     );
                     listItem.subClasses = _.get(response[0], 'classes');
@@ -444,7 +572,6 @@
                     _.forEach(response[8], importedOntObj => {
                         addImportedOntologyToListItem(listItem, importedOntObj, 'ontology');
                     });
-                    listItem.upToDate = upToDate;
                     listItem.classesAndIndividuals = response[3].individuals;
                     listItem.classesWithIndividuals = _.keys(response[3].individuals);
                     listItem.individualsParentPath = self.getIndividualsParentPath(listItem);
@@ -455,6 +582,7 @@
                         _.concat(om.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties),
                         compareListItems
                     );
+                    listItem.failedImports = response[9];
                     deferred.resolve(listItem);
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
                 return deferred.promise;
@@ -466,15 +594,17 @@
                 });
                 return _.uniq(result);
             }
-            self.createVocabularyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate = true) {
+            self.createVocabularyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate = true, title) {
                 var deferred = $q.defer();
-                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, 'vocabulary');
+                var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, 'vocabulary', title);
                 $q.all([
                     om.getIris(recordId, branchId, commitId),
                     om.getImportedIris(recordId, branchId, commitId),
                     om.getConceptHierarchies(recordId, branchId, commitId),
+                    om.getConceptSchemeHierarchies(recordId, branchId, commitId),
                     cm.getRecordBranches(recordId, catalogId),
-                    om.getImportedOntologies(recordId, branchId, commitId)
+                    om.getImportedOntologies(recordId, branchId, commitId),
+                    om.getFailedImports(recordId, branchId, commitId)
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
                     listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri));
@@ -486,6 +616,7 @@
                         _.get(response[0], 'annotationProperties'),
                         propertyManagerService.defaultAnnotations,
                         propertyManagerService.skosAnnotations,
+                        propertyManagerService.owlAnnotations,
                         _.isMatch
                     );
                     listItem.dataPropertyRange = _.unionWith(
@@ -515,17 +646,20 @@
                     listItem.conceptHierarchy = response[2].hierarchy;
                     listItem.conceptIndex = response[2].index;
                     listItem.flatConceptHierarchy = self.flattenHierarchy(listItem.conceptHierarchy, recordId, listItem);
-                    listItem.branches = response[3].data;
-                    _.forEach(response[4], importedOntObj => {
+                    listItem.conceptSchemeHierarchy = response[3].hierarchy;
+                    listItem.conceptSchemeIndex = response[3].index;
+                    listItem.flatConceptSchemeHierarchy = self.flattenHierarchy(listItem.conceptSchemeHierarchy, recordId, listItem);
+                    listItem.branches = response[4].data;
+                    _.forEach(response[5], importedOntObj => {
                         addImportedOntologyToListItem(listItem, importedOntObj, 'vocabulary');
                     });
-                    listItem.upToDate = upToDate;
                     _.pullAllWith(
                         listItem.annotations,
                         _.concat(om.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties,
                             angular.copy(om.conceptRelationshipList), angular.copy(om.schemeRelationshipList)),
                         compareListItems
                     );
+                    listItem.failedImports = response[6];
                     deferred.resolve(listItem);
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
                 return deferred.promise;
@@ -570,9 +704,10 @@
                 var orderedClasses = sortByName(om.getClasses(ontologies), listItem);
                 var orderedProperties = [];
                 var path = [];
+
                 _.forEach(orderedClasses, clazz => {
                     orderedProperties = sortByName(om.getClassProperties(ontologies, clazz['@id']), listItem);
-                    path = [listItem.recordId, clazz['@id']];
+                    path = [listItem.ontologyRecord.recordId, clazz['@id']];
                     result.push(_.merge({}, clazz, {
                         indent: 0,
                         hasChildren: !!orderedProperties.length,
@@ -598,7 +733,7 @@
                             indent: 1,
                             hasChildren: false,
                             get: self.getNoDomainsOpened,
-                            path: [listItem.recordId, property['@id']]
+                            path: [listItem.ontologyRecord.recordId, property['@id']]
                         }));
                     });
                 }
@@ -640,7 +775,7 @@
              *
              * @description
              * Adds the entity represented by the entityJSON to the ontology with the provided ontology ID in the
-             * MatOnto repository. Adds the new entity to the index.
+             * Mobi repository. Adds the new entity to the index.
              *
              * @param {Object} listItem The listItem linked to the ontology you want to add the entity to.
              * @param {string} entityJSON The JSON-LD representation for the entity you want to add to the ontology.
@@ -650,7 +785,7 @@
                 listItem.iriList.push(entityJSON['@id']);
                 _.get(listItem, 'index', {})[entityJSON['@id']] = {
                     position: listItem.ontology.length - 1,
-                    label: om.getEntityName(entityJSON, listItem.type),
+                    label: om.getEntityName(entityJSON, listItem.ontologyRecord.type),
                     ontologyIri: listItem.ontologyId
                 }
             }
@@ -660,22 +795,51 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Removes the entity with the provided IRI from the ontology with the provided ontology ID in the MatOnto
-             * repository. Removes the entityIRI from the index. Returns the entity Object.
+             * Removes the entity with the provided IRI from the ontology with the provided ontology ID in the Mobi
+             * repository along with any referenced blank nodes. Removes the entityIRI and any reference blank nodes
+             * from the index.
              *
              * @param {Object} listItem The listItem linked to the ontology you want to remove the entity from.
-             * @returns {Object} An Object which represents the requested entity.
+             * @returns {Object[]} The list of JSON-LD entities that were removed.
              */
             self.removeEntity = function(listItem, entityIRI) {
-                var entityPosition = _.get(listItem.index, "['" + entityIRI + "'].position");
-                _.remove(listItem.iriList, (iri) => { return iri === entityIRI });
-                _.unset(listItem.index, entityIRI);
-                _.forOwn(listItem.index, (value, key) => {
-                    if (value.position > entityPosition) {
-                        listItem.index[key].position = value.position - 1;
-                    }
+                var toRemove = [];
+                var toTest = [];
+
+                // Helper method
+                function addToLists(iri) {
+                    var newObj = {entityIRI: iri, position: _.get(listItem.index, "['" + iri + "'].position")};
+                    toRemove.push(newObj);
+                    toTest.push(newObj);
+                }
+                addToLists(entityIRI);
+                while (toTest.length) {
+                    var obj = toTest.pop();
+                    var entity = listItem.ontology[obj.position];
+                    _.forOwn(_.omit(entity, ['@id', '@type']), (value, key) => {
+                        if (om.isBlankNodeId(key)) {
+                            addToLists(key);
+                        }
+                        _.forEach(value, valueObj => {
+                            var id = _.get(valueObj, '@id');
+                            if (om.isBlankNodeId(id)) {
+                                addToLists(id);
+                            }
+                        });
+                    });
+                }
+                var removed = _.pullAt(listItem.ontology, _.map(toRemove, 'position'));
+                _.forEach(toRemove, obj => {
+                    var newPosition = _.get(listItem.index, "['" + obj.entityIRI + "'].position");
+                    _.remove(listItem.iriList, obj.entityIRI);
+                    _.unset(listItem.index, obj.entityIRI);
+                    _.forOwn(listItem.index, (value, key) => {
+                        if (value.position > newPosition) {
+                            listItem.index[key].position = value.position - 1;
+                        }
+                    });
                 });
-                return _.remove(listItem.ontology, {'@id': entityIRI})[0];
+                return removed;
             }
             /**
              * @ngdoc method
@@ -691,7 +855,7 @@
              * {@link ontologyState.service:ontologyStateService#list list}.
              */
             self.getListItemByRecordId = function(recordId) {
-                return _.find(self.list, {recordId});
+                return _.find(self.list, {ontologyRecord: {recordId}});
             }
             /**
              * @ngdoc method
@@ -714,14 +878,17 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Gets entity with the provided IRI from the ontology linked to the provided recordId in the MatOnto
+             * Gets entity with the provided IRI from the ontology linked to the provided recordId in the Mobi
              * repository. Returns the entity Object.
              *
              * @param {string} recordId The recordId linked to the ontology you want to check.
              * @param {string} entityIRI The IRI of the entity that you want.
              * @returns {Object} An Object which represents the requested entity.
              */
-            self.getEntityByRecordId = function(recordId, entityIRI) {
+            self.getEntityByRecordId = function(recordId, entityIRI, listItem) {
+                if (listItem) {
+                    return getEntityFromListItem(listItem, entityIRI);
+                }
                 return getEntityFromListItem(self.getListItemByRecordId(recordId), entityIRI);
             }
             /**
@@ -781,14 +948,14 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Used to open an ontology from the MatOnto repository. It calls
+             * Used to open an ontology from the Mobi repository. It calls
              * {@link ontologyState.service:ontologyStateService#getOntology getOntology} to get the specified
-             * ontology from the MatOnto repository. Returns a promise.
+             * ontology from the Mobi repository. Returns a promise.
              *
              * @param {string} recordId The record ID of the requested ontology.
              * @returns {Promise} A promise with the ontology ID or error message.
              */
-            self.openOntology = function(recordId, type = 'ontology') {
+            self.openOntology = function(recordId, recordTitle, type = 'ontology') {
                 var branchId, commitId, ontology, inProgressCommit, ontologyId;
                 return self.getOntology(recordId)
                     .then(response => {
@@ -803,12 +970,17 @@
                         var upToDate = headId === commitId;
                         ontologyId = om.getOntologyIRI(ontology);
                         if (type === 'ontology') {
-                            return self.addOntologyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate);
+                            return self.addOntologyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, recordTitle, upToDate);
                         } else if (type === 'vocabulary') {
-                            return self.addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate);
+                            return self.addVocabularyToList(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, recordTitle, upToDate);
                         }
                     }, $q.reject)
-                    .then(() => ontologyId, $q.reject);
+                    .then(response => {
+                        self.listItem = response;
+                        self.setSelected(self.getActiveEntityIRI(), false);
+                        self.setPageTitle(self.listItem.ontologyRecord.type);
+                        return ontologyId; 
+                    }, $q.reject);
             }
             /**
              * @ngdoc method
@@ -816,33 +988,37 @@
              * @methodOf ontologyState.service:ontologyStateService
              *
              * @description
-             * Used to close an ontology from the MatOnto application. It removes the ontology list item from the
+             * Used to close an ontology from the Mobi application. It removes the ontology list item from the
              * {@link ontologyState.service:ontologyStateService#list list}.
              *
              * @param {string} recordId The record ID of the requested ontology.
              */
             self.closeOntology = function(recordId) {
-                _.remove(self.list, {recordId});
+                if (self.listItem && self.listItem.ontologyRecord.recordId == recordId) {
+                   self.listItem = undefined;
+                   self.setPageTitle();
+                }
+                _.remove(self.list, { ontologyRecord: { recordId }});
             }
             self.removeBranch = function(recordId, branchId) {
                 _.remove(self.getListItemByRecordId(recordId).branches, {'@id': branchId});
             }
             self.afterSave = function() {
-                return cm.getInProgressCommit(self.listItem.recordId, catalogId)
+                return cm.getInProgressCommit(self.listItem.ontologyRecord.recordId, catalogId)
                     .then(inProgressCommit => {
                         self.listItem.inProgressCommit = inProgressCommit;
 
                         self.listItem.additions = [];
                         self.listItem.deletions = [];
 
-                        _.forOwn(self.state, (value, key) => {
+                        _.forOwn(self.listItem.editorTabStates, (value, key) => {
                             _.unset(value, 'usages');
                         });
 
-                        if (_.isEmpty(sm.getOntologyStateByRecordId(self.listItem.recordId))) {
-                            return sm.createOntologyState(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId);
+                        if (_.isEmpty(sm.getOntologyStateByRecordId(self.listItem.ontologyRecord.recordId))) {
+                            return sm.createOntologyState(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.branchId, self.listItem.ontologyRecord.commitId);
                         } else {
-                            return sm.updateOntologyState(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId);
+                            return sm.updateOntologyState(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.branchId, self.listItem.ontologyRecord.commitId);
                         }
                     }, $q.reject);
             }
@@ -851,175 +1027,108 @@
                 _.set(self.listItem, 'inProgressCommit.deletions', []);
             }
             self.setOpened = function(pathString, isOpened) {
-                _.set(self.state, getOpenPath(pathString, 'isOpened'), isOpened);
+                _.set(self.listItem.editorTabStates, getOpenPath(pathString, 'isOpened'), isOpened);
             }
             self.getOpened = function(pathString) {
-                return _.get(self.state, getOpenPath(pathString, 'isOpened'), false);
+                return _.get(self.listItem.editorTabStates, getOpenPath(pathString, 'isOpened'), false);
             }
             self.setNoDomainsOpened = function(recordId, isOpened) {
-                _.set(self.state, getOpenPath(recordId, 'noDomainsOpened'), isOpened);
+                _.set(self.listItem.editorTabStates, getOpenPath(recordId, 'noDomainsOpened'), isOpened);
             }
             self.getNoDomainsOpened = function(recordId) {
-                return _.get(self.state, getOpenPath(recordId, 'noDomainsOpened'), false);
+                return _.get(self.listItem.editorTabStates, getOpenPath(recordId, 'noDomainsOpened'), false);
             }
             self.setIndividualsOpened = function(pathString, isOpened) {
-                _.set(self.state, getOpenPath(pathString, 'individualsOpened'), isOpened);
+                _.set(self.listItem.editorTabStates, getOpenPath(pathString, 'individualsOpened'), isOpened);
             }
             self.getIndividualsOpened = function(pathString) {
-                return _.get(self.state, getOpenPath(pathString, 'individualsOpened'), false);
+                return _.get(self.listItem.editorTabStates, getOpenPath(pathString, 'individualsOpened'), false);
             }
             self.setDataPropertiesOpened = function(recordId, isOpened) {
-                _.set(self.state, getOpenPath(recordId, 'dataPropertiesOpened'), isOpened);
+                _.set(self.listItem.editorTabStates, getOpenPath(recordId, 'dataPropertiesOpened'), isOpened);
             }
             self.getDataPropertiesOpened = function(recordId) {
-                return _.get(self.state, getOpenPath(recordId, 'dataPropertiesOpened'), false);
+                return _.get(self.listItem.editorTabStates, getOpenPath(recordId, 'dataPropertiesOpened'), false);
             }
             self.setObjectPropertiesOpened = function(recordId, isOpened) {
-                _.set(self.state, getOpenPath(recordId, 'objectPropertiesOpened'), isOpened);
+                _.set(self.listItem.editorTabStates, getOpenPath(recordId, 'objectPropertiesOpened'), isOpened);
             }
             self.getObjectPropertiesOpened = function(recordId) {
-                return _.get(self.state, getOpenPath(recordId, 'objectPropertiesOpened'), false);
+                return _.get(self.listItem.editorTabStates, getOpenPath(recordId, 'objectPropertiesOpened'), false);
             }
             self.setAnnotationPropertiesOpened = function(recordId, isOpened) {
-                _.set(self.state, getOpenPath(recordId, 'annotationPropertiesOpened'), isOpened);
+                _.set(self.listItem.editorTabStates, getOpenPath(recordId, 'annotationPropertiesOpened'), isOpened);
             }
             self.getAnnotationPropertiesOpened = function(recordId) {
-                return _.get(self.state, getOpenPath(recordId, 'annotationPropertiesOpened'), false);
+                return _.get(self.listItem.editorTabStates, getOpenPath(recordId, 'annotationPropertiesOpened'), false);
             }
             self.onEdit = function(iriBegin, iriThen, iriEnd) {
                 var newIRI = iriBegin + iriThen + iriEnd;
-                var oldEntity = $filter('removeMatonto')(self.selected);
+                var oldEntity = $filter('removeMatonto')(self.listItem.selected);
                 self.getActivePage().entityIRI = newIRI;
                 if (_.some(self.listItem.additions, oldEntity)) {
                     _.remove(self.listItem.additions, oldEntity);
-                    updateRefsService.update(self.listItem, self.selected['@id'], newIRI);
+                    updateRefsService.update(self.listItem, self.listItem.selected['@id'], newIRI);
                 } else {
-                    updateRefsService.update(self.listItem, self.selected['@id'], newIRI);
-                    self.addToDeletions(self.listItem.recordId, oldEntity);
+                    updateRefsService.update(self.listItem, self.listItem.selected['@id'], newIRI);
+                    self.addToDeletions(self.listItem.ontologyRecord.recordId, oldEntity);
                 }
                 if (self.getActiveKey() !== 'project') {
                     self.setCommonIriParts(iriBegin, iriThen);
                 }
-                self.addToAdditions(self.listItem.recordId, $filter('removeMatonto')(self.selected));
-                return om.getEntityUsages(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId, oldEntity['@id'], 'construct')
+                self.addToAdditions(self.listItem.ontologyRecord.recordId, $filter('removeMatonto')(self.listItem.selected));
+                return om.getEntityUsages(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.branchId, self.listItem.ontologyRecord.commitId, oldEntity['@id'], 'construct')
                     .then(statements => {
-                        _.forEach(statements, statement => self.addToDeletions(self.listItem.recordId, statement));
+                        _.forEach(statements, statement => self.addToDeletions(self.listItem.ontologyRecord.recordId, statement));
                         updateRefsService.update(statements, oldEntity['@id'], newIRI);
-                        _.forEach(statements, statement => self.addToAdditions(self.listItem.recordId, statement));
+                        _.forEach(statements, statement => self.addToAdditions(self.listItem.ontologyRecord.recordId, statement));
                     }, errorMessage => util.createErrorToast('Associated entities were not updated due to an internal error.'));
             }
             self.setCommonIriParts = function(iriBegin, iriThen) {
                 _.set(self.listItem, 'iriBegin', iriBegin);
                 _.set(self.listItem, 'iriThen', iriThen);
             }
-            self.setSelected = function(entityIRI, getUsages = true) {
-                self.selected = self.getEntityByRecordId(self.listItem.recordId, entityIRI);
-                if (getUsages && !_.has(self.getActivePage(), 'usages') && self.selected) {
+            self.setSelected = function(entityIRI, getUsages = true, listItem = self.listItem) {
+                listItem.selected = self.getEntityByRecordId(listItem.ontologyRecord.recordId, entityIRI, listItem);
+                if (getUsages && !_.has(self.getActivePage(), 'usages') && listItem.selected) {
                     self.setEntityUsages(entityIRI);
                 }
             }
             self.setEntityUsages = function(entityIRI) {
                 var page = self.getActivePage();
-                var id = 'usages-' + self.getActiveKey() + '-' + self.listItem.recordId;
+                var id = 'usages-' + self.getActiveKey() + '-' + self.listItem.ontologyRecord.recordId;
                 httpService.cancel(id);
-                om.getEntityUsages(self.listItem.recordId, self.listItem.branchId, self.listItem.commitId, entityIRI, 'select', id)
+                om.getEntityUsages(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.branchId, self.listItem.ontologyRecord.commitId, entityIRI, 'select', id)
                     .then(bindings => _.set(page, 'usages', bindings),
                         response => _.set(page, 'usages', []));
             }
-            self.addState = function(recordId, entityIRI, type) {
-                var tabs = {};
-                var newState = {
-                    recordId,
-                    active: false,
-                    type
-                }
-                if (type === 'ontology') {
-                    tabs = {
-                        project: {
-                            active: true,
-                            entityIRI: entityIRI
-                        },
-                        overview: {
-                            active: false
-                        },
-                        classes: {
-                            active: false
-                        },
-                        properties: {
-                            active: false
-                        },
-                        individuals: {
-                            active: false
-                        },
-                        search: {
-                            active: false
-                        }
-                    }
-                } else if (type === 'vocabulary') {
-                    tabs = {
-                        project: {
-                            active: true,
-                            entityIRI: entityIRI
-                        },
-                        concepts: {
-                            active: false
-                        },
-                        search: {
-                            active: false
-                        }
-                    }
-                }
-                _.merge(newState, tabs);
-                self.states.push(newState);
-            }
-            self.setState = function(recordId, getUsages = false) {
-                self.state.active = false;
-                if (!recordId) {
-                    self.state = self.newState;
-                } else {
-                    self.state = _.find(self.states, {recordId});
-                    self.listItem = self.getListItemByRecordId(recordId);
-                    self.setSelected(self.getActiveEntityIRI(), self.getActiveKey() === 'project' ? false : getUsages);
-                }
-                self.state.active = true;
-            }
-            self.getState = function(recordId) {
-                return recordId ? _.find(self.states, {recordId}) : self.newState;
-            }
-            self.deleteState = function(recordId) {
-                if (self.state.recordId === recordId) {
-                    self.state = self.newState;
-                    self.state.active = true;
-                    self.selected = undefined;
-                }
-                _.remove(self.states, {recordId});
-            }
-            self.resetStateTabs = function() {
-                _.forOwn(self.state, (value, key) => {
+
+            self.resetStateTabs = function(listItem = self.listItem) {
+                _.forOwn(listItem.editorTabStates, (value, key) => {
                     if (key !== 'project') {
                         _.unset(value, 'entityIRI');
                     } else {
-                        value.entityIRI = om.getOntologyIRI(self.listItem.ontology);
+                        value.entityIRI = om.getOntologyIRI(listItem.ontology);
                         value.preview = '';
                     }
                     _.unset(value, 'usages');
                 });
                 if (self.getActiveKey() !== 'project') {
-                    self.selected = undefined;
+                    listItem.selected = undefined;
                 } else {
-                    self.selected = self.getEntityByRecordId(self.listItem.recordId, self.state.project.entityIRI);
+                    listItem.selected = self.getEntityByRecordId(listItem.ontologyRecord.recordId, listItem.editorTabStates.project.entityIRI);
                 }
             }
-            self.getActiveKey = function() {
-                return _.findKey(self.state, ['active', true]) || 'project';
+            self.getActiveKey = function(listItem = self.listItem) {
+                return _.findKey(listItem.editorTabStates, 'active') || 'project';
             }
-            self.getActivePage = function() {
-                return self.state[self.getActiveKey()];
+            self.getActivePage = function(listItem = self.listItem) {
+                return listItem.editorTabStates[self.getActiveKey(listItem)];
             }
-            self.setActivePage = function(key) {
-                if (_.has(self.state, key)) {
-                    self.getActivePage().active = false;
-                    self.state[key].active = true;
+            self.setActivePage = function(key, listItem = self.listItem) {
+                if (_.has(listItem.editorTabStates, key)) {
+                    self.getActivePage(listItem).active = false;
+                    listItem.editorTabStates[key].active = true;
                 }
             }
             self.getActiveEntityIRI = function() {
@@ -1038,7 +1147,7 @@
                 var activePage = self.getActivePage();
                 _.unset(activePage, 'entityIRI');
                 _.unset(activePage, 'usages');
-                self.selected = undefined;
+                self.listItem.selected = undefined;
             }
             self.hasChanges = function(recordId) {
                 var listItem = self.getListItemByRecordId(recordId);
@@ -1142,19 +1251,21 @@
                 return _.join(path, '.');
             }
             self.goTo = function(iri) {
-                var entity = self.getEntityByRecordId(self.listItem.recordId, iri);
-                if (self.state.type === 'vocabulary') {
+                var entity = self.getEntityByRecordId(self.listItem.ontologyRecord.recordId, iri);
+                if (om.isConcept(entity, self.listItem.derivedConcepts)) {
                     commonGoTo('concepts', iri, self.listItem.flatConceptHierarchy);
+                } else if (om.isConceptScheme(entity, self.listItem.derivedConceptSchemes)) {
+                    commonGoTo('schemes', iri, self.listItem.flatConceptSchemeHierarchy);
                 } else if (om.isClass(entity)) {
                     commonGoTo('classes', iri, self.listItem.flatClassHierarchy);
                 } else if (om.isDataTypeProperty(entity)) {
-                    self.setDataPropertiesOpened(self.listItem.recordId, true);
+                    self.setDataPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
                     commonGoTo('properties', iri, self.listItem.flatDataPropertyHierarchy);
                 } else if (om.isObjectProperty(entity)) {
-                    self.setObjectPropertiesOpened(self.listItem.recordId, true);
+                    self.setObjectPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
                     commonGoTo('properties', iri, self.listItem.flatObjectPropertyHierarchy);
                 } else if (om.isAnnotation(entity)) {
-                    self.setAnnotationPropertiesOpened(self.listItem.recordId, true);
+                    self.setAnnotationPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
                     commonGoTo('properties', iri, self.listItem.flatAnnotationPropertyHierarchy);
                 } else if (om.isIndividual(entity)) {
                     commonGoTo('individuals', iri);
@@ -1178,10 +1289,21 @@
             self.getOntologiesArray = function() {
                 return getOntologiesArrayByListItem(self.listItem);
             }
+            
             self.updatePropertyIcon = function(entity) {
                 if (om.isProperty(entity)) {
                     setPropertyIcon(entity);
                 }
+            }
+
+            self.hasInProgressCommit = function(listItem = self.listItem) {
+                return listItem.inProgressCommit !== undefined 
+                        && ((listItem.inProgressCommit.additions !== undefined && listItem.inProgressCommit.additions.length > 0) 
+                        || (listItem.inProgressCommit.deletions !== undefined && listItem.inProgressCommit.deletions.length > 0));
+            }
+
+            self.setPageTitle = function(type) {
+                _.set($state, 'current.data.title', type === 'vocabulary' ? 'Vocabulary Editor' : 'Ontology Editor');
             }
 
             /* Private helper functions */
@@ -1213,7 +1335,7 @@
             function getOpenPath() {
                 return _.join(_.map([...arguments], encodeURIComponent), '.');
             }
-            function setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, type) {
+            function setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, type, title) {
                 var listItem = (type === 'ontology') ? angular.copy(ontologyListItemTemplate) : angular.copy(vocabularyListItemTemplate);
                 var blankNodes = {};
                 var index = {};
@@ -1230,26 +1352,30 @@
                     if (om.isProperty(entity)) {
                         setPropertyIcon(entity);
                     } else if (om.isBlankNode(entity)) {
-                        let id = _.get(entity, '@id');
-                        _.set(blankNodes, id, mc.jsonldToManchester(id, ontology, true));
+                        blankNodes[_.get(entity, '@id')] = undefined;
                     } else if (om.isIndividual(entity)) {
                         findValuesMissingDatatypes(entity);
                     }
                 });
+                _.forEach(blankNodes, (value, id) => {
+                    blankNodes[id] = mc.jsonldToManchester(id, ontology, index);
+                });
                 listItem.ontologyId = ontologyId;
-                listItem.recordId = recordId;
-                listItem.branchId = branchId;
-                listItem.commitId = commitId;
+                listItem.editorTabStates.project.entityIRI = ontologyId;
+                listItem.ontologyRecord.title = title;
+                listItem.ontologyRecord.recordId = recordId;
+                listItem.ontologyRecord.branchId = branchId;
+                listItem.ontologyRecord.commitId = commitId;
+                listItem.ontologyRecord.type = type;
                 listItem.ontology = ontology;
                 listItem.blankNodes = blankNodes;
                 listItem.index = index;
                 listItem.inProgressCommit = inProgressCommit;
-                listItem.type = type;
                 return listItem;
             }
             function findValuesMissingDatatypes(object) {
                 if (_.has(object, '@value')) {
-                    if (!_.has(object, '@type')) {
+                    if (!_.has(object, '@type') && !_.has(object, '@language')) {
                         object['@type'] = prefixes.xsd + "string";
                     }
                 } else if (_.isObject(object)) {
@@ -1257,10 +1383,6 @@
                         findValuesMissingDatatypes(object[key]);
                     });
                 }
-            }
-            function updateListItem(recordId, newListItem) {
-                var oldListItem = self.getListItemByRecordId(recordId);
-                _.assign(oldListItem, newListItem);
             }
             function addOntologyIdToArray(arr, ontologyId) {
                 return _.forEach(arr, item => _.set(item, 'ontologyId', ontologyId));
@@ -1380,6 +1502,7 @@
             }
             function addImportedOntologyToListItem(listItem, importedOntObj, type) {
                 var index = {};
+                var blankNodes = {};
                 _.forEach(importedOntObj.ontology, (entity, i) => {
                     if (_.has(entity, '@id')) {
                         index[entity['@id']] = {
@@ -1387,14 +1510,23 @@
                             label: om.getEntityName(entity, type),
                             ontologyIri: importedOntObj.id
                         }
+                        if (om.isBlankNode(entity)) {
+                            blankNodes[entity['@id']] =  undefined;
+                        }
                     }
                     self.updatePropertyIcon(entity);
                     _.set(entity, 'matonto.imported', true);
+                    _.set(entity, 'matonto.importedIRI', importedOntObj.ontologyId);
+                });
+                _.forEach(blankNodes, (value, id) => {
+                    blankNodes[id] = mc.jsonldToManchester(id, importedOntObj.ontology, index);
                 });
                 var importedOntologyListItem = {
                     id: importedOntObj.id,
-                    index: index,
-                    ontology: importedOntObj.ontology
+                    ontologyId: importedOntObj.ontologyId,
+                    ontology: importedOntObj.ontology,
+                    index,
+                    blankNodes
                 };
                 listItem.importedOntologyIds.push(importedOntObj.id);
                 listItem.importedOntologies.push(importedOntologyListItem);

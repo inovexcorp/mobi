@@ -23,7 +23,7 @@
 <form class="edit-mapping-form full-height">
     <div class="mapping-config form-group">
         <p>
-            <span class="field-name">Ontology:</span> {{dvm.util.getDctermsValue(dvm.state.mapping.record, 'title') || "(None Specified)"}}
+            <span class="field-name">Ontology:</span> {{dvm.util.getDctermsValue(dvm.state.mapping.ontology, 'title') || "(None Specified)"}}
             <button class="btn btn-link no-padding" ng-click="dvm.state.displayMappingConfigOverlay = true"><i class="fa fa-pencil"></i></button>
         </p>
     </div>

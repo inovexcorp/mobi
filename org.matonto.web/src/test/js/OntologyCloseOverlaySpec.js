@@ -78,11 +78,10 @@ describe('Ontology Close Overlay directive', function() {
         describe('saveThenClose', function() {
             beforeEach(function() {
                 ontologyStateSvc.saveChanges.and.returnValue(deferred.promise);
-                ontologyStateSvc.getState.and.returnValue({deletedEntities: []});
                 controller.saveThenClose();
             });
             it('calls the correct manager functions', function() {
-                expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.recordId,
+                expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
                     {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
             });
             describe('when resolved, calls the correct controller function', function() {
@@ -116,7 +115,6 @@ describe('Ontology Close Overlay directive', function() {
         });
         it('close calls the correct manager functions and sets the correct manager variable', function() {
             controller.close();
-            expect(ontologyStateSvc.deleteState).toHaveBeenCalledWith(ontologyStateSvc.recordIdToClose);
             expect(ontologyStateSvc.closeOntology).toHaveBeenCalledWith(ontologyStateSvc.recordIdToClose);
             expect(ontologyStateSvc.showCloseOverlay).toBe(false);
         });

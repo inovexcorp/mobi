@@ -35,19 +35,18 @@
             <block>
                 <block-content class="open-ontology-content">
                     <div class="ontologies">
-                        <div class="ontology" ng-click="dvm.recordId = record['@id']; dvm.showOpenOverlay = true" ng-repeat="record in dvm.filteredList | limitTo:dvm.limit:dvm.begin">
+                        <div class="ontology" ng-click="dvm.openSelected(record)" ng-repeat="record in dvm.filteredList | limitTo:dvm.limit:dvm.begin">
                             <div class="details">
                                 <h2 class="header" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.filterText | trusted"></h2>
+                                <small class="ontology-iri text-muted">{{dvm.util.getPropertyId(record, dvm.prefixes.ontologyEditor + 'ontologyIRI')}}</small>
                                 <p class="description" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
                             </div>
                             <div class="action-container">
                                 <a ng-click="dvm.showDeleteConfirmationOverlay(record); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
                             </div>
                         </div>
-                        <p ng-if="!dvm.filteredList.length" class="text-info message">
-                            <span ng-if="dvm.filterText"><i class="fa fa-info fa-fw"></i>No ontologies match your filtered text.</span>
-                            <span ng-if="!dvm.filterText"><i class="fa fa-info fa-fw"></i>Create or upload an ontology to get started.</span>
-                        </p>
+                        <info-message ng-if="!dvm.filteredList.length && dvm.filterText">No ontologies match your filtered text.</info-message>
+                        <info-message ng-if="!dvm.filteredList.length && !dvm.filterText">Create or upload an ontology to get started.</info-message>
                     </div>
                 </block-content>
                 <block-footer>
@@ -59,22 +58,20 @@
             </block>
         </div>
     </div>
-    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Ontology'" confirm-click="dvm.deleteOntology()"
-                          cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
+    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Ontology'" confirm-click="dvm.deleteOntology()" cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
         <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
+        <error-display ng-if="dvm.mappingErrorMessage">{{dvm.mappingErrorMessage}}</error-display>
         <p>Are you sure that you want to delete <strong>{{dvm.recordTitle}}</strong>?</p>
     </confirmation-overlay>
     <confirmation-overlay ng-if="dvm.showOpenOverlay" header-text="'Open'" confirm-click="dvm.open()"
                           cancel-click="dvm.showOpenOverlay = false" confirm-text="'Open'" cancel-text="'Cancel'">
         <div class="type-container">
-            <button ng-click="dvm.type = 'ontology'" ng-class="{'active': dvm.type === 'ontology'}" class="type"
-                    ng-dblclick="dvm.open()">
+            <button ng-click="dvm.type = 'ontology'" ng-class="{'active': dvm.type === 'ontology'}" class="type" ng-dblclick="dvm.open()">
                 <div class="text-wrapper">
                     <i class="fa fa-fw fa-file-code-o fa-2x"></i><span class="text">Ontology Editor</span>
                 </div>
             </button>
-            <button ng-click="dvm.type = 'vocabulary'" ng-class="{'active': dvm.type === 'vocabulary'}" class="type"
-                    ng-dblclick="dvm.open()">
+            <button ng-click="dvm.type = 'vocabulary'" ng-class="{'active': dvm.type === 'vocabulary'}" class="type" ng-dblclick="dvm.open()">
                 <div class="text-wrapper">
                     <i class="fa fa-fw fa-file-text-o fa-2x"></i><span class="text">Vocabulary Editor</span>
                 </div>

@@ -61,7 +61,7 @@
 
                     dvm.getPreview = function() {
                         setMode(dvm.activePage.serialization);
-                        om.getOntology(dvm.os.listItem.recordId, dvm.os.listItem.branchId, dvm.os.listItem.commitId, dvm.activePage.serialization)
+                        om.getOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.activePage.serialization, false, true)
                             .then(ontology => dvm.activePage.preview = (dvm.activePage.serialization === 'jsonld' ? $filter('json')(ontology) : ontology),
                                 response => dvm.activePage.preview = response);
                     }

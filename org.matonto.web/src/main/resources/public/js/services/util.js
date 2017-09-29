@@ -30,22 +30,28 @@
          *
          * @description
          * The `util` module only provides the `utilService` service which provides various common utility
-         * methods for use across MatOnto.
+         * methods for use across Mobi.
          */
         .module('util', [])
         /**
          * @ngdoc service
          * @name util.service:utilService
          * @requires $filter
+         * @requires $http
+         * @requires $q
+         * @requires uuid
+         * @requires toastr
+         * @requires prefixes.service:prefixes
+         * @requires httpService.service:httpService
          *
          * @description
-         * `utilService` is a service that provides various utility methods for use across MatOnto.
+         * `utilService` is a service that provides various utility methods for use across Mobi.
          */
         .service('utilService', utilService);
 
-        utilService.$inject = ['$filter', 'prefixes', 'toastr', '$http', '$q', 'REGEX'];
+        utilService.$inject = ['$filter', '$http', '$q', 'uuid', 'toastr', 'prefixes', 'httpService', 'REGEX'];
 
-        function utilService($filter, prefixes, toastr, $http, $q, REGEX) {
+        function utilService($filter, $http, $q, uuid, toastr, prefixes, httpService, REGEX) {
             var self = this;
 
             /**
@@ -96,12 +102,38 @@
              * @param {string} value The new value for the property
              */
             self.setPropertyValue = function(entity, propertyIRI, value) {
-                var valueObj = {'@value': value};
-                if (_.has(entity, "['" + propertyIRI + "']")) {
-                    entity[propertyIRI].push(valueObj);
-                } else {
-                    _.set(entity, "['" + propertyIRI + "'][0]", valueObj);
-                }
+                setValue(entity, propertyIRI, {'@value': value});
+            }
+            /**
+             * @ngdoc method
+             * @name hasPropertyValue
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Tests whether or not the passed entity contains the passed value for the passed property.
+             *
+             * @param {Object} entity The entity to look for the property value in
+             * @param {string} propertyIRI The IRI of a property
+             * @param {string} value The value to search for
+             * @return {boolean} True if the entity has the property value; false otherwise
+             */
+            self.hasPropertyValue = function(entity, propertyIRI, value) {
+                return hasValue(entity, propertyIRI, {'@value': value});
+            }
+            /**
+             * @ngdoc method
+             * @name removePropertyValue
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Remove the passed value of the passed property from the passed entity.
+             *
+             * @param {Object} entity The entity to remove the property value from
+             * @param {string} propertyIRI The IRI of a property
+             * @param {string} value The value to remove
+             */
+            self.removePropertyValue = function(entity, propertyIRI, value) {
+                removeValue(entity, propertyIRI, {'@value': value});
             }
             /**
              * @ngdoc method
@@ -130,19 +162,45 @@
              *
              * @param {Object} entity The entity to set the property value of
              * @param {string} propertyIRI The IRI of a property
-             * @param {string} id The new id for the property
+             * @param {string} id The new id value for the property
              */
             self.setPropertyId = function(entity, propertyIRI, id) {
-                var idObj = {'@id': id};
-                if (_.has(entity, "['" + propertyIRI + "']")) {
-                    entity[propertyIRI].push(idObj);
-                } else {
-                    _.set(entity, "['" + propertyIRI + "'][0]", idObj);
-                }
+                setValue(entity, propertyIRI, {'@id': id});
             }
             /**
              * @ngdoc method
-             * @name getPropertyValue
+             * @name hasPropertyId
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Tests whether or not the passed entity contains the passed id value for the passed property.
+             *
+             * @param {Object} entity The entity to look for the property id value in
+             * @param {string} propertyIRI The IRI of a property
+             * @param {string} id The id value to search for
+             * @return {boolean} True if the entity has the property id value; false otherwise
+             */
+            self.hasPropertyId = function(entity, propertyIRI, id) {
+                return hasValue(entity, propertyIRI, {'@id': id});
+            }
+            /**
+             * @ngdoc method
+             * @name removePropertyId
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Remove the passed id value of the passed property from the passed entity.
+             *
+             * @param {Object} entity The entity to remove the property id value from
+             * @param {string} propertyIRI The IRI of a property
+             * @param {string} id The id value to remove
+             */
+            self.removePropertyId = function(entity, propertyIRI, id) {
+                removeValue(entity, propertyIRI, {'@id': id});
+            }
+            /**
+             * @ngdoc method
+             * @name getDctermsValue
              * @methodOf util.service:utilService
              *
              * @description
@@ -257,7 +315,7 @@
              * @param {string} text The text for the body of the error toast
              */
             self.createErrorToast = function(text) {
-                toastr.error(text, 'Error', {timeOut: 0});
+                toastr.error(text, 'Error', {timeOut: 3000});
             }
             /**
              * @ngdoc method
@@ -270,7 +328,7 @@
              * @param {string} text The text for the body of the success toast
              */
             self.createSuccessToast = function(text) {
-                toastr.success(text, 'Success', {timeOut: 0});
+                toastr.success(text, 'Success', {timeOut: 3000});
             }
             /**
              * @ngdoc method
@@ -379,15 +437,17 @@
              * @description
              * Calls the passed URL which repesents a call to get paginated results and returns a Promise
              * that resolves to the HTTP response if successful and calls the provided function if it
-             * failed.
+             * failed. Can optionally be cancel-able if provided a request id.
              *
              * @param {string} url The URL to make a GET call to. Expects the response to be paginated
              * @param {Function} errorFunction The optional function to call if the request fails. Default
              * function rejects with the error message from the response.
+             * @param {string} [id=''] The identifier for this request
              * @return {Promise} A Promise that resolves to the HTTP response if successful
              */
-            self.getResultsPage = function(url, errorFunction = response => $q.reject(self.getErrorMessage(response))) {
-                return $http.get(url).then(response => response, errorFunction);
+            self.getResultsPage = function(url, errorFunction = self.rejectError, id = '') {
+                var promise = id ? httpService.get(url, undefined, id) : $http.get(url);
+                return promise.then($q.when, errorFunction);
             }
             /**
              * @ngdoc method
@@ -404,6 +464,22 @@
              */
             self.onError = function(error, deferred, defaultMessage) {
                 deferred.reject(_.get(error, 'status') === -1 ? '' : self.getErrorMessage(error, defaultMessage));
+            }
+            /**
+             * @ngdoc method
+             * @name rejectError
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Returns a rejected promise with the status text of the passed HTTP response object if present,
+             * otherwise uses the passed default message.
+             *
+             * @param {Object} error A HTTP response object
+             * @param {string} defaultMessage The optional default error text for the rejection
+             * @return {Promise} A Promise that rejects with an error message
+             */
+            self.rejectError = function(error, defaultMessage) {
+                return $q.reject(_.get(error, 'status') === -1 ? '' : self.getErrorMessage(error, defaultMessage));
             }
             /**
              * @ngdoc method
@@ -468,6 +544,110 @@
              */
             self.getPredicateLocalName = function(partialStatement) {
                 return $filter('splitIRI')(_.get(partialStatement, 'p', '')).end;
+            }
+            /**
+             * @ngdoc method
+             * @name getIdForBlankNode
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Generates a blank node IRI using a random V4 UUID.
+             *
+             * @return {string} A blank node IRI that should be unique.
+             */
+            self.getIdForBlankNode = function() {
+                return '_:matonto-bnode-' + uuid.v4();
+            }
+            /**
+             * @ngdoc method
+             * @name getSkolemizedIRI
+             * @methodOf util.service:utilService
+             *
+             * @description
+             * Generates a skolemized IRI using a random V4 UUID.
+             *
+             * @return {string} A skolemized IRI that should be unique.
+             */
+            self.getSkolemizedIRI = function() {
+                return 'http://matonto.org/.well-known/genid/' + uuid.v4();
+            }
+            /**
+             * @ngdoc method
+             * @name getInputType
+             * @methodOf exploreUtils.service:exploreUtilsService
+             *
+             * @description
+             * Gets the input type associated with the property in the properties list provided.
+             *
+             * @param {string} typeIRI The IRI of the type
+             * @returns {string} A string identifying the input type that should be used for the provided property.
+             */
+            self.getInputType = function(typeIRI) {
+                switch (_.replace(typeIRI, prefixes.xsd, '')) {
+                    case 'dateTime':
+                    case 'dateTimeStamp':
+                        return 'datetime-local';
+                    case 'byte':
+                    case 'decimal':
+                    case 'double':
+                    case 'float':
+                    case 'int':
+                    case 'integer':
+                    case 'long':
+                    case 'short':
+                        return 'number';
+                    default:
+                        return 'text';
+                }
+            }
+            /**
+             * @ngdoc method
+             * @name getPattern
+             * @methodOf exploreUtils.service:exploreUtilsService
+             *
+             * @description
+             * Gets the pattern type associated with the property in the properties list provided.
+             *
+             * @param {string} typeIRI The IRI of the type
+             * @returns {RegEx} A Regular Expression identifying the acceptable values for the provided property.
+             */
+            self.getPattern = function(typeIRI) {
+                switch (_.replace(typeIRI, prefixes.xsd, '')) {
+                    case 'dateTime':
+                    case 'dateTimeStamp':
+                        return REGEX.DATETIME;
+                    case 'decimal':
+                    case 'double':
+                    case 'float':
+                        return REGEX.DECIMAL;
+                    case 'byte':
+                    case 'int':
+                    case 'long':
+                    case 'short':
+                    case 'integer':
+                        return REGEX.INTEGER;
+                    default:
+                        return REGEX.ANYTHING;
+                }
+            }
+
+            function setValue(entity, propertyIRI, valueObj) {
+                if (_.has(entity, "['" + propertyIRI + "']")) {
+                    entity[propertyIRI].push(valueObj);
+                } else {
+                    _.set(entity, "['" + propertyIRI + "'][0]", valueObj);
+                }
+            }
+            function hasValue(entity, propertyIRI, valueObj) {
+                return _.some(_.get(entity, "['" + propertyIRI + "']", []), valueObj);
+            }
+            function removeValue(entity, propertyIRI, valueObj) {
+                if (_.has(entity, "['" + propertyIRI + "']")) {
+                    _.remove(entity[propertyIRI], valueObj);
+                    if (entity[propertyIRI].length === 0) {
+                        delete entity[propertyIRI];
+                    }
+                }
             }
         }
 })();

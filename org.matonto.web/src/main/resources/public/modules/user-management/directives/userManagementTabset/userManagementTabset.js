@@ -44,7 +44,7 @@
          * @description
          * `userManagementTabset` is a directive which creates a {@link tabset.directive:tabset tabset} with different
          * pages depending on whether the {@link usersPage.directive:usersPage users} or
-         * {@link groupsPage.directive:groupsPage groups} of MatOnto should be shown. The directive is replaced by the
+         * {@link groupsPage.directive:groupsPage groups} of Mobi should be shown. The directive is replaced by the
          * contents of its template.
          */
         .directive('userManagementTabset', userManagementTabset);

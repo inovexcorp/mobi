@@ -46,6 +46,7 @@
 
     <owl:ObjectProperty rdf:about="http://test.com/ontology1#testObjectProperty1">
         <rdfs:range rdf:resource="http://test.com/ontology1#TestClassA"/>
+        <rdfs:domain rdf:resource="http://test.com/ontology1#TestClassA"/>
     </owl:ObjectProperty>
     
 
@@ -81,6 +82,7 @@
 
     <owl:DatatypeProperty rdf:about="http://test.com/ontology1#testDataProperty1">
         <rdfs:range rdf:resource="http://www.w3.org/2001/XMLSchema#integer"/>
+        <rdfs:domain rdf:resource="http://test.com/ontology1#TestClassA"/>
     </owl:DatatypeProperty>
     
 
@@ -149,6 +151,14 @@
 
     <owl:Class rdf:about="http://test.com/ontology1#TestClassD">
         <rdfs:subClassOf rdf:resource="http://test.com/ontology1#TestClassC"/>
+    </owl:Class>
+
+
+
+    <!-- http://test.com/ontology1#TestClassE -->
+
+    <owl:Class rdf:about="http://test.com/ontology1#TestClassE">
+        <owl:equivalentClass rdf:resource="http://test.com/ontology1#TestClassC"/>
     </owl:Class>
     
 

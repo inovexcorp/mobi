@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+/* global _ */
+
 (function() {
     'use strict';
 
@@ -30,7 +32,7 @@
          *
          * @description
          * The `datasetManager` module only provides the `datasetManagerService` service which provides access
-         * to the MatOnto Dataset REST endpoints.
+         * to the Mobi Dataset REST endpoints.
          */
         .module('datasetManager', [])
         /**
@@ -43,17 +45,18 @@
          * @requires discoverState.service:discoverStateService
          *
          * @description
-         * `datasetManagerService` is a service that provides access to the MatOnto Dataset REST endpoints.
+         * `datasetManagerService` is a service that provides access to the Mobi Dataset REST endpoints.
          */
         .service('datasetManagerService', datasetManagerService);
 
-        datasetManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'discoverStateService'];
+        datasetManagerService.$inject = ['$http', '$q', 'utilService', 'prefixes', 'discoverStateService', 'catalogManagerService', 'REST_PREFIX'];
 
-        function datasetManagerService($http, $q, utilService, prefixes, discoverStateService) {
+        function datasetManagerService($http, $q, utilService, prefixes, discoverStateService, catalogManagerService, REST_PREFIX) {
             var self = this,
                 util = utilService,
                 ds = discoverStateService,
-                prefix = '/matontorest/datasets';
+                cm = catalogManagerService,
+                prefix = REST_PREFIX + 'datasets';
 
             /**
              * @ngdoc property
@@ -73,7 +76,7 @@
              * @methodOf datasetManager.service:datasetManagerService
              *
              * @description
-             * Calls the GET /matontorest/datasets endpoint to collect a list of the DatasetRecords in MatOnto.
+             * Calls the GET /mobirest/datasets endpoint to collect a list of the DatasetRecords in Mobi.
              * Can optionally be paged and sorted through the properties in the passed `paginatedConfig` object.
              * Returns a response with the list of DatasetRecords in the data and any extra pagination information
              * in the headers.
@@ -88,16 +91,31 @@
              * error message
              */
             self.getDatasetRecords = function(paginatedConfig) {
-                var deferred = $q.defer(),
-                    config = {
+                var config = {
                         params: util.paginatedConfigToParams(paginatedConfig)
                     };
                 if (_.get(paginatedConfig, 'searchText')) {
                     config.params.searchText = paginatedConfig.searchText;
                 }
-                $http.get(prefix, config)
-                    .then(deferred.resolve, error => util.onError(error, deferred));
-                return deferred.promise;
+                return $http.get(prefix, config)
+                    .then($q.when, util.rejectError);
+            }
+
+            /**
+             * @ngdoc method
+             * @name getDatasetRecord
+             * @methodOf datasetManager.service:datasetManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/datasets/{datasetRecordIRI} endpoint to get the DatasetRecord associated
+             * with the provided ID.
+             *
+             * @return {Promise} A promise that either resolves with the response of the endpoint or is rejected with an
+             * error message
+             */
+            self.getDatasetRecord = function(datasetRecordIRI) {
+                return $http.get(prefix + '/' + encodeURIComponent(datasetRecordIRI))
+                    .then(response => response.data, $q.reject);
             }
 
             /**
@@ -106,7 +124,7 @@
              * @methodOf datasetManager.service:datasetManagerService
              *
              * @description
-             * Calls POST /matontorest/datasets endpoint with the passed metadata and creates a new DatasetRecord and
+             * Calls POST /mobirest/datasets endpoint with the passed metadata and creates a new DatasetRecord and
              * associated Dataset. Returns a Promise with the IRI of the new DatasetRecord if successful or rejects
              * with an error message.
              *
@@ -122,8 +140,7 @@
              * error message
              */
             self.createDatasetRecord = function(recordConfig) {
-                var deferred = $q.defer(),
-                    fd = new FormData(),
+                var fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
                         headers: {
@@ -142,16 +159,13 @@
                     fd.append('keywords', _.join(recordConfig.keywords, ','));
                 }
                 _.forEach(_.get(recordConfig, 'ontologies', []), id => fd.append('ontologies', id));
-                $http.post(prefix, fd, config)
+                return $http.post(prefix, fd, config)
+                    .then(response => self.getDatasetRecord(response.data), $q.reject)
                     .then(response => {
-                        self.datasetRecords.push({
-                            '@id': response.data,
-                            [prefixes.dcterms + 'title']: [{'@value': recordConfig.title}]
-                        });
-                        self.datasetRecords = _.orderBy(self.datasetRecords, record => util.getDctermsValue(record, 'title'));
-                        deferred.resolve(response.data);
-                    }, error => util.onError(error, deferred));
-                return deferred.promise;
+                        self.datasetRecords.push(response);
+                        self.datasetRecords = _.orderBy(self.datasetRecords, array => util.getDctermsValue(_.find(array, '@type'), 'title'));
+                        return response['@id'];
+                    }, util.rejectError);
             }
 
             /**
@@ -160,8 +174,8 @@
              * @methodOf datasetManager.service:datasetManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/datasets/{datasetRecordId} endpoint and removes the identified DatasetRecord
-             * and its associated Dataset and named graphs from MatOnto. By default, only removes named graphs that are not
+             * Calls the DELETE /mobirest/datasets/{datasetRecordId} endpoint and removes the identified DatasetRecord
+             * and its associated Dataset and named graphs from Mobi. By default, only removes named graphs that are not
              * used by other Datasets, but can be forced to delete them by passed in a boolean. Returns a Promise indicating
              * the success of the request.
              *
@@ -170,15 +184,12 @@
              * @return {Promise} A Promise that resolves if the delete was successful; rejects with an error message otherwise
              */
             self.deleteDatasetRecord = function(datasetRecordIRI, force = false) {
-                var deferred = $q.defer(),
-                    config = {params: {force}};
-                $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI), config)
-                    .then(response => {
+                var config = {params: {force}};
+                return $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI), config)
+                    .then(() => {
                         ds.cleanUpOnDatasetDelete(datasetRecordIRI);
-                        _.remove(self.datasetRecords, {'@id': datasetRecordIRI});
-                        deferred.resolve();
-                    }, error => util.onError(error, deferred));
-                return deferred.promise;
+                        removeDataset(datasetRecordIRI);
+                    }, util.rejectError);
             }
 
             /**
@@ -187,8 +198,8 @@
              * @methodOf datasetManager.service:datasetManagerService
              *
              * @description
-             * Calls the DELETE /matontorest/datasets/{datasetRecordId}/data endpoint and removes the named graphs of the
-             * Dataset associated with the identified DatasetRecord from MatOnto. By default, only removes named graphs that
+             * Calls the DELETE /mobirest/datasets/{datasetRecordId}/data endpoint and removes the named graphs of the
+             * Dataset associated with the identified DatasetRecord from Mobi. By default, only removes named graphs that
              * are not used by other Datasets, but can be forced to delete them by passed in a boolean. Returns a Promise
              * indicating the success of the request.
              *
@@ -197,17 +208,35 @@
              * @return {Promise} A Promise that resolves if the delete was successful; rejects with an error message otherwise
              */
             self.clearDatasetRecord = function(datasetRecordIRI, force = false) {
-                var deferred = $q.defer(),
-                    config = {params: {force}};
-                $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI) + '/data', config)
-                    .then(response => {
+                var config = {params: {force}};
+                return $http.delete(prefix + '/' + encodeURIComponent(datasetRecordIRI) + '/data', config)
+                    .then(() => {
                         ds.cleanUpOnDatasetClear(datasetRecordIRI);
-                        deferred.resolve();
-                    }, error => util.onError(error, deferred));
-                return deferred.promise;
+                    }, util.rejectError);
+            }
+            
+            /**
+             * @ngdoc method
+             * @name updateDatasetRecord
+             * @methodOf datasetManager.service:datasetManagerService
+             *
+             * @description
+             * Calls the updateRecord method of the CatalogManager to update the dataset record provided in the JSON-LD. 
+             * If successful: it then updates the appropriate dataset record in datasetRecords. Returns a Promise
+             * indicating the success of the request.
+             * 
+             * @param {string} datasetRecordIRI The IRI of the DatasetRecord whose Dataset named graphs should be updated.
+             * @param {string} catalogIRI The IRI of the catalog to which the DatasetRecord belongs.
+             * @param {Object[]} jsonld An array containing the JSON-LD DatasetRecord with it's associated Ontology information.
+             * @return {Promise} A Promise that resolves if the update was successful; rejects with an error message otherwise
+             */
+            self.updateDatasetRecord = function(datasetRecordIRI, catalogIRI, jsonld) {
+                return cm.updateRecord(datasetRecordIRI, catalogIRI, jsonld).then(() => {
+                    removeDataset(datasetRecordIRI);
+                    self.datasetRecords.push(jsonld);
+                }, $q.reject);
             }
 
-            
             /**
              * @ngdoc method
              * @name initialize
@@ -225,8 +254,12 @@
                 }
                 self.getDatasetRecords(paginatedConfig)
                     .then(response => {
-                        self.datasetRecords = _.map(response.data, arr => _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord')));
+                        self.datasetRecords = response.data;
                     }, util.createErrorToast);
+            }
+
+            function removeDataset(datasetRecordIRI) {
+                _.remove(self.datasetRecords, array => _.find(array, {'@id': datasetRecordIRI}));
             }
         }
 })();

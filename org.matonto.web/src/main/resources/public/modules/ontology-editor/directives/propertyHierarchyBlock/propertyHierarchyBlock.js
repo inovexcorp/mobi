@@ -44,18 +44,18 @@
                     dvm.utils = ontologyUtilsManagerService;
 
                     dvm.deleteProperty = function() {
-                        if (dvm.om.isObjectProperty(dvm.os.selected)) {
+                        if (dvm.om.isObjectProperty(dvm.os.listItem.selected)) {
                             dvm.utils.deleteObjectProperty();
-                        } else if (dvm.om.isDataTypeProperty(dvm.os.selected)) {
+                        } else if (dvm.om.isDataTypeProperty(dvm.os.listItem.selected)) {
                             dvm.utils.deleteDataTypeProperty();
-                        } else if (dvm.om.isAnnotation(dvm.os.selected)) {
+                        } else if (dvm.om.isAnnotation(dvm.os.listItem.selected)) {
                             dvm.utils.deleteAnnotationProperty();
                         }
                         dvm.showDeleteConfirmation = false;
                     }
                     
                     dvm.isShown = function(node) {
-                        return !_.has(node, 'entityIRI') || (dvm.os.areParentsOpen(node) && node.get(dvm.os.listItem.recordId));
+                        return !_.has(node, 'entityIRI') || (dvm.os.areParentsOpen(node) && node.get(dvm.os.listItem.ontologyRecord.recordId));
                     }
                     
                     dvm.flatPropertyTree = constructFlatPropertyTree();

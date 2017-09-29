@@ -23,17 +23,12 @@ package org.matonto.ontology.rest.impl;
  * #L%
  */
 
-import static org.matonto.rest.util.RestUtils.encode;
-import static org.testng.Assert.assertEquals;
-
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.matonto.rest.util.MatontoRestTestNg;
-import org.testng.annotations.Test;
 
 import javax.ws.rs.core.Application;
-import javax.ws.rs.core.Response;
 
 public class ImportedOntologyRestImplTest extends MatontoRestTestNg {
     private ImportedOntologyRestImpl rest;
@@ -49,27 +44,27 @@ public class ImportedOntologyRestImplTest extends MatontoRestTestNg {
         config.register(MultiPartFeature.class);
     }
 
-    @Test
-    public void testVerifyUrl() throws Exception {
-        Response response = target().path("imported-ontologies/" + encode("https://www.w3.org/TR/owl2-syntax/")).request().head();
-        assertEquals(response.getStatus(), 200);
-    }
+//    @Test
+//    public void testVerifyUrl() throws Exception {
+//        Response response = target().path("imported-ontologies/" + encode("https://www.w3.org/TR/owl2-syntax/")).request().head();
+//        assertEquals(response.getStatus(), 200);
+//    }
 
-    @Test
-    public void testVerifyUrlWhenNotOK() throws Exception {
-        Response response = target().path("imported-ontologies/" + encode("http://www.stefan-birkner.de/system-rules/")).request().head();
-        assertEquals(response.getStatus(), 400);
-    }
+//    @Test
+//    public void testVerifyUrlWhenNotOK() throws Exception {
+//        Response response = target().path("imported-ontologies/" + encode("http://www.stefan-birkner.de/system-rules/")).request().head();
+//        assertEquals(response.getStatus(), 400);
+//    }
 
-    @Test
-    public void testVerifyUrlWhenIOException() throws Exception {
-        Response response = target().path("imported-ontologies/" + encode("https://not-there.com")).request().head();
-        assertEquals(response.getStatus(), 500);
-    }
+//    @Test
+//    public void testVerifyUrlWhenIOException() throws Exception {
+//        Response response = target().path("imported-ontologies/" + encode("https://not-there.com")).request().head();
+//        assertEquals(response.getStatus(), 500);
+//    }
 
-    @Test
-    public void testVerifyUrlWhenMalformedURLException() throws Exception {
-        Response response = target().path("imported-ontologies/" + encode("malformed")).request().head();
-        assertEquals(response.getStatus(), 500);
-    }
+//    @Test
+//    public void testVerifyUrlWhenMalformedURLException() throws Exception {
+//        Response response = target().path("imported-ontologies/" + encode("malformed")).request().head();
+//        assertEquals(response.getStatus(), 500);
+//    }
 }

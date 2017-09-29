@@ -27,9 +27,11 @@ import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
@@ -37,19 +39,17 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.matonto.catalog.api.CatalogManager;
+import org.matonto.catalog.api.CatalogProvUtils;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Branch;
 import org.matonto.catalog.api.ontologies.mcat.BranchFactory;
 import org.matonto.catalog.api.ontologies.mcat.Commit;
 import org.matonto.catalog.api.ontologies.mcat.CommitFactory;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecord;
-import org.matonto.catalog.api.ontologies.mcat.OntologyRecordFactory;
 import org.matonto.dataset.api.DatasetManager;
 import org.matonto.dataset.api.builder.DatasetRecordConfig;
 import org.matonto.dataset.ontology.dataset.DatasetRecord;
@@ -59,10 +59,17 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
-import org.matonto.ontology.utils.api.SesameTransformer;
+import org.matonto.persistence.utils.api.BNodeService;
+import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivity;
+import org.matonto.prov.api.ontologies.mobiprov.DeleteActivityFactory;
+import org.matonto.rdf.api.IRI;
 import org.matonto.rdf.api.Model;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
@@ -78,6 +85,7 @@ import org.matonto.rdf.orm.conversion.impl.ResourceValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
 import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
+import org.matonto.repository.exception.RepositoryException;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.matonto.rest.util.UsernameTestFilter;
 import org.mockito.Mock;
@@ -105,22 +113,24 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
     private ValueConverterRegistry vcr;
     private DatasetRecordFactory datasetRecordFactory;
     private UserFactory userFactory;
-    private OntologyRecordFactory ontologyRecordFactory;
     private BranchFactory branchFactory;
     private CommitFactory commitFactory;
+    private CreateActivityFactory createActivityFactory;
+    private DeleteActivityFactory deleteActivityFactory;
     private DatasetRecord record1;
     private DatasetRecord record2;
     private DatasetRecord record3;
     private Commit commit;
     private Branch branch;
-    private OntologyRecord ontologyRecord;
     private User user;
+    private CreateActivity createActivity;
+    private DeleteActivity deleteActivity;
 
-    private final String ERROR_IRI = "http://example.com/error";
-    private final String LOCAL_IRI = "http://example.com/catalogs/local";
-    private final String ONTOLOGY_RECORD_IRI = "http://example.com/ontologyRecord";
-    private final String BRANCH_IRI = "http://example.com/branch";
-    private final String COMMIT_IRI = "http://example.com/commit";
+    private IRI errorIRI;
+    private IRI localIRI;
+    private IRI ontologyRecordIRI;
+    private IRI branchIRI;
+    private IRI commitIRI;
 
     @Mock
     private SesameTransformer transformer;
@@ -137,37 +147,59 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
     @Mock
     private PaginatedSearchResults<DatasetRecord> results;
 
+    @Mock
+    private BNodeService service;
+
+    @Mock
+    private CatalogProvUtils provUtils;
+
     @Override
     protected Application configureApp() throws Exception {
         vf = SimpleValueFactory.getInstance();
         mf = LinkedHashModelFactory.getInstance();
         vcr = new DefaultValueConverterRegistry();
-        datasetRecordFactory = new DatasetRecordFactory();
+        errorIRI = vf.createIRI("http://example.com/error");
+        localIRI = vf.createIRI("http://example.com/catalogs/local");
+        ontologyRecordIRI = vf.createIRI("http://example.com/ontologyRecord");
+        branchIRI = vf.createIRI("http://example.com/branch");
+        commitIRI = vf.createIRI("http://example.com/commit");
+
         userFactory = new UserFactory();
-        ontologyRecordFactory = new OntologyRecordFactory();
-        branchFactory = new BranchFactory();
-        commitFactory = new CommitFactory();
-        datasetRecordFactory.setValueFactory(vf);
-        datasetRecordFactory.setModelFactory(mf);
-        datasetRecordFactory.setValueConverterRegistry(vcr);
         userFactory.setValueFactory(vf);
         userFactory.setModelFactory(mf);
         userFactory.setValueConverterRegistry(vcr);
-        ontologyRecordFactory.setValueFactory(vf);
-        ontologyRecordFactory.setModelFactory(mf);
-        ontologyRecordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(userFactory);
+
+        datasetRecordFactory = new DatasetRecordFactory();
+        datasetRecordFactory.setValueFactory(vf);
+        datasetRecordFactory.setModelFactory(mf);
+        datasetRecordFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(datasetRecordFactory);
+
+        branchFactory = new BranchFactory();
         branchFactory.setValueFactory(vf);
         branchFactory.setModelFactory(mf);
         branchFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(branchFactory);
+
+        commitFactory = new CommitFactory();
         commitFactory.setValueFactory(vf);
         commitFactory.setModelFactory(mf);
         commitFactory.setValueConverterRegistry(vcr);
-
-        vcr.registerValueConverter(datasetRecordFactory);
-        vcr.registerValueConverter(userFactory);
-        vcr.registerValueConverter(ontologyRecordFactory);
-        vcr.registerValueConverter(branchFactory);
         vcr.registerValueConverter(commitFactory);
+
+        createActivityFactory = new CreateActivityFactory();
+        createActivityFactory.setValueFactory(vf);
+        createActivityFactory.setModelFactory(mf);
+        createActivityFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(createActivityFactory);
+
+        deleteActivityFactory = new DeleteActivityFactory();
+        deleteActivityFactory.setModelFactory(mf);
+        deleteActivityFactory.setValueFactory(vf);
+        deleteActivityFactory.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(deleteActivityFactory);
+
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
         vcr.registerValueConverter(new DoubleValueConverter());
@@ -185,11 +217,11 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         record3 = datasetRecordFactory.createNew(vf.createIRI("http://example.com/record3"));
         record3.setProperty(vf.createLiteral("C"), vf.createIRI(DCTERMS.TITLE.stringValue()));
         user = userFactory.createNew(vf.createIRI("http://example.com/" + UsernameTestFilter.USERNAME));
-        commit = commitFactory.createNew(vf.createIRI(COMMIT_IRI));
-        branch = branchFactory.createNew(vf.createIRI(BRANCH_IRI));
+        commit = commitFactory.createNew(commitIRI);
+        branch = branchFactory.createNew(branchIRI);
         branch.setHead(commit);
-        ontologyRecord = ontologyRecordFactory.createNew(vf.createIRI(ONTOLOGY_RECORD_IRI));
-        ontologyRecord.setMasterBranch(branch);
+        createActivity = createActivityFactory.createNew(vf.createIRI("http://example.com/activity/create"));
+        deleteActivity = deleteActivityFactory.createNew(vf.createIRI("http://example.com/activity/delete"));
 
         MockitoAnnotations.initMocks(this);
         rest = new DatasetRestImpl();
@@ -199,8 +231,8 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         rest.setTransformer(transformer);
         rest.setEngineManager(engineManager);
         rest.setCatalogManager(catalogManager);
-        rest.setOntologyRecordFactory(ontologyRecordFactory);
-        rest.setBranchFactory(branchFactory);
+        rest.setBNodeService(service);
+        rest.setProvUtils(provUtils);
 
         return new ResourceConfig()
                 .register(rest)
@@ -215,20 +247,33 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(datasetManager, catalogManager, transformer, results);
+        reset(datasetManager, catalogManager, transformer, results, service, provUtils);
 
         when(transformer.sesameModel(any(Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
+        when(transformer.sesameStatement(any(Statement.class)))
+                .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
+
+        when(service.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgumentAt(0, Statement.class));
+
+        when(datasetManager.getDatasetRecord(any(Resource.class))).thenReturn(Optional.of(record1));
         when(datasetManager.getDatasetRecords(any(DatasetPaginatedSearchParams.class))).thenReturn(results);
         when(datasetManager.createDataset(any(DatasetRecordConfig.class))).thenReturn(record1);
+        when(datasetManager.deleteDataset(record1.getResource())).thenReturn(record1);
+        when(datasetManager.safeDeleteDataset(record1.getResource())).thenReturn(record1);
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
-        when(catalogManager.getLocalCatalogIRI()).thenReturn(vf.createIRI(LOCAL_IRI));
-        when(catalogManager.getMasterBranch(any(Resource.class), any(Resource.class))).thenReturn(branch);
-        when(results.getPage()).thenReturn(Stream.of(record1, record2, record3)
-                .collect(Collectors.toList()));
+
+        when(catalogManager.getLocalCatalogIRI()).thenReturn(localIRI);
+        when(catalogManager.getRecord(eq(localIRI), eq(record1.getResource()), any(DatasetRecordFactory.class))).thenReturn(Optional.of(record1));
+        when(catalogManager.getMasterBranch(localIRI, ontologyRecordIRI)).thenReturn(branch);
+
+        when(results.getPage()).thenReturn(Stream.of(record1, record2, record3).collect(Collectors.toList()));
         when(results.getPageNumber()).thenReturn(1);
         when(results.getPageSize()).thenReturn(10);
         when(results.getTotalSize()).thenReturn(3);
+
+        when(provUtils.startCreateActivity(any(User.class))).thenReturn(createActivity);
+        when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
     }
 
     /* GET datasets */
@@ -238,6 +283,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         Response response = target().path("datasets").request().get();
         assertEquals(response.getStatus(), 200);
         verify(datasetManager).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
+        verify(service, atLeastOnce()).skolemize(any(Statement.class));
         try {
             JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
             assertEquals(result.size(), 3);
@@ -256,6 +302,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         Response response = target().path("datasets").queryParam("offset", 1).queryParam("limit", 1).request().get();
         assertEquals(response.getStatus(), 200);
         verify(datasetManager).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
+        verify(service, atLeastOnce()).skolemize(any(Statement.class));
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "3");
         Set<Link> links = response.getLinks();
@@ -301,13 +348,15 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
                 .field("repositoryId", "system")
                 .field("description", "description")
                 .field("keywords", "test,demo")
-                .field("ontologies", ONTOLOGY_RECORD_IRI);
+                .field("ontologies", ontologyRecordIRI.stringValue());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
         verify(datasetManager).createDataset(any(DatasetRecordConfig.class));
-        verify(catalogManager).getMasterBranch(vf.createIRI(LOCAL_IRI), vf.createIRI(ONTOLOGY_RECORD_IRI));
+        verify(catalogManager).getMasterBranch(localIRI, ontologyRecordIRI);
         assertEquals(response.readEntity(String.class), record1.getResource().stringValue());
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).endCreateActivity(createActivity, record1.getResource());
     }
 
     @Test
@@ -317,6 +366,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
@@ -326,6 +376,7 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils, times(0)).startCreateActivity(user);
     }
 
     @Test
@@ -337,43 +388,51 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(createActivity);
     }
 
     @Test
     public void createDatasetRecordWithMissingOntologyRecordTest() {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(catalogManager).getMasterBranch(vf.createIRI(LOCAL_IRI), vf.createIRI(ERROR_IRI));
+        doThrow(new IllegalArgumentException()).when(catalogManager).getMasterBranch(localIRI, errorIRI);
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title")
                 .field("repositoryId", "system")
-                .field("ontologies", ERROR_IRI);
+                .field("ontologies", errorIRI.stringValue());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 400);
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(createActivity);
     }
 
     @Test
     public void createDatasetRecordWithMissingMasterBranchTest() {
         // Setup:
-        doThrow(new IllegalStateException()).when(catalogManager).getMasterBranch(vf.createIRI(LOCAL_IRI), vf.createIRI(ERROR_IRI));
+        doThrow(new IllegalStateException()).when(catalogManager).getMasterBranch(localIRI, errorIRI);
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title")
                 .field("repositoryId", "system")
-                .field("ontologies", ERROR_IRI);
+                .field("ontologies", errorIRI.stringValue());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(createActivity);
     }
 
     @Test
     public void createDatasetRecordWithNoHeadCommitTest() {
         // Setup:
-        Branch newBranch = branchFactory.createNew(vf.createIRI(BRANCH_IRI));
-        when(catalogManager.getMasterBranch(vf.createIRI(LOCAL_IRI), vf.createIRI(ONTOLOGY_RECORD_IRI))).thenReturn(newBranch);
+        Branch newBranch = branchFactory.createNew(branchIRI);
+        when(catalogManager.getMasterBranch(localIRI, ontologyRecordIRI)).thenReturn(newBranch);
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title")
                 .field("repositoryId", "system")
-                .field("ontologies", ONTOLOGY_RECORD_IRI);
+                .field("ontologies", ontologyRecordIRI.stringValue());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(createActivity);
     }
 
     @Test
@@ -385,6 +444,53 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
 
         Response response = target().path("datasets").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 500);
+        verify(provUtils).startCreateActivity(user);
+        verify(provUtils).removeActivity(createActivity);
+    }
+
+    /* GET datasets/{datasetId} */
+
+    @Test
+    public void getDatasetRecordTest() {
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue())).request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(datasetManager).getDatasetRecord(record1.getResource());
+    }
+
+    @Test
+    public void getDatasetRecordThatCouldNotBeFoundTest() {
+        when(datasetManager.getDatasetRecord(any(Resource.class))).thenReturn(Optional.empty());
+
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue())).request().get();
+        assertEquals(response.getStatus(), 404);
+        verify(datasetManager).getDatasetRecord(record1.getResource());
+    }
+
+    @Test
+    public void getDatasetRecordThatDoesNotExistTest() {
+        doThrow(new IllegalArgumentException()).when(datasetManager).getDatasetRecord(any(Resource.class));
+
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue())).request().get();
+        assertEquals(response.getStatus(), 400);
+        verify(datasetManager).getDatasetRecord(record1.getResource());
+    }
+
+    @Test
+    public void getDatasetRecordWithIllegalStateTest() {
+        doThrow(new IllegalStateException()).when(datasetManager).getDatasetRecord(any(Resource.class));
+
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue())).request().get();
+        assertEquals(response.getStatus(), 500);
+        verify(datasetManager).getDatasetRecord(record1.getResource());
+    }
+
+    @Test
+    public void getDatasetRecordWithFailedConnectionTest() {
+        doThrow(new RepositoryException()).when(datasetManager).getDatasetRecord(any(Resource.class));
+
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue())).request().get();
+        assertEquals(response.getStatus(), 500);
+        verify(datasetManager).getDatasetRecord(record1.getResource());
     }
 
     /* DELETE datasets/{datasetId} */
@@ -396,6 +502,8 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(datasetManager).deleteDataset(record1.getResource());
         verify(datasetManager, never()).safeDeleteDataset(any(Resource.class));
+        verify(provUtils).startDeleteActivity(user, record1.getResource());
+        verify(provUtils).endDeleteActivity(deleteActivity, record1);
     }
 
     @Test
@@ -405,6 +513,8 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(datasetManager).safeDeleteDataset(record1.getResource());
         verify(datasetManager, never()).deleteDataset(any(Resource.class));
+        verify(provUtils).startDeleteActivity(user, record1.getResource());
+        verify(provUtils).endDeleteActivity(deleteActivity, record1);
     }
 
     @Test
@@ -420,6 +530,8 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", true).request().delete();
         assertEquals(response.getStatus(), 400);
+        verify(provUtils, times(2)).startDeleteActivity(user, record1.getResource());
+        verify(provUtils, times(2)).removeActivity(deleteActivity);
     }
 
     @Test
@@ -435,6 +547,8 @@ public class DatasetRestImplTest extends MatontoRestTestNg {
         response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", true).request().delete();
         assertEquals(response.getStatus(), 500);
+        verify(provUtils, times(2)).startDeleteActivity(user, record1.getResource());
+        verify(provUtils, times(2)).removeActivity(deleteActivity);
     }
 
     /* DELETE datasets/{datasetId}/data */

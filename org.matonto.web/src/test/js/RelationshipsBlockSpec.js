@@ -43,7 +43,7 @@ describe('Relationships Block directive', function() {
         });
 
         scope.relationshipList = [];
-        ontologyStateSvc.selected = {
+        ontologyStateSvc.listItem.selected = {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
@@ -74,6 +74,12 @@ describe('Relationships Block directive', function() {
         it('with a block-header', function() {
             expect(element.find('block-header').length).toBe(1);
         });
+        it('depending on how many annotations there are', function() {
+            expect(element.find('property-values').length).toBe(2);
+            ontologyStateSvc.listItem.selected = undefined;
+            scope.$digest();
+            expect(element.find('property-values').length).toBe(0);
+        });
         it('with a block-content', function() {
             expect(element.find('block-content').length).toBe(1);
         });
@@ -98,18 +104,14 @@ describe('Relationships Block directive', function() {
         });
         it('with property-values', function() {
             expect(element.find('property-values').length).toBe(2);
-            
-            ontologyStateSvc.selected = undefined;
+            ontologyStateSvc.listItem.selected = undefined;
             scope.$apply();
-            
             expect(element.find('property-values').length).toBe(0);
         });
         it('with a block-header a', function() {
             expect(element.querySelectorAll('block-header a').length).toBe(1);
-
-            ontologyStateSvc.selected = undefined;
-            scope.$apply();
-            
+            ontologyStateSvc.listItem.selected = undefined;
+            scope.$digest();
             expect(element.querySelectorAll('block-header a').length).toBe(0);
         });
     });

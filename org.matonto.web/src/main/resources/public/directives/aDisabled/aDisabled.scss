@@ -1,0 +1,8 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+a.disabled {
+    pointer-events: none;
+    cursor: not-allowed;
+    opacity: 0.65;
+}

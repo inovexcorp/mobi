@@ -23,29 +23,34 @@ package org.matonto.rest.util;
  * #L%
  */
 
-import javax.annotation.Nullable;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.Response;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.persistence.utils.SkolemizedStatementIterable;
+import org.matonto.persistence.utils.StatementIterable;
+import org.matonto.persistence.utils.api.BNodeService;
+import org.matonto.persistence.utils.api.SesameTransformer;
+import org.matonto.rdf.api.Model;
 import org.matonto.web.security.util.AuthenticationProps;
-import org.openrdf.model.Model;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import javax.annotation.Nullable;
+import javax.ws.rs.container.ContainerRequestContext;
+import javax.ws.rs.core.Response;
 
 public class RestUtils {
 
@@ -91,17 +96,18 @@ public class RestUtils {
     }
 
     /**
-     * Converts a Sesame Model into a string containing RDF in the specified RDFFormat.
+     * Converts a {@link Model} into a string containing RDF in the specified RDFFormat.
      *
-     * @param model  A Sesame Model of RDF to convert.
+     * @param model  A {@link Model} of RDF to convert.
      * @param format The RDFFormat the RDF should be serialized into.
+     * @param transformer The SesameTransformer for model conversions.
      * @return A String of the serialized RDF from the Model.
      */
-    public static String modelToString(Model model, RDFFormat format) {
+    public static String modelToString(Model model, RDFFormat format, SesameTransformer transformer) {
         long start = System.currentTimeMillis();
         try {
             StringWriter sw = new StringWriter();
-            Rio.write(model, sw, format);
+            Rio.write(new StatementIterable(model, transformer), sw, format);
             return sw.toString();
         } finally {
             LOG.trace("modelToString took {}ms", System.currentTimeMillis() - start);
@@ -109,68 +115,168 @@ public class RestUtils {
     }
 
     /**
-     * Converts a Sesame Model into a string containing grouped RDF in the specified RDFFormat.
+     * Converts a {@link Model} into a string containing RDF in the format specified by the passed string.
      *
-     * @param model  A Sesame Model of RDF to convert.
+     * @param model  A {@link Model} of RDF to convert.
+     * @param format The abbreviated name of a RDFFormat.
+     * @param transformer The SesameTransformer for model conversions.
+     * @return A String of the serialized RDF from the Model.
+     */
+    public static String modelToString(Model model, String format, SesameTransformer transformer) {
+        return modelToString(model, getRDFFormat(format), transformer);
+    }
+
+    /**
+     * Converts a {@link Model} into a skolemized string containing RDF in the specified RDFFormat.
+     *
+     * @param model  A {@link Model} of RDF to convert.
      * @param format The RDFFormat the RDF should be serialized into.
+     * @param transformer The SesameTransformer for model conversions.
+     * @param service The BNodeService for skolemization.
+     * @return A skolemized String of the serialized RDF from the Model.
+     */
+    public static String modelToSkolemizedString(Model model, RDFFormat format, SesameTransformer transformer,
+                                                 BNodeService service) {
+        long start = System.currentTimeMillis();
+        try {
+            StringWriter sw = new StringWriter();
+            Rio.write(new SkolemizedStatementIterable(model, transformer, service), sw, format);
+            return sw.toString();
+        } finally {
+            LOG.trace("modelToSkolemizedString took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    /**
+     * Converts a {@link Model} into a skolemized string containing RDF in the format specified by the passed string.
+     *
+     * @param model  A {@link Model} of RDF to convert.
+     * @param format The abbreviated name of a RDFFormat.
+     * @param transformer The SesameTransformer for model conversions.
+     * @param service The BNodeService for skolemization.
+     * @return A skolemized String of the serialized RDF from the Model.
+     */
+    public static String modelToSkolemizedString(Model model, String format, SesameTransformer transformer,
+                                                 BNodeService service) {
+        return modelToSkolemizedString(model, getRDFFormat(format), transformer, service);
+    }
+
+    /**
+     * Converts a {@link Model} into a string containing grouped RDF in the specified RDFFormat.
+     *
+     * @param model  A {@link Model} of RDF to convert.
+     * @param format The RDFFormat the RDF should be serialized into.
+     * @param transformer The SesameTransformer for model conversions.
      * @return A String of the serialized grouped RDF from the Model.
      */
-    public static String groupedModelToString(Model model, RDFFormat format) {
+    public static String groupedModelToString(Model model, RDFFormat format, SesameTransformer transformer) {
         long start = System.currentTimeMillis();
         try {
             StringWriter sw = new StringWriter();
             RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, sw));
-            Rio.write(model, rdfWriter);
+            Rio.write(new StatementIterable(model, transformer), rdfWriter);
             return sw.toString();
         } finally {
-            LOG.trace("modelToString took {}ms", System.currentTimeMillis() - start);
+            LOG.trace("groupedModelToString took {}ms", System.currentTimeMillis() - start);
         }
     }
 
     /**
-     * Converts a Sesame Model into a string containing RDF in the format specified by the passed string.
+     * Converts a {@link Model} into a string containing grouped RDF in the format specified by the passed string.
      *
-     * @param model  A Sesame Model of RDF to convert.
+     * @param model  A {@link Model} of RDF to convert.
      * @param format The abbreviated name of a RDFFormat.
-     * @return A String of the serialized RDF from the Model.
-     */
-    public static String modelToString(Model model, String format) {
-        return modelToString(model, getRDFFormat(format));
-    }
-
-    /**
-     * Converts a Sesame Model into a string containing grouped RDF in the format specified by the passed string.
-     *
-     * @param model  A Sesame Model of RDF to convert.
-     * @param format The abbreviated name of a RDFFormat.
+     * @param transformer The SesameTransformer for model conversions.
      * @return A String of the serialized grouped RDF from the Model.
      */
-    public static String groupedModelToString(Model model, String format) {
-        return groupedModelToString(model, getRDFFormat(format));
+    public static String groupedModelToString(Model model, String format, SesameTransformer transformer) {
+        return groupedModelToString(model, getRDFFormat(format), transformer);
     }
 
     /**
-     * Converts a JSON-LD string into a Sesame Model.
+     * Converts a {@link Model} into a skolemized string containing grouped RDF in the specified RDFFormat.
+     *
+     * @param model  A {@link Model} of RDF to convert.
+     * @param format The RDFFormat the RDF should be serialized into.
+     * @param transformer The SesameTransformer for model conversions.
+     * @param service The BNodeService for skolemization.
+     * @return A skolemized String of the serialized grouped RDF from the Model.
+     */
+    public static String groupedModelToSkolemizedString(Model model, RDFFormat format, SesameTransformer transformer,
+                                                        BNodeService service) {
+        long start = System.currentTimeMillis();
+        try {
+            StringWriter sw = new StringWriter();
+            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, sw));
+            Rio.write(new SkolemizedStatementIterable(model, transformer, service), rdfWriter);
+            return sw.toString();
+        } finally {
+            LOG.trace("groupedModelToSkolemizedString took {}ms", System.currentTimeMillis() - start);
+        }
+    }
+
+    /**
+     * Converts a {@link Model} into a skolemized string containing grouped RDF in the format specified by the passed
+     * string.
+     *
+     * @param model  A {@link Model} of RDF to convert.
+     * @param format The abbreviated name of a RDFFormat.
+     * @param transformer The SesameTransformer for model conversions.
+     * @param service The BNodeService for skolemization.
+     * @return A skolemized String of the serialized grouped RDF from the Model.
+     */
+    public static String groupedModelToSkolemizedString(Model model, String format, SesameTransformer transformer,
+                                                        BNodeService service) {
+        return groupedModelToSkolemizedString(model, getRDFFormat(format), transformer, service);
+    }
+
+    /**
+     * Converts a JSON-LD string into a {@link Model}.
      *
      * @param jsonld A string of JSON-LD.
+     * @param transformer The SesameTransformer for model conversions.
      * @return A Model containing the RDF from the JSON-LD string.
      */
-    public static Model jsonldToModel(String jsonld) {
+    public static Model jsonldToModel(String jsonld, SesameTransformer transformer) {
         try {
-            return Rio.parse(IOUtils.toInputStream(jsonld), "", RDFFormat.JSONLD);
+            return transformer.matontoModel(Rio.parse(IOUtils.toInputStream(jsonld), "", RDFFormat.JSONLD));
         } catch (Exception e) {
             throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
         }
     }
 
     /**
-     * Converts a Sesame Model into a JSON-LD string.
+     * Converts a JSON-LD string into a deskolemized {@link Model}.
      *
-     * @param model A Sesame model containing RDF.
+     * @param jsonld      A string of JSON-LD.
+     * @param transformer The SesameTransformer for model conversions.
+     * @param service     The BNodeService for skolemization.
+     * @return A deskolemized Model containing the RDF from the JSON-LD string.
+     */
+    public static Model jsonldToDeskolemizedModel(String jsonld, SesameTransformer transformer, BNodeService service) {
+        return service.deskolemize(jsonldToModel(jsonld, transformer));
+    }
+
+    /**
+     * Converts a {@link Model} into a JSON-LD string.
+     *
+     * @param model A {@link Model} containing RDF.
+     * @param transformer The SesameTransformer for model conversions.
      * @return A JSON-LD string containing the converted RDF from the Model.
      */
-    public static String modelToJsonld(Model model) {
-        return modelToString(model, "jsonld");
+    public static String modelToJsonld(Model model, SesameTransformer transformer) {
+        return modelToString(model, "jsonld", transformer);
+    }
+
+    /**
+     * Converts a {@link Model} into a skolemized JSON-LD string.
+     *
+     * @param model A {@link Model} containing RDF.
+     * @param transformer The SesameTransformer for model conversions.
+     * @return A skolemized JSON-LD string containing the converted RDF from the Model.
+     */
+    public static String modelToSkolemizedJsonld(Model model, SesameTransformer transformer, BNodeService service) {
+        return modelToSkolemizedString(model, "jsonld", transformer, service);
     }
 
     /**
@@ -248,7 +354,7 @@ public class RestUtils {
      * @param errorMessage The error message to send if parameter is not set
      */
     public static void checkStringParam(@Nullable String param, String errorMessage) {
-        if (param == null || param.isEmpty()) {
+        if (StringUtils.isBlank(param)) {
             throw ErrorUtils.sendError(errorMessage, Response.Status.BAD_REQUEST);
         }
     }

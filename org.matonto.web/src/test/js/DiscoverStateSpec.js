@@ -35,9 +35,14 @@ describe('Discover State Service', function() {
         expect(discoverStateSvc.explore).toEqual({
             active: true,
             breadcrumbs: ['Classes'],
+            classDeprecated: false,
             classDetails: [],
+            classId: '',
+            creating: false,
+            editing: false,
             instance: {
-                entity: {},
+                changed: [],
+                entity: [{}],
                 metadata: {}
             },
             instanceDetails: {
@@ -87,6 +92,7 @@ describe('Discover State Service', function() {
                 classDetails: [{}],
                 classId: 'classId',
                 instance: {
+                    changed: ['prop'],
                     entity: {'@id': 'instanceId'},
                     metadata: {prop: 'prop'}
                 },
@@ -97,7 +103,8 @@ describe('Discover State Service', function() {
             discoverStateSvc.cleanUpOnDatasetDelete('recordId');
             expect(discoverStateSvc.explore.breadcrumbs).toEqual(['Classes']);
             expect(discoverStateSvc.explore.classDetails).toEqual([]);
-            expect(discoverStateSvc.explore.instance).toEqual({entity: {}, metadata: {}});
+            expect(discoverStateSvc.explore.classId).toEqual('');
+            expect(discoverStateSvc.explore.instance).toEqual({changed: [], entity: {}, metadata: {}});
             expect(discoverStateSvc.explore.recordId).toEqual('');
             expect(discoverStateSvc.resetPagedInstanceDetails).toHaveBeenCalled();
         });
@@ -105,7 +112,8 @@ describe('Discover State Service', function() {
             discoverStateSvc.cleanUpOnDatasetDelete('other');
             expect(discoverStateSvc.explore.breadcrumbs).toEqual(['Classes', 'instance']);
             expect(discoverStateSvc.explore.classDetails).toEqual([{}]);
-            expect(discoverStateSvc.explore.instance).toEqual({entity: {'@id': 'instanceId'}, metadata: {prop: 'prop'}});
+            expect(discoverStateSvc.explore.classId).toEqual('classId');
+            expect(discoverStateSvc.explore.instance).toEqual({changed: ['prop'], entity: {'@id': 'instanceId'}, metadata: {prop: 'prop'}});
             expect(discoverStateSvc.explore.recordId).toEqual('recordId');
             expect(discoverStateSvc.resetPagedInstanceDetails).not.toHaveBeenCalled();
         });
@@ -119,6 +127,7 @@ describe('Discover State Service', function() {
                 classDetails: [{}],
                 classId: 'classId',
                 instance: {
+                    changed: ['prop'],
                     entity: {'@id': 'instanceId'},
                     metadata: {prop: 'prop'}
                 },
@@ -129,15 +138,65 @@ describe('Discover State Service', function() {
             discoverStateSvc.cleanUpOnDatasetClear('recordId');
             expect(discoverStateSvc.explore.breadcrumbs).toEqual(['Classes']);
             expect(discoverStateSvc.explore.classDetails).toEqual([]);
-            expect(discoverStateSvc.explore.instance).toEqual({entity: {}, metadata: {}});
+            expect(discoverStateSvc.explore.classId).toEqual('');
+            expect(discoverStateSvc.explore.instance).toEqual({changed: [], entity: {}, metadata: {}});
             expect(discoverStateSvc.resetPagedInstanceDetails).toHaveBeenCalled();
         });
         it('does not match the recordId', function() {
             discoverStateSvc.cleanUpOnDatasetClear('other');
             expect(discoverStateSvc.explore.breadcrumbs).toEqual(['Classes', 'instance']);
             expect(discoverStateSvc.explore.classDetails).toEqual([{}]);
-            expect(discoverStateSvc.explore.instance).toEqual({entity: {'@id': 'instanceId'}, metadata: {prop: 'prop'}});
+            expect(discoverStateSvc.explore.classId).toEqual('classId');
+            expect(discoverStateSvc.explore.instance).toEqual({changed: ['prop'], entity: {'@id': 'instanceId'}, metadata: {prop: 'prop'}});
             expect(discoverStateSvc.resetPagedInstanceDetails).not.toHaveBeenCalled();
+        });
+    });
+    
+    it('clickCrumb should navigate to the selected crumb', function() {
+        discoverStateSvc.explore.breadcrumbs = ['', ''];
+        discoverStateSvc.explore.editing = true;
+        discoverStateSvc.explore.creating = true;
+        discoverStateSvc.clickCrumb(0);
+        expect(discoverStateSvc.explore.breadcrumbs.length).toBe(1);
+        expect(discoverStateSvc.explore.editing).toBe(false);
+        expect(discoverStateSvc.explore.creating).toBe(false);
+    });
+    
+    it('getInstance should return the correct object in the entity', function() {
+        discoverStateSvc.explore.instance.metadata = {
+            instanceIRI: 'id'
+        };
+        discoverStateSvc.explore.instance.entity = [{
+            '@id': 'id'
+        }, {
+            '@id': '_:x1'
+        }];
+        expect(discoverStateSvc.getInstance()).toEqual({'@id': 'id'});
+    });
+
+    it('resetSearchQueryConfig should reset the query config variables', function() {
+        discoverStateSvc.search.queryConfig = {
+            isOrKeywords: true,
+            isOrTypes: true,
+            keywords: ['keyword'],
+            types: ['type'],
+            filters: [{
+                prop: 'filter'
+            }],
+            variables: {
+                var0: 'var0'
+            }
+        };
+        discoverStateSvc.resetSearchQueryConfig();
+        expect(discoverStateSvc.search.queryConfig).toEqual({
+            isOrKeywords: false,
+            isOrTypes: false,
+            keywords: [],
+            types: [],
+            filters: [],
+            variables: {
+                var0: 'var0'
+            }
         });
     });
 });

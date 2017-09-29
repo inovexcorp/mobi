@@ -43,14 +43,31 @@
                 width: 0.8em;
             }
         }
+        .dataset-title {
+            font-weight: 500;
+            font-size: 24px;
+            display: inline-block;
+        }
         p {
             margin: 0;
         }
         .action-container {
             float: right;
+            padding-right: 10px;
+            padding-top: 10px;
 
+            button {
+                i {
+                    vertical-align: middle;
+                }
+            }
+            .dropdown-menu {
+                right: 10px;
+                left: inherit;
+            }
             .action {
                 display: inline-block;
+                width: 100%;
             }
         }
         .description {

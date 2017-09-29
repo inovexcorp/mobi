@@ -42,12 +42,12 @@ body {
     }
 
     /* Error message font */
-    .error-msg {
-        color: #f00;
+    .error-display {
+        color: $error-color;
         font-weight: bold;
     }
 
-    .text-info {
+    .info-message {
         font-weight: bold;
     }
 
@@ -68,7 +68,7 @@ body {
         }
 
         /* Error message spacing when below form inputs */
-        .error-msg {
+        .error-display {
             margin: 5px 0 0;
         }
     }
@@ -82,19 +82,6 @@ body {
             margin-top: 0;
         }
     }
-}
-
-/* Manchester Syntax styles */
-.manchester-expr {
-    color: $brand-primary;
-    font-weight: bold;
-}
-.manchester-rest {
-    color: $brand-success;
-    font-weight: bold;
-}
-.manchester-lit {
-    color: #f49c1f;
 }
 
 /* clears out ul styles */
@@ -536,6 +523,24 @@ ul {
 }
 
 /* Pagination styles */
+.pagination-wrapper {
+    .paging-details {
+        float: left;
+
+        p {
+            line-height: 34px;
+            margin: 0;
+        }
+    }
+    .page-nav {
+        float: right;
+
+        .pagination {
+            margin: 0;
+            vertical-align: bottom;
+        }
+    }
+}
 .page-nav {
     display: block;
     text-align: center;

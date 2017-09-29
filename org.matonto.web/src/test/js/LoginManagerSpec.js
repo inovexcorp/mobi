@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Login Manager service', function() {
-    var $httpBackend, loginManagerSvc, catalogManagerSvc, catalogStateSvc, ontologyManagerSvc, ontologyStateSvc, mappingManagerSvc, userManagerSvc, stateManagerSvc, state, timeout, $q, params, datasetManagerSvc;
+    var $httpBackend, loginManagerSvc, catalogManagerSvc, catalogStateSvc, ontologyManagerSvc, ontologyStateSvc, userManagerSvc, stateManagerSvc, state, timeout, $q, params, datasetManagerSvc;
 
     beforeEach(function() {
         module('loginManager');
@@ -30,10 +30,10 @@ describe('Login Manager service', function() {
         mockUserManager();
         mockOntologyManager();
         mockOntologyState();
-        mockMappingManager();
         mockStateManager();
         mockOntologyState();
         mockDatasetManager();
+        injectRestPathConstant();
 
         module(function($provide) {
             $provide.service('$state', function() {
@@ -41,13 +41,12 @@ describe('Login Manager service', function() {
             });
         });
 
-        inject(function(loginManagerService, _$httpBackend_, _$state_, _$timeout_, _$q_, _catalogManagerService_, _catalogStateService_, _ontologyManagerService_, _ontologyStateService_, _mappingManagerService_, _userManagerService_, _stateManagerService_, _datasetManagerService_) {
+        inject(function(loginManagerService, _$httpBackend_, _$state_, _$timeout_, _$q_, _catalogManagerService_, _catalogStateService_, _ontologyManagerService_, _ontologyStateService_, _userManagerService_, _stateManagerService_, _datasetManagerService_) {
             loginManagerSvc = loginManagerService;
             catalogStateSvc = _catalogStateService_;
             catalogManagerSvc = _catalogManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
-            mappingManagerSvc = _mappingManagerService_;
             userManagerSvc = _userManagerService_;
             stateManagerSvc = _stateManagerService_;
             $httpBackend = _$httpBackend_;
@@ -66,7 +65,7 @@ describe('Login Manager service', function() {
             };
         });
         it('unless the credentials are wrong', function(done) {
-            $httpBackend.expectGET('/matontorest/user/login' + createQueryString(params)).respond(401, {});
+            $httpBackend.expectGET('/mobirest/user/login' + createQueryString(params)).respond(401, {});
             loginManagerSvc.login(params.username, params.password).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -77,7 +76,7 @@ describe('Login Manager service', function() {
             $httpBackend.flush();
         });
         it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/matontorest/user/login' + createQueryString(params)).respond(400, {});
+            $httpBackend.expectGET('/mobirest/user/login' + createQueryString(params)).respond(400, {});
             loginManagerSvc.login(params.username, params.password).then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -88,7 +87,7 @@ describe('Login Manager service', function() {
             $httpBackend.flush();
         });
         it('unless something else went wrong', function(done) {
-            $httpBackend.expectGET('/matontorest/user/login' + createQueryString(params)).respond(201, {});
+            $httpBackend.expectGET('/mobirest/user/login' + createQueryString(params)).respond(201, {});
             loginManagerSvc.login(params.username, params.password).then(function(response) {
                 expect(response).not.toBe(true);
                 expect(state.go).not.toHaveBeenCalled();
@@ -98,7 +97,7 @@ describe('Login Manager service', function() {
             $httpBackend.flush();
         });
         it('unless the account is anonymous', function(done) {
-            $httpBackend.expectGET('/matontorest/user/login' + createQueryString(params)).respond(200, {scope: 'self anon'});
+            $httpBackend.expectGET('/mobirest/user/login' + createQueryString(params)).respond(200, {scope: 'self anon'});
             loginManagerSvc.login(params.username, params.password).then(function(response) {
                 expect(response).not.toBe(true);
                 expect(state.go).not.toHaveBeenCalled();
@@ -108,7 +107,7 @@ describe('Login Manager service', function() {
             $httpBackend.flush();
         });
         it('if everything was passed correctly', function(done) {
-            $httpBackend.expectGET('/matontorest/user/login' + createQueryString(params)).respond(200, {sub: params.username});
+            $httpBackend.expectGET('/mobirest/user/login' + createQueryString(params)).respond(200, {sub: params.username});
             loginManagerSvc.login(params.username, params.password).then(function(response) {
                 expect(response).toBe(true);
                 expect(state.go).toHaveBeenCalledWith('root.home');
@@ -119,7 +118,7 @@ describe('Login Manager service', function() {
         });
     });
     it('should log a user out', function() {
-        $httpBackend.expectGET('/matontorest/user/logout').respond(200, {});
+        $httpBackend.expectGET('/mobirest/user/logout').respond(200, {});
         loginManagerSvc.logout();
         $httpBackend.flush();
         expect(loginManagerSvc.currentUser).toBe('');
@@ -127,7 +126,7 @@ describe('Login Manager service', function() {
     });
     describe('should get the current login', function() {
         it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/matontorest/user/current').respond(400, {});
+            $httpBackend.expectGET('/mobirest/user/current').respond(400, {});
             loginManagerSvc.getCurrentLogin().then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -138,7 +137,7 @@ describe('Login Manager service', function() {
             $httpBackend.flush();
         });
         it('unless something else went wrong', function(done) {
-            $httpBackend.expectGET('/matontorest/user/current').respond(201, {});
+            $httpBackend.expectGET('/mobirest/user/current').respond(201, {});
             loginManagerSvc.getCurrentLogin().then(function(response) {
                 fail('Promise should have rejected');
                 done();
@@ -149,7 +148,7 @@ describe('Login Manager service', function() {
             $httpBackend.flush();
         });
         it('successfully', function(done) {
-            $httpBackend.expectGET('/matontorest/user/current').respond(200, {});
+            $httpBackend.expectGET('/mobirest/user/current').respond(200, {});
             loginManagerSvc.getCurrentLogin().then(function(response) {
                 expect(response).toEqual({});
                 done();
@@ -192,7 +191,6 @@ describe('Login Manager service', function() {
                 expect(catalogStateSvc.initialize).toHaveBeenCalled();
                 expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
                 expect(ontologyStateSvc.initialize).toHaveBeenCalled();
-                expect(mappingManagerSvc.initialize).toHaveBeenCalled();
                 expect(userManagerSvc.initialize).toHaveBeenCalled();
                 expect(stateManagerSvc.initialize).toHaveBeenCalled();
                 expect(datasetManagerSvc.initialize).toHaveBeenCalled();

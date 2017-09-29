@@ -4,6 +4,7 @@
 @prefix xml: <http://www.w3.org/XML/1998/namespace> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @base <https://matonto.org/vocabulary> .
 
 <https://matonto.org/vocabulary> rdf:type owl:Ontology ;
@@ -17,28 +18,39 @@
 ###  https://matonto.org/vocabulary#ConceptSubClass
 :ConceptSubClass rdf:type owl:Class;
     rdfs:subClassOf skos:Concept;
-    <http://www.w3.org/2004/02/skos/core#prefLabel> "Concept Sub-Class"^^xsd:string .
+    skos:prefLabel "Concept Sub-Class"^^xsd:string .
 
 ###  https://matonto.org/vocabulary#ConceptSchemeSubClass
-#:ConceptSchemeSubClass rdf:type owl:Class;
-#    rdfs:subClassOf skos:ConceptScheme;
-#    <http://www.w3.org/2004/02/skos/core#prefLabel> "Concept Scheme Sub-Class"^^xsd:string .
+:ConceptSchemeSubClass rdf:type owl:Class;
+    rdfs:subClassOf skos:ConceptScheme .
 
 #################################################################
 #    Individuals
 #################################################################
 
 ###  https://matonto.org/vocabulary#Concept1
-:Concept1 rdf:type owl:NamedIndividual ,
-                   <https://matonto.org/vocabulary#ConceptSubClass> ;
-          <http://www.w3.org/2004/02/skos/core#narrower> :Concept2 ;
-          <http://www.w3.org/2004/02/skos/core#prefLabel> "Concept 1"^^xsd:string .
-
+:Concept1 rdf:type owl:NamedIndividual , :ConceptSubClass ;
+          skos:narrower :Concept2 ;
+          skos:prefLabel "Concept 1"^^xsd:string .
 
 ###  https://matonto.org/vocabulary#Concept2
-:Concept2 rdf:type owl:NamedIndividual ,
-                   <https://matonto.org/vocabulary#ConceptSubClass> ;
-          <http://www.w3.org/2004/02/skos/core#prefLabel> "Concept 2"^^xsd:string .
+:Concept2 rdf:type owl:NamedIndividual , :ConceptSubClass ;
+          skos:inScheme :ConceptScheme2 ;
+          skos:prefLabel "Concept 2"^^xsd:string .
 
+###  https://matonto.org/vocabulary#Concept3
+:Concept3 rdf:type owl:NamedIndividual , skos:Concept ;
+          skos:topConceptOf :ConceptScheme3 ;
+          skos:prefLabel "Concept 3"^^xsd:string .
+
+###  https://matonto.org/vocabulary#ConceptScheme1
+:ConceptScheme1 rdf:type :ConceptSchemeSubClass ;
+                skos:hasTopConcept :Concept1 .
+
+###  https://matonto.org/vocabulary#ConceptScheme2
+:ConceptScheme2 rdf:type owl:NamedIndividual , skos:ConceptScheme .
+
+###  https://matonto.org/vocabulary#ConceptScheme3
+:ConceptScheme3 rdf:type owl:NamedIndividual , skos:ConceptScheme .
 
 

@@ -5,12 +5,11 @@
     max-height: 100%;
     overflow-x: hidden;
     overflow-y: scroll;
-
-    h1 {
-        font-size: 5em;
-        margin: 0;
-        padding: .5em;
-        text-align: center;
+    text-align: center;
+    
+    .main-logo {
+        height: 200px;
+        padding: 25px;
     }
 
     .lead {
