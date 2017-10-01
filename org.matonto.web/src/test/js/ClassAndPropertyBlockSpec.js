@@ -21,26 +21,26 @@
  * #L%
  */
 describe('Class And Property Block directive', function() {
-    var $q, $compile, scope, element, controller, analyticStateSvc, ontologyManagerSvc, prefixes, utilSvc;
+    var $q, $compile, scope, element, controller, analyticStateSvc, prefixes, utilSvc;
 
     beforeEach(function() {
         module('templates');
         module('classAndPropertyBlock');
         mockAnalyticState();
-        mockOntologyManager();
         mockPrefixes();
         mockUtil();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _analyticStateService_, _ontologyManagerService_, _prefixes_, _utilService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _analyticStateService_, _prefixes_, _utilService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             analyticStateSvc = _analyticStateService_;
-            ontologyManagerSvc = _ontologyManagerService_;
             prefixes = _prefixes_;
             utilSvc = _utilService_;
         });
         
+        analyticStateSvc.classes = [{title: 'class', id: 'class-id'}];
+        analyticStateSvc.properties = [{title: 'property', id: 'property-id'}];
         compileElement();
         controller = element.controller('classAndPropertyBlock');
     });
@@ -63,11 +63,11 @@ describe('Class And Property Block directive', function() {
             expect(element.querySelectorAll('.list-container h1').length).toBe(2);
         });
         it('with .list-container md-list-item', function() {
-            expect(element.querySelectorAll('.list-container md-list-item').length).toBe(0);
-            analyticStateSvc.classes = [{title: 'class', id: 'class-id'}];
-            analyticStateSvc.properties = [{title: 'property', id: 'property-id'}];
-            scope.$apply();
             expect(element.querySelectorAll('.list-container md-list-item').length).toBe(2);
+            analyticStateSvc.classes = [];
+            analyticStateSvc.properties = [];
+            scope.$apply();
+            expect(element.querySelectorAll('.list-container md-list-item').length).toBe(0);
         });
     });
     describe('controller methods', function() {
@@ -83,45 +83,22 @@ describe('Class And Property Block directive', function() {
     });
     describe('on startup sets values correctly when classes and properties are', function() {
         it('populated', function() {
-            analyticStateSvc.classes = [{}];
-            analyticStateSvc.properties = [{}];
             compileElement();
-            expect(ontologyManagerSvc.getOntology).not.toHaveBeenCalled();
+            expect(analyticStateSvc.setClassesAndProperties).not.toHaveBeenCalled();
         });
-        describe('empty and getOntology', function() {
-            var dataProp;
+        describe('empty and setClassesAndProperties is', function() {
             beforeEach(function() {
-                analyticStateSvc.datasets = [{
-                    ontologies: [{
-                        recordId: 'recordId',
-                        branchId: 'branchId',
-                        commitId: 'commitId'
-                    }]
-                }];
-                objProp = {'@id': 'objectPropId'};
-                objProp[prefixes.rdfs + 'domain'] = [{'@id': 'domainId'}];
-                ontologyManagerSvc.getClasses.and.returnValue([{'@id': 'classId'}]);
-                ontologyManagerSvc.getEntityName.and.returnValue('name');
-                ontologyManagerSvc.getObjectProperties.and.returnValue([objProp]);
-                ontologyManagerSvc.getDataTypeProperties.and.returnValue([{'@id': 'dataPropId'}]);
+                analyticStateSvc.classes = [];
+                analyticStateSvc.properties = [];
             });
-            it('resolves', function() {
-                ontologyManagerSvc.getOntology.and.returnValue($q.when([]));
+            it('resolved', function() {
                 compileElement();
-                expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
-                expect(ontologyManagerSvc.getClasses).toHaveBeenCalledWith([]);
-                expect(ontologyManagerSvc.getObjectProperties).toHaveBeenCalledWith([]);
-                expect(ontologyManagerSvc.getDataTypeProperties).toHaveBeenCalledWith([]);
-                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({'@id': 'classId'});
-                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(objProp);
-                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({'@id': 'dataPropId'});
-                expect(analyticStateSvc.classes).toEqual([{id: 'classId', title: 'name'}]);
-                expect(analyticStateSvc.properties).toEqual([{id: 'objectPropId', title: 'name', classes: ['domainId']}, {id: 'dataPropId', title: 'name', classes: ['classId']}]);
+                expect(analyticStateSvc.setClassesAndProperties).toHaveBeenCalled();
             });
-            it('rejects', function() {
-                ontologyManagerSvc.getOntology.and.returnValue($q.reject('error'));
+            it('rejected', function() {
+                analyticStateSvc.setClassesAndProperties.and.returnValue($q.reject('error'));
                 compileElement();
-                expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
+                expect(analyticStateSvc.setClassesAndProperties).toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
             });
         });

@@ -28,8 +28,18 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement
 public class BaseDetails {
+    private String configurationId;
+
     @XmlElement(required = true)
     private String datasetRecordId;
+
+    public String getConfigurationId() {
+        return configurationId;
+    }
+
+    public void setConfigurationId(String configurationId) {
+        this.configurationId = configurationId;
+    }
 
     public String getDatasetRecordId() {
         return datasetRecordId;

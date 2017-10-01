@@ -38,6 +38,9 @@
          * @name analyticsLandingPage.directive:analyticsLandingPage
          * @scope
          * @restrict E
+         * @requires $q
+         * @requires analyticManager.service:analyticManagerService
+         * @requires analyticState.service:analyticStateService
          * @requires catalogManager.service:catalogManagerService
          * @requires prefixes.service:prefixes
          * @requires util.service:utilService
@@ -48,9 +51,9 @@
          */
         .directive('analyticsLandingPage', analyticsLandingPage);
         
-        analyticsLandingPage.$inject = ['catalogManagerService', 'prefixes', 'utilService'];
+        analyticsLandingPage.$inject = ['$q', 'analyticManagerService', 'analyticStateService', 'catalogManagerService', 'prefixes', 'utilService'];
 
-        function analyticsLandingPage(catalogManagerService, prefixes, utilService) {
+        function analyticsLandingPage($q, analyticManagerService, analyticStateService, catalogManagerService, prefixes, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -60,6 +63,8 @@
                 controller: function() {
                     var dvm = this;
                     var cm = catalogManagerService;
+                    var am = analyticManagerService;
+                    var state = analyticStateService;
                     dvm.showCreateOverlay = false;
                     dvm.showDeleteOverlay = false;
                     dvm.recordIndex = -1;
@@ -97,6 +102,17 @@
                             .then(response => {
                                 dvm.config.pageIndex = direction === 'next' ? dvm.config.pageIndex + 1 : dvm.config.pageIndex - 1;
                                 setPagination(response);
+                            }, dvm.util.createErrorToast);
+                    }
+                    
+                    dvm.open = function(analyticRecordId) {
+                        am.getAnalytic(analyticRecordId)
+                            .then(state.populateEditor, $q.reject)
+                            .then(message => {
+                                if (!_.isEmpty(message)) {
+                                    dvm.util.createErrorToast(message);
+                                }
+                                state.showEditor();
                             }, dvm.util.createErrorToast);
                     }
 

@@ -461,7 +461,7 @@ function mockPrefixes() {
             this.dataset = 'dataset:';
             this.matprov = 'matprov:';
             this.prov = 'prov:';
-            this.analytic = 'analytic:';
+            this.analytic = 'https://matonto.org/analytic#';
         });
     });
 }
@@ -1127,7 +1127,7 @@ function mockSearch() {
 
 function mockAnalyticState() {
     module(function($provide) {
-        $provide.service('analyticStateService', function() {
+        $provide.service('analyticStateService', function($q) {
             this.landing = true;
             this.editor = false;
             this.datasets = [];
@@ -1147,6 +1147,7 @@ function mockAnalyticState() {
             this.links = {};
             this.query = {};
             this.record = {};
+            this.selectedConfigurationId = '';
             this.showEditor = jasmine.createSpy('showEditor');
             this.showLanding = jasmine.createSpy('showLanding');
             this.resetSelected = jasmine.createSpy('resetSelected');
@@ -1157,6 +1158,10 @@ function mockAnalyticState() {
             this.getPage = jasmine.createSpy('getPage');
             this.sortResults = jasmine.createSpy('sortResults');
             this.reorderColumns = jasmine.createSpy('reorderColumns');
+            this.setClassesAndProperties = jasmine.createSpy('setClassesAndProperties').and.returnValue($q.when());
+            this.populateEditor = jasmine.createSpy('populateEditor').and.returnValue($q.when());
+            this.getOntologies = jasmine.createSpy('getOntologies').and.returnValue([]);
+            this.createTableConfigurationConfig = jasmine.createSpy('createTableConfigurationConfig').and.returnValue({});
         });
     });
 }
@@ -1167,6 +1172,8 @@ function mockAnalyticManager() {
             this.initialize = jasmine.createSpy('initialize').and.returnValue($q.when());
             this.getConfigurationTypes = jasmine.createSpy('getConfigurationTypes').and.returnValue($q.when([]));
             this.createAnalytic = jasmine.createSpy('createAnalytic').and.returnValue($q.when(''));
+            this.getAnalytic = jasmine.createSpy('getAnalytic').and.returnValue($q.when([]));
+            this.updateAnalytic = jasmine.createSpy('updateAnalytic').and.returnValue($q.when());
         });
     });
 }

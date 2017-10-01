@@ -68,11 +68,7 @@
                     var util = utilService;
                     dvm.datasets = _.map(dm.datasetRecords, arr => {
                         var record = _.find(arr, '@type');
-                        var ontologies = _.map(_.without(arr, record), identifier => ({
-                            recordId: util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'),
-                            branchId: util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch'),
-                            commitId: util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit')
-                        }));
+                        var ontologies = state.getOntologies(arr, record);
                         return {
                             id: record['@id'],
                             datasetIRI: util.getPropertyId(record, prefixes.dataset + 'dataset'),

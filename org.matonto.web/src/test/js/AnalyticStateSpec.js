@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Analytic State Service', function() {
-    var $q, scope, analyticStateSvc, prefixes, httpSvc, utilSvc, sparqlManagerSvc, response;
+    var $q, scope, analyticStateSvc, prefixes, httpSvc, utilSvc, sparqlManagerSvc, response, ontologyManagerSvc, datasetManagerSvc;
 
     beforeEach(function() {
         module('analyticState');
@@ -29,8 +29,10 @@ describe('Analytic State Service', function() {
         mockPrefixes();
         mockSparqlManager();
         mockUtil();
+        mockOntologyManager();
+        mockDatasetManager();
 
-        inject(function(_$q_, _$rootScope_, analyticStateService, _prefixes_, _httpService_, _utilService_, _sparqlManagerService_) {
+        inject(function(_$q_, _$rootScope_, analyticStateService, _prefixes_, _httpService_, _utilService_, _sparqlManagerService_, _ontologyManagerService_, _datasetManagerService_) {
             $q = _$q_;
             scope = _$rootScope_;
             analyticStateSvc = analyticStateService;
@@ -38,6 +40,8 @@ describe('Analytic State Service', function() {
             httpSvc = _httpService_;
             utilSvc = _utilService_;
             sparqlManagerSvc = _sparqlManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
+            datasetManagerSvc = _datasetManagerService_;
         });
         
         analyticStateSvc.datasets = [{id: 'datasetId'}];
@@ -86,8 +90,10 @@ describe('Analytic State Service', function() {
         expect(analyticStateSvc.limit).toEqual(100);
         expect(analyticStateSvc.links).toEqual({});
         expect(analyticStateSvc.query).toEqual({});
+        expect(analyticStateSvc.record).toEqual({});
         expect(analyticStateSvc.landing).toBe(true);
         expect(analyticStateSvc.editor).toBe(false);
+        expect(analyticStateSvc.selectedConfigurationId).toBe('');
     });
     it('resetSelected sets the variables correctly', function() {
         analyticStateSvc.resetSelected();
@@ -294,6 +300,254 @@ describe('Analytic State Service', function() {
             expect(analyticStateSvc.query.variables).toEqual([]);
         });
     });
+    describe('setClassesAndProperties should correctly set the classes and properties when getOntology', function() {
+        var dataProp;
+        beforeEach(function() {
+            analyticStateSvc.datasets = [{
+                ontologies: [{
+                    recordId: 'recordId',
+                    branchId: 'branchId',
+                    commitId: 'commitId'
+                }]
+            }];
+            analyticStateSvc.defaultProperties = [];
+            objProp = {'@id': 'objectPropId'};
+            objProp[prefixes.rdfs + 'domain'] = [{'@id': 'domainId'}];
+            ontologyManagerSvc.getClasses.and.returnValue([{'@id': 'classId'}]);
+            ontologyManagerSvc.getEntityName.and.returnValue('name');
+            ontologyManagerSvc.getObjectProperties.and.returnValue([objProp]);
+            ontologyManagerSvc.getDataTypeProperties.and.returnValue([{'@id': 'dataPropId'}]);
+        });
+        it('is not called because no ontologies were found', function() {
+            analyticStateSvc.datasets = [{ontologies: []}];
+            analyticStateSvc.setClassesAndProperties()
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('The Dataset does not have any associated ontologies');
+                });
+            scope.$apply();
+        });
+        describe('resolves and response is', function() {
+            it('empty', function() {
+                ontologyManagerSvc.getOntology.and.returnValue($q.when([]));
+                analyticStateSvc.setClassesAndProperties()
+                    .then(function() {
+                        fail('Promise should have rejected');
+                    }, function(response) {
+                        expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
+                        expect(response).toBe('The Dataset ontologies could not be retrieved');
+                    });
+                scope.$apply();
+            });
+            it('populated', function() {
+                ontologyManagerSvc.getOntology.and.returnValue($q.when([{}]));
+                analyticStateSvc.setClassesAndProperties()
+                    .then(function(response) {
+                        expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
+                        expect(ontologyManagerSvc.getClasses).toHaveBeenCalledWith([[{}]]);
+                        expect(ontologyManagerSvc.getObjectProperties).toHaveBeenCalledWith([[{}]]);
+                        expect(ontologyManagerSvc.getDataTypeProperties).toHaveBeenCalledWith([[{}]]);
+                        expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({'@id': 'classId'});
+                        expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(objProp);
+                        expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({'@id': 'dataPropId'});
+                        expect(analyticStateSvc.classes).toEqual([{id: 'classId', title: 'name'}]);
+                        expect(analyticStateSvc.properties).toEqual([{id: 'objectPropId', title: 'name', classes: ['domainId']}, {id: 'dataPropId', title: 'name', classes: ['classId']}]);
+                    }, function() {
+                        fail('Promise should have resolved');
+                    })
+                scope.$apply();
+            });
+        });
+        it('rejects', function() {
+            ontologyManagerSvc.getOntology.and.returnValue($q.reject('error'));
+            analyticStateSvc.setClassesAndProperties()
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
+                    expect(response).toBe('The Dataset ontologies could not be found');
+                });
+            scope.$apply();
+        });
+    });
+    describe('populateEditor should set the values correctly if setClassesAndProperties', function() {
+        var record = [];
+        var configuration = {};
+        var analyticRecord = {};
+        var column1 = {};
+        var column2 = {};
+        beforeEach(function() {
+            spyOn(analyticStateSvc, 'getOntologies').and.returnValue([]);
+            configuration = {'@id': 'configId', '@type': [prefixes.analytic + 'Configuration']};
+            configuration[prefixes.analytic + 'datasetRecord'] = [{'@id': 'datasetRecordId'}];
+            configuration[prefixes.analytic + 'hasRow'] = [{'@id': 'rowId'}];
+            configuration[prefixes.analytic + 'hasColumn'] = [{'@id': 'columnId1'}, {'@id': 'columnId2'}];
+            analyticRecord = {'@id': 'recordId', '@type': [prefixes.analytic + 'AnalyticRecord']};
+            analyticRecord[prefixes.dcterms + 'title'] = [{'@value': 'title'}];
+            analyticRecord[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
+            analyticRecord[prefixes.catalog + 'keyword'] = [{'@value': 'keyword1'}, {'@value': 'keyword2'}];
+            column1 = {'@id': 'columnId1'};
+            column1[prefixes.analytic + 'hasIndex'] = [{'@value': 1}];
+            column1[prefixes.analytic + 'hasProperty'] = [{'@id': 'property1'}];
+            column2 = {'@id': 'columnId2'};
+            column2[prefixes.analytic + 'hasIndex'] = [{'@value': 0}];
+            column2[prefixes.analytic + 'hasProperty'] = [{'@id': 'property2'}];
+            record = [analyticRecord, configuration, column1, column2];
+            utilSvc.getPropertyId.and.callFake(function(obj, prop) {
+                return obj[prop][0]['@id'];
+            });
+            utilSvc.getDctermsValue.and.callFake(function(obj, prop) {
+                return obj[prefixes.dcterms + prop][0]['@value'];
+            });
+            utilSvc.getPropertyValue.and.callFake(function(obj, prop) {
+                return obj[prop][0]['@value'];
+            });
+            datasetManagerSvc.datasetRecords = [[{'@id': 'datasetRecordId', '@type': 'type'}, {}]];
+        });
+        it('it not called because the datset cannot be found', function() {
+            datasetManagerSvc.datasetRecords = [];
+            analyticStateSvc.populateEditor(record)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Dataset could not be found');
+                });
+            scope.$apply();
+        });
+        describe('resolves and', function() {
+            beforeEach(function() {
+                spyOn(analyticStateSvc, 'setClassesAndProperties').and.returnValue($q.when());
+                spyOn(analyticStateSvc, 'createQueryString').and.returnValue('query');
+            });
+            it('the row classId could not be found in the classes list', function() {
+                analyticStateSvc.populateEditor(record)
+                    .then(function(response) {
+                        populateEditor(configuration, analyticRecord);
+                        expect(analyticStateSvc.createQueryString).not.toHaveBeenCalled();
+                        expect(analyticStateSvc.selectedClass).toBeUndefined();
+                        expect(analyticStateSvc.selectedProperties).toEqual([]);
+                        expect(response).toBe('The Class could not be found in the Dataset ontologies');
+                    }, function() {
+                        fail('Promise should have resolved');
+                    });
+                scope.$apply();
+            });
+            it('none of the propertyIds could be found in the properties list', function() {
+                analyticStateSvc.classes = [{id: 'rowId'}];
+                analyticStateSvc.populateEditor(record)
+                    .then(function(response) {
+                        populateEditor(configuration, analyticRecord);
+                        expect(analyticStateSvc.createQueryString).not.toHaveBeenCalled();
+                        expect(analyticStateSvc.selectedClass).toEqual({id: 'rowId'});
+                        expect(analyticStateSvc.selectedProperties).toEqual([]);
+                        expect(response).toBe('The Properties could not be found in the Dataset ontologies');
+                    }, function() {
+                        fail('Promise should have resolved');
+                    });
+                scope.$apply();
+            });
+            describe('getPagedResults', function() {
+                beforeEach(function() {
+                    analyticStateSvc.classes = [{id: 'rowId'}];
+                    analyticStateSvc.properties = [{id: 'property1'}, {id: 'property2'}];
+                });
+                it('resolves', function() {
+                    sparqlManagerSvc.pagedQuery.and.returnValue($q.when(response));
+                    analyticStateSvc.populateEditor(record)
+                        .then(function() {
+                            populateEditor(configuration, analyticRecord);
+                            expect(analyticStateSvc.createQueryString).toHaveBeenCalled();
+                            expect(analyticStateSvc.selectedClass).toEqual({id: 'rowId'});
+                            expect(analyticStateSvc.selectedProperties).toEqual([{id: 'property2'}, {id: 'property1'}]);
+                            onPagedSuccess();
+                        }, function() {
+                            fail('Promise should have resolved');
+                        });
+                    scope.$apply();
+                });
+                it('rejects', function() {
+                    sparqlManagerSvc.pagedQuery.and.returnValue($q.reject('error'));
+                    analyticStateSvc.populateEditor(record)
+                        .then(function() {
+                            populateEditor(configuration, analyticRecord);
+                            expect(analyticStateSvc.createQueryString).toHaveBeenCalled();
+                            expect(analyticStateSvc.selectedClass).toEqual({id: 'rowId'});
+                            expect(analyticStateSvc.selectedProperties).toEqual([{id: 'property2'}, {id: 'property1'}]);
+                            onPagedError();
+                        }, function() {
+                            fail('Promise should have resolved');
+                        });
+                    scope.$apply();
+                });
+            });
+        });
+        it('rejects', function() {
+            spyOn(analyticStateSvc, 'setClassesAndProperties').and.returnValue($q.reject('error'));
+            analyticStateSvc.populateEditor(record)
+                .then(function() {
+                    fail('Promise should have been rejected');
+                }, function(response) {
+                    expect(utilSvc.getPropertyId).toHaveBeenCalledWith(configuration, prefixes.analytic + 'datasetRecord');
+                    expect(analyticStateSvc.datasets).toEqual([]);
+                    expect(utilSvc.getPropertyId).toHaveBeenCalledWith(configuration, prefixes.analytic + 'hasRow');
+                    expect(analyticStateSvc.setClassesAndProperties).toHaveBeenCalled();
+                    expect(response).toBe('error');
+                });
+            scope.$apply();
+        });
+    });
+    it('getOntologies should return the correct array of ontologies', function() {
+        utilSvc.getPropertyId.and.returnValue('id');
+        var record = {'@id': 'id', '@type': 'type'};
+        var dataset = [record, {}];
+        expect(analyticStateSvc.getOntologies(dataset, record)).toEqual([{recordId: 'id', branchId: 'id', commitId: 'id'}]);
+        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.dataset + 'linksToRecord');
+        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.dataset + 'linksToBranch');
+        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.dataset + 'linksToCommit');
+    });
+    describe('createTableConfigurationConfig should return the correct object when selectedConfigurationId is', function() {
+        beforeEach(function() {
+            analyticStateSvc.datasets = [{id: 'datasetId'}];
+            analyticStateSvc.selectedClass = {id: 'classId'};
+            analyticStateSvc.selectedProperties = [{id: 'propId1'}, {id: 'propId2'}];
+        });
+        it('empty', function() {
+            expect(analyticStateSvc.createTableConfigurationConfig()).toEqual({
+                json: JSON.stringify({
+                    datasetRecordId: 'datasetId',
+                    row: 'classId',
+                    columns: [{index: 0, property: 'propId1'}, {index: 1, property: 'propId2'}]
+                }),
+                type: prefixes.analytic + 'TableConfiguration'
+            });
+        });
+        it('populated', function() {
+            analyticStateSvc.selectedConfigurationId = 'configId';
+            expect(analyticStateSvc.createTableConfigurationConfig()).toEqual({
+                json: JSON.stringify({
+                    datasetRecordId: 'datasetId',
+                    row: 'classId',
+                    columns: [{index: 0, property: 'propId1'}, {index: 1, property: 'propId2'}],
+                    configurationId: 'configId'
+                }),
+                type: prefixes.analytic + 'TableConfiguration'
+            });
+        });
+    });
+    
+    function populateEditor(configuration, analyticRecord) {
+        expect(utilSvc.getPropertyId).toHaveBeenCalledWith(configuration, prefixes.analytic + 'datasetRecord');
+        expect(analyticStateSvc.datasets).toEqual([{id: 'datasetRecordId', ontologies: []}]);
+        expect(utilSvc.getPropertyId).toHaveBeenCalledWith(configuration, prefixes.analytic + 'hasRow');
+        expect(analyticStateSvc.setClassesAndProperties).toHaveBeenCalled();
+        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(analyticRecord, 'description');
+        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(analyticRecord, 'title');
+        expect(analyticStateSvc.selectedConfigurationId).toBe('configId');
+        expect(analyticStateSvc.record).toEqual({analyticRecordId: 'recordId', description: 'description', keywords: ['keyword1', 'keyword2'], title: 'title'});
+        expect(analyticStateSvc.classes).toEqual([]);
+        expect(analyticStateSvc.properties).toEqual([]);
+    }
     
     function getPageResolves(direction) {
         httpSvc.get.and.returnValue($q.when(response));

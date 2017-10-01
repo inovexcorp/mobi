@@ -25,10 +25,12 @@ package org.matonto.analytic.rest.impl;
 
 import static org.matonto.rest.util.RestUtils.checkStringParam;
 import static org.matonto.rest.util.RestUtils.getActiveUser;
+import static org.matonto.rest.util.RestUtils.modelToJsonld;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.matonto.analytic.api.AnalyticManager;
 import org.matonto.analytic.api.builder.AnalyticRecordConfig;
@@ -39,7 +41,12 @@ import org.matonto.catalog.api.CatalogProvUtils;
 import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
+import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
+import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.OrmFactoryRegistry;
 import org.matonto.rest.util.ErrorUtils;
@@ -59,6 +66,9 @@ public class AnalyticRestImpl implements AnalyticRest {
     private EngineManager engineManager;
     private CatalogProvUtils provUtils;
     private OrmFactoryRegistry factoryRegistry;
+    private ValueFactory vf;
+    private ModelFactory mf;
+    private SesameTransformer transformer;
 
     @Reference
     void setAnalyticManager(AnalyticManager analyticManager) {
@@ -80,6 +90,21 @@ public class AnalyticRestImpl implements AnalyticRest {
         this.factoryRegistry = factoryRegistry;
     }
 
+    @Reference
+    void setValueFactory(ValueFactory vf) {
+        this.vf = vf;
+    }
+
+    @Reference
+    void setModelFactory(ModelFactory mf) {
+        this.mf = mf;
+    }
+
+    @Reference
+    void setSesameTransformer(SesameTransformer transformer) {
+        this.transformer = transformer;
+    }
+
     @Override
     public Response getConfigurationTypes() {
         try {
@@ -93,15 +118,12 @@ public class AnalyticRestImpl implements AnalyticRest {
     public Response createAnalytic(ContainerRequestContext context, String typeIRI, String title, String description,
                                    String keywords, String json) {
         checkStringParam(title, "AnalyticRecord title is required");
-        Map<String, OrmFactory<? extends Configuration>> factories = getConfigurationFactories();
-        if (typeIRI == null || !factories.keySet().contains(typeIRI)) {
-            throw ErrorUtils.sendError("Invalid Configuration type", Response.Status.BAD_REQUEST);
-        }
+        OrmFactory<? extends Configuration> factory = getConfigurationFactoryOfType(typeIRI);
         User activeUser = getActiveUser(context, engineManager);
         CreateActivity createActivity = null;
         try {
             createActivity = provUtils.startCreateActivity(activeUser);
-            Configuration configuration = analyticManager.createConfiguration(json, factories.get(typeIRI));
+            Configuration configuration = analyticManager.createConfiguration(json, factory);
             AnalyticRecordConfig.AnalyticRecordBuilder builder = new AnalyticRecordConfig.AnalyticRecordBuilder(title,
                     Collections.singleton(activeUser), configuration);
             if (description != null) {
@@ -112,7 +134,9 @@ public class AnalyticRestImpl implements AnalyticRest {
             }
             AnalyticRecord newRecord = analyticManager.createAnalytic(builder.build());
             provUtils.endCreateActivity(createActivity, newRecord.getResource());
-            return Response.status(201).entity(newRecord.getResource().stringValue()).build();
+            JSONObject response = new JSONObject().element("analyticRecordId", newRecord.getResource().stringValue())
+                    .element("configurationId", configuration.getResource().stringValue());
+            return Response.status(201).entity(response).build();
         } catch (IllegalArgumentException ex) {
             provUtils.removeActivity(createActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -125,10 +149,49 @@ public class AnalyticRestImpl implements AnalyticRest {
         }
     }
 
+    @Override
+    public Response getAnalytic(String analyticRecordId) {
+        Resource recordIRI = vf.createIRI(analyticRecordId);
+        try {
+            AnalyticRecord analyticRecord = analyticManager.getAnalyticRecord(recordIRI).orElseThrow(() ->
+                    ErrorUtils.sendError("AnalyticRecord " + analyticRecordId + " could not be found",
+                            Response.Status.NOT_FOUND));
+            Model copy = mf.createModel();
+            analyticRecord.getModel().forEach(st -> copy.add(st.getSubject(), st.getPredicate(), st.getObject()));
+            return Response.ok(modelToJsonld(copy, transformer)).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MatOntoException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
+    public Response updateAnalytic(String analyticRecordId, String typeIRI, String json) {
+        OrmFactory<? extends Configuration> factory = getConfigurationFactoryOfType(typeIRI);
+        try {
+            analyticManager.updateConfiguration(vf.createIRI(analyticRecordId),
+                    analyticManager.createConfiguration(json, factory));
+            return Response.ok().build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MatOntoException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     private Map<String, OrmFactory<? extends Configuration>> getConfigurationFactories() {
         Map<String, OrmFactory<? extends Configuration>> factoryMap = new HashMap<>();
         factoryRegistry.getFactoriesOfType(Configuration.class).forEach(factory ->
                 factoryMap.put(factory.getTypeIRI().stringValue(), factory));
         return factoryMap;
+    }
+
+    private OrmFactory<? extends Configuration> getConfigurationFactoryOfType(String typeIRI) {
+        Map<String, OrmFactory<? extends Configuration>> factories = getConfigurationFactories();
+        if (typeIRI == null || !factories.keySet().contains(typeIRI)) {
+            throw ErrorUtils.sendError("Invalid Configuration type", Response.Status.BAD_REQUEST);
+        }
+        return factories.get(typeIRI);
     }
 }

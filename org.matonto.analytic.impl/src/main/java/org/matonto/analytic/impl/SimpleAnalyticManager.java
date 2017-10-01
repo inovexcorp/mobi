@@ -37,6 +37,9 @@ import org.matonto.catalog.api.CatalogManager;
 import org.matonto.catalog.api.CatalogUtilsService;
 import org.matonto.catalog.api.PaginatedSearchResults;
 import org.matonto.catalog.api.ontologies.mcat.Record;
+import org.matonto.persistence.utils.RepositoryResults;
+import org.matonto.rdf.api.Model;
+import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.orm.OrmFactory;
@@ -57,6 +60,7 @@ public class SimpleAnalyticManager implements AnalyticManager {
     private Repository repository;
     private AnalyticRecordFactory analyticRecordFactory;
     private ValueFactory vf;
+    private ModelFactory mf;
     private Map<String, ConfigurationService<? extends Configuration>> configurationServices = new HashMap<>();
 
     @Reference(type = '*', dynamic = true)
@@ -93,6 +97,11 @@ public class SimpleAnalyticManager implements AnalyticManager {
         this.vf = vf;
     }
 
+    @Reference
+    void setModelFactory(ModelFactory mf) {
+        this.mf = mf;
+    }
+
     @Override
     public PaginatedSearchResults<AnalyticRecord> getAnalyticRecords(AnalyticPaginatedSearchParams searchParams) {
         PaginatedSearchResults<Record> results = catalogManager.findRecord(catalogManager.getLocalCatalogIRI(),
@@ -118,13 +127,10 @@ public class SimpleAnalyticManager implements AnalyticManager {
     public void deleteAnalytic(Resource recordId) {
         AnalyticRecord record = getAnalyticRecord(recordId).orElseThrow(() ->
                 new IllegalArgumentException("Could not find the required AnalyticRecord in the Catalog."));
-        Resource configId = record.getHasConfig_resource().orElseThrow(() ->
-                new IllegalStateException("Could not retrieve the Configuration IRI from the AnalyticRecord."));
 
         try (RepositoryConnection conn = repository.getConnection()) {
             conn.begin();
             catalogUtils.removeObject(record, conn);
-            catalogUtils.remove(configId, conn);
             conn.commit();
         }
     }
@@ -142,7 +148,8 @@ public class SimpleAnalyticManager implements AnalyticManager {
     @Override
     public <T extends Configuration> Optional<T> getConfiguration(Resource configId, OrmFactory<T> factory) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            return catalogUtils.optObject(configId, factory, conn);
+            Model model = RepositoryResults.asModel(conn.getStatements(configId, null, null), mf);
+            return factory.getExisting(configId, model);
         }
     }
 
@@ -158,11 +165,16 @@ public class SimpleAnalyticManager implements AnalyticManager {
     }
 
     @Override
-    public <T extends Configuration> void updateConfiguration(T newConfiguration) {
+    public <T extends Configuration> void updateConfiguration(Resource recordId, T newConfiguration) {
         try (RepositoryConnection conn = repository.getConnection()) {
-            catalogUtils.validateResource(newConfiguration.getResource(), vf.createIRI(Configuration.TYPE), conn);
+            Resource configId = newConfiguration.getResource();
+            if (!conn.getStatements(recordId, vf.createIRI(AnalyticRecord.hasConfig_IRI), configId).hasNext()) {
+                throw new IllegalArgumentException(String.format("Configuration %s does not belong to AnalyticRecord "
+                        + "%s", configId, recordId));
+            }
             conn.begin();
-            catalogUtils.updateObject(newConfiguration, conn);
+            conn.remove(configId, null, null);
+            conn.add(newConfiguration.getModel(), recordId);
             conn.commit();
         }
     }

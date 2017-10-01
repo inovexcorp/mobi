@@ -33,7 +33,7 @@ public class TableDetails extends BaseDetails {
     private String row;
 
     @XmlElement(required = true)
-    private List<String> columns;
+    private List<ColumnDetails> columns;
 
     public String getRow() {
         return row;
@@ -43,11 +43,11 @@ public class TableDetails extends BaseDetails {
         this.row = row;
     }
 
-    public List<String> getColumns() {
+    public List<ColumnDetails> getColumns() {
         return columns;
     }
 
-    public void setColumns(List<String> columns) {
+    public void setColumns(List<ColumnDetails> columns) {
         this.columns = columns;
     }
 }
