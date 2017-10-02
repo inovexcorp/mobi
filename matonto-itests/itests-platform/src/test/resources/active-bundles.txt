@@ -45,5 +45,6 @@ org.matonto.analytic.api
 org.matonto.analytic.impl
 org.matonto.cache
 org.matonto.cache.impl.ehcache
-org.matonto.clustering.api
-org.matonto.clustering.hazelcast
+org.matonto.federation.api
+org.matonto.federation.hazelcast
+org.matonto.federation.cli
