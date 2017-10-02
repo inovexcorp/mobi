@@ -21,32 +21,38 @@
  * #L%
  */
 describe('Relationships Block directive', function() {
-    var $compile, scope, element, ontologyStateSvc, ontologyManagerSvc, controller, resObj, prefixes;
+    var $compile, scope, element, ontologyStateSvc, controller, resObj, prefixes;
+    var broaderRelations = ['broader', 'broaderTransitive', 'broadMatch'];
+    var narrowerRelations = ['narrower', 'narrowerTransitive', 'narrowMatch'];
+    var conceptToScheme = ['inScheme', 'topConceptOf'];
+    var schemeToConcept = ['hasTopConcept'];
+    var values = [{'@id': 'value1'}, {'@id': 'value2'}];
 
     beforeEach(function() {
         module('templates');
         module('relationshipsBlock');
         injectShowPropertiesFilter();
         mockOntologyState();
-        mockOntologyManager();
         mockPrefixes();
         mockResponseObj();
         mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            ontologyManagerSvc = _ontologyManagerService_;
             resObj = _responseObj_;
             prefixes = _prefixes_;
         });
 
         scope.relationshipList = [];
+        ontologyStateSvc.listItem.ontologyRecord.recordId = 'recordId';
         ontologyStateSvc.listItem.selected = {
+            '@id': 'selectedId',
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
+        ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'flat'}]);
         element = $compile(angular.element('<relationships-block relationship-list="relationshipList"></relationships-block>'))(scope);
         scope.$digest();
         controller = element.controller('relationshipsBlock');
@@ -122,56 +128,240 @@ describe('Relationships Block directive', function() {
             expect(controller.index).toBe(1);
             expect(controller.showRemoveOverlay).toBe(true);
         });
-        // describe('updateHierarchy', function() {
-        //     var values = [{'@id': 'value1'}, {'@id': 'value2'}];
-        //     beforeEach(function() {
-        //         resObj.getItemIri.and.callFake(function(item) {
-        //             return prefixes.skos + item;
-        //         });
-        //     });
-        //     describe('when broader type relationship', function() {
-        //         _.forEach(['broader', 'broaderTransitive', 'broadMatch'], function(relationship) {
-        //             it(relationship + ' and should be updated, calls the correct method', function() {
-        //                 controller.updateHierarchy(relationship, values);
-        //                 _.forEach(values, function(value) {
-        //                     expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, ontologyStateSvc.selected.matonto.originalIRI, ontologyStateSvc.listItem.conceptIndex, value['@id']);
-        //                 });
-        //             });
-        //             it(relationship + ' and should not be updated, does not call the method', function() {
-        //                 var narrowerProp = prefixes.skos + 'narrower';
-        //                 var entity = {};
-        //                 entity[narrowerProp] = 'value';
-        //                 ontologyManagerSvc.getEntityById.and.returnValue(entity);
-        //                 _.forEach(values, function(value) {
-        //                     expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
-        //                 });
-        //             });
-        //         });
-        //     });
-        //     describe('when narrower type relationship', function() {
-        //         _.forEach(['narrower', 'narrowerTransitive', 'narrowMatch'], function(relationship) {
-        //             it(relationship + ' and should be updated, calls the correct method', function() {
-        //                 controller.updateHierarchy(relationship, values);
-        //                 _.forEach(values, function(value) {
-        //                     expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, value['@id'], ontologyStateSvc.listItem.conceptIndex, ontologyStateSvc.selected.matonto.originalIRI);
-        //                 });
-        //             });
-        //             it(relationship + ' and should not be updated, does not call the method', function() {
-        //                 var broaderProp = prefixes.skos + 'broader';
-        //                 var entity = {};
-        //                 entity[broaderProp] = 'value';
-        //                 ontologyManagerSvc.getEntityById.and.returnValue(entity);
-        //                 _.forEach(values, function(value) {
-        //                     expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
-        //                 });
-        //             });
-        //         });
-        //     });
-        // });
+        describe('updateHierarchy should call proper methods when the relationship', function() {
+            beforeEach(function() {
+                resObj.getItemIri.and.callFake(function(item) {
+                    return prefixes.skos + item;
+                });
+            });
+            describe('is', function() {
+                _.forEach(broaderRelations, function(relationship) {
+                    it(relationship + ' and should be updated', function() {
+                        controller.updateHierarchy(relationship, values);
+                        _.forEach(values, function(value) {
+                            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', value['@id'], ontologyStateSvc.listItem);
+                            expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, 'selectedId', ontologyStateSvc.listItem.conceptIndex, value['@id']);
+                        });
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, 'recordId');
+                        expect(ontologyStateSvc.listItem.flatConceptHierarchy).toEqual([{prop: 'flat'}]);
+                    });
+                    describe(relationship + ' and should not be updated when target entity has relationship', function() {
+                        _.forEach(narrowerRelations, function(otherRelationship) {
+                            it(otherRelationship, function() {
+                                ontologyStateSvc.getEntityByRecordId.and.returnValue(createDummyEntity(otherRelationship));
+                                controller.updateHierarchy(relationship, values);
+                                _.forEach(values, function(value) {
+                                    expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', value['@id'], ontologyStateSvc.listItem);
+                                });
+                                expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
+                                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                            });
+                        });
+                    });
+                });
+            });
+            describe('is', function() {
+                _.forEach(narrowerRelations, function(relationship) {
+                    it(relationship, function() {
+                        controller.updateHierarchy(relationship, values);
+                        _.forEach(values, function(value) {
+                            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', value['@id'], ontologyStateSvc.listItem);
+                            expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, value['@id'], ontologyStateSvc.listItem.conceptIndex, 'selectedId');
+                        });
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, 'recordId');
+                        expect(ontologyStateSvc.listItem.flatConceptHierarchy).toEqual([{prop: 'flat'}]);
+                    });
+                    describe(relationship + ' and should not be updated when target entity has relationship', function() {
+                        _.forEach(broaderRelations, function(otherRelationship) {
+                            it(otherRelationship, function() {
+                                ontologyStateSvc.getEntityByRecordId.and.returnValue(createDummyEntity(otherRelationship));
+                                controller.updateHierarchy(relationship, values);
+                                _.forEach(values, function(value) {
+                                    expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', value['@id'], ontologyStateSvc.listItem);
+                                });
+                                expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
+                                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                            });
+                        });
+                    });
+                });
+            });
+            describe('is', function() {
+                _.forEach(conceptToScheme, function(relationship) {
+                    it(relationship, function() {
+                        controller.updateHierarchy(relationship, values);
+                        _.forEach(values, function(value) {
+                            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', value['@id'], ontologyStateSvc.listItem);
+                            expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, 'selectedId', ontologyStateSvc.listItem.conceptSchemeIndex, value['@id']);
+                        });
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, 'recordId');
+                        expect(ontologyStateSvc.listItem.flatConceptSchemeHierarchy).toEqual([{prop: 'flat'}]);
+                    });
+                    describe(relationship + ' and should not be updated when target entity has relationship', function() {
+                        _.forEach(schemeToConcept, function(otherRelationship) {
+                            it(otherRelationship, function() {
+                                ontologyStateSvc.getEntityByRecordId.and.returnValue(createDummyEntity(otherRelationship));
+                                controller.updateHierarchy(relationship, values);
+                                _.forEach(values, function(value) {
+                                    expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', value['@id'], ontologyStateSvc.listItem);
+                                });
+                                expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
+                                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                            });
+                        });
+                    });
+                });
+            });
+            describe('is', function() {
+                _.forEach(schemeToConcept, function(relationship) {
+                    it(relationship, function() {
+                        controller.updateHierarchy(relationship, values);
+                        _.forEach(values, function(value) {
+                            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', value['@id'], ontologyStateSvc.listItem);
+                            expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, value['@id'], ontologyStateSvc.listItem.conceptSchemeIndex, 'selectedId');
+                        });
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, 'recordId');
+                        expect(ontologyStateSvc.listItem.flatConceptSchemeHierarchy).toEqual([{prop: 'flat'}]);
+                    });
+                    describe(relationship + ' and should not be updated when target entity has relationship', function() {
+                        _.forEach(conceptToScheme, function(otherRelationship) {
+                            it(otherRelationship, function() {
+                                ontologyStateSvc.getEntityByRecordId.and.returnValue(createDummyEntity(otherRelationship));
+                                controller.updateHierarchy(relationship, values);
+                                _.forEach(values, function(value) {
+                                    expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', value['@id'], ontologyStateSvc.listItem);
+                                });
+                                expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
+                                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                            });
+                        });
+                    });
+                });
+            });
+        });
+        describe('removeFromHierarchy should call the proper methods when the relationship', function() {
+            describe('is', function() {
+                _.forEach(broaderRelations, function(relationship) {
+                    beforeEach(function() {
+                        controller.key = prefixes.skos + relationship;
+                    });
+                    it(relationship + ' and should be updated', function() {
+                        controller.removeFromHierarchy({'@id': 'value1'});
+                        expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', 'value1', ontologyStateSvc.listItem);
+                        expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, 'selectedId', 'value1', ontologyStateSvc.listItem.conceptIndex);
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, 'recordId');
+                        expect(ontologyStateSvc.listItem.flatConceptHierarchy).toEqual([{prop: 'flat'}]);
+                        expect(ontologyStateSvc.goTo).toHaveBeenCalledWith('selectedId');
+                    });
+                    describe(relationship + ' and should not be updated when target entity has relationship', function() {
+                        _.forEach(narrowerRelations, function(otherRelationship) {
+                            it(otherRelationship, function() {
+                                ontologyStateSvc.getEntityByRecordId.and.returnValue(createDummyEntity(otherRelationship, [{'@id': 'selectedId'}]));
+                                controller.removeFromHierarchy({'@id': 'value1'});
+                                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', 'value1', ontologyStateSvc.listItem);
+                                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
+                                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                                expect(ontologyStateSvc.goTo).not.toHaveBeenCalled();
+                            });
+                        });
+                    });
+                });
+            });
+            describe('is', function() {
+                _.forEach(narrowerRelations, function(relationship) {
+                    beforeEach(function() {
+                        controller.key = prefixes.skos + relationship;
+                    });
+                    it(relationship + ' and should be updated', function() {
+                        controller.key = prefixes.skos + relationship;
+                        controller.removeFromHierarchy({'@id': 'value1'});
+                        expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', 'value1', ontologyStateSvc.listItem);
+                        expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, 'value1', 'selectedId', ontologyStateSvc.listItem.conceptIndex);
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, 'recordId');
+                        expect(ontologyStateSvc.listItem.flatConceptHierarchy).toEqual([{prop: 'flat'}]);
+                        expect(ontologyStateSvc.goTo).toHaveBeenCalledWith('selectedId');
+                    });
+                    describe(relationship + ' and should not be updated when target entity has relationship', function() {
+                        _.forEach(broaderRelations, function(otherRelationship) {
+                            it(otherRelationship, function() {
+                                ontologyStateSvc.getEntityByRecordId.and.returnValue(createDummyEntity(otherRelationship, [{'@id': 'selectedId'}]));
+                                controller.removeFromHierarchy({'@id': 'value1'});
+                                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', 'value1', ontologyStateSvc.listItem);
+                                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
+                                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                                expect(ontologyStateSvc.goTo).not.toHaveBeenCalled();
+                            });
+                        });
+                    });
+                });
+            });
+            describe('is', function() {
+                _.forEach(conceptToScheme, function(relationship) {
+                    beforeEach(function() {
+                        controller.key = prefixes.skos + relationship;
+                    });
+                    it(relationship + ' and should be updated', function() {
+                        controller.key = prefixes.skos + relationship;
+                        controller.removeFromHierarchy({'@id': 'value1'});
+                        expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', 'value1', ontologyStateSvc.listItem);
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, 'selectedId', ontologyStateSvc.listItem.conceptSchemeIndex);
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, 'recordId');
+                        expect(ontologyStateSvc.listItem.flatConceptSchemeHierarchy).toEqual([{prop: 'flat'}]);
+                        expect(ontologyStateSvc.goTo).toHaveBeenCalledWith('selectedId');
+                    });
+                    describe(relationship + ' and should not be updated when target entity has relationship', function() {
+                        _.forEach(schemeToConcept, function(otherRelationship) {
+                            it(otherRelationship, function() {
+                                ontologyStateSvc.getEntityByRecordId.and.returnValue(createDummyEntity(otherRelationship, [{'@id': 'selectedId'}]));
+                                controller.removeFromHierarchy({'@id': 'value1'});
+                                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', 'value1', ontologyStateSvc.listItem);
+                                expect(ontologyStateSvc.deleteEntityFromHierarchy).not.toHaveBeenCalled();
+                                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                                expect(ontologyStateSvc.goTo).not.toHaveBeenCalled();
+                            });
+                        });
+                    });
+                });
+            });
+            describe('is', function() {
+                _.forEach(schemeToConcept, function(relationship) {
+                    beforeEach(function() {
+                        controller.key = prefixes.skos + relationship;
+                    });
+                    it(relationship + ' and should be updated', function() {
+                        controller.key = prefixes.skos + relationship;
+                        controller.removeFromHierarchy({'@id': 'value1'});
+                        expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', 'value1', ontologyStateSvc.listItem);
+                        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, 'value1', ontologyStateSvc.listItem.conceptSchemeIndex);
+                        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, 'recordId');
+                        expect(ontologyStateSvc.listItem.flatConceptSchemeHierarchy).toEqual([{prop: 'flat'}]);
+                        expect(ontologyStateSvc.goTo).toHaveBeenCalledWith('selectedId');
+                    });
+                    describe(relationship + ' and should not be updated when target entity has relationship', function() {
+                        _.forEach(conceptToScheme, function(otherRelationship) {
+                            it(otherRelationship, function() {
+                                ontologyStateSvc.getEntityByRecordId.and.returnValue(createDummyEntity(otherRelationship, [{'@id': 'selectedId'}]));
+                                controller.removeFromHierarchy({'@id': 'value1'});
+                                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', 'value1', ontologyStateSvc.listItem);
+                                expect(ontologyStateSvc.deleteEntityFromHierarchy).not.toHaveBeenCalled();
+                                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                                expect(ontologyStateSvc.goTo).not.toHaveBeenCalled();
+                            });
+                        });
+                    });
+                });
+            });
+        });
     });
     it('should set the correct state when the add relationship link is clicked', function() {
         var link = angular.element(element.querySelectorAll('block-header a')[0]);
         link.triggerHandler('click');
         expect(ontologyStateSvc.showRelationshipOverlay).toBe(true);
     });
+
+    function createDummyEntity(property, vals = values) {
+        var entity = {};
+        entity[prefixes.skos + property] = vals;
+        return entity;
+    }
 });
