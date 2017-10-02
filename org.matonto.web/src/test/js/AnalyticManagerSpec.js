@@ -87,7 +87,8 @@ describe('Analytic Manager service', function() {
             type: 'Type',
             title: 'Title',
             description: 'Description',
-            keywords: ['keyword0', 'keyword1']
+            keywords: ['keyword0', 'keyword1'],
+            json: '{}'
         };
         it('unless an error occurs', function() {
             $httpBackend.expectPOST(url,
@@ -126,6 +127,70 @@ describe('Analytic Manager service', function() {
             }, function(response) {
                 fail('Promise should have resolved');
             });
+            flushAndVerify($httpBackend);
+        });
+    });
+    describe('should retrieve an AnalyticRecord', function() {
+        it('unless an error occurs', function() {
+            utilSvc.rejectError.and.returnValue($q.reject('error'));
+            $httpBackend.whenGET('/mobirest/analytics/recordId').respond(400, null, null, 'error');
+            analyticManagerSvc.getAnalytic('recordId')
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                        status: 400,
+                        statusText: 'error'
+                    }));
+                    expect(response).toBe('error');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('when resolved', function() {
+            $httpBackend.whenGET('/mobirest/analytics/recordId').respond(200, {});
+            analyticManagerSvc.getAnalytic('recordId')
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
+    describe('should update an AnalyticRecord', function() {
+        var url = '/mobirest/analytics/recordId';
+        var analyticConfig = {
+            analyticRecordId: 'recordId',
+            type: 'Type',
+            json: '{}'
+        };
+        it('unless an error occurs', function() {
+            $httpBackend.whenPUT(url,
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(400, null, null, 'Error Message');
+            analyticManagerSvc.updateAnalytic(analyticConfig)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+                    expect(response).toBe('Error Message');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('when resolved', function() {
+            $httpBackend.whenPUT(url,
+                function(data) {
+                    return data instanceof FormData;
+                }).respond(200);
+            analyticManagerSvc.updateAnalytic(analyticConfig)
+                .then(function(response) {
+                    expect(response).toEqual(jasmine.objectContaining({
+                        status: 200
+                    }));
+                }, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });

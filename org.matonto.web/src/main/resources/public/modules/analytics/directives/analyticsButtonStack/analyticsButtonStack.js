@@ -39,6 +39,8 @@
          * @scope
          * @restrict E
          * @requires analyticState.service:analyticStateService
+         * @requires analyticManager.service:analyticManagerService
+         * @requires util.service:utilService
          *
          * @description
          * HTML contents in the button stack section of the analytics page which provides the users with a stack
@@ -46,9 +48,9 @@
          */
         .directive('analyticsButtonStack', analyticsButtonStack);
         
-        analyticsButtonStack.$inject = ['analyticStateService'];
+        analyticsButtonStack.$inject = ['analyticStateService', 'analyticManagerService', 'utilService'];
 
-        function analyticsButtonStack(analyticStateService) {
+        function analyticsButtonStack(analyticStateService, analyticManagerService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -57,9 +59,21 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var manager = analyticManagerService;
+                    var util = utilService;
                     dvm.state = analyticStateService;
-                    dvm.showDeleteConfirmation = false;
-                    dvm.showSaveConfirmation = false;
+                    dvm.showSaveOverlay = false;
+                    
+                    dvm.save = function() {
+                        if (!_.has(dvm.state, 'record.analyticRecordId')) {
+                            dvm.showSaveOverlay = true;
+                        } else {
+                            manager.updateAnalytic(_.set(dvm.state.createTableConfigurationConfig(), 'analyticRecordId', dvm.state.record.analyticRecordId))
+                                .then(() => {
+                                    util.createSuccessToast('Analytic successfully saved');
+                                }, util.createErrorToast);
+                        }
+                    }
                 }
             }
         }

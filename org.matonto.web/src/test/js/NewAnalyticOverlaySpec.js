@@ -135,6 +135,7 @@ describe('Class And Property Block directive', function() {
     });
     it('on startup sets datasets correctly', function() {
         datasetManagerSvc.datasetRecords = [[{'@id': 'id', '@type': 'type'}, {}]];
+        analyticStateSvc.getOntologies.and.returnValue([{}]);
         utilSvc.getPropertyId.and.returnValue('utilId');
         utilSvc.getDctermsValue.and.returnValue('title');
         compileElement();
@@ -143,15 +144,9 @@ describe('Class And Property Block directive', function() {
             datasetIRI: 'utilId',
             selected: false,
             title: 'title',
-            ontologies: [{
-                recordId: 'utilId',
-                branchId: 'utilId',
-                commitId: 'utilId'
-            }]
+            ontologies: [{}]
         }]);
-        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.dataset + 'linksToRecord');
-        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.dataset + 'linksToBranch');
-        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.dataset + 'linksToCommit');
+        expect(analyticStateSvc.getOntologies).toHaveBeenCalledWith([{'@id': 'id', '@type': 'type'}, {}], {'@id': 'id', '@type': 'type'});
         expect(utilSvc.getPropertyId).toHaveBeenCalledWith({'@id': 'id', '@type': 'type'}, prefixes.dataset + 'dataset');
         expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({'@id': 'id', '@type': 'type'}, 'title');
     });

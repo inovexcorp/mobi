@@ -23,6 +23,7 @@ package org.matonto.analytic.rest.impl;
  * #L%
  */
 
+import static org.matonto.rest.util.RestUtils.encode;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -36,6 +37,7 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.FormDataMultiPart;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
@@ -53,13 +55,16 @@ import org.matonto.exception.MatOntoException;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.ontologies.usermanagement.User;
 import org.matonto.jaas.api.ontologies.usermanagement.UserFactory;
+import org.matonto.persistence.utils.api.SesameTransformer;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivity;
 import org.matonto.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import org.matonto.rdf.api.ModelFactory;
 import org.matonto.rdf.api.Resource;
+import org.matonto.rdf.api.Statement;
 import org.matonto.rdf.api.ValueFactory;
 import org.matonto.rdf.core.impl.sesame.LinkedHashModelFactory;
 import org.matonto.rdf.core.impl.sesame.SimpleValueFactory;
+import org.matonto.rdf.core.utils.Values;
 import org.matonto.rdf.orm.OrmFactory;
 import org.matonto.rdf.orm.OrmFactoryRegistry;
 import org.matonto.rdf.orm.Thing;
@@ -74,6 +79,7 @@ import org.matonto.rdf.orm.conversion.impl.ResourceValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ShortValueConverter;
 import org.matonto.rdf.orm.conversion.impl.StringValueConverter;
 import org.matonto.rdf.orm.conversion.impl.ValueValueConverter;
+import org.matonto.repository.exception.RepositoryException;
 import org.matonto.rest.util.MatontoRestTestNg;
 import org.matonto.rest.util.UsernameTestFilter;
 import org.mockito.Mock;
@@ -104,6 +110,7 @@ public class AnalyticRestImplTest extends MatontoRestTestNg {
     private CreateActivity activity;
     private Configuration config;
     private TableConfiguration tableConfig;
+    private Resource recordId;
 
     private static final String RECORD_IRI = "http://matonto.org/test/records#1";
     private static final String USER_IRI = "http://matonto.org/users/tester";
@@ -122,6 +129,9 @@ public class AnalyticRestImplTest extends MatontoRestTestNg {
 
     @Mock
     private CatalogProvUtils provUtils;
+
+    @Mock
+    private SesameTransformer transformer;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -169,7 +179,8 @@ public class AnalyticRestImplTest extends MatontoRestTestNg {
         vcr.registerValueConverter(new ValueValueConverter());
         vcr.registerValueConverter(new LiteralValueConverter());
 
-        record = analyticRecordFactory.createNew(vf.createIRI(RECORD_IRI));
+        recordId = vf.createIRI(RECORD_IRI);
+        record = analyticRecordFactory.createNew(recordId);
         user = userFactory.createNew(vf.createIRI(USER_IRI));
         activity = createActivityFactory.createNew(vf.createIRI(ACTIVITY_IRI));
         config = configurationFactory.createNew(vf.createIRI(CONFIG_IRI));
@@ -183,6 +194,9 @@ public class AnalyticRestImplTest extends MatontoRestTestNg {
         rest.setEngineManager(engineManager);
         rest.setFactoryRegistry(factoryRegistry);
         rest.setProvUtils(provUtils);
+        rest.setValueFactory(vf);
+        rest.setModelFactory(mf);
+        rest.setSesameTransformer(transformer);
 
         return new ResourceConfig()
                 .register(rest)
@@ -197,16 +211,19 @@ public class AnalyticRestImplTest extends MatontoRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(analyticManager, engineManager, provUtils);
+        reset(analyticManager, engineManager, provUtils, transformer);
 
         when(analyticManager.createConfiguration(anyString(), eq(configurationFactory))).thenReturn(config);
         when(analyticManager.createConfiguration(anyString(), eq(tableConfigurationFactory))).thenReturn(tableConfig);
         when(analyticManager.createAnalytic(any(AnalyticRecordConfig.class))).thenReturn(record);
+        when(analyticManager.getAnalyticRecord(recordId)).thenReturn(Optional.of(record));
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.of(user.getResource().stringValue()));
 
         when(provUtils.startCreateActivity(any(User.class))).thenReturn(activity);
+
+        when(transformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
     }
 
     @Test
@@ -288,21 +305,128 @@ public class AnalyticRestImplTest extends MatontoRestTestNg {
         verifyCreateAnalyticFailAfterActivity(fd, 500);
     }
 
-    private <T extends Configuration> void testCreateAnalyticByType(OrmFactory<T> factory) {
+    @Test
+    public void getAnalyticTest() {
+        Response response = target().path("analytics/" + encode(RECORD_IRI)).request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(analyticManager).getAnalyticRecord(recordId);
+    }
+
+    @Test
+    public void getAnalyticThatCouldNotBeFoundTest() {
+        // Setup:
+        when(analyticManager.getAnalyticRecord(recordId)).thenReturn(Optional.empty());
+
+        Response response = target().path("analytics/" + encode(RECORD_IRI)).request().get();
+        assertEquals(response.getStatus(), 404);
+        verify(analyticManager).getAnalyticRecord(recordId);
+    }
+
+    @Test
+    public void getAnalyticThatDoesNotExistTest() {
+        // Setup:
+        doThrow(new IllegalArgumentException()).when(analyticManager).getAnalyticRecord(recordId);
+
+        Response response = target().path("analytics/" + encode(RECORD_IRI)).request().get();
+        assertEquals(response.getStatus(), 400);
+        verify(analyticManager).getAnalyticRecord(recordId);
+    }
+
+    @Test
+    public void getAnalyticWithIllegalStateTest() {
+        // Setup:
+        doThrow(new IllegalStateException()).when(analyticManager).getAnalyticRecord(recordId);
+
+        Response response = target().path("analytics/" + encode(RECORD_IRI)).request().get();
+        assertEquals(response.getStatus(), 500);
+        verify(analyticManager).getAnalyticRecord(recordId);
+    }
+
+    @Test
+    public void getAnalyticWithFailedConnectionTest() {
+        // Setup:
+        doThrow(new RepositoryException()).when(analyticManager).getAnalyticRecord(recordId);
+
+        Response response = target().path("analytics/" + encode(RECORD_IRI)).request().get();
+        assertEquals(response.getStatus(), 500);
+        verify(analyticManager).getAnalyticRecord(recordId);
+    }
+
+    @Test
+    public void updateAnalyticTest() {
+        testUpdateAnalyticByType(configurationFactory, config);
+    }
+
+    @Test
+    public void updateTableAnalyticTest() {
+        testUpdateAnalyticByType(tableConfigurationFactory, tableConfig);
+    }
+
+    @Test
+    public void updateAnalyticWithInvalidConfigurationTypeTest() {
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart();
+        fd.field("typeIRI", "INVALID");
+        fd.field("json", "{}");
+
+        verifyUpdateAnalytic(fd, 400);
+    }
+
+    @Test
+    public void updateAnalyticWithIllegalStateTest() {
+        // Setup:
+        FormDataMultiPart fd = getValidFormData(configurationFactory);
+        doThrow(new IllegalArgumentException()).when(analyticManager).updateConfiguration(recordId, config);
+
+        verifyUpdateAnalytic(fd, 400);
+    }
+
+    @Test
+    public void updateAnalyticWithFailedConnectionTest() {
+        // Setup:
+        FormDataMultiPart fd = getValidFormData(configurationFactory);
+        doThrow(new RepositoryException()).when(analyticManager).updateConfiguration(recordId, config);
+
+        verifyUpdateAnalytic(fd, 500);
+    }
+
+    private <T extends Configuration> FormDataMultiPart getValidFormData(OrmFactory<T> factory) {
+        FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("type", factory.getTypeIRI().stringValue());
+        fd.field("json", "{}");
+        return fd;
+    }
+
+    private <T extends Configuration> void testCreateAnalyticByType(OrmFactory<T> factory) {
+        // Setup:
+        FormDataMultiPart fd = getValidFormData(factory);
         fd.field("title", "Title");
         fd.field("description", "Description");
         fd.field("keywords", "keyword");
-        fd.field("json", "{}");
 
         Response response = target().path("analytics").request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
-        assertEquals(response.readEntity(String.class), RECORD_IRI);
+        JSONObject object = response.readEntity(JSONObject.class);
+        assertEquals(object.get("analyticRecordId"), RECORD_IRI);
+        assertEquals(object.get("configurationId"), CONFIG_IRI);
         verify(analyticManager).createAnalytic(any(AnalyticRecordConfig.class));
         verify(provUtils).startCreateActivity(user);
-        verify(provUtils).endCreateActivity(activity, vf.createIRI(RECORD_IRI));
+        verify(provUtils).endCreateActivity(activity, recordId);
+    }
+
+    private <T extends Configuration> void testUpdateAnalyticByType(OrmFactory<T> factory, T config) {
+        // Setup:
+        FormDataMultiPart fd = getValidFormData(factory);
+
+        verifyUpdateAnalytic(fd, 200);
+        verify(analyticManager).createConfiguration("{}", factory);
+        verify(analyticManager).updateConfiguration(recordId, config);
+    }
+
+    private void verifyUpdateAnalytic(FormDataMultiPart fd, int status) {
+        Response response = target().path("analytics/" + encode(RECORD_IRI)).request()
+                .put(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), status);
     }
 
     private void verifyCreateAnalyticFail(FormDataMultiPart fd, int status) {

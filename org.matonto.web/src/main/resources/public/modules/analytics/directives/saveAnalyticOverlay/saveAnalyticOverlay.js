@@ -41,6 +41,7 @@
          * @requires analyticManager.service:analyticManagerService
          * @requires analyticState.service:analyticStateService
          * @requires prefixes.service:prefixes
+         * @requires util.service:utilService
          *
          * @description
          * HTML contents in the save analytic overlay which with inputs for the analytic's title, description,
@@ -48,9 +49,9 @@
          */
         .directive('saveAnalyticOverlay', saveAnalyticOverlay);
         
-        saveAnalyticOverlay.$inject = ['analyticManagerService', 'analyticStateService', 'prefixes'];
+        saveAnalyticOverlay.$inject = ['analyticManagerService', 'analyticStateService', 'prefixes', 'utilService'];
         
-        function saveAnalyticOverlay(analyticManagerService, analyticStateService, prefixes) {
+        function saveAnalyticOverlay(analyticManagerService, analyticStateService, prefixes, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -65,24 +66,18 @@
                     var manager = analyticManagerService;
                     var state = analyticStateService;
                     dvm.error = '';
-                    dvm.config = {};
-                    
-                    dvm.cancel = function() {
-                        state.record = {};
-                        dvm.close();
-                    }
+                    dvm.config = angular.copy(state.record);
                     
                     dvm.submit = function() {
-                        dvm.config.type = prefixes.analytic + 'TableConfiguration';
-                        dvm.config.json = JSON.stringify({
-                            datasetRecordId: state.datasets[0].id,
-                            row: state.selectedClass.id,
-                            columns: _.map(state.selectedProperties, 'id')
-                        });
+                        _.unset(state, 'selectedConfigurationId');
+                        _.merge(dvm.config, state.createTableConfigurationConfig());
                         manager.createAnalytic(dvm.config)
-                            .then(analyticRecordId => {
+                            .then(ids => {
                                 dvm.close();
-                                state.showLanding();
+                                state.record = angular.copy(dvm.config);
+                                state.record.analyticRecordId = ids.analyticRecordId;
+                                state.selectedConfigurationId = ids.configurationId;
+                                utilService.createSuccessToast('Analytic successfully saved');
                             }, errorMessage => dvm.error = errorMessage);
                     }
                 }

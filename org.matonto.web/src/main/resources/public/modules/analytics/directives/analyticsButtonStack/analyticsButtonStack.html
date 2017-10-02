@@ -23,7 +23,8 @@
 <div class="analytics-button-stack ontology-button-stack">
     <circle-button-stack>
         <circle-button class="btn-danger" ng-click="dvm.state.showLanding()" btn-icon="'fa-times'" display-text="'Close'" btn-small="true"></circle-button>
-        <circle-button class="btn-primary" ng-click="dvm.showSaveOverlay = true" btn-icon="'fa-floppy-o'" display-text="'Save Analytic'" ng-disabled="!dvm.state.isSaveable()"></circle-button>
+        <circle-button class="btn-default" ng-click="dvm.showSaveOverlay = true" btn-icon="'fa-floppy-o'" display-text="'Save As'" btn-small="true" ng-disabled="!dvm.state.isSaveable()"></circle-button>
+        <circle-button class="btn-primary" ng-click="dvm.save()" btn-icon="'fa-floppy-o'" display-text="'Save'" ng-disabled="!dvm.state.isSaveable()"></circle-button>
     </circle-button-stack>
     <save-analytic-overlay ng-if="dvm.showSaveOverlay" close="dvm.showSaveOverlay = false"></save-analytic-overlay>
 </div>

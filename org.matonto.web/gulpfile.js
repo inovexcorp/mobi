@@ -221,8 +221,7 @@ gulp.task('minify-scripts', ['antlr4', 'sparqljs'], function() {
 
 // Concatenates and minifies CSS Files
 gulp.task('minify-css', function() {
-    var sassFiles = gulp.src(styleFiles(src, 'scss'))
-            .pipe(sass().on('error', sass.logError)),
+    var sassFiles = gulp.src(styleFiles(src, 'scss')).pipe(sass()),
         cssFiles = gulp.src(nodeStyleFiles(nodeDir).concat(styleFiles(src, 'css')));
     return queue({ objectMode: true }, cssFiles, sassFiles)
         .pipe(concat('main.css'))

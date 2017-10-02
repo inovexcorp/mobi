@@ -27,9 +27,9 @@
                 display: flex;
 
                 &:hover {
-                    background-color: $gray-lighter;
+                    background-color: $gray-custom;
                 }
-
+                    
                 .title {
                     flex: 1;
                     font-size: 16px;
@@ -44,9 +44,14 @@
                 .time {
                     line-height: 22px;
                 }
-                i {
-                    line-height: 24px;
-                    font-size: 1.5em;
+
+                .dropdown-toggle {
+                    margin-left: 15px;
+                }
+
+                .dropdown-menu {
+                    left: inherit;
+                    right: 0;
                 }
             }
         }

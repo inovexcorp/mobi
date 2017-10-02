@@ -21,21 +21,25 @@
  * #L%
  */
 describe('Analytics Landing Page directive', function() {
-    var $compile, $q, scope, element, controller, catalogManagerSvc, utilSvc;
+    var $compile, $q, scope, element, controller, catalogManagerSvc, utilSvc, analyticStateSvc, analyticManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('analyticsLandingPage');
+        mockAnalyticManager();
+        mockAnalyticState();
         mockCatalogManager();
         mockPrefixes();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _$q_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _$q_, _utilService_, _analyticStateService_, _analyticManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             catalogManagerSvc = _catalogManagerService_;
             $q = _$q_;
             utilSvc = _utilService_;
+            analyticStateSvc = _analyticStateService_;
+            analyticManagerSvc = _analyticManagerService_;
         });
         
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
@@ -214,12 +218,49 @@ describe('Analytics Landing Page directive', function() {
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
             });
         });
+        describe('open should call the correct functions when getAnalytic', function() {
+            describe('resolves and populateEditor', function() {
+                beforeEach(function() {
+                    analyticManagerSvc.getAnalytic.and.returnValue($q.when([]));
+                });
+                describe('resolves and the response is', function() {
+                    it('empty', function() {
+                        analyticStateSvc.populateEditor.and.returnValue($q.when());
+                        controller.open('recordId');
+                        scope.$apply();
+                        expect(analyticManagerSvc.getAnalytic).toHaveBeenCalledWith('recordId');
+                        expect(analyticStateSvc.populateEditor).toHaveBeenCalled();
+                        expect(analyticStateSvc.showEditor).toHaveBeenCalled();
+                        expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+                    });
+                    it('populated', function() {
+                        analyticStateSvc.populateEditor.and.returnValue($q.when('message'));
+                        controller.open('recordId');
+                        scope.$apply();
+                        expect(analyticManagerSvc.getAnalytic).toHaveBeenCalledWith('recordId');
+                        expect(analyticStateSvc.populateEditor).toHaveBeenCalled();
+                        expect(analyticStateSvc.showEditor).toHaveBeenCalled();
+                        expect(utilSvc.createErrorToast).toHaveBeenCalledWith('message');
+                    });
+                });
+                it('rejects', function() {
+                    analyticStateSvc.populateEditor.and.returnValue($q.reject('error'));
+                    controller.open('recordId');
+                    scope.$apply();
+                    expect(analyticManagerSvc.getAnalytic).toHaveBeenCalledWith('recordId');
+                    expect(analyticStateSvc.populateEditor).toHaveBeenCalled();
+                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+                });
+            });
+            it('rejects', function() {
+                analyticManagerSvc.getAnalytic.and.returnValue($q.reject('error'));
+                controller.open('recordId');
+                scope.$apply();
+                expect(analyticManagerSvc.getAnalytic).toHaveBeenCalledWith('recordId');
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+            });
+        });
         it('showDeleteConfirmation should set the correct variables when passed a valid index.', function() {
-            controller.records = [{'@id': 'zero', 'title': 'zero'}, 
-                                    {'@id': 'one', 'title': 'one'}, 
-                                    {'@id': 'two', 'title': 'two'}, 
-                                    {'@id': 'three', 'title': 'three'}];
-
             controller.showDeleteConfirmation(2);
             scope.$apply();
             expect(controller.recordIndex).toEqual(2)
@@ -228,18 +269,15 @@ describe('Analytics Landing Page directive', function() {
         });
         describe('deleteRecord should set the correct variables', function() {
             beforeEach(function() {
-                controller.records = [{'@id': 'zero', 'title': 'zero'}, 
-                                        {'@id': 'one', 'title': 'one'}, 
-                                        {'@id': 'two', 'title': 'two'}, 
-                                        {'@id': 'three', 'title': 'three'}];
-                controller.recordIndex = 3;
+                controller.records = [{'@id': 'zero', title: 'zero'}];
+                controller.recordIndex = 0;
                 controller.showDeleteOverlay = true;                
             });
             it('when record deletion fails.', function() {
                 catalogManagerSvc.deleteRecord.and.returnValue($q.reject('error'));
                 controller.deleteRecord();
                 scope.$apply();
-                expect(controller.recordIndex).toEqual(3);
+                expect(controller.recordIndex).toEqual(0);
                 expect(controller.errorMessage).toBe('error');
                 expect(element.find('error-display').length).toBe(1);
                 expect(controller.showDeleteOverlay).toBe(true);
@@ -248,8 +286,8 @@ describe('Analytics Landing Page directive', function() {
                 catalogManagerSvc.deleteRecord.and.returnValue($q.when({}));
                 controller.deleteRecord();
                 scope.$apply();
-                expect(catalogManagerSvc.deleteRecord).toHaveBeenCalledWith('three', 'catalogId');
-                expect(_.includes(controller.records, {'@id': 'three', 'title': 'three'})).toBe(false);
+                expect(catalogManagerSvc.deleteRecord).toHaveBeenCalledWith('zero', 'catalogId');
+                expect(controller.records).not.toContain({'@id': 'zero', title: 'zero'});
                 expect(controller.recordIndex).toEqual(-1);
                 expect(controller.errorMessage).toBeFalsy();
                 expect(controller.showDeleteOverlay).toBe(false);
