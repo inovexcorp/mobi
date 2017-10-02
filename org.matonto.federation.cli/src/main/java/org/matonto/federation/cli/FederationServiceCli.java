@@ -34,13 +34,14 @@ import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.matonto.federation.api.FederationService;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Command line utilities for interacting with the Federated Services.
  *
  * @author Sean Smitz &lt;sean.smitz@inovexcorp.com&gt;
  */
-@Command(scope = "mobi", name = "fedsvc", description = "View information about or restart federation services.")
+@Command(scope = "mobi", name = "fedsvc", description = "View information about or restart Federation Services.")
 @Service
 public class FederationServiceCli implements Action {
     private static final String VIEW_OPERATION = "view";
@@ -48,21 +49,22 @@ public class FederationServiceCli implements Action {
     private static final String START_OPERATION = "start";
     private static final String STOP_OPERATION = "stop";
 
-    private static final String fedInfoFormatString = "(%s) %s\nid: %s\ndescription: %s\n\n";
-    private static final String fedNodeFormatString = "\t%s"; // TODO: Get more node information
+    private static final String fedInfoFormatString = "%s\nid: %s\ndescription: %s\n\n";
+    private static final String fedNodeFormatString = "\t%s\n"; // TODO: Get more node information
 
     @Reference
     private List<FederationService> federationServices;
 
-    @Argument(index = 0, name = "operation", description = "Controls the interaction performed with the Federation "
-            + "Services.\n\tmatonto:fedsvc view - To view configuration information about connected federations.\n"
-            + "\tmobi:fedsvc -f/--federation <id> view - To view nodes in a federation. mobi:fedsvc  -f/--federation "
-            + "<id> restart - To restart the connection to the specified federation.\n", required = true)
-    String operation = null;
+    @Argument(name = "operation", description = "Controls the interaction performed with the Federation Services.\n"
+            + "\tmobi:fedsvc view - To view configuration information about connected federations.\n"
+            + "\tmobi:fedsvc -f/--federation <id> view - To view nodes in a federation. "
+            + "mobi:fedsvc  -f/--federation <id> restart - To restart the connection to the specified federation.\n",
+            required = true)
+    private String operation = null;
 
     @Option(name = "-f", aliases = "--federation", description = "Specify the federation id to run the specified"
             + " operation against.")
-    String federation = null;
+    private String federation = null;
 
     void setFederationServices(List<FederationService> federationServices) {
         this.federationServices = federationServices;
@@ -96,16 +98,19 @@ public class FederationServiceCli implements Action {
     private void viewFederations() {
         StringBuilder sb = new StringBuilder();
         federationServices.stream().map(FederationService::getFederationServiceConfig).forEach(config ->
-                sb.append(String.format(fedInfoFormatString, config.enabled() ? "ENABLED" : "DISABLED",
-                        config.title(), config.id(), config.description())));
+                sb.append(String.format(fedInfoFormatString, config.title(), config.id(), config.description())));
         System.out.print(sb.toString());
     }
 
     private void viewFederationNodes(final String federation) {
-        StringBuilder sb = new StringBuilder(String.format("Federation (%s) Connected Nodes\n", federation));
-        federationServices.stream().filter(service -> service.getFederationServiceConfig().id().equals(federation))
-                .map(FederationService::getFederationNodeIds)
-                .forEach(ids -> ids.forEach(id -> sb.append(String.format(fedNodeFormatString, id))));
+        StringBuilder sb = new StringBuilder();
+        Optional<FederationService> fedService = federationServices.stream()
+                .filter(service -> service.getFederationServiceConfig().id().equals(federation))
+                .findFirst();
+        if (fedService.isPresent()) {
+            sb.append(String.format("Federation (%s) Connected Nodes\n", federation));
+            fedService.get().getFederationNodeIds().forEach(id -> sb.append(String.format(fedNodeFormatString, id)));
+        }
         System.out.print(sb.toString());
     }
 

@@ -37,12 +37,6 @@ public interface FederationServiceConfig {
     String id();
 
     /**
-     * Whether or not the {@link FederationService} should be enabled.
-     */
-    @Meta.AD(deflt = "false", required = false)
-    boolean enabled();
-
-    /**
      * The name of the {@link FederationService} instance.
      */
     @Meta.AD(required = false)

@@ -108,11 +108,9 @@ public class HazelcastFederationServiceTest extends TestCase {
                 .times(3))
                 .registerService(Mockito.any(Class.class), Mockito.any(HazelcastFederationService.class), Mockito.any(Dictionary.class));
 
-
         Assert.assertNotNull(s1.getHazelcastInstance());
         Assert.assertNotNull(s2.getHazelcastInstance());
         Assert.assertNotNull(s3.getHazelcastInstance());
-
 
         assertEquals(3, s1.getMemberCount());
         assertEquals(3, s2.getMemberCount());
@@ -142,7 +140,6 @@ public class HazelcastFederationServiceTest extends TestCase {
     private ForkJoinTask<?> createNode(ForkJoinPool pool, HazelcastFederationService service, int port, Set<String> members) {
         return pool.submit(() -> {
             final Map<String, Object> map = new HashMap<>();
-            map.put("enabled", "true");
             map.put("instanceName", service.hashCode());
             map.put("listeningPort", Integer.toString(port));
             map.put("joinMechanism", "TCPIP");
@@ -153,8 +150,6 @@ public class HazelcastFederationServiceTest extends TestCase {
             } catch (Exception e) {
                 throw new RuntimeException("Issue waiting on service initialization", e);
             }
-
         });
-
     }
 }
