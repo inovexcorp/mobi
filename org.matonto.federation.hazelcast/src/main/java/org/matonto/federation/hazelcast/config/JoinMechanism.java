@@ -33,12 +33,12 @@ import org.matonto.federation.hazelcast.HazelcastFederationService;
 public enum JoinMechanism {
 
     /**
-     * Federate nodes together automatically using hazelcast's multicast functionality.
+     * Federate nodes automatically using hazelcast's multicast functionality.
      */
     MULTICAST,
 
     /**
-     * Federate known nodes together using direct TCP/IP connections.
+     * Federate known nodes using direct TCP/IP connections.
      */
     TCPIP
 }
