@@ -24,7 +24,29 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name relationshipsBlock
+         *
+         * @description
+         * The `relationshipsBlock` module only provides the `relationshipsBlock` directive which creates
+         * the relationships block within the vocabulary editor.
+         */
         .module('relationshipsBlock', [])
+        /**
+         * @ngdoc directive
+         * @name relationshipsBlock.directive:relationshipsBlock
+         * @scope
+         * @restrict E
+         * @requires ontologyState.service:ontologyStateService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         * @requires prefixes.service:prefixes
+         * @requires responseObj.service:responseObj
+         *
+         * @description
+         * HTML contents in the relationships block with provides the users with a display of SKOS vocabulary relationships
+         * for the selected entity. A link to add additional relationships is also provided.
+         */
         .directive('relationshipsBlock', relationshipsBlock);
 
         relationshipsBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'prefixes', 'responseObj'];
