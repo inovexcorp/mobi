@@ -44,7 +44,7 @@
         <module>itests-platform</module>
         <module>itests-etl</module>
         <module>itests-rest</module>
-        <module>itests-clustering</module>
+        <module>itests-federation</module>
         <module>itests-vfs</module>
     </modules>
 
