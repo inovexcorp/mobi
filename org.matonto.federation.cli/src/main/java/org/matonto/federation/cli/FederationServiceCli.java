@@ -56,8 +56,8 @@ public class FederationServiceCli implements Action {
     private List<FederationService> federationServices;
 
     @Argument(name = "operation", description = "Controls the interaction performed with the Federation Services.\n"
-            + "\tmobi:fedsvc view - To view configuration information about connected federations.\n"
-            + "\tmobi:fedsvc -f/--federation <id> view - To view nodes in a federation. "
+            + "mobi:fedsvc view - To view configuration information about connected federations.\n"
+            + "mobi:fedsvc -f/--federation <id> view - To view nodes in a federation.\n"
             + "mobi:fedsvc  -f/--federation <id> restart - To restart the connection to the specified federation.\n",
             required = true)
     private String operation = null;
