@@ -1,4 +1,3 @@
-enabled = false
 id = system.federation.hazelcast
 title = Hazelcast System Federation Service
 description = Federation service implemented via Hazelcast

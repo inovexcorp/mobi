@@ -46,6 +46,7 @@ import org.osgi.framework.ServiceRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Optional;
@@ -191,31 +192,25 @@ public class HazelcastFederationService implements FederationService {
     public void start() {
         final HazelcastFederationServiceConfig serviceConfig =
                 Configurable.createConfigurable(HazelcastFederationServiceConfig.class, this.configuration);
-        if (serviceConfig.enabled()) {
-            this.initializationTask = ForkJoinPool.commonPool().submit(() -> {
-                this.semaphore.acquireUninterruptibly();
-                try {
-                    LOGGER.debug("Spinning up underlying hazelcast instance");
-                    this.hazelcastInstance = this.hazelcastOSGiService
-                            .newHazelcastInstance(HazelcastConfigurationFactory.build(serviceConfig,
-                                    this.matOntoServer.getServerIdentifier().toString()));
-                    LOGGER.info("Federation Service {}: Successfully initialized Hazelcast instance",
-                            this.matOntoServer.getServerIdentifier());
-                    // Listen to lifecycle changes...
-                    this.listener = new FederationServiceLifecycleListener();
-                    this.hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
-                    this.hazelcastInstance.getCluster().addMembershipListener(listener);
-                    registerWithFederationNodes(hazelcastInstance);
-                } finally {
-                    this.semaphore.release();
-                }
-            });
-            LOGGER.info("Successfully spawned initialization thread.");
-        } else {
-            LOGGER.warn("Federation Service {}: Service initialized in disabled state... Not going to start a"
-                    + " hazelcast node instance and join federation", this.matOntoServer.getServerIdentifier());
-        }
-
+        this.initializationTask = ForkJoinPool.commonPool().submit(() -> {
+            this.semaphore.acquireUninterruptibly();
+            try {
+                LOGGER.debug("Spinning up underlying hazelcast instance");
+                this.hazelcastInstance = this.hazelcastOSGiService
+                        .newHazelcastInstance(HazelcastConfigurationFactory.build(serviceConfig,
+                                this.matOntoServer.getServerIdentifier().toString()));
+                LOGGER.info("Federation Service {}: Successfully initialized Hazelcast instance",
+                        this.matOntoServer.getServerIdentifier());
+                // Listen to lifecycle changes...
+                this.listener = new FederationServiceLifecycleListener();
+                this.hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
+                this.hazelcastInstance.getCluster().addMembershipListener(listener);
+                registerWithFederationNodes(hazelcastInstance);
+            } finally {
+                this.semaphore.release();
+            }
+        });
+        LOGGER.info("Successfully spawned initialization thread.");
     }
 
     @Override
@@ -232,7 +227,6 @@ public class HazelcastFederationService implements FederationService {
         }
 
         // Shut down the hazelcast instance.
-
         if (this.hazelcastInstance != null) {
             LOGGER.info("Shutting down underlying hazelcast federation infrastructure");
             this.hazelcastOSGiService.shutdownHazelcastInstance((HazelcastOSGiInstance) this.hazelcastInstance);
@@ -256,6 +250,9 @@ public class HazelcastFederationService implements FederationService {
 
     @Override
     public Set<UUID> getFederationNodeIds() {
+        if (this.federationNodes == null) {
+            return Collections.emptySet();
+        }
         return this.federationNodes.keySet();
     }
 
@@ -279,6 +276,5 @@ public class HazelcastFederationService implements FederationService {
         } catch (Exception e) {
             throw new MatOntoException("Issue acquiring underlying hazelcast federation infrastructure", e);
         }
-
     }
 }
