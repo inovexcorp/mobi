@@ -46,6 +46,8 @@
          * @description
          * HTML contents in the relationships block with provides the users with a display of SKOS vocabulary relationships
          * for the selected entity. A link to add additional relationships is also provided.
+         *
+         * @param {Object[]} relationshipList the list of relationships to display
          */
         .directive('relationshipsBlock', relationshipsBlock);
 

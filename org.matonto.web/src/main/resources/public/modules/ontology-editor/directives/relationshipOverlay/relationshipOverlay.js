@@ -35,7 +35,7 @@
         .module('relationshipOverlay', [])
         /**
          * @ngdoc directive
-         * @name relationshipsBlock.directive:relationshipsBlock
+         * @name relationshipOverlay.directive:relationshipOverlay
          * @scope
          * @restrict E
          * @requires $filter
@@ -46,8 +46,11 @@
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          *
          * @description
-         * HTML contents in the relationship overlay with provides the users with an overlay which can be used to additional
+         * HTML contents in the relationship overlay with provides the users with an overlay which can be used to add
          * a SKOS relationship to the selected entity.
+         *
+         * @param {Object[]} relationshipList the list of relationships available to add to the selected entity
+         * @param {function=undefined} onSubmit the function to be called after a relationship is added
          */
         .directive('relationshipOverlay', relationshipOverlay);
 
