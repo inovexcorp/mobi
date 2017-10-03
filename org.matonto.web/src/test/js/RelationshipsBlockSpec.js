@@ -205,6 +205,7 @@ describe('Relationships Block directive', function() {
         _.forEach(targetArray, function(relationship) {
             beforeEach(function() {
                 controller.key = prefixes.skos + relationship;
+                _.set(ontologyStateSvc.listItem, 'editorTabStates.schemes.entityIRI', entityIRI);
             });
             it(relationship + ' and should be updated', function() {
                 controller.removeFromHierarchy({'@id': 'value1'});
@@ -213,6 +214,7 @@ describe('Relationships Block directive', function() {
                     expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, entityIRI, parentIRI, ontologyStateSvc.listItem.conceptIndex);
                 } else {
                     expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, entityIRI, ontologyStateSvc.listItem.conceptSchemeIndex);
+                    expect(ontologyStateSvc.listItem.editorTabStates.schemes.entityIRI).toBeUndefined();
                 }
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem[hierarchyName], 'recordId');
                 expect(ontologyStateSvc.listItem[flatHierarchyName]).toEqual([{prop: 'flat'}]);

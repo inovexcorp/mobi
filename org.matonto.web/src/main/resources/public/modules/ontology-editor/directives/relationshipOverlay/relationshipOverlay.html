@@ -25,7 +25,7 @@
         <h6>Add Relationship</h6>
         <div class="form-group">
             <custom-label>Relationship</custom-label>
-            <ui-select ng-model="dvm.relationship" on-select="dvm.values = []">
+            <ui-select ng-model="dvm.relationship" on-select="dvm.values = []" autofocus>
                 <ui-select-match placeholder="Select Relationship">
                     <span>{{dvm.ro.getItemIri($select.selected)}}</span>
                 </ui-select-match>

@@ -149,6 +149,9 @@
 
                     function deleteFromSchemeHierarchy(entityIRI) {
                         dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.conceptSchemeHierarchy, entityIRI, dvm.os.listItem.conceptSchemeIndex);
+                        if (_.get(dvm.os.listItem, 'editorTabStates.schemes.entityIRI') === entityIRI) {
+                            _.unset(dvm.os.listItem, 'editorTabStates.schemes.entityIRI');
+                        }
                         commonDelete('conceptSchemeHierarchy', 'conceptSchemeIndex', 'flatConceptSchemeHierarchy');
                     }
 
