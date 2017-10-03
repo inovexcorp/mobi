@@ -124,6 +124,11 @@
                 conceptListRelationships,
                 [{
                     namespace: prefixes.skos,
+                    localName: 'topConceptOf',
+                    values: 'schemeList'
+                },
+                {
+                    namespace: prefixes.skos,
                     localName: 'inScheme',
                     values: 'schemeList'
                 }]

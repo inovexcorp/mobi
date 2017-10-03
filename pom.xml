@@ -29,7 +29,7 @@
 
     <groupId>org.matonto</groupId>
     <artifactId>root</artifactId>
-    <version>1.9.25-SNAPSHOT</version>
+    <version>1.9.27-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -77,9 +77,9 @@
         <module>org.matonto.jaas</module>
         <module>org.matonto.web.security</module>
         <module>org.matonto.jaas.rest</module>
-        <module>org.matonto.clustering.api</module>
-        <module>org.matonto.clustering.hazelcast</module>
-        <module>org.matonto.clustering.cli</module>
+        <module>org.matonto.federation.api</module>
+        <module>org.matonto.federation.hazelcast</module>
+        <module>org.matonto.federation.cli</module>
         <module>matonto-karaf-feature</module>
         <module>org.matonto.rdf.orm.ontologies</module>
         <module>rdf-orm</module>

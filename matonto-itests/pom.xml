@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.9.25-SNAPSHOT</version>
+        <version>1.9.27-SNAPSHOT</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -44,7 +44,7 @@
         <module>itests-platform</module>
         <module>itests-etl</module>
         <module>itests-rest</module>
-        <module>itests-clustering</module>
+        <module>itests-federation</module>
         <module>itests-vfs</module>
     </modules>
 
