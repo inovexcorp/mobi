@@ -103,15 +103,15 @@ public class FederationServiceCli implements Action {
     }
 
     private void viewFederationNodes(final String federation) {
-        StringBuilder sb = new StringBuilder();
         Optional<FederationService> fedService = federationServices.stream()
                 .filter(service -> service.getFederationServiceConfig().id().equals(federation))
                 .findFirst();
         if (fedService.isPresent()) {
+            StringBuilder sb = new StringBuilder();
             sb.append(String.format("Federation (%s) Connected Nodes\n", federation));
             fedService.get().getFederationNodeIds().forEach(id -> sb.append(String.format(fedNodeFormatString, id)));
+            System.out.print(sb.toString());
         }
-        System.out.print(sb.toString());
     }
 
     private void restartFederation(final String federation) {
