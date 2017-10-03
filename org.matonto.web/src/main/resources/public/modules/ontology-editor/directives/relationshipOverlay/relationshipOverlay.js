@@ -24,7 +24,34 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name relationshipOverlay
+         *
+         * @description
+         * The `relationshipOverlay` module only provides the `relationshipOverlay` directive which creates
+         * the relationship overlay within the vocabulary editor.
+         */
         .module('relationshipOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name relationshipOverlay.directive:relationshipOverlay
+         * @scope
+         * @restrict E
+         * @requires $filter
+         * @requires responseObj.service:responseObj
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyState.service:ontologyStateService
+         * @requires util.service:utilService
+         * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
+         *
+         * @description
+         * HTML contents in the relationship overlay with provides the users with an overlay which can be used to add
+         * a SKOS relationship to the selected entity.
+         *
+         * @param {Object[]} relationshipList the list of relationships available to add to the selected entity
+         * @param {function=undefined} onSubmit the function to be called after a relationship is added
+         */
         .directive('relationshipOverlay', relationshipOverlay);
 
         relationshipOverlay.$inject = ['$filter', 'responseObj', 'ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
@@ -35,7 +62,8 @@
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/relationshipOverlay/relationshipOverlay.html',
                 scope: {
-                    relationshipList: '<'
+                    relationshipList: '<',
+                    onSubmit: '&?'
                 },
                 controllerAs: 'dvm',
                 controller: function() {
