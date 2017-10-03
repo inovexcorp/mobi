@@ -831,7 +831,7 @@
                 var removed = _.pullAt(listItem.ontology, _.map(toRemove, 'position'));
                 _.forEach(toRemove, obj => {
                     var newPosition = _.get(listItem.index, "['" + obj.entityIRI + "'].position");
-                    _.remove(listItem.iriList, obj.entityIRI);
+                    _.remove(listItem.iriList, item => item === obj.entityIRI);
                     _.unset(listItem.index, obj.entityIRI);
                     _.forOwn(listItem.index, (value, key) => {
                         if (value.position > newPosition) {

@@ -1346,6 +1346,7 @@ describe('Ontology State Service', function() {
                 {'@id': 'bnode2'},
                 {'@id': 'classC'}
             ];
+            listItem.iriList = ['classA'];
             ontologyManagerSvc.isBlankNodeId.and.callFake(function(iri) {
                 return _.startsWith(iri, 'bnode');
             });
@@ -1356,11 +1357,13 @@ describe('Ontology State Service', function() {
                 {'@id': 'bnode1', propA: [{'@id': 'classB'}]}
             ]);
             expect(listItem.index).toEqual({classB: {position: 0}, classC: {position: 1}});
+            expect(listItem.iriList).toEqual([]);
         });
         it('if it does not point to blank nodes', function() {
             expect(ontologyStateSvc.removeEntity(listItem, classId)).toEqual([classObj]);
             expect(_.has(listItem.index, classId)).toBe(false);
             expect(listItem.index.dataPropertyId.position).toEqual(1);
+            expect(listItem.iriList).not.toContain(classId);
         });
     });
     it('flattenHierarchy properly flattens the provided hierarchy', function() {
