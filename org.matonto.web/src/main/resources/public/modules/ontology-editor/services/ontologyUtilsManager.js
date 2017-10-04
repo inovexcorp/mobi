@@ -212,7 +212,7 @@
             }
 
             self.checkIri = function(iri) {
-                return _.includes(os.listItem.iriList, iri) && iri !== _.get(os.listItem.selected, '@id');
+                return _.includes(os.listItem.iriList, iri);
             }
 
             self.setSuperClasses = function(iri, classIRIs) {

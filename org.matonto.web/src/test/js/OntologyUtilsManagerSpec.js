@@ -533,24 +533,16 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyStateSvc.listItem.flatHierarchy).toEqual([{prop: 'flattened'}]);
     });
 
-    describe('checkIri should return correct values when', function() {
+    describe('checkIri should return correct values when the IRI is', function() {
         beforeEach(function() {
             ontologyStateSvc.listItem.iriList.push('id');
         });
-        it('the IRI is not a duplicate and not selected.', function() {
+        it('not a duplicate', function() {
             expect(ontologyUtilsManagerSvc.checkIri('newIri')).toBe(false);
         });
-        it('the IRI is a duplicate and not selected.', function() {
+        it('a duplicate', function() {
             ontologyStateSvc.listItem.selected = {'@id': 'newIri'};
             expect(ontologyUtilsManagerSvc.checkIri('id')).toBe(true);
-        });
-        it('the IRI is not a duplicate and there is an IRI selected.', function() {
-            ontologyStateSvc.listItem.selected = {'@id': 'id'};
-            expect(ontologyUtilsManagerSvc.checkIri('newIri')).toBe(false);
-        });
-        it('the IRI is a duplicate and is selected.', function() {
-            ontologyStateSvc.listItem.selected = {'@id': 'id'};
-            expect(ontologyUtilsManagerSvc.checkIri('id')).toBe(false);
         });
     });
 });
