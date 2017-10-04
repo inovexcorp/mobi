@@ -42,8 +42,8 @@
     "prod": "gulp prod",
     "clean": "gulp clean",
     "prepare-for-bundle": "gulp prepare-for-bundle",
-    "test-prod": "gulp test-minified-5",
-    "test-dev": "gulp test-unminified-5"
+    "test-prod": "gulp test-minified-6",
+    "test-dev": "gulp test-unminified-6"
   },
   "author": "Jordan Lewis",
   "license": "UNLICENSED",
