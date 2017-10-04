@@ -109,7 +109,7 @@
                         if (shouldDelete(axiomObject, broaderRelations, narrowerRelations)) {
                             deleteFromConceptHierarchy(dvm.os.listItem.selected['@id'], axiomObject['@id']);
                         } else if (shouldDelete(axiomObject, narrowerRelations, broaderRelations)) {
-                            deleteFromConceptHierarchy(axiomObject['@id'], dvm.os.listItem.selected['@id'], );
+                            deleteFromConceptHierarchy(axiomObject['@id'], dvm.os.listItem.selected['@id']);
                         } else if (shouldDelete(axiomObject, conceptToScheme, schemeToConcept)) {
                             deleteFromSchemeHierarchy(dvm.os.listItem.selected['@id']);
                         } else if (shouldDelete(axiomObject, schemeToConcept, conceptToScheme)) {

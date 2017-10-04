@@ -211,8 +211,8 @@
                 return os.getEntityNameByIndex(ro.getItemIri(item), os.listItem);
             }
 
-            self.checkIri = function(iri) {
-                return _.includes(os.listItem.iriList, iri);
+            self.checkIri = function(iri, forEdit = false) {
+                return _.includes(os.listItem.iriList, iri) && (!forEdit || iri !== _.get(os.listItem.selected, '@id'));
             }
 
             self.setSuperClasses = function(iri, classIRIs) {
