@@ -90,7 +90,6 @@ public class KarafTestSupport {
     public static final String HTTPS_PORT = "9082";
     public static final String RMI_REG_PORT = "1100";
     public static final String SSH_PORT = "8102";
-    public static final String NEXUS = "http://nexus.inovexcorp.com/nexus/content/groups/public/";
 
     protected static Set<String> bundleList = new HashSet<>();
     protected static Set<String> serviceFilters = new HashSet<>();
@@ -141,7 +140,6 @@ public class KarafTestSupport {
                 KarafDistributionOption.keepRuntimeFolder(),
                 KarafDistributionOption.logLevel(LogLevel.INFO),
                 KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg", getFileResource("/etc/org.ops4j.pax.logging.cfg")),
-                KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.repositories", NEXUS),
                 KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port", HTTP_PORT),
                 KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port.secure", HTTPS_PORT),
                 KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiRegistryPort", RMI_REG_PORT),
