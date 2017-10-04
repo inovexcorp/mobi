@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<error-display ng-if="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd, true) && dvm.isOverlay()">This IRI already exists</error-display>
+<error-display ng-if="dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd) && dvm.isOverlay()">This IRI already exists</error-display>
 <span class="static-iri">
     <strong class="text-muted" ng-class="{'duplicate-iri': dvm.ontoUtils.checkIri(dvm.iriBegin + dvm.iriThen + dvm.iriEnd) && dvm.isOverlay()}" uib-tooltip="Copy to clipboard" ngclipboard data-clipboard-text="{{dvm.iri}}" ngclipboard-success="dvm.onSuccess()">{{dvm.iri}}</strong>
     <a ng-if="!dvm.os.listItem.selected.matonto.imported" ng-click="dvm.os.showIriOverlay = true"><i class="fa fa-pencil"></i></a>

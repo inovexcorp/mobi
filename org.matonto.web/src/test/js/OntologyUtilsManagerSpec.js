@@ -533,32 +533,24 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyStateSvc.listItem.flatHierarchy).toEqual([{prop: 'flattened'}]);
     });
 
-    describe('checkIri should return correct values when forEdit is', function() {
+    describe('checkIri should return correct values when the IRI is', function() {
         beforeEach(function() {
             ontologyStateSvc.listItem.iriList.push('id');
         });
-        describe('false and the IRI is', function() {
-            it('not a duplicate', function() {
-                expect(ontologyUtilsManagerSvc.checkIri('other')).toBe(false);
-            });
-            it('a duplicate', function() {
-                expect(ontologyUtilsManagerSvc.checkIri('id')).toBe(true);
-            });
+        it('not a duplicate and not selected.', function() {
+            expect(ontologyUtilsManagerSvc.checkIri('newIri')).toBe(false);
         });
-        describe('true and the IRI is', function() {
-            it('not a duplicate', function() {
-                expect(ontologyUtilsManagerSvc.checkIri('other', true)).toBe(false);
-            });
-            describe('a duplicate and', function() {
-                it('not selected', function() {
-                    ontologyStateSvc.listItem.selected = {'@id': 'iri'};
-                    expect(ontologyUtilsManagerSvc.checkIri('id', true)).toBe(true);
-                });
-                it('is selected', function() {
-                    ontologyStateSvc.listItem.selected = {'@id': 'id'};
-                    expect(ontologyUtilsManagerSvc.checkIri('id', true)).toBe(false);
-                });
-            });
+        it('a duplicate and not selected.', function() {
+            ontologyStateSvc.listItem.selected = {'@id': 'newIri'};
+            expect(ontologyUtilsManagerSvc.checkIri('id')).toBe(true);
+        });
+        it('not a duplicate and there is an IRI selected.', function() {
+            ontologyStateSvc.listItem.selected = {'@id': 'id'};
+            expect(ontologyUtilsManagerSvc.checkIri('newIri')).toBe(false);
+        });
+        it('a duplicate and is selected.', function() {
+            ontologyStateSvc.listItem.selected = {'@id': 'id'};
+            expect(ontologyUtilsManagerSvc.checkIri('id')).toBe(false);
         });
     });
 });
