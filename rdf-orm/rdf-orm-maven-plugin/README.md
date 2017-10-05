@@ -1,11 +1,8 @@
-# MatOnto RDF ORM Maven Plugin
-This maven plugin is a more simple, convenient way to generate your MatOnto
-RDF ORM source code.  Basically you can configure your project to point at a
-necessary ontology file (including any imported ontologies), and then tell it
-where you want to write your source code.  Once you run maven install on your
-project, the source will automatically be generated.
+# Mobi RDF ORM Maven Plugin
+This maven plugin is a more simple, convenient way to generate your Mobi RDF ORM source code. You can configure your project to point at a necessary ontology file (including any imported ontologies), and then tell it where you want to write your source code.  Once you run maven install on your project, the source will automatically be generated.
 
 Example configuration in your pom:
+
 ```xml
 <plugin>
     <groupId>org.matonto.orm</groupId>
