@@ -12,7 +12,7 @@ $ npm -version
 
 ## Build the Module
 
-The maven build process takes care of installing all dependencies using npm, bower, and gulp. Simply run:
+The maven build process takes care of installing all dependencies using npm and gulp. Simply run:
 
 ```
 $ mvn clean install
