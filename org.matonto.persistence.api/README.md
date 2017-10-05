@@ -1,19 +1,17 @@
-# MatOnto Persistence API
+# Mobi Persistence API
 
-## MatOnto Repository API
+## Mobi Repository API
 
-The MatOnto Repository API provides access to triplestores for storing, retrieving, and querying RDF data.
+The Mobi Repository API provides access to triplestores for storing, retrieving, and querying RDF data.
 
-### MatOnto Repository Sesame Implementation
+### Mobi Repository Sesame Implementation
 
-The Repository Sesame Impl provides MatOnto Repositories via an OSGi Service backed by Sesame 
-implementations. The repository implementation services will create Repository instances for each associated 
-configuration. The configurations follow the factory-configuration model, where each configuration file is prefixed 
-with the appropriate factory-pid. The currently supported Repository types are:
+The Repository Sesame Impl provides Mobi Repositories via an OSGi Service backed by Sesame implementations. The repository implementation services will create Repository instances for each associated configuration. The configurations follow the factory-configuration model, where each configuration file is prefixed with the appropriate factory-pid. The currently supported Repository types are:
 
 | Repository Type | Providing Module | Factory-PID |
 | --------------- | ---------------- | ----------- |
 | memory | org.matonto.rdf.impl.sesame | org.matonto.service.repository.memory |
+| native | org.matonto.rdf.impl.sesame | org.matonto.service.repository.native |
 
 ### Configuring Repository Services
 
@@ -22,11 +20,11 @@ Each repository serivce designates a configuration class for configuration prope
 | Repository Type | Configuration Class |
 | --------------- | ------------------- |
 | memory | org.matonto.repository.impl.sesame.memory.MemoryRepositoryConfig |
+| native | org.matonto.repository.impl.sesame.native.NativeRepositoryConfig |
 
 #### Memory Repository Configuration
 
-Configuration file must begin with `org.matonto.service.repository.memory`. For example: 
-`org.matonto.service.repository.memory-test.cfg`.
+Configuration file must begin with `org.matonto.service.repository.memory`. For example `org.matonto.service.repository.memory-test.cfg`.
 
 ```
 # Memory Repo Settings
@@ -38,8 +36,7 @@ dataDir = /data/memory1
 
 ### Referencing Repository Services
 
-Repository services are published to the service registry via Declarative Services. They can be referenced via 
-Blueprints like so:
+Repository services are published to the service registry via Declarative Services. They can be referenced via Blueprints like so:
  
 ```xml
 <reference id="repo" interface="org.openrdf.repository.Repository" filter="(repositorytype=memory)"/>
