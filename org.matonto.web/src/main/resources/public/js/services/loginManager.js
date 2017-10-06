@@ -154,7 +154,6 @@
                     .then(response => {
                         self.currentUser = '';
                         userStateService.reset();
-                        $state.go('login');
                     });
                 $state.go('login');
             }
