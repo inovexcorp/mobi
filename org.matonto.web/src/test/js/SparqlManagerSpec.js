@@ -49,6 +49,19 @@ describe('SPARQL Manager service', function() {
         params = { query: sparqlManagerSvc.queryString };
     });
 
+    it('should reset the state variables', function() {
+        sparqlManagerSvc.reset();
+        expect(sparqlManagerSvc.prefixes).toEqual([]);
+        expect(sparqlManagerSvc.queryString).toEqual('');
+        expect(sparqlManagerSvc.datasetRecordIRI).toEqual('');
+        expect(sparqlManagerSvc.data).toEqual(undefined);
+        expect(sparqlManagerSvc.errorMessage).toEqual('');
+        expect(sparqlManagerSvc.infoMessage).toEqual('Please submit a query to see results here.');
+        expect(sparqlManagerSvc.currentPage).toEqual(0);
+        expect(sparqlManagerSvc.links).toEqual({next: '', prev: ''});
+        expect(sparqlManagerSvc.totalSize).toEqual(0);
+        expect(sparqlManagerSvc.bindings).toEqual([]);
+    });
     describe('should query the repository', function() {
         var query = 'query', url = '/mobirest/sparql', data = {head: {}}, id = 'id';
         describe('with a dataset', function() {

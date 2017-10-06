@@ -137,7 +137,7 @@
                         self.recordTypes = responses[0];
                         _.forEach(responses[1], option => {
                             var label = util.getBeautifulIRI(option);
-                            if (!_.includes(self.sortOptions, {field: option})) {
+                            if (!_.find(self.sortOptions, {field: option})) {
                                 self.sortOptions.push({
                                     field: option,
                                     asc: true,
@@ -149,7 +149,7 @@
                                 });
                             }
                         });
-                    }, error => $q.reject('Error in catalogManager initialization'));
+                    }, () => $q.reject('Error in catalogManager initialization'));
             }
 
             /**
