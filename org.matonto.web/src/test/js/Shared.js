@@ -991,6 +991,7 @@ function mockDatasetState() {
             };
             this.results = [];
             this.setResults = jasmine.createSpy('setResults');
+            this.reset = jasmine.createSpy('reset');
             this.resetPagination = jasmine.createSpy('resetPagination');
             this.setPagination = jasmine.createSpy('setPagination');
             this.selectedDataset = '';
@@ -1066,6 +1067,7 @@ function mockDiscoverState() {
                 results: undefined,
                 targetedId: 'discover-search-results'
             };
+            this.reset = jasmine.createSpy('reset');
             this.resetPagedInstanceDetails = jasmine.createSpy('resetPagedInstanceDetails');
             this.cleanUpOnDatasetDelete = jasmine.createSpy('cleanUpOnDatasetDelete');
             this.cleanUpOnDatasetClear = jasmine.createSpy('cleanUpOnDatasetClear');
@@ -1148,6 +1150,7 @@ function mockAnalyticState() {
             this.query = {};
             this.record = {};
             this.selectedConfigurationId = '';
+            this.reset = jasmine.createSpy('reset');
             this.showEditor = jasmine.createSpy('showEditor');
             this.showLanding = jasmine.createSpy('showLanding');
             this.resetSelected = jasmine.createSpy('resetSelected');

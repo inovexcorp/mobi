@@ -43,7 +43,7 @@ describe('Analytic State Service', function() {
             ontologyManagerSvc = _ontologyManagerService_;
             datasetManagerSvc = _datasetManagerService_;
         });
-        
+
         analyticStateSvc.datasets = [{id: 'datasetId'}];
         analyticStateSvc.spinnerId = 'spinnerId';
         analyticStateSvc.currentPage = 1;
@@ -56,7 +56,7 @@ describe('Analytic State Service', function() {
         analyticStateSvc.currentPage = 0;
         analyticStateSvc.spinnerId = 'spinnerId';
         utilSvc.parseLinks.and.returnValue({prev: 'prev-link', next: 'next-link'});
-        
+
         response = {
             data: {
                 data: [],
@@ -68,7 +68,28 @@ describe('Analytic State Service', function() {
             })
         };
     });
-    
+
+    it('reset resets the appropriate variables', function() {
+        analyticStateSvc.reset();
+        expect(analyticStateSvc.datasets).toEqual([]);
+        expect(analyticStateSvc.classes).toEqual([]);
+        expect(analyticStateSvc.properties).toEqual([]);
+        expect(analyticStateSvc.selectedClass).toBeUndefined();
+        expect(analyticStateSvc.enabledProperties).toEqual([]);
+        expect(analyticStateSvc.selectedProperties).toEqual([]);
+        expect(analyticStateSvc.results).toBeUndefined();
+        expect(analyticStateSvc.variables).toEqual({});
+        expect(analyticStateSvc.queryError).toEqual('');
+        expect(analyticStateSvc.currentPage).toEqual(0);
+        expect(analyticStateSvc.totalSize).toEqual(0);
+        expect(analyticStateSvc.limit).toEqual(100);
+        expect(analyticStateSvc.links).toEqual({});
+        expect(analyticStateSvc.query).toEqual({});
+        expect(analyticStateSvc.record).toEqual({});
+        expect(analyticStateSvc.landing).toBe(true);
+        expect(analyticStateSvc.editor).toBe(false);
+        expect(analyticStateSvc.selectedConfigurationId).toBe('');
+    });
     it('showEditor sets the variables correctly', function() {
         analyticStateSvc.showEditor();
         expect(analyticStateSvc.landing).toBe(false);
