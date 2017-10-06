@@ -101,6 +101,10 @@
                     dvm.isSubmittable = function() {
                          return dvm.ds.search.datasetRecordId && (dvm.ds.search.queryConfig.keywords.length || dvm.ds.search.queryConfig.types.length || dvm.ds.search.queryConfig.filters.length);
                     }
+
+                    dvm.getLast = function(path) {
+                        return _.last(path);
+                    }
                 }
             }
         }

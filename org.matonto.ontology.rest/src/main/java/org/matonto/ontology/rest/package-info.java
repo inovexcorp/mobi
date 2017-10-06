@@ -1,4 +1,4 @@
-@Version("6.0.2.${build}")
+@Version("7.0.0.${build}")
 
 package org.matonto.ontology.rest;
 

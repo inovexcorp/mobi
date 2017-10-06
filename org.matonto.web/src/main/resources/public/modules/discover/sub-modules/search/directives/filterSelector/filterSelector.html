@@ -23,7 +23,7 @@
 <div class="filter-selector">
     <div ng-if="!dvm.isBoolean()">
         <custom-label>Filter Type</custom-label>
-        <md-select ng-model="dvm.filterType">
+        <md-select ng-model="dvm.filterType" aria-label="Filter type">
             <md-option ng-value="type" ng-repeat="type in dvm.types[dvm.type] | orderBy track by $index">{{type}}</md-option>
         </md-select>
         <div ng-if="dvm.filterType && dvm.filterType !== 'Existence'" class="input-container">
@@ -46,7 +46,7 @@
     </div>
     <div ng-if="dvm.isBoolean()">
         <custom-label>{{dvm.util.getBeautifulIRI(dvm.range)}}</custom-label>
-        <md-select ng-model="dvm.boolean">
+        <md-select ng-model="dvm.boolean" aria-label="{{dvm.util.getBeautifulIRI(dvm.range)}}">
             <md-option ng-value="true">True</md-option>
             <md-option ng-value="false">False</md-option>
         </md-select>

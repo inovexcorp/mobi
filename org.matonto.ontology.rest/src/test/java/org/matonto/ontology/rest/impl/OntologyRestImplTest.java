@@ -616,12 +616,17 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         set.forEach(datatype -> assertTrue(jsonDatatypes.contains(createJsonIRI(datatype.getIRI()))));
     }
 
-    private void assertObjectProperties(JSONObject responseObject, Set<ObjectProperty> set) {
+    private void assertObjectPropertyIRIs(JSONObject responseObject, Set<ObjectProperty> set) {
         JSONArray jsonObjectProperties = responseObject.optJSONArray("objectProperties");
         assertNotNull(jsonObjectProperties);
         assertEquals(jsonObjectProperties.size(), set.size());
         set.forEach(objectProperty -> assertTrue(jsonObjectProperties.contains(createJsonIRI(objectProperty
                 .getIRI()))));
+    }
+
+    private void assertObjectProperties(JSONArray responseArray, Set<ObjectProperty> set) {
+        assertNotNull(responseArray);
+        assertEquals(responseArray.size(), set.size());
     }
 
     private void assertDataPropertyIRIs(JSONObject responseObject, Set<DataProperty> set) {
@@ -1139,7 +1144,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertAnnotations(responseObject, annotationProperties, annotations);
         assertClasses(responseObject, classes);
         assertDatatypes(responseObject, datatypes);
-        assertObjectProperties(responseObject, objectProperties);
+        assertObjectPropertyIRIs(responseObject, objectProperties);
         assertDataPropertyIRIs(responseObject, dataProperties);
         assertIndividuals(responseObject, individuals);
         assertDerivedConcepts(responseObject, derivedConcepts);
@@ -1161,7 +1166,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertAnnotations(responseObject, annotationProperties, annotations);
         assertClasses(responseObject, classes);
         assertDatatypes(responseObject, datatypes);
-        assertObjectProperties(responseObject, objectProperties);
+        assertObjectPropertyIRIs(responseObject, objectProperties);
         assertDataPropertyIRIs(responseObject, dataProperties);
         assertIndividuals(responseObject, individuals);
         assertDerivedConcepts(responseObject, derivedConcepts);
@@ -1188,7 +1193,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertAnnotations(responseObject, annotationProperties, annotations);
         assertClasses(responseObject, classes);
         assertDatatypes(responseObject, datatypes);
-        assertObjectProperties(responseObject, objectProperties);
+        assertObjectPropertyIRIs(responseObject, objectProperties);
         assertDataPropertyIRIs(responseObject, dataProperties);
         assertIndividuals(responseObject, individuals);
         assertDerivedConcepts(responseObject, derivedConcepts);
@@ -1206,7 +1211,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertAnnotations(responseObject, annotationProperties, annotations);
         assertClasses(responseObject, classes);
         assertDatatypes(responseObject, datatypes);
-        assertObjectProperties(responseObject, objectProperties);
+        assertObjectPropertyIRIs(responseObject, objectProperties);
         assertDataPropertyIRIs(responseObject, dataProperties);
         assertIndividuals(responseObject, individuals);
         assertDerivedConcepts(responseObject, derivedConcepts);
@@ -1867,7 +1872,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
-        assertObjectProperties(getResponse(response), objectProperties);
+        assertObjectProperties(getResponseArray(response), objectProperties);
     }
 
     @Test
@@ -1881,7 +1886,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
-        assertObjectProperties(getResponse(response), objectProperties);
+        assertObjectProperties(getResponseArray(response), objectProperties);
     }
 
     @Test
@@ -1900,7 +1905,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
-        assertObjectProperties(getResponse(response), objectProperties);
+        assertObjectProperties(getResponseArray(response), objectProperties);
     }
 
     @Test
@@ -1911,7 +1916,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
-        assertObjectProperties(getResponse(response), objectProperties);
+        assertObjectProperties(getResponseArray(response), objectProperties);
     }
 
     @Test
@@ -1937,7 +1942,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
-        assertObjectProperties(getResponse(response), Collections.EMPTY_SET);
+        assertObjectProperties(getResponseArray(response), Collections.EMPTY_SET);
     }
 
     // Test add object property to ontology
@@ -2516,7 +2521,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
             assertAnnotations(responseObject, annotationProperties, annotations);
             assertClasses(responseObject, classes);
             assertDatatypes(responseObject, datatypes);
-            assertObjectProperties(responseObject, objectProperties);
+            assertObjectPropertyIRIs(responseObject, objectProperties);
             assertDataPropertyIRIs(responseObject, dataProperties);
             assertIndividuals(responseObject, individuals);
             assertDerivedConcepts(responseObject, derivedConcepts);
@@ -2539,7 +2544,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
             assertAnnotations(responseObject, annotationProperties, annotations);
             assertClasses(responseObject, classes);
             assertDatatypes(responseObject, datatypes);
-            assertObjectProperties(responseObject, objectProperties);
+            assertObjectPropertyIRIs(responseObject, objectProperties);
             assertDataPropertyIRIs(responseObject, dataProperties);
             assertIndividuals(responseObject, individuals);
             assertDerivedConcepts(responseObject, derivedConcepts);
@@ -2567,7 +2572,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
             assertAnnotations(responseObject, annotationProperties, annotations);
             assertClasses(responseObject, classes);
             assertDatatypes(responseObject, datatypes);
-            assertObjectProperties(responseObject, objectProperties);
+            assertObjectPropertyIRIs(responseObject, objectProperties);
             assertDataPropertyIRIs(responseObject, dataProperties);
             assertIndividuals(responseObject, individuals);
             assertDerivedConcepts(responseObject, derivedConcepts);
@@ -2587,7 +2592,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
             assertAnnotations(responseObject, annotationProperties, annotations);
             assertClasses(responseObject, classes);
             assertDatatypes(responseObject, datatypes);
-            assertObjectProperties(responseObject, objectProperties);
+            assertObjectPropertyIRIs(responseObject, objectProperties);
             assertDataPropertyIRIs(responseObject, dataProperties);
             assertIndividuals(responseObject, individuals);
             assertDerivedConcepts(responseObject, derivedConcepts);
@@ -2966,7 +2971,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->
-                assertObjectProperties(responseObject, objectProperties));
+                assertObjectPropertyIRIs(responseObject, objectProperties));
     }
 
     @Test
@@ -2981,7 +2986,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->
-                assertObjectProperties(responseObject, objectProperties));
+                assertObjectPropertyIRIs(responseObject, objectProperties));
     }
 
     @Test
@@ -3001,7 +3006,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->
-                assertObjectProperties(responseObject, objectProperties));
+                assertObjectPropertyIRIs(responseObject, objectProperties));
     }
 
     @Test
@@ -3013,7 +3018,7 @@ public class OntologyRestImplTest extends MatontoRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->
-                assertObjectProperties(responseObject, objectProperties));
+                assertObjectPropertyIRIs(responseObject, objectProperties));
     }
 
     @Test

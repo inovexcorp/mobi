@@ -43,6 +43,7 @@ describe('Property Selector directive', function() {
         });
 
         ontologyManagerSvc.getEntityName.and.callFake(_.identity);
+        discoverStateSvc.search.properties = {key: [{}]};
 
         scope.keys = ['key'];
         scope.property = {'@id': 'id'};
@@ -171,13 +172,6 @@ describe('Property Selector directive', function() {
             it('no queryConfig types', function() {
                 expect(controller.shouldDisplayOptGroup('type')).toBe(true);
                 expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith('type');
-            });
-            it('queryConfig types', function() {
-                discoverStateSvc.search.queryConfig.types = [{classIRI: 'iri'}];
-                expect(controller.shouldDisplayOptGroup('iri')).toBe(true);
-                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith('');
-                expect(controller.shouldDisplayOptGroup('other')).toBe(false);
-                expect(ontologyManagerSvc.getEntityName).not.toHaveBeenCalledWith('other');
             });
             it('nothing left after filter', function() {
                 controller.propertySearch = 'word';

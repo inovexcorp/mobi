@@ -87,13 +87,7 @@
                     }
                     
                     dvm.shouldDisplayOptGroup = function(type) {
-                        if (!filterArrayWithSearch(dvm.ds.search.properties[type]).length) {
-                            return false;
-                        }
-                        if (dvm.ds.search.queryConfig.types.length) {
-                            return _.includes(_.map(dvm.ds.search.queryConfig.types, 'classIRI'), type);
-                        }
-                        return true;
+                        return _.some(dvm.ds.search.properties[type], entity => _.includes(dvm.om.getEntityName(entity), dvm.propertySearch));
                     }
                     
                     dvm.propertyChanged = function() {
@@ -105,11 +99,7 @@
                     
                     dvm.showNoDomains = function() {
                         var noDomains = _.get(dvm.ds.search, 'noDomains', []);
-                        return noDomains.length && filterArrayWithSearch(noDomains).length;
-                    }
-                    
-                    function filterArrayWithSearch(array) {
-                        return _.filter(array, entity => _.includes(dvm.om.getEntityName(entity), dvm.propertySearch));
+                        return noDomains.length && _.filter(noDomains, entity => _.includes(dvm.om.getEntityName(entity), dvm.propertySearch)).length;
                     }
                 }
             }

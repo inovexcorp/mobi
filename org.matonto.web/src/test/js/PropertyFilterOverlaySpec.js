@@ -71,14 +71,20 @@ describe('Property Filter Overlay directive', function() {
         it('with a .main', function() {
             expect(element.querySelectorAll('.main').length).toBe(1);
         });
-        it('with a .parts', function() {
-            expect(element.querySelectorAll('.parts').length).toBe(1);
+        it('with a .path', function() {
+            expect(element.querySelectorAll('.path').length).toBe(1);
+        });
+        it('with .path spans', function() {
+            expect(element.querySelectorAll('.path span').length).toBe(0);
+            scope.$apply();
+            expect(element.querySelectorAll('.path span').length).toBe(1);
         });
         it('with a property-selector', function() {
             expect(element.find('property-selector').length).toBe(1);
         });
         it('with a filter-selector', function() {
             expect(element.find('filter-selector').length).toBe(0);
+            controller.showFilter = true;
             scope.$apply();
             expect(element.find('filter-selector').length).toBe(1);
         });
@@ -87,6 +93,7 @@ describe('Property Filter Overlay directive', function() {
         });
         it('with a .btn-primary', function() {
             expect(element.querySelectorAll('.btn-primary').length).toBe(0);
+            controller.path = [{}];
             scope.$apply();
             expect(element.querySelectorAll('.btn-primary').length).toBe(1);
         });
@@ -135,6 +142,13 @@ describe('Property Filter Overlay directive', function() {
                 controller.regex = '/[a-zA-Z]/';
                 expect(controller.submittable()).toBe(true);
             });
+            it('undefined', function() {
+                controller.filterType = undefined;
+                expect(controller.submittable()).toBeFalsy();
+                controller.path = [{}];
+                controller.showFilter = false;
+                expect(controller.submittable()).toBeTruthy();
+            });
             it('something else', function() {
                 controller.filterType = 'Other';
                 expect(controller.submittable()).toBe(false);
@@ -146,10 +160,10 @@ describe('Property Filter Overlay directive', function() {
                 utilSvc.getBeautifulIRI.and.returnValue('range');
                 ontologyManagerSvc.getEntityName.and.returnValue('name');
                 controller.value = 'value';
+                controller.path = [{property: {'@id': 'id'}, range: 'range'}, {property: {'@id': 'id2'}, range: 'range2'}];
                 config = {
-                    predicate: 'id',
-                    range: 'range',
-                    title: 'name'
+                    path: [{predicate: 'id', range: 'range'}, {predicate: 'id2', range: 'range2'}],
+                    title: 'name > name'
                 };
             });
             it('Boolean', function() {
@@ -255,6 +269,26 @@ describe('Property Filter Overlay directive', function() {
                     regex: '/[a-zA-Z]/'
                 }));
                 expect(scope.closeOverlay).toHaveBeenCalled();
+            });
+        });
+        describe('propertySelected should set the variables correctly when isObjectProperty returns', function() {
+            beforeEach(function() {
+                controller.property = {'@id': 'id'};
+            });
+            it('true', function() {
+                ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+                controller.range = 'range';
+                controller.propertySelected();
+                expect(controller.path).toEqual([{property: {'@id': 'id'}, range: 'range'}]);
+                expect(controller.keys).toEqual(['range']);
+                expect(controller.property).toBeUndefined();
+                expect(controller.range).toBeUndefined();
+            });
+            it('false', function() {
+                ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+                controller.showFilter = false;
+                controller.propertySelected();
+                expect(controller.showFilter).toBe(true);
             });
         });
     });

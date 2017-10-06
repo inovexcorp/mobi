@@ -150,6 +150,9 @@ describe('Search Form directive', function() {
                 });
             });
         });
+        it('getLast should return the last element of the array', function() {
+            expect(controller.getLast([0, 1])).toBe(1);
+        });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {

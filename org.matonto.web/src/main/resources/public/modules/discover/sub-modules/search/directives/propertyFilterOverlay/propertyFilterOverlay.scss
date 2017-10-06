@@ -4,11 +4,21 @@
 .property-filter-overlay {
     z-index: 10;
     
-    .parts {
+    .path {
         border-bottom: 1px solid $gray-light;
         margin: -10px -10px 10px -10px;
         min-height: 33px;
         padding: 8px 10px;
+
+        span {
+            margin-left: 8px;
+            text-decoration: underline;
+            white-space: nowrap;
+
+            &:first-child {
+                margin-left: 0;
+            }
+        }
     }
     
     .input-container {
