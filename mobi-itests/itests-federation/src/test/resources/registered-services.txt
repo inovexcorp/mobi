@@ -1,0 +1,1 @@
+(&(objectClass=FederationService)(component.name=com.mobi.federation.hazelcast))

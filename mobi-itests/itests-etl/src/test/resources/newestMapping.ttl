@@ -1,0 +1,38 @@
+@prefix : <http://mobi.com/mappings/newest_mapping/> .
+@prefix delim: <http://mobi.com/ontologies/delimited#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix uhtc: <http://mobi.com/ontologies/uhtc/> .
+
+:newest_mapping a         delim:Mapping .
+
+:Material a                       delim:ClassMapping ;
+          delim:mapsTo            uhtc:Material ;
+          delim:dataProperty      :DataMapping1 ;
+          delim:dataProperty      :DataMapping2 ;
+          delim:dataProperty      :DataMapping3 ;
+          delim:objectProperty    :ObjectMapping1 ;
+          delim:hasPrefix         "http://mobi.com/data/uhtc/material/" ;
+          delim:localName         "${1}" .
+
+:CrystalStructure a                   delim:ClassMapping ;
+                  delim:mapsTo        uhtc:CrystalStructure ;
+                  delim:hasPrefix     "http://mobi.com/data/uhtc/crystalstructure/" ;
+                  delim:localName     "${2}" .
+
+
+:DataMapping1 a                       delim:DataMapping ;
+              delim:columnIndex       "1" ;
+              delim:hasProperty       uhtc:formula .
+
+:DataMapping2 a                       delim:DataMapping ;
+              delim:columnIndex       "6" ;
+              delim:hasProperty       uhtc:density .
+
+:DataMapping3 a                       delim:DataMapping ;
+              delim:columnIndex       "3" ;
+              delim:hasProperty       uhtc:latticeParameter .
+
+:ObjectMapping1 a                       delim:ObjectMapping ;
+                delim:classMapping      :CrystalStructure ;
+                delim:hasProperty       uhtc:crystalStructure .

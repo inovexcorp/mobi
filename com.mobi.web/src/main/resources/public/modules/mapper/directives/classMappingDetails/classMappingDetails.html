@@ -1,0 +1,53 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="class-mapping-details">
+    <div class="iri-template">
+        <custom-label><small>IRI Template <button class="btn btn-link no-padding" ng-disabled="!dvm.state.selectedClassMappingId" ng-click="dvm.state.editIriTemplate = true"><i class="fa fa-pencil"></i></button></small></custom-label>
+        <p><small class="text-muted">{{dvm.getIriTemplate()}}</small></p>
+    </div>
+
+    <div class="class-mapping-props">
+        <div class="properties-field-name">
+            <span class="field-name">Properties</span>
+            <button class="btn btn-link no-padding pull-right add-prop-mapping-button" ng-disabled="!dvm.state.hasAvailableProps(dvm.state.selectedClassMappingId)" ng-click="dvm.addProp()"><i class="fa fa-plus"></i> Add Property</button>
+        </div>
+        <div class="prop-list list-group">
+            <div ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, dvm.state.selectedClassMappingId)" class="list-group-item" ng-class="{'active': dvm.state.selectedPropMappingId === propMapping['@id'], 'invalid': dvm.isInvalid(propMapping)}" ng-click="dvm.state.selectedPropMappingId = propMapping['@id']; dvm.state.highlightIndexes = [dvm.getLinkedColumnIndex(propMapping)]" ng-dblclick="dvm.switchClass(propMapping)">
+                <div class="prop-actions pull-right">
+                    <a class="edit-prop" ng-click="dvm.editProp(propMapping)"><i class="fa fa-pencil"></i></a>
+                    <a class="delete-prop" ng-click="dvm.deleteProp(propMapping)"><i class="fa fa-trash"></i></a>
+                </div>
+                <h4 class="list-group-item-heading">{{dvm.getPropName(propMapping)}}</h4>
+                <div class="list-group-item-text">
+                    <div ng-if="dvm.mm.isDataMapping(propMapping)" class="data-prop-value">
+                        <div><span class="field-name">Column: </span>{{dvm.getPropValue(propMapping)}}</div>
+                        <div><span class="field-name">Preview: </span><span ng-class="{'text-muted': dvm.getDataValuePreview(propMapping) === '(None)'}">{{dvm.getDataValuePreview(propMapping)}}</span></div>
+                    </div>
+                    <div ng-if="dvm.mm.isObjectMapping(propMapping)" class="object-prop-value">
+                        <p><span class="field-name">Class: </span>{{dvm.getPropValue(propMapping)}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

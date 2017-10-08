@@ -1,0 +1,18 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix : <http://mobi.com/ontologies/mobi#> .
+
+<http://mobi.com/ontologies/mobi> a owl:Ontology ;
+    owl:versionIRI <http://mobi.com/ontologies/mobi/1.0> ;
+    rdfs:label "The Mobi Ontology"@en ;
+    rdfs:comment "The Mobi ontology describes general classes and properties used throughout the platform."@en ;
+    dcterms:creator [foaf:name "Stephen Kahmann"] ;
+    foaf:maker [foaf:name "Mobi"; foaf:homepage <http://mobi.com>] ;
+    dcterms:modified "2017-10-06"^^xsd:date .
+
+:Identifier a rdfs:Class, owl:Class ;
+    rdfs:label "Identifier"@en ;
+    rdfs:comment "A Resource that represents an IRI or a Blank Node."@en .

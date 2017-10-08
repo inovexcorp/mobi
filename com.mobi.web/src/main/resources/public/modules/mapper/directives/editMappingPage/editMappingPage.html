@@ -1,0 +1,62 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="edit-mapping-page row">
+    <div class="col-xs-5">
+        <mapping-title></mapping-title>
+        <tabset class="edit-tabs">
+            <tab heading="'Edit'" active="dvm.tabs.edit">
+                <block>
+                    <block-content class="padding">
+                        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
+                        <edit-mapping-form></edit-mapping-form>
+                    </block-content>
+                    <block-footer>
+                        <button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
+                        <button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="!dvm.state.isMappingChanged() || dvm.state.invalidProps.length > 0">Save</button>
+                        <button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="!dvm.state.isMappingChanged() || dvm.state.invalidProps.length > 0">Save &amp; Run</button>
+                    </block-footer>
+                </block>
+            </tab>
+            <tab heading="'Preview'" active="dvm.tabs.preview">
+                <block>
+                    <block-content class="padding">
+                        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
+                        <rdf-preview-form></rdf-preview-form>
+                    </block-content>
+                    <block-footer>
+                        <button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
+                        <button class="btn btn-primary pull-right save-btn" ng-click="dvm.save()" ng-disabled="!dvm.state.isMappingChanged() || dvm.state.invalidProps.length > 0">Save</button>
+                        <button class="btn btn-primary pull-right save-run-btn" ng-click="dvm.state.displayRunMappingOverlay = true" ng-disabled="!dvm.state.isMappingChanged() || dvm.state.invalidProps.length > 0">Save &amp; Run</button>
+                    </block-footer>
+                </block>
+            </tab>
+        </tabset>
+    </div>
+    <div class="col-xs-7">
+        <block>
+            <block-content>
+                <preview-data-grid></preview-data-grid>
+            </block-content>
+        </block>
+    </div>
+</div>

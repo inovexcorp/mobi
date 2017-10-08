@@ -26,10 +26,10 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>matonto-parent</artifactId>
-        <groupId>org.matonto</groupId>
+        <groupId>com.mobi</groupId>
+        <artifactId>mobi-parent</artifactId>
         <version>1.9.30-SNAPSHOT</version>
-        <relativePath>../matonto-parent/pom.xml</relativePath>
+        <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -37,31 +37,31 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>org.matonto.rdf.orm</module>
-        <module>org.matonto.rdf.orm.generate</module>
+        <module>com.mobi.rdf.orm</module>
+        <module>com.mobi.rdf.orm.generate</module>
         <module>rdf-orm-maven-plugin</module>
-        <module>org.matonto.rdf.orm.cli</module>
+        <module>com.mobi.rdf.orm.cli</module>
     </modules>
 
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.matonto</groupId>
+                <groupId>com.mobi</groupId>
                 <artifactId>persistence.api</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.matonto</groupId>
+                <groupId>com.mobi</groupId>
                 <artifactId>persistence.utils</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.matonto</groupId>
+                <groupId>com.mobi</groupId>
                 <artifactId>rdf.orm</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.matonto</groupId>
+                <groupId>com.mobi</groupId>
                 <artifactId>rdf.orm.generate</artifactId>
                 <version>${project.version}</version>
                 <exclusions>
@@ -80,7 +80,7 @@
             </dependency>
 
             <dependency>
-                <groupId>org.matonto</groupId>
+                <groupId>com.mobi</groupId>
                 <artifactId>rdf.impl.sesame</artifactId>
                 <version>${project.version}</version>
                 <scope>test</scope>

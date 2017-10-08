@@ -1,0 +1,62 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="saved-changes-tab row">
+    <div class="col-xs-8 col-xs-offset-2">
+        <block>
+            <block-header ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length">
+                <error-display ng-if="!dvm.os.listItem.ontologyState.upToDate">There have been other commits made on this Branch.</error-display>
+                <div class="btn-container clearfix">
+                    <button class="btn btn-danger pull-left" ng-click="dvm.removeChanges()" ng-disabled="!dvm.os.isCommittable(dvm.os.listItem.ontologyRecord.recordId)">Remove All Changes</button>
+                    <!--<a class="btn btn-link pull-left" ng-click="dvm.setChecked(true)">All</a>
+                    <a class="btn btn-link pull-left" ng-click="dvm.setChecked(false)">None</a>-->
+                </div>
+            </block-header>
+            <block-content>
+                <div ng-if="dvm.os.listItem.inProgressCommit.additions.length || dvm.os.listItem.inProgressCommit.deletions.length" class="changes">
+                    <div class="property-values" ng-repeat="item in dvm.list | orderBy:dvm.orderByIRI">
+                        <h5 ng-click="isClosed = !isClosed" class="clearfix">
+                            <p class="text">{{dvm.util.getBeautifulIRI(item.id)}} <small><a ng-click="dvm.go($event, item.id)">{{item.id}}</a></small></p>
+                            <i class="fa fa-fw" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i>
+                        </h5>
+                        <div class="value-container" ng-hide="isClosed">
+                            <statement-container ng-if="item.additions.length" additions>
+                                <statement-display ng-repeat="addition in item.additions | orderBy:dvm.util.getPredicateLocalName" predicate="addition.p" object="addition.o" addition>
+                                    <!--<checkbox ng-model="addition.checked" is-disabled-when="addition.disabled" ng-click="dvm.onAdditionCheck(item.id, addition.p, addition.o, addition.checked)"></checkbox>-->
+                                </statement-display>
+                            </statement-container>
+                            <statement-container ng-if="item.deletions.length" deletions>
+                                <statement-display ng-repeat="deletion in item.deletions | orderBy:dvm.util.getPredicateLocalName" predicate="deletion.p" object="deletion.o" deletion>
+                                    <!--<checkbox ng-model="deletion.checked" is-disabled-when="deletion.disabled" ng-click="dvm.onDeletionCheck(item.id, deletion.p, deletion.o, deletion.checked)"></checkbox>-->
+                                </statement-display>
+                            </statement-container>
+                        </div>
+                    </div>
+                </div>
+                <div ng-if="!dvm.os.listItem.inProgressCommit.additions.length && !dvm.os.listItem.inProgressCommit.deletions.length" class="text-center padding">
+                    <info-message ng-if="dvm.os.listItem.ontologyState.upToDate">You don't have any uncommitted changes.</info-message>
+                    <error-display ng-if="!dvm.os.listItem.ontologyState.upToDate">There have been other commits made on this Branch. Click <a ng-click="dvm.update()">here</a> to pull in the latest changes.</error-display>
+                </div>
+            </block-content>
+        </block>
+    </div>
+</div>
