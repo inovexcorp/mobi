@@ -174,7 +174,6 @@
                 <artifactId>karaf-maven-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
-                    <!-- no startupFeatures -->
                     <startupFeatures>
                         <feature>eventadmin</feature>
                     </startupFeatures>
