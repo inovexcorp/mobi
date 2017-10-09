@@ -179,7 +179,7 @@ public class SimpleVersioningManagerTest {
 
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream testData = getClass().getResourceAsStream("/testVersioningData.trig");
-            conn.add(Values.matontoModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+            conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
         }
 
         user = userFactory.createNew(vf.createIRI("http://test.com#user"));

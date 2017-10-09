@@ -62,7 +62,7 @@ class SesameGraphQueryResultSpec extends Specification {
         def pred = vf.createIRI("http://test.com/pred")
         def obj = vf.createIRI("http://test.com/obj")
         def sesStatement = vf.createStatement(subj, pred, obj)
-        def s = Values.matontoStatement(sesStatement)
+        def s = Values.mobiStatement(sesStatement)
 
         1 * sesGQR.next() >> sesStatement
 

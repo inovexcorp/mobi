@@ -86,7 +86,7 @@ class DelimitedOntologySpec extends Specification {
         vcr.registerValueConverter(new ValueValueConverter())
 
         InputStream mappingFile = new ClassPathResource("newestMapping.ttl").getInputStream()
-        Model mapping = Values.matontoModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
+        Model mapping = Values.mobiModel(Rio.parse(mappingFile, "", RDFFormat.TURTLE))
         classMapping = classFactory.getExisting(vf.createIRI("http://mobi.com/mappings/demo/Material"), mapping, vf, vcr).get()
     }
 

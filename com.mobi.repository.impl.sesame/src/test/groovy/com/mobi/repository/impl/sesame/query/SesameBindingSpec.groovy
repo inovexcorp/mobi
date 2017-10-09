@@ -51,7 +51,7 @@ class SesameBindingSpec extends Specification {
         1 * sesBinding.getValue() >> testVal
 
         expect:
-        matBinding.getValue().equals(Values.matontoIRI(testVal))
+        matBinding.getValue().equals(Values.mobiIRI(testVal))
     }
 
 }

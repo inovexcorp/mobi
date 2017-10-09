@@ -330,7 +330,7 @@ public class SimpleCatalogManagerTest {
         InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(Values.matontoModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+            conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
         }
 
         Map<String, Object> props = new HashMap<>();

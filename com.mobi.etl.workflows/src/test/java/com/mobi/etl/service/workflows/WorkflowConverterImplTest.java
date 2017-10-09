@@ -535,7 +535,7 @@ public class WorkflowConverterImplTest {
     private void runUseCaseTest(String fileName, int expectedSubRoutes) throws Exception {
         // Setup:
         InputStream input = getClass().getResourceAsStream(fileName);
-        Model model = Values.matontoModel(Rio.parse(input, "", RDFFormat.TURTLE));
+        Model model = Values.mobiModel(Rio.parse(input, "", RDFFormat.TURTLE));
         workflow = workflowFactory.getExisting(WORKFLOW_ID, model).get();
 
         RouteBuilder result = converter.convert(workflow);

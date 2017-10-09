@@ -30,6 +30,6 @@ public class ResourceValueFactory implements SesameMobiValueFactory<Resource, or
 
     @Override
     public Resource asMatOntoObject(org.openrdf.model.Resource object) {
-        return Values.matontoResource(object);
+        return Values.mobiResource(object);
     }
 }

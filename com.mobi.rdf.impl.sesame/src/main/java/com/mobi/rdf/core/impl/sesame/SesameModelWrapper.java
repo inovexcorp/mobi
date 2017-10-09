@@ -32,15 +32,6 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.base.AbstractStatementSet;
 import com.mobi.rdf.core.utils.Values;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Namespace;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.base.AbstractStatementSet;
-import com.mobi.rdf.core.utils.Values;
 import org.openrdf.model.util.Models;
 
 import javax.annotation.Nonnull;
@@ -183,9 +174,9 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
             @Override
             public Statement next() {
                 org.openrdf.model.Statement stmt = sesameItr.next();
-                return MATONTO_VF.createStatement(Values.matontoResource(stmt.getSubject()),
-                        Values.matontoIRI(stmt.getPredicate()), Values.matontoValue(stmt.getObject()),
-                        Values.matontoResource(stmt.getContext()));
+                return MATONTO_VF.createStatement(Values.mobiResource(stmt.getSubject()),
+                        Values.mobiIRI(stmt.getPredicate()), Values.mobiValue(stmt.getObject()),
+                        Values.mobiResource(stmt.getContext()));
             }
 
             @Override

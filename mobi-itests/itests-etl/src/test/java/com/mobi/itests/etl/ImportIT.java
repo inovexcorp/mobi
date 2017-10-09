@@ -79,7 +79,7 @@ public class ImportIT extends KarafTestSupport {
         waitForService("(&(objectClass=com.mobi.ontology.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
 
-        data = Values.matontoModel(Rio.parse(new FileInputStream(new File(dataFile)), "", RDFFormat.TRIG));
+        data = Values.mobiModel(Rio.parse(new FileInputStream(new File(dataFile)), "", RDFFormat.TRIG));
 
         manager = getOsgiService(DatasetManager.class);
         userFactory = getOsgiService(UserFactory.class);

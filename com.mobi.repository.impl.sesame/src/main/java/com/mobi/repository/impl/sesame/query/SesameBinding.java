@@ -42,7 +42,7 @@ public class SesameBinding implements Binding {
 
     @Override
     public Value getValue() {
-        return Values.matontoValue(binding.getValue());
+        return Values.mobiValue(binding.getValue());
     }
 
 }

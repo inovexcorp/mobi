@@ -34,10 +34,6 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.rdf.api.*;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import org.openrdf.model.impl.LinkedHashModel;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,8 +41,8 @@ import java.util.stream.Collectors;
 public class Values {
 
     private static final org.openrdf.model.ValueFactory SESAME_VF = org.openrdf.model.impl.SimpleValueFactory.getInstance();
-    private static final ValueFactory MATONTO_VF = SimpleValueFactory.getInstance();
-    private static final ModelFactory MATONTO_MF = LinkedHashModelFactory.getInstance();
+    private static final ValueFactory MOBI_VF = SimpleValueFactory.getInstance();
+    private static final ModelFactory MOBI_MF = LinkedHashModelFactory.getInstance();
 
     private Values() {}
 
@@ -60,13 +56,13 @@ public class Values {
         }
     }
 
-    public static Statement matontoStatement(org.openrdf.model.Statement statement) {
+    public static Statement mobiStatement(org.openrdf.model.Statement statement) {
         if (statement.getContext() != null) {
-            return MATONTO_VF.createStatement(matontoResource(statement.getSubject()), matontoIRI(statement.getPredicate()),
-                    matontoValue(statement.getObject()), matontoResource(statement.getContext()));
+            return MOBI_VF.createStatement(mobiResource(statement.getSubject()), mobiIRI(statement.getPredicate()),
+                    mobiValue(statement.getObject()), mobiResource(statement.getContext()));
         } else {
-            return MATONTO_VF.createStatement(matontoResource(statement.getSubject()), matontoIRI(statement.getPredicate()),
-                    matontoValue(statement.getObject()));
+            return MOBI_VF.createStatement(mobiResource(statement.getSubject()), mobiIRI(statement.getPredicate()),
+                    mobiValue(statement.getObject()));
         }
     }
 
@@ -80,13 +76,13 @@ public class Values {
         }
     }
 
-    public static Resource matontoResource(org.openrdf.model.Resource resource) {
+    public static Resource mobiResource(org.openrdf.model.Resource resource) {
         if (resource == null) {
           return null;
         } else if (resource instanceof org.openrdf.model.IRI) {
-            return matontoIRI((org.openrdf.model.IRI) resource);
+            return mobiIRI((org.openrdf.model.IRI) resource);
         } else {
-            return MATONTO_VF.createBNode(((org.openrdf.model.BNode) resource).getID());
+            return MOBI_VF.createBNode(((org.openrdf.model.BNode) resource).getID());
         }
     }
 
@@ -98,11 +94,11 @@ public class Values {
         }
     }
 
-    public static IRI matontoIRI(org.openrdf.model.IRI iri) {
+    public static IRI mobiIRI(org.openrdf.model.IRI iri) {
         if (iri == null) {
             return null;
         } else {
-            return MATONTO_VF.createIRI(iri.stringValue());
+            return MOBI_VF.createIRI(iri.stringValue());
         }
     }
 
@@ -114,7 +110,7 @@ public class Values {
         } else if (value instanceof BNode) {
             return sesameResource((BNode) value);
         } else {
-            // Else it's a MatOnto Literal
+            // Else it's a Mobi Literal
             Literal literal = (Literal) value;
             if (literal.getLanguage().isPresent()) {
                 return SESAME_VF.createLiteral(literal.stringValue(), literal.getLanguage().get());
@@ -125,21 +121,21 @@ public class Values {
         }
     }
 
-    public static Value matontoValue(org.openrdf.model.Value value) {
+    public static Value mobiValue(org.openrdf.model.Value value) {
         if (value == null) {
             return null;
         } else if (value instanceof org.openrdf.model.IRI) {
-            return matontoIRI((org.openrdf.model.IRI) value);
+            return mobiIRI((org.openrdf.model.IRI) value);
         } else if (value instanceof org.openrdf.model.BNode) {
-            return matontoResource((org.openrdf.model.BNode) value);
+            return mobiResource((org.openrdf.model.BNode) value);
         } else {
             // Else it's a Sesame Literal
             org.openrdf.model.Literal literal = (org.openrdf.model.Literal) value;
             if (literal.getLanguage().isPresent()) {
-                return MATONTO_VF.createLiteral(literal.stringValue(), literal.getLanguage().get());
+                return MOBI_VF.createLiteral(literal.stringValue(), literal.getLanguage().get());
             } else {
-                IRI datatype = MATONTO_VF.createIRI(literal.getDatatype().stringValue());
-                return MATONTO_VF.createLiteral(literal.stringValue(), datatype);
+                IRI datatype = MOBI_VF.createIRI(literal.getDatatype().stringValue());
+                return MOBI_VF.createLiteral(literal.stringValue(), datatype);
             }
         }
     }
@@ -158,11 +154,11 @@ public class Values {
         }
     }
 
-    public static Model matontoModel(org.openrdf.model.Model model) {
+    public static Model mobiModel(org.openrdf.model.Model model) {
         Set<Statement> statements = model.stream()
-                .map(Values::matontoStatement)
+                .map(Values::mobiStatement)
                 .collect(Collectors.toSet());
-        return MATONTO_MF.createModel(statements);
+        return MOBI_MF.createModel(statements);
     }
 
     public static org.openrdf.model.Model sesameModel(Model model) {

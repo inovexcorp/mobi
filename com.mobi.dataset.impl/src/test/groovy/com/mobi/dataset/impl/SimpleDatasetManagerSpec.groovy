@@ -362,7 +362,7 @@ class SimpleDatasetManagerSpec extends Specification {
     def "getDatasets() returns an empty set when there are no datasets in that repository"() {
         setup:
         service.setRepository(systemRepo)
-        systemConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-records.trig"), "", RDFFormat.TRIG)))
+        systemConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-records.trig"), "", RDFFormat.TRIG)))
 
         expect:
         service.getDatasets("system").size() == 0
@@ -371,7 +371,7 @@ class SimpleDatasetManagerSpec extends Specification {
     def "getDatasets() returns an empty set when there are no datasets in the local catalog in that repository, but there are other datasets in that repository"() {
         setup:
         service.setRepository(systemRepo)
-        systemConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-catalog-records.trig"), "", RDFFormat.TRIG)))
+        systemConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_no-catalog-records.trig"), "", RDFFormat.TRIG)))
 
         expect:
         service.getDatasets("system").size() == 0
@@ -380,8 +380,8 @@ class SimpleDatasetManagerSpec extends Specification {
     def "getDatasets() returns a set with #size elements in the #repo repo"() {
         setup:
         service.setRepository(systemRepo)
-        systemConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
-        testConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
+        systemConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
+        testConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
 
         expect:
         service.getDatasets(repo).size() == size
@@ -600,7 +600,7 @@ class SimpleDatasetManagerSpec extends Specification {
         setup:
         def testRecord = bootstrapCatalog(testDatasetIRI, testRecordIRI, repo)
         1 * catalogManagerMock.removeRecord(!null, testRecordIRI, !null) >> testRecord
-        testConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
+        testConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
         dynamicConn = repos.get(repo).getConnection()
 
         when:
@@ -632,7 +632,7 @@ class SimpleDatasetManagerSpec extends Specification {
         setup:
         def testRecord = bootstrapCatalog(testDatasetIRI, testRecordIRI, repo)
         1 * catalogManagerMock.removeRecord(!null, testRecordIRI, !null) >> testRecord
-        testConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
+        testConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
         dynamicConn = repos.get(repo).getConnection()
 
         when:
@@ -678,7 +678,7 @@ class SimpleDatasetManagerSpec extends Specification {
         setup:
         def testRecord = bootstrapCatalog(testDatasetIRI, testRecordIRI, repo)
         1 * catalogManagerMock.getRecord(!null, testRecordIRI, !null) >> Optional.of(testRecord)
-        testConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
+        testConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
         dynamicConn = repos.get(repo).getConnection()
 
         when:
@@ -713,7 +713,7 @@ class SimpleDatasetManagerSpec extends Specification {
         setup:
         def testRecord = bootstrapCatalog(testDatasetIRI, testRecordIRI, repo)
         1 * catalogManagerMock.getRecord(!null, testRecordIRI, !null) >> Optional.of(testRecord)
-        testConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
+        testConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
         dynamicConn = repos.get(repo).getConnection()
 
         when:
@@ -808,7 +808,7 @@ class SimpleDatasetManagerSpec extends Specification {
 
         service.setRepository(systemRepo)
 
-        systemConn.add(Values.matontoModel(
+        systemConn.add(Values.mobiModel(
                 Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
         
         return record

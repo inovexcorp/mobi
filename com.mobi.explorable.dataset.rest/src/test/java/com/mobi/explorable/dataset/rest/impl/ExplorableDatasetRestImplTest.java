@@ -206,10 +206,10 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
         InputStream testData = getClass().getResourceAsStream("/test-dataset-data.trig");
         conn = repository.getConnection();
-        conn.add(Values.matontoModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+        conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
 
         InputStream compiledData = getClass().getResourceAsStream("/compiled-resource.trig");
-        compiledModel = Values.matontoModel(Rio.parse(compiledData, "", RDFFormat.TRIG));
+        compiledModel = Values.mobiModel(Rio.parse(compiledData, "", RDFFormat.TRIG));
 
         classId = vf.createIRI(CLASS_ID_STR);
         dataPropertyId = vf.createIRI(DATA_PROPERTY_ID);
@@ -249,8 +249,8 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(compiledModel);
         when(catalogManager.getRecord(catalogId, ontologyRecordId, ontologyRecordFactory)).thenReturn(Optional.empty());
 
-        when(sesameTransformer.matontoModel(any(org.openrdf.model.Model.class))).thenAnswer(i -> Values.matontoModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
-        when(sesameTransformer.matontoIRI(any(org.openrdf.model.IRI.class))).thenAnswer(i -> Values.matontoIRI(i.getArgumentAt(0, org.openrdf.model.IRI.class)));
+        when(sesameTransformer.matontoModel(any(org.openrdf.model.Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
+        when(sesameTransformer.matontoIRI(any(org.openrdf.model.IRI.class))).thenAnswer(i -> Values.mobiIRI(i.getArgumentAt(0, org.openrdf.model.IRI.class)));
         when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
         when(sesameTransformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
 
@@ -299,7 +299,7 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
     @Test
     public void getClassDetailsWhenDeprecatedClassFound() throws Exception {
         InputStream partialData = getClass().getResourceAsStream("/partial-compiled-resource.trig");
-        Model partialModel = Values.matontoModel(Rio.parse(partialData, "", RDFFormat.TRIG));
+        Model partialModel = Values.mobiModel(Rio.parse(partialData, "", RDFFormat.TRIG));
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(partialModel);
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();

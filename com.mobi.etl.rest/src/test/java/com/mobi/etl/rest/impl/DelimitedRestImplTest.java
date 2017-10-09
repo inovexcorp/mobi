@@ -151,7 +151,7 @@ public class DelimitedRestImplTest extends MobiRestTestNg {
         rest.start();
 
         when(transformer.matontoModel(any(Model.class)))
-                .thenAnswer(i -> Values.matontoModel(i.getArgumentAt(0, Model.class)));
+                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, Model.class)));
         when(transformer.sesameModel(any(com.mobi.rdf.api.Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, com.mobi.rdf.api.Model.class)));
         when(transformer.sesameStatement(any(Statement.class)))

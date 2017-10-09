@@ -367,11 +367,11 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         WriterConfig config = new WriterConfig();
         config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
         InputStream testOntology = getClass().getResourceAsStream("/test-ontology.ttl");
-        ontologyModel = mf.createModel(Values.matontoModel(Rio.parse(testOntology, "", RDFFormat.TURTLE)));
+        ontologyModel = mf.createModel(Values.mobiModel(Rio.parse(testOntology, "", RDFFormat.TURTLE)));
         ontologyJsonLd = new ByteArrayOutputStream();
         Rio.write(Values.sesameModel(ontologyModel), ontologyJsonLd, RDFFormat.JSONLD, config);
         InputStream testVocabulary = getClass().getResourceAsStream("/test-vocabulary.ttl");
-        importedOntologyModel = mf.createModel(Values.matontoModel(Rio.parse(testVocabulary, "",
+        importedOntologyModel = mf.createModel(Values.mobiModel(Rio.parse(testVocabulary, "",
                 RDFFormat.TURTLE)));
         importedOntologyJsonLd = new ByteArrayOutputStream();
         Rio.write(Values.sesameModel(importedOntologyModel), importedOntologyJsonLd, RDFFormat.JSONLD, config);
@@ -540,9 +540,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 simpleOntologyManager.getSearchResults(ontology, invocationOnMock.getArgumentAt(1, String.class)));
 
         when(sesameTransformer.matontoModel(any(org.openrdf.model.Model.class))).thenAnswer(invocationOnMock ->
-                Values.matontoModel(invocationOnMock.getArgumentAt(0, org.openrdf.model.Model.class)));
+                Values.mobiModel(invocationOnMock.getArgumentAt(0, org.openrdf.model.Model.class)));
         when(sesameTransformer.matontoIRI(any(org.openrdf.model.IRI.class))).thenAnswer(invocationOnMock ->
-                Values.matontoIRI(invocationOnMock.getArgumentAt(0, org.openrdf.model.IRI.class)));
+                Values.mobiIRI(invocationOnMock.getArgumentAt(0, org.openrdf.model.IRI.class)));
         when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(invocationOnMock ->
                 Values.sesameModel(invocationOnMock.getArgumentAt(0, Model.class)));
         when(sesameTransformer.sesameStatement(any(Statement.class))).thenAnswer(invocationOnMock ->

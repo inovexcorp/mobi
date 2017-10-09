@@ -66,7 +66,7 @@ class ValuesSpec extends Specification {
     def "matontoResource(IRI) returns a MatOnto IRI"() {
         setup:
         def resource = SESAME_VF.createIRI("http://test.com")
-        def matontoResource = Values.matontoResource(resource)
+        def matontoResource = Values.mobiResource(resource)
 
         expect:
         matontoResource instanceof IRI
@@ -75,7 +75,7 @@ class ValuesSpec extends Specification {
     def "matontoResource(BNode) returns a MatOnto BNode"() {
         setup:
         def resource = SESAME_VF.createBNode("http://test.com")
-        def matontoResource = Values.matontoResource(resource)
+        def matontoResource = Values.mobiResource(resource)
 
         expect:
         matontoResource instanceof BNode
@@ -83,7 +83,7 @@ class ValuesSpec extends Specification {
 
     def "matontoResource(null) returns null"() {
         setup:
-        def matontoResource = Values.matontoResource(null)
+        def matontoResource = Values.mobiResource(null)
 
         expect:
         matontoResource == null
@@ -109,7 +109,7 @@ class ValuesSpec extends Specification {
     def "matontoIRI(IRI) returns a MatOnto IRI"() {
         setup:
         def iri = SESAME_VF.createIRI("http://test.com")
-        def matontoIRI = Values.matontoIRI(iri)
+        def matontoIRI = Values.mobiIRI(iri)
 
         expect:
         matontoIRI instanceof IRI
@@ -117,7 +117,7 @@ class ValuesSpec extends Specification {
 
     def "matontoIRI(null) returns null"() {
         setup:
-        def matontoIRI = Values.matontoIRI(null)
+        def matontoIRI = Values.mobiIRI(null)
 
         expect:
         matontoIRI == null
@@ -161,7 +161,7 @@ class ValuesSpec extends Specification {
     def "matontoValue(IRI) returns a MatOnto IRI"() {
         setup:
         def value = SESAME_VF.createIRI("http://test.com")
-        def matontoValue = Values.matontoValue(value)
+        def matontoValue = Values.mobiValue(value)
 
         expect:
         matontoValue instanceof IRI
@@ -170,7 +170,7 @@ class ValuesSpec extends Specification {
     def "matontoValue(BNode) returns a MatOnto BNode"() {
         setup:
         def value = SESAME_VF.createBNode("http://test.com")
-        def matontoValue = Values.matontoValue(value)
+        def matontoValue = Values.mobiValue(value)
 
         expect:
         matontoValue instanceof BNode
@@ -179,7 +179,7 @@ class ValuesSpec extends Specification {
     def "matontoValue(Literal) returns a MatOnto Literal"() {
         setup:
         def value = SESAME_VF.createLiteral("MatOnto")
-        def matontoValue = Values.matontoValue(value)
+        def matontoValue = Values.mobiValue(value)
 
         expect:
         matontoValue instanceof Literal
@@ -187,7 +187,7 @@ class ValuesSpec extends Specification {
 
     def "matontoValue(null) returns a MatOnto Literal"() {
         setup:
-        def matontoValue = Values.matontoValue(null)
+        def matontoValue = Values.mobiValue(null)
 
         expect:
         matontoValue == null

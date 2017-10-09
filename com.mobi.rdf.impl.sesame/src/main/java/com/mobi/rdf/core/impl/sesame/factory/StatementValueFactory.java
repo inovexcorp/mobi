@@ -31,7 +31,7 @@ public class StatementValueFactory implements SesameMobiValueFactory<Statement, 
 
     @Override
     public Statement asMatOntoObject(org.openrdf.model.Statement object) {
-        return new SimpleStatement(Values.matontoResource(object.getSubject()), Values.matontoIRI(object.getPredicate()),
-                Values.matontoValue(object.getObject()), Values.matontoResource(object.getContext()));
+        return new SimpleStatement(Values.mobiResource(object.getSubject()), Values.mobiIRI(object.getPredicate()),
+                Values.mobiValue(object.getObject()), Values.mobiResource(object.getContext()));
     }
 }

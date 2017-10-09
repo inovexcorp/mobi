@@ -26,9 +26,6 @@ package com.mobi.repository.impl.sesame.query;
 import com.mobi.query.api.Binding;
 import com.mobi.query.api.BindingSet;
 import com.mobi.rdf.api.Value;
-import com.mobi.query.api.Binding;
-import com.mobi.query.api.BindingSet;
-import com.mobi.rdf.api.Value;
 import com.mobi.rdf.core.utils.Values;
 
 import java.util.Iterator;
@@ -74,7 +71,7 @@ public class SesameBindingSet implements BindingSet {
         if (value == null) {
             return Optional.empty();
         } else {
-            return Optional.of(Values.matontoValue(value));
+            return Optional.of(Values.mobiValue(value));
         }
     }
 

@@ -26,9 +26,6 @@ package com.mobi.repository.impl.sesame.query;
 import com.mobi.query.GraphQueryResult;
 import com.mobi.query.exception.QueryEvaluationException;
 import com.mobi.rdf.api.Statement;
-import com.mobi.query.GraphQueryResult;
-import com.mobi.query.exception.QueryEvaluationException;
-import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.core.utils.Values;
 
 import java.util.Map;
@@ -71,7 +68,7 @@ public class SesameGraphQueryResult extends GraphQueryResult {
     @Override
     public Statement next() throws QueryEvaluationException {
         try {
-            return Values.matontoStatement(graphQueryResult.next());
+            return Values.mobiStatement(graphQueryResult.next());
         } catch (org.openrdf.query.QueryEvaluationException e) {
             throw new QueryEvaluationException(e);
         }

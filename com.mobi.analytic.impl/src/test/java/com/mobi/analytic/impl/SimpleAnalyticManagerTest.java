@@ -119,7 +119,7 @@ public class SimpleAnalyticManagerTest {
 
         try (RepositoryConnection conn = repository.getConnection()) {
             InputStream data = getClass().getResourceAsStream("/testData.trig");
-            conn.add(Values.matontoModel(Rio.parse(data, "", RDFFormat.TRIG)));
+            conn.add(Values.mobiModel(Rio.parse(data, "", RDFFormat.TRIG)));
         }
 
         analyticRecordFactory.setModelFactory(mf);

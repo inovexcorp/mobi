@@ -172,7 +172,7 @@ public class OntologyRecordVersioningServiceTest {
 
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream testData = getClass().getResourceAsStream("/testData.trig");
-            conn.add(Values.matontoModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+            conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
         }
 
         user = userFactory.createNew(vf.createIRI("http://mobi.com/test/users#user"));

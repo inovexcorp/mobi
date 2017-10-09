@@ -179,7 +179,7 @@ public class ProvRestImplTest extends MobiRestTestNg {
         MockitoAnnotations.initMocks(this);
 
         when(transformer.matontoModel(any(Model.class)))
-                .thenAnswer(i -> Values.matontoModel(i.getArgumentAt(0, Model.class)));
+                .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, Model.class)));
         when(transformer.sesameModel(any(com.mobi.rdf.api.Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, com.mobi.rdf.api.Model.class)));
         when(transformer.sesameStatement(any(Statement.class)))
@@ -207,7 +207,7 @@ public class ProvRestImplTest extends MobiRestTestNg {
     @BeforeMethod
     public void setUpMocks() throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(Values.matontoModel(Rio.parse(new ByteArrayInputStream(provData.getBytes()), "", RDFFormat.TURTLE)));
+            conn.add(Values.mobiModel(Rio.parse(new ByteArrayInputStream(provData.getBytes()), "", RDFFormat.TURTLE)));
         }
         reset(provService);
 

@@ -143,7 +143,7 @@ class SimpleMappingManagerSpec extends Specification {
 
         mappingId.getMappingIdentifier() >> mappingIRI
 
-        transformer.matontoModel(_) >> { args -> Values.matontoModel(args[0])}
+        transformer.matontoModel(_) >> { args -> Values.mobiModel(args[0])}
     }
 
     def "Create a MappingRecord"() {
@@ -202,8 +202,8 @@ class SimpleMappingManagerSpec extends Specification {
         def versionedMappingFile = Paths.get(getClass().getClassLoader().getResource("newestVersionedMapping.jsonld")
                 .toURI()).toFile()
 
-        def expectedModel = Values.matontoModel(Rio.parse(mappingStream, "", RDFFormat.TURTLE))
-        def expectedVersionedModel = Values.matontoModel(Rio.parse(versionedMappingStream, "", RDFFormat.JSONLD))
+        def expectedModel = Values.mobiModel(Rio.parse(mappingStream, "", RDFFormat.TURTLE))
+        def expectedVersionedModel = Values.mobiModel(Rio.parse(versionedMappingStream, "", RDFFormat.JSONLD))
 
         when:
         def actualMapping = service.createMapping(mappingFile)
@@ -216,9 +216,9 @@ class SimpleMappingManagerSpec extends Specification {
 
     def "Create a Mapping using a valid InputStream"() {
         setup:
-        def model = Values.matontoModel(Rio.parse(getClass().getClassLoader()
+        def model = Values.mobiModel(Rio.parse(getClass().getClassLoader()
                 .getResourceAsStream("newestMapping.ttl"), "", RDFFormat.TURTLE))
-        def versionedModel = Values.matontoModel(Rio.parse(getClass().getClassLoader()
+        def versionedModel = Values.mobiModel(Rio.parse(getClass().getClassLoader()
                 .getResourceAsStream("newestVersionedMapping.jsonld"), "", RDFFormat.JSONLD))
 
         when:
@@ -240,8 +240,8 @@ class SimpleMappingManagerSpec extends Specification {
         def versionedMappingFile = Paths.get(getClass().getClassLoader().getResource("newestVersionedMapping.jsonld")
                 .toURI()).toFile()
 
-        def expectedModel = Values.matontoModel(Rio.parse(mappingStream, "", RDFFormat.JSONLD))
-        def expectedVersionedModel = Values.matontoModel(Rio.parse(versionedMappingStream, "", RDFFormat.JSONLD))
+        def expectedModel = Values.mobiModel(Rio.parse(mappingStream, "", RDFFormat.JSONLD))
+        def expectedVersionedModel = Values.mobiModel(Rio.parse(versionedMappingStream, "", RDFFormat.JSONLD))
 
         when:
         def actualMapping = service.createMapping(mappingFile.getText("UTF-8"))

@@ -211,11 +211,11 @@ public class SimpleOntologyManagerTest {
         when(sesameTransformer.sesameModel(any(Model.class))).thenReturn(new org.openrdf.model.impl.LinkedHashModel());
 
         InputStream testOntology = getClass().getResourceAsStream("/test-ontology.ttl");
-        when(ontology.asModel(mf)).thenReturn(Values.matontoModel(Rio.parse(testOntology, "", RDFFormat.TURTLE)));
+        when(ontology.asModel(mf)).thenReturn(Values.mobiModel(Rio.parse(testOntology, "", RDFFormat.TURTLE)));
         when(ontology.getImportsClosure()).thenReturn(Collections.singleton(ontology));
 
         InputStream testVocabulary = getClass().getResourceAsStream("/test-vocabulary.ttl");
-        when(vocabulary.asModel(mf)).thenReturn(Values.matontoModel(Rio.parse(testVocabulary, "", RDFFormat.TURTLE)));
+        when(vocabulary.asModel(mf)).thenReturn(Values.mobiModel(Rio.parse(testVocabulary, "", RDFFormat.TURTLE)));
         when(vocabulary.getImportsClosure()).thenReturn(Collections.singleton(vocabulary));
 
         PowerMockito.mockStatic(SimpleOntologyValues.class);
@@ -234,7 +234,7 @@ public class SimpleOntologyManagerTest {
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
-            conn.add(Values.matontoModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+            conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
         }
         when(mockRepoManager.createMemoryRepository()).thenReturn(repoManager.createMemoryRepository());
         when(mockRepoManager.getRepository("system")).thenReturn(Optional.of(repo));

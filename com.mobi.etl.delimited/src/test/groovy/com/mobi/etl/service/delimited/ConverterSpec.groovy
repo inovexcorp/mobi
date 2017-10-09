@@ -662,7 +662,7 @@ class ConverterSpec extends Specification {
     }
 
     private def loadModel(InputStream stream) {
-        Values.matontoModel(Rio.parse(stream, "", RDFFormat.TURTLE))
+        Values.mobiModel(Rio.parse(stream, "", RDFFormat.TURTLE))
     }
 
     private def getSVConfigBuilder(String inputFilename, String mappingFilename) {

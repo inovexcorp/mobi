@@ -27,9 +27,6 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
-import com.mobi.rdf.api.Value;
 import com.mobi.rdf.core.utils.Values;
 
 import java.util.Objects;
@@ -67,23 +64,23 @@ public class SimpleStatement implements Statement {
         if (context == null) {
             return Optional.empty();
         } else {
-            return Optional.of(Values.matontoResource(context));
+            return Optional.of(Values.mobiResource(context));
         }
     }
 
     @Override
     public Value getObject() {
-        return Values.matontoValue(sesameStmt.getObject());
+        return Values.mobiValue(sesameStmt.getObject());
     }
 
     @Override
     public IRI getPredicate() {
-        return Values.matontoIRI(sesameStmt.getPredicate());
+        return Values.mobiIRI(sesameStmt.getPredicate());
     }
 
     @Override
     public Resource getSubject() {
-        return Values.matontoResource(sesameStmt.getSubject());
+        return Values.mobiResource(sesameStmt.getSubject());
     }
 
     @Override

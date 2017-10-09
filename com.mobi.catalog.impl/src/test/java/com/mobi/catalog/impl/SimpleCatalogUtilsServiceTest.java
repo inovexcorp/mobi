@@ -161,7 +161,7 @@ public class SimpleCatalogUtilsServiceTest {
 
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
-            conn.add(Values.matontoModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+            conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
         }
 
         catalogFactory.setModelFactory(mf);

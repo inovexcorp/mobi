@@ -88,8 +88,8 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
         repos << [ "test": testRepo ]
 
         // Load test data
-        systemConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
-        testConn.add(Values.matontoModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
+        systemConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_only-ds-records.trig"), "", RDFFormat.TRIG)))
+        testConn.add(Values.mobiModel(Rio.parse(this.getClass().getResourceAsStream("/test-catalog_test-repo-datasets.trig"), "", RDFFormat.TRIG)))
 
         // Setup mocks
         repoManager.getRepository("system") >> systemRepo

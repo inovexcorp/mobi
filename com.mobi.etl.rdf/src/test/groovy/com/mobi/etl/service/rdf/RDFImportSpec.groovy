@@ -42,7 +42,7 @@ class RDFImportSpec extends Specification {
     def repoId = "test"
     def datasetId = vf.createIRI("http://test.com/dataset-record")
     def file = new ClassPathResource("importer/testFile.trig").getFile()
-    def model = Values.matontoModel(Rio.parse(new FileInputStream(file), "", RDFFormat.TRIG))
+    def model = Values.mobiModel(Rio.parse(new FileInputStream(file), "", RDFFormat.TRIG))
 
     def transformer = Mock(SesameTransformer)
     def datasetManager = Mock(DatasetManager)
@@ -51,7 +51,7 @@ class RDFImportSpec extends Specification {
     def datasetConn = Mock(DatasetConnection)
 
     def setup() {
-        transformer.matontoModel(_) >> { args -> Values.matontoModel(args[0])}
+        transformer.matontoModel(_) >> { args -> Values.mobiModel(args[0])}
         repo.getRepositoryID() >> repoId
         repo.getConnection() >> conn
         datasetManager.getConnection(datasetId) >> datasetConn
