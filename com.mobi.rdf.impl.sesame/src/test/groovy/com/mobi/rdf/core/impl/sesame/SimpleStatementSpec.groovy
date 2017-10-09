@@ -58,7 +58,7 @@ class SimpleStatementSpec extends Specification {
             new SimpleLiteral("true", vf.createIRI(XMLSchema.BOOLEAN.stringValue())),
             new SimpleLiteral("Mobi", "en"),
             new SimpleIRI("http://test.com/obj1"),
-            new SimpleBNode("_:mobi/1"`),
+            new SimpleBNode("_:mobi/1"),
             new SimpleLiteral("Mobi"),
     ]
 
