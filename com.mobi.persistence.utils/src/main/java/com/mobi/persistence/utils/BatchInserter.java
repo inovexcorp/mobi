@@ -26,9 +26,6 @@ package com.mobi.persistence.utils;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.exception.RepositoryException;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.exception.RepositoryException;
 import org.openrdf.model.Statement;
 import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.helpers.AbstractRDFHandler;
@@ -106,7 +103,7 @@ public class BatchInserter extends AbstractRDFHandler {
 
     @Override
     public void handleStatement(Statement st) throws RDFHandlerException {
-        conn.add(transformer.matontoStatement(st));
+        conn.add(transformer.mobiStatement(st));
         count++;
         if (count % batchSize == 0) {
             try {

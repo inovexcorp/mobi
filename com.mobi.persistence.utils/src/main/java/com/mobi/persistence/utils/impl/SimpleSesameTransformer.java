@@ -30,13 +30,11 @@ import aQute.bnd.annotation.component.Reference;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.Statement;
 import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import org.openrdf.model.impl.LinkedHashModel;
@@ -91,9 +89,9 @@ public class SimpleSesameTransformer implements SesameTransformer {
     }
 
     @Override
-    public Model matontoModel(org.openrdf.model.Model m) {
+    public Model mobiModel(org.openrdf.model.Model m) {
         Set<Statement> stmts = m.stream()
-                .map(this::matontoStatement)
+                .map(this::mobiStatement)
                 .collect(Collectors.toSet());
 
         return matontoMF.createModel(stmts);
@@ -113,15 +111,15 @@ public class SimpleSesameTransformer implements SesameTransformer {
     }
 
     @Override
-    public Statement matontoStatement(org.openrdf.model.Statement statement) {
+    public Statement mobiStatement(org.openrdf.model.Statement statement) {
         if (statement == null) {
             return null;
         } else if (statement.getContext() == null) {
-            return matontoVF.createStatement(matontoResource(statement.getSubject()), matontoIRI(statement.getPredicate()),
-                    matontoValue(statement.getObject()));
+            return matontoVF.createStatement(mobiResource(statement.getSubject()), mobiIRI(statement.getPredicate()),
+                    mobiValue(statement.getObject()));
         } else {
-            return matontoVF.createStatement(matontoResource(statement.getSubject()), matontoIRI(statement.getPredicate()),
-                    matontoValue(statement.getObject()), matontoResource(statement.getContext()));
+            return matontoVF.createStatement(mobiResource(statement.getSubject()), mobiIRI(statement.getPredicate()),
+                    mobiValue(statement.getObject()), mobiResource(statement.getContext()));
         }
     }
 
@@ -137,11 +135,11 @@ public class SimpleSesameTransformer implements SesameTransformer {
     }
 
     @Override
-    public Resource matontoResource(org.openrdf.model.Resource resource) {
+    public Resource mobiResource(org.openrdf.model.Resource resource) {
         if (resource == null) {
             return null;
         } else if (resource instanceof org.openrdf.model.IRI) {
-            return matontoIRI((org.openrdf.model.IRI) resource);
+            return mobiIRI((org.openrdf.model.IRI) resource);
         } else {
             return matontoVF.createBNode(((org.openrdf.model.BNode) resource).getID());
         }
@@ -158,7 +156,7 @@ public class SimpleSesameTransformer implements SesameTransformer {
     }
 
     @Override
-    public IRI matontoIRI(org.openrdf.model.IRI sesameIRI) {
+    public IRI mobiIRI(org.openrdf.model.IRI sesameIRI) {
         if (sesameIRI == null) {
             return null;
         } else {
@@ -187,13 +185,13 @@ public class SimpleSesameTransformer implements SesameTransformer {
     }
 
     @Override
-    public Value matontoValue(org.openrdf.model.Value value) {
+    public Value mobiValue(org.openrdf.model.Value value) {
         if (value == null) {
             return null;
         } else if (value instanceof org.openrdf.model.IRI) {
-            return matontoIRI((org.openrdf.model.IRI) value);
+            return mobiIRI((org.openrdf.model.IRI) value);
         } else if (value instanceof org.openrdf.model.BNode) {
-            return matontoResource((org.openrdf.model.BNode) value);
+            return mobiResource((org.openrdf.model.BNode) value);
         } else {
             // Else it's a Sesame Literal
             org.openrdf.model.Literal literal = (org.openrdf.model.Literal) value;

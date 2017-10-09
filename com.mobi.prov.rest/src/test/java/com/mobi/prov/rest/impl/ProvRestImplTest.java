@@ -178,7 +178,7 @@ public class ProvRestImplTest extends MobiRestTestNg {
 
         MockitoAnnotations.initMocks(this);
 
-        when(transformer.matontoModel(any(Model.class)))
+        when(transformer.mobiModel(any(Model.class)))
                 .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, Model.class)));
         when(transformer.sesameModel(any(com.mobi.rdf.api.Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, com.mobi.rdf.api.Model.class)));

@@ -412,7 +412,7 @@ public class CatalogRestImplTest extends MobiRestTestNg {
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
         when(transformer.sesameStatement(any(Statement.class)))
                 .thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
-        when(transformer.matontoModel(any(org.openrdf.model.Model.class)))
+        when(transformer.mobiModel(any(org.openrdf.model.Model.class)))
                 .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
 
         when(bNodeService.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgumentAt(0, Statement.class));

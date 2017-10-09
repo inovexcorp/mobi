@@ -99,7 +99,7 @@ public class StateRestImplTest extends MobiRestTestNg {
 
         MockitoAnnotations.initMocks(this);
 
-        when(transformer.matontoModel(any(org.openrdf.model.Model.class)))
+        when(transformer.mobiModel(any(org.openrdf.model.Model.class)))
                 .thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
         when(transformer.sesameModel(any(Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));

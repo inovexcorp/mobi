@@ -128,9 +128,9 @@ public class FullSimpleOntologyTest {
 
         MockitoAnnotations.initMocks(this);
 
-        when(transformer.matontoModel(any(Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, Model.class)));
+        when(transformer.mobiModel(any(Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, Model.class)));
         when(transformer.sesameModel(any(com.mobi.rdf.api.Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, com.mobi.rdf.api.Model.class)));
-        when(transformer.matontoStatement(any(Statement.class))).thenAnswer(i -> Values.mobiStatement(i.getArgumentAt(0, Statement.class)));
+        when(transformer.mobiStatement(any(Statement.class))).thenAnswer(i -> Values.mobiStatement(i.getArgumentAt(0, Statement.class)));
 
         when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
         when(ontologyId.getVersionIRI()).thenReturn(Optional.of(versionIRI));

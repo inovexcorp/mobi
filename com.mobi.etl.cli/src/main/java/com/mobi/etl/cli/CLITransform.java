@@ -140,7 +140,7 @@ public class CLITransform implements Action {
             if (!format.isPresent()) {
                 throw new Exception("Mapping file is not in a correct RDF format.");
             }
-            Model mapping = transformer.matontoModel(Rio.parse(new FileInputStream(mappingFile), "", format.get()));
+            Model mapping = transformer.mobiModel(Rio.parse(new FileInputStream(mappingFile), "", format.get()));
             Model model;
             if (extension.equals("xls") || extension.equals("xlsx")) {
                 ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(new FileInputStream(newFile), mapping)

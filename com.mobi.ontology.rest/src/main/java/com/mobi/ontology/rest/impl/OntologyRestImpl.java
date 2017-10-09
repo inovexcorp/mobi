@@ -1133,7 +1133,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     private JSONObject getDerivedConceptTypeArray(Ontology ontology) {
         List<IRI> iris = new ArrayList<>();
-        ontologyManager.getSubClassesFor(ontology, sesameTransformer.matontoIRI(SKOS.CONCEPT))
+        ontologyManager.getSubClassesFor(ontology, sesameTransformer.mobiIRI(SKOS.CONCEPT))
                 .forEach(r -> iris.add(valueFactory.createIRI(Bindings.requiredResource(r, "s").stringValue())));
         return new JSONObject().element("derivedConcepts", iriListToJsonArray(iris));
 
@@ -1141,7 +1141,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     private JSONObject getDerivedConceptSchemeTypeArray(Ontology ontology) {
         List<IRI> iris = new ArrayList<>();
-        ontologyManager.getSubClassesFor(ontology, sesameTransformer.matontoIRI(SKOS.CONCEPT_SCHEME))
+        ontologyManager.getSubClassesFor(ontology, sesameTransformer.mobiIRI(SKOS.CONCEPT_SCHEME))
                 .forEach(r -> r.getBinding("s")
                         .ifPresent(b -> iris.add(valueFactory.createIRI(b.getValue().stringValue()))));
         return new JSONObject().element("derivedConceptSchemes", iriListToJsonArray(iris));

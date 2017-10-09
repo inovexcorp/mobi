@@ -23,9 +23,6 @@ package com.mobi.persistence.utils.api;
  * #L%
  */
 
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
@@ -36,21 +33,21 @@ public interface SesameTransformer {
 
     org.openrdf.model.Model sesameModel(Model model);
 
-    Model matontoModel(org.openrdf.model.Model model);
+    Model mobiModel(org.openrdf.model.Model model);
 
     org.openrdf.model.Statement sesameStatement(Statement statement);
 
-    Statement matontoStatement(org.openrdf.model.Statement statement);
+    Statement mobiStatement(org.openrdf.model.Statement statement);
 
     org.openrdf.model.Resource sesameResource(Resource resource);
 
-    Resource matontoResource(org.openrdf.model.Resource resource);
+    Resource mobiResource(org.openrdf.model.Resource resource);
 
     org.openrdf.model.IRI sesameIRI(IRI iri);
 
-    IRI matontoIRI(org.openrdf.model.IRI sesameURI);
+    IRI mobiIRI(org.openrdf.model.IRI sesameURI);
 
     org.openrdf.model.Value sesameValue(Value value);
 
-    Value matontoValue(org.openrdf.model.Value value);
+    Value mobiValue(org.openrdf.model.Value value);
 }

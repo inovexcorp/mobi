@@ -539,9 +539,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(ontologyManager.getSearchResults(eq(ontology), anyString())).thenAnswer(invocationOnMock ->
                 simpleOntologyManager.getSearchResults(ontology, invocationOnMock.getArgumentAt(1, String.class)));
 
-        when(sesameTransformer.matontoModel(any(org.openrdf.model.Model.class))).thenAnswer(invocationOnMock ->
+        when(sesameTransformer.mobiModel(any(org.openrdf.model.Model.class))).thenAnswer(invocationOnMock ->
                 Values.mobiModel(invocationOnMock.getArgumentAt(0, org.openrdf.model.Model.class)));
-        when(sesameTransformer.matontoIRI(any(org.openrdf.model.IRI.class))).thenAnswer(invocationOnMock ->
+        when(sesameTransformer.mobiIRI(any(org.openrdf.model.IRI.class))).thenAnswer(invocationOnMock ->
                 Values.mobiIRI(invocationOnMock.getArgumentAt(0, org.openrdf.model.IRI.class)));
         when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(invocationOnMock ->
                 Values.sesameModel(invocationOnMock.getArgumentAt(0, Model.class)));

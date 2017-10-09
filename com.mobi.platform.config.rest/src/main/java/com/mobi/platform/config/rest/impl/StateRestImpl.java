@@ -23,9 +23,6 @@ package com.mobi.platform.config.rest.impl;
  * #L%
  */
 
-import static com.mobi.rest.util.RestUtils.getActiveUsername;
-import static com.mobi.rest.util.RestUtils.modelToJsonld;
-
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.persistence.utils.api.SesameTransformer;
@@ -40,14 +37,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import com.mobi.exception.MobiException;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.platform.config.api.state.StateManager;
-import com.mobi.platform.config.rest.StateRest;
-import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rest.util.ErrorUtils;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
 
@@ -111,7 +101,7 @@ public class StateRestImpl implements StateRest {
     public Response createState(ContainerRequestContext context, String applicationId, String stateJson) {
         String username = RestUtils.getActiveUsername(context);
         try {
-            Model newState = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(stateJson), "",
+            Model newState = transformer.mobiModel(Rio.parse(IOUtils.toInputStream(stateJson), "",
                     RDFFormat.JSONLD));
             if (newState.isEmpty()) {
                 throw ErrorUtils.sendError("Empty state model", Response.Status.BAD_REQUEST);
@@ -151,7 +141,7 @@ public class StateRestImpl implements StateRest {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
                 throw ErrorUtils.sendError("Not allowed", Response.Status.FORBIDDEN);
             }
-            Model newState = transformer.matontoModel(Rio.parse(IOUtils.toInputStream(newStateJson), "",
+            Model newState = transformer.mobiModel(Rio.parse(IOUtils.toInputStream(newStateJson), "",
                     RDFFormat.JSONLD));
             if (newState.isEmpty()) {
                 throw ErrorUtils.sendError("Empty state model", Response.Status.BAD_REQUEST);

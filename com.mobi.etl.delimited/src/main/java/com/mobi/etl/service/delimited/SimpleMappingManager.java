@@ -157,7 +157,7 @@ public class SimpleMappingManager implements MappingManager {
 
     @Override
     public MappingWrapper createMapping(InputStream in, RDFFormat format) throws IOException {
-        return getWrapperFromModel(transformer.matontoModel(Rio.parse(in, "", format)));
+        return getWrapperFromModel(transformer.mobiModel(Rio.parse(in, "", format)));
     }
 
     @Override

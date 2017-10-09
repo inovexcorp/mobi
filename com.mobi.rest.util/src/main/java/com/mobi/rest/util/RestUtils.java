@@ -33,11 +33,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.persistence.utils.SkolemizedStatementIterable;
-import com.mobi.persistence.utils.StatementIterable;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Model;
 import com.mobi.web.security.util.AuthenticationProps;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
@@ -243,7 +239,7 @@ public class RestUtils {
      */
     public static Model jsonldToModel(String jsonld, SesameTransformer transformer) {
         try {
-            return transformer.matontoModel(Rio.parse(IOUtils.toInputStream(jsonld), "", RDFFormat.JSONLD));
+            return transformer.mobiModel(Rio.parse(IOUtils.toInputStream(jsonld), "", RDFFormat.JSONLD));
         } catch (Exception e) {
             throw ErrorUtils.sendError("Invalid JSON-LD", Response.Status.BAD_REQUEST);
         }

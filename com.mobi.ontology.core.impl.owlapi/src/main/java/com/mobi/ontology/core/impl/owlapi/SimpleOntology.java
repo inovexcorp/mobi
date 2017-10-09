@@ -697,7 +697,7 @@ public class SimpleOntology implements Ontology {
         Model matontoModel = factory.createModel();
 
         org.openrdf.model.Model sesameModel = asSesameModel();
-        sesameModel.forEach(stmt -> matontoModel.add(transformer.matontoStatement(stmt)));
+        sesameModel.forEach(stmt -> matontoModel.add(transformer.mobiStatement(stmt)));
 
         return matontoModel;
     }
@@ -738,7 +738,7 @@ public class SimpleOntology implements Ontology {
         try {
             org.openrdf.model.Model sesameModel = asSesameModel();
             if (skolemize) {
-                sesameModel = transformer.sesameModel(bNodeService.skolemize(transformer.matontoModel(sesameModel)));
+                sesameModel = transformer.sesameModel(bNodeService.skolemize(transformer.mobiModel(sesameModel)));
             }
             Rio.write(sesameModel, outputStream, RDFFormat.JSONLD, config);
         } catch (RDFHandlerException e) {

@@ -249,8 +249,8 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(compiledModel);
         when(catalogManager.getRecord(catalogId, ontologyRecordId, ontologyRecordFactory)).thenReturn(Optional.empty());
 
-        when(sesameTransformer.matontoModel(any(org.openrdf.model.Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
-        when(sesameTransformer.matontoIRI(any(org.openrdf.model.IRI.class))).thenAnswer(i -> Values.mobiIRI(i.getArgumentAt(0, org.openrdf.model.IRI.class)));
+        when(sesameTransformer.mobiModel(any(org.openrdf.model.Model.class))).thenAnswer(i -> Values.mobiModel(i.getArgumentAt(0, org.openrdf.model.Model.class)));
+        when(sesameTransformer.mobiIRI(any(org.openrdf.model.IRI.class))).thenAnswer(i -> Values.mobiIRI(i.getArgumentAt(0, org.openrdf.model.IRI.class)));
         when(sesameTransformer.sesameModel(any(Model.class))).thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
         when(sesameTransformer.sesameStatement(any(Statement.class))).thenAnswer(i -> Values.sesameStatement(i.getArgumentAt(0, Statement.class)));
 

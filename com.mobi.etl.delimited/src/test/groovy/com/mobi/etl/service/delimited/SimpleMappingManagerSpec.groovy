@@ -143,7 +143,7 @@ class SimpleMappingManagerSpec extends Specification {
 
         mappingId.getMappingIdentifier() >> mappingIRI
 
-        transformer.matontoModel(_) >> { args -> Values.mobiModel(args[0])}
+        transformer.mobiModel(_) >> { args -> Values.mobiModel(args[0])}
     }
 
     def "Create a MappingRecord"() {

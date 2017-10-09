@@ -51,7 +51,7 @@ class RDFImportSpec extends Specification {
     def datasetConn = Mock(DatasetConnection)
 
     def setup() {
-        transformer.matontoModel(_) >> { args -> Values.mobiModel(args[0])}
+        transformer.mobiModel(_) >> { args -> Values.mobiModel(args[0])}
         repo.getRepositoryID() >> repoId
         repo.getConnection() >> conn
         datasetManager.getConnection(datasetId) >> datasetConn

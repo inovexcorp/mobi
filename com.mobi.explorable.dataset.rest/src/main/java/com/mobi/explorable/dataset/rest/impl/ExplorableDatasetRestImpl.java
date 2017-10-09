@@ -308,7 +308,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
             } else {
                 RepositoryResult<Statement> reifiedDeclarations = conn.getStatements(null,
-                        sesameTransformer.matontoIRI(RDF.SUBJECT), instanceId);
+                        sesameTransformer.mobiIRI(RDF.SUBJECT), instanceId);
                 conn.begin();
                 conn.remove(statements);
                 reifiedDeclarations.forEach(statement -> {
