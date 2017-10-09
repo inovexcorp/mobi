@@ -27,10 +27,6 @@ import com.mobi.persistence.utils.api.RDFHandler;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Statement;
 import com.mobi.repository.exception.RepositoryException;
-import com.mobi.persistence.utils.api.RDFHandler;
-import com.mobi.persistence.utils.api.SesameTransformer;
-import com.mobi.rdf.api.Statement;
-import com.mobi.repository.exception.RepositoryException;
 import org.openrdf.rio.RDFHandlerException;
 import org.slf4j.Logger;
 
@@ -45,7 +41,7 @@ public class BatchExporter implements RDFHandler {
 
     /**
      * Creates a new BatchExporter that will log exported statements. Wraps a Sesame RDFHandler and performs conversion
-     * from MatOnto to Sesame Statements.
+     * from Mobi to Sesame Statements.
      *
      * @param delegate The Sesame RDFHandler to wrap
      * @param transformer A SesameTransformer for converting statements
