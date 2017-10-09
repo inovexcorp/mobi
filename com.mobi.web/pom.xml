@@ -185,7 +185,7 @@
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
-                        <Bundle-Name>MatOnto Web</Bundle-Name>
+                        <Bundle-Name>Mobi Web</Bundle-Name>
                         <Export-Package />
                         <Import-Package>
                             com.mobi.ontology.rest,

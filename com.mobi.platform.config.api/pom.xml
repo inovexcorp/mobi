@@ -73,7 +73,7 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>MatOnto Platform Config API</Bundle-Name>
+                        <Bundle-Name>Mobi Platform Config API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
                             com.mobi.platform.config.api.*
