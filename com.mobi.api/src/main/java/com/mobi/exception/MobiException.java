@@ -24,7 +24,7 @@ package com.mobi.exception;
  */
 
 /**
- * General superclass of all unchecked exceptions that parts of MatOnto can throw.
+ * General superclass of all unchecked exceptions that parts of Mobi can throw.
  */
 public class MobiException extends RuntimeException {
 

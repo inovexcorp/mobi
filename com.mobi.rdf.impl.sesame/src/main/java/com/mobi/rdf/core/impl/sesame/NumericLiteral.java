@@ -33,7 +33,7 @@ public class NumericLiteral extends SimpleLiteral {
 
     private final Number number;
 
-    private static final ValueFactory MATONTO_VF = SimpleValueFactory.getInstance();
+    private static final ValueFactory MOBI_VF = SimpleValueFactory.getInstance();
 
     /**
      * Creates a literal with the specified value and datatype.
@@ -47,42 +47,42 @@ public class NumericLiteral extends SimpleLiteral {
      * Creates an xsd:byte typed litral with the specified value.
      */
     protected NumericLiteral(byte number) {
-        this(number, MATONTO_VF.createIRI(XMLSchema.BYTE.stringValue()));
+        this(number, MOBI_VF.createIRI(XMLSchema.BYTE.stringValue()));
     }
 
     /**
      * Creates an xsd:short typed litral with the specified value.
      */
     protected NumericLiteral(short number) {
-        this(number, MATONTO_VF.createIRI(XMLSchema.SHORT.stringValue()));
+        this(number, MOBI_VF.createIRI(XMLSchema.SHORT.stringValue()));
     }
 
     /**
      * Creates an xsd:int typed litral with the specified value.
      */
     protected NumericLiteral(int number) {
-        this(number, MATONTO_VF.createIRI(XMLSchema.INT.stringValue()));
+        this(number, MOBI_VF.createIRI(XMLSchema.INT.stringValue()));
     }
 
     /**
      * Creates an xsd:long typed litral with the specified value.
      */
     protected NumericLiteral(long n) {
-        this(n, MATONTO_VF.createIRI(XMLSchema.LONG.stringValue()));
+        this(n, MOBI_VF.createIRI(XMLSchema.LONG.stringValue()));
     }
 
     /**
      * Creates an xsd:float typed litral with the specified value.
      */
     protected NumericLiteral(float n) {
-        this(n, MATONTO_VF.createIRI(XMLSchema.FLOAT.stringValue()));
+        this(n, MOBI_VF.createIRI(XMLSchema.FLOAT.stringValue()));
     }
 
     /**
      * Creates an xsd:double typed litral with the specified value.
      */
     protected NumericLiteral(double n) {
-        this(n, MATONTO_VF.createIRI(XMLSchema.DOUBLE.stringValue()));
+        this(n, MOBI_VF.createIRI(XMLSchema.DOUBLE.stringValue()));
     }
 
     @Override

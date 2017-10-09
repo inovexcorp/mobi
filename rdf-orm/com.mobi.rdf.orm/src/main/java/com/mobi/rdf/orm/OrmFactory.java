@@ -7,9 +7,6 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.conversion.ValueConverter;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.api.*;
-import com.mobi.rdf.orm.conversion.ValueConverter;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 
 import java.util.Collection;
 import java.util.List;
@@ -43,7 +40,7 @@ import java.util.stream.Stream;
 
 /**
  * This interface describes a factory OSGi service that will provide other
- * services the ability to work with ontologies in MatOnto. Each
+ * services the ability to work with ontologies in Mobi. Each
  * {@link OrmFactory} will also be a {@link ValueConverter} for the given type.
  * This will allow a reduced amount of generated code.
  *

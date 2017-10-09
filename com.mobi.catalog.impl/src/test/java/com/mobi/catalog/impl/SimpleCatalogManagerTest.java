@@ -334,7 +334,7 @@ public class SimpleCatalogManagerTest {
         }
 
         Map<String, Object> props = new HashMap<>();
-        props.put("title", "MatOnto Test Catalog");
+        props.put("title", "Mobi Test Catalog");
         props.put("description", "This is a test catalog");
         props.put("iri", "http://mobi.com/test/catalogs#catalog");
 

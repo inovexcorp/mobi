@@ -50,8 +50,8 @@ import java.util.stream.Collectors;
 public class SimpleSesameTransformer implements SesameTransformer {
 
     private static final org.openrdf.model.ValueFactory SESAME_VF = ValueFactoryImpl.getInstance();
-    private ValueFactory matontoVF;
-    private ModelFactory matontoMF;
+    private ValueFactory mobiVF;
+    private ModelFactory mobiMF;
     private static final Logger LOG = LoggerFactory.getLogger(SimpleSesameTransformer.class);
     
     @Activate
@@ -65,13 +65,13 @@ public class SimpleSesameTransformer implements SesameTransformer {
     }
 
     @Reference
-    protected void setMatontoVF(ValueFactory valueFactory) {
-        matontoVF = valueFactory;
+    protected void setMobiVF(ValueFactory valueFactory) {
+        mobiVF = valueFactory;
     }
 
     @Reference
-    protected void setMatontoMF(ModelFactory modelFactory) {
-        matontoMF = modelFactory;
+    protected void setMobiMF(ModelFactory modelFactory) {
+        mobiMF = modelFactory;
     }
 
     public SimpleSesameTransformer() {}
@@ -94,7 +94,7 @@ public class SimpleSesameTransformer implements SesameTransformer {
                 .map(this::mobiStatement)
                 .collect(Collectors.toSet());
 
-        return matontoMF.createModel(stmts);
+        return mobiMF.createModel(stmts);
     }
 
     @Override
@@ -115,10 +115,10 @@ public class SimpleSesameTransformer implements SesameTransformer {
         if (statement == null) {
             return null;
         } else if (statement.getContext() == null) {
-            return matontoVF.createStatement(mobiResource(statement.getSubject()), mobiIRI(statement.getPredicate()),
+            return mobiVF.createStatement(mobiResource(statement.getSubject()), mobiIRI(statement.getPredicate()),
                     mobiValue(statement.getObject()));
         } else {
-            return matontoVF.createStatement(mobiResource(statement.getSubject()), mobiIRI(statement.getPredicate()),
+            return mobiVF.createStatement(mobiResource(statement.getSubject()), mobiIRI(statement.getPredicate()),
                     mobiValue(statement.getObject()), mobiResource(statement.getContext()));
         }
     }
@@ -141,7 +141,7 @@ public class SimpleSesameTransformer implements SesameTransformer {
         } else if (resource instanceof org.openrdf.model.IRI) {
             return mobiIRI((org.openrdf.model.IRI) resource);
         } else {
-            return matontoVF.createBNode(((org.openrdf.model.BNode) resource).getID());
+            return mobiVF.createBNode(((org.openrdf.model.BNode) resource).getID());
         }
     }
 
@@ -160,7 +160,7 @@ public class SimpleSesameTransformer implements SesameTransformer {
         if (sesameIRI == null) {
             return null;
         } else {
-            return matontoVF.createIRI(sesameIRI.stringValue());
+            return mobiVF.createIRI(sesameIRI.stringValue());
         }
     }
 
@@ -173,7 +173,7 @@ public class SimpleSesameTransformer implements SesameTransformer {
         } else if (value instanceof BNode) {
             return sesameResource((BNode) value);
         } else {
-            // Else it's a MatOnto Literal
+            // Else it's a Mobi Literal
             Literal literal = (Literal) value;
             if (literal.getLanguage().isPresent()) {
                 return SESAME_VF.createLiteral(literal.stringValue(), literal.getLanguage().get());
@@ -196,10 +196,10 @@ public class SimpleSesameTransformer implements SesameTransformer {
             // Else it's a Sesame Literal
             org.openrdf.model.Literal literal = (org.openrdf.model.Literal) value;
             if (literal.getLanguage().isPresent()) {
-                return matontoVF.createLiteral(literal.stringValue(), literal.getLanguage().get());
+                return mobiVF.createLiteral(literal.stringValue(), literal.getLanguage().get());
             } else {
-                IRI datatype = matontoVF.createIRI(literal.getDatatype().stringValue());
-                return matontoVF.createLiteral(literal.stringValue(), datatype);
+                IRI datatype = mobiVF.createIRI(literal.getDatatype().stringValue());
+                return mobiVF.createLiteral(literal.stringValue(), datatype);
             }
         }
     }

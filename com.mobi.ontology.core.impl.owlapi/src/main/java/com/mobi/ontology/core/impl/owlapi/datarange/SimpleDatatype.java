@@ -112,13 +112,13 @@ public class SimpleDatatype implements Datatype {
 	
 	public static Set<IRI> getDatatypeIRIs()
 	{
-		Set<IRI> matontoIris = new HashSet<IRI>();
+		Set<IRI> iris = new HashSet<>();
 		Set<org.semanticweb.owlapi.model.IRI> owlapiIris = OWL2Datatype.getDatatypeIRIs();
 		for(org.semanticweb.owlapi.model.IRI i : owlapiIris) {
-			matontoIris.add(SimpleOntologyValues.mobiIRI(i));
+			iris.add(SimpleOntologyValues.mobiIRI(i));
 		}
 		
-		return matontoIris;
+		return iris;
 	}
 	
 	

@@ -34,7 +34,7 @@ import javax.annotation.Nullable;
 public class MobiOntologyIRIMapper implements OWLOntologyIRIMapper {
     private OntologyManager manager;
 
-    public static final String protocol = "matonto:";
+    public static final String protocol = "mobi:";
     public static final String standardProtocol = "https:";
 
     public MobiOntologyIRIMapper(OntologyManager manager) {

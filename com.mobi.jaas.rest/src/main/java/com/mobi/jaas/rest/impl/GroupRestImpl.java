@@ -73,7 +73,7 @@ public class GroupRestImpl implements GroupRest {
     }
 
     @Reference
-    protected void setMatOntoConfiguration(MobiConfiguration configuration) {
+    protected void setMobiConfiguration(MobiConfiguration configuration) {
         this.mobiConfiguration = configuration;
     }
 

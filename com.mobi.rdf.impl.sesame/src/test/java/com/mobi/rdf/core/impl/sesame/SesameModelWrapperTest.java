@@ -23,14 +23,14 @@ package com.mobi.rdf.core.impl.sesame;
  * #L%
  */
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import org.junit.Test;
-import com.mobi.rdf.api.*;
 import org.openrdf.model.impl.LinkedHashModel;
-
-import static org.junit.Assert.*;
 
 public class SesameModelWrapperTest {
 
@@ -39,9 +39,9 @@ public class SesameModelWrapperTest {
         IRI s = new SimpleIRI("http://test.com/s");
         IRI p = new SimpleIRI("http://test.com/p");
         IRI o = new SimpleIRI("http://test.com/o");
-        Literal o2 = new SimpleLiteral("MatOnto");
-        BNode b = new SimpleBNode("_:matonto1");
-        BNode b2 = new SimpleBNode("_:matonto2");
+        Literal o2 = new SimpleLiteral("Mobi");
+        BNode b = new SimpleBNode("_:mobi1");
+        BNode b2 = new SimpleBNode("_:mobi2");
         IRI c1 = new SimpleIRI("http://test.com/c1");
 
         SesameModelWrapper model1 = new SesameModelWrapper(new LinkedHashModel());

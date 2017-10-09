@@ -33,7 +33,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * As service for managing local datasets within the MatOnto platform.
+ * As service for managing local datasets within the Mobi platform.
  */
 public interface DatasetManager {
 

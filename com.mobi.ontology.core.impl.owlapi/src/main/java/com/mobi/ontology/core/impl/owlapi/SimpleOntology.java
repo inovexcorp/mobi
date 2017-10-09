@@ -694,12 +694,12 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Model asModel(ModelFactory factory) throws MobiOntologyException {
-        Model matontoModel = factory.createModel();
+        Model model = factory.createModel();
 
         org.openrdf.model.Model sesameModel = asSesameModel();
-        sesameModel.forEach(stmt -> matontoModel.add(transformer.mobiStatement(stmt)));
+        sesameModel.forEach(stmt -> model.add(transformer.mobiStatement(stmt)));
 
-        return matontoModel;
+        return model;
     }
 
     @Override

@@ -31,12 +31,11 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.api.*;
 import com.mobi.rdf.core.utils.LiteralUtils;
 import org.openrdf.model.vocabulary.XMLSchema;
 
-import javax.annotation.Nonnull;
 import java.time.OffsetDateTime;
+import javax.annotation.Nonnull;
 
 public abstract class AbstractValueFactory implements ValueFactory {
 
@@ -167,7 +166,7 @@ public abstract class AbstractValueFactory implements ValueFactory {
     protected void initBNodeParams() {
         // BNode prefix is based on currentTimeMillis(). Combined with a
         // sequential number per session, this gives a unique identifier.
-        bnodePrefix = "matonto-bnode-" + Long.toString(getNextBNodePrefixUid(), 32) + "x";
+        bnodePrefix = "mobi-bnode-" + Long.toString(getNextBNodePrefixUid(), 32) + "x";
         nextBNodeID = 1;
     }
 

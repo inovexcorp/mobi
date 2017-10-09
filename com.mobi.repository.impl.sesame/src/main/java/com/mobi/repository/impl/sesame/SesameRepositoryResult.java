@@ -53,7 +53,7 @@ public class SesameRepositoryResult<T, U> extends RepositoryResult<T> {
     @Override
     public T next() {
         try {
-            return factory.asMatOntoObject(sesameResults.next());
+            return factory.asMobiObject(sesameResults.next());
         } catch (org.openrdf.repository.RepositoryException e) {
             throw new RepositoryException(e);
         }

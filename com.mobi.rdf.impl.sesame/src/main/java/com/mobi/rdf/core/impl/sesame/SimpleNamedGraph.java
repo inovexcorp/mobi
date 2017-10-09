@@ -33,12 +33,15 @@ import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.base.AbstractStatementSet;
-import com.mobi.rdf.api.*;
-import com.mobi.rdf.base.AbstractStatementSet;
 import org.openrdf.model.util.Models;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Optional;
+import java.util.Set;
 import javax.annotation.Nonnull;
-import java.util.*;
 
 public class SimpleNamedGraph extends AbstractStatementSet implements NamedGraph {
 
@@ -46,7 +49,7 @@ public class SimpleNamedGraph extends AbstractStatementSet implements NamedGraph
     private Resource graphID;
     private Model model;
     private ModelFactory factory = LinkedHashModelFactory.getInstance();
-    private static final ValueFactory MATONTO_VF = SimpleValueFactory.getInstance();
+    private static final ValueFactory MOBI_VF = SimpleValueFactory.getInstance();
 
     protected SimpleNamedGraph(Resource graphID, ModelFactory factory) {
         this.factory = factory;
@@ -55,7 +58,7 @@ public class SimpleNamedGraph extends AbstractStatementSet implements NamedGraph
     }
 
     public SimpleNamedGraph() {
-        this(MATONTO_VF.createBNode());
+        this(MOBI_VF.createBNode());
     }
 
     public SimpleNamedGraph(Resource graphID) {

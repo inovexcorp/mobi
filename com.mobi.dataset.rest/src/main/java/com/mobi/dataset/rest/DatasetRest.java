@@ -77,7 +77,7 @@ public interface DatasetRest {
      *
      * @param context The context of the request
      * @param title The required title for the new DatasetRecord
-     * @param repositoryId The required id of a repository in MatOnto
+     * @param repositoryId The required id of a repository in Mobi
      * @param datasetIRI The optional IRI for the new Dataset
      * @param description The optional description for the new DatasetRecord
      * @param keywords The optional comma separated list of keywords for the new DatasetRecord

@@ -37,44 +37,44 @@ import java.util.List;
 @Api( value = "/groups")
 public interface GroupRest {
     /**
-     * Retrieves the list of groups in MatOnto.
+     * Retrieves the list of groups in Mobi.
      *
-     * @return a Response with a JSON array of the groups in MatOnto
+     * @return a Response with a JSON array of the groups in Mobi
      */
     @GET
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("List all MatOnto groups")
+    @ApiOperation("List all Mobi groups")
     Response listGroups();
 
     /**
-     * Creates a group in MatOnto with the passed information.
+     * Creates a group in Mobi with the passed information.
      *
      * @param group the new group to create
      * @return a Response indicating the success or failure of the request
      */
     @POST
     @RolesAllowed("admin")
-    @ApiOperation("Create a new MatOnto group")
+    @ApiOperation("Create a new Mobi group")
     @Produces(MediaType.TEXT_PLAIN)
     @Consumes(MediaType.APPLICATION_JSON)
     Response createGroup(Group group);
 
     /**
-     * Retrieves a specific group in MatOnto.
+     * Retrieves a specific group in Mobi.
      *
      * @param groupTitle the title of the group to retrieve
-     * @return a Response with a JSON representation of the group in MatOnto
+     * @return a Response with a JSON representation of the group in Mobi
      */
     @GET
     @Path("{groupTitle}")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("Get a single MatOnto group")
+    @ApiOperation("Get a single Mobi group")
     Response getGroup(@PathParam("groupTitle") String groupTitle);
 
     /**
-     * Updates information about the specified group in MatOnto.
+     * Updates information about the specified group in Mobi.
      *
      * @param groupTitle the title of the group to update
      * @param newGroup the new group to replace the existing one
@@ -83,12 +83,12 @@ public interface GroupRest {
     @PUT
     @Path("{groupTitle}")
     @RolesAllowed("admin")
-    @ApiOperation("Update a MatOnto group's information")
+    @ApiOperation("Update a Mobi group's information")
     @Consumes(MediaType.APPLICATION_JSON)
     Response updateGroup(@PathParam("groupTitle") String groupTitle, Group newGroup);
 
     /**
-     * Removes a group from MatOnto, and by consequence removing all users from it as well.
+     * Removes a group from Mobi, and by consequence removing all users from it as well.
      *
      * @param groupTitle the title of the group to remove
      * @return a Response indicating the success or failure of the request
@@ -96,24 +96,24 @@ public interface GroupRest {
     @DELETE
     @Path("{groupTitle}")
     @RolesAllowed("admin")
-    @ApiOperation("Remove a MatOnto group")
+    @ApiOperation("Remove a Mobi group")
     Response deleteGroup(@PathParam("groupTitle") String groupTitle);
 
     /**
-     * Retrieves the list of roles of the specified group in MatOnto.
+     * Retrieves the list of roles of the specified group in Mobi.
      *
      * @param groupTitle the title of the group to retrieve roles from
-     * @return a Response with a JSON array of the roles of the group in MatOnto
+     * @return a Response with a JSON array of the roles of the group in Mobi
      */
     @GET
     @Path("{groupTitle}/roles")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("List roles of a MatOnto group")
+    @ApiOperation("List roles of a Mobi group")
     Response getGroupRoles(@PathParam("groupTitle") String groupTitle);
 
     /**
-     * Adds roles to the specified group in MatOnto.
+     * Adds roles to the specified group in Mobi.
      *
      * @param groupTitle the title of the group to add a role to
      * @param roles the name of the roles to add to the specified group
@@ -122,11 +122,11 @@ public interface GroupRest {
     @PUT
     @Path("{groupTitle}/roles")
     @RolesAllowed("admin")
-    @ApiOperation("Add roles to a MatOnto group")
+    @ApiOperation("Add roles to a Mobi group")
     Response addGroupRoles(@PathParam("groupTitle") String groupTitle, @QueryParam("roles") List<String> roles);
 
     /**
-     * Removes a role from the specified group in MatOnto.
+     * Removes a role from the specified group in Mobi.
      *
      * @param groupTitle the title of the group to remove a role from
      * @param role the role to remove from the specified group
@@ -135,24 +135,24 @@ public interface GroupRest {
     @DELETE
     @Path("{groupTitle}/roles")
     @RolesAllowed("admin")
-    @ApiOperation("Remove role from a MatOnto group")
+    @ApiOperation("Remove role from a Mobi group")
     Response removeGroupRole(@PathParam("groupTitle") String groupTitle, @QueryParam("role") String role);
 
     /**
-     * Retrieves the list of users for the specified group in MatOnto.
+     * Retrieves the list of users for the specified group in Mobi.
      *
      * @param groupTitle the title of the group to retrieve users from
-     * @return a Response with a JSON array of the users of the group in MatOnto
+     * @return a Response with a JSON array of the users of the group in Mobi
      */
     @GET
     @Path("{groupTitle}/users")
     @RolesAllowed("user")
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation("List users of a MatOnto group")
+    @ApiOperation("List users of a Mobi group")
     Response getGroupUsers(@PathParam("groupTitle") String groupTitle);
 
     /**
-     * Adds the users specified by usernames to the specified group in MatOnto.
+     * Adds the users specified by usernames to the specified group in Mobi.
      *
      * @param groupTitle the title of the group to add users to
      * @param usernames the list of usernames of users to add to the group
@@ -161,11 +161,11 @@ public interface GroupRest {
     @PUT
     @Path("{groupTitle}/users")
     @RolesAllowed("admin")
-    @ApiOperation("Add a MatOnto User to a Group")
+    @ApiOperation("Add a Mobi User to a Group")
     Response addGroupUser(@PathParam("groupTitle") String groupTitle, @QueryParam("users") List<String> usernames);
 
     /**
-     * Removes the user specified by username from the specified group in MatOnto.
+     * Removes the user specified by username from the specified group in Mobi.
      *
      * @param groupTitle the title of the group to remove a user from
      * @param username the username of the user to remove from the group
@@ -174,6 +174,6 @@ public interface GroupRest {
     @DELETE
     @Path("{groupTitle}/users")
     @RolesAllowed("admin")
-    @ApiOperation("Remove a MatOnto User from a Group")
+    @ApiOperation("Remove a Mobi User from a Group")
     Response removeGroupUser(@PathParam("groupTitle") String groupTitle, @QueryParam("user") String username);
 }

@@ -30,7 +30,7 @@ import com.mobi.rdf.core.utils.Values;
 public class StatementValueFactory implements SesameMobiValueFactory<Statement, org.openrdf.model.Statement> {
 
     @Override
-    public Statement asMatOntoObject(org.openrdf.model.Statement object) {
+    public Statement asMobiObject(org.openrdf.model.Statement object) {
         return new SimpleStatement(Values.mobiResource(object.getSubject()), Values.mobiIRI(object.getPredicate()),
                 Values.mobiValue(object.getObject()), Values.mobiResource(object.getContext()));
     }

@@ -76,7 +76,7 @@ public interface MappingManager {
     MappingWrapper createMapping(MappingId id);
 
     /**
-     * Creates a MatOnto Model with the mapping in the given file.
+     * Creates a Mobi Model with the mapping in the given file.
      *
      * @param mapping a file containing RDF with a mapping
      * @return a Mapping with the mapping RDF and id pulled from the data
@@ -86,7 +86,7 @@ public interface MappingManager {
     MappingWrapper createMapping(File mapping) throws IOException, MobiException;
 
     /**
-     * Creates a MatOnto Model with the mapping in the given JSON-LD string.
+     * Creates a Mobi Model with the mapping in the given JSON-LD string.
      *
      * @param jsonld a string containing JSON-LD of a mapping
      * @return a Mapping with the mapping RDF and id pulled from the data
@@ -96,7 +96,7 @@ public interface MappingManager {
     MappingWrapper createMapping(String jsonld) throws IOException, MobiException;
 
     /**
-     * Creates a MatOnto Model with the mapping in the given InputStream in
+     * Creates a Mobi Model with the mapping in the given InputStream in
      * the given RDF format.
      *
      * @param in an input stream containing mapping RDF
@@ -118,7 +118,7 @@ public interface MappingManager {
     PaginatedSearchResults<MappingRecord> getMappingRecords(MappingPaginatedSearchParams searchParams);
 
     /**
-     * Collects a mapping MatOnto Model specified by the passed mapping IRI Resource
+     * Collects a mapping Mobi Model specified by the passed mapping IRI Resource
      * from the repository if it exists.
      *
      * @param recordId the IRI Resource for a mapping
@@ -127,7 +127,7 @@ public interface MappingManager {
     Optional<MappingWrapper> retrieveMapping(@Nonnull Resource recordId);
 
     /**
-     * Collects a mapping MatOnto Model specified by the passed mapping IRI Resource
+     * Collects a mapping Mobi Model specified by the passed mapping IRI Resource
      * from the repository if it exists.
      *
      * @param recordId the IRI Resource for a mapping
@@ -136,7 +136,7 @@ public interface MappingManager {
     Optional<MappingWrapper> retrieveMapping(@Nonnull Resource recordId, @Nonnull Resource branchId);
 
     /**
-     * Collects a mapping MatOnto Model specified by the passed mapping IRI Resource
+     * Collects a mapping Mobi Model specified by the passed mapping IRI Resource
      * from the repository if it exists.
      *
      * @param recordId the IRI Resource for a mapping

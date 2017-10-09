@@ -271,7 +271,7 @@ public class DelimitedRestImpl implements DelimitedRest {
      * @param mappingSupplier the supplier for getting a mapping model
      * @param containsHeaders whether the delimited file has headers
      * @param separator the character the columns are separated by if it is a CSV
-     * @return a MatOnto Model with the resulting mapped RDF data
+     * @return a Mobi Model with the resulting mapped RDF data
      */
     private Model etlFile(String fileName, SupplierWithException<Model> mappingSupplier,
                                               boolean containsHeaders, String separator, boolean limit) {
@@ -318,7 +318,7 @@ public class DelimitedRestImpl implements DelimitedRest {
      * Converts delimited SV data in an InputStream into RDF.
      *
      * @param supplier the supplier for getting the result of running a conversion using a Config
-     * @return a MatOnto Model with the delimited data converted into RDF
+     * @return a Mobi Model with the delimited data converted into RDF
      */
     private Model etlFile(SupplierWithException<Model> supplier) {
         try {

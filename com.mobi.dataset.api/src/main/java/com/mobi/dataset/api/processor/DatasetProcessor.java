@@ -38,7 +38,7 @@ import com.mobi.query.api.processor.OperationProcessor;
 public interface DatasetProcessor extends OperationProcessor {
 
     /**
-     * Processes an operation to ensure that query and update results are limited to graphs within a MatOnto Dataset.
+     * Processes an operation to ensure that query and update results are limited to graphs within a Mobi Dataset.
      */
     void process();
 }

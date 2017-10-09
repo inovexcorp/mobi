@@ -48,12 +48,12 @@ import javax.ws.rs.core.SecurityContext;
 public class RestSecurityHandler implements AuthenticationHandler, AuthorizationHandler {
     private static final Logger LOG = LoggerFactory.getLogger(RestSecurityHandler.class.getName());
 
-    protected MobiConfiguration matOntoConfiguration;
+    protected MobiConfiguration mobiConfiguration;
     protected EngineManager engineManager;
 
     @Reference
-    protected void setMatOntoConfiguration(MobiConfiguration configuration) {
-        this.matOntoConfiguration = configuration;
+    protected void setMobiConfiguration(MobiConfiguration configuration) {
+        this.mobiConfiguration = configuration;
     }
 
     @Reference
@@ -66,7 +66,7 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
         Subject subject = new Subject();
         String tokenString = TokenUtils.getTokenString(containerRequestContext);
 
-        if (!RestSecurityUtils.authenticateToken("matonto", subject, tokenString, matOntoConfiguration)) {
+        if (!RestSecurityUtils.authenticateToken("matonto", subject, tokenString, mobiConfiguration)) {
             return null;
         }
 

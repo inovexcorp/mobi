@@ -34,14 +34,16 @@ import com.mobi.rdf.base.AbstractStatementSet;
 import com.mobi.rdf.core.utils.Values;
 import org.openrdf.model.util.Models;
 
-import javax.annotation.Nonnull;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.Nonnull;
 
 public class SesameModelWrapper extends AbstractStatementSet implements Model {
 
     private static final long serialVersionUID = -4290503637573113943L;
-    private static final ValueFactory MATONTO_VF = SimpleValueFactory.getInstance();
+    private static final ValueFactory MOBI_VF = SimpleValueFactory.getInstance();
 
     private org.openrdf.model.Model sesameModel;
 
@@ -174,7 +176,7 @@ public class SesameModelWrapper extends AbstractStatementSet implements Model {
             @Override
             public Statement next() {
                 org.openrdf.model.Statement stmt = sesameItr.next();
-                return MATONTO_VF.createStatement(Values.mobiResource(stmt.getSubject()),
+                return MOBI_VF.createStatement(Values.mobiResource(stmt.getSubject()),
                         Values.mobiIRI(stmt.getPredicate()), Values.mobiValue(stmt.getObject()),
                         Values.mobiResource(stmt.getContext()));
             }

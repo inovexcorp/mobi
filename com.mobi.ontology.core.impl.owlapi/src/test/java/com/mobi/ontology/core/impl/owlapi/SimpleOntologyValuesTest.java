@@ -102,7 +102,7 @@ public class SimpleOntologyValuesTest {
     }
     
     @Test
-    public void testMatontoIRI() throws Exception {
+    public void testMobiIRI() throws Exception {
         SimpleOntologyValues values = new SimpleOntologyValues();
         values.setValueFactory(factory);
         expect(factory.createIRI(isA(String.class))).andReturn(ontologyIRI).anyTimes();
@@ -122,7 +122,7 @@ public class SimpleOntologyValuesTest {
     }
     
     @Test
-    public void testMatontoAnonymousIndividual() throws Exception {
+    public void testMobiAnonymousIndividual() throws Exception {
         OWLAnonymousIndividual owlIndividual = mock(OWLAnonymousIndividual.class);
         NodeID nodeId = mock(NodeID.class);
         expect(nodeId.getID()).andReturn("_:genid123");
@@ -134,12 +134,12 @@ public class SimpleOntologyValuesTest {
     
     @Test
     public void testOwlapiAnonymousIndividual() throws Exception {
-        AnonymousIndividual matontoIndividual = new SimpleAnonymousIndividual(NodeID.getNodeID("_:genid123"));//mock(AnonymousIndividual.class);
-        assertEquals("_:genid123", SimpleOntologyValues.owlapiAnonymousIndividual(matontoIndividual).getID().getID());
+        AnonymousIndividual mobiIndividual = new SimpleAnonymousIndividual(NodeID.getNodeID("_:genid123"));//mock(AnonymousIndividual.class);
+        assertEquals("_:genid123", SimpleOntologyValues.owlapiAnonymousIndividual(mobiIndividual).getID().getID());
     }
     
     @Test
-    public void testMatontoLiteral() throws Exception {
+    public void testMobiLiteral() throws Exception {
         OWLLiteral owlLiteral = new OWLLiteralImplString("testString");
         IRI iri = mock(IRI.class);
         Literal literal = mock(Literal.class);
@@ -183,7 +183,7 @@ public class SimpleOntologyValuesTest {
     }
     
     @Test
-    public void testEmptyMatontoAnnotation() throws Exception {
+    public void testEmptyMobiAnnotation() throws Exception {
         OWLAnnotation owlAnno = mock(OWLAnnotation.class);
         OWLAnnotation owlAnno1 = mock(OWLAnnotation.class);
         Set<OWLAnnotation> mockAnnoSet = new HashSet<>();
@@ -208,7 +208,7 @@ public class SimpleOntologyValuesTest {
     }
     
 //    @Test
-//    public void testMatontoAnnotation() throws Exception {
+//    public void testMobiAnnotation() throws Exception {
 //        OWLAnnotation owlAnno = mock(OWLAnnotation.class);
 //        OWLAnnotation owlAnno1 = mock(OWLAnnotation.class);
 //        Set<OWLAnnotation> mockAnnoSet = new HashSet<>();
@@ -270,7 +270,7 @@ public class SimpleOntologyValuesTest {
 //    }
     
     @Test
-    public void testMatontoNamedIndividual() throws Exception {
+    public void testMobiNamedIndividual() throws Exception {
         OWLNamedIndividual owlIndividual = mock(OWLNamedIndividual.class);
         org.semanticweb.owlapi.model.IRI owlIRI = mock(org.semanticweb.owlapi.model.IRI.class);
         
@@ -282,22 +282,22 @@ public class SimpleOntologyValuesTest {
     
     @Test
     public void testOwlapiNamedIndividual() throws Exception {
-        NamedIndividual matontoIndividual = mock(NamedIndividual.class);
-        IRI matontoIRI = mock(IRI.class);
+        NamedIndividual mobiIndividual = mock(NamedIndividual.class);
+        IRI mobiIRI = mock(IRI.class);
         org.semanticweb.owlapi.model.IRI owlIRI = mock(org.semanticweb.owlapi.model.IRI.class);
         
-        expect(matontoIndividual.getIRI()).andReturn(matontoIRI);
-        expect(matontoIRI.stringValue()).andReturn("http://www.test.com/owlapiNamedIndividual");
+        expect(mobiIndividual.getIRI()).andReturn(mobiIRI);
+        expect(mobiIRI.stringValue()).andReturn("http://www.test.com/owlapiNamedIndividual");
         
         mockStaticPartial(SimpleOntologyValues.class, "owlapiIRI");
         expect(SimpleOntologyValues.owlapiIRI(isA(IRI.class))).andReturn(owlIRI);
-        replay(matontoIndividual, matontoIRI, SimpleOntologyValues.class);
+        replay(mobiIndividual, mobiIRI, SimpleOntologyValues.class);
         
-        assertTrue(SimpleOntologyValues.owlapiNamedIndividual(matontoIndividual).isOWLNamedIndividual());
+        assertTrue(SimpleOntologyValues.owlapiNamedIndividual(mobiIndividual).isOWLNamedIndividual());
     }
     
     @Test
-    public void testMatontoIndividual() throws Exception {
+    public void testMobiIndividual() throws Exception {
         OWLAnonymousIndividual owlAnonymous = mock(OWLAnonymousIndividual.class);
         OWLNamedIndividual owlNamed = mock(OWLNamedIndividual.class);
         AnonymousIndividual anonymous = mock(AnonymousIndividual.class);
@@ -343,7 +343,7 @@ public class SimpleOntologyValuesTest {
     }
     
     @Test
-    public void testMatontoOntologyId() throws Exception {
+    public void testMobiOntologyId() throws Exception {
         org.semanticweb.owlapi.model.IRI oIRI = org.semanticweb.owlapi.model.IRI.create("http://www.test.com/ontology");
         org.semanticweb.owlapi.model.IRI vIRI = org.semanticweb.owlapi.model.IRI.create("http://www.test.com/ontology/1.0.0");
         OWLOntologyID owlId2 = new OWLOntologyID(oIRI, vIRI);
@@ -395,7 +395,7 @@ public class SimpleOntologyValuesTest {
     }
     
     @Test
-    public void testMatontoClass() throws Exception {
+    public void testMobiClass() throws Exception {
         org.semanticweb.owlapi.model.IRI owlClassIRI = org.semanticweb.owlapi.model.IRI.create("http://www.test.com/ontologyClass");
         OWLClass owlapiClass = new OWLClassImpl(owlClassIRI);
 
@@ -413,22 +413,22 @@ public class SimpleOntologyValuesTest {
     
     @Test
     public void testOwlapiClass() throws Exception {
-        OClass matontoClass = mock(OClass.class);
+        OClass mobiClass = mock(OClass.class);
         IRI classIRI = mock(IRI.class);
         org.semanticweb.owlapi.model.IRI owlClassIRI = org.semanticweb.owlapi.model.IRI.create("http://www.test.com/ontologyClass");
         
-        expect(matontoClass.getIRI()).andReturn(classIRI).anyTimes();
+        expect(mobiClass.getIRI()).andReturn(classIRI).anyTimes();
         
         mockStaticPartial(SimpleOntologyValues.class, "owlapiIRI");
         expect(SimpleOntologyValues.owlapiIRI(classIRI)).andReturn(owlClassIRI).anyTimes();
 
-        replay(matontoClass, classIRI, SimpleOntologyValues.class);
+        replay(mobiClass, classIRI, SimpleOntologyValues.class);
         
-        assertEquals(owlClassIRI, SimpleOntologyValues.owlapiClass(matontoClass).getIRI());       
+        assertEquals(owlClassIRI, SimpleOntologyValues.owlapiClass(mobiClass).getIRI());       
     }
     
 //    @Test
-//    public void testMatontoDatatype() throws Exception {
+//    public void testMobiDatatype() throws Exception {
 //        OWLDatatype owlDatatype = mock(OWLDatatype.class);
 //        org.semanticweb.owlapi.model.IRI owlDatatypeIRI = mock(org.semanticweb.owlapi.model.IRI.class);
 //        IRI datatypeIRI = mock(IRI.class);
@@ -466,7 +466,7 @@ public class SimpleOntologyValuesTest {
 //    }
     
     @Test
-    public void testMatontoAxiomType() throws Exception {
+    public void testMobiAxiomType() throws Exception {
         org.semanticweb.owlapi.model.AxiomType owlType1 = org.semanticweb.owlapi.model.AxiomType.CLASS_ASSERTION;
         org.semanticweb.owlapi.model.AxiomType owlType2 = org.semanticweb.owlapi.model.AxiomType.DATA_PROPERTY_ASSERTION;
         org.semanticweb.owlapi.model.AxiomType owlType3 = org.semanticweb.owlapi.model.AxiomType.DECLARATION;
@@ -494,7 +494,7 @@ public class SimpleOntologyValuesTest {
     }
     
     @Test
-    public void testMatontoEntityType() throws Exception {
+    public void testMobiEntityType() throws Exception {
         org.semanticweb.owlapi.model.EntityType entityType1 = org.semanticweb.owlapi.model.EntityType.ANNOTATION_PROPERTY;
         org.semanticweb.owlapi.model.EntityType entityType2 = org.semanticweb.owlapi.model.EntityType.NAMED_INDIVIDUAL;
         org.semanticweb.owlapi.model.EntityType entityType3 = org.semanticweb.owlapi.model.EntityType.CLASS;
@@ -517,7 +517,7 @@ public class SimpleOntologyValuesTest {
     }
     
 //    @Test
-//    public void testMatontoClassExpressionType() throws Exception {
+//    public void testMobiClassExpressionType() throws Exception {
 //        org.semanticweb.owlapi.model.ClassExpressionType expressionType1 = org.semanticweb.owlapi.model.ClassExpressionType.DATA_SOME_VALUES_FROM;
 //        org.semanticweb.owlapi.model.ClassExpressionType expressionType2 = org.semanticweb.owlapi.model.ClassExpressionType.DATA_EXACT_CARDINALITY;
 //        org.semanticweb.owlapi.model.ClassExpressionType expressionType3 = org.semanticweb.owlapi.model.ClassExpressionType.OBJECT_HAS_VALUE;
@@ -551,7 +551,7 @@ public class SimpleOntologyValuesTest {
 //    }
     
 //    @Test
-//    public void testMatontoDataRangeType() throws Exception {
+//    public void testMobiDataRangeType() throws Exception {
 //        org.semanticweb.owlapi.model.DataRangeType type1 = org.semanticweb.owlapi.model.DataRangeType.DATA_COMPLEMENT_OF;
 //        org.semanticweb.owlapi.model.DataRangeType type2 = org.semanticweb.owlapi.model.DataRangeType.DATATYPE;
 //        org.semanticweb.owlapi.model.DataRangeType type3 = org.semanticweb.owlapi.model.DataRangeType.DATATYPE_RESTRICTION;
@@ -573,7 +573,7 @@ public class SimpleOntologyValuesTest {
 //    }
     
 //    @Test
-//    public void testMatontoFacet() throws Exception {
+//    public void testMobiFacet() throws Exception {
 //        OWLFacet facet1 = OWLFacet.FRACTION_DIGITS;
 //        OWLFacet facet2 = OWLFacet.LENGTH;
 //        OWLFacet facet3 = OWLFacet.MIN_EXCLUSIVE;
@@ -595,7 +595,7 @@ public class SimpleOntologyValuesTest {
 //    }
     
 //    @Test
-//    public void testMatontoFacetRestriction() throws Exception {
+//    public void testMobiFacetRestriction() throws Exception {
 //        OWLFacetRestriction owlRestriction = mock(OWLFacetRestriction.class);
 //        OWLFacet owlFacet = OWLFacet.FRACTION_DIGITS;
 //        Facet facet = Facet.FRACTION_DIGITS;
@@ -621,7 +621,7 @@ public class SimpleOntologyValuesTest {
 //    }
 //
 //    @Test
-//    public void testMatontoDataOneOf() throws Exception {
+//    public void testMobiDataOneOf() throws Exception {
 //
 //    }
 //
@@ -631,7 +631,7 @@ public class SimpleOntologyValuesTest {
 //    }
     
     @Test
-    public void testMatontoObjectProperty() throws Exception {
+    public void testMobiObjectProperty() throws Exception {
         OWLObjectProperty property = mock(OWLObjectProperty.class);
         org.semanticweb.owlapi.model.IRI owlIRI = mock(org.semanticweb.owlapi.model.IRI.class);
         IRI iri = mock(IRI.class);
@@ -661,7 +661,7 @@ public class SimpleOntologyValuesTest {
     }
     
     @Test
-    public void testMatontoDataProperty() throws Exception {
+    public void testMobiDataProperty() throws Exception {
         OWLDataProperty property = mock(OWLDataProperty.class);
         org.semanticweb.owlapi.model.IRI owlIRI = mock(org.semanticweb.owlapi.model.IRI.class);
         IRI iri = mock(IRI.class);
@@ -691,7 +691,7 @@ public class SimpleOntologyValuesTest {
     }
     
     @Test
-    public void testMatontoAnnotationProperty() throws Exception {
+    public void testMobiAnnotationProperty() throws Exception {
         OWLAnnotationProperty property = mock(OWLAnnotationProperty.class);
         org.semanticweb.owlapi.model.IRI owlIRI = mock(org.semanticweb.owlapi.model.IRI.class);
         IRI iri = mock(IRI.class);
@@ -721,7 +721,7 @@ public class SimpleOntologyValuesTest {
     }
     
 //    @Test
-//    public void testMatontoDeclarationAxiom() throws Exception {
+//    public void testMobiDeclarationAxiom() throws Exception {
 //
 //    }
 //

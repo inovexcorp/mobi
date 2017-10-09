@@ -256,12 +256,12 @@ public class SimpleCatalogManager implements CatalogManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             IRI typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
             if (!conn.contains(distributedCatalogIRI, typeIRI, vf.createIRI(Catalog.TYPE))) {
-                log.debug("Initializing the distributed MatOnto Catalog.");
+                log.debug("Initializing the distributed Mobi Catalog.");
                 addCatalogToRepo(distributedCatalogIRI, config.title() + " (Distributed)", config.description(), conn);
             }
 
             if (!conn.contains(localCatalogIRI, typeIRI, vf.createIRI(Catalog.TYPE))) {
-                log.debug("Initializing the local MatOnto Catalog.");
+                log.debug("Initializing the local Mobi Catalog.");
                 addCatalogToRepo(localCatalogIRI, config.title() + " (Local)", config.description(), conn);
             }
         }

@@ -25,5 +25,5 @@ package com.mobi.rdf.core.impl.sesame.factory;
 
 public interface SesameMobiValueFactory<T, U> {
 
-    T asMatOntoObject(U object);
+    T asMobiObject(U object);
 }

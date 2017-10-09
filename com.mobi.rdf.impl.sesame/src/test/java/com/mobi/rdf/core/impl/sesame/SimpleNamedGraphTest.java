@@ -23,16 +23,13 @@ package com.mobi.rdf.core.impl.sesame;
  * #L%
  */
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import org.junit.Test;
-import com.mobi.rdf.api.BNode;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Literal;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 public class SimpleNamedGraphTest {
 
@@ -41,9 +38,9 @@ public class SimpleNamedGraphTest {
         IRI s = new SimpleIRI("http://test.com/s");
         IRI p = new SimpleIRI("http://test.com/p");
         IRI o = new SimpleIRI("http://test.com/o");
-        Literal o2 = new SimpleLiteral("MatOnto");
-        BNode b = new SimpleBNode("_:matonto1");
-        BNode b2 = new SimpleBNode("_:matonto2");
+        Literal o2 = new SimpleLiteral("Mobi");
+        BNode b = new SimpleBNode("_:mobi1");
+        BNode b2 = new SimpleBNode("_:mobi2");
 
         SimpleNamedGraph graph1 = new SimpleNamedGraph(new SimpleIRI("http://test.com/NG1"));
         SimpleNamedGraph graph2 = new SimpleNamedGraph(new SimpleIRI("http://test.com/NG1"));

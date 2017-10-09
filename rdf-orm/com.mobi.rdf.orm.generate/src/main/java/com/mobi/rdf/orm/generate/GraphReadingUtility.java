@@ -41,7 +41,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-// TODO - use matonto graph reading utilities instead of sesame
+// TODO - use mobi graph reading utilities instead of sesame
 public class GraphReadingUtility {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphReadingUtility.class);

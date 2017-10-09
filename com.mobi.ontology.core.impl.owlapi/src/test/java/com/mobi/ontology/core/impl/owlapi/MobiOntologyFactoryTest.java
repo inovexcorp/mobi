@@ -70,7 +70,7 @@ import java.util.stream.Stream;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(SimpleOntologyValues.class)
-public class MatOntoOntologyFactoryTest {
+public class MobiOntologyFactoryTest {
     private MobiOntologyFactory factory;
     private ValueFactory vf = SimpleValueFactory.getInstance();
     private ModelFactory mf = LinkedHashModelFactory.getInstance();

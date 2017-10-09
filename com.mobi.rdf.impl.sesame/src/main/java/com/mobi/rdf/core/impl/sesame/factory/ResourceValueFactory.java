@@ -29,7 +29,7 @@ import com.mobi.rdf.core.utils.Values;
 public class ResourceValueFactory implements SesameMobiValueFactory<Resource, org.openrdf.model.Resource> {
 
     @Override
-    public Resource asMatOntoObject(org.openrdf.model.Resource object) {
+    public Resource asMobiObject(org.openrdf.model.Resource object) {
         return Values.mobiResource(object);
     }
 }

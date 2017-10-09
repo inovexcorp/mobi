@@ -32,7 +32,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.mobi.federation.api.FederationService;
 import com.mobi.itests.support.KarafTestSupport;
-import com.mobi.platform.config.api.server.MatOnto;
+import com.mobi.platform.config.api.server.Mobi;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
@@ -101,12 +101,12 @@ public class HazelcastFederationIT extends KarafTestSupport {
         LOGGER.info("Test hazelcastFederationStartsCorrectly starting...");
 
         FederationService service = getOsgiService(FederationService.class, "(&(objectClass=com.mobi.federation.api.FederationService)(component.name=com.mobi.federation.hazelcast))", 5000);
-        MatOnto matonto = getOsgiService(MatOnto.class, "(&(objectClass=com.mobi.platform.config.api.server.MatOnto)(component.name=com.mobi.platform.server))", 5000);
+        Mobi mobi = getOsgiService(Mobi.class, "(&(objectClass=com.mobi.platform.config.api.server.Mobi)(component.name=com.mobi.platform.server))", 5000);
         assertEquals("Hazelcast Service did not startup correctly.", 1, service.getMemberCount());
-        assertNotNull("MatOnto service had no server identifier!", matonto.getServerIdentifier());
+        assertNotNull("Mobi service had no server identifier!", mobi.getServerIdentifier());
         Optional<UUID> uuid = service.getFederationNodeIds().stream().findFirst();
         if (uuid.isPresent()) {
-            assertEquals("", matonto.getServerIdentifier(), uuid.get());
+            assertEquals("", mobi.getServerIdentifier(), uuid.get());
         } else {
             Assert.fail("No UUID found in set of nodes in federation service");
         }

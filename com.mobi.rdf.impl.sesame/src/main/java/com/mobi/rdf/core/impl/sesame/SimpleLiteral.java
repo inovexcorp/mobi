@@ -38,7 +38,7 @@ import java.util.Optional;
 public class SimpleLiteral implements Literal {
 
     private static final org.openrdf.model.ValueFactory SESAME_VF = org.openrdf.model.impl.SimpleValueFactory.getInstance();
-    private static final ValueFactory MATONTO_VF = SimpleValueFactory.getInstance();
+    private static final ValueFactory MOBI_VF = SimpleValueFactory.getInstance();
     private static final long serialVersionUID = -3684229464632745297L;
     private static final String INF = "INF";
     private static final String NEG_INF = "-INF";
@@ -78,7 +78,7 @@ public class SimpleLiteral implements Literal {
 
     @Override
     public IRI getDatatype() {
-        return MATONTO_VF.createIRI(sesameLiteral.getDatatype().stringValue());
+        return MOBI_VF.createIRI(sesameLiteral.getDatatype().stringValue());
     }
 
     @Override

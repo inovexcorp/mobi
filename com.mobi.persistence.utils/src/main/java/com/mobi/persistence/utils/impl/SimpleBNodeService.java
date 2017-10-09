@@ -25,10 +25,6 @@ package com.mobi.persistence.utils.impl;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.rdf.api.BNode;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Statement;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
@@ -47,7 +43,7 @@ public class SimpleBNodeService implements BNodeService {
 
     private static final String PATH_COMPONENT = "/.well-known/genid/";
     public static final String SKOLEMIZED_NAMESPACE = "http://mobi.com" + PATH_COMPONENT;
-    public static final String BNODE_PREFIX = "matonto-bnode-";
+    public static final String BNODE_PREFIX = "mobi-bnode-";
 
     @Reference
     public void setValueFactory(ValueFactory valueFactory) {
