@@ -1,9 +1,8 @@
 package com.mobi.rdf.core.impl.sesame
 
 import com.mobi.rdf.api.Statement
-import com.mobi.rdf.api.Statement
-import spock.lang.Specification
 import org.openrdf.model.impl.LinkedHashModel
+import spock.lang.Specification
 
 class SimpleNamedGraphSpec extends Specification {
 
@@ -26,7 +25,7 @@ class SimpleNamedGraphSpec extends Specification {
         def s = new SimpleIRI("http://test.com/s")
         def p = new SimpleIRI("http://test.com/p")
         def o = new SimpleIRI("http://test.com/o")
-        def o2 = new SimpleLiteral("MatOnto")
+        def o2 = new SimpleLiteral("Mobi")
         def stmt = new SimpleStatement(s, p, o, graphID)
         def stmt2 = new SimpleStatement(s, p, o2, graphID)
 
@@ -106,7 +105,7 @@ class SimpleNamedGraphSpec extends Specification {
         def s2 = new SimpleIRI("http://test.com/s2")
         def p = new SimpleIRI("http://test.com/p")
         def o = new SimpleIRI("http://test.com/o")
-        def o2 = new SimpleLiteral("MatOnto")
+        def o2 = new SimpleLiteral("Mobi")
         graph.add(s, p, o)
         graph.add(s, p, o2)
 
@@ -165,7 +164,7 @@ class SimpleNamedGraphSpec extends Specification {
         def p = new SimpleIRI("http://test.com/p")
         def p2 = new SimpleIRI("http://test.com/p2")
         def o = new SimpleIRI("http://test.com/o")
-        def o2 = new SimpleLiteral("MatOnto")
+        def o2 = new SimpleLiteral("Mobi")
         graph.add(s, p, o)
         graph.add(s, p2, o)
         graph.add(s, p, o2)
@@ -187,7 +186,7 @@ class SimpleNamedGraphSpec extends Specification {
         def s = new SimpleIRI("http://test.com/s")
         def p = new SimpleIRI("http://test.com/p")
         def o = new SimpleIRI("http://test.com/o")
-        def o2 = new SimpleLiteral("MatOnto")
+        def o2 = new SimpleLiteral("Mobi")
         def c1 = new SimpleIRI("http://test.com/c1")
         def stmt = new SimpleStatement(s, p, o, graphID)
         def stmt2 = new SimpleStatement(s, p, o, c1)
@@ -210,7 +209,7 @@ class SimpleNamedGraphSpec extends Specification {
         def s = new SimpleIRI("http://test.com/s")
         def p = new SimpleIRI("http://test.com/p")
         def o = new SimpleIRI("http://test.com/o")
-        def o2 = new SimpleLiteral("MatOnto")
+        def o2 = new SimpleLiteral("Mobi")
         graph.add(s, p, o)
 
         when:
@@ -225,7 +224,7 @@ class SimpleNamedGraphSpec extends Specification {
         def s = new SimpleIRI("http://test.com/s")
         def p = new SimpleIRI("http://test.com/p")
         def o = new SimpleIRI("http://test.com/o")
-        def o2 = new SimpleLiteral("MatOnto")
+        def o2 = new SimpleLiteral("Mobi")
         def stmt = new SimpleStatement(s, p, o2, graphID)
         graph.add(s, p, o)
 
@@ -285,7 +284,7 @@ class SimpleNamedGraphSpec extends Specification {
         def s = new SimpleIRI("http://test.com/s")
         def p = new SimpleIRI("http://test.com/p")
         def o = new SimpleIRI("http://test.com/o")
-        def o2 = new SimpleLiteral("MatOnto")
+        def o2 = new SimpleLiteral("Mobi")
         graph.add(s, p, o)
         graph.add(s, p, o2)
         def model2 = new SesameModelWrapper(new LinkedHashModel())
@@ -340,8 +339,8 @@ class SimpleNamedGraphSpec extends Specification {
         def s = new SimpleIRI("http://test.com/s")
         def p = new SimpleIRI("http://test.com/p")
         def o = new SimpleIRI("http://test.com/o")
-        def o2 = new SimpleLiteral("MatOnto")
-        def o3 = new SimpleLiteral("MatOnto3")
+        def o2 = new SimpleLiteral("Mobi")
+        def o3 = new SimpleLiteral("Mobi3")
         graph.add(s, p, o)
         graph.add(s, p, o2)
         def model2 = new SesameModelWrapper(new LinkedHashModel())
@@ -366,8 +365,8 @@ class SimpleNamedGraphSpec extends Specification {
         def s = new SimpleIRI("http://test.com/s")
         def p = new SimpleIRI("http://test.com/p")
         def o = new SimpleIRI("http://test.com/o")
-        def o2 = new SimpleLiteral("MatOnto")
-        def o3 = new SimpleLiteral("MatOnto3")
+        def o2 = new SimpleLiteral("Mobi")
+        def o3 = new SimpleLiteral("Mobi3")
         graph.add(s, p, o)
         graph.add(s, p, o2)
         def model2 = new SesameModelWrapper(new LinkedHashModel())
@@ -392,7 +391,7 @@ class SimpleNamedGraphSpec extends Specification {
         def s = new SimpleIRI("http://test.com/s")
         def p = new SimpleIRI("http://test.com/p")
         def o = new SimpleIRI("http://test.com/o")
-        def o2 = new SimpleLiteral("MatOnto")
+        def o2 = new SimpleLiteral("Mobi")
         def c1 = new SimpleIRI("http://test.com/c1")
         def stmt = new SimpleStatement(s, p, o, graphID)
         def stmt2 = new SimpleStatement(s, p, o, c1)
@@ -410,7 +409,7 @@ class SimpleNamedGraphSpec extends Specification {
         def s = new SimpleIRI("http://test.com/s")
         def p = new SimpleIRI("http://test.com/p")
         def o = new SimpleIRI("http://test.com/o")
-        def o2 = new SimpleLiteral("MatOnto")
+        def o2 = new SimpleLiteral("Mobi")
         def c1 = new SimpleIRI("http://test.com/c1")
         def c2 = new SimpleIRI("http://test.com/c2")
         graph.add(s, p, o)
@@ -430,7 +429,7 @@ class SimpleNamedGraphSpec extends Specification {
         def s = new SimpleIRI("http://test.com/s")
         def p = new SimpleIRI("http://test.com/p")
         def o = new SimpleIRI("http://test.com/o")
-        def o2 = new SimpleLiteral("MatOnto")
+        def o2 = new SimpleLiteral("Mobi")
         def c1 = new SimpleIRI("http://test.com/c1")
         graph.add(s, p, o)
         def model = new SesameModelWrapper(new LinkedHashModel())

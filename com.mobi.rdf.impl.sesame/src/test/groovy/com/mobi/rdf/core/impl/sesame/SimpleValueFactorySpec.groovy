@@ -44,9 +44,9 @@ class SimpleValueFactorySpec extends Specification {
         VF.createBNode() != VF.createBNode()
     }
 
-    def "createBNode() returns BNodes that start with matonto prefix"() {
+    def "createBNode() returns BNodes that start with mobi prefix"() {
         expect:
-        VF.createBNode().stringValue().startsWith("matonto-bnode-")
+        VF.createBNode().stringValue().startsWith("mobi-bnode-")
     }
 
     def "createBNode() returns unique BNodes with two threads"() {
@@ -71,7 +71,7 @@ class SimpleValueFactorySpec extends Specification {
 
     def "createBNode(String id).getID is id"() {
         expect:
-        VF.createBNode("_:matonto/MatOnto").getID() == "_:matonto/MatOnto"
+        VF.createBNode("_:mobi/Mobi").getID() == "_:mobi/Mobi"
     }
 
     def "createIRI(iri) creates the correct IRI"() {
@@ -104,9 +104,9 @@ class SimpleValueFactorySpec extends Specification {
         where:
         s | p | o
         new SimpleIRI("http://test.com/s") | new SimpleIRI("http://test.com/p") | new SimpleIRI("http://test.com/o")
-        new SimpleIRI("http://test.com/s") | new SimpleIRI("http://test.com/p") | new SimpleLiteral("MatOnto")
-        new SimpleBNode("_:matonto/1") | new SimpleIRI("http://test.com/p") | new SimpleLiteral("MatOnto")
-        new SimpleIRI("http://test.com/s") | new SimpleIRI("http://test.com/p") | new SimpleBNode("_:matonto/1")
+        new SimpleIRI("http://test.com/s") | new SimpleIRI("http://test.com/p") | new SimpleLiteral("Mobi")
+        new SimpleBNode("_:mobi/1") | new SimpleIRI("http://test.com/p") | new SimpleLiteral("Mobi")
+        new SimpleIRI("http://test.com/s") | new SimpleIRI("http://test.com/p") | new SimpleBNode("_:mobi/1")
     }
 
     def "createStatement(s, p, o, null) creates the correct statement"() {
@@ -140,10 +140,10 @@ class SimpleValueFactorySpec extends Specification {
 
     def "createLiteral(string) creates the correct literal"() {
         given:
-        def literal = VF.createLiteral("MatOnto")
+        def literal = VF.createLiteral("Mobi")
 
         expect:
-        literal.getLabel() == "MatOnto"
+        literal.getLabel() == "Mobi"
         literal.getDatatype().stringValue() == XMLSchema.STRING.stringValue()
         literal.getLanguage() == Optional.empty()
     }

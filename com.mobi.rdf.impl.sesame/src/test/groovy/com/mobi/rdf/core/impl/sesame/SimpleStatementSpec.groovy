@@ -30,7 +30,7 @@ import spock.lang.Specification
 class SimpleStatementSpec extends Specification {
 
     @Shared
-    ValueFactory MATONTO_VF = SimpleValueFactory.getInstance()
+    ValueFactory vf = SimpleValueFactory.getInstance()
 
     @Shared
     def subjects = [
@@ -39,7 +39,7 @@ class SimpleStatementSpec extends Specification {
             new SimpleIRI("http://test.com/1"),
             new SimpleIRI("http://test.com/1"),
             new SimpleIRI("http://test.com/1"),
-            new SimpleBNode("_:matonto/1"),
+            new SimpleBNode("_:mobi/1"),
     ]
 
     @Shared
@@ -54,12 +54,12 @@ class SimpleStatementSpec extends Specification {
 
     @Shared
     def objects = [
-            new SimpleLiteral("MatOnto"),
-            new SimpleLiteral("true", MATONTO_VF.createIRI(XMLSchema.BOOLEAN.stringValue())),
-            new SimpleLiteral("MatOnto", "en"),
+            new SimpleLiteral("Mobi"),
+            new SimpleLiteral("true", vf.createIRI(XMLSchema.BOOLEAN.stringValue())),
+            new SimpleLiteral("Mobi", "en"),
             new SimpleIRI("http://test.com/obj1"),
-            new SimpleBNode("_:matonto/1"),
-            new SimpleLiteral("MatOnto"),
+            new SimpleBNode("_:mobi/1"`),
+            new SimpleLiteral("Mobi"),
     ]
 
     @Shared

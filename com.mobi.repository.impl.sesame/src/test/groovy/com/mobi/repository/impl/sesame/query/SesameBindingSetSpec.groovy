@@ -63,7 +63,7 @@ class SesameBindingSetSpec extends Specification {
 
     }
 
-    def "getBinding(String) returns a MatOnto binding with the same name"() {
+    def "getBinding(String) returns a Mobi binding with the same name"() {
         setup:
         def sesBindingSet = Mock(BindingSet)
         def matBindingSet = new SesameBindingSet(sesBindingSet)

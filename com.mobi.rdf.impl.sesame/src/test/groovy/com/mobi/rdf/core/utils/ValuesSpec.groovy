@@ -63,30 +63,30 @@ class ValuesSpec extends Specification {
         sesameResource == null
     }
 
-    def "matontoResource(IRI) returns a MatOnto IRI"() {
+    def "mobiResource(IRI) returns a Mobi IRI"() {
         setup:
         def resource = SESAME_VF.createIRI("http://test.com")
-        def matontoResource = Values.mobiResource(resource)
+        def mobiResource = Values.mobiResource(resource)
 
         expect:
-        matontoResource instanceof IRI
+        mobiResource instanceof IRI
     }
 
-    def "matontoResource(BNode) returns a MatOnto BNode"() {
+    def "mobiResource(BNode) returns a Mobi BNode"() {
         setup:
         def resource = SESAME_VF.createBNode("http://test.com")
-        def matontoResource = Values.mobiResource(resource)
+        def mobiResource = Values.mobiResource(resource)
 
         expect:
-        matontoResource instanceof BNode
+        mobiResource instanceof BNode
     }
 
-    def "matontoResource(null) returns null"() {
+    def "mobiResource(null) returns null"() {
         setup:
-        def matontoResource = Values.mobiResource(null)
+        def mobiResource = Values.mobiResource(null)
 
         expect:
-        matontoResource == null
+        mobiResource == null
     }
 
     def "sesameIRI(IRI) returns a Sesame IRI"() {
@@ -106,21 +106,21 @@ class ValuesSpec extends Specification {
         sesameIRI == null
     }
 
-    def "matontoIRI(IRI) returns a MatOnto IRI"() {
+    def "mobiIRI(IRI) returns a Mobi IRI"() {
         setup:
         def iri = SESAME_VF.createIRI("http://test.com")
-        def matontoIRI = Values.mobiIRI(iri)
+        def mobiIRI = Values.mobiIRI(iri)
 
         expect:
-        matontoIRI instanceof IRI
+        mobiIRI instanceof IRI
     }
 
-    def "matontoIRI(null) returns null"() {
+    def "mobiIRI(null) returns null"() {
         setup:
-        def matontoIRI = Values.mobiIRI(null)
+        def mobiIRI = Values.mobiIRI(null)
 
         expect:
-        matontoIRI == null
+        mobiIRI == null
     }
 
     def "sesameValue(IRI) returns a Sesame IRI"() {
@@ -143,7 +143,7 @@ class ValuesSpec extends Specification {
 
     def "sesameValue(Literal) returns a Sesame Literal"() {
         setup:
-        def value = new SimpleLiteral("MatOnto")
+        def value = new SimpleLiteral("Mobi")
         def sesameValue = Values.sesameValue(value)
 
         expect:
@@ -158,39 +158,39 @@ class ValuesSpec extends Specification {
         sesameValue == null
     }
 
-    def "matontoValue(IRI) returns a MatOnto IRI"() {
+    def "mobiValue(IRI) returns a Mobi IRI"() {
         setup:
         def value = SESAME_VF.createIRI("http://test.com")
-        def matontoValue = Values.mobiValue(value)
+        def mobiValue = Values.mobiValue(value)
 
         expect:
-        matontoValue instanceof IRI
+        mobiValue instanceof IRI
     }
 
-    def "matontoValue(BNode) returns a MatOnto BNode"() {
+    def "mobiValue(BNode) returns a Mobi BNode"() {
         setup:
         def value = SESAME_VF.createBNode("http://test.com")
-        def matontoValue = Values.mobiValue(value)
+        def mobiValue = Values.mobiValue(value)
 
         expect:
-        matontoValue instanceof BNode
+        mobiValue instanceof BNode
     }
 
-    def "matontoValue(Literal) returns a MatOnto Literal"() {
+    def "mobiValue(Literal) returns a Mobi Literal"() {
         setup:
-        def value = SESAME_VF.createLiteral("MatOnto")
-        def matontoValue = Values.mobiValue(value)
+        def value = SESAME_VF.createLiteral("Mobi")
+        def mobiValue = Values.mobiValue(value)
 
         expect:
-        matontoValue instanceof Literal
+        mobiValue instanceof Literal
     }
 
-    def "matontoValue(null) returns a MatOnto Literal"() {
+    def "mobiValue(null) returns a Mobi Literal"() {
         setup:
-        def matontoValue = Values.mobiValue(null)
+        def mobiValue = Values.mobiValue(null)
 
         expect:
-        matontoValue == null
+        mobiValue == null
     }
 
     def "sesameResources(c) returns a Sesame Resource[]"() {

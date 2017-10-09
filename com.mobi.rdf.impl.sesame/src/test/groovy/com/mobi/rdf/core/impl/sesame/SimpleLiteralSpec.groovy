@@ -12,7 +12,7 @@ import java.time.format.DateTimeParseException
 
 class SimpleLiteralSpec extends Specification {
 
-    ValueFactory MATONTO_VF = SimpleValueFactory.getInstance();
+    ValueFactory vf = SimpleValueFactory.getInstance();
 
 /*-
  * #%L
@@ -44,7 +44,7 @@ class SimpleLiteralSpec extends Specification {
     def stringLabels = [
             "RDF is Awesome!",
             "",
-            "MatOnto"
+            "Mobi"
     ]
 
     @Shared
@@ -224,7 +224,7 @@ class SimpleLiteralSpec extends Specification {
         def literal = new SimpleLiteral(labelString)
 
         expect:
-        literal.getDatatype() == MATONTO_VF.createIRI(XMLSchema.STRING.stringValue())
+        literal.getDatatype() == vf.createIRI(XMLSchema.STRING.stringValue())
 
         where:
         labelString << labelsToTest
@@ -235,7 +235,7 @@ class SimpleLiteralSpec extends Specification {
         def literal = new SimpleLiteral("test with language", "en")
 
         expect:
-        literal.getDatatype() == MATONTO_VF.createIRI(RDF.LANGSTRING.stringValue())
+        literal.getDatatype() == vf.createIRI(RDF.LANGSTRING.stringValue())
     }
 
     /* Language Tests */
@@ -259,7 +259,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "language of #labelString with an IRI and without a language does not exist"() {
         setup:
-        def literal = new SimpleLiteral("true", MATONTO_VF.createIRI(XMLSchema.BOOLEAN.stringValue()))
+        def literal = new SimpleLiteral("true", vf.createIRI(XMLSchema.BOOLEAN.stringValue()))
 
         expect:
         !literal.getLanguage().isPresent()
@@ -269,7 +269,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "boolean #boolLabel resolves to #boolVal"() {
         setup:
-        def label = new SimpleLiteral(boolLabel, MATONTO_VF.createIRI(XMLSchema.BOOLEAN.stringValue()))
+        def label = new SimpleLiteral(boolLabel, vf.createIRI(XMLSchema.BOOLEAN.stringValue()))
 
         expect:
         label.booleanValue() == boolVal
@@ -281,7 +281,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "bad boolean #boolLabel throws an IllegalArgumentException when accessed"() {
         when:
-        new SimpleLiteral(boolLabel, MATONTO_VF.createIRI(XMLSchema.BOOLEAN.stringValue())).booleanValue()
+        new SimpleLiteral(boolLabel, vf.createIRI(XMLSchema.BOOLEAN.stringValue())).booleanValue()
 
         then:
         thrown IllegalArgumentException
@@ -294,7 +294,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "byte #byteLabel resolves to #byteVal"() {
         setup:
-        def literal = new SimpleLiteral(byteLabel, MATONTO_VF.createIRI(XMLSchema.BOOLEAN.stringValue()))
+        def literal = new SimpleLiteral(byteLabel, vf.createIRI(XMLSchema.BOOLEAN.stringValue()))
 
         expect:
         literal.byteValue() == byteVal
@@ -306,7 +306,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "bad byte #byteLabel throws an IllegalArgumentException when accessed"() {
         when:
-        new SimpleLiteral(byteLabel, MATONTO_VF.createIRI(XMLSchema.BYTE.stringValue())).byteValue()
+        new SimpleLiteral(byteLabel, vf.createIRI(XMLSchema.BYTE.stringValue())).byteValue()
 
         then:
         thrown IllegalArgumentException
@@ -319,7 +319,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "dateTime #dateLabel resolves to #dateVal"() {
         setup:
-        def literal = new SimpleLiteral(dateLabel, MATONTO_VF.createIRI(XMLSchema.DATETIME.stringValue()))
+        def literal = new SimpleLiteral(dateLabel, vf.createIRI(XMLSchema.DATETIME.stringValue()))
 
         expect:
         literal.dateTimeValue() == dateVal
@@ -331,7 +331,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "bad date #dateLabel throws a DateTimeParseException when accessed"() {
         when:
-        new SimpleLiteral(dateLabel, MATONTO_VF.createIRI(XMLSchema.DATETIME.stringValue())).dateTimeValue()
+        new SimpleLiteral(dateLabel, vf.createIRI(XMLSchema.DATETIME.stringValue())).dateTimeValue()
 
         then:
         thrown DateTimeParseException
@@ -344,7 +344,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "double #doubleLabel resolves to #doubleVal"() {
         setup:
-        def literal = new SimpleLiteral(doubleLabel, MATONTO_VF.createIRI(XMLSchema.DOUBLE.stringValue()))
+        def literal = new SimpleLiteral(doubleLabel, vf.createIRI(XMLSchema.DOUBLE.stringValue()))
 
         expect:
         literal.doubleValue() == doubleVal
@@ -356,7 +356,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "bad double #doubleLabel throws a IllegalArgumentException when accessed"() {
         when:
-        new SimpleLiteral(doubleLabel, MATONTO_VF.createIRI(XMLSchema.DOUBLE.stringValue())).doubleValue()
+        new SimpleLiteral(doubleLabel, vf.createIRI(XMLSchema.DOUBLE.stringValue())).doubleValue()
 
         then:
         thrown IllegalArgumentException
@@ -369,7 +369,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "float #floatLabel resolves to #floatVal"() {
         setup:
-        def literal = new SimpleLiteral(floatLabel, MATONTO_VF.createIRI(XMLSchema.FLOAT.stringValue()))
+        def literal = new SimpleLiteral(floatLabel, vf.createIRI(XMLSchema.FLOAT.stringValue()))
 
         expect:
         literal.floatValue() == floatVal
@@ -381,7 +381,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "bad float #floatLabel throws a IllegalArgumentException when accessed"() {
         when:
-        new SimpleLiteral(floatLabel, MATONTO_VF.createIRI(XMLSchema.FLOAT.stringValue())).floatValue()
+        new SimpleLiteral(floatLabel, vf.createIRI(XMLSchema.FLOAT.stringValue())).floatValue()
 
         then:
         thrown IllegalArgumentException
@@ -394,7 +394,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "int #intLabel resolves to #intVal"() {
         setup:
-        def literal = new SimpleLiteral(intLabel, MATONTO_VF.createIRI(XMLSchema.INT.stringValue()))
+        def literal = new SimpleLiteral(intLabel, vf.createIRI(XMLSchema.INT.stringValue()))
 
         expect:
         literal.intValue() == intVal
@@ -406,7 +406,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "bad int #intLabel throws a IllegalArgumentException when accessed"() {
         when:
-        new SimpleLiteral(intLabel, MATONTO_VF.createIRI(XMLSchema.INT.stringValue())).intValue()
+        new SimpleLiteral(intLabel, vf.createIRI(XMLSchema.INT.stringValue())).intValue()
 
         then:
         thrown IllegalArgumentException
@@ -417,7 +417,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "integer #intLabel resolves to #intVal"() {
         setup:
-        def literal = new SimpleLiteral(intLabel, MATONTO_VF.createIRI(XMLSchema.INTEGER.stringValue()))
+        def literal = new SimpleLiteral(intLabel, vf.createIRI(XMLSchema.INTEGER.stringValue()))
 
         expect:
         literal.intValue() == intVal
@@ -429,7 +429,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "bad integer #intLabel throws a IllegalArgumentException when accessed"() {
         when:
-        new SimpleLiteral(intLabel, MATONTO_VF.createIRI(XMLSchema.INTEGER.stringValue())).intValue()
+        new SimpleLiteral(intLabel, vf.createIRI(XMLSchema.INTEGER.stringValue())).intValue()
 
         then:
         thrown IllegalArgumentException
@@ -442,7 +442,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "long #longLabel resolves to #longVal"() {
         setup:
-        def literal = new SimpleLiteral(longLabel, MATONTO_VF.createIRI(XMLSchema.LONG.stringValue()))
+        def literal = new SimpleLiteral(longLabel, vf.createIRI(XMLSchema.LONG.stringValue()))
 
         expect:
         literal.longValue() == longVal
@@ -454,7 +454,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "bad long #longLabel throws a IllegalArgumentException when accessed"() {
         when:
-        new SimpleLiteral(longLabel, MATONTO_VF.createIRI(XMLSchema.LONG.stringValue())).longValue()
+        new SimpleLiteral(longLabel, vf.createIRI(XMLSchema.LONG.stringValue())).longValue()
 
         then:
         thrown IllegalArgumentException
@@ -467,7 +467,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "long #shortLabel resolves to #shortVal"() {
         setup:
-        def literal = new SimpleLiteral(shortLabel, MATONTO_VF.createIRI(XMLSchema.SHORT.stringValue()))
+        def literal = new SimpleLiteral(shortLabel, vf.createIRI(XMLSchema.SHORT.stringValue()))
 
         expect:
         literal.shortValue() == shortVal
@@ -479,7 +479,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "bad short #shortLabel throws a IllegalArgumentException when accessed"() {
         when:
-        new SimpleLiteral(shortLabel, MATONTO_VF.createIRI(XMLSchema.SHORT.stringValue())).shortValue()
+        new SimpleLiteral(shortLabel, vf.createIRI(XMLSchema.SHORT.stringValue())).shortValue()
 
         then:
         thrown IllegalArgumentException
@@ -504,8 +504,8 @@ class SimpleLiteralSpec extends Specification {
 
     def "#literalString equals #literalString with datatypes"() {
         setup:
-        def literal1 = new SimpleLiteral(literalString, MATONTO_VF.createIRI(XMLSchema.BOOLEAN.stringValue()))
-        def literal2 = new SimpleLiteral(literalString, MATONTO_VF.createIRI(XMLSchema.BOOLEAN.stringValue()))
+        def literal1 = new SimpleLiteral(literalString, vf.createIRI(XMLSchema.BOOLEAN.stringValue()))
+        def literal2 = new SimpleLiteral(literalString, vf.createIRI(XMLSchema.BOOLEAN.stringValue()))
 
         expect:
         literal1.equals(literal2)
@@ -542,7 +542,7 @@ class SimpleLiteralSpec extends Specification {
 
     def "#literalString does not equal #literalString with different datatype"() {
         setup:
-        def literal1 = new SimpleLiteral(literalString, MATONTO_VF.createIRI(XMLSchema.BOOLEAN.stringValue()))
+        def literal1 = new SimpleLiteral(literalString, vf.createIRI(XMLSchema.BOOLEAN.stringValue()))
         def literal2 = new SimpleLiteral(literalString)
 
         expect:

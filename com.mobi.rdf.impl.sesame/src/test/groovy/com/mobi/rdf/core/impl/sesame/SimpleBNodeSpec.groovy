@@ -29,11 +29,11 @@ class SimpleBNodeSpec extends Specification {
 
     @Shared
     def bnodes = [
-            "_:matonto/bnode/",
-            "urn:matonto/bnode/",
-            "_:matonto/bno de/",
-            "http://matonto/bnode/",
-            "http://matonto/bnode#Name"
+            "_:mobi/bnode/",
+            "urn:mobi/bnode/",
+            "_:mobi/bno de/",
+            "http://mobi/bnode/",
+            "http://mobi/bnode#Name"
     ]
 
     def "id of #bnodeString is #bnodeString"() {
@@ -102,7 +102,7 @@ class SimpleBNodeSpec extends Specification {
 
         where:
         bnodeString1 | bnodeString2
-        "_:matonto/bnode/" | "urn:matonto/bnode/"
-        "_:matonto/bn ode/" | "urn:matonto/bnode/"
+        "_:mobi/bnode/" | "urn:mobi/bnode/"
+        "_:mobi/bn ode/" | "urn:mobi/bnode/"
     }
 }
