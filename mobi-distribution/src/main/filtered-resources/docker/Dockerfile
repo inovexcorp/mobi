@@ -20,7 +20,7 @@ RUN set -ex \
 ENV NPM_CONFIG_LOGLEVEL info
 ENV NODE_VERSION 4.0.0
 # Maven filtered to produce correct versioning.
-ENV MATONTO_VERSION ${project.version}
+ENV MOBI_VERSION ${project.version}
 
 RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz" \
   && curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc" \
@@ -31,10 +31,10 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
   && ln -s /usr/local/bin/node /usr/local/bin/nodejs
 
 RUN ["node"]
-# Base MatOnto assembly in the /opt/matonto directory.
-WORKDIR /opt/matonto
-ADD ./distribution-$MATONTO_VERSION.tar.gz ./
-CMD ./distribution-$MATONTO_VERSION/bin/karaf
+# Base Mobi assembly in the /opt/mobi directory.
+WORKDIR /opt/mobi
+ADD ./distribution-$MOBI_VERSION.tar.gz ./
+CMD ./distribution-$MOBI_VERSION/bin/karaf
 
 EXPOSE 8443
 
