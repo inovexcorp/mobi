@@ -96,10 +96,10 @@ public class SimpleOntologyTest {
         mockStatic(SimpleOntologyValues.class);
 
         when(SimpleOntologyValues.owlapiIRI(any(IRI.class))).thenAnswer(i -> org.semanticweb.owlapi.model.IRI.create(i.getArgumentAt(0, IRI.class).stringValue()));
-        when(SimpleOntologyValues.matontoIRI(any(org.semanticweb.owlapi.model.IRI.class))).thenAnswer(i -> vf.createIRI(i.getArgumentAt(0, org.semanticweb.owlapi.model.IRI.class).toString()));
+        when(SimpleOntologyValues.mobiIRI(any(org.semanticweb.owlapi.model.IRI.class))).thenAnswer(i -> vf.createIRI(i.getArgumentAt(0, org.semanticweb.owlapi.model.IRI.class).toString()));
         when(SimpleOntologyValues.owlapiClass(any(OClass.class))).thenAnswer(i -> new OWLClassImpl(org.semanticweb.owlapi.model.IRI.create(i.getArgumentAt(0, OClass.class).getIRI().stringValue())));
-        when(SimpleOntologyValues.matontoObjectProperty(any(OWLObjectProperty.class))).thenAnswer(i -> new SimpleObjectProperty(vf.createIRI(i.getArgumentAt(0, OWLObjectProperty.class).getIRI().toString())));
-        when(SimpleOntologyValues.matontoDataProperty(any(OWLDataProperty.class))).thenAnswer(i -> new SimpleDataProperty(vf.createIRI(i.getArgumentAt(0, OWLDataProperty.class).getIRI().toString())));
+        when(SimpleOntologyValues.mobiObjectProperty(any(OWLObjectProperty.class))).thenAnswer(i -> new SimpleObjectProperty(vf.createIRI(i.getArgumentAt(0, OWLObjectProperty.class).getIRI().toString())));
+        when(SimpleOntologyValues.mobiDataProperty(any(OWLDataProperty.class))).thenAnswer(i -> new SimpleDataProperty(vf.createIRI(i.getArgumentAt(0, OWLDataProperty.class).getIRI().toString())));
 
         when(ontologyIdMock.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
         when(ontologyIdMock.getVersionIRI()).thenReturn(Optional.of(versionIRI));
@@ -195,7 +195,7 @@ public class SimpleOntologyTest {
     @Test
     public void annotationsAreCorrectForNonemptyOntology() throws Exception {
         // Behaviors
-        when(SimpleOntologyValues.matontoAnnotation(any(OWLAnnotation.class))).thenReturn(mock(Annotation.class));
+        when(SimpleOntologyValues.mobiAnnotation(any(OWLAnnotation.class))).thenReturn(mock(Annotation.class));
 
         // Setup
         InputStream stream = new FileInputStream(testFile);
@@ -218,7 +218,7 @@ public class SimpleOntologyTest {
     @Test
     public void axiomsAreCorrectForNonemptyOntology() throws Exception {
         // Behaviors
-        when(SimpleOntologyValues.matontoAxiom(any(OWLAxiom.class))).thenReturn(mock(Axiom.class));
+        when(SimpleOntologyValues.mobiAxiom(any(OWLAxiom.class))).thenReturn(mock(Axiom.class));
 
         // Setup
         InputStream stream = new FileInputStream(testFile);

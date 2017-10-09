@@ -108,7 +108,7 @@ public class SimpleOntologyId implements OntologyId {
         Optional<org.semanticweb.owlapi.model.IRI> ontIRI = ontologyId.getOntologyIRI();
 
         if (ontIRI.isPresent()) {
-            return Optional.of(SimpleOntologyValues.matontoIRI(ontIRI.get()));
+            return Optional.of(SimpleOntologyValues.mobiIRI(ontIRI.get()));
         } else {
             return Optional.empty();
         }
@@ -120,7 +120,7 @@ public class SimpleOntologyId implements OntologyId {
         Optional<org.semanticweb.owlapi.model.IRI> verIRI = ontologyId.getVersionIRI();
 
         if (verIRI.isPresent()) {
-            return Optional.of(SimpleOntologyValues.matontoIRI(verIRI.get()));
+            return Optional.of(SimpleOntologyValues.mobiIRI(verIRI.get()));
         } else {
             return Optional.empty();
         }

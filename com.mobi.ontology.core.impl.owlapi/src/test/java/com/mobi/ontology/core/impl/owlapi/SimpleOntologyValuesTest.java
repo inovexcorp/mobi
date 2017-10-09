@@ -108,7 +108,7 @@ public class SimpleOntologyValuesTest {
         expect(factory.createIRI(isA(String.class))).andReturn(ontologyIRI).anyTimes();
         replay(factory, SimpleOntologyValues.class);
 
-        assertEquals(ontologyIRI, SimpleOntologyValues.matontoIRI(owlOntologyIRI));
+        assertEquals(ontologyIRI, SimpleOntologyValues.mobiIRI(owlOntologyIRI));
     }
     
     @Test
@@ -129,7 +129,7 @@ public class SimpleOntologyValuesTest {
         expect(owlIndividual.getID()).andReturn(nodeId);
         replay(owlIndividual, nodeId);
         
-        Assert.assertEquals("_:genid123", SimpleOntologyValues.matontoAnonymousIndividual(owlIndividual).getId());
+        Assert.assertEquals("_:genid123", SimpleOntologyValues.mobiAnonymousIndividual(owlIndividual).getId());
     }
     
     @Test
@@ -155,12 +155,12 @@ public class SimpleOntologyValuesTest {
         replay(literal, datatype);
         
         expect(factory.createLiteral(isA(String.class), isA(IRI.class))).andReturn(literal).anyTimes();
-        mockStaticPartial(SimpleOntologyValues.class, "matontoDatatype");
-        expect(SimpleOntologyValues.matontoDatatype(isA(OWLDatatype.class))).andReturn(datatype).anyTimes();
+        mockStaticPartial(SimpleOntologyValues.class, "mobiDatatype");
+        expect(SimpleOntologyValues.mobiDatatype(isA(OWLDatatype.class))).andReturn(datatype).anyTimes();
         replay(factory, SimpleOntologyValues.class);
         
-        assertEquals("testString", SimpleOntologyValues.matontoLiteral(owlLiteral).getLabel());
-        assertEquals(iri, SimpleOntologyValues.matontoLiteral(owlLiteral).getDatatype());
+        assertEquals("testString", SimpleOntologyValues.mobiLiteral(owlLiteral).getLabel());
+        assertEquals(iri, SimpleOntologyValues.mobiLiteral(owlLiteral).getDatatype());
     }
     
     @Test
@@ -198,13 +198,13 @@ public class SimpleOntologyValuesTest {
         expect(owlAnno.getProperty()).andReturn(owlProperty).anyTimes();
         expect(owlAnno.getValue()).andReturn(value).anyTimes();
           
-        mockStaticPartial(SimpleOntologyValues.class, "matontoAnnotationProperty", "matontoIRI");
-        expect(SimpleOntologyValues.matontoAnnotationProperty(owlProperty)).andReturn(property).anyTimes();
-        expect(SimpleOntologyValues.matontoIRI(value)).andReturn(iri).anyTimes();
+        mockStaticPartial(SimpleOntologyValues.class, "mobiAnnotationProperty", "mobiIRI");
+        expect(SimpleOntologyValues.mobiAnnotationProperty(owlProperty)).andReturn(property).anyTimes();
+        expect(SimpleOntologyValues.mobiIRI(value)).andReturn(iri).anyTimes();
           
         replay(owlAnno, owlAnno1, owlProperty, property, value, iri, SimpleOntologyValues.class);
         
-        assertEquals(0, SimpleOntologyValues.matontoAnnotation(owlAnno).getAnnotations().size());
+        assertEquals(0, SimpleOntologyValues.mobiAnnotation(owlAnno).getAnnotations().size());
     }
     
 //    @Test
@@ -230,15 +230,15 @@ public class SimpleOntologyValuesTest {
 //        expect(owlAnno1.getProperty()).andReturn(owlProperty1).anyTimes();
 //        expect(owlAnno.getValue()).andReturn(value).anyTimes();
 //        expect(owlAnno1.getValue()).andReturn(value1).anyTimes();
-//        mockStaticPartial(SimpleOntologyValues.class, "matontoAnnotationProperty", "matontoIRI");
-//        expect(SimpleOntologyValues.matontoAnnotationProperty(owlProperty)).andReturn(property).anyTimes();
-//        expect(SimpleOntologyValues.matontoAnnotationProperty(owlProperty1)).andReturn(property1);
-//        expect(SimpleOntologyValues.matontoIRI(value)).andReturn(iri).anyTimes();
-//        expect(SimpleOntologyValues.matontoIRI(value1)).andReturn(iri1).anyTimes();
+//        mockStaticPartial(SimpleOntologyValues.class, "mobiAnnotationProperty", "mobiIRI");
+//        expect(SimpleOntologyValues.mobiAnnotationProperty(owlProperty)).andReturn(property).anyTimes();
+//        expect(SimpleOntologyValues.mobiAnnotationProperty(owlProperty1)).andReturn(property1);
+//        expect(SimpleOntologyValues.mobiIRI(value)).andReturn(iri).anyTimes();
+//        expect(SimpleOntologyValues.mobiIRI(value1)).andReturn(iri1).anyTimes();
 //        
 //        replay(owlAnno, owlAnno1, owlProperty, property, value, owlProperty1, property1, value1, iri, iri1, SimpleOntologyValues.class);
 //        
-//        assertEquals(2, SimpleOntologyValues.matontoAnnotation(owlAnno).getAnnotations().size());
+//        assertEquals(2, SimpleOntologyValues.mobiAnnotation(owlAnno).getAnnotations().size());
 //    }
     
     @Test
@@ -277,7 +277,7 @@ public class SimpleOntologyValuesTest {
         expect(owlIndividual.getIRI()).andReturn(owlIRI);
         replay(owlIndividual, owlIRI);
         
-        assertEquals(EntityType.NAMED_INDIVIDUAL, SimpleOntologyValues.matontoNamedIndividual(owlIndividual).getEntityType());
+        assertEquals(EntityType.NAMED_INDIVIDUAL, SimpleOntologyValues.mobiNamedIndividual(owlIndividual).getEntityType());
     }
     
     @Test
@@ -307,16 +307,16 @@ public class SimpleOntologyValuesTest {
         expect(anonymous.isNamed()).andReturn(false);
         expect(named.isNamed()).andReturn(true);
         expect(named.isAnonymous()).andReturn(false);
-        mockStaticPartial(SimpleOntologyValues.class, "matontoAnonymousIndividual", "matontoNamedIndividual");
-        expect(SimpleOntologyValues.matontoAnonymousIndividual(owlAnonymous)).andReturn(anonymous).anyTimes();
-        expect(SimpleOntologyValues.matontoNamedIndividual(owlNamed)).andReturn(named).anyTimes();
+        mockStaticPartial(SimpleOntologyValues.class, "mobiAnonymousIndividual", "mobiNamedIndividual");
+        expect(SimpleOntologyValues.mobiAnonymousIndividual(owlAnonymous)).andReturn(anonymous).anyTimes();
+        expect(SimpleOntologyValues.mobiNamedIndividual(owlNamed)).andReturn(named).anyTimes();
         
         replay(owlAnonymous, owlNamed, anonymous, named, SimpleOntologyValues.class);
               
-        assertTrue(SimpleOntologyValues.matontoIndividual(owlAnonymous).isAnonymous());
-        assertFalse(SimpleOntologyValues.matontoIndividual(owlAnonymous).isNamed());
-        assertTrue(SimpleOntologyValues.matontoIndividual(owlNamed).isNamed());
-        assertFalse(SimpleOntologyValues.matontoIndividual(owlNamed).isAnonymous());
+        assertTrue(SimpleOntologyValues.mobiIndividual(owlAnonymous).isAnonymous());
+        assertFalse(SimpleOntologyValues.mobiIndividual(owlAnonymous).isNamed());
+        assertTrue(SimpleOntologyValues.mobiIndividual(owlNamed).isNamed());
+        assertFalse(SimpleOntologyValues.mobiIndividual(owlNamed).isAnonymous());
     }
     
     @Test
@@ -354,15 +354,15 @@ public class SimpleOntologyValuesTest {
         expect(moIRI.stringValue()).andReturn("http://www.test.com/ontology").anyTimes();
         expect(mvIRI.stringValue()).andReturn("http://www.test.com/ontology/1.0.0").anyTimes();
         
-        mockStaticPartial(SimpleOntologyValues.class, "matontoIRI");
-        expect(SimpleOntologyValues.matontoIRI(oIRI)).andReturn(moIRI).anyTimes();
-        expect(SimpleOntologyValues.matontoIRI(vIRI)).andReturn(mvIRI).anyTimes();
+        mockStaticPartial(SimpleOntologyValues.class, "mobiIRI");
+        expect(SimpleOntologyValues.mobiIRI(oIRI)).andReturn(moIRI).anyTimes();
+        expect(SimpleOntologyValues.mobiIRI(vIRI)).andReturn(mvIRI).anyTimes();
         
         expect(factory.createIRI(isA(String.class))).andReturn(mvIRI).anyTimes();
         
         replay(factory, moIRI, mvIRI, SimpleOntologyValues.class);
 
-        OntologyId ontologyId = SimpleOntologyValues.matontoOntologyId(owlId2);
+        OntologyId ontologyId = SimpleOntologyValues.mobiOntologyId(owlId2);
         assertEquals("http://www.test.com/ontology", ontologyId.getOntologyIRI().get().stringValue());
         assertEquals("http://www.test.com/ontology/1.0.0", ontologyId.getVersionIRI().get().stringValue());
     }
@@ -401,14 +401,14 @@ public class SimpleOntologyValuesTest {
 
         IRI classIRI = mock(IRI.class);
 
-        mockStaticPartial(SimpleOntologyValues.class, "matontoIRI", "owlapiIRI");
-        expect(SimpleOntologyValues.matontoIRI(owlClassIRI)).andReturn(classIRI).anyTimes();
+        mockStaticPartial(SimpleOntologyValues.class, "mobiIRI", "owlapiIRI");
+        expect(SimpleOntologyValues.mobiIRI(owlClassIRI)).andReturn(classIRI).anyTimes();
         expect(SimpleOntologyValues.owlapiIRI(classIRI)).andReturn(owlClassIRI).anyTimes();
         expect(classIRI.stringValue()).andReturn("http://www.test.com/ontologyClass").anyTimes();
 
         replay(classIRI, SimpleOntologyValues.class);
         
-        assertEquals(classIRI, SimpleOntologyValues.matontoClass(owlapiClass).getIRI());
+        assertEquals(classIRI, SimpleOntologyValues.mobiClass(owlapiClass).getIRI());
     }
     
     @Test
@@ -436,15 +436,15 @@ public class SimpleOntologyValuesTest {
 //        expect(owlDatatype.getIRI()).andReturn(owlDatatypeIRI).anyTimes();
 //        expect(datatypeIRI.stringValue()).andReturn("http://www.w3.org/1999/02/22-rdf-syntax-ns#PlainLiteral").anyTimes();
 //        
-//        mockStaticPartial(SimpleOntologyValues.class, "matontoIRI", "owlapiIRI");
-//        expect(SimpleOntologyValues.matontoIRI(owlDatatypeIRI)).andReturn(datatypeIRI).anyTimes();
+//        mockStaticPartial(SimpleOntologyValues.class, "mobiIRI", "owlapiIRI");
+//        expect(SimpleOntologyValues.mobiIRI(owlDatatypeIRI)).andReturn(datatypeIRI).anyTimes();
 //        expect(SimpleOntologyValues.owlapiIRI(datatypeIRI)).andReturn(owlDatatypeIRI).anyTimes();
 //        
 //        expect(org.semanticweb.owlapi.model.IRI.create(isA(String.class), isA(String.class))).andReturn(owlDatatypeIRI).anyTimes();
 //
 //        replay(owlDatatype, owlDatatypeIRI, datatypeIRI, SimpleOntologyValues.class, org.semanticweb.owlapi.model.IRI.class);
 //        
-//        assertEquals(datatypeIRI, SimpleOntologyValues.matontoDatatype(owlDatatype).getIRI());
+//        assertEquals(datatypeIRI, SimpleOntologyValues.mobiDatatype(owlDatatype).getIRI());
 //    }
     
 //    @Test
@@ -472,11 +472,11 @@ public class SimpleOntologyValuesTest {
         org.semanticweb.owlapi.model.AxiomType owlType3 = org.semanticweb.owlapi.model.AxiomType.DECLARATION;
         org.semanticweb.owlapi.model.AxiomType owlType4 = org.semanticweb.owlapi.model.AxiomType.NEGATIVE_DATA_PROPERTY_ASSERTION;
         
-        Assert.assertEquals("ClassAssertion", SimpleOntologyValues.matontoAxiomType(owlType1).getName());
-        Assert.assertEquals("DataPropertyAssertion", SimpleOntologyValues.matontoAxiomType(owlType2).getName());
-        Assert.assertEquals("Declaration", SimpleOntologyValues.matontoAxiomType(owlType3).getName());
-        Assert.assertEquals("NegativeDataPropertyAssertion", SimpleOntologyValues.matontoAxiomType(owlType4).getName());
-        Assert.assertEquals(null, SimpleOntologyValues.matontoAxiomType(null));
+        Assert.assertEquals("ClassAssertion", SimpleOntologyValues.mobiAxiomType(owlType1).getName());
+        Assert.assertEquals("DataPropertyAssertion", SimpleOntologyValues.mobiAxiomType(owlType2).getName());
+        Assert.assertEquals("Declaration", SimpleOntologyValues.mobiAxiomType(owlType3).getName());
+        Assert.assertEquals("NegativeDataPropertyAssertion", SimpleOntologyValues.mobiAxiomType(owlType4).getName());
+        Assert.assertEquals(null, SimpleOntologyValues.mobiAxiomType(null));
     }
     
     @Test
@@ -499,9 +499,9 @@ public class SimpleOntologyValuesTest {
         org.semanticweb.owlapi.model.EntityType entityType2 = org.semanticweb.owlapi.model.EntityType.NAMED_INDIVIDUAL;
         org.semanticweb.owlapi.model.EntityType entityType3 = org.semanticweb.owlapi.model.EntityType.CLASS;
         
-        Assert.assertEquals("AnnotationProperty", SimpleOntologyValues.matontoEntityType(entityType1).getName());
-        Assert.assertEquals("NamedIndividual", SimpleOntologyValues.matontoEntityType(entityType2).getName());
-        Assert.assertEquals("Class", SimpleOntologyValues.matontoEntityType(entityType3).getName());
+        Assert.assertEquals("AnnotationProperty", SimpleOntologyValues.mobiEntityType(entityType1).getName());
+        Assert.assertEquals("NamedIndividual", SimpleOntologyValues.mobiEntityType(entityType2).getName());
+        Assert.assertEquals("Class", SimpleOntologyValues.mobiEntityType(entityType3).getName());
     }
     
     @Test
@@ -531,10 +531,10 @@ public class SimpleOntologyValuesTest {
 //        replay(factory, iri1, ClassExpressionType.class);       
 //        
 //        type.setValueFactory(factory);
-//        assertEquals(expressionType1.getName(), SimpleOntologyValues.matontoClassExpressionType(expressionType1).getName());
-//        assertEquals(expressionType2.getName(), SimpleOntologyValues.matontoClassExpressionType(expressionType2).getName());
-//        assertEquals(expressionType3.getName(), SimpleOntologyValues.matontoClassExpressionType(expressionType3).getName());
-//        assertEquals(expressionType4.getName(), SimpleOntologyValues.matontoClassExpressionType(expressionType4).getName());       
+//        assertEquals(expressionType1.getName(), SimpleOntologyValues.mobiClassExpressionType(expressionType1).getName());
+//        assertEquals(expressionType2.getName(), SimpleOntologyValues.mobiClassExpressionType(expressionType2).getName());
+//        assertEquals(expressionType3.getName(), SimpleOntologyValues.mobiClassExpressionType(expressionType3).getName());
+//        assertEquals(expressionType4.getName(), SimpleOntologyValues.mobiClassExpressionType(expressionType4).getName());
 //    }
     
 //    @Test
@@ -556,9 +556,9 @@ public class SimpleOntologyValuesTest {
 //        org.semanticweb.owlapi.model.DataRangeType type2 = org.semanticweb.owlapi.model.DataRangeType.DATATYPE;
 //        org.semanticweb.owlapi.model.DataRangeType type3 = org.semanticweb.owlapi.model.DataRangeType.DATATYPE_RESTRICTION;
 //        
-//        assertEquals(type1.getName(), SimpleOntologyValues.matontoDataRangeType(type1).getName());
-//        assertEquals(type2.getName(), SimpleOntologyValues.matontoDataRangeType(type2).getName());
-//        assertEquals(type3.getName(), SimpleOntologyValues.matontoDataRangeType(type3).getName());
+//        assertEquals(type1.getName(), SimpleOntologyValues.mobiDataRangeType(type1).getName());
+//        assertEquals(type2.getName(), SimpleOntologyValues.mobiDataRangeType(type2).getName());
+//        assertEquals(type3.getName(), SimpleOntologyValues.mobiDataRangeType(type3).getName());
 //    }
     
 //    @Test
@@ -578,9 +578,9 @@ public class SimpleOntologyValuesTest {
 //        OWLFacet facet2 = OWLFacet.LENGTH;
 //        OWLFacet facet3 = OWLFacet.MIN_EXCLUSIVE;
 //        
-//        assertEquals(facet1.getShortForm(), SimpleOntologyValues.matontoFacet(facet1).getShortForm());
-//        assertEquals(facet2.getShortForm(), SimpleOntologyValues.matontoFacet(facet2).getShortForm());
-//        assertEquals(facet3.getShortForm(), SimpleOntologyValues.matontoFacet(facet3).getShortForm());
+//        assertEquals(facet1.getShortForm(), SimpleOntologyValues.mobiFacet(facet1).getShortForm());
+//        assertEquals(facet2.getShortForm(), SimpleOntologyValues.mobiFacet(facet2).getShortForm());
+//        assertEquals(facet3.getShortForm(), SimpleOntologyValues.mobiFacet(facet3).getShortForm());
 //    }
     
 //    @Test
@@ -605,14 +605,14 @@ public class SimpleOntologyValuesTest {
 //        expect(owlRestriction.getFacet()).andReturn(owlFacet);
 //        expect(owlRestriction.getFacetValue()).andReturn(owlLiteral);
 //        
-//        mockStaticPartial(SimpleOntologyValues.class, "matontoFacet", "matontoLiteral");
-//        expect(SimpleOntologyValues.matontoFacet(owlFacet)).andReturn(facet);
-//        expect(SimpleOntologyValues.matontoLiteral(owlLiteral)).andReturn(literal);
+//        mockStaticPartial(SimpleOntologyValues.class, "mobiFacet", "mobiLiteral");
+//        expect(SimpleOntologyValues.mobiFacet(owlFacet)).andReturn(facet);
+//        expect(SimpleOntologyValues.mobiLiteral(owlLiteral)).andReturn(literal);
 //        
 //        replay(owlRestriction, owlFacet, facet, owlLiteral, literal, SimpleOntologyValues.class);
 //        
-//        assertEquals(facet, SimpleOntologyValues.matontoFacetRestriction(owlRestriction).getFacet());
-//        assertEquals(literal, SimpleOntologyValues.matontoFacetRestriction(owlRestriction).getFacetValue());
+//        assertEquals(facet, SimpleOntologyValues.mobiFacetRestriction(owlRestriction).getFacet());
+//        assertEquals(literal, SimpleOntologyValues.mobiFacetRestriction(owlRestriction).getFacetValue());
 //    }
     
 //    @Test
@@ -637,12 +637,12 @@ public class SimpleOntologyValuesTest {
         IRI iri = mock(IRI.class);
         
         expect(property.getIRI()).andReturn(owlIRI).anyTimes();
-        mockStaticPartial(SimpleOntologyValues.class, "matontoIRI");
-        expect(SimpleOntologyValues.matontoIRI(owlIRI)).andReturn(iri);
+        mockStaticPartial(SimpleOntologyValues.class, "mobiIRI");
+        expect(SimpleOntologyValues.mobiIRI(owlIRI)).andReturn(iri);
         
         replay(property, owlIRI, iri, SimpleOntologyValues.class);
         
-        Assert.assertEquals(iri, SimpleOntologyValues.matontoObjectProperty(property).getIRI());
+        Assert.assertEquals(iri, SimpleOntologyValues.mobiObjectProperty(property).getIRI());
     }
     
     @Test
@@ -667,12 +667,12 @@ public class SimpleOntologyValuesTest {
         IRI iri = mock(IRI.class);
         
         expect(property.getIRI()).andReturn(owlIRI).anyTimes();
-        mockStaticPartial(SimpleOntologyValues.class, "matontoIRI");
-        expect(SimpleOntologyValues.matontoIRI(owlIRI)).andReturn(iri);
+        mockStaticPartial(SimpleOntologyValues.class, "mobiIRI");
+        expect(SimpleOntologyValues.mobiIRI(owlIRI)).andReturn(iri);
         
         replay(property, owlIRI, iri, SimpleOntologyValues.class);
         
-        Assert.assertEquals(iri, SimpleOntologyValues.matontoDataProperty(property).getIRI());
+        Assert.assertEquals(iri, SimpleOntologyValues.mobiDataProperty(property).getIRI());
     }
     
     @Test
@@ -697,12 +697,12 @@ public class SimpleOntologyValuesTest {
         IRI iri = mock(IRI.class);
         
         expect(property.getIRI()).andReturn(owlIRI).anyTimes();
-        mockStaticPartial(SimpleOntologyValues.class, "matontoIRI");
-        expect(SimpleOntologyValues.matontoIRI(owlIRI)).andReturn(iri);
+        mockStaticPartial(SimpleOntologyValues.class, "mobiIRI");
+        expect(SimpleOntologyValues.mobiIRI(owlIRI)).andReturn(iri);
         
         replay(property, owlIRI, iri, SimpleOntologyValues.class);
         
-        Assert.assertEquals(iri, SimpleOntologyValues.matontoAnnotationProperty(property).getIRI());
+        Assert.assertEquals(iri, SimpleOntologyValues.mobiAnnotationProperty(property).getIRI());
     }
     
     @Test

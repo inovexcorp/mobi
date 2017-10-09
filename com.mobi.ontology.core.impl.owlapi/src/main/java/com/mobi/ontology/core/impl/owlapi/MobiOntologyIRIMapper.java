@@ -44,7 +44,7 @@ public class MobiOntologyIRIMapper implements OWLOntologyIRIMapper {
     @Nullable
     @Override
     public IRI getDocumentIRI(IRI ontologyIRI) {
-        Optional<Resource> recordId = manager.getOntologyRecordResource(SimpleOntologyValues.matontoIRI(ontologyIRI));
+        Optional<Resource> recordId = manager.getOntologyRecordResource(SimpleOntologyValues.mobiIRI(ontologyIRI));
         return recordId.map(resource -> IRI.create(resource.stringValue().replace(standardProtocol, protocol))).orElse(null);
     }
 }

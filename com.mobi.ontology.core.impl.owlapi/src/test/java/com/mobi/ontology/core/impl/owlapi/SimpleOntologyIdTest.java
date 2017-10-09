@@ -73,8 +73,8 @@ public class SimpleOntologyIdTest {
         mockStatic(SimpleOntologyValues.class);
         expect(SimpleOntologyValues.owlapiIRI(ontologyIRI)).andReturn(owlOntIRI).anyTimes();
         expect(SimpleOntologyValues.owlapiIRI(versionIRI)).andReturn(owlVerIRI).anyTimes();
-        expect(SimpleOntologyValues.matontoIRI(owlOntIRI)).andReturn(ontologyIRI).anyTimes();
-        expect(SimpleOntologyValues.matontoIRI(owlVerIRI)).andReturn(versionIRI).anyTimes();
+        expect(SimpleOntologyValues.mobiIRI(owlOntIRI)).andReturn(ontologyIRI).anyTimes();
+        expect(SimpleOntologyValues.mobiIRI(owlVerIRI)).andReturn(versionIRI).anyTimes();
 
         expect(factory.createIRI(ontologyIRIString)).andReturn(ontologyIRI).anyTimes();
         expect(factory.createIRI(versionIRIString)).andReturn(versionIRI).anyTimes();

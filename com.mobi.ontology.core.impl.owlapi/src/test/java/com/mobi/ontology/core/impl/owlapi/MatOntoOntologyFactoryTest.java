@@ -125,7 +125,7 @@ public class MatOntoOntologyFactoryTest {
         PowerMockito.mockStatic(SimpleOntologyValues.class);
 
         when(SimpleOntologyValues.owlapiOntology(any(Ontology.class))).thenReturn(owlOntology);
-        when(SimpleOntologyValues.matontoIRI(any(IRI.class))).thenReturn(matIRI);
+        when(SimpleOntologyValues.mobiIRI(any(IRI.class))).thenReturn(matIRI);
 
         when(ontologyFactory.createOWLOntology(any(OWLOntologyManager.class), any(OWLOntologyID.class), any(IRI.class), any(OWLOntologyFactory.OWLOntologyCreationHandler.class))).thenReturn(owlOntology);
         when(ontologyManager.retrieveOntology(any(Resource.class))).thenReturn(Optional.of(ontology));

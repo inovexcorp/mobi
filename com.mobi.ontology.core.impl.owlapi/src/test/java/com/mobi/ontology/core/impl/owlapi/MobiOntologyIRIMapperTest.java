@@ -60,7 +60,7 @@ public class MobiOntologyIRIMapperTest {
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
         PowerMockito.mockStatic(SimpleOntologyValues.class);
-        when(SimpleOntologyValues.matontoIRI(any(IRI.class))).thenReturn(matIRI);
+        when(SimpleOntologyValues.mobiIRI(any(IRI.class))).thenReturn(matIRI);
 
         mapper = new MobiOntologyIRIMapper(ontologyManager);
     }

@@ -161,7 +161,7 @@ public class SimpleOntology implements Ontology {
 
     {
         owlManager.addMissingImportListener((MissingImportListener) arg0 -> {
-            missingImports.add(SimpleOntologyValues.matontoIRI(arg0.getImportedOntologyURI()));
+            missingImports.add(SimpleOntologyValues.mobiIRI(arg0.getImportedOntologyURI()));
             LOG.warn("Missing import {} ", arg0.getImportedOntologyURI());
         });
         owlManager.setOntologyLoaderConfiguration(config);
@@ -369,10 +369,10 @@ public class SimpleOntology implements Ontology {
         IRI matVerIRI;
 
         if (owlOntIRI.isPresent()) {
-            matOntIRI = SimpleOntologyValues.matontoIRI(owlOntIRI.get());
+            matOntIRI = SimpleOntologyValues.mobiIRI(owlOntIRI.get());
 
             if (owlVerIRI.isPresent()) {
-                matVerIRI = SimpleOntologyValues.matontoIRI(owlVerIRI.get());
+                matVerIRI = SimpleOntologyValues.mobiIRI(owlVerIRI.get());
                 this.ontologyId = ontologyManager.createOntologyId(matOntIRI, matVerIRI);
             } else {
                 this.ontologyId = ontologyManager.createOntologyId(matOntIRI);
@@ -397,7 +397,7 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<Ontology> getDirectImports() {
         return owlOntology.directImports()
-                .map(SimpleOntologyValues::matontoOntology)
+                .map(SimpleOntologyValues::mobiOntology)
                 .collect(Collectors.toSet());
     }
 
@@ -408,7 +408,7 @@ public class SimpleOntology implements Ontology {
                     if (ontology.equals(owlOntology)) {
                         return this;
                     }
-                    return SimpleOntologyValues.matontoOntology(ontology);
+                    return SimpleOntologyValues.mobiOntology(ontology);
                 })
                 .collect(Collectors.toSet());
     }
@@ -417,7 +417,7 @@ public class SimpleOntology implements Ontology {
     public Set<IRI> getImportedOntologyIRIs() {
         return owlOntology.importsDeclarations()
                 .map(OWLImportsDeclaration::getIRI)
-                .map(SimpleOntologyValues::matontoIRI)
+                .map(SimpleOntologyValues::mobiIRI)
                 .collect(Collectors.toSet());
     }
 
@@ -448,7 +448,7 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<OClass> getAllClasses() {
         return owlOntology.classesInSignature()
-                .map(SimpleOntologyValues::matontoClass)
+                .map(SimpleOntologyValues::mobiClass)
                 .collect(Collectors.toSet());
     }
 
@@ -473,7 +473,7 @@ public class SimpleOntology implements Ontology {
                         return hasClassAsDomain(domains.stream(), classIRI, equivalentClasses, superClasses)
                                 || hasNoDomain(domains.stream());
                     })
-                    .map(SimpleOntologyValues::matontoObjectProperty)
+                    .map(SimpleOntologyValues::mobiObjectProperty)
                     .collect(Collectors.toSet());
         }
         throw new IllegalArgumentException("Class not found in ontology");
@@ -484,7 +484,7 @@ public class SimpleOntology implements Ontology {
         return owlOntology.objectPropertiesInSignature(Imports.INCLUDED)
                 .filter(property -> hasNoDomain(owlOntology.axioms(OWLObjectPropertyDomainAxiom.class,
                         OWLObjectPropertyExpression.class, property, Imports.INCLUDED, Navigation.IN_SUB_POSITION)))
-                .map(SimpleOntologyValues::matontoObjectProperty)
+                .map(SimpleOntologyValues::mobiObjectProperty)
                 .collect(Collectors.toSet());
     }
 
@@ -503,7 +503,7 @@ public class SimpleOntology implements Ontology {
                         return hasClassAsDomain(domains.stream(), classIRI, equivalentClasses, superClasses)
                                 || hasNoDomain(domains.stream());
                     })
-                    .map(SimpleOntologyValues::matontoDataProperty)
+                    .map(SimpleOntologyValues::mobiDataProperty)
                     .collect(Collectors.toSet());
         }
         throw new IllegalArgumentException("Class not found in ontology");
@@ -515,28 +515,28 @@ public class SimpleOntology implements Ontology {
                 .filter(property -> hasNoDomain(owlOntology.axioms(OWLDataPropertyDomainAxiom.class,
                         OWLDataPropertyExpression.class, property, Imports.INCLUDED,
                         Navigation.IN_SUB_POSITION)))
-                .map(SimpleOntologyValues::matontoDataProperty)
+                .map(SimpleOntologyValues::mobiDataProperty)
                 .collect(Collectors.toSet());
     }
 
     @Override
     public Set<Axiom> getAxioms() {
         return owlOntology.axioms()
-                .map(SimpleOntologyValues::matontoAxiom)
+                .map(SimpleOntologyValues::mobiAxiom)
                 .collect(Collectors.toSet());
     }
 
     @Override
     public Set<Datatype> getAllDatatypes() {
         return owlOntology.datatypesInSignature()
-                .map(SimpleOntologyValues::matontoDatatype)
+                .map(SimpleOntologyValues::mobiDatatype)
                 .collect(Collectors.toSet());
     }
 
     @Override
     public Set<ObjectProperty> getAllObjectProperties() {
         return owlOntology.objectPropertiesInSignature()
-                .map(SimpleOntologyValues::matontoObjectProperty)
+                .map(SimpleOntologyValues::mobiObjectProperty)
                 .collect(Collectors.toSet());
     }
 
@@ -544,7 +544,7 @@ public class SimpleOntology implements Ontology {
     public Optional<ObjectProperty> getObjectProperty(IRI iri) {
         return getOwlObjectProperty(iri)
                 .flatMap(owlObjectProperty -> Optional.of(
-                        SimpleOntologyValues.matontoObjectProperty(owlObjectProperty)));
+                        SimpleOntologyValues.mobiObjectProperty(owlObjectProperty)));
     }
 
     @Override
@@ -555,7 +555,7 @@ public class SimpleOntology implements Ontology {
                 .map(HasRange::getRange)
                 // TODO: Return all range values, not just classes
                 .filter(AsOWLClass::isOWLClass)
-                .map(owlClassExpression -> SimpleOntologyValues.matontoIRI(owlClassExpression.asOWLClass().getIRI()))
+                .map(owlClassExpression -> SimpleOntologyValues.mobiIRI(owlClassExpression.asOWLClass().getIRI()))
                 .collect(Collectors.toSet());
     }
 
@@ -564,7 +564,7 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<DataProperty> getAllDataProperties() {
         return owlOntology.dataPropertiesInSignature(Imports.INCLUDED)
-                .map(SimpleOntologyValues::matontoDataProperty)
+                .map(SimpleOntologyValues::mobiDataProperty)
                 .collect(Collectors.toSet());
     }
 
@@ -572,7 +572,7 @@ public class SimpleOntology implements Ontology {
     public Optional<DataProperty> getDataProperty(IRI iri) {
         return getOwlDataProperty(iri)
                 .flatMap(owlDataProperty -> Optional.of(
-                        SimpleOntologyValues.matontoDataProperty(owlDataProperty)));
+                        SimpleOntologyValues.mobiDataProperty(owlDataProperty)));
     }
 
     @Override
@@ -583,7 +583,7 @@ public class SimpleOntology implements Ontology {
                 .map(HasRange::getRange)
                 // TODO: Return all range values, not just datatypes
                 .filter(AsOWLDatatype::isOWLDatatype)
-                .map(owlDataRange -> SimpleOntologyValues.matontoIRI(owlDataRange.asOWLDatatype().getIRI()))
+                .map(owlDataRange -> SimpleOntologyValues.mobiIRI(owlDataRange.asOWLDatatype().getIRI()))
                 .collect(Collectors.toSet());
     }
 
@@ -592,7 +592,7 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<Individual> getAllIndividuals() {
         return owlOntology.individualsInSignature()
-                .map(SimpleOntologyValues::matontoIndividual)
+                .map(SimpleOntologyValues::mobiIndividual)
                 .collect(Collectors.toSet());
     }
 
@@ -604,7 +604,7 @@ public class SimpleOntology implements Ontology {
     @Override
     public Set<Individual> getIndividualsOfType(OClass clazz) {
         return owlReasoner.getInstances(SimpleOntologyValues.owlapiClass(clazz)).entities()
-                .map(SimpleOntologyValues::matontoIndividual)
+                .map(SimpleOntologyValues::mobiIndividual)
                 .collect(Collectors.toSet());
     }
 
@@ -660,13 +660,13 @@ public class SimpleOntology implements Ontology {
 
         private void addObjectPropertyExpression(OWLObjectCardinalityRestriction ce,
                                                  ClassExpressionType classExpressionType) {
-            add(SimpleOntologyValues.matontoObjectProperty(ce.getProperty().asOWLObjectProperty()),
+            add(SimpleOntologyValues.mobiObjectProperty(ce.getProperty().asOWLObjectProperty()),
                     ce.getCardinality(), classExpressionType);
         }
 
         private void addDataPropertyExpression(OWLDataCardinalityRestriction ce,
                                                ClassExpressionType classExpressionType) {
-            add(SimpleOntologyValues.matontoDataProperty(ce.getProperty().asOWLDataProperty()),
+            add(SimpleOntologyValues.mobiDataProperty(ce.getProperty().asOWLDataProperty()),
                     ce.getCardinality(), classExpressionType);
         }
 
@@ -812,7 +812,7 @@ public class SimpleOntology implements Ontology {
         annotations = new HashSet<>();
 
         ontoAnnotations = owlOntology.annotations()
-                .map(SimpleOntologyValues::matontoAnnotation)
+                .map(SimpleOntologyValues::mobiAnnotation)
                 .collect(Collectors.toSet());
         annotations.addAll(ontoAnnotations);
 
@@ -820,7 +820,7 @@ public class SimpleOntology implements Ontology {
         OWLOntologyWalkerVisitor visitor = new OWLOntologyWalkerVisitor(walker) {
             @Override
             public void visit(OWLObjectSomeValuesFrom desc) {
-                annotations.add(SimpleOntologyValues.matontoAnnotation(getCurrentAnnotation()));
+                annotations.add(SimpleOntologyValues.mobiAnnotation(getCurrentAnnotation()));
             }
         };
 
@@ -834,7 +834,7 @@ public class SimpleOntology implements Ontology {
         annotationProperties = new HashSet<>();
 
         annotationProperties = owlOntology.annotationPropertiesInSignature()
-                .map(SimpleOntologyValues::matontoAnnotationProperty)
+                .map(SimpleOntologyValues::mobiAnnotationProperty)
                 .collect(Collectors.toSet());
     }
 

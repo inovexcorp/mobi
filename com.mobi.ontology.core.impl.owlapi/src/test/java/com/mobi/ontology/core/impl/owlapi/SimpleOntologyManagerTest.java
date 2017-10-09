@@ -221,9 +221,9 @@ public class SimpleOntologyManagerTest {
         PowerMockito.mockStatic(SimpleOntologyValues.class);
         when(SimpleOntologyValues.owlapiIRI(ontologyIRI)).thenReturn(owlOntologyIRI);
         when(SimpleOntologyValues.owlapiIRI(versionIRI)).thenReturn(owlVersionIRI);
-        when(SimpleOntologyValues.matontoIRI(owlOntologyIRI)).thenReturn(ontologyIRI);
-        when(SimpleOntologyValues.matontoIRI(owlVersionIRI)).thenReturn(versionIRI);
-        when(SimpleOntologyValues.matontoOntology(any(OWLOntology.class))).thenReturn(ontology);
+        when(SimpleOntologyValues.mobiIRI(owlOntologyIRI)).thenReturn(ontologyIRI);
+        when(SimpleOntologyValues.mobiIRI(owlVersionIRI)).thenReturn(versionIRI);
+        when(SimpleOntologyValues.mobiOntology(any(OWLOntology.class))).thenReturn(ontology);
 
         when(mockCache.containsKey(anyString())).thenReturn(false);
 
