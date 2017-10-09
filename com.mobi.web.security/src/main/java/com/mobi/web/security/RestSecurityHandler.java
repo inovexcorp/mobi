@@ -66,7 +66,7 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
         Subject subject = new Subject();
         String tokenString = TokenUtils.getTokenString(containerRequestContext);
 
-        if (!RestSecurityUtils.authenticateToken("matonto", subject, tokenString, mobiConfiguration)) {
+        if (!RestSecurityUtils.authenticateToken("mobi", subject, tokenString, mobiConfiguration)) {
             return null;
         }
 

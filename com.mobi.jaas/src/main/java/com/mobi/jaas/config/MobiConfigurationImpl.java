@@ -67,7 +67,7 @@ public class MobiConfigurationImpl extends MobiConfiguration {
 
     @Override
     public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
-        if (name.equals("matonto")) {
+        if (name.equals("mobi")) {
             Map<String, Object> tokenOptions = new HashMap<>();
             tokenOptions.put(LoginModuleConfig.ENGINE_MANAGER, engineManager);
             tokenOptions.put(LoginModuleConfig.ENGINE, RDF_ENGINE);

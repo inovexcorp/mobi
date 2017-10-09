@@ -57,7 +57,7 @@ public class TokenUtils {
         random.nextBytes(KEY);
     }
 
-    private static final String TOKEN_NAME = "matonto_web_token";
+    private static final String TOKEN_NAME = "mobi_web_token";
 
     private static final long ONE_DAY_SEC = 24 * 60 * 60;
     private static final long ONE_DAY_MS = ONE_DAY_SEC * 1000;
@@ -95,7 +95,7 @@ public class TokenUtils {
         javax.ws.rs.core.Cookie cookie = req.getCookies().get(TOKEN_NAME);
 
         if (cookie == null) {
-            LOG.debug("MatOnto web token cookie not found.");
+            LOG.debug("Mobi web token cookie not found.");
             return null;
         } else {
             return cookie.getValue();

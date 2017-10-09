@@ -131,7 +131,7 @@ public abstract class AuthHttpContext implements HttpContext {
     public Optional<Subject> doAuthenticate(final String username, final String password) {
         Subject subject = new Subject();
 
-        if (!RestSecurityUtils.authenticateUser("matonto", subject, username, password, configuration)) {
+        if (!RestSecurityUtils.authenticateUser("mobi", subject, username, password, configuration)) {
             return Optional.empty();
         }
 
