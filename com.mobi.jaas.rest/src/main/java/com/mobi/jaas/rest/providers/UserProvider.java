@@ -26,14 +26,14 @@ package com.mobi.jaas.rest.providers;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import net.sf.json.JSONObject;
-import org.apache.commons.io.IOUtils;
+import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.engines.UserConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.rdf.api.Value;
 import com.mobi.rest.util.ErrorUtils;
+import net.sf.json.JSONObject;
+import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -61,10 +61,16 @@ import javax.ws.rs.ext.Provider;
 @Consumes(MediaType.APPLICATION_JSON)
 public class UserProvider implements MessageBodyWriter<User>, MessageBodyReader<User> {
     protected EngineManager engineManager;
+    protected Engine rdfEngine;
 
     @Reference
     public void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
+    }
+
+    @Reference(target = "engineName=RdfEngine")
+    public void setRdfEngine(Engine engine) {
+        this.rdfEngine = engine;
     }
 
     @Override
@@ -109,7 +115,7 @@ public class UserProvider implements MessageBodyWriter<User>, MessageBodyReader<
                 .lastName(input.containsKey("lastName") ? input.getString("lastName") : "")
                 .build();
 
-        return engineManager.createUser(RdfEngine.COMPONENT_NAME, config);
+        return engineManager.createUser(rdfEngine.getEngineName(), config);
     }
 
     private boolean isUser(Class<?> someClass, Type type) {

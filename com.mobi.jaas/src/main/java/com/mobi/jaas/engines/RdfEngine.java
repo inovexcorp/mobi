@@ -2,7 +2,7 @@ package com.mobi.jaas.engines;
 
 /*-
  * #%L
- * com.mobi.jaas
+ * com.mobi.jaas.engines
  * $Id:$
  * $HeadURL:$
  * %%
@@ -63,6 +63,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -73,12 +74,14 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component(
-        name = RdfEngine.COMPONENT_NAME,
         designateFactory = RdfEngineConfig.class,
-        configurationPolicy = ConfigurationPolicy.require
+        configurationPolicy = ConfigurationPolicy.require,
+        properties = {
+                "engineName=RdfEngine"
+        }
 )
 public class RdfEngine implements Engine {
-    public static final String COMPONENT_NAME = "RdfEngine";
+    private static final String ENGINE_NAME = "com.mobi.jaas.engines.RdfEngine";
     private static final Logger logger = LoggerFactory.getLogger(RdfEngine.class);
 
     private Resource context;
@@ -97,7 +100,7 @@ public class RdfEngine implements Engine {
 
     @Activate
     public void start(BundleContext bundleContext, Map<String, Object> props) {
-        logger.info("Activating " + COMPONENT_NAME);
+        logger.info("Activating " + getEngineName());
         RdfEngineConfig config = Configurable.createConfigurable(RdfEngineConfig.class, props);
         setEncryption(config, bundleContext);
         roles = Stream.of(config.roles()).collect(Collectors.toSet());
@@ -132,7 +135,7 @@ public class RdfEngine implements Engine {
 
     @Modified
     public void modified(BundleContext bundleContext, Map<String, Object> props) {
-        logger.info("Modifying the " + COMPONENT_NAME);
+        logger.info("Modifying the " + getEngineName());
         RdfEngineConfig config = Configurable.createConfigurable(RdfEngineConfig.class, props);
         setEncryption(config, bundleContext);
         initEngineResources();
@@ -423,8 +426,7 @@ public class RdfEngine implements Engine {
 
     @Override
     public Set<Role> getUserRoles(String username) {
-        TreeSet<Role> allRoles = new TreeSet<>((role1, role2) ->
-                role1.getResource().stringValue().compareTo(role2.getResource().stringValue()));
+        TreeSet<Role> allRoles = new TreeSet<>(Comparator.comparing(role -> role.getResource().stringValue()));
         Optional<User> userOptional = retrieveUser(username);
         if (!userOptional.isPresent()) {
             throw new MobiException("User with that id does not exist");
@@ -469,6 +471,11 @@ public class RdfEngine implements Engine {
                 return password.equals(savedPassword);
             }
         }
+    }
+
+    @Override
+    public String getEngineName() {
+        return ENGINE_NAME;
     }
 
     private String getEncryptedPassword(String password) {

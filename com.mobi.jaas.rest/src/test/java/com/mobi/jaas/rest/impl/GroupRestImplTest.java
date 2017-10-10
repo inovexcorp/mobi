@@ -23,19 +23,38 @@ package com.mobi.jaas.rest.impl;
  * #L%
  */
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
+
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.engines.GroupConfig;
+import com.mobi.jaas.api.engines.UserConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.GroupFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.RoleFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
+import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.jaas.rest.providers.GroupProvider;
 import com.mobi.jaas.rest.providers.RoleProvider;
 import com.mobi.jaas.rest.providers.RoleSetProvider;
 import com.mobi.jaas.rest.providers.UserProvider;
 import com.mobi.jaas.rest.providers.UserSetProvider;
+import com.mobi.ontologies.foaf.AgentFactory;
+import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
+import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
 import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
@@ -46,45 +65,29 @@ import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
 import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import com.mobi.rdf.orm.impl.ThingFactory;
+import com.mobi.rest.util.MobiRestTestNg;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.media.multipart.MultiPartFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import com.mobi.jaas.api.engines.UserConfig;
-import com.mobi.jaas.api.ontologies.usermanagement.*;
-import com.mobi.jaas.rest.providers.*;
-import com.mobi.ontologies.foaf.AgentFactory;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
-import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.impl.ThingFactory;
-import com.mobi.rest.util.MobiRestTestNg;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.IntStream;
-
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.*;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Application;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 public class GroupRestImplTest extends MobiRestTestNg {
     private GroupRestImpl rest;
@@ -110,6 +113,9 @@ public class GroupRestImplTest extends MobiRestTestNg {
 
     @Mock
     EngineManager engineManager;
+
+    @Mock
+    private RdfEngine rdfEngine;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -180,8 +186,10 @@ public class GroupRestImplTest extends MobiRestTestNg {
         // Setup rest
         MockitoAnnotations.initMocks(this);
         groupProvider.setEngineManager(engineManager);
+        groupProvider.setRdfEngine(rdfEngine);
         rest = spy(new GroupRestImpl());
         rest.setEngineManager(engineManager);
+        rest.setRdfEngine(rdfEngine);
         rest.setFactory(vf);
         rest.setUserFactory(userFactory);
 
@@ -208,6 +216,7 @@ public class GroupRestImplTest extends MobiRestTestNg {
     @BeforeMethod
     public void setupMocks() {
         reset(engineManager);
+        reset(rdfEngine);
         when(engineManager.getUsers(anyString())).thenReturn(users);
         when(engineManager.userExists(anyString())).thenReturn(true);
         when(engineManager.createUser(anyString(), any(UserConfig.class))).thenReturn(user);
@@ -217,6 +226,7 @@ public class GroupRestImplTest extends MobiRestTestNg {
         when(engineManager.createGroup(anyString(), any(GroupConfig.class))).thenReturn(group);
         when(engineManager.retrieveGroup(anyString(), anyString())).thenReturn(Optional.of(group));
         when(engineManager.getRole(anyString(), anyString())).thenReturn(Optional.of(role));
+        when(rdfEngine.getEngineName()).thenReturn("com.mobi.jaas.engines.RdfEngine");
     }
 
     @Test

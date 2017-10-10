@@ -42,17 +42,13 @@ import com.mobi.jaas.api.ontologies.usermanagement.GroupFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.RoleFactory;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.rest.providers.RoleSetProvider;
-import com.mobi.jaas.rest.providers.UserProvider;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
+import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.jaas.rest.providers.GroupProvider;
 import com.mobi.jaas.rest.providers.GroupSetProvider;
 import com.mobi.jaas.rest.providers.RoleProvider;
+import com.mobi.jaas.rest.providers.RoleSetProvider;
+import com.mobi.jaas.rest.providers.UserProvider;
 import com.mobi.ontologies.foaf.AgentFactory;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
@@ -74,6 +70,11 @@ import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
 import com.mobi.rdf.orm.impl.ThingFactory;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.server.ResourceConfig;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.model.vocabulary.DCTERMS;
@@ -118,6 +119,9 @@ public class UserRestImplTest extends MobiRestTestNg {
 
     @Mock
     private EngineManager engineManager;
+
+    @Mock
+    private RdfEngine rdfEngine;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -192,9 +196,12 @@ public class UserRestImplTest extends MobiRestTestNg {
         groups = Collections.singleton(group);
 
         MockitoAnnotations.initMocks(this);
+        groupProvider.setRdfEngine(rdfEngine);
         userProvider.setEngineManager(engineManager);
+        userProvider.setRdfEngine(rdfEngine);
         rest = spy(new UserRestImpl());
         rest.setEngineManager(engineManager);
+        rest.setRdfEngine(rdfEngine);
         rest.setFactory(vf);
 
         return new ResourceConfig()
@@ -221,6 +228,7 @@ public class UserRestImplTest extends MobiRestTestNg {
     @BeforeMethod
     public void setupMocks() {
         reset(engineManager);
+        reset(rdfEngine);
         when(engineManager.getUsers(anyString())).thenReturn(users);
         when(engineManager.userExists(anyString())).thenReturn(true);
         when(engineManager.userExists(UsernameTestFilter.USERNAME)).thenReturn(true);
@@ -236,6 +244,7 @@ public class UserRestImplTest extends MobiRestTestNg {
         when(engineManager.getUserRoles(UsernameTestFilter.USERNAME)).thenReturn(Stream.concat(roles.stream(),
                 group.getHasGroupRole().stream()).collect(Collectors.toSet()));
         when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.empty());
+        when(rdfEngine.getEngineName()).thenReturn("com.mobi.jaas.engines.RdfEngine");
     }
 
     @Test

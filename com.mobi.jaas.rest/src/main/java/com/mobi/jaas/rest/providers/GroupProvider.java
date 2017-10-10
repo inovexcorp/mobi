@@ -25,15 +25,15 @@ package com.mobi.jaas.rest.providers;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.engines.GroupConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
-import net.sf.json.JSONObject;
-import org.apache.commons.io.IOUtils;
-import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
+import net.sf.json.JSONObject;
+import org.apache.commons.io.IOUtils;
 import org.openrdf.model.vocabulary.DCTERMS;
 
 import java.io.IOException;
@@ -63,6 +63,7 @@ import javax.ws.rs.ext.Provider;
 public class GroupProvider implements MessageBodyWriter<Group>, MessageBodyReader<Group> {
     protected ValueFactory factory;
     protected EngineManager engineManager;
+    protected Engine rdfEngine;
 
     @Reference
     public void setFactory(ValueFactory factory) {
@@ -72,6 +73,11 @@ public class GroupProvider implements MessageBodyWriter<Group>, MessageBodyReade
     @Reference
     public void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
+    }
+
+    @Reference(target = "engineName=RdfEngine")
+    public void setRdfEngine(Engine engine) {
+        this.rdfEngine = engine;
     }
 
     @Override
@@ -114,7 +120,7 @@ public class GroupProvider implements MessageBodyWriter<Group>, MessageBodyReade
                 .description(input.containsKey("description") ? input.getString("description") : "")
                 .build();
 
-        return engineManager.createGroup(RdfEngine.COMPONENT_NAME, config);
+        return engineManager.createGroup(rdfEngine.getEngineName(), config);
     }
 
     private boolean isGroup(Class<?> someClass, Type type) {

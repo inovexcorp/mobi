@@ -169,4 +169,6 @@ public interface Engine {
      * @return true if the passwords match; false otherwise
      */
     boolean checkPassword(String username, String password);
+
+    String getEngineName();
 }

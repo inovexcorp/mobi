@@ -27,13 +27,13 @@ import static com.mobi.rest.util.RestUtils.getActiveUsername;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
+import com.mobi.jaas.api.config.MobiConfiguration;
+import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.engines.UserConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.config.MobiConfiguration;
-import com.mobi.jaas.api.engines.UserConfig;
-import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.jaas.rest.UserRest;
 import com.mobi.ontologies.foaf.Agent;
 import com.mobi.rdf.api.Value;
@@ -57,6 +57,7 @@ public class UserRestImpl implements UserRest {
     protected EngineManager engineManager;
     protected ValueFactory factory;
     protected MobiConfiguration mobiConfiguration;
+    protected Engine rdfEngine;
     private final Logger logger = LoggerFactory.getLogger(UserRestImpl.class);
 
     @Reference
@@ -74,9 +75,14 @@ public class UserRestImpl implements UserRest {
         this.mobiConfiguration = configuration;
     }
 
+    @Reference(target = "engineName=RdfEngine")
+    protected void setRdfEngine(Engine engine) {
+        this.rdfEngine = engine;
+    }
+
     @Override
     public Response listUsers() {
-        Set<String> usernames = engineManager.getUsers(RdfEngine.COMPONENT_NAME).stream()
+        Set<String> usernames = engineManager.getUsers(rdfEngine.getEngineName()).stream()
                 .map(User::getUsername)
                 .filter(Optional::isPresent)
                 .map(username -> username.get().stringValue())
@@ -96,10 +102,10 @@ public class UserRestImpl implements UserRest {
             throw ErrorUtils.sendError("User already exists", Response.Status.BAD_REQUEST);
         }
 
-        User tempUser = engineManager.createUser(RdfEngine.COMPONENT_NAME,
+        User tempUser = engineManager.createUser(rdfEngine.getEngineName(),
                 new UserConfig.Builder("", password, new HashSet<>()).build());
         user.setPassword(tempUser.getPassword().get());
-        engineManager.storeUser(RdfEngine.COMPONENT_NAME, user);
+        engineManager.storeUser(rdfEngine.getEngineName(), user);
         logger.info("Created user " + username.stringValue());
         return Response.status(201).entity(username.stringValue()).build();
     }
@@ -109,7 +115,7 @@ public class UserRestImpl implements UserRest {
         if (username == null) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
-        User user = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
+        User user = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.NOT_FOUND));
         return Response.status(200).entity(user).build();
     }
@@ -123,7 +129,7 @@ public class UserRestImpl implements UserRest {
         isAuthorizedUser(context, username);
         Value newUsername = newUser.getUsername().orElseThrow(() ->
                 ErrorUtils.sendError("Username must be provided in new user", Response.Status.BAD_REQUEST));
-        User savedUser = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
+        User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
         if (!savedUser.getUsername().get().equals(newUsername)) {
             throw ErrorUtils.sendError("Usernames must match", Response.Status.BAD_REQUEST);
@@ -134,7 +140,7 @@ public class UserRestImpl implements UserRest {
         }
         newUser.setPassword(savedUser.getPassword().get());
 
-        engineManager.updateUser(RdfEngine.COMPONENT_NAME, newUser);
+        engineManager.updateUser(rdfEngine.getEngineName(), newUser);
         return Response.ok().build();
     }
 
@@ -148,7 +154,7 @@ public class UserRestImpl implements UserRest {
         if (currentPassword == null) {
             throw ErrorUtils.sendError("Current password must be provided", Response.Status.BAD_REQUEST);
         }
-        if (!engineManager.checkPassword(RdfEngine.COMPONENT_NAME, username, currentPassword)) {
+        if (!engineManager.checkPassword(rdfEngine.getEngineName(), username, currentPassword)) {
             throw ErrorUtils.sendError("Invalid password", Response.Status.UNAUTHORIZED);
         }
         if (newPassword == null) {
@@ -178,7 +184,7 @@ public class UserRestImpl implements UserRest {
             throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
         }
 
-        engineManager.deleteUser(RdfEngine.COMPONENT_NAME, username);
+        engineManager.deleteUser(rdfEngine.getEngineName(), username);
         logger.info("Deleted user " + username);
         return Response.ok().build();
     }
@@ -188,9 +194,9 @@ public class UserRestImpl implements UserRest {
         if (username == null) {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
-        User user = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
+        User user = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        Set<Role> roles = includeGroups ? engineManager.getUserRoles(RdfEngine.COMPONENT_NAME, username)
+        Set<Role> roles = includeGroups ? engineManager.getUserRoles(rdfEngine.getEngineName(), username)
                 : user.getHasUserRole();
         return Response.ok(new GenericEntity<Set<Role>>(roles) {}).build();
     }
@@ -201,15 +207,15 @@ public class UserRestImpl implements UserRest {
             throw ErrorUtils.sendError("Both username and roles must be provided", Response.Status.BAD_REQUEST);
         }
 
-        User savedUser = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
+        User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
         Set<Role> roleObjs = new HashSet<>();
-        roles.forEach(s -> roleObjs.add(engineManager.getRole(RdfEngine.COMPONENT_NAME, s).orElseThrow(() ->
+        roles.forEach(s -> roleObjs.add(engineManager.getRole(rdfEngine.getEngineName(), s).orElseThrow(() ->
                 ErrorUtils.sendError("Role " + s + " not found", Response.Status.BAD_REQUEST))));
         Set<Role> allRoles = savedUser.getHasUserRole();
         allRoles.addAll(roleObjs);
         savedUser.setHasUserRole(allRoles);
-        engineManager.updateUser(RdfEngine.COMPONENT_NAME, savedUser);
+        engineManager.updateUser(rdfEngine.getEngineName(), savedUser);
         logger.info("Role(s) " + String.join(", ", roles) + " added to user " + username);
         return Response.ok().build();
     }
@@ -219,12 +225,12 @@ public class UserRestImpl implements UserRest {
         if (username == null || role == null) {
             throw ErrorUtils.sendError("Both username and role must be provided", Response.Status.BAD_REQUEST);
         }
-        User savedUser = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
+        User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        Role roleObj = engineManager.getRole(RdfEngine.COMPONENT_NAME, role).orElseThrow(() ->
+        Role roleObj = engineManager.getRole(rdfEngine.getEngineName(), role).orElseThrow(() ->
                 ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
         savedUser.removeProperty(roleObj.getResource(), factory.createIRI(User.hasUserRole_IRI));
-        engineManager.updateUser(RdfEngine.COMPONENT_NAME, savedUser);
+        engineManager.updateUser(rdfEngine.getEngineName(), savedUser);
         logger.info("Role " + role + " removed from user " + username);
         return Response.ok().build();
     }
@@ -235,9 +241,9 @@ public class UserRestImpl implements UserRest {
             throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
         }
 
-        User savedUser = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
+        User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        Set<Group> groups = engineManager.getGroups(RdfEngine.COMPONENT_NAME).stream()
+        Set<Group> groups = engineManager.getGroups(rdfEngine.getEngineName()).stream()
                 .filter(group -> {
                     Set<Agent> members = group.getMember();
                     return members.stream()
@@ -254,14 +260,14 @@ public class UserRestImpl implements UserRest {
         if (username == null || groupTitle == null) {
             throw ErrorUtils.sendError("Both username and group name must be provided", Response.Status.BAD_REQUEST);
         }
-        User savedUser = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
+        User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        Group savedGroup = engineManager.retrieveGroup(RdfEngine.COMPONENT_NAME, groupTitle).orElseThrow(() ->
+        Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
         Set<Agent> newMembers = savedGroup.getMember();
         newMembers.add(savedUser);
         savedGroup.setMember(newMembers);
-        engineManager.updateGroup(RdfEngine.COMPONENT_NAME, savedGroup);
+        engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
         logger.info("Added user " + username + " to group " + groupTitle);
         return Response.ok().build();
     }
@@ -271,12 +277,12 @@ public class UserRestImpl implements UserRest {
         if (username == null || groupTitle == null) {
             throw ErrorUtils.sendError("Both username and group name must be provided", Response.Status.BAD_REQUEST);
         }
-        User savedUser = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
+        User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        Group savedGroup = engineManager.retrieveGroup(RdfEngine.COMPONENT_NAME, groupTitle).orElseThrow(() ->
+        Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
                 ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
         savedGroup.removeProperty(savedUser.getResource(), factory.createIRI(Group.member_IRI));
-        engineManager.updateGroup(RdfEngine.COMPONENT_NAME, savedGroup);
+        engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
         logger.info("Removed user " + username + " from group " + groupTitle);
         return Response.ok().build();
     }
@@ -339,12 +345,12 @@ public class UserRestImpl implements UserRest {
      * @return A Response indicating the success of the request
      */
     private Response changePassword(String username, String newPassword) {
-        User savedUser = engineManager.retrieveUser(RdfEngine.COMPONENT_NAME, username).orElseThrow(() ->
+        User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                 ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-        User tempUser = engineManager.createUser(RdfEngine.COMPONENT_NAME,
+        User tempUser = engineManager.createUser(rdfEngine.getEngineName(),
                 new UserConfig.Builder("", newPassword, new HashSet<>()).build());
         savedUser.setPassword(tempUser.getPassword().get());
-        engineManager.updateUser(RdfEngine.COMPONENT_NAME, savedUser);
+        engineManager.updateUser(rdfEngine.getEngineName(), savedUser);
         return Response.ok().build();
     }
 }
