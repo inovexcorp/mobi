@@ -28,7 +28,7 @@
     <parent>
         <artifactId>matonto-parent</artifactId>
         <groupId>org.matonto</groupId>
-        <version>1.9.31</version>
+        <version>1.9.32</version>
         <relativePath>../matonto-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -38,17 +38,6 @@
     <name>${project.groupId}.${project.artifactId}</name>
 
     <packaging>karaf-assembly</packaging>
-
-    <properties>
-        <bnd.index.version>${project.version}</bnd.index.version>
-        <obr.urls>
-            http://nexus.matonto.org/repository/matonto-releases-obr/.meta/obr.xml \
-            mvn:org.matonto/bnd-index/${project.version}/xml \
-            mvn:org.matonto/index.dependency/${project.version}/xml \
-            mvn:org.matonto/index.sesame4/${project.version}/xml
-        </obr.urls>
-        <deploy.bundles.version></deploy.bundles.version>
-    </properties>
 
     <dependencies>
         <dependency>
@@ -185,7 +174,6 @@
                 <artifactId>karaf-maven-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
-                    <!-- no startupFeatures -->
                     <startupFeatures>
                         <feature>eventadmin</feature>
                     </startupFeatures>
