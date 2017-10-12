@@ -192,7 +192,7 @@ describe('Search Tab directive', function() {
             ontologyStateSvc.listItem.selected = {
                 '@id': 'new',
                 key: 'new',
-                'matonto': 'new'
+                mobi: 'new'
             }
             scope.$digest();
             expect(ontologyStateSvc.listItem.editorTabStates.search.selected).toEqual({key: 'new'});

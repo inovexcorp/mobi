@@ -52,7 +52,7 @@
         function settingsManagerService($window, $cookies, prefixes) {
             var self = this;
             var settings = {};
-            var cookieName = 'matonto-settings';
+            var cookieName = 'mobi-settings';
             var defaultSettings = {
                 treeDisplay: 'pretty',
                 tooltipDisplay: '@id'

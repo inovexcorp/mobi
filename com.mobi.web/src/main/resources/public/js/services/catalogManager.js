@@ -126,8 +126,8 @@
             self.initialize = function() {
                 return $q.all([self.getRecordTypes(), self.getSortOptions(), $http.get(prefix)])
                     .then(responses => {
-                        self.localCatalog = _.find(responses[2].data, {[prefixes.dcterms + 'title']: [{'@value': 'MatOnto Catalog (Local)'}]});
-                        self.distributedCatalog = _.find(responses[2].data, {[prefixes.dcterms + 'title']: [{'@value': 'MatOnto Catalog (Distributed)'}]});
+                        self.localCatalog = _.find(responses[2].data, {[prefixes.dcterms + 'title']: [{'@value': 'Mobi Catalog (Local)'}]});
+                        self.distributedCatalog = _.find(responses[2].data, {[prefixes.dcterms + 'title']: [{'@value': 'Mobi Catalog (Distributed)'}]});
                         if (!self.localCatalog) {
                             return $q.reject('Could not find local catalog');
                         }

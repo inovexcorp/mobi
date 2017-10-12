@@ -138,8 +138,8 @@
             self.getBlankNodeValue = function(id) {
                 var result;
                 if (om.isBlankNodeId(id)) {
-                    if (_.get(os.listItem.selected, 'matonto.imported')) {
-                        var ontologyObj = _.find(os.listItem.importedOntologies, {ontologyId: os.listItem.selected.matonto.importedIRI});
+                    if (_.get(os.listItem.selected, 'mobi.imported')) {
+                        var ontologyObj = _.find(os.listItem.importedOntologies, {ontologyId: os.listItem.selected.mobi.importedIRI});
                         result = _.get(ontologyObj.blankNodes, id, id)
                     } else {
                         result = _.get(os.listItem.blankNodes, id, id);

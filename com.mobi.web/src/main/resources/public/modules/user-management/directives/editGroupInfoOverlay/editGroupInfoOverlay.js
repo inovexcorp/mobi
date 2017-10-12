@@ -44,7 +44,7 @@
          *
          * @description
          * `editGroupInfoOverlay` is a directive that creates an overlay with a form to change the
-         * {@link userState.service:userStateService#selectedGroup selected group's} information in Matonto. The
+         * {@link userState.service:userStateService#selectedGroup selected group's} information in Mobi. The
          * form contains a field to edit the group's description. The directive is replaced by the contents of
          * its template.
          */

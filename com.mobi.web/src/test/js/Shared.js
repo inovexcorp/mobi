@@ -157,9 +157,9 @@ function injectRemoveIriFromArrayFilter() {
     });
 }
 
-function injectRemoveMatontoFilter() {
+function injectRemoveMobiFilter() {
     module(function($provide) {
-        $provide.value('removeMatontoFilter', jasmine.createSpy('removeMatontoFilter').and.callFake(_.identity));
+        $provide.value('removeMobiFilter', jasmine.createSpy('removeMobiFilter').and.callFake(_.identity));
     });
 }
 
@@ -589,7 +589,7 @@ function mockOntologyState() {
                 branches: [],
                 ontology: [{
                     '@id': 'id',
-                    matonto: {
+                    mobi: {
                         id: 'id',
                         jsAnnotations: [{}]
                     }

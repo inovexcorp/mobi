@@ -1064,7 +1064,7 @@
             }
             self.onEdit = function(iriBegin, iriThen, iriEnd) {
                 var newIRI = iriBegin + iriThen + iriEnd;
-                var oldEntity = $filter('removeMatonto')(self.listItem.selected);
+                var oldEntity = $filter('removeMobi')(self.listItem.selected);
                 self.getActivePage().entityIRI = newIRI;
                 if (_.some(self.listItem.additions, oldEntity)) {
                     _.remove(self.listItem.additions, oldEntity);
@@ -1076,7 +1076,7 @@
                 if (self.getActiveKey() !== 'project') {
                     self.setCommonIriParts(iriBegin, iriThen);
                 }
-                self.addToAdditions(self.listItem.ontologyRecord.recordId, $filter('removeMatonto')(self.listItem.selected));
+                self.addToAdditions(self.listItem.ontologyRecord.recordId, $filter('removeMobi')(self.listItem.selected));
                 return om.getEntityUsages(self.listItem.ontologyRecord.recordId, self.listItem.ontologyRecord.branchId, self.listItem.ontologyRecord.commitId, oldEntity['@id'], 'construct')
                     .then(statements => {
                         _.forEach(statements, statement => self.addToDeletions(self.listItem.ontologyRecord.recordId, statement));
@@ -1347,7 +1347,7 @@
                             ontologyIri: ontologyId
                         }
                     } else {
-                        _.set(entity, 'matonto.anonymous', ontologyId + ' (Anonymous Ontology)');
+                        _.set(entity, 'mobi.anonymous', ontologyId + ' (Anonymous Ontology)');
                     }
                     if (om.isProperty(entity)) {
                         setPropertyIcon(entity);
@@ -1388,7 +1388,7 @@
                 return _.forEach(arr, item => _.set(item, 'ontologyId', ontologyId));
             }
             function setPropertyIcon(entity) {
-                _.set(entity, 'matonto.icon', getIcon(entity));
+                _.set(entity, 'mobi.icon', getIcon(entity));
             }
             function getIcon(property) {
                 var range = _.get(property, prefixes.rdfs + 'range');
@@ -1465,7 +1465,7 @@
             function addToInProgress(recordId, json, prop) {
                 var listItem = self.getListItemByRecordId(recordId);
                 var entity = _.find(listItem[prop], {'@id': json['@id']});
-                var filteredJson = $filter('removeMatonto')(json);
+                var filteredJson = $filter('removeMobi')(json);
                 if (entity) {
                     _.mergeWith(entity, filteredJson, util.mergingArrays);
                 } else  {
@@ -1515,8 +1515,8 @@
                         }
                     }
                     self.updatePropertyIcon(entity);
-                    _.set(entity, 'matonto.imported', true);
-                    _.set(entity, 'matonto.importedIRI', importedOntObj.ontologyId);
+                    _.set(entity, 'mobi.imported', true);
+                    _.set(entity, 'mobi.importedIRI', importedOntObj.ontologyId);
                 });
                 _.forEach(blankNodes, (value, id) => {
                     blankNodes[id] = mc.jsonldToManchester(id, importedOntObj.ontology, index);

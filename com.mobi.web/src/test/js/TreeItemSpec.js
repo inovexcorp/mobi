@@ -142,7 +142,7 @@ describe('Tree Item directive', function() {
     describe('controller methods', function() {
         describe('getTreeDisplay', function() {
             it('should return anonymous when not pretty', function() {
-                scope.currentEntity = {matonto: {anonymous: 'anon'}};
+                scope.currentEntity = {mobi: {anonymous: 'anon'}};
                 scope.$digest();
                 var result = controller.getTreeDisplay();
                 expect(result).toBe('anon');
@@ -157,7 +157,7 @@ describe('Tree Item directive', function() {
         });
         describe('toggleOpen', function() {
             it('should call correct manager function', function() {
-                scope.currentEntity = {matonto: {anonymous: 'anon'}};
+                scope.currentEntity = {mobi: {anonymous: 'anon'}};
                 scope.$digest();
                 controller.toggleOpen();
                 expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(controller.path, controller.isOpened);

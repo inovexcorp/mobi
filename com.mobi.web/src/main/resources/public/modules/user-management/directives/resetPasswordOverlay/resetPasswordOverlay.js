@@ -44,7 +44,7 @@
          *
          * @description
          * `resetPasswordOverlay` is a directive that creates an overlay with a form to reset the
-         * {@link userState.service:userStateService#selectedUser selected user's} password in Matonto. The form
+         * {@link userState.service:userStateService#selectedUser selected user's} password in Mobi. The form
          * uses a {@link passwordConfirmInput.directive:passwordConfirmInput passwordConfirmInput} to confirm the
          * new password. The directive is replaced by the contents of its template.
          */

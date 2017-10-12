@@ -103,7 +103,7 @@ describe('Ontology Manager service', function() {
         ontologyObj = {
             '@id': ontologyId,
             '@type': [prefixes.owl + 'Ontology'],
-            matonto: {
+            mobi: {
                 anonymous: anonymous
             }
         }
@@ -145,7 +145,7 @@ describe('Ontology Manager service', function() {
         importedOntObj = {
             '@id': importedOntologyId,
             '@type': [prefixes.owl + 'Ontology'],
-            matonto: {
+            mobi: {
               anonymous: anonymous,
               imported: true
             }
@@ -154,7 +154,7 @@ describe('Ontology Manager service', function() {
         importedClassObj = {
             '@id': importedClassId,
             '@type': [prefixes.owl + 'Class'],
-            matonto: {
+            mobi: {
               imported: true
             }
         }
@@ -162,7 +162,7 @@ describe('Ontology Manager service', function() {
         importedDataPropertyObj = {
             '@id': importedDataPropertyId,
             '@type': [prefixes.owl + 'DatatypeProperty'],
-            matonto: {
+            mobi: {
                 imported: true
             }
         };
@@ -1012,10 +1012,10 @@ describe('Ontology Manager service', function() {
         it('@id if there is an ontology entity in the ontology with @id', function() {
             expect(ontologyManagerSvc.getOntologyIRI([ontologyObj])).toBe(ontologyId);
         });
-        it('matonto.anonymous if there is an ontology entity without @id', function() {
+        it('mobi.anonymous if there is an ontology entity without @id', function() {
             var obj = {
                 '@type': prefixes.owl + 'Ontology',
-                matonto: {
+                mobi: {
                     anonymous: anonymous
                 }
             }

@@ -42,7 +42,7 @@
             </div>
         </block-content>
         <block-footer class="centered">
-            <button class="btn btn-link" ng-disabled="!dvm.os.listItem.selected || dvm.os.listItem.selected.matonto.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Property</span></button>
+            <button class="btn btn-link" ng-disabled="!dvm.os.listItem.selected || dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Property</span></button>
         </block-footer>
     </block>
     <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Property'" confirm-click="dvm.deleteProperty()"

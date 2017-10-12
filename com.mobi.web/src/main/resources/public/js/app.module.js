@@ -48,7 +48,7 @@
             'inArray',
             'prefixation',
             'removeIriFromArray',
-            'removeMatonto',
+            'removeMobi',
             'showProperties',
             'splitIRI',
             'trusted',

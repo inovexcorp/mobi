@@ -221,7 +221,7 @@ describe('Ontology Utils Manager service', function() {
         });
         describe('value for the key provided contained in the object', function() {
             it('if selected is imported', function() {
-                ontologyStateSvc.listItem.selected.matonto = {imported: true, importedIRI: importedOntology.ontologyId};
+                ontologyStateSvc.listItem.selected.mobi = {imported: true, importedIRI: importedOntology.ontologyId};
                 expect(ontologyUtilsManagerSvc.getBlankNodeValue('key1')).toEqual(importedOntology.blankNodes['key1']);
             });
             it('if selected is not imported', function() {
@@ -230,7 +230,7 @@ describe('Ontology Utils Manager service', function() {
         });
         describe('key for the key provided not contained in the object', function() {
             it('if selected is imported', function() {
-                ontologyStateSvc.listItem.selected.matonto = {imported: true, importedIRI: importedOntology.ontologyId};
+                ontologyStateSvc.listItem.selected.mobi = {imported: true, importedIRI: importedOntology.ontologyId};
                 expect(ontologyUtilsManagerSvc.getBlankNodeValue('key2')).toEqual('key2');
             });
             it('if selected is not imported', function() {
@@ -427,7 +427,7 @@ describe('Ontology Utils Manager service', function() {
             beforeEach(function() {
                 ontologyStateSvc.listItem.selected = {
                     '@id': 'iri',
-                    matonto: {
+                    mobi: {
                         originalIRI: ''
                     }
                 };

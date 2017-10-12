@@ -20,9 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="tree-item" ng-class="{'saved': dvm.saved , 'imported': dvm.currentEntity.matonto.imported}">
+<div class="tree-item" ng-class="{'saved': dvm.saved , 'imported': dvm.currentEntity.mobi.imported}">
     <a ng-if="!hasChildren" ng-click="onClick()" ng-class="{'active': isActive}">
-        <i class="fa fa-fw {{dvm.currentEntity.matonto.icon || 'fa-square-o'}}"></i>
+        <i class="fa fa-fw {{dvm.currentEntity.mobi.icon || 'fa-square-o'}}"></i>
         <span ng-class="{'bold': isBold}">{{dvm.getTreeDisplay()}}</span>
         <i class="fa fa-fw fa-caret-left"></i>
     </a>

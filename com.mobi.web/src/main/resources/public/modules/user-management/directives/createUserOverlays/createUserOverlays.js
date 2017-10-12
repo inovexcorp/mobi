@@ -43,7 +43,7 @@
          * @requires userState.service:userStateService
          *
          * @description
-         * `createUserOverlays` is a directive that creates overlays with forms to add a user to Matonto.
+         * `createUserOverlays` is a directive that creates overlays with forms to add a user to Mobi.
          * The first overlay provides a form for the basic information about the user including the username,
          * password, first name, last name, and email. The second overlay provides a form for settings the
          * permissions and roles of the new user.

@@ -24,12 +24,12 @@
     'use strict';
 
     angular
-        .module('removeMatonto', [])
-        .filter('removeMatonto', removeMatonto);
+        .module('removeMobi', [])
+        .filter('removeMobi', removeMobi);
 
-    function removeMatonto() {
+    function removeMobi() {
         return function(obj) {
-            return _.omit(angular.copy(obj), 'matonto');
+            return _.omit(angular.copy(obj), 'mobi');
         }
     }
 })();

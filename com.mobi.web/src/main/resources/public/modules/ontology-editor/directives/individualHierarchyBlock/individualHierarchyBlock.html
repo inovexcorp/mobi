@@ -29,7 +29,7 @@
             <individual-tree></individual-tree>
         </block-content>
         <block-footer class="centered">
-            <button class="btn btn-link" ng-disabled="!dvm.sm.listItem.selected || dvm.sm.listItem.selected.matonto.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Individual</span></button>
+            <button class="btn btn-link" ng-disabled="!dvm.sm.listItem.selected || dvm.sm.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Individual</span></button>
         </block-footer>
     </block>
     <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Individual'" confirm-click="dvm.deleteIndividual()"

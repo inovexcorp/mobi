@@ -172,8 +172,8 @@ describe('Static IRI directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            ontologyStateSvc.listItem.ontology[0].matonto.iriBegin = 'begin';
-            ontologyStateSvc.listItem.ontology[0].matonto.iriThen = 'then';
+            ontologyStateSvc.listItem.ontology[0].mobi.iriBegin = 'begin';
+            ontologyStateSvc.listItem.ontology[0].mobi.iriThen = 'then';
             controller = element.controller('staticIri');
         });
         it('setVariables changes the passed in variable', function() {

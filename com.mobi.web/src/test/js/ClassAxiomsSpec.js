@@ -84,7 +84,7 @@ describe('Class Axioms directive', function() {
         beforeEach(function() {
             ontologyStateSvc.listItem.selected = {
                 '@id': 'classId',
-                matonto: {
+                mobi: {
                     originalIRI: ''
                 }
             };

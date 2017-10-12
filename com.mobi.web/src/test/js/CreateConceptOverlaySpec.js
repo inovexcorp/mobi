@@ -159,8 +159,8 @@ describe('Create Concept Overlay directive', function() {
         it('should create a concept', function() {
             ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
             var schemes = {
-                'scheme1': {'@id': 'scheme1', matonto: {}},
-                'scheme2': {'@id': 'scheme2', matonto: {}}
+                'scheme1': {'@id': 'scheme1', mobi: {}},
+                'scheme2': {'@id': 'scheme2', mobi: {}}
             };
             schemes.scheme1[prefixes.skos + 'hasTopConcept'] = [{'@id': 'test'}];
             controller.schemes = _.values(schemes);

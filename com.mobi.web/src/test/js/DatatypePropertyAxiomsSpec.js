@@ -82,7 +82,7 @@ describe('Datatype Property Axioms directive', function() {
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            ontologyStateSvc.listItem.selected.matonto = {originalIRI: ''};
+            ontologyStateSvc.listItem.selected.mobi = {originalIRI: ''};
         });
         it('should open the remove overlay', function() {
             controller.openRemoveOverlay('key', 0);

@@ -142,7 +142,7 @@ describe('Ontology State Service', function() {
         mockStateManager();
         mockUtil();
         mockCatalogManager();
-        injectRemoveMatontoFilter();
+        injectRemoveMobiFilter();
         mockPrefixes();
         mockManchesterConverter();
         mockHttpService();
@@ -290,7 +290,7 @@ describe('Ontology State Service', function() {
         ontologyObj = {
             '@id': ontologyId,
             '@type': [prefixes.owl + 'Ontology'],
-            matonto: {
+            mobi: {
                 anonymous: anonymous
             }
         };
@@ -1674,7 +1674,7 @@ describe('Ontology State Service', function() {
                     expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([ontology, [{
                         '@id': 'ontologyId',
-                        matonto: {
+                        mobi: {
                             icon: 'fa-square-o',
                             imported: true,
                             importedIRI: 'ontologyId'
@@ -3109,7 +3109,7 @@ describe('Ontology State Service', function() {
         it('unless it is not a property', function() {
             ontologyManagerSvc.isProperty.and.returnValue(false);
             ontologyStateSvc.updatePropertyIcon(entity);
-            expect(_.has(entity, 'matonto.icon')).toBe(false);
+            expect(_.has(entity, 'mobi.icon')).toBe(false);
         });
         describe('if it is a property', function() {
             beforeEach(function() {
@@ -3118,14 +3118,14 @@ describe('Ontology State Service', function() {
             it('with more than one range', function() {
                 _.set(entity, "['" + prefixes.rdfs + "range']", [{'@id': '1'}, {'@id': '2'}]);
                 ontologyStateSvc.updatePropertyIcon(entity);
-                expect(_.get(entity, 'matonto.icon')).toBe('fa-cubes');
+                expect(_.get(entity, 'mobi.icon')).toBe('fa-cubes');
             });
             it('with a range of xsd:string or rdf:langString', function() {
                 var tests = [prefixes.xsd + 'string', prefixes.rdf + 'langString'];
                 _.forEach(tests, function(test) {
                     _.set(entity, "['" + prefixes.rdfs + "range'][0]['@id']", test);
                     ontologyStateSvc.updatePropertyIcon(entity);
-                    expect(_.get(entity, 'matonto.icon')).toBe('fa-font');
+                    expect(_.get(entity, 'mobi.icon')).toBe('fa-font');
                 });
             });
             it('with a range of xsd:decimal, xsd:double, xsd:float, xsd:int, xsd:integer, xsd:long, or xsd:nonNegativeInteger', function() {
@@ -3133,41 +3133,41 @@ describe('Ontology State Service', function() {
                 _.forEach(tests, function(test) {
                     _.set(entity, "['" + prefixes.rdfs + "range'][0]['@id']", test);
                     ontologyStateSvc.updatePropertyIcon(entity);
-                    expect(_.get(entity, 'matonto.icon')).toBe('fa-calculator');
+                    expect(_.get(entity, 'mobi.icon')).toBe('fa-calculator');
                 });
             });
             it('with a range of xsd:language', function() {
                 _.set(entity, "['" + prefixes.rdfs + "range'][0]['@id']", prefixes.xsd + 'language');
                 ontologyStateSvc.updatePropertyIcon(entity);
-                expect(_.get(entity, 'matonto.icon')).toBe('fa-language');
+                expect(_.get(entity, 'mobi.icon')).toBe('fa-language');
             });
             it('with a range of xsd:anyURI', function() {
                 _.set(entity, "['" + prefixes.rdfs + "range'][0]['@id']", prefixes.xsd + 'anyURI');
                 ontologyStateSvc.updatePropertyIcon(entity);
-                expect(_.get(entity, 'matonto.icon')).toBe('fa-external-link');
+                expect(_.get(entity, 'mobi.icon')).toBe('fa-external-link');
             });
             it('with a range of xsd:anyURI', function() {
                 _.set(entity, "['" + prefixes.rdfs + "range'][0]['@id']", prefixes.xsd + 'dateTime');
                 ontologyStateSvc.updatePropertyIcon(entity);
-                expect(_.get(entity, 'matonto.icon')).toBe('fa-clock-o');
+                expect(_.get(entity, 'mobi.icon')).toBe('fa-clock-o');
             });
             it('with a range of xsd:boolean or xsd:byte', function() {
                 var tests = [prefixes.xsd + 'boolean', prefixes.xsd + 'byte'];
                 _.forEach(tests, function(test) {
                     _.set(entity, "['" + prefixes.rdfs + "range'][0]['@id']", test);
                     ontologyStateSvc.updatePropertyIcon(entity);
-                    expect(_.get(entity, 'matonto.icon')).toBe('fa-signal');
+                    expect(_.get(entity, 'mobi.icon')).toBe('fa-signal');
                 });
             });
             it('with a range of rdfs:Literal', function() {
                 _.set(entity, "['" + prefixes.rdfs + "range'][0]['@id']", prefixes.rdfs + 'Literal');
                 ontologyStateSvc.updatePropertyIcon(entity);
-                expect(_.get(entity, 'matonto.icon')).toBe('fa-cube');
+                expect(_.get(entity, 'mobi.icon')).toBe('fa-cube');
             });
             it('with a range that is not predefined', function() {
                 _.set(entity, "['" + prefixes.rdfs + "range'][0]['@id']", 'test');
                 ontologyStateSvc.updatePropertyIcon(entity);
-                expect(_.get(entity, 'matonto.icon')).toBe('fa-link');
+                expect(_.get(entity, 'mobi.icon')).toBe('fa-link');
             });
         });
     });

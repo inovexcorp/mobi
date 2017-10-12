@@ -781,7 +781,7 @@
              */
             self.getOntologyIRI = function(ontology) {
                 var entity = self.getOntologyEntity(ontology);
-                return _.get(entity, '@id', _.get(entity, 'matonto.anonymous', ''));
+                return _.get(entity, '@id', _.get(entity, 'mobi.anonymous', ''));
             }
             /**
              * @ngdoc method

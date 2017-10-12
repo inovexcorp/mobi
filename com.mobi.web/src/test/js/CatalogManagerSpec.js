@@ -90,9 +90,9 @@ describe('Catalog Manager service', function() {
                 var types = this.types;
                 var sortOptions = this.sortOptions;
                 var localCatalog = {};
-                localCatalog[prefixes.dcterms + 'title'] = [{'@value': 'MatOnto Catalog (Local)'}];
+                localCatalog[prefixes.dcterms + 'title'] = [{'@value': 'Mobi Catalog (Local)'}];
                 var distributedCatalog = {};
-                distributedCatalog[prefixes.dcterms + 'title'] = [{'@value': 'MatOnto Catalog (Distributed)'}];
+                distributedCatalog[prefixes.dcterms + 'title'] = [{'@value': 'Mobi Catalog (Distributed)'}];
                 $httpBackend.whenGET('/mobirest/catalogs').respond(200, [localCatalog, distributedCatalog]);
                 catalogManagerSvc.initialize().then(function(response) {
                     expect(catalogManagerSvc.recordTypes).toEqual(types);

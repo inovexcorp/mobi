@@ -55,7 +55,7 @@
                         if (treeDisplay === 'pretty') {
                             return os.getEntityNameByIndex(_.get(dvm.currentEntity, '@id'), os.listItem);
                         }
-                        return _.get(dvm.currentEntity, 'matonto.anonymous', '');
+                        return _.get(dvm.currentEntity, 'mobi.anonymous', '');
                     }
 
                     dvm.toggleOpen = function() {

@@ -24,7 +24,7 @@
 <div class="relationships-block axiom-block">
     <block>
         <block-header>
-            <span>Relationships</span><a ng-if="dvm.os.listItem.selected && !dvm.os.listItem.selected.matonto.imported" class="pull-right" ng-click="dvm.os.showRelationshipOverlay = true"><i class="fa fa-fw fa-plus"></i>Add Relationship</a>
+            <span>Relationships</span><a ng-if="dvm.os.listItem.selected && !dvm.os.listItem.selected.mobi.imported" class="pull-right" ng-click="dvm.os.showRelationshipOverlay = true"><i class="fa fa-fw fa-plus"></i>Add Relationship</a>
         </block-header>
         <block-content>
             <property-values ng-repeat="relationship in dvm.os.listItem.selected | showProperties:dvm.relationshipList | orderBy:dvm.ontoUtils.getLabelForIRI"

@@ -44,7 +44,7 @@
          * @requires loginManager.service:loginManagerService
          *
          * @description
-         * `createGroupOverlay` is a directive that creates an overlay with a form to add a group to Matonto.
+         * `createGroupOverlay` is a directive that creates an overlay with a form to add a group to Mobi.
          * The form includes the group title, a group description, and group
          * {@link memberTable.directive:memberTable members}. The directive is replaced by the contents of its
          * template.
