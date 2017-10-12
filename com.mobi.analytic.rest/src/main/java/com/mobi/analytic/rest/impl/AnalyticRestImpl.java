@@ -59,7 +59,7 @@ import java.util.stream.Collectors;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.Response;
 
-@Component
+@Component(immediate = true)
 public class AnalyticRestImpl implements AnalyticRest {
 
     private AnalyticManager analyticManager;

@@ -75,7 +75,7 @@ public class GroupProvider implements MessageBodyWriter<Group>, MessageBodyReade
         this.engineManager = engineManager;
     }
 
-    @Reference(target = "engineName=RdfEngine")
+    @Reference(target = "(engineName=RdfEngine)")
     public void setRdfEngine(Engine engine) {
         this.rdfEngine = engine;
     }

@@ -50,10 +50,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@Component(name = SimpleAnalyticManager.COMPONENT_NAME)
+@Component
 public class SimpleAnalyticManager implements AnalyticManager {
-
-    static final String COMPONENT_NAME = "AnalyticManager";
 
     private CatalogManager catalogManager;
     private CatalogUtilsService catalogUtils;

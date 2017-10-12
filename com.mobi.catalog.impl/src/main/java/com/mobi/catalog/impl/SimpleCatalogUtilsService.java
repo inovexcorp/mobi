@@ -85,12 +85,8 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
-@Component(
-        immediate = true,
-        name = SimpleCatalogUtilsService.COMPONENT_NAME
-)
+@Component(immediate = true)
 public class SimpleCatalogUtilsService implements CatalogUtilsService {
-    static final String COMPONENT_NAME = "CatalogUtilsService";
     private ModelFactory mf;
     private ValueFactory vf;
     private CatalogFactory catalogFactory;

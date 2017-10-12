@@ -25,7 +25,6 @@ package com.mobi.platform.config.impl.application;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.platform.config.api.ontologies.platformconfig.Application;
 import com.mobi.platform.config.api.application.ApplicationManager;
 import com.mobi.platform.config.api.application.ApplicationWrapper;
 import com.mobi.platform.config.api.ontologies.platformconfig.Application;
@@ -34,12 +33,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@Component(
-        immediate = true,
-        name = SimpleApplicationManager.COMPONENT_NAME
-)
+@Component(immediate = true)
 public class SimpleApplicationManager implements ApplicationManager {
-    public static final String COMPONENT_NAME = "com.mobi.platform.config.api.ApplicationManager";
     private Map<String, ApplicationWrapper> applications = new HashMap<>();
 
     @Reference(type = '*', dynamic = true)

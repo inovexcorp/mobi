@@ -28,7 +28,6 @@ import aQute.bnd.annotation.component.Reference;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.etl.api.config.delimited.MappingRecordConfig;
@@ -63,15 +62,13 @@ import java.util.Collections;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
-@Component(name = SimpleMappingManager.COMPONENT_NAME)
+@Component
 public class SimpleMappingManager implements MappingManager {
-    static final String COMPONENT_NAME = "com.mobi.etl.api.MappingManager";
     private ValueFactory vf;
     private CatalogManager catalogManager;
     private MappingRecordFactory mappingRecordFactory;
     private MappingFactory mappingFactory;
     private ClassMappingFactory classMappingFactory;
-    private BranchFactory branchFactory;
     private SesameTransformer transformer;
 
     public SimpleMappingManager() {}
@@ -99,11 +96,6 @@ public class SimpleMappingManager implements MappingManager {
     @Reference
     protected void setClassMappingFactory(ClassMappingFactory classMappingFactory) {
         this.classMappingFactory = classMappingFactory;
-    }
-
-    @Reference
-    protected void setBranchFactory(BranchFactory branchFactory) {
-        this.branchFactory = branchFactory;
     }
 
     @Reference

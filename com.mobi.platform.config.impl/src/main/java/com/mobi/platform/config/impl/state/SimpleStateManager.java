@@ -26,12 +26,6 @@ package com.mobi.platform.config.impl.state;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.persistence.utils.Bindings;
-import com.mobi.platform.config.api.ontologies.platformconfig.Application;
-import com.mobi.platform.config.api.state.StateManager;
-import com.mobi.query.TupleQueryResult;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -53,6 +47,8 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openrdf.model.vocabulary.RDF;
 
 import java.io.IOException;
@@ -67,6 +63,7 @@ import javax.annotation.Nullable;
 @Component(name = SimpleStateManager.COMPONENT_NAME)
 public class SimpleStateManager implements StateManager {
     protected static final String COMPONENT_NAME = "com.mobi.platform.config.state.StateManager";
+
     private Repository repository;
     private ValueFactory factory;
     private ModelFactory modelFactory;

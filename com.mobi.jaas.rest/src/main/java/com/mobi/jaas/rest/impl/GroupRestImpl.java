@@ -78,7 +78,7 @@ public class GroupRestImpl implements GroupRest {
         this.mobiConfiguration = configuration;
     }
 
-    @Reference(target = "engineName=RdfEngine")
+    @Reference(target = "(engineName=RdfEngine)")
     protected void setRdfEngine(Engine engine) {
         this.rdfEngine = engine;
     }

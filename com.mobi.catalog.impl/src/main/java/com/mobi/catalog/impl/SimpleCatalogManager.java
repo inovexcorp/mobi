@@ -85,7 +85,6 @@ import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,7 +110,7 @@ import javax.annotation.Nullable;
 )
 public class SimpleCatalogManager implements CatalogManager {
 
-    static final String COMPONENT_NAME = "CatalogManager";
+    static final String COMPONENT_NAME = "com.mobi.catalog.api.CatalogManager";
     private static final Logger log = LoggerFactory.getLogger(SimpleCatalogManager.class);
     private Repository repository;
     private ValueFactory vf;

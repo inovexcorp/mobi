@@ -23,27 +23,9 @@
 package com.mobi.etl.service.delimited
 
 import com.mobi.catalog.api.CatalogManager
-import com.mobi.catalog.api.ontologies.mcat.BranchFactory
 import com.mobi.etl.api.config.delimited.MappingRecordConfig
 import com.mobi.etl.api.delimited.MappingId
 import com.mobi.etl.api.delimited.MappingWrapper
-import com.mobi.etl.api.ontologies.delimited.ClassMappingFactory
-import com.mobi.etl.api.ontologies.delimited.DataMappingFactory
-import com.mobi.etl.api.ontologies.delimited.Mapping
-import com.mobi.etl.api.ontologies.delimited.MappingFactory
-import com.mobi.etl.api.ontologies.delimited.MappingRecord
-import com.mobi.etl.api.ontologies.delimited.MappingRecordFactory
-import com.mobi.etl.api.ontologies.delimited.PropertyFactory
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter
-import com.mobi.rdf.orm.conversion.impl.IRIValueConverter
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter
-import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter
-import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter
 import com.mobi.etl.api.ontologies.delimited.*
 import com.mobi.exception.MobiException
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory
@@ -71,7 +53,6 @@ class SimpleMappingManagerSpec extends Specification {
     def mappingFactory = new MappingFactory()
     def classMappingFactory = new ClassMappingFactory()
     def dataMappingFactory = new DataMappingFactory()
-    def branchFactory = new BranchFactory()
     def propertyFactory = new PropertyFactory()
     def builder = new SimpleMappingId.Builder(vf)
 
@@ -110,10 +91,6 @@ class SimpleMappingManagerSpec extends Specification {
         propertyFactory.setModelFactory(mf)
         propertyFactory.setValueConverterRegistry(vcr)
         vcr.registerValueConverter(propertyFactory)
-        branchFactory.setValueFactory(vf)
-        branchFactory.setModelFactory(mf)
-        branchFactory.setValueConverterRegistry(vcr)
-        vcr.registerValueConverter(branchFactory)
 
         vcr.registerValueConverter(new ResourceValueConverter())
         vcr.registerValueConverter(new IRIValueConverter())
@@ -131,7 +108,6 @@ class SimpleMappingManagerSpec extends Specification {
         service.setMappingFactory(mappingFactory)
         service.setMappingFactory(mappingFactory)
         service.setClassMappingFactory(classMappingFactory)
-        service.setBranchFactory(branchFactory)
         service.setSesameTransformer(transformer)
 
         mappingWrapper.getId() >> mappingId

@@ -66,12 +66,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.cache.Cache;
 
-@Component(
-        provide = OntologyManager.class,
-        name = SimpleOntologyManager.COMPONENT_NAME)
+@Component
 public class SimpleOntologyManager implements OntologyManager {
 
-    protected static final String COMPONENT_NAME = "com.mobi.ontology.core.OntologyManager";
     private ValueFactory valueFactory;
     private SesameTransformer sesameTransformer;
     private ModelFactory modelFactory;

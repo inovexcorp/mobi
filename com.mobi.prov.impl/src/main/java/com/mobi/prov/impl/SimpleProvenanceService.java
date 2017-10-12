@@ -30,20 +30,6 @@ import com.mobi.ontologies.provo.ActivityFactory;
 import com.mobi.ontologies.provo.Entity;
 import com.mobi.persistence.utils.ReadOnlyRepositoryConnection;
 import com.mobi.persistence.utils.RepositoryResults;
-import com.mobi.prov.api.ProvenanceService;
-import com.mobi.prov.api.builder.ActivityConfig;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.OrmFactoryRegistry;
-import com.mobi.repository.api.Repository;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.ontologies.provo.Activity;
-import com.mobi.ontologies.provo.ActivityFactory;
-import com.mobi.ontologies.provo.Entity;
-import com.mobi.persistence.utils.ReadOnlyRepositoryConnection;
-import com.mobi.persistence.utils.RepositoryResults;
 import com.mobi.persistence.utils.Statements;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.prov.api.builder.ActivityConfig;
@@ -65,9 +51,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Component( name = SimpleProvenanceService.COMPONENT_NAME )
+@Component
 public class SimpleProvenanceService implements ProvenanceService {
-    static final String COMPONENT_NAME = "ProvenanceService";
     private Repository repo;
     private OrmFactoryRegistry factoryRegistry;
     private ValueFactory vf;

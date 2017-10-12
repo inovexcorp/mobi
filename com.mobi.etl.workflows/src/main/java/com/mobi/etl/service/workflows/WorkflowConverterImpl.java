@@ -59,9 +59,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Component(name = WorkflowConverterImpl.COMPONENT_NAME)
+@Component
 public class WorkflowConverterImpl implements WorkflowConverter {
-    static final String COMPONENT_NAME = "WorkflowConverter";
 
     private OrmFactoryRegistry factoryRegistry;
     private ValueFactory vf;

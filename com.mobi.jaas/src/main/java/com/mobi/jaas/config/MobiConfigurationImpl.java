@@ -40,12 +40,8 @@ import java.util.Map;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 
-@Component(
-        name = MobiConfigurationImpl.COMPONENT_NAME,
-        provide = MobiConfiguration.class
-    )
+@Component
 public class MobiConfigurationImpl extends MobiConfiguration {
-    public static final String COMPONENT_NAME = "MobiConfiguration";
     private static final String RDF_ENGINE = "RdfEngine";
     protected EngineManager engineManager;
     private BundleContext context;

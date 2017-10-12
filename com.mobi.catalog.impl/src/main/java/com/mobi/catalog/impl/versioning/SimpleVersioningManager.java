@@ -51,11 +51,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@Component(
-        name = SimpleVersioningManager.COMPONENT_NAME
-)
+@Component
 public class SimpleVersioningManager implements VersioningManager {
-    static final String COMPONENT_NAME = "VersioningManager";
     private RepositoryManager repositoryManager;
     private OrmFactoryRegistry factoryRegistry;
     private CatalogUtilsService catalogUtils;

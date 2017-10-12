@@ -43,12 +43,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@Component(
-        immediate = true,
-        name = SimpleEngineManager.COMPONENT_NAME
-    )
+@Component(immediate = true)
 public class SimpleEngineManager implements EngineManager {
-    public static final String COMPONENT_NAME = "EngineManager";
     protected Map<String, Engine> engines = new HashMap<>();
 
     @Reference(type = '*', dynamic = true)

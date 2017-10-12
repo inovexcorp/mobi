@@ -68,7 +68,7 @@ public class UserProvider implements MessageBodyWriter<User>, MessageBodyReader<
         this.engineManager = engineManager;
     }
 
-    @Reference(target = "engineName=RdfEngine")
+    @Reference(target = "(engineName=RdfEngine)")
     public void setRdfEngine(Engine engine) {
         this.rdfEngine = engine;
     }

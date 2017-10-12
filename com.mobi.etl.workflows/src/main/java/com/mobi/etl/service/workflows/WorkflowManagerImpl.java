@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
         name = WorkflowManagerImpl.COMPONENT_NAME
     )
 public class WorkflowManagerImpl implements WorkflowManager {
-    static final String COMPONENT_NAME = "WorkflowManager";
+    protected static final String COMPONENT_NAME = "com.mobi.etl.api.workflows.WorkflowManager";
     private static final Logger LOG = LoggerFactory.getLogger(WorkflowManagerImpl.class);
 
     Set<Resource> workflows = new HashSet<>();
