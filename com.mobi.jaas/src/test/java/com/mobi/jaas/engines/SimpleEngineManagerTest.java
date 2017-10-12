@@ -24,29 +24,33 @@ package com.mobi.jaas.engines;
  */
 
 
+import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertNotNull;
+import static junit.framework.TestCase.assertNull;
+import static junit.framework.TestCase.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.GroupConfig;
+import com.mobi.jaas.api.engines.UserConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.Group;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import org.junit.Before;
-import org.junit.Test;
-import com.mobi.jaas.api.engines.Engine;
-import com.mobi.jaas.api.engines.UserConfig;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
-
-import static junit.framework.TestCase.*;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
 
 public class SimpleEngineManagerTest {
     private SimpleEngineManager engineManager;
@@ -94,7 +98,7 @@ public class SimpleEngineManagerTest {
 
     @Test
     public void testContainsEngine() throws Exception {
-        boolean result = engineManager.containsEngine(engine.getClass().getName());
+        boolean result = engineManager.containsEngine(engine.getEngineName());
         assertTrue(result);
 
         result = engineManager.containsEngine("error");
@@ -107,7 +111,7 @@ public class SimpleEngineManagerTest {
         verify(engine, times(0)).getRole("role");
         assertFalse(roleOptional.isPresent());
 
-        roleOptional = engineManager.getRole(engine.getClass().getName(), "role");
+        roleOptional = engineManager.getRole(engine.getEngineName(), "role");
         verify(engine).getRole("role");
         assertTrue(roleOptional.isPresent());
         assertEquals(roleOptional.get(), role);
@@ -119,7 +123,7 @@ public class SimpleEngineManagerTest {
         verify(engine, times(0)).getUsers();
         assertTrue(users.isEmpty());
 
-        users = engineManager.getUsers(engine.getClass().getName());
+        users = engineManager.getUsers(engine.getEngineName());
         verify(engine).getUsers();
         assertEquals(1, users.size());
     }
@@ -137,7 +141,7 @@ public class SimpleEngineManagerTest {
         verify(engine, times(0)).createUser(userConfig);
         assertNull(result);
 
-        result = engineManager.createUser(engine.getClass().getName(), userConfig);
+        result = engineManager.createUser(engine.getEngineName(), userConfig);
         verify(engine).createUser(userConfig);
         assertNotNull(result);
         assertEquals(user, result);
@@ -148,7 +152,7 @@ public class SimpleEngineManagerTest {
         engineManager.storeUser("error", user);
         verify(engine, times(0)).storeUser(user);
 
-        engineManager.storeUser(engine.getClass().getName(), user);
+        engineManager.storeUser(engine.getEngineName(), user);
         verify(engine).storeUser(user);
     }
 
@@ -158,7 +162,7 @@ public class SimpleEngineManagerTest {
         verify(engine, times(0)).retrieveUser("user");
         assertFalse(result.isPresent());
 
-        result = engineManager.retrieveUser(engine.getClass().getName(), "user");
+        result = engineManager.retrieveUser(engine.getEngineName(), "user");
         verify(engine).retrieveUser("user");
         assertTrue(result.isPresent());
         assertEquals(user, result.get());
@@ -184,7 +188,7 @@ public class SimpleEngineManagerTest {
         engineManager.deleteUser("error", "user");
         verify(engine, times(0)).deleteUser("user");
 
-        engineManager.deleteUser(engine.getClass().getName(), "user");
+        engineManager.deleteUser(engine.getEngineName(), "user");
         verify(engine).deleteUser("user");
     }
 
@@ -193,7 +197,7 @@ public class SimpleEngineManagerTest {
         engineManager.updateUser("error", user);
         verify(engine, times(0)).updateUser(user);
 
-        engineManager.updateUser(engine.getClass().getName(), user);
+        engineManager.updateUser(engine.getEngineName(), user);
         verify(engine).updateUser(user);
     }
 
@@ -203,7 +207,7 @@ public class SimpleEngineManagerTest {
         verify(engine, times(0)).userExists("user");
         assertFalse(result);
 
-        result = engineManager.userExists(engine.getClass().getName(), "user");
+        result = engineManager.userExists(engine.getEngineName(), "user");
         verify(engine).userExists("user");
         assertTrue(result);
     }
@@ -226,7 +230,7 @@ public class SimpleEngineManagerTest {
         verify(engine, times(0)).getGroups();
         assertTrue(groups.isEmpty());
 
-        groups = engineManager.getGroups(engine.getClass().getName());
+        groups = engineManager.getGroups(engine.getEngineName());
         verify(engine).getGroups();
         assertEquals(1, groups.size());
     }
@@ -237,7 +241,7 @@ public class SimpleEngineManagerTest {
         verify(engine, times(0)).createGroup(groupConfig);
         assertNull(result);
 
-        result = engineManager.createGroup(engine.getClass().getName(), groupConfig);
+        result = engineManager.createGroup(engine.getEngineName(), groupConfig);
         verify(engine).createGroup(groupConfig);
         assertNotNull(result);
         assertEquals(group, result);
@@ -248,7 +252,7 @@ public class SimpleEngineManagerTest {
         engineManager.storeGroup("error", group);
         verify(engine, times(0)).storeGroup(group);
 
-        engineManager.storeGroup(engine.getClass().getName(), group);
+        engineManager.storeGroup(engine.getEngineName(), group);
         verify(engine).storeGroup(group);
     }
 
@@ -258,7 +262,7 @@ public class SimpleEngineManagerTest {
         verify(engine, times(0)).retrieveGroup("group");
         assertFalse(result.isPresent());
 
-        result = engineManager.retrieveGroup(engine.getClass().getName(), "group");
+        result = engineManager.retrieveGroup(engine.getEngineName(), "group");
         verify(engine).retrieveGroup("group");
         assertTrue(result.isPresent());
         assertEquals(group, result.get());
@@ -269,7 +273,7 @@ public class SimpleEngineManagerTest {
         engineManager.deleteGroup("error", "group");
         verify(engine, times(0)).deleteGroup("group");
 
-        engineManager.deleteGroup(engine.getClass().getName(), "group");
+        engineManager.deleteGroup(engine.getEngineName(), "group");
         verify(engine).deleteGroup("group");
     }
 
@@ -278,7 +282,7 @@ public class SimpleEngineManagerTest {
         engineManager.updateGroup("error", group);
         verify(engine, times(0)).updateGroup(group);
 
-        engineManager.updateGroup(engine.getClass().getName(), group);
+        engineManager.updateGroup(engine.getEngineName(), group);
         verify(engine).updateGroup(group);
     }
 
@@ -288,7 +292,7 @@ public class SimpleEngineManagerTest {
         verify(engine, times(0)).groupExists("group");
         assertFalse(result);
 
-        result = engineManager.groupExists(engine.getClass().getName(), "group");
+        result = engineManager.groupExists(engine.getEngineName(), "group");
         verify(engine).groupExists("group");
         assertTrue(result);
     }
@@ -311,7 +315,7 @@ public class SimpleEngineManagerTest {
         verify(engine, times(0)).getUserRoles("user");
         assertTrue(roles.isEmpty());
 
-        roles = engineManager.getUserRoles(engine.getClass().getName(), "user");
+        roles = engineManager.getUserRoles(engine.getEngineName(), "user");
         verify(engine).getUserRoles("user");
         assertEquals(1, roles.size());
     }
@@ -329,7 +333,7 @@ public class SimpleEngineManagerTest {
         verify(engine, times(0)).checkPassword("user", "password");
         assertFalse(result);
 
-        result = engineManager.checkPassword(engine.getClass().getName(), "user", "password");
+        result = engineManager.checkPassword(engine.getEngineName(), "user", "password");
         verify(engine).checkPassword("user", "password");
         assertTrue(result);
     }

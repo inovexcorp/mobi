@@ -49,11 +49,11 @@ public class SimpleEngineManager implements EngineManager {
 
     @Reference(type = '*', dynamic = true)
     public void addEngine(Engine engine) {
-        engines.put(engine.getClass().getName(), engine);
+        engines.put(engine.getEngineName(), engine);
     }
 
     public void removeEngine(Engine engine) {
-        engines.remove(engine.getClass().getName());
+        engines.remove(engine.getEngineName());
     }
 
     @Override

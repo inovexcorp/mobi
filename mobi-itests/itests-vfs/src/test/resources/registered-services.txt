@@ -1,1 +1,1 @@
-(&(objectClass=VirtualFilesystem)(component.name=com.mobi.vfs.basic))
+(&(objectClass=com.mobi.vfs.api.VirtualFilesystem)(component.name=com.mobi.vfs.basic))
