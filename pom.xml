@@ -67,13 +67,11 @@
         <module>org.matonto.persistence.utils</module>
         <module>org.matonto.ontology.utils</module>
         <module>org.matonto.swagger.ui</module>
-        <module>matonto-bnd-index</module>
         <module>org.matonto.rest.util</module>
         <module>org.matonto.sparql.rest</module>
         <module>org.matonto.catalog.api</module>
         <module>org.matonto.catalog.impl</module>
         <module>org.matonto.catalog.rest</module>
-        <module>matonto-index-dependency</module>
         <module>org.matonto.jaas</module>
         <module>org.matonto.web.security</module>
         <module>org.matonto.jaas.rest</module>

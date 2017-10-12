@@ -39,17 +39,6 @@
 
     <packaging>karaf-assembly</packaging>
 
-    <properties>
-        <bnd.index.version>${project.version}</bnd.index.version>
-        <obr.urls>
-            http://nexus.matonto.org/repository/matonto-releases-obr/.meta/obr.xml \
-            mvn:org.matonto/bnd-index/${project.version}/xml \
-            mvn:org.matonto/index.dependency/${project.version}/xml \
-            mvn:org.matonto/index.sesame4/${project.version}/xml
-        </obr.urls>
-        <deploy.bundles.version></deploy.bundles.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <!-- scope is compile so all features (there is only one) are installed into startup.properties and the feature repo itself is not added in etc/org.apache.karaf.features.cfg file -->
@@ -185,7 +174,6 @@
                 <artifactId>karaf-maven-plugin</artifactId>
                 <extensions>true</extensions>
                 <configuration>
-                    <!-- no startupFeatures -->
                     <startupFeatures>
                         <feature>eventadmin</feature>
                     </startupFeatures>
