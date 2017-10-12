@@ -22,7 +22,7 @@
  */
 (function() {
     'use strict';
-    
+
     angular
         /**
          * @ngdoc overview
@@ -45,14 +45,14 @@
          * endpoints.
          */
         .service('analyticManagerService', analyticManagerService);
-        
+
         analyticManagerService.$inject = ['$http', '$q', 'utilService', 'REST_PREFIX'];
-        
+
         function analyticManagerService($http, $q, utilService, REST_PREFIX) {
             var self = this;
             var prefix = REST_PREFIX + 'analytics';
             var util = utilService;
-            
+
             /**
              * @ngdoc property
              * @name configurationTypes
@@ -64,7 +64,7 @@
              * This list is populated by the `initialize` method.
              */
             self.configurationTypes = [];
-            
+
             /**
              * @ngdoc method
              * @name initialize
@@ -80,7 +80,7 @@
             self.initialize = function() {
                 return self.getConfigurationTypes().then(types => self.configurationTypes = types, $q.reject);
             }
-            
+
             /**
              * @ngdoc method
              * @name getConfigurationTypes
@@ -96,7 +96,7 @@
             self.getConfigurationTypes = function() {
                 return $http.get(prefix + '/configuration-types').then(response => response.data, util.rejectError);
             }
-            
+
             /**
              * @ngdoc method
              * @name createAnalytic
@@ -135,7 +135,7 @@
                 }
                 return $http.post(prefix, fd, config).then(response => response.data, util.rejectError);
             }
-            
+
             /**
              * @ngdoc method
              * @name getAnalytic
@@ -152,7 +152,7 @@
                 return $http.get(prefix + '/' + encodeURIComponent(analyticRecordId))
                     .then(response => response.data, util.rejectError);
             }
-            
+
             /**
              * @ngdoc method
              * @name updateAnalytic

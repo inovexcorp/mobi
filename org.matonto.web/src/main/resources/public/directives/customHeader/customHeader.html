@@ -44,6 +44,6 @@
                 <li ng-if="dvm.um.isAdmin(dvm.lm.currentUser)"><a ng-class="{'active': $state.is('root.user-management')}" ui-sref-active="active" ui-sref="root.user-management">User Management</a></li>
             </ul>
         </div>
-        <a ng-click="dvm.logout()" title="Logout"><i class="fa fa-sign-out fa-fw"></i></a>
+        <a ng-click="dvm.lm.logout()" title="Logout"><i class="fa fa-sign-out fa-fw"></i></a>
     </span>
 </header>
