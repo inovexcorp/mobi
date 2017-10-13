@@ -1,0 +1,51 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<header class="clearfix main-header">
+    <h1>{{pageTitle}}</h1>
+    <object ng-if="pageTitle !== 'Home'" data="images/mobi-primary-logo.png" class="logo">
+        <img src="images/mobi-primary-logo.png" class="logo" />
+    </object>
+    <span class="actions">
+        <div uib-dropdown>
+            <a uib-dropdown-toggle title="Help">
+                <i class="fa fa-fw fa-question-circle"></i>
+            </a>
+            <ul uib-dropdown-menu>
+                <li><a href="https://mobi.inovexcorp.com/docs/" target="_blank">Documentation</a></li>
+                <li role="separator" class="divider"></li>
+                <li><a href="https://groups.google.com/forum/#!forum/matonto" target="_blank">Google Groups Forum</a></li>
+            </ul>
+        </div>
+        <div uib-dropdown>
+            <a uib-dropdown-toggle ng-class="{'active': $state.is('root.settings') || $state.is('root.user-management')}" title="Settings">
+                <i class="fa fa-cog fa-2x fa-fw"></i>
+            </a>
+            <ul uib-dropdown-menu>
+                <li><a ng-class="{'active': $state.is('root.settings')}" ui-sref-active="active" ui-sref="root.settings">My Account</a></li>
+                <li role="separator" class="divider" ng-if="dvm.um.isAdmin(dvm.lm.currentUser)"></li>
+                <li ng-if="dvm.um.isAdmin(dvm.lm.currentUser)"><a ng-class="{'active': $state.is('root.user-management')}" ui-sref-active="active" ui-sref="root.user-management">User Management</a></li>
+            </ul>
+        </div>
+        <a ng-click="dvm.lm.logout()" title="Logout"><i class="fa fa-sign-out fa-fw"></i></a>
+    </span>
+</header>

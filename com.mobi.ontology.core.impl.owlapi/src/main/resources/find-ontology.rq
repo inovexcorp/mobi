@@ -1,0 +1,9 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX ontedit: <http://mobi.com/ontologies/ontology-editor#>
+
+SELECT ?record
+WHERE {
+	?record a ontedit:OntologyRecord ;
+        mcat:catalog ?catalog ;
+		ontedit:ontologyIRI ?ontologyIRI .
+}

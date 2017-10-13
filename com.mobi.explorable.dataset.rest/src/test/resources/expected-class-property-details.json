@@ -1,0 +1,11 @@
+[{
+  "propertyIRI": "http://mobi.com/data-property",
+  "type": "Data",
+  "range": ["http://mobi.com/data/missing"],
+  "restrictions": null
+}, {
+  "propertyIRI": "http://mobi.com/object-property",
+  "type": "Object",
+  "range": ["http://mobi.com/data/missing"],
+  "restrictions": null
+}]

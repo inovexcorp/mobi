@@ -1,1 +1,0 @@
-(&(objectClass=org.matonto.federation.api.FederationService)(component.name=org.matonto.federation.hazelcast))

@@ -1,0 +1,50 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="prop-mapping-overlay overlay">
+    <form class="content" name="dvm.propMappingForm">
+        <h6>{{dvm.state.newProp ? 'Add' : 'Edit'}} Property</h6>
+        <div class="form-group">
+            <custom-label>Property</custom-label>
+            <prop-select props="dvm.state.getAvailableProps(dvm.state.selectedClassMappingId)"
+                         selected-prop="dvm.selectedProp"
+                         is-disabled-when="!dvm.state.newProp"
+                         on-change="dvm.updateRange()"></prop-select>
+        </div>
+        <prop-preview ng-if="dvm.selectedProp" prop-obj="dvm.selectedProp.propObj" ontologies="dvm.state.sourceOntologies"></prop-preview>
+        <div class="range-class-select-container form-group" ng-if="dvm.selectedProp && dvm.om.isObjectProperty(dvm.selectedProp.propObj)">
+            <custom-label>Link To</custom-label>
+            <p class="form-control-static">
+                {{dvm.getClassMappingName()}}
+                <span class="deprecated text-muted" ng-if="dvm.om.isDeprecated(dvm.rangeClass.classObj)">(Deprecated)</span>
+            </p>
+        </div>
+        <div class="column-select-container form-group" ng-if="dvm.selectedProp && !dvm.om.isObjectProperty(dvm.selectedProp.propObj)">
+            <custom-label>Column</custom-label>
+            <column-select selected-column="dvm.selectedColumn"></column-select>
+        </div>
+        <div class="btn-container clearfix">
+            <button class="btn btn-primary pull-right" ng-click="dvm.set()" ng-disabled="dvm.disableSet()">Set</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.cancel()">Cancel</button>
+        </div>
+    </form>
+</div>

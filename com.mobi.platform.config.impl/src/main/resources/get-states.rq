@@ -1,0 +1,10 @@
+PREFIX plat: <http://mobi.com/ontologies/platform/config#>
+
+SELECT
+    ?id
+    (GROUP_CONCAT(DISTINCT ?resource ; separator = ",") AS ?resources)
+WHERE {
+    ?id a plat:State ;
+        plat:forUser ?userId ;
+        plat:stateResource ?resource .
+} GROUP BY ?id

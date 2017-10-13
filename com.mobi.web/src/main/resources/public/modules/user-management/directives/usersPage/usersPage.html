@@ -1,0 +1,117 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="users-page row">
+    <div class="col-xs-4">
+        <block>
+            <block-header>
+                <span>Users</span>
+                <button class="btn btn-link pull-right" ng-click="dvm.createUser()" ng-disabled="!dvm.um.isAdmin(dvm.lm.currentUser)">
+                    <i class="fa fa-plus"></i>Create User
+                </button>
+            </block-header>
+            <block-search ng-model="dvm.state.userSearchString" clear-event="dvm.state.userSearchString = ''"></block-search>
+            <block-content>
+                <users-list></users-list>
+            </block-content>
+            <block-footer class="centered">
+                <button class="btn btn-link" ng-click="dvm.deleteUser()" ng-disabled="!dvm.state.selectedUser || !dvm.um.isAdmin(dvm.lm.currentUser) || dvm.state.selectedUser.username === dvm.lm.currentUser">
+                    <i class="fa fa-trash"></i>Delete User
+                </button>
+            </block-footer>
+        </block>
+    </div>
+    <div class="col-xs-8">
+        <div class="user-title">
+            <h3>{{dvm.state.selectedUser.username}}</h3>
+        </div>
+        <div class="row">
+            <div class="col-xs-6">
+                <div class="row vertical-half">
+                    <div class="col-xs-12">
+                        <block>
+                            <block-header>
+                                <span>Profile</span>
+                                <button class="btn btn-link pull-right" ng-click="dvm.editProfile()" ng-disabled="!dvm.state.selectedUser || !dvm.um.isAdmin(dvm.lm.currentUser)">
+                                    <i class="fa fa-pencil"></i>Edit
+                                </button>
+                            </block-header>
+                            <block-content class="padding">
+                                <div ng-if="dvm.state.selectedUser" class="user-profile">
+                                    <dl class="dl-horizontal">
+                                        <dt>First Name:</dt>
+                                        <dd>{{dvm.state.selectedUser.firstName}}</dd>
+                                        <dt>Last Name:</dt>
+                                        <dd>{{dvm.state.selectedUser.lastName}}</dd>
+                                        <dt>Email:</dt>
+                                        <dd><a href="{{dvm.state.selectedUser.email}}">{{dvm.state.selectedUser.email.replace('mailto:', '')}}</a></dd>
+                                    </dl>
+                                </div>
+                            </block-content>
+                        </block>
+                    </div>
+                </div>
+                <div class="row password-block-row">
+                    <div class="col-xs-12">
+                        <block>
+                            <block-header>
+                                <span>Password</span>
+                            </block-header>
+                            <block-content class="padding">
+                                <button class="btn btn-primary" ng-click="dvm.resetPassword()" ng-disabled="!dvm.state.selectedUser || !dvm.um.isAdmin(dvm.lm.currentUser)">Reset Password</button>
+                            </block-content>
+                        </block>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-6">
+                <div class="row vertical-half">
+                    <div class="col-xs-12">
+                        <block>
+                            <block-header>
+                                <span>Permissions</span>
+                            </block-header>
+                            <block-content class="padding">
+                                <permissions-input ng-if="dvm.state.selectedUser" roles="dvm.roles" is-disabled-when="!dvm.um.isAdmin(dvm.lm.currentUser) || dvm.lm.currentUser === dvm.state.selectedUser.username" on-change="dvm.changeRoles()"></permissions-input>
+                            </block-content>
+                        </block>
+                    </div>
+                </div>
+                <div class="row vertical-half">
+                    <div class="col-xs-12">
+                        <block>
+                            <block-header>
+                                <span>Groups</span>
+                            </block-header>
+                            <block-content class="padding">
+                                <ul ng-if="dvm.state.selectedUser" class="user-groups-list">
+                                    <li ng-repeat="group in dvm.getUserGroups() track by group.title"><a ng-click="dvm.goToGroup(group)">{{group.title}}</a> <small class="admin" ng-if="group.roles.includes('admin')">(Admin)</small></li>
+                                    <li class="no-groups" ng-if="dvm.getUserGroups().length === 0">No groups</li>
+                                </ul>
+                            </block-content>
+                        </block>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,26 @@
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix dataset: <http://mobi.com/ontologies/dataset#> .
+@prefix matuser: <http://mobi.com/ontologies/user/management#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+### DATASETS
+
+GRAPH <http://mobi.com/dataset/not-in-catalog> {
+    <http://mobi.com/dataset/not-in-catalog> a dataset:Dataset .
+}
+
+### OTHER DATA
+
+
+### CATALOG
+
+GRAPH <http://mobi.com/test/catalog-local> {
+    <http://mobi.com/test/catalog-local> a mcat:Catalog .
+}
+
+GRAPH <http://mobi.com/test/catalog-distributed> {
+    <http://mobi.com/test/catalog-distributed> a mcat:Catalog .
+}

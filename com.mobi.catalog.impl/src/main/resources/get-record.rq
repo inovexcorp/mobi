@@ -1,0 +1,25 @@
+PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+
+SELECT
+    ?record
+    (GROUP_CONCAT(DISTINCT ?type ; separator = ",") AS ?types)
+    ?title
+    ?issued
+    ?modified
+    ?description
+    ?identifier
+    (GROUP_CONCAT(DISTINCT ?keyword ; separator = ",") AS ?keywords)
+WHERE {
+	?record a ?type ;
+		dc:title ?title ;
+		dc:issued ?issued ;
+		dc:modified ?modified .
+
+	FILTER(?type IN (mcat:Record, mcat:UnversionedRecord, mcat:VersionedRecord, mcat:VersionedRDFRecord, mcat:OntologyRecord, mcat:MappingRecord, mcat:DatasetRecord))
+	
+	OPTIONAL { ?record dc:description ?description } .
+	OPTIONAL { ?record dc:identifier ?identifier } .
+    OPTIONAL { ?record mcat:keyword ?keyword } .
+} GROUP BY ?record ?title ?issued ?modified ?description ?identifier
+		

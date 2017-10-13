@@ -1,0 +1,32 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="dataset-select">
+    <ui-select ng-model="dvm.bindModel" ng-disabled="dvm.dm.datasetRecords.length === 0" on-select="onSelect()">
+        <ui-select-match placeholder="Select a dataset">
+            <span title="{{$select.selected['@id']}}">{{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
+        </ui-select-match>
+        <ui-select-choices repeat="record['@id'] as record in dvm.datasetRecords | filter:$select.search">
+            <div title="{{record['@id']}}" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:$select.search | trusted"></div>
+        </ui-select-choices>
+    </ui-select>
+</div>

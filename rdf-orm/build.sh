@@ -9,7 +9,7 @@
 mvn clean install $1
 
 # Install the itests-orm binaries: run itests, which builds the generated code and runs the tests.
-cd ../org.matonto.itests/itests-orm/
+cd ../com.mobi.itests/itests-orm/
 mvn clean install $1
 
 # Return to the orm directory.
