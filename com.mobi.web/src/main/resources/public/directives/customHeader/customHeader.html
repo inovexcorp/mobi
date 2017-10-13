@@ -26,16 +26,7 @@
         <img src="images/mobi-primary-logo.png" class="logo" />
     </object>
     <span class="actions">
-        <div uib-dropdown>
-            <a uib-dropdown-toggle title="Help">
-                <i class="fa fa-fw fa-question-circle"></i>
-            </a>
-            <ul uib-dropdown-menu>
-                <li><a href="https://mobi.inovexcorp.com/docs/" target="_blank">Documentation</a></li>
-                <li role="separator" class="divider"></li>
-                <li><a href="https://groups.google.com/forum/#!forum/matonto" target="_blank">Google Groups Forum</a></li>
-            </ul>
-        </div>
+        <a title="Help" href="https://mobi.inovexcorp.com/docs/" target="_blank"><i class="fa fa-fw fa-question-circle"></i></a>
         <div uib-dropdown>
             <a uib-dropdown-toggle ng-class="{'active': $state.is('root.settings') || $state.is('root.user-management')}" title="Settings">
                 <i class="fa fa-cog fa-2x fa-fw"></i>
