@@ -31,7 +31,7 @@
             <ul uib-dropdown-menu>
                 <li><a href="https://mobi.inovexcorp.com/docs/" target="_blank">Documentation</a></li>
                 <li role="separator" class="divider"></li>
-                <li><a href="https://groups.google.com/forum/#!forum/mobi" target="_blank">Google Groups Forum</a></li>
+                <li><a href="https://groups.google.com/forum/#!forum/matonto" target="_blank">Google Groups Forum</a></li>
             </ul>
         </div>
         <div uib-dropdown>
@@ -44,6 +44,6 @@
                 <li ng-if="dvm.um.isAdmin(dvm.lm.currentUser)"><a ng-class="{'active': $state.is('root.user-management')}" ui-sref-active="active" ui-sref="root.user-management">User Management</a></li>
             </ul>
         </div>
-        <a ng-click="dvm.logout()" title="Logout"><i class="fa fa-sign-out fa-fw"></i></a>
+        <a ng-click="dvm.lm.logout()" title="Logout"><i class="fa fa-sign-out fa-fw"></i></a>
     </span>
 </header>

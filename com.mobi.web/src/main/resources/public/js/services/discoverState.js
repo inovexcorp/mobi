@@ -57,31 +57,7 @@
          * 'explore' is an object which holds properties associated with the explore tab in the
          * discover section of the application.
          */
-        self.explore = {
-            active: true,
-            breadcrumbs: ['Classes'],
-            classDeprecated: false,
-            classDetails: [],
-            classId: '',
-            creating: false,
-            editing: false,
-            instance: {
-                changed: [],
-                entity: [{}],
-                metadata: {}
-            },
-            instanceDetails: {
-                currentPage: 0,
-                data: [],
-                limit: 99,
-                links: {
-                    next: '',
-                    prev: ''
-                },
-                total: 0
-            },
-            recordId: ''
-        };
+        self.explore = {};
 
         /**
          * @ngdoc property
@@ -93,23 +69,7 @@
          * 'search' is an object which holds properties associated with the search tab in the
          * discover section of the application.
          */
-        self.search = {
-            active: false,
-            datasetRecordId: '',
-            noDomains: undefined,
-            properties: undefined,
-            queryConfig: {
-                isOrKeywords: false,
-                isOrTypes: false,
-                keywords: [],
-                types: [],
-                filters: [],
-                variables: {}
-            },
-            results: undefined,
-            targetedId: 'discover-search-results',
-            typeObject: undefined
-        };
+        self.search = {};
 
         /**
          * @ngdoc property
@@ -121,10 +81,21 @@
          * 'query' is an object which holds properties associated with the query tab in the
          * discover section of the application.
          */
-        self.query = {
-            active: false
-        };
+        self.query = {};
 
+        setStates();
+
+        /**
+         * @ngdoc method
+         * @name reset
+         * @methodOf discoverState.service:discoverStateService
+         *
+         * @description
+         * Resets all state variables.
+         */
+        self.reset = function() {
+            setStates();
+        }
         /**
          * @ngdoc method
          * @name resetPagedInstanceDetails
@@ -233,6 +204,53 @@
             };
         }
 
+        function setStates() {
+            self.explore = {
+                active: true,
+                breadcrumbs: ['Classes'],
+                classDeprecated: false,
+                classDetails: [],
+                classId: '',
+                creating: false,
+                editing: false,
+                instance: {
+                    changed: [],
+                    entity: [{}],
+                    metadata: {}
+                },
+                instanceDetails: {
+                    currentPage: 0,
+                    data: [],
+                    limit: 99,
+                    links: {
+                        next: '',
+                        prev: ''
+                    },
+                    total: 0
+                },
+                recordId: ''
+            };
+            self.search = {
+                active: false,
+                datasetRecordId: '',
+                noDomains: undefined,
+                properties: undefined,
+                queryConfig: {
+                    isOrKeywords: false,
+                    isOrTypes: false,
+                    keywords: [],
+                    types: [],
+                    filters: [],
+                    variables: {}
+                },
+                results: undefined,
+                targetedId: 'discover-search-results',
+                typeObject: undefined
+            };
+            self.query = {
+                active: false
+            };
+        }
         function resetOnClear() {
             self.resetPagedInstanceDetails();
             self.explore.breadcrumbs = ['Classes'];

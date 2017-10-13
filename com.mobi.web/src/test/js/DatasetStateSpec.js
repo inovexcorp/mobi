@@ -44,6 +44,14 @@ describe('Dataset State service', function() {
         });
     });
 
+    it('should reset all state variables', function() {
+        datasetStateSvc.reset();
+        expect(datasetStateSvc.paginationConfig.pageIndex).toBe(0);
+        expect(datasetStateSvc.paginationConfig.searchText).toBe('');
+        expect(datasetStateSvc.totalSize).toBe(0);
+        expect(datasetStateSvc.links).toEqual({next: '', prev: ''});
+        expect(datasetStateSvc.results).toEqual([]);
+    });
     describe('should set the results of dataset records', function() {
         beforeEach(function() {
             spyOn(datasetStateSvc, 'setPagination');

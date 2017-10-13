@@ -156,7 +156,7 @@
                 self.catalogs.local.openedPath = [cm.localCatalog];
                 self.catalogs.distributed.catalog = cm.distributedCatalog;
                 self.catalogs.distributed.openedPath = [cm.distributedCatalog];
-                _.forEach(_.flatten(_.map(self.catalogs, catalog => _.filter(catalog, val => _.has(val, 'sortOption')))), obj => obj.sortOption = _.get(cm.sortOptions, 0));
+                self.resetSortOptions();
             }
             /**
              * @ngdoc method
@@ -168,6 +168,23 @@
              */
             self.reset = function() {
                 self.resetPagination();
+                self.catalogs.local.openedPath = _.take(self.catalogs.local.openedPath);
+                self.catalogs.distributed.openedPath = _.take(self.catalogs.distributed.openedPath);
+                self.resetSortOptions();
+            }
+            /**
+             * @ngdoc method
+             * @name resetSortOptions
+             * @methodOf catalogState.service:catalogStateService
+             *
+             * @description
+             * Resets all selected sort options.
+             */
+            self.resetSortOptions = function() {
+                _.forEach(
+                    _.flatten(_.map(self.catalogs, catalog => _.filter(catalog, val => _.has(val, 'sortOption')))),
+                    obj => obj.sortOption = _.head(cm.sortOptions)
+                );
             }
             /**
              * @ngdoc method

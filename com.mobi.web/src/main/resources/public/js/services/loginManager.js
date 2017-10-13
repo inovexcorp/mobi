@@ -51,12 +51,29 @@
          */
         .service('loginManagerService', loginManagerService);
 
-        loginManagerService.$inject = ['$q', '$http', '$state', 'catalogManagerService', 'catalogStateService', 'ontologyManagerService', 'userManagerService', 'stateManagerService', 'ontologyStateService', 'datasetManagerService', 'REST_PREFIX'];
+        loginManagerService.$inject = ['$q', '$http', '$state', 'REST_PREFIX',
+            'analyticManagerService',
+            'analyticStateService',
+            'catalogManagerService',
+            'catalogStateService',
+            'datasetManagerService',
+            'datasetStateService',
+            'delimitedManagerService',
+            'discoverStateService',
+            'mapperStateService',
+            'ontologyManagerService',
+            'ontologyStateService',
+            'sparqlManagerService',
+            'stateManagerService',
+            'userManagerService',
+            'userStateService'
+        ];
 
-        function loginManagerService($q, $http, $state, catalogManagerService, catalogStateService, ontologyManagerService, userManagerService, stateManagerService, ontologyStateService, datasetManagerService, REST_PREFIX) {
+    function loginManagerService($q, $http, $state, REST_PREFIX, analyticManagerService, analyticStateService, catalogManagerService, catalogStateService, datasetManagerService, datasetStateService, delimitedManagerService, discoverStateService, mapperStateService, ontologyManagerService, ontologyStateService, sparqlManagerService, stateManagerService, userManagerService, userStateService) {
             var self = this,
                 anon = 'self anon',
-                prefix = REST_PREFIX + 'user/';
+                prefix = REST_PREFIX + 'user/',
+                weGood = false;
 
             /**
              * @ngdoc property
@@ -123,10 +140,20 @@
              * is current. Navigates back to the login page.
              */
             self.logout = function() {
+                analyticStateService.reset();
+                catalogStateService.reset();
+                datasetStateService.reset();
+                delimitedManagerService.reset();
+                discoverStateService.reset();
+                mapperStateService.initialize();
+                mapperStateService.resetEdit();
+                ontologyManagerService.reset();
+                ontologyStateService.reset();
+                sparqlManagerService.reset();
                 $http.get(prefix + 'logout')
                     .then(response => {
                         self.currentUser = '';
-                        $state.go('login');
+                        userStateService.reset();
                     });
                 $state.go('login');
             }
@@ -147,7 +174,7 @@
              * @return {Promise} A Promise that resolves if a user is logged in and rejects with the HTTP
              * response data if no user is logged in.
              */
-            self.isAuthenticated = function () {
+            self.isAuthenticated = function() {
                 var handleError = function(data) {
                     self.currentUser = '';
                     $state.go('login');
@@ -156,14 +183,18 @@
                 return self.getCurrentLogin().then(data => {
                     if (data.scope !== anon) {
                         self.currentUser = data.sub;
-                        catalogManagerService.initialize().then(() => {
-                            catalogStateService.initialize();
-                            ontologyManagerService.initialize();
-                            ontologyStateService.initialize();
-                        });
-                        userManagerService.initialize();
+                        if (!weGood) {
+                            catalogManagerService.initialize().then(() => {
+                                catalogStateService.initialize();
+                                ontologyManagerService.initialize();
+                                ontologyStateService.initialize();
+                            });
+                            userManagerService.initialize();
+                            datasetManagerService.initialize();
+                            analyticManagerService.initialize();
+                            weGood = true;
+                        }
                         stateManagerService.initialize();
-                        datasetManagerService.initialize();
                         return $q.when();
                     } else {
                         return handleError(data);

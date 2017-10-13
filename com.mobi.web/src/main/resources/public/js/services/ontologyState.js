@@ -204,7 +204,7 @@
                 selected: {},
                 failedImports: []
             };
-            
+
             var emptyInProgressCommit = {
                 additions: [],
                 deletions: []
@@ -253,9 +253,20 @@
             self.initialize = function() {
                 catalogId = _.get(cm.localCatalog, '@id', '');
             }
+            /**
+             * @ngdoc method
+             * @name reset
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Resets all state variables.
+             */
             self.reset = function() {
                 self.list = [];
                 self.listItem = {selected: {}};
+                self.setPageTitle();
+                self.showNewTab = false;
+                self.showUploadTab = false;
             }
             /**
              * @ngdoc method
@@ -401,7 +412,7 @@
                         self.listItem = response;
                         self.setSelected(self.getActiveEntityIRI(), false);
                         self.setPageTitle(response.ontologyRecord.type);
-                        return recordId; 
+                        return recordId;
                     }, $q.reject);
             }
             /**
@@ -447,7 +458,7 @@
             self.updateOntology = function(recordId, branchId, commitId, type = 'ontology', upToDate = true, inProgressCommit = emptyInProgressCommit, clearCache = false) {
                 var listItem;
                 var oldListItem = self.getListItemByRecordId(recordId);
-                
+
                 return om.getOntology(recordId, branchId, commitId, 'jsonld', clearCache)
                     .then(ontology => {
                         var ontologyId = om.getOntologyIRI(ontology);
@@ -476,16 +487,16 @@
             }
             self.addOntologyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, title, upToDate = true) {
                 return self.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title)
-                    .then(listItem => { 
-                        self.list.push(listItem); 
-                        return listItem; 
+                    .then(listItem => {
+                        self.list.push(listItem);
+                        return listItem;
                     }, $q.reject);
             }
             self.addVocabularyToList = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, title, upToDate = true) {
                 return self.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title)
-                    .then(listItem => { 
-                        self.list.push(listItem); 
-                        return listItem; 
+                    .then(listItem => {
+                        self.list.push(listItem);
+                        return listItem;
                     }, $q.reject);
             }
             self.createOntologyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
@@ -979,7 +990,7 @@
                         self.listItem = response;
                         self.setSelected(self.getActiveEntityIRI(), false);
                         self.setPageTitle(self.listItem.ontologyRecord.type);
-                        return ontologyId; 
+                        return ontologyId;
                     }, $q.reject);
             }
             /**
@@ -1289,7 +1300,7 @@
             self.getOntologiesArray = function() {
                 return getOntologiesArrayByListItem(self.listItem);
             }
-            
+
             self.updatePropertyIcon = function(entity) {
                 if (om.isProperty(entity)) {
                     setPropertyIcon(entity);
@@ -1297,8 +1308,8 @@
             }
 
             self.hasInProgressCommit = function(listItem = self.listItem) {
-                return listItem.inProgressCommit !== undefined 
-                        && ((listItem.inProgressCommit.additions !== undefined && listItem.inProgressCommit.additions.length > 0) 
+                return listItem.inProgressCommit !== undefined
+                        && ((listItem.inProgressCommit.additions !== undefined && listItem.inProgressCommit.additions.length > 0)
                         || (listItem.inProgressCommit.deletions !== undefined && listItem.inProgressCommit.deletions.length > 0));
             }
 

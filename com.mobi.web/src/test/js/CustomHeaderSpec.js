@@ -21,34 +21,18 @@
  * #L%
  */
 describe('Custom Header directive', function() {
-    var $compile, scope, element, controller, isolatedScope, catalogStateSvc, catalogManagerSvc, ontologyManagerSvc, ontologyStateSvc, mapperStateSvc, delimitedManagerSvc, sparqlManagerSvc, loginManagerSvc, userStateSvc, userManagerSvc;
+    var $compile, scope, element, controller, isolatedScope, loginManagerSvc, userManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('customHeader');
-        mockCatalogState();
-        mockCatalogManager();
-        mockOntologyManager();
-        mockOntologyState();
-        mockMapperState();
-        mockDelimitedManager();
-        mockSparqlManager();
         mockLoginManager();
-        mockUserState();
         mockUserManager();
 
-        inject(function(_$compile_, _$rootScope_, _catalogStateService_, _catalogManagerService_, _ontologyManagerService_, _ontologyStateService_, _mapperStateService_, _delimitedManagerService_, _sparqlManagerService_, _loginManagerService_, _userStateService_, _userManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _loginManagerService_, _userManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            catalogStateSvc = _catalogStateService_;
-            catalogManagerSvc = _catalogManagerService_;
-            ontologyManagerSvc = _ontologyManagerService_;
-            ontologyStateSvc = _ontologyStateService_;
-            mapperStateSvc = _mapperStateService_;
-            delimitedManagerSvc = _delimitedManagerService_;
-            sparqlManagerSvc = _sparqlManagerService_;
             loginManagerSvc = _loginManagerService_;
-            userStateSvc = _userStateService_;
             userManagerSvc = _userManagerService_;
         });
 
@@ -66,21 +50,6 @@ describe('Custom Header directive', function() {
             expect(scope.pageTitle).toEqual('');
         });
     });
-    describe('controller methods', function() {
-        it('should log out of the application', function() {
-            controller.logout();
-            expect(catalogStateSvc.reset).toHaveBeenCalled();
-            expect(ontologyStateSvc.reset).toHaveBeenCalled();
-            expect(ontologyManagerSvc.reset).toHaveBeenCalled();
-            expect(mapperStateSvc.initialize).toHaveBeenCalled();
-            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
-            expect(delimitedManagerSvc.reset).toHaveBeenCalled();
-            expect(sparqlManagerSvc.reset).toHaveBeenCalled();
-            expect(loginManagerSvc.logout).toHaveBeenCalled();
-            expect(userStateSvc.reset).toHaveBeenCalled();
-            expect(userManagerSvc.reset).toHaveBeenCalled();
-        });
-    });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.hasClass('main-header')).toBe(true);
@@ -95,5 +64,10 @@ describe('Custom Header directive', function() {
             scope.$digest();
             expect(element.find('li').length).toBe(6);
         });
+    });
+    it('should logout when the link is clicked', function() {
+        var link = angular.element(element.querySelectorAll('a[title="Logout"]')[0]);
+        link.triggerHandler('click');
+        expect(loginManagerSvc.logout).toHaveBeenCalled();
     });
 });

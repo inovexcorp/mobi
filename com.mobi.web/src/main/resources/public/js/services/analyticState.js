@@ -22,7 +22,7 @@
  */
 (function() {
     'use strict';
-    
+
     angular
         /**
          * @ngdoc overview
@@ -50,9 +50,9 @@
          * state of the analytic module along with some utility functions for those variables.
          */
         .service('analyticStateService', analyticStateService);
-        
+
         analyticStateService.$inject = ['$q', 'datasetManagerService', 'httpService', 'ontologyManagerService', 'prefixes', 'sparqlManagerService', 'utilService'];
-        
+
         function analyticStateService($q, datasetManagerService, httpService, ontologyManagerService, prefixes, sparqlManagerService, utilService) {
             var self = this;
             var subject = '?s';
@@ -60,7 +60,7 @@
             var util = utilService;
             var om = ontologyManagerService;
             var dm = datasetManagerService;
-            
+
             /**
              * @ngdoc property
              * @name landing
@@ -71,7 +71,7 @@
              * 'landing' is a boolean value indicating whether the landing page is shown.
              */
             self.landing = true;
-            
+
             /**
              * @ngdoc property
              * @name editor
@@ -82,7 +82,7 @@
              * 'editor' is a boolean value indicating whether the editor page is shown.
              */
             self.editor = false;
-            
+
             /**
              * @ngdoc property
              * @name datasets
@@ -93,7 +93,7 @@
              * 'datasets' is an array containing the selected datasets.
              */
             self.datasets = [];
-            
+
             /**
              * @ngdoc property
              * @name classes
@@ -105,7 +105,7 @@
              * with the selected datasets.
              */
             self.classes = [];
-            
+
             /**
              * @ngdoc property
              * @name defaultProperties
@@ -137,7 +137,7 @@
              * with the selected datasets.
              */
             self.properties = [];
-            
+
             /**
              * @ngdoc property
              * @name selectedClass
@@ -149,7 +149,7 @@
              * to the analytic editor section.
              */
             self.selectedClass = undefined;
-            
+
             /**
              * @ngdoc property
              * @name enabledProperties
@@ -161,7 +161,7 @@
              * with the selected datasets that have a domain of the selectedClass.
              */
             self.enabledProperties = [];
-            
+
             /**
              * @ngdoc property
              * @name selectedProperties
@@ -173,7 +173,7 @@
              * out to the editor section.from ontologies associated.
              */
             self.selectedProperties = [];
-            
+
             /**
              * @ngdoc property
              * @name results
@@ -191,7 +191,7 @@
              * ```
              */
             self.results = undefined;
-            
+
             /**
              * @ngdoc property
              * @name variables
@@ -203,7 +203,7 @@
              * variable names and their display text.
              */
             self.variables = {};
-            
+
             /**
              * @ngdoc property
              * @name spinnerId
@@ -214,7 +214,7 @@
              * 'spinnerId' is a string which identifies the targeted spinner for the SPARQL query.
              */
             self.spinnerId = 'analytic-spinner';
-            
+
             /**
              * @ngdoc property
              * @name queryError
@@ -225,7 +225,7 @@
              * 'queryError' is a string which includes the error message if the query failed.
              */
             self.queryError = '';
-            
+
             /**
              * @ngdoc property
              * @name currentPage
@@ -236,7 +236,7 @@
              * 'currentPage' is a number indicating which page is currently shown.
              */
             self.currentPage = 0;
-            
+
             /**
              * @ngdoc property
              * @name totalSize
@@ -247,7 +247,7 @@
              * 'totalSize' is a number indicating the total size of the query results.
              */
             self.totalSize = 0;
-            
+
             /**
              * @ngdoc property
              * @name limit
@@ -258,7 +258,7 @@
              * 'limit' is a number which limits how many query results are returned.
              */
             self.limit = 100;
-            
+
             /**
              * @ngdoc property
              * @name links
@@ -269,7 +269,7 @@
              * 'links' is an object which contains the links to the next and previous page of the results.
              */
             self.links = {};
-            
+
             /**
              * @ngdoc property
              * @name query
@@ -281,7 +281,7 @@
              * executed to create the analytic.
              */
             self.query = {};
-            
+
             /**
              * @ngdoc property
              * @name record
@@ -301,7 +301,7 @@
              * ```
              */
             self.record = {};
-            
+
             /**
              * @ngdoc property
              * @name selectedConfigurationId
@@ -312,7 +312,19 @@
              * 'selectedConfigurationId' is a string containing the selected Configuration's ID.
              */
             self.selectedConfigurationId = '';
-            
+
+            /**
+             * @ngdoc method
+             * @name reset
+             * @propertyOf analyticState.service:analyticStateService
+             *
+             * @description
+             * Resets all state variables.
+             */
+            self.reset = function() {
+                self.showLanding();
+            }
+
             /**
              * @ngdoc method
              * @name showEditor
@@ -325,7 +337,7 @@
                 self.landing = false;
                 self.editor = true;
             }
-            
+
             /**
              * @ngdoc method
              * @name showLanding
@@ -338,9 +350,8 @@
                 self.datasets = [];
                 self.classes = [];
                 self.properties = [];
-                self.selectedClass = undefined;
+                self.resetSelected();
                 self.enabledProperties = [];
-                self.selectedProperties = [];
                 self.results = undefined;
                 self.variables = {};
                 self.queryError = '';
@@ -354,7 +365,7 @@
                 self.landing = true;
                 self.editor = false;
             }
-            
+
             /**
              * @ngdoc method
              * @name resetSelected
@@ -367,7 +378,7 @@
                 self.selectedClass = undefined;
                 self.selectedProperties = [];
             }
-            
+
             /**
              * @ngdoc method
              * @name selectClass
@@ -389,7 +400,7 @@
                 self.properties = _.concat(self.properties, angular.copy(self.selectedProperties));
                 self.selectedProperties = [];
             }
-            
+
             /**
              * @ngdoc method
              * @name selectProperty
@@ -405,7 +416,7 @@
                 self.selectedProperties.push(_.remove(self.properties, data)[0]);
                 getPagedResults(self.createQueryString());
             }
-            
+
             /**
              * @ngdoc method
              * @name removeProperty
@@ -479,7 +490,7 @@
                 var generator = new sparqljs.Generator();
                 return generator.stringify(query);
             }
-            
+
             /**
              * @ngdoc method
              * @name getPage
@@ -500,7 +511,7 @@
                         onPagedSuccess(response);
                     }, onPagedError);
             }
-            
+
             /**
              * @ngdoc method
              * @name sortResults
@@ -518,7 +529,7 @@
                 var generator = new sparqljs.Generator();
                 getPagedResults(generator.stringify(self.query));
             }
-            
+
             /**
              * @ngdoc method
              * @name reorderColumns
@@ -537,7 +548,7 @@
                     move(self.query.variables, from, to);
                 }
             }
-            
+
             /**
              * @ngdoc method
              * @name setClassesAndProperties
@@ -570,7 +581,7 @@
                         return $q.resolve();
                     }, () => $q.reject('The Dataset ontologies could not be found'));
             }
-            
+
             /**
              * @ngdoc method
              * @name populateEditor
@@ -626,7 +637,7 @@
                         return $q.reject(errorMessage);
                     });
             }
-            
+
             /**
              * @ngdoc method
              * @name getOntologies
@@ -646,7 +657,7 @@
                     commitId: util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit')
                 }));
             }
-            
+
             /**
              * @ngdoc method
              * @name createTableConfigurationConfig
@@ -671,7 +682,7 @@
                     type: prefixes.analytic + 'TableConfiguration'
                 };
             }
-            
+
             function getPropertyIds(configuration, analyticRecordArray) {
                 var columnIds = _.map(_.get(configuration, prefixes.analytic + 'hasColumn', []), '@id');
                 var result = _.fill(Array(columnIds.length));
@@ -682,7 +693,7 @@
                 });
                 return result;
             }
-            
+
             function getDataset(configuration) {
                 var datasetRecordId = util.getPropertyId(configuration, prefixes.analytic + 'datasetRecord');
                 var datasetRecord = {};
@@ -696,22 +707,22 @@
                 var ontologies = self.getOntologies(dataset, datasetRecord);
                 return {id: datasetRecord['@id'], ontologies};
             }
-            
+
             function getByType(recordArray, typeLocalName) {
                 return _.find(recordArray, obj => _.includes(_.get(obj, '@type', []), prefixes.analytic + typeLocalName));
             }
-            
+
             function move(arr, from, to) {
                 arr.splice(to, 0, _.pullAt(arr, from)[0]);
             }
-            
+
             function createPattern(subject, predicate, object) {
                 return {
                     type: 'bgp',
                     triples: [{ subject, predicate, object }]
                 };
             }
-            
+
             function createVariableExpression(variable) {
                 return {
                     expression: {
@@ -724,7 +735,7 @@
                     variable: variable + 's'
                 };
             }
-            
+
             function getPagedResults(query) {
                 httpService.cancel(self.spinnerId);
                 self.currentPage = 0;
@@ -737,7 +748,7 @@
                 sm.pagedQuery(query, paramObj)
                     .then(onPagedSuccess, onPagedError);
             }
-            
+
             function onPagedSuccess(response) {
                 self.queryError = '';
                 self.results = response.data;
@@ -747,7 +758,7 @@
                 self.links.prev = _.get(links, 'prev', '');
                 self.links.next = _.get(links, 'next', '');
             }
-            
+
             function onPagedError(errorMessage) {
                 self.results = undefined;
                 self.queryError = errorMessage;

@@ -123,6 +123,17 @@
 
             /**
              * @ngdoc method
+             * @name reset
+             * @methodOf datasetState.service:datasetStateService
+             *
+             * @description
+             * Resets all state variables.
+             */
+            self.reset = function() {
+                self.resetPagination();
+            }
+            /**
+             * @ngdoc method
              * @name setResults
              * @methodOf datasetState.service:datasetStateService
              *

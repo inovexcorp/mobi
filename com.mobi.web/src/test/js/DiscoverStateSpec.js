@@ -30,36 +30,14 @@ describe('Discover State Service', function() {
             discoverStateSvc = discoverStateService;
         });
     });
-    
+
     it('default variables should be set properly', function() {
-        expect(discoverStateSvc.explore).toEqual({
-            active: true,
-            breadcrumbs: ['Classes'],
-            classDeprecated: false,
-            classDetails: [],
-            classId: '',
-            creating: false,
-            editing: false,
-            instance: {
-                changed: [],
-                entity: [{}],
-                metadata: {}
-            },
-            instanceDetails: {
-                currentPage: 0,
-                data: [],
-                limit: 99,
-                links: {
-                    next: '',
-                    prev: ''
-                },
-                total: 0
-            },
-            recordId: ''
-        });
-        expect(discoverStateSvc.query).toEqual({active: false});
+        expectInitialState();
     });
-    
+    it('reset should reset all state variables', function() {
+        discoverStateSvc.reset();
+        expectInitialState();
+    });
     it('resetPagedInstanceDetails should reset the proper variables', function() {
         discoverStateSvc.explore.instanceDetails = {
             currentPage: 1,
@@ -83,7 +61,6 @@ describe('Discover State Service', function() {
             total: 0
         });
     });
-    
     describe('cleanUpOnDatasetDelete should reset the proper variables if the datasetIRI', function() {
         beforeEach(function() {
             spyOn(discoverStateSvc, 'resetPagedInstanceDetails');
@@ -118,7 +95,6 @@ describe('Discover State Service', function() {
             expect(discoverStateSvc.resetPagedInstanceDetails).not.toHaveBeenCalled();
         });
     });
-    
     describe('cleanUpOnDatasetClear should reset the proper variables if the datasetIRI', function() {
         beforeEach(function() {
             spyOn(discoverStateSvc, 'resetPagedInstanceDetails');
@@ -151,7 +127,6 @@ describe('Discover State Service', function() {
             expect(discoverStateSvc.resetPagedInstanceDetails).not.toHaveBeenCalled();
         });
     });
-    
     it('clickCrumb should navigate to the selected crumb', function() {
         discoverStateSvc.explore.breadcrumbs = ['', ''];
         discoverStateSvc.explore.editing = true;
@@ -161,7 +136,6 @@ describe('Discover State Service', function() {
         expect(discoverStateSvc.explore.editing).toBe(false);
         expect(discoverStateSvc.explore.creating).toBe(false);
     });
-    
     it('getInstance should return the correct object in the entity', function() {
         discoverStateSvc.explore.instance.metadata = {
             instanceIRI: 'id'
@@ -173,7 +147,6 @@ describe('Discover State Service', function() {
         }];
         expect(discoverStateSvc.getInstance()).toEqual({'@id': 'id'});
     });
-
     it('resetSearchQueryConfig should reset the query config variables', function() {
         discoverStateSvc.search.queryConfig = {
             isOrKeywords: true,
@@ -199,4 +172,50 @@ describe('Discover State Service', function() {
             }
         });
     });
+
+    function expectInitialState() {
+        expect(discoverStateSvc.explore).toEqual({
+            active: true,
+            breadcrumbs: ['Classes'],
+            classDeprecated: false,
+            classDetails: [],
+            classId: '',
+            creating: false,
+            editing: false,
+            instance: {
+                changed: [],
+                entity: [{}],
+                metadata: {}
+            },
+            instanceDetails: {
+                currentPage: 0,
+                data: [],
+                limit: 99,
+                links: {
+                    next: '',
+                    prev: ''
+                },
+                total: 0
+            },
+            recordId: ''
+        });
+        expect(discoverStateSvc.search).toEqual({
+            active: false,
+            datasetRecordId: '',
+            noDomains: undefined,
+            properties: undefined,
+            queryConfig: {
+                isOrKeywords: false,
+                isOrTypes: false,
+                keywords: [],
+                types: [],
+                filters: [],
+                variables: {}
+            },
+            results: undefined,
+            targetedId: 'discover-search-results',
+            typeObject: undefined
+        });
+        expect(discoverStateSvc.query).toEqual({active: false});
+    }
 });

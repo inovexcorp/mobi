@@ -1870,6 +1870,9 @@ describe('Ontology State Service', function() {
         expect(ontologyStateSvc.list).toEqual([]);
         expect(ontologyStateSvc.listItem).toEqual({selected: {}});
         expect(ontologyStateSvc.listItem.selected).toEqual({});
+        expect($state.current.data.title).toBe('Ontology Editor');
+        expect(ontologyStateSvc.showNewTab).toEqual(false);
+        expect(ontologyStateSvc.showUploadTab).toEqual(false);
     });
     describe('afterSave calls the correct functions', function() {
         var getDeferred;

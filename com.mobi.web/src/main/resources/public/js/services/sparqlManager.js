@@ -198,10 +198,17 @@
             self.reset = function() {
                 self.prefixes = [];
                 self.queryString = '';
-                self.data = {};
+                self.datasetRecordIRI = '';
+                self.data = undefined;
                 self.errorMessage = '';
-                self.infoMessage = '';
+                self.infoMessage = 'Please submit a query to see results here.';
                 self.currentPage = 0;
+                self.links = {
+                    next: '',
+                    prev: ''
+                };
+                self.totalSize = 0;
+                self.bindings = [];
             }
 
             /**
