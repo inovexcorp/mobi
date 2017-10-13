@@ -1,0 +1,48 @@
+/*-
+ * #%L
+ * com.mobi.swagger.ui
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* droid-sans-regular - latin */
+@font-face {
+  font-family: 'Droid Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../fonts/droid-sans-v6-latin-regular.eot'); /* IE9 Compat Modes */
+  src: local('Droid Sans'), local('DroidSans'),
+       url('../fonts/droid-sans-v6-latin-regular.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+       url('../fonts/droid-sans-v6-latin-regular.woff2') format('woff2'), /* Super Modern Browsers */
+       url('../fonts/droid-sans-v6-latin-regular.woff') format('woff'), /* Modern Browsers */
+       url('../fonts/droid-sans-v6-latin-regular.ttf') format('truetype'), /* Safari, Android, iOS */
+       url('../fonts/droid-sans-v6-latin-regular.svg#DroidSans') format('svg'); /* Legacy iOS */
+}
+/* droid-sans-700 - latin */
+@font-face {
+  font-family: 'Droid Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: url('../fonts/droid-sans-v6-latin-700.eot'); /* IE9 Compat Modes */
+  src: local('Droid Sans Bold'), local('DroidSans-Bold'),
+       url('../fonts/droid-sans-v6-latin-700.eot?#iefix') format('embedded-opentype'), /* IE6-IE8 */
+       url('../fonts/droid-sans-v6-latin-700.woff2') format('woff2'), /* Super Modern Browsers */
+       url('../fonts/droid-sans-v6-latin-700.woff') format('woff'), /* Modern Browsers */
+       url('../fonts/droid-sans-v6-latin-700.ttf') format('truetype'), /* Safari, Android, iOS */
+       url('../fonts/droid-sans-v6-latin-700.svg#DroidSans') format('svg'); /* Legacy iOS */
+}

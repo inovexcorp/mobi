@@ -1,0 +1,9 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?commit
+WHERE {
+    ?commit a mcat:InProgressCommit ;
+        mcat:onVersionedRDFRecord ?record ;
+        prov:wasAssociatedWith ?user .
+}

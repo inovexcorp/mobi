@@ -1,0 +1,19 @@
+PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX dataset: <http://mobi.com/ontologies/dataset#>
+
+SELECT DISTINCT ?record
+WHERE {
+    ?record a ?type ;
+        mcat:catalog ?catalog ;
+        dc:title ?title ;
+        dc:issued ?issued ;
+        dc:modified ?modified ;
+        ?p ?o .
+
+    FILTER(?type IN (mcat:Record, mcat:UnversionedRecord, mcat:VersionedRecord, mcat:VersionedRDFRecord, mcat:OntologyRecord, mcat:MappingRecord, dataset:DatasetRecord))
+
+    FILTER EXISTS { ?record a ?type_filter . }
+
+    FILTER IF(bound(?search_text), CONTAINS(lcase(?o), lcase(?search_text)), true)
+}

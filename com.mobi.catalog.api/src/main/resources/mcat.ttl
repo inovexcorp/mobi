@@ -1,0 +1,243 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix prov: <http://www.w3.org/ns/prov#>.
+@prefix : <http://mobi.com/ontologies/catalog#>.
+@base <http://mobi.com/ontologies/catalog>.
+
+<http://mobi.com/ontologies/catalog> a owl:Ontology;
+    owl:versionIRI <http://mobi.com/ontologies/catalog#1.0>;
+    owl:imports <http://www.w3.org/ns/prov#>;
+    rdfs:label "The Mobi Catalog Ontology"@en;
+    rdfs:comment "The Mobi catalog ontology is designed to facilitate interoperability between Mobi catalogs published on the Web. By using the Mobi catalog to describe resources, publishers increase discoverability and enable easy consumption of metadata from multiple catalogs. It further enables decentralized publishing of catalogs and facilitates federated resource search across sites. Aggregated Mobi catalog metadata can serve as a manifest file to facilitate digital preservation."@en;
+    dct:creator [foaf:name "Jordan Lewis"], [foaf:name "Megan Mercer"];
+    foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>];
+    dct:modified "2017-10-06"^^xsd:date.
+
+# Catalog
+
+:Catalog a owl:Class;
+    rdfs:label "Catalog"@en;
+    rdfs:comment "A curated collection of metadata about resources."@en.
+
+# Record
+
+:Record a owl:Class;
+    rdfs:label "Record"@en;
+    rdfs:comment "A collection of data, published or curated by a single source, and available for access or download in one or more formats."@en.
+
+:keyword a owl:DatatypeProperty;
+    rdfs:subPropertyOf dct:subject;
+    rdfs:label "keyword"@en;
+    rdfs:comment "A keyword describing the resource."@en;
+    rdfs:domain :Record;
+    rdfs:range rdfs:Literal.
+
+:catalog a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "catalog"@en;
+    rdfs:comment "The Catalog containing the described Record."@en;
+    rdfs:domain :Record;
+    rdfs:range :Catalog.
+
+# Unversioned Record
+
+:UnversionedRecord a owl:Class;
+    rdfs:subClassOf :Record;
+    rdfs:label "Unversioned Record"@en;
+    rdfs:comment "A catalog Record that is not versioned."@en.
+
+:unversionedDistribution a owl:ObjectProperty;
+    rdfs:label "unversioned distribution"@en;
+    rdfs:comment "A Distribution of the described Unversioned Resource."@en;
+    rdfs:domain :UnversionedRecord;
+    rdfs:range :Distribution.
+
+# Versioned Record
+
+:VersionedRecord a owl:Class;
+    rdfs:subClassOf :Record;
+    rdfs:label "Versioned Record"@en;
+    rdfs:comment "A catalog Record that is versioned."@en.
+
+:version a owl:ObjectProperty;
+    rdfs:label "version"@en;
+    rdfs:comment "A version, edition, or adaptation of the described Versioned Record."@en;
+    rdfs:domain :VersionedRecord;
+    rdfs:range :Version.
+
+:latestVersion a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "latest version"@en;
+    rdfs:comment "The latest available Version on the Versioned Record."@en;
+    rdfs:domain :VersionedRecord;
+    rdfs:range :Version.
+
+# Versioned RDF Record
+
+:VersionedRDFRecord a owl:Class;
+    rdfs:subClassOf :VersionedRecord;
+    rdfs:label "Versioned RDF Record"@en;
+    rdfs:comment "A catalog Record for an RDF resource that is versioned."@en.
+
+:branch a owl:ObjectProperty;
+    rdfs:label "branch"@en;
+    rdfs:comment "A Branch of the described Versioned RDF Record."@en;
+    rdfs:domain :VersionedRDFRecord;
+    rdfs:range :Branch.
+
+:masterBranch a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "master branch"@en;
+    rdfs:comment "The master Branch of the described Versioned RDF Record."@en;
+    rdfs:domain :VersionedRDFRecord;
+    rdfs:range :Branch.
+
+# Branch
+
+:Branch a owl:Class;
+    rdfs:label "Branch"@en;
+    rdfs:comment "A set of Commits of a Versioned RDF Record."@en.
+
+:head a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "head"@en;
+    rdfs:comment "The latest Commit of the described Branch."@en;
+    rdfs:domain :Branch;
+    rdfs:range :Commit.
+
+# UserBranch
+
+:UserBranch a owl:Class;
+    rdfs:subClassOf :Branch;
+    rdfs:label "User Branch"@en;
+    rdfs:comment "A set of Commits of a Versioned RDF Record linked to a specific User."@en.
+
+:createdFrom a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "created from"@en;
+    rdfs:comment "The Branch that the described UserBranch was created from."@en;
+    rdfs:domain :UserBranch;
+    rdfs:range :Branch.
+
+# Version
+
+:Version a owl:Class;
+    rdfs:label "Version"@en;
+    rdfs:comment "A specific state of a Versioned Record."@en.
+
+:versionedDistribution a owl:ObjectProperty;
+    rdfs:label "versioned distribution"@en;
+    rdfs:comment "A distribution of the described Version of a Record."@en;
+    rdfs:domain :Version;
+    rdfs:range :Distribution.
+
+# Tag
+
+:Tag a owl:Class;
+    rdfs:subClassOf :Version;
+    rdfs:label "Tag"@en;
+    rdfs:comment "A tag on a Versioned RDF Record pointing to a Commit of interest."@en.
+
+:commit a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "commit"@en;
+    rdfs:comment "The tagged commit for the described Tag."@en;
+    rdfs:domain :Tag;
+    rdfs:range :Commit.
+
+# Distribution
+
+:Distribution a owl:Class;
+    rdfs:label "Distribution"@en;
+    rdfs:comment "Represents a specific available form of a record. Each record might be available in different forms, these forms might represent different formats of the record or different endpoints. Examples of distributions include a downloadable CSV file, an API or an RSS feed."@en.
+
+:accessURL a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "access URL"@en;
+    rdfs:domain :Distribution;
+    rdfs:range xsd:anyURI;
+    rdfs:comment "Could be any kind of URL that gives access to a distribution of the record. E.g. landing page, download, feed URL, SPARQL endpoint. Use when your catalog does not have information on which it is or when it is definitely not a download."@en.
+
+:downloadURL a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "download URL"@en;
+    rdfs:domain :Distribution;
+    rdfs:range xsd:anyURI;
+    rdfs:comment "This is a direct link to a downloadable file in a given format. E.g. CSV file or RDF file. The format is described by the distribution's dc:format and/or :mediaType."@en.
+
+# Commit
+
+:Commit a owl:Class;
+    rdfs:subClassOf prov:Activity;
+    rdfs:label "Commit"@en;
+    rdfs:comment "The provenance describing a commit activity made on a Versioned RDF Record."@en.
+
+:baseCommit a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf prov:wasInformedBy ;
+    rdfs:label "base commit"@en ;
+    rdfs:comment "The base Commit of the described Commit."@en ;
+    rdfs:domain :Commit ;
+    rdfs:range :Commit .
+
+:auxiliaryCommit a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf prov:wasInformedBy ;
+    rdfs:label "auxiliary commit"@en ;
+    rdfs:comment "The Commit that was merged into the described Commit."@en ;
+    rdfs:domain :Commit ;
+    rdfs:range :Commit .
+
+# In Progress Commit
+
+:InProgressCommit a owl:Class;
+    rdfs:subClassOf :Commit;
+    rdfs:label "In Progress Commit"@en;
+    rdfs:comment "The provenance describing a commit activity that is currently being made on a Versioned RDF Record."@en.
+
+:onVersionedRDFRecord a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "on versioned RDF record"@en;
+    rdfs:comment "The versioned RDF record that the described In Progress Commit belongs to."@en;
+    rdfs:domain :InProgressCommit;
+    rdfs:range :VersionedRDFRecord.
+
+# Revision
+
+:Revision a owl:Class;
+    rdfs:subClassOf prov:Entity;
+    rdfs:label "Revision"@en;
+    rdfs:comment "The entity created by a Commit."@en.
+
+:additions a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "additions"@en;
+    rdfs:comment "Links the IRI of a graph containing the triples that were added with the described Revision."@en;
+    rdfs:domain :Revision;
+    rdfs:range xsd:anyURI.
+
+:deletions a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "deletions"@en;
+    rdfs:comment "Links the IRI of a graph containing the triples that were deleted with the described Revision."@en;
+    rdfs:domain :Revision;
+    rdfs:range xsd:anyURI.
+
+:graphRevision a owl:ObjectProperty ;
+    rdfs:label "graph revision"@en ;
+    rdfs:comment "A Revision to track changes to a named graph."@en ;
+    rdfs:domain :Revision ;
+    rdfs:range :GraphRevision .
+
+# Graph Revision
+
+:GraphRevision a owl:Class;
+    rdfs:subClassOf :Revision;
+    rdfs:label "Graph Revision"@en;
+    rdfs:comment "An entity created by a Commit to track changes to a named graph."@en.
+
+:revisionedGraph a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "revisioned graph"@en;
+    rdfs:comment "Links the Resource of the revisioned named graph."@en;
+    rdfs:domain :GraphRevision;
+    rdfs:range <http://mobi.com/ontologies/mobi#Identifier>.
+
+# Misc.
+
+# Blank node class issue
+#:distribution a owl:ObjectProperty;
+#    rdfs:label "distribution"@en;
+#    rdfs:comment "A distribution of a Version of a Versioned Resource or an Unversioned Resource."@en;
+#    rdfs:domain [a owl:Class; owl:unionOf(:Version :UnversionedRecord)];
+#    rdfs:range :Distribution.

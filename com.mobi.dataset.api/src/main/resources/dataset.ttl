@@ -1,0 +1,85 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix prov: <http://www.w3.org/ns/prov-o#> .
+@prefix matg: <http://mobi.com/ontologies/graph#> .
+@prefix matcat: <http://mobi.com/ontologies/catalog#> .
+@prefix mobi: <http://mobi.com/ontologies/mobi#> .
+@prefix : <http://mobi.com/ontologies/dataset#> .
+@base <http://mobi.com/ontologies/dataset> .
+
+<http://mobi.com/ontologies/dataset> a owl:Ontology ;
+    owl:versionIRI <http://mobi.com/ontologies/dataset#1.0> ;
+    owl:imports <http://mobi.com/ontologies/catalog> , <http://mobi.com/ontologies/Mobi> ;
+    rdfs:label "Mobi Dataset Ontology"@en;
+    rdfs:comment "The Mobi dataset ontology describes the structure of dataset objects and how they relate to the Mobi Catalog."@en;
+    dct:creator [foaf:name "Stephen Kahmann"] ;
+    foaf:maker [foaf:name "Mobi" ; foaf:homepage <https://mobi.inovexcorp.com/>] ;
+    dct:modified "2017-10-06"^^xsd:date .
+
+# Dataset
+
+:Dataset a owl:Class ;
+    rdfs:label "Dataset"@en ;
+    rdfs:comment "A collection of named graph identifiers that correspond to RDF Graphs in an RDF Dataset."@en ;
+    rdfs:seeAlso "https://www.w3.org/TR/rdf11-concepts/#section-dataset" .
+
+:systemDefaultNamedGraph a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:label "System Default Named Graph"@en ;
+    rdfs:comment "The resource representing the default named graph of an RDF Dataset that is created and maintained
+    by the system. This graph is used when loading default graph data and no other default named graph is specified"@en ;
+    rdfs:seeAlso "https://www.w3.org/TR/rdf11-concepts/#section-dataset" ;
+    rdfs:domain :Dataset ;
+    rdfs:range mobi:Identifier .
+
+:defaultNamedGraph a owl:ObjectProperty ;
+    rdfs:label "Default Named Graph"@en ;
+    rdfs:comment "A resource representing a default named graph of an RDF Dataset."@en ;
+    rdfs:seeAlso "https://www.w3.org/TR/rdf11-concepts/#section-dataset" ;
+    rdfs:domain :Dataset ;
+    rdfs:range mobi:Identifier .
+
+:namedGraph a owl:ObjectProperty ;
+    rdfs:label "Named Graph"@en ;
+    rdfs:comment "A resource representing a named graph of an RDF Dataset."@en ;
+    rdfs:seeAlso "https://www.w3.org/TR/rdf11-concepts/#section-dataset" ;
+    rdfs:domain :Dataset ;
+    rdfs:range mobi:Identifier .
+
+# DatasetRecord
+
+:DatasetRecord a owl:Class ;
+    rdfs:subClassOf matcat:UnversionedRecord ;
+    rdfs:label "Dataset"@en ;
+    rdfs:comment "A record describing a collection of RDF Graphs that make up an RDF Dataset."@en ;
+    rdfs:seeAlso "https://www.w3.org/TR/rdf11-concepts/#section-dataset" .
+
+:dataset a owl:ObjectProperty , owl:FunctionalProperty ;
+    rdfs:label "Dataset"@en ;
+    rdfs:comment "The Dataset described by this record."@en ;
+    rdfs:seeAlso "https://www.w3.org/TR/rdf11-concepts/#section-dataset" ;
+    rdfs:domain :DatasetRecord ;
+    rdfs:range :Dataset .
+
+:repository a owl:DatatypeProperty , owl:FunctionalProperty ;
+    rdfs:label "Repository"@en ;
+    rdfs:comment "The repository where the dataset object and its data is stored."@en ;
+    rdfs:domain :DatasetRecord ;
+    rdfs:range xsd:string .
+
+:ontology a owl:DatatypeProperty ;
+    rdfs:domain :DatasetRecord .
+
+# Misc.
+
+:linksToRecord a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:range matcat:VersionedRDFRecord .
+
+:linksToBranch a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:range matcat:Branch .
+
+:linksToCommit a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:range matcat:Commit .

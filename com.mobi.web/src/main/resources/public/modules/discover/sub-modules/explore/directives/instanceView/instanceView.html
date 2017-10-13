@@ -1,0 +1,65 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="instance-view">
+    <block>
+        <block-header>
+            <breadcrumbs class="pull-left" items="dvm.ds.explore.breadcrumbs" on-click="dvm.ds.clickCrumb(index)"></breadcrumbs>
+            <a class="pull-right edit-button" ng-click="dvm.ds.explore.editing = true"><i class="fa fa-pencil-square-o"></i>Edit</a>
+        </block-header>
+        <block-content>
+            <div class="row">
+                <div class="col-xs-8 col-xs-offset-2">
+                    <h2>{{dvm.ds.explore.instance.metadata.title}} <small>&lt;{{dvm.ds.explore.instance.metadata.instanceIRI}}&gt;</small></h2>
+                    <p class="lead">{{dvm.ds.explore.instance.metadata.description}}</p>
+                    <div ng-repeat="(key, value) in dvm.entity track by $index">
+                        <h3 class="property">{{dvm.util.getBeautifulIRI(key)}}</h3>
+                        <ul class="values" ng-class="{'show-more': more, 'show-link': value.length > 1}">
+                            <li ng-repeat="item in value track by $index" ng-init="reification = dvm.getReification(key, item)">
+                                <div class="value-container">
+                                    <value-display value="item"></value-display>
+                                    <span class="show-reification pull-right" ng-show="reification" ng-click="showReification = !showReification"><i class="fa" ng-class="{'fa-angle-down': !showReification, 'fa-angle-up': showReification}"></i></span>
+                                </div>
+                                <div class="well well-sm" uib-collapse="!showReification">
+                                    <div ng-repeat="(keyR, valueR) in reification track by $index">
+                                        <h3 class="property">{{dvm.util.getBeautifulIRI(keyR)}}</h3>
+                                        <ul class="values" ng-class="{'show-more': moreR, 'show-link': valueR.length > 1}">
+                                            <li ng-repeat="itemR in valueR track by $index">
+                                                <value-display value="itemR"></value-display>
+                                            </li>
+                                            <li class="link-container">
+                                                <a class="link" ng-class="{'more': moreR}" ng-click="moreR = !moreR">Show</a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="link-container">
+                                <a class="link" ng-class="{'more': more}" ng-click="more = !more">Show</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </block-content>
+    </block>
+</div>
