@@ -29,13 +29,9 @@ body.collapsed-nav .main-header {
         top: 0;
     }
 
-    img {
+    .logo {
         height: 42px;
         padding: 8px;
-        
-        &.home {
-            display: none;
-        }
     }
 
     .actions {

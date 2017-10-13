@@ -22,7 +22,9 @@
   -->
 <header class="clearfix main-header">
     <h1>{{pageTitle}}</h1>
-    <img ng-if="pageTitle !== 'Home'" src="images/mobi-primary-logo.png">
+    <object ng-if="pageTitle !== 'Home'" data="images/mobi-primary-logo.png" class="logo">
+        <img src="images/mobi-primary-logo.png" />
+    </object>
     <span class="actions">
         <div uib-dropdown>
             <a uib-dropdown-toggle title="Help">

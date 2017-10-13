@@ -245,7 +245,7 @@ gulp.task('inject-minified', ['minify-scripts', 'minify-css', 'html'], function(
 
 // Compresses images
 gulp.task('images', function() {
-    return gulp.src(src + 'images/**/*')
+    return gulp.src(src + 'images/**.*')
         .pipe(cache(
             imagemin({
                 optimizationLevel: 5,
