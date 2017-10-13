@@ -212,6 +212,8 @@ public abstract class AuthHttpContext implements HttpContext {
             return "text/css";
         } else if (str.endsWith(".js")) {
             return "application/javascript";
+        } else if (str.endsWith(".svg")) {
+            return "image/svg+xml";
         } else {
             return "text/html";
         }

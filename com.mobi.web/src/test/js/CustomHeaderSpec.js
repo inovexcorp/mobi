@@ -58,11 +58,11 @@ describe('Custom Header directive', function() {
         it('for user management item', function(){
             userManagerSvc.isAdmin.and.returnValue(false);
             scope.$digest();
-            expect(element.find('li').length).toBe(4);
+            expect(element.find('li').length).toBe(1);
 
             userManagerSvc.isAdmin.and.returnValue(true);
             scope.$digest();
-            expect(element.find('li').length).toBe(6);
+            expect(element.find('li').length).toBe(3);
         });
     });
     it('should logout when the link is clicked', function() {
