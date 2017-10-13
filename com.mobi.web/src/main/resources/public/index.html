@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+
+<html ng-app="app">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="icon" href="images/favicon.ico">
+        <title ng-bind="$state.current.data.title + ' | Mobi'"></title>
+        <!-- inject:css -->
+        <!-- endinject -->
+    </head>
+    <body ng-class="{'collapsed-nav': $root.collapsedNav}">
+        <div ng-if="!!$state.current.name && $state.current.name !== 'login'" class="full-height">
+            <nav ui-view="nav"></nav>
+            <div class="main-page">
+                <custom-header page-title="$state.current.data.title"></custom-header>
+                <section ui-view="container" class="view-container full-height"></section>
+            </div>
+        </div>
+        <section ng-if="$state.current.name === 'login'" ui-view="container" class="view-container full-height"></section>
+        <footer ui-view="footer"></footer>
+        <spinner ng-show="pendingRequests > 0"></spinner>
+        <!-- inject:js -->
+        <!-- endinject -->
+    </body>
+</html>

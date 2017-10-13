@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  MatOnto
+  Mobi
   $Id:$
   $HeadURL:$
   %%
@@ -27,14 +27,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.matonto</groupId>
+    <groupId>com.mobi</groupId>
     <artifactId>root</artifactId>
     <version>1.9.33-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
-    <name>MatOnto</name>
-    <url>http://matonto.org</url>
+    <name>Mobi</name>
+    <url>https://mobi.inovexcorp.com/</url>
 
     <licenses>
         <license>
@@ -45,63 +45,63 @@
     </licenses>
 
     <modules>
-        <module>matonto-parent</module>
-        <module>org.matonto.persistence.api</module>
-        <module>org.matonto.rdf.impl.sesame</module>
-        <module>org.matonto.etl.api</module>
-        <module>org.matonto.etl.cli</module>
-        <module>org.matonto.etl.delimited</module>
-        <module>org.matonto.etl.rdf</module>
-        <module>org.matonto.etl.rest</module>
-        <module>org.matonto.ontology.api</module>
-        <module>org.matonto.ontology.core.impl.owlapi</module>
-        <module>org.matonto.ontology.rest</module>
-        <module>org.matonto.web</module>
-        <module>org.matonto.api</module>
-        <module>org.matonto.vfs</module>
-        <module>org.matonto.repository.impl.sesame</module>
-        <module>org.matonto.semantic.service</module>
-        <module>matonto-distribution</module>
-        <module>org.matonto.repository.impl.core</module>
-        <module>org.matonto.persistence.cli</module>
-        <module>org.matonto.persistence.utils</module>
-        <module>org.matonto.ontology.utils</module>
-        <module>org.matonto.swagger.ui</module>
-        <module>org.matonto.rest.util</module>
-        <module>org.matonto.sparql.rest</module>
-        <module>org.matonto.catalog.api</module>
-        <module>org.matonto.catalog.impl</module>
-        <module>org.matonto.catalog.rest</module>
-        <module>org.matonto.jaas</module>
-        <module>org.matonto.web.security</module>
-        <module>org.matonto.jaas.rest</module>
-        <module>org.matonto.federation.api</module>
-        <module>org.matonto.federation.hazelcast</module>
-        <module>org.matonto.federation.cli</module>
-        <module>matonto-karaf-feature</module>
-        <module>org.matonto.rdf.orm.ontologies</module>
+        <module>mobi-parent</module>
+        <module>com.mobi.persistence.api</module>
+        <module>com.mobi.rdf.impl.sesame</module>
+        <module>com.mobi.etl.api</module>
+        <module>com.mobi.etl.cli</module>
+        <module>com.mobi.etl.delimited</module>
+        <module>com.mobi.etl.rdf</module>
+        <module>com.mobi.etl.rest</module>
+        <module>com.mobi.ontology.api</module>
+        <module>com.mobi.ontology.core.impl.owlapi</module>
+        <module>com.mobi.ontology.rest</module>
+        <module>com.mobi.web</module>
+        <module>com.mobi.api</module>
+        <module>com.mobi.vfs</module>
+        <module>com.mobi.repository.impl.sesame</module>
+        <module>com.mobi.semantic.service</module>
+        <module>mobi-distribution</module>
+        <module>com.mobi.repository.impl.core</module>
+        <module>com.mobi.persistence.cli</module>
+        <module>com.mobi.persistence.utils</module>
+        <module>com.mobi.ontology.utils</module>
+        <module>com.mobi.swagger.ui</module>
+        <module>com.mobi.rest.util</module>
+        <module>com.mobi.sparql.rest</module>
+        <module>com.mobi.catalog.api</module>
+        <module>com.mobi.catalog.impl</module>
+        <module>com.mobi.catalog.rest</module>
+        <module>com.mobi.jaas</module>
+        <module>com.mobi.web.security</module>
+        <module>com.mobi.jaas.rest</module>
+        <module>com.mobi.federation.api</module>
+        <module>com.mobi.federation.hazelcast</module>
+        <module>com.mobi.federation.cli</module>
+        <module>mobi-karaf-feature</module>
+        <module>com.mobi.rdf.orm.ontologies</module>
         <module>rdf-orm</module>
-        <module>org.matonto.jaas.api</module>
-        <module>org.matonto.jaas.proxy</module>
-        <module>org.matonto.platform.config.api</module>
-        <module>org.matonto.platform.config.rest</module>
-        <module>org.matonto.platform.config.impl</module>
-        <module>org.matonto.dataset.api</module>
-        <module>org.matonto.dataset.impl</module>
-        <module>org.matonto.dataset.rest</module>
-        <module>org.matonto.sparql.utils</module>
-        <module>org.matonto.cache</module>
-        <module>org.matonto.cache.impl.ehcache</module>
-        <module>org.matonto.explorable.dataset.rest</module>
-        <module>org.matonto.etl.workflows</module>
-        <module>matonto-itests</module>
-        <module>org.matonto.prov.api</module>
-        <module>org.matonto.prov.impl</module>
-        <module>org.matonto.analytic.api</module>
-        <module>org.matonto.analytic.impl</module>
-        <module>org.matonto.analytic.rest</module>
-        <module>org.matonto.prov.rest</module>
-        <module>org.matonto.sparql.cli</module>
+        <module>com.mobi.jaas.api</module>
+        <module>com.mobi.jaas.proxy</module>
+        <module>com.mobi.platform.config.api</module>
+        <module>com.mobi.platform.config.rest</module>
+        <module>com.mobi.platform.config.impl</module>
+        <module>com.mobi.dataset.api</module>
+        <module>com.mobi.dataset.impl</module>
+        <module>com.mobi.dataset.rest</module>
+        <module>com.mobi.sparql.utils</module>
+        <module>com.mobi.cache</module>
+        <module>com.mobi.cache.impl.ehcache</module>
+        <module>com.mobi.explorable.dataset.rest</module>
+        <module>com.mobi.etl.workflows</module>
+        <module>mobi-itests</module>
+        <module>com.mobi.prov.api</module>
+        <module>com.mobi.prov.impl</module>
+        <module>com.mobi.analytic.api</module>
+        <module>com.mobi.analytic.impl</module>
+        <module>com.mobi.analytic.rest</module>
+        <module>com.mobi.prov.rest</module>
+        <module>com.mobi.sparql.cli</module>
     </modules>
 
     <properties>
@@ -142,7 +142,7 @@
                     <addSvnKeyWords>true</addSvnKeyWords>
                     <useMissingFile>true</useMissingFile>
                     <missingFile>legal/THIRD-PARTY.properties</missingFile>
-                    <excludedGroups>org.matonto</excludedGroups>
+                    <excludedGroups>com.mobi</excludedGroups>
                     <excludes>
                         <exclude>**/test/resources/**</exclude>
                     </excludes>

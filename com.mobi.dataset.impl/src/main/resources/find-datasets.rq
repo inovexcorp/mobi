@@ -1,0 +1,14 @@
+PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX dataset: <http://mobi.com/ontologies/dataset#>
+
+SELECT
+    DISTINCT ?dataset
+WHERE {
+    ?catalog a mcat:Catalog .
+
+	?record a dataset:DatasetRecord ;
+	    mcat:catalog ?catalog ;
+	    dataset:dataset ?dataset ;
+	    dataset:repository ?repository .
+}

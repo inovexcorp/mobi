@@ -1,0 +1,14 @@
+{
+  "individuals": {
+    "https://mobi.com/vocabulary#ConceptSubClass": [
+      "https://mobi.com/vocabulary#Concept2",
+      "https://mobi.com/vocabulary#Concept1"
+    ],
+    "http://mobi.com/ontology#Class1a": [
+      "http://mobi.com/ontology#Individual1a"
+    ],
+    "http://mobi.com/ontology#Class1b": [
+      "http://mobi.com/ontology#Individual1b"
+    ]
+  }
+}

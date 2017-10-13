@@ -1,0 +1,213 @@
+<http://mobi.com/dataset/a9a20370-e4d8-43c0-8a13-6e720b2ede10_system_dng> {
+	<http://mobi.com/data/uhtc/material/c1855eb9-89dc-445e-8f02-22c1162c0844> a <http://mobi.com/ontologies/uhtc/Material> ;
+		<http://www.w3.org/2000/01/rdf-schema#label> "ZrN" ;
+		<http://mobi.com/ontologies/uhtc/density> 7.29E0 ;
+		<http://www.w3.org/2000/01/rdf-schema#comment> "Comment" ;
+		<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/FCC> .
+
+	<http://mobi.com/data/uhtc/material/fb17ca2f-f9d0-4a4d-b780-2f4025983ae2> a <http://mobi.com/ontologies/uhtc/Material> ;
+		<http://mobi.com/ontologies/uhtc/density> 1.276E1 ;
+		<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/FCC> ;
+		<http://www.w3.org/2000/01/rdf-schema#comment> "Comment" ;
+		<http://www.w3.org/2000/01/rdf-schema#label> "HfC" .
+
+	<http://mobi.com/data/uhtc/material/4e60785a-e091-4f26-834a-198aebeb3483> a <http://mobi.com/ontologies/uhtc/Material> ;
+		<http://mobi.com/ontologies/uhtc/density> 1.119E1 ;
+		<http://www.w3.org/2000/01/rdf-schema#comment> "Comment" ;
+		<http://www.w3.org/2000/01/rdf-schema#label> "HfB2" ;
+		<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Hexagonal> .
+
+	<http://mobi.com/data/uhtc/material/2e345d0d-20a6-4329-b8e7-e5cb2709edb6> a <http://mobi.com/ontologies/uhtc/Material> ;
+		<http://mobi.com/ontologies/uhtc/density> 1.45E1 ;
+		<http://www.w3.org/2000/01/rdf-schema#label> "TaC" ;
+		<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Cubic> ;
+		<http://www.w3.org/2000/01/rdf-schema#comment> "Comment" .
+
+	<http://mobi.com/data/uhtc/material/9d273e6a-2a97-47eb-9a14-529ce8d8343e> a <http://mobi.com/ontologies/uhtc/Material> ;
+		<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Polymorphic> ;
+		<http://mobi.com/ontologies/uhtc/density> 3.21E0 ;
+		<http://www.w3.org/2000/01/rdf-schema#label> "SiC" ;
+		<http://www.w3.org/2000/01/rdf-schema#comment> "Comment" .
+
+	<http://mobi.com/data/uhtc/material/b5989d3b-047d-4903-8533-1f520d8ce5b2> a <http://mobi.com/ontologies/uhtc/Material> ;
+		<http://www.w3.org/2000/01/rdf-schema#comment> "Comment" ;
+		<http://mobi.com/ontologies/uhtc/density> 1.254E1 ;
+		<http://www.w3.org/2000/01/rdf-schema#label> "TaB2" ;
+		<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Hexagonal> .
+
+	<http://mobi.com/data/uhtc/material/6e6e9300-bf78-4493-8705-223d10ef0093> a <http://mobi.com/ontologies/uhtc/Material> ;
+		<http://www.w3.org/2000/01/rdf-schema#label> "TiN" ;
+		<http://www.w3.org/2000/01/rdf-schema#comment> "Comment" ;
+		<http://mobi.com/ontologies/uhtc/density> 5.39E0 ;
+		<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/FCC> .
+
+	<http://mobi.com/data/uhtc/material/12e0c002-1bec-4bdc-b475-19ca88cc04cc> a <http://mobi.com/ontologies/uhtc/Material> ;
+		<http://www.w3.org/2000/01/rdf-schema#comment> "Comment" ;
+		<http://www.w3.org/2000/01/rdf-schema#label> "ZrB2" ;
+		<http://mobi.com/ontologies/uhtc/density> 6.1E0 ;
+		<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Hexagonal> .
+
+	<http://mobi.com/data/uhtc/material/00698807-763b-40cc-a74a-4f78b706f1d5> a <http://mobi.com/ontologies/uhtc/Material> ;
+		<http://mobi.com/ontologies/uhtc/density> 1.43E1 ;
+		<http://www.w3.org/2000/01/rdf-schema#label> "TaN" ;
+		<http://www.w3.org/2000/01/rdf-schema#comment> "Comment" ;
+		<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Cubic> .
+
+	<http://mobi.com/data/uhtc/material/70402dcc-47ae-4b9f-a788-8f66b06b2d00> a <http://mobi.com/ontologies/uhtc/Material> ;
+		<http://mobi.com/ontologies/uhtc/density> 4.94E0 ;
+		<http://www.w3.org/2000/01/rdf-schema#label> "TiC" ;
+		<http://www.w3.org/2000/01/rdf-schema#comment> "Comment" ;
+		<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Cubic> .
+
+	<http://mobi.com/data/uhtc/material/57824c72-69ca-4d4d-875a-22c37d179549> a <http://mobi.com/ontologies/uhtc/Material> ;
+		<http://mobi.com/ontologies/uhtc/density> 1.39E1 ;
+		<http://www.w3.org/2000/01/rdf-schema#label> "HfN" ;
+		<http://www.w3.org/2000/01/rdf-schema#comment> "Comment" ;
+		<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/FCC> .
+
+	<http://mobi.com/data/uhtc/material/810a4205-df93-4951-8945-5081680a4fcf> a <http://mobi.com/ontologies/uhtc/Material> ;
+		<http://www.w3.org/2000/01/rdf-schema#comment> "Comment" ;
+		<http://mobi.com/ontologies/uhtc/density> 4.52E0 ;
+		<http://www.w3.org/2000/01/rdf-schema#label> "TiB2" ;
+		<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Hexagonal> .
+
+	<http://mobi.com/data/uhtc/material/14fb99d6-32ec-445e-8192-12630fcb77a6> a <http://mobi.com/ontologies/uhtc/Material> ;
+		<http://www.w3.org/2000/01/rdf-schema#comment> "Comment" ;
+		<http://www.w3.org/2000/01/rdf-schema#label> "ZrC" ;
+		<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/FCC> ;
+		<http://mobi.com/ontologies/uhtc/density> 6.56E0 .
+
+	<http://mobi.com/data/uhtc/crystalstructure/Cubic> a <http://mobi.com/ontologies/uhtc/CrystalStructure> ;
+	    <http://www.w3.org/2000/01/rdf-schema#label> "French Label"@fr ;
+	    <http://www.w3.org/2000/01/rdf-schema#label> "Label"@en ;
+	    <http://www.w3.org/2000/01/rdf-schema#comment> "Comment" ;
+		<http://purl.org/dc/terms/title> "Title" ;
+		<http://purl.org/dc/terms/description> "Description" .
+
+	<http://mobi.com/data/uhtc/crystalstructure/FCC> a <http://mobi.com/ontologies/uhtc/CrystalStructure> ;
+	    <http://www.w3.org/2000/01/rdf-schema#comment> "French Comment"@fr ;
+	    <http://www.w3.org/2000/01/rdf-schema#comment> "Comment"@en ;
+		<http://purl.org/dc/terms/title> "Title" ;
+		<http://purl.org/dc/terms/description> "Description" .
+
+	<http://mobi.com/data/uhtc/crystalstructure/Hexagonal> a <http://mobi.com/ontologies/uhtc/CrystalStructure> ;
+	    <http://www.w3.org/2000/01/rdf-schema#label> "Label" ;
+		<http://purl.org/dc/terms/title> "Title" ;
+		<http://purl.org/dc/terms/description> "French Description"@fr ;
+		<http://purl.org/dc/terms/description> "Description"@en .
+
+	<http://mobi.com/data/uhtc/crystalstructure/Polymorphic> a <http://mobi.com/ontologies/uhtc/CrystalStructure> ;
+	    <http://purl.org/dc/terms/title> "French Title"@fr ;
+		<http://purl.org/dc/terms/title> "Title"@en ;
+		<http://purl.org/dc/terms/description> "Description" .
+
+	_:x1 a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement> ;
+	    <http://www.w3.org/1999/02/22-rdf-syntax-ns#subject> <http://mobi.com/data/uhtc/crystalstructure/Polymorphic> ;
+	    <http://www.w3.org/1999/02/22-rdf-syntax-ns#predicate> <http://purl.org/dc/terms/description> ;
+	    <http://www.w3.org/1999/02/22-rdf-syntax-ns#object> "Description" ;
+	    <http://purl.org/dc/terms/creator> <http://mobi.com/user/1> .
+
+	<http://mobi.com/data/large> <http://purl.org/dc/terms/title> "0" ;
+	    <http://purl.org/dc/terms/title> "1" ;
+	    <http://purl.org/dc/terms/title> "2" ;
+	    <http://purl.org/dc/terms/title> "3" ;
+	    <http://purl.org/dc/terms/title> "4" ;
+	    <http://purl.org/dc/terms/title> "5" ;
+	    <http://purl.org/dc/terms/title> "6" ;
+	    <http://purl.org/dc/terms/title> "7" ;
+	    <http://purl.org/dc/terms/title> "8" ;
+	    <http://purl.org/dc/terms/title> "9" ;
+	    <http://purl.org/dc/terms/title> "10" ;
+	    <http://purl.org/dc/terms/title> "11" ;
+	    <http://purl.org/dc/terms/title> "12" ;
+	    <http://purl.org/dc/terms/title> "13" ;
+	    <http://purl.org/dc/terms/title> "14" ;
+	    <http://purl.org/dc/terms/title> "15" ;
+	    <http://purl.org/dc/terms/title> "16" ;
+	    <http://purl.org/dc/terms/title> "17" ;
+	    <http://purl.org/dc/terms/title> "18" ;
+	    <http://purl.org/dc/terms/title> "19" ;
+	    <http://purl.org/dc/terms/title> "20" ;
+	    <http://purl.org/dc/terms/title> "21" ;
+	    <http://purl.org/dc/terms/title> "22" ;
+	    <http://purl.org/dc/terms/title> "23" ;
+	    <http://purl.org/dc/terms/title> "24" ;
+	    <http://purl.org/dc/terms/title> "25" ;
+	    <http://purl.org/dc/terms/title> "26" ;
+	    <http://purl.org/dc/terms/title> "27" ;
+	    <http://purl.org/dc/terms/title> "28" ;
+	    <http://purl.org/dc/terms/title> "29" ;
+	    <http://purl.org/dc/terms/title> "30" ;
+	    <http://purl.org/dc/terms/title> "31" ;
+	    <http://purl.org/dc/terms/title> "32" ;
+	    <http://purl.org/dc/terms/title> "33" ;
+	    <http://purl.org/dc/terms/title> "34" ;
+	    <http://purl.org/dc/terms/title> "35" ;
+	    <http://purl.org/dc/terms/title> "36" ;
+	    <http://purl.org/dc/terms/title> "37" ;
+	    <http://purl.org/dc/terms/title> "38" ;
+	    <http://purl.org/dc/terms/title> "39" ;
+	    <http://purl.org/dc/terms/title> "40" ;
+	    <http://purl.org/dc/terms/title> "41" ;
+	    <http://purl.org/dc/terms/title> "42" ;
+	    <http://purl.org/dc/terms/title> "43" ;
+	    <http://purl.org/dc/terms/title> "44" ;
+	    <http://purl.org/dc/terms/title> "45" ;
+	    <http://purl.org/dc/terms/title> "46" ;
+	    <http://purl.org/dc/terms/title> "47" ;
+	    <http://purl.org/dc/terms/title> "48" ;
+	    <http://purl.org/dc/terms/title> "49" ;
+	    <http://purl.org/dc/terms/title> "50" ;
+	    <http://purl.org/dc/terms/title> "51" ;
+	    <http://purl.org/dc/terms/title> "52" ;
+	    <http://purl.org/dc/terms/title> "53" ;
+	    <http://purl.org/dc/terms/title> "54" ;
+	    <http://purl.org/dc/terms/title> "55" ;
+	    <http://purl.org/dc/terms/title> "56" ;
+	    <http://purl.org/dc/terms/title> "57" ;
+	    <http://purl.org/dc/terms/title> "58" ;
+	    <http://purl.org/dc/terms/title> "59" ;
+	    <http://purl.org/dc/terms/title> "60" ;
+	    <http://purl.org/dc/terms/title> "61" ;
+	    <http://purl.org/dc/terms/title> "62" ;
+	    <http://purl.org/dc/terms/title> "63" ;
+	    <http://purl.org/dc/terms/title> "64" ;
+	    <http://purl.org/dc/terms/title> "65" ;
+	    <http://purl.org/dc/terms/title> "66" ;
+	    <http://purl.org/dc/terms/title> "67" ;
+	    <http://purl.org/dc/terms/title> "68" ;
+	    <http://purl.org/dc/terms/title> "69" ;
+	    <http://purl.org/dc/terms/title> "70" ;
+	    <http://purl.org/dc/terms/title> "71" ;
+	    <http://purl.org/dc/terms/title> "72" ;
+	    <http://purl.org/dc/terms/title> "73" ;
+	    <http://purl.org/dc/terms/title> "74" ;
+	    <http://purl.org/dc/terms/title> "75" ;
+	    <http://purl.org/dc/terms/title> "76" ;
+	    <http://purl.org/dc/terms/title> "77" ;
+	    <http://purl.org/dc/terms/title> "78" ;
+	    <http://purl.org/dc/terms/title> "79" ;
+	    <http://purl.org/dc/terms/title> "80" ;
+	    <http://purl.org/dc/terms/title> "81" ;
+	    <http://purl.org/dc/terms/title> "82" ;
+	    <http://purl.org/dc/terms/title> "83" ;
+	    <http://purl.org/dc/terms/title> "84" ;
+	    <http://purl.org/dc/terms/title> "85" ;
+	    <http://purl.org/dc/terms/title> "86" ;
+	    <http://purl.org/dc/terms/title> "87" ;
+	    <http://purl.org/dc/terms/title> "88" ;
+	    <http://purl.org/dc/terms/title> "89" ;
+	    <http://purl.org/dc/terms/title> "90" ;
+	    <http://purl.org/dc/terms/title> "91" ;
+	    <http://purl.org/dc/terms/title> "92" ;
+	    <http://purl.org/dc/terms/title> "93" ;
+	    <http://purl.org/dc/terms/title> "94" ;
+	    <http://purl.org/dc/terms/title> "95" ;
+	    <http://purl.org/dc/terms/title> "96" ;
+	    <http://purl.org/dc/terms/title> "97" ;
+	    <http://purl.org/dc/terms/title> "98" ;
+	    <http://purl.org/dc/terms/title> "99" ;
+	    <http://purl.org/dc/terms/title> "100" ;
+	    <http://purl.org/dc/terms/title> "101" .
+
+}
