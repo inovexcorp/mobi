@@ -70,7 +70,8 @@ body.collapsed-nav {
         position: absolute;
         width: 200px;
 
-        img {
+        .logo {
+            float: left;
             height: 30px;
             padding-left: 10px;
         }
