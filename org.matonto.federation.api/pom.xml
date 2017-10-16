@@ -38,8 +38,26 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>jaas.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.matonto</groupId>
+            <artifactId>rdf.orm</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>biz.aQute.bnd</groupId>
             <artifactId>biz.aQute.bndlib</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
         </dependency>
     </dependencies>
 
@@ -54,7 +72,7 @@
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            org.matonto.federation.api
+                            org.matonto.federation.api*
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
@@ -62,6 +80,31 @@
                     </instructions>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.matonto.orm</groupId>
+                <artifactId>rdf-orm-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>generateOrmSources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>generate-orm</goal>
+                        </goals>
+                        <inherited>false</inherited>
+                        <configuration>
+                            <generates>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/federation.ttl</ontologyFile>
+                                    <outputPackage>org.matonto.federation.api.ontologies.federation</outputPackage>
+                                    <ontologyName>Federation</ontologyName>
+                                </ontology>
+                            </generates>
+                            <outputLocation>${project.basedir}/src/main/java</outputLocation>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 </project>

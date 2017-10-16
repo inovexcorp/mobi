@@ -31,7 +31,7 @@ import org.matonto.jaas.api.config.LoginModuleConfig;
 import org.matonto.jaas.api.config.MatontoConfiguration;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.modules.password.PasswordLoginModule;
-import org.matonto.jaas.api.modules.token.TokenLoginModule;
+import org.matonto.jaas.api.modules.token.SimpleTokenLoginModule;
 import org.matonto.jaas.proxy.ProxyLoginModule;
 import org.osgi.framework.BundleContext;
 
@@ -48,6 +48,7 @@ public class MatontoConfigurationImpl extends MatontoConfiguration {
     public static final String COMPONENT_NAME = "org.matonto.jaas.api.config.MatontoConfiguration";
     private static final String RDF_ENGINE = "org.matonto.jaas.engines.RdfEngine";
     protected EngineManager engineManager;
+//    protected FederationUserUtils userUtils;
     private BundleContext context;
 
     @Activate
@@ -65,6 +66,11 @@ public class MatontoConfigurationImpl extends MatontoConfiguration {
         this.engineManager = engineManager;
     }
 
+//    @Reference
+//    public void setFederationUserUtils(FederationUserUtils userUtils) {
+//        this.userUtils = userUtils;
+//    }
+
     @Override
     public AppConfigurationEntry[] getAppConfigurationEntry(String name) {
         if (name.equals("matonto")) {
@@ -73,7 +79,13 @@ public class MatontoConfigurationImpl extends MatontoConfiguration {
             tokenOptions.put(LoginModuleConfig.ENGINE, RDF_ENGINE);
             tokenOptions.put(BundleContext.class.getName(), context);
             tokenOptions.put(ProxyLoginModule.BUNDLE_ID, Long.toString(context.getBundle().getBundleId()));
-            tokenOptions.put(ProxyLoginModule.MODULE, TokenLoginModule.class.getName());
+            tokenOptions.put(ProxyLoginModule.MODULE, SimpleTokenLoginModule.class.getName());
+
+//            Map<String, Object> federationTokenOptions = new HashMap<>();
+//            federationTokenOptions.put(FederationLoginModuleConfig.USER_UTILS, userUtils);
+//            federationTokenOptions.put(BundleContext.class.getName(), context);
+//            federationTokenOptions.put(ProxyLoginModule.BUNDLE_ID, Long.toString(context.getBundle().getBundleId()));
+//            federationTokenOptions.put(ProxyLoginModule.MODULE, FederationTokenLoginModule.class.getName());
 
             Map<String, Object> passwordOptions = new HashMap<>();
             passwordOptions.put(LoginModuleConfig.ENGINE_MANAGER, engineManager);

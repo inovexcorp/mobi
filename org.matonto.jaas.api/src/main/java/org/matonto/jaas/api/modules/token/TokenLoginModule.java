@@ -2,11 +2,11 @@ package org.matonto.jaas.api.modules.token;
 
 /*-
  * #%L
- * org.matonto.jaas
+ * org.matonto.jaas.api
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -28,7 +28,6 @@ import com.nimbusds.jwt.SignedJWT;
 import org.matonto.jaas.api.config.LoginModuleConfig;
 import org.matonto.jaas.api.engines.EngineManager;
 import org.matonto.jaas.api.principals.UserPrincipal;
-import org.matonto.jaas.api.utils.TokenUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,44 +36,36 @@ import java.text.ParseException;
 import java.util.Map;
 import java.util.Optional;
 import javax.security.auth.Subject;
-import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 import javax.security.auth.spi.LoginModule;
 
-public class TokenLoginModule implements LoginModule {
+public abstract class TokenLoginModule<T extends TokenCallback> implements LoginModule {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TokenLoginModule.class.getName());
-    private EngineManager engineManager;
-    private String engineName;
+    private static final Logger LOG = LoggerFactory.getLogger(TokenLoginModule.class);
     private Subject subject;
     private CallbackHandler callbackHandler;
     private String userId;
 
+    protected abstract T[] getCallbacks();
+
+    protected abstract Optional<SignedJWT> verifyToken(T callback) throws ParseException, JOSEException;
+
+    protected abstract void verifyUser(String user, T callback) throws LoginException;
+
     @Override
-    public void initialize(Subject subject, CallbackHandler callbackHandler,
-                           Map<String, ?> sharedState, Map<String, ?> options) {
+    public void initialize(Subject subject, CallbackHandler handler, Map<String, ?> state, Map<String, ?> options) {
         this.subject = subject;
-        this.callbackHandler = callbackHandler;
-        engineManager = (EngineManager) options.get(LoginModuleConfig.ENGINE_MANAGER);
-        engineName = options.get(LoginModuleConfig.ENGINE) + "";
-        LOG.debug("Initialized TokenLoginModule engineName=" + engineName);
+        this.callbackHandler = handler;
     }
 
     @Override
     public boolean login() throws LoginException {
         LOG.debug("Verifying token...");
 
-        if (!engineManager.containsEngine(engineName)) {
-            String msg = "Engine " + engineName + " is not registered with SimpleEngineManager";
-            LOG.debug(msg);
-            throw new LoginException(msg);
-        }
-
-        Callback[] callbacks = new Callback[1];
-        callbacks[0] = new TokenCallback();
+        T[] callbacks = getCallbacks();
 
         try {
             callbackHandler.handle(callbacks);
@@ -87,7 +78,7 @@ public class TokenLoginModule implements LoginModule {
             throw new LoginException(msg);
         }
 
-        String tokenString = ((TokenCallback) callbacks[0]).getTokenString();
+        String tokenString = callbacks[0].getTokenString();
         if (tokenString == null) {
             String msg = "Unable to retrieve token string";
             LOG.debug(msg);
@@ -96,7 +87,7 @@ public class TokenLoginModule implements LoginModule {
 
         Optional<SignedJWT> tokenOptional;
         try {
-            tokenOptional = TokenUtils.verifyToken(tokenString);
+            tokenOptional = verifyToken(callbacks[0]);
         } catch (ParseException e) {
             String msg = "Problem parsing JWT";
             LOG.debug(msg);
@@ -125,9 +116,7 @@ public class TokenLoginModule implements LoginModule {
             throw new FailedLoginException(msg);
         }
 
-        if (!engineManager.userExists(engineName, user)) {
-            throw new FailedLoginException("User " + user + " does not exist");
-        }
+        verifyUser(user, callbacks[0]);
 
         this.userId = user;
         LOG.debug("Successfully logged in " + user);

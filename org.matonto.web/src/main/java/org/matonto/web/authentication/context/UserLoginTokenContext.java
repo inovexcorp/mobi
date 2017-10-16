@@ -42,9 +42,7 @@ public class UserLoginTokenContext extends AuthHttpContext {
 
     @Override
     protected boolean handleAuth(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        Optional<UserCredentials> userCredsOptional;
-
-        userCredsOptional = processFormAuth(request);
+        Optional<UserCredentials> userCredsOptional = processFormAuth(request);
 
         if (!userCredsOptional.isPresent()) {
             log.debug("Could not find creds from Form Auth. Trying BASIC Auth...");
@@ -66,10 +64,9 @@ public class UserLoginTokenContext extends AuthHttpContext {
 
             log.debug("Authentication successful.");
             return true;
-        } else {
-            log.debug("Authentication failed.");
-            return false;
         }
+        log.debug("Authentication failed.");
+        return false;
     }
 
     @Override
@@ -83,9 +80,8 @@ public class UserLoginTokenContext extends AuthHttpContext {
 
         if (username != null && password != null) {
             return Optional.of(new UserCredentials(username, password));
-        } else {
-            return Optional.empty();
         }
+        return Optional.empty();
     }
 
     private Optional<UserCredentials> processBasicAuth(HttpServletRequest request) {

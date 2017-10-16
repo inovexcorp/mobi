@@ -30,24 +30,44 @@ import aQute.bnd.annotation.component.Deactivate;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
 import aQute.bnd.annotation.metatype.Configurable;
+import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ReplicatedMap;
 import com.hazelcast.osgi.HazelcastOSGiInstance;
 import com.hazelcast.osgi.HazelcastOSGiService;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jwt.SignedJWT;
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.matonto.exception.MatOntoException;
 import org.matonto.federation.api.FederationService;
 import org.matonto.federation.api.FederationServiceConfig;
+import org.matonto.federation.api.FederationUserUtils;
+import org.matonto.federation.api.ontologies.federation.FederationNode;
+import org.matonto.federation.api.ontologies.federation.FederationNodeFactory;
 import org.matonto.federation.hazelcast.config.HazelcastConfigurationFactory;
 import org.matonto.federation.hazelcast.config.HazelcastFederationServiceConfig;
 import org.matonto.federation.hazelcast.listener.FederationServiceLifecycleListener;
+import org.matonto.federation.hazelcast.serializable.HazelcastFederationNode;
+import org.matonto.jaas.api.utils.TokenUtils;
 import org.matonto.platform.config.api.server.MatOnto;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
+import org.matonto.rdf.api.IRI;
+import org.matonto.rdf.api.ValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
+import java.text.ParseException;
+import java.time.OffsetDateTime;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Hashtable;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -55,6 +75,7 @@ import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Semaphore;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * This is the {@link FederationService} implementation built on top of Hazelcast.
@@ -65,15 +86,14 @@ import java.util.concurrent.Semaphore;
         name = HazelcastFederationService.NAME,
         properties = {
                 "federationType=hazelcast"
-        },
-        provide = {}
+        }
 )
 public class HazelcastFederationService implements FederationService {
 
     /**
      * Key where we'll store a {@link com.hazelcast.core.ReplicatedMap} of federated nodes and metadata about them.
      */
-    public static final String FEDERATION_MEMBERS_KEY = "federation.members";
+    public static final String FEDERATION_NODES_KEY = "federation.nodes";
 
     /**
      * The name of this service type.
@@ -89,6 +109,8 @@ public class HazelcastFederationService implements FederationService {
      * Core platform service for accessing central server functionality.
      */
     private MatOnto matOntoServer;
+    private ValueFactory vf;
+    private FederationNodeFactory federationNodeFactory;
 
     /**
      * {@link HazelcastOSGiService} instance.
@@ -108,7 +130,7 @@ public class HazelcastFederationService implements FederationService {
     /**
      * Map of MatOnto nodes currently in the federation to some metadata about the node.
      */
-    private ReplicatedMap<UUID, String> federationNodes;
+    private ReplicatedMap<UUID, HazelcastFederationNode> federationNodes;
 
     /**
      * Listener for membership changes and lifecycle changes.
@@ -121,14 +143,21 @@ public class HazelcastFederationService implements FederationService {
     private ForkJoinTask<?> initializationTask;
 
     /**
-     * Service registration if it is necessary.
-     */
-    private ServiceRegistration<FederationService> registration;
-
-    /**
      * Lock to protect the hazelcast instance.
      */
     private Semaphore semaphore = new Semaphore(1, true);
+
+    /**
+     * The unique key to generate and verify federation tokens.
+     */
+    private byte[] tokenKey;
+
+    private FederationUserUtils userUtils;
+
+    /**
+     * Encryptor needed to decrypt the configuration's sharedKey to properly populate the tokenKey.
+     */
+    private StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
 
     @Reference
     void setMatOntoServer(MatOnto matOntoServer) {
@@ -136,18 +165,32 @@ public class HazelcastFederationService implements FederationService {
     }
 
     @Reference
+    void setValueFactory(ValueFactory valueFactory) {
+        this.vf = valueFactory;
+    }
+
+    @Reference
+    void setFederationNodeFactory(FederationNodeFactory federationNodeFactory) {
+        this.federationNodeFactory = federationNodeFactory;
+    }
+
+    @Reference
     void setHazelcastOSGiService(HazelcastOSGiService hazelcastOSGiService) {
         this.hazelcastOSGiService = hazelcastOSGiService;
+    }
+
+    @Reference
+    void setFederationUserUtils(FederationUserUtils userUtils) {
+        this.userUtils = userUtils;
     }
 
     /**
      * Method that joins the hazelcast federation when the service is activated.
      */
     @Activate
-    void activate(BundleContext context, Map<String, Object> configuration) {
+    void activate(Map<String, Object> configuration) {
         this.configuration = configuration;
         start();
-        this.registration = context.registerService(FederationService.class, this, new Hashtable<>(configuration));
     }
 
     /**
@@ -156,11 +199,11 @@ public class HazelcastFederationService implements FederationService {
      * @param configuration The configuration map for this service
      */
     @Modified
-    void modified(BundleContext context, Map<String, Object> configuration) {
+    void modified(Map<String, Object> configuration) {
         LOGGER.warn("Modified configuration of service! Going to deactivate, and re-activate with new"
                 + " configuration...");
         deactivate();
-        activate(context, configuration);
+        activate(configuration);
     }
 
     /**
@@ -169,16 +212,6 @@ public class HazelcastFederationService implements FederationService {
     @Deactivate
     void deactivate() {
         stop();
-        // Blank out previous configuration.
-        this.configuration = null;
-        // Unregister previous service.
-        if (registration != null) {
-            LOGGER.info("Un-registering previously registered service in the OSGi service registry");
-            registration.unregister();
-            registration = null;
-        } else {
-            LOGGER.warn("No previously registered service, so we're skipping this deactivation step");
-        }
     }
 
     @Override
@@ -196,9 +229,10 @@ public class HazelcastFederationService implements FederationService {
             this.semaphore.acquireUninterruptibly();
             try {
                 LOGGER.debug("Spinning up underlying hazelcast instance");
-                this.hazelcastInstance = this.hazelcastOSGiService
-                        .newHazelcastInstance(HazelcastConfigurationFactory.build(serviceConfig,
-                                this.matOntoServer.getServerIdentifier().toString()));
+                Config config = HazelcastConfigurationFactory.build(serviceConfig,
+                        this.matOntoServer.getServerIdentifier().toString());
+                config.setClassLoader(getClass().getClassLoader());
+                this.hazelcastInstance = this.hazelcastOSGiService.newHazelcastInstance(config);
                 LOGGER.info("Federation Service {}: Successfully initialized Hazelcast instance",
                         this.matOntoServer.getServerIdentifier());
                 // Listen to lifecycle changes...
@@ -206,10 +240,12 @@ public class HazelcastFederationService implements FederationService {
                 this.hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
                 this.hazelcastInstance.getCluster().addMembershipListener(listener);
                 registerWithFederationNodes(hazelcastInstance);
+                userUtils.createMapEntry(this);
             } finally {
                 this.semaphore.release();
             }
         });
+        this.tokenKey = encryptor.decrypt(serviceConfig.sharedKey()).getBytes(StandardCharsets.UTF_8);
         LOGGER.info("Successfully spawned initialization thread.");
     }
 
@@ -228,6 +264,35 @@ public class HazelcastFederationService implements FederationService {
 
         // Shut down the hazelcast instance.
         if (this.hazelcastInstance != null) {
+            String federationId = getFederationId();
+            UUID nodeId = getNodeId();
+            if (nodeId == null) {
+                LOGGER.warn("Unable to retrieve node ID from hazelcast instance: {}.", federationId);
+            } else {
+                if (this.federationNodes == null) {
+                    LOGGER.info("Attempting to retrieve distributed data structure for federation: {} on node: {}.",
+                            federationId, nodeId);
+                    this.federationNodes = this.hazelcastInstance.getReplicatedMap(FEDERATION_NODES_KEY);
+                }
+                if (this.federationNodes == null) {
+                    LOGGER.warn("Unable to access distributed data structure for federation: {} on node: {}.",
+                            federationId, nodeId);
+                } else {
+                    try {
+                        HazelcastFederationNode node = this.federationNodes.get(nodeId);
+                        if (node != null) {
+                            node.setNodeActive(false);
+                            node.setNodeLastUpdated(OffsetDateTime.now());
+                            this.federationNodes.replace(nodeId, node);
+                        } else {
+                            LOGGER.warn("No node found with id: {} in distributed data structure.", nodeId);
+                        }
+                    } catch (Exception e) {
+                        LOGGER.error("Unable to update status for node: {} on federation: {}", nodeId, federationId, e);
+                    }
+                }
+            }
+
             LOGGER.info("Shutting down underlying hazelcast federation infrastructure");
             this.hazelcastOSGiService.shutdownHazelcastInstance((HazelcastOSGiInstance) this.hazelcastInstance);
             this.hazelcastInstance.getLifecycleService().terminate();
@@ -239,13 +304,48 @@ public class HazelcastFederationService implements FederationService {
 
     @Override
     public FederationServiceConfig getFederationServiceConfig() {
-        return Configurable.createConfigurable(HazelcastFederationServiceConfig.class, configuration);
+        return Configurable.createConfigurable(HazelcastFederationServiceConfig.class, this.configuration);
     }
 
     @Override
     public int getMemberCount() {
         Optional<HazelcastInstance> optional = getHazelcastInstance();
         return optional.map(hazelcastInstance -> hazelcastInstance.getCluster().getMembers().size()).orElse(0);
+    }
+
+    @Override
+    public String getFederationId() {
+        return this.configuration.get("id").toString();
+    }
+
+    @Override
+    public UUID getNodeId() {
+        return this.matOntoServer.getServerIdentifier();
+    }
+
+    @Override
+    public String getNodeRESTEndpoint(UUID nodeId) {
+        HazelcastFederationNode node = this.federationNodes.get(nodeId);
+        return String.format(NODE_REST_ENDPOINT, node.getHost());
+    }
+
+    @Override
+    public Optional<FederationNode> getMetadataForNode(String nodeId) {
+        Optional<FederationNode> optNode = Optional.empty();
+        HazelcastFederationNode hfn = this.federationNodes.get(UUID.fromString(nodeId));
+        if (hfn != null) {
+            optNode = Optional.of(HazelcastFederationNode.getAsFederationNode(hfn, federationNodeFactory, vf));
+        }
+        return optNode;
+    }
+
+    @Override
+    public <K, V> Map<K, V> getDistributedMap(String mapId) {
+        Optional<HazelcastInstance> hazelcastInstance = getHazelcastInstance();
+        if (!hazelcastInstance.isPresent()) {
+            return null;
+        }
+        return hazelcastInstance.get().getReplicatedMap(mapId);
     }
 
     @Override
@@ -256,13 +356,73 @@ public class HazelcastFederationService implements FederationService {
         return this.federationNodes.keySet();
     }
 
+    @Override
+    public SignedJWT generateToken(HttpServletResponse res, String username) throws IOException {
+        String federationId = getFederationServiceConfig().id();
+        String nodeId = this.matOntoServer.getServerIdentifier().toString();
+        return TokenUtils.generateFederationToken(res, username, this.tokenKey, federationId, nodeId);
+    }
+
+    @Override
+    public Optional<SignedJWT> verifyToken(String tokenString) throws ParseException, JOSEException {
+        return TokenUtils.verifyToken(tokenString, this.tokenKey);
+    }
+
+    @Override
+    public Optional<SignedJWT> verifyToken(String tokenString, HttpServletResponse res) throws IOException {
+        return TokenUtils.verifyToken(tokenString, res, this.tokenKey);
+    }
+
     /**
      * Simple method that will register this node as it comes alive with the federation registry.
      */
     private void registerWithFederationNodes(final HazelcastInstance hazelcastInstance) {
-        this.federationNodes = hazelcastInstance.getReplicatedMap(FEDERATION_MEMBERS_KEY);
-        //TODO - add metadata about this node to the model in the map.
-        this.federationNodes.put(matOntoServer.getServerIdentifier(), "");
+        try {
+            this.federationNodes = hazelcastInstance.getReplicatedMap(FEDERATION_NODES_KEY);
+            String iri = FederationService.getNodeIri(getFederationId(), getNodeId().toString());
+            IRI fedNodeIri = vf.createIRI(iri);
+            FederationNode node = federationNodeFactory.createNew(fedNodeIri);
+            node.setNodeId(getNodeId().toString());
+            node.setNodeActive(Boolean.TRUE);
+            node.setNodeLastUpdated(OffsetDateTime.now());
+            getHostAddress().ifPresent(node::setHost);
+
+            //TODO - add remaining metadata about this node.
+            this.federationNodes.put(getNodeId(), new HazelcastFederationNode(node));
+        } catch (UnsupportedEncodingException e) {
+            LOGGER.warn("Unable to create Node IRI for: " + getNodeId(), e);
+        }
+    }
+
+    private Optional<String> getHostAddress() {
+        Optional<String> rtn = Optional.empty();
+
+        try {
+            Collection<InetAddress> addresses = getAllLocalAddresses();
+            Optional<InetAddress> optIA = addresses.stream().filter(ia -> ia instanceof Inet4Address).findFirst();
+            if (optIA.isPresent()) {
+                rtn = Optional.of(optIA.get().getHostAddress());
+            }
+        } catch (SocketException e) {
+            LOGGER.error("Unable to get local host address", e);
+        }
+        return rtn;
+    }
+
+    private Collection<InetAddress> getAllLocalAddresses() throws SocketException {
+        Collection<InetAddress> addresses = new HashSet<>();
+        Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+        while (networkInterfaces.hasMoreElements()) {
+            NetworkInterface ni = networkInterfaces.nextElement();
+            Enumeration<InetAddress> nias = ni.getInetAddresses();
+            while (nias.hasMoreElements()) {
+                InetAddress ia = nias.nextElement();
+                if (!ia.isLinkLocalAddress() && !ia.isLoopbackAddress()) {
+                    addresses.add(ia);
+                }
+            }
+        }
+        return addresses;
     }
 
     synchronized Optional<HazelcastInstance> getHazelcastInstance() {

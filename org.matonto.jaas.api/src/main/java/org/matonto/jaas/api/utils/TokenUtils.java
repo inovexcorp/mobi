@@ -65,6 +65,7 @@ public class TokenUtils {
     private static final String ISSUER = "http://matonto.org/";
     public static final String ANON_SCOPE = "self anon";
     public static final String AUTH_SCOPE = "self /*";
+    public static final String REMOTE_SCOPE = "self federation";
 
     // Attribute set if token verification occurs
     public static final String TOKEN_VERIFICATION_FAILED = "org.matonto.attribute.verificationFailed";
@@ -103,12 +104,16 @@ public class TokenUtils {
     }
 
     public static Optional<SignedJWT> verifyToken(String tokenString) throws ParseException, JOSEException {
+        return verifyToken(tokenString, KEY);
+    }
+
+    public static Optional<SignedJWT> verifyToken(String tokenString, byte[] key) throws ParseException, JOSEException {
         if (tokenString == null) {
             return Optional.empty();
         }
 
         SignedJWT signedJWT = SignedJWT.parse(tokenString);
-        JWSVerifier verifier = new MACVerifier(KEY);
+        JWSVerifier verifier = new MACVerifier(key);
 
         // Verify Token
         if (signedJWT.verify(verifier)) {
@@ -119,13 +124,18 @@ public class TokenUtils {
     }
 
     public static Optional<SignedJWT> verifyToken(String tokenString, HttpServletResponse res) throws IOException {
+        return verifyToken(tokenString, res, KEY);
+    }
+
+    public static Optional<SignedJWT> verifyToken(String tokenString, HttpServletResponse res, byte[] key)
+            throws IOException {
         if (tokenString == null) {
             return Optional.empty();
         }
 
         try {
             SignedJWT signedJWT = SignedJWT.parse(tokenString);
-            JWSVerifier verifier = new MACVerifier(KEY);
+            JWSVerifier verifier = new MACVerifier(key);
 
             // Verify Token
             if (signedJWT.verify(verifier)) {
@@ -147,22 +157,18 @@ public class TokenUtils {
     }
 
     public static SignedJWT generateUnauthToken(HttpServletResponse res) throws IOException {
-        SignedJWT unauthToken = null;
-        try {
-            unauthToken = createJWT("anon", ANON_SCOPE);
-        } catch (JOSEException e) {
-            String msg = "Problem Creating JWT Token";
-            LOG.error(msg, e);
-            res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
-        }
-
-        return unauthToken;
+        return generateToken(res, "anon", ANON_SCOPE);
     }
 
     public static SignedJWT generateauthToken(HttpServletResponse res, String username) throws IOException {
+        return generateToken(res, username, AUTH_SCOPE);
+    }
+
+    public static SignedJWT generateFederationToken(HttpServletResponse res, String username, byte[] key,
+                                                    String federationId, String nodeId) throws IOException {
         SignedJWT authToken = null;
         try {
-            authToken = createJWT(username, AUTH_SCOPE);
+            authToken = createFederationJWT(username, key, federationId, nodeId);
         } catch (JOSEException e) {
             String msg = "Problem Creating JWT Token";
             LOG.error(msg, e);
@@ -190,24 +196,68 @@ public class TokenUtils {
     /**
      * Creates a JWT Token String.
      *
+     * @param res The response to send an error message to
+     * @param username The sub of the token
+     * @param scope The scope of the token
+     * @return The String representing the encoded and compact JWT Token
+     * @throws IOException if there is a problem sending the error to the response
+     */
+    private static SignedJWT generateToken(HttpServletResponse res, String username, String scope)
+            throws IOException {
+        SignedJWT authToken = null;
+        try {
+            authToken = createJWT(username, scope);
+        } catch (JOSEException e) {
+            String msg = "Problem Creating JWT Token";
+            LOG.error(msg, e);
+            res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
+        }
+
+        return authToken;
+    }
+
+    /**
+     * Creates a JWT Token String.
+     *
      * @param username The sub of the token
      * @param scope The scope of the token
      * @return The String representing the encoded and compact JWT Token
      * @throws JOSEException if there is a problem creating the token
      */
     private static SignedJWT createJWT(String username, String scope) throws JOSEException {
-        Date now = new Date();
-        Date expirationDate = new Date(now.getTime() + TOKEN_DURATION);
-
         // Create HMAC signer
         JWSSigner signer = new MACSigner(KEY);
 
         // Prepare JWT with claims set
-        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
-                .subject(username)
-                .issuer(ISSUER)
-                .expirationTime(expirationDate)
-                .claim("scope", scope)
+        JWTClaimsSet claimsSet = createCommonBuilder(username, scope).build();
+
+        SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);
+
+        // Apply the HMAC protection
+        signedJWT.sign(signer);
+
+        return signedJWT;
+    }
+
+    /**
+     * Creates a JWT Token String to be used by a federation.
+     *
+     * @param username The sub of the token
+     * @param key The key (or secret) of the HMAC signer
+     * @param federationId The node's federation ID
+     * @param nodeId The node's ID
+     * @return The String representing the encoded and compact JWT Token
+     * @throws JOSEException if there is a problem creating the token
+     */
+    private static SignedJWT createFederationJWT(String username, byte[] key, String federationId, String nodeId)
+            throws JOSEException {
+        // Create HMAC signer
+        JWSSigner signer = new MACSigner(key);
+
+        // Prepare JWT with claims set
+        JWTClaimsSet claimsSet = createCommonBuilder(username, REMOTE_SCOPE)
+                .claim("federationId", federationId)
+                .claim("nodeId", nodeId)
                 .build();
 
         SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);
@@ -216,5 +266,23 @@ public class TokenUtils {
         signedJWT.sign(signer);
 
         return signedJWT;
+    }
+
+    /**
+     * Creates the basic JWTClaimsSet.Builder to be used by all Tokens.
+     *
+     * @param username The sub of the token
+     * @param scope The scope of the token
+     * @return The Builder with all common configurations populated
+     */
+    private static JWTClaimsSet.Builder createCommonBuilder(String username, String scope) {
+        Date now = new Date();
+        Date expirationDate = new Date(now.getTime() + TOKEN_DURATION);
+
+        return new JWTClaimsSet.Builder()
+                .subject(username)
+                .issuer(ISSUER)
+                .expirationTime(expirationDate)
+                .claim("scope", scope);
     }
 }

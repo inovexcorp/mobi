@@ -1,8 +1,8 @@
-package org.matonto.federation.api;
+package org.matonto.federation.api.token;
 
 /*-
  * #%L
- * federation.api
+ * org.matonto.federation.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,34 +23,18 @@ package org.matonto.federation.api;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
+import org.matonto.federation.api.FederationService;
+import org.matonto.jaas.api.modules.token.TokenCallback;
 
-/**
- * This interface describes the base service configuration for a {@link FederationService} implementation.
- */
-@Meta.OCD
-public interface FederationServiceConfig {
+public class FederationTokenCallback extends TokenCallback {
 
-    /**
-     * An ID for the {@link FederationService} instance.
-     */
-    String id();
+    private FederationService service;
 
-    /**
-     * The name of the {@link FederationService} instance.
-     */
-    @Meta.AD(required = false)
-    String title();
+    public FederationService getService() {
+        return service;
+    }
 
-    /**
-     * A brief description of the {@link FederationService}.
-     */
-    @Meta.AD(required = false)
-    String description();
-
-    /**
-     * An encrypted key used to generate and verify the federation token.
-     */
-    @Meta.AD
-    String sharedKey();
+    public void setService(FederationService service) {
+        this.service = service;
+    }
 }

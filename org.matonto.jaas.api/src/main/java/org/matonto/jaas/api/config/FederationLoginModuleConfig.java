@@ -1,8 +1,8 @@
-package org.matonto.federation.api;
+package org.matonto.jaas.api.config;
 
 /*-
  * #%L
- * federation.api
+ * org.matonto.jaas.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,34 +23,6 @@ package org.matonto.federation.api;
  * #L%
  */
 
-import aQute.bnd.annotation.metatype.Meta;
-
-/**
- * This interface describes the base service configuration for a {@link FederationService} implementation.
- */
-@Meta.OCD
-public interface FederationServiceConfig {
-
-    /**
-     * An ID for the {@link FederationService} instance.
-     */
-    String id();
-
-    /**
-     * The name of the {@link FederationService} instance.
-     */
-    @Meta.AD(required = false)
-    String title();
-
-    /**
-     * A brief description of the {@link FederationService}.
-     */
-    @Meta.AD(required = false)
-    String description();
-
-    /**
-     * An encrypted key used to generate and verify the federation token.
-     */
-    @Meta.AD
-    String sharedKey();
+public class FederationLoginModuleConfig {
+    public static final String USER_UTILS = "user-utils";
 }
