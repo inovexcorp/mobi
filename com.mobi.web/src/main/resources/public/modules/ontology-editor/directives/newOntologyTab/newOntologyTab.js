@@ -61,6 +61,7 @@
                     }
 
                     dvm.create = function() {
+                        dvm.ontology = _.pick(dvm.ontology, ['@id', '@type']);
                         util.setDctermsValue(dvm.ontology, 'title', dvm.title);
                         if (dvm.description) {
                             util.setDctermsValue(dvm.ontology, 'description', dvm.description);
