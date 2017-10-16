@@ -1,0 +1,84 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix muser: <http://mobi.com/ontologies/user/management#> .
+@prefix mobi: <http://mobi.com/ontologies/mobi#> .
+@prefix : <http://mobi.com/ontologies/platform/config#>.
+@base <http://mobi.com/ontologies/platform/config>.
+
+<http://mobi.com/ontologies/platform/config> a owl:Ontology;
+    owl:versionIRI <http://mobi.com/ontologies/platform/config/1.0>;
+    owl:imports <http://mobi.com/ontologies/user/management>, <http://mobi.com/ontologies/matonto> ;
+    rdfs:label "The Mobi platform configuration ontology"@en;
+    rdfs:comment "The Mobi platform configuration ontology describes how user preferences, user state, and applications are expressed within the Mobi framework."@en;
+    dct:creator [foaf:name "Jordan Lewis"], [foaf:name "Megan Mercer"], [foaf:name "Stephen Kahmann"];
+    foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>];
+    dct:modified "2017-10-06"^^xsd:date.
+
+# Application
+
+:Application a owl:Class;
+    rdfs:label "Application"@en;
+    rdfs:comment "A representative of an application in Mobi."@en.
+
+# State
+
+:State a owl:Class;
+    rdfs:label "State"@en;
+    rdfs:comment "A representative of a user's last state for an aspect of Mobi."@en.
+
+:stateResource a owl:ObjectProperty;
+    rdfs:label "state resource"@en;
+    rdfs:comment "The subject of one of the resources associated with the described State."@en;
+    rdfs:domain :State;
+    rdfs:range mobi:Identifier.
+
+# ApplicationState
+
+:ApplicationState a owl:Class;
+    rdfs:subClassOf :State;
+    rdfs:label "Application State"@en;
+    rdfs:comment "A representation of a user's last state for a specific application in Mobi."@en.
+
+:application a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "application"@en;
+    rdfs:comment "The Application associated with the described ApplicationState."@en;
+    rdfs:domain :ApplicationState;
+    rdfs:range :Application.
+
+# Preferences
+
+:Preferences a owl:Class;
+    rdfs:label "Preferences"@en;
+    rdfs:comment "A set of key-value pairs representing preferences a User has chosen."@en.
+
+# Ontology Preferences
+
+:OntologyPreferences a owl:Class;
+    rdfs:subClassOf :Preferences;
+    rdfs:label "Ontology Preferences"@en;
+    rdfs:comment "The set of Ontology Editor preferences that a User has chosen."@en.
+
+:dropDownTooltipDisplay a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "drop down tooltip display"@en;
+    rdfs:comment "The display type shown when you hover over items in dropdown fields in the Ontology Editor."@en;
+    rdfs:domain :OntologyPreferences;
+    rdfs:range rdfs:Literal.
+
+:treeItemDisplay a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "tree item display"@en;
+    rdfs:comment "The display type shown in tree views in the Ontology Editor."@en;
+    rdfs:domain :OntologyPreferences;
+    rdfs:range rdfs:Literal.
+
+# Misc.
+
+:forUser a owl:ObjectProperty, owl:FunctionalProperty;
+    rdfs:label "for user"@en;
+    rdfs:comment "The User associated with the described Preferences or State."@en;
+    # ORM issue with blank node domains. Will show up on ontology _Thing
+    #rdfs:domain [a owl:Class; owl:unionOf(:State :Preferences)];
+    rdfs:range muser:User.

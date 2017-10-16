@@ -1,0 +1,31 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix mcat: <http://mobi.com/ontologies/catalog#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix : <http://mobi.com/ontologies/ontology-editor#>.
+@base <http://mobi.com/ontologies/ontology-editor>.
+
+<http://mobi.com/ontologies/ontology-editor> a owl:Ontology;
+    owl:versionIRI <http://mobi.com/ontologies/ontology-editor#1.0>;
+    owl:imports <http://mobi.com/ontologies/catalog>;
+    rdfs:label "The Mobi Ontology Editor Ontology"@en;
+    rdfs:comment "The Mobi Ontology Editor ontology describes the structure of OntologyRecords and how they relate to the Mobi Catalog."@en;
+    dct:creator [foaf:name "Megan Mercer"];
+    foaf:maker [foaf:name "Mobi"; foaf:homepage <http://mobi.com>];
+    dct:modified "2017-10-06"^^xsd:date.
+
+# OntologyRecord
+
+:OntologyRecord a owl:Class;
+    rdfs:subClassOf mcat:VersionedRDFRecord;
+    rdfs:label "Ontology"@en;
+    rdfs:comment "A collection of RDF data that defines an ontology resource."@en.
+
+:ontologyIRI a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "ontology IRI"@en;
+    rdfs:comment "The latest ontology IRI on the master branch."@en;
+    rdfs:domain :OntologyRecord;
+    rdfs:range <http://mobi.com/ontologies/mobi#Identifier> .

@@ -1,0 +1,53 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="relationship-overlay overlay">
+    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
+        <h6>Add Relationship</h6>
+        <div class="form-group">
+            <custom-label>Relationship</custom-label>
+            <ui-select ng-model="dvm.relationship" on-select="dvm.values = []" autofocus>
+                <ui-select-match placeholder="Select Relationship">
+                    <span>{{dvm.ro.getItemIri($select.selected)}}</span>
+                </ui-select-match>
+                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="relationship in relationshipList | filter:$select.search | orderBy:'localName' track by relationship.localName">
+                    <div title="{{dvm.ro.getItemIri(relationship)}}" ng-bind-html="relationship.localName | highlight: $select.search | trusted"></div>
+                </ui-select-choices>
+            </ui-select>
+        </div>
+        <div class="form-group">
+            <custom-label muted-text="'(Optional)'">Value(s)</custom-label>
+            <ui-select multiple ng-model="dvm.values" ng-disabled="!dvm.relationship">
+                <ui-select-match placeholder="Select Value(s)">
+                    <span title="{{$item}}">{{dvm.ontoUtils.getLabelForIRI($item)}}</span>
+                </ui-select-match>
+                <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm[dvm.relationship.values] | filter:$select.search | orderBy:dvm.ontoUtils.getLabelForIRI track by iri">
+                    <div title="{{iri}}" ng-bind-html="dvm.ontoUtils.getLabelForIRI(iri) | highlight: $select.search | trusted"></div>
+                </ui-select-choices>
+            </ui-select>
+        </div>
+        <div class="btn-container clearfix">
+            <button class="btn btn-primary pull-right" ng-click="dvm.addRelationship(); onSubmit({relationship: dvm.relationship, values: dvm.values})" ng-disabled="dvm.relationship === undefined || !dvm.values.length">Add</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.os.showRelationshipOverlay = false">Cancel</button>
+        </div>
+    </form>
+</div>

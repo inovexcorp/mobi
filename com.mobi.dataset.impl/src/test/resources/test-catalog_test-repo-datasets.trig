@@ -1,0 +1,54 @@
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix dataset: <http://mobi.com/ontologies/dataset#> .
+@prefix matuser: <http://mobi.com/ontologies/user/management#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+### DATASETS
+
+GRAPH <http://mobi.com/dataset/test5> {
+    <http://mobi.com/dataset/test5> a dataset:Dataset ;
+        dataset:defaultNamedGraph <http://mobi.com/dataset/test5/graph1> ;
+        dataset:namedGraph <http://mobi.com/dataset/test5/graph2> ;
+        dataset:systemDefaultNamedGraph <http://mobi.com/dataset/test5_system_dng> .
+}
+
+GRAPH <http://mobi.com/dataset/test5/graph1> {
+    <http://mobi.com/dataset/test5/graph1> a owl:Thing .
+}
+
+GRAPH <http://mobi.com/dataset/test5/graph2> {
+    <http://mobi.com/dataset/test5/graph2> a owl:Thing .
+}
+
+GRAPH <http://mobi.com/dataset/test5_system_dng> {
+    <http://test.com/someThing> a owl:Thing .
+}
+
+GRAPH <http://mobi.com/dataset/test6> {
+    <http://mobi.com/dataset/test6> a dataset:Dataset ;
+        dataset:defaultNamedGraph <http://mobi.com/dataset/test2/graph1> ;
+        dataset:namedGraph <http://mobi.com/dataset/test2/graph2> ;
+        dataset:systemDefaultNamedGraph <http://mobi.com/dataset/test2_system_dng> .
+}
+
+GRAPH <http://mobi.com/dataset/test2/graph1> {
+    <http://mobi.com/dataset/test2/graph1> a owl:Thing .
+}
+
+GRAPH <http://mobi.com/dataset/test2/graph2> {
+    <http://mobi.com/dataset/test2/graph2> a owl:Thing .
+}
+
+GRAPH <http://mobi.com/dataset/test2_system_dng> {
+    <http://test.com/someThing> a owl:Thing .
+}
+
+GRAPH <http://mobi.com/dataset/test7> {
+    <http://mobi.com/dataset/test7> a dataset:Dataset ;
+        dataset:defaultNamedGraph <http://mobi.com/dataset/test7/graph1> ;
+        dataset:namedGraph <http://mobi.com/dataset/test7/graph2> ;
+        dataset:systemDefaultNamedGraph <http://mobi.com/dataset/test7_system_dng> .
+}

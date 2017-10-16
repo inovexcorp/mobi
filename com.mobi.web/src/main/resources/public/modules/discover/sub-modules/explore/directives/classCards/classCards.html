@@ -1,0 +1,48 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="class-cards full-height">
+    <div vs-repeat="183" class="rows-container full-height">
+        <div ng-repeat="chunk in dvm.chunks" class="row">
+            <div ng-repeat="item in chunk" class="card-container col-xs-4">
+                <md-card class="card">
+                    <md-card-title>
+                        <md-card-title-text>
+                            <span class="card-header">
+                                <span class="md-headline text">{{item.classTitle}}</span>
+                                <span class="badge">{{item.instancesCount | number}}</span>
+                            </span>
+                        </md-card-title-text>
+                    </md-card-title>
+                    <md-card-content>
+                        <p class="overview">{{item.classDescription}}</p>
+                        <p class="text-muted">Defined in {{item.ontologyRecordTitle}}</p>
+                        <em class="text-muted">Examples: <span class="example" ng-repeat="example in item.classExamples track by $index">{{example}}</span></em>
+                    </md-card-content>
+                    <md-card-actions layout="row" layout-align="end center">
+                        <md-button ng-click="dvm.exploreData(item)">Explore Data</md-button>
+                    </md-card-actions>
+                </md-card>
+            </div>
+        </div>
+    </div>
+</div>

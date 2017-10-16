@@ -1,0 +1,118 @@
+@prefix : <http://mobi.com/ontology#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://mobi.com/ontology> .
+
+<http://mobi.com/ontology> rdf:type owl:Ontology ;
+                               owl:versionIRI <http://mobi.com/ontology/1.0> ;
+                               owl:imports <https://mobi.com/vocabulary> ;
+                               <http://purl.org/dc/terms/description> "This is a test ontology."^^xsd:string .
+
+#################################################################
+#    Annotation properties
+#################################################################
+
+###  http://purl.org/dc/terms/title
+<http://purl.org/dc/terms/title> rdf:type owl:AnnotationProperty .
+
+###  http://mobi.com/ontology#annotationProperty1a
+:annotationProperty1a rdf:type owl:AnnotationProperty ;
+                      <http://purl.org/dc/terms/title> "Annotation Property 1a"^^xsd:string .
+
+
+###  http://mobi.com/ontology#annotationProperty1b
+:annotationProperty1b rdf:type owl:AnnotationProperty ;
+                      rdfs:subPropertyOf :annotationProperty1a ;
+                      <http://purl.org/dc/terms/title> "Annotation Property 1b"^^xsd:string .
+
+
+#################################################################
+#    Datatypes
+#################################################################
+
+###  http://www.w3.org/1999/02/22-rdf-syntax-ns#langString
+rdf:langString rdf:type rdfs:Datatype .
+
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://mobi.com/ontology#objectProperty1a
+:objectProperty1a rdf:type owl:ObjectProperty ;
+                  <http://purl.org/dc/terms/title> "Object Property 1a"^^xsd:string .
+
+
+###  http://mobi.com/ontology#objectProperty1b
+:objectProperty1b rdf:type owl:ObjectProperty ;
+                  rdfs:subPropertyOf :objectProperty1a ;
+                  <http://purl.org/dc/terms/title> "Object Property 1b"^^xsd:string .
+
+
+#################################################################
+#    Data properties
+#################################################################
+
+###  http://mobi.com/ontology#dataProperty1a
+:dataProperty1a rdf:type owl:DatatypeProperty ;
+                <http://purl.org/dc/terms/title> "Data Property 1a"^^xsd:string .
+
+
+###  http://mobi.com/ontology#dataProperty1b
+:dataProperty1b rdf:type owl:DatatypeProperty ;
+                rdfs:subPropertyOf :dataProperty1a ;
+                <http://purl.org/dc/terms/title> "Data Property 1b"^^xsd:string .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://mobi.com/ontology#Class1a
+:Class1a rdf:type owl:Class ;
+         <http://purl.org/dc/terms/title> "Class 1a"^^xsd:string .
+
+
+###  http://mobi.com/ontology#Class1b
+:Class1b rdf:type owl:Class ;
+         rdfs:subClassOf :Class1a ;
+         <http://purl.org/dc/terms/title> "Class 1b"^^xsd:string .
+
+
+#################################################################
+#    Individuals
+#################################################################
+
+###  http://mobi.com/ontology#Individual1a
+:Individual1a rdf:type owl:NamedIndividual ,
+                       :Class1a .
+
+
+###  http://mobi.com/ontology#Individual1b
+:Individual1b rdf:type owl:NamedIndividual ,
+                       :Class1b .
+
+
+###  http://mobi.com/ontology#Individual1c
+:Individual1c rdf:type owl:NamedIndividual .
+
+
+###  http://mobi.com/ontology#Individual2a
+:Individual2a rdf:type owl:NamedIndividual .
+
+
+###  http://mobi.com/ontology#Individual2b
+:Individual2b rdf:type owl:NamedIndividual .
+
+
+#################################################################
+#    Annotations
+#################################################################
+
+<http://mobi.com/ontology> <http://purl.org/dc/terms/title> "Test Ontology"^^xsd:string .
+
+
+

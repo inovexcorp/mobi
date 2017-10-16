@@ -1,0 +1,24 @@
+<http://mobi.com/ontologies/uhtc/density> a <http://www.w3.org/2002/07/owl#DatatypeProperty> ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Density" ;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#double> ;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.com/ontologies/uhtc/Material> ;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The density of a material" .
+
+<http://mobi.com/ontologies/uhtc/crystalStructure> a <http://www.w3.org/2002/07/owl#ObjectProperty> ;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The crystal structure of a material" ;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://mobi.com/ontologies/uhtc/CrystalStructure> ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Crystal Structure" ;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.com/ontologies/uhtc/Material> .
+
+<http://mobi.com/ontologies/uhtc/CrystalStructure> a <http://www.w3.org/2002/07/owl#Class> ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Crystal Structure" ;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The crystal structure of a material" .
+
+<http://mobi.com/ontologies/uhtc> a <http://www.w3.org/2002/07/owl#Ontology> ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "UHTC" ;
+    <http://purl.org/dc/elements/1.1/title> "UHTC" ;
+    <http://purl.org/dc/elements/1.1/description> "A material ontology" .
+
+<http://mobi.com/ontologies/uhtc/Material> a <http://www.w3.org/2002/07/owl#Class> ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Material" ;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "A material" .

@@ -1,0 +1,81 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="open-ontology-tab">
+    <div class="actions">
+        <form class="form-inline">
+            <div class="form-group">
+                <input type="text" class="form-control" placeholder="Filter by text" ng-model="dvm.filterText" ng-keyup="dvm.begin = 0" />
+            </div>
+            <button type="button" class="btn btn-primary" ng-click="dvm.os.showNewTab = true">New Ontology</button>
+            <button type="button" class="btn btn-primary" ng-click="dvm.os.showUploadTab = true">Upload Ontology</button>
+        </form>
+    </div>
+    <div class="list row">
+        <div class="col-xs-8 col-xs-offset-2">
+            <block>
+                <block-content class="open-ontology-content">
+                    <div class="ontologies">
+                        <div class="ontology" ng-click="dvm.openSelected(record)" ng-repeat="record in dvm.filteredList | limitTo:dvm.limit:dvm.begin">
+                            <div class="details">
+                                <h2 class="header" ng-bind-html="dvm.util.getDctermsValue(record, 'title') | highlight:dvm.filterText | trusted"></h2>
+                                <small class="ontology-iri text-muted">{{dvm.util.getPropertyId(record, dvm.prefixes.ontologyEditor + 'ontologyIRI')}}</small>
+                                <p class="description" ng-bind-html="dvm.util.getDctermsValue(record, 'description') | highlight:dvm.filterText | trusted"></p>
+                            </div>
+                            <div class="action-container">
+                                <a ng-click="dvm.showDeleteConfirmationOverlay(record); $event.stopPropagation()" class="action"><i class="fa fa-2x fa-fw fa-trash-o"></i></a>
+                            </div>
+                        </div>
+                        <info-message ng-if="!dvm.filteredList.length && dvm.filterText">No ontologies match your filtered text.</info-message>
+                        <info-message ng-if="!dvm.filteredList.length && !dvm.filterText">Create or upload an ontology to get started.</info-message>
+                    </div>
+                </block-content>
+                <block-footer>
+                    <div class="paging-container clearfix">
+                        <paging-details total-size="dvm.filteredList.length" page-index="dvm.begin / dvm.limit" limit="dvm.limit"></paging-details>
+                        <pagination links="{'prev': dvm.begin !== 0, 'next': (dvm.begin + dvm.limit) < dvm.filteredList.length}" current-page="dvm.begin / dvm.limit" get-page="dvm.getPage(direction)"></pagination>
+                    </div>
+                </block-footer>
+            </block>
+        </div>
+    </div>
+    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Ontology'" confirm-click="dvm.deleteOntology()" cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Yes'" cancel-text="'No'">
+        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
+        <error-display ng-if="dvm.mappingErrorMessage">{{dvm.mappingErrorMessage}}</error-display>
+        <p>Are you sure that you want to delete <strong>{{dvm.recordTitle}}</strong>?</p>
+    </confirmation-overlay>
+    <confirmation-overlay ng-if="dvm.showOpenOverlay" header-text="'Open'" confirm-click="dvm.open()"
+                          cancel-click="dvm.showOpenOverlay = false" confirm-text="'Open'" cancel-text="'Cancel'">
+        <div class="type-container">
+            <button ng-click="dvm.type = 'ontology'" ng-class="{'active': dvm.type === 'ontology'}" class="type" ng-dblclick="dvm.open()">
+                <div class="text-wrapper">
+                    <i class="fa fa-fw fa-file-code-o fa-2x"></i><span class="text">Ontology Editor</span>
+                </div>
+            </button>
+            <button ng-click="dvm.type = 'vocabulary'" ng-class="{'active': dvm.type === 'vocabulary'}" class="type" ng-dblclick="dvm.open()">
+                <div class="text-wrapper">
+                    <i class="fa fa-fw fa-file-text-o fa-2x"></i><span class="text">Vocabulary Editor</span>
+                </div>
+            </button>
+        </div>
+    </confirmation-overlay>
+</div>

@@ -1,0 +1,43 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="branch-select">
+    <ui-select ng-model="dvm.bindModel" ng-disabled="dvm.os.hasChanges(dvm.os.listItem.ontologyRecord.recordId) || dvm.os.isCommittable(dvm.os.listItem.ontologyRecord.recordId)" on-select="dvm.changeBranch($item)">
+        <ui-select-match placeholder="Select a Branch">
+            <span>Branch: {{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
+        </ui-select-match>
+        <ui-select-choices repeat="branch['@id'] as branch in dvm.os.listItem.branches | filter:$select.search">
+            <div class="branch-display" ng-init="branchTitle = dvm.util.getDctermsValue(branch, 'title')" ng-class="{'master': branchTitle === 'MASTER'}">
+                <i class="fa fa-fw" ng-class="{'fa-check': branch['@id'] === dvm.bindModel}"></i>
+                <span ng-bind-html="branchTitle | highlight:$select.search | trusted"></span>
+                <a ng-if="branch['@id'] !== dvm.os.listItem.ontologyRecord.branchId" class="fa fa-trash-o fa-fw pull-right" ng-click="dvm.openDeleteConfirmation($event, branch);"></a>
+                <a class="fa fa-pencil fa-fw pull-right" ng-click="dvm.openEditOverlay($event, branch);"></a>
+            </div>
+        </ui-select-choices>
+    </ui-select>
+    <confirmation-overlay ng-if="dvm.showDeleteConfirmation" header-text="'Delete Branch'" confirm-click="dvm.delete()"
+                          cancel-click="dvm.showDeleteConfirmation = false" confirm-text="'Submit'" cancel-text="'Cancel'">
+        <error-message ng-if="dvm.deleteError">{{deleteError}}</error-message>
+        <p>Are you sure that you want to delete Branch: <strong>{{dvm.util.getDctermsValue(dvm.branch, 'title')}}</strong>?</p>
+    </confirmation-overlay>
+    <edit-branch-overlay ng-if="dvm.showEditOverlay" overlay-flag="dvm.showEditOverlay" branch="dvm.branch"></edit-branch-overlay>
+</div>

@@ -1,0 +1,195 @@
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix dataset: <http://mobi.com/ontologies/dataset#> .
+@prefix matuser: <http://mobi.com/ontologies/user/management#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+### DATASETS
+
+GRAPH <http://mobi.com/record/dataset/test1> {
+    <http://mobi.com/record/dataset/test1> a dataset:DatasetRecord, mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://mobi.com/test/catalog-local> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        dataset:repository "system" ;
+        dataset:dataset <http://mobi.com/dataset/test1> .
+}
+
+GRAPH <http://mobi.com/dataset/test1> {
+    <http://mobi.com/dataset/test1> a dataset:Dataset ;
+        dataset:systemDefaultNamedGraph <http://mobi.com/dataset/test1_system_dng> .
+}
+
+GRAPH <http://mobi.com/record/dataset/test2> {
+    <http://mobi.com/record/dataset/test2> a dataset:DatasetRecord, mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://mobi.com/test/catalog-local> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        dataset:repository "system" ;
+        dataset:dataset <http://mobi.com/dataset/test2> .
+}
+
+GRAPH <http://mobi.com/dataset/test2> {
+    <http://mobi.com/dataset/test2> a dataset:Dataset ;
+        dataset:defaultNamedGraph <http://mobi.com/dataset/test2/graph1> ;
+        dataset:namedGraph <http://mobi.com/dataset/test2/graph2>, <http://mobi.com/dataset/test2/graph3> ;
+        dataset:systemDefaultNamedGraph <http://mobi.com/dataset/test2_system_dng> .
+}
+
+GRAPH <http://mobi.com/dataset/test2/graph1> {
+    <http://mobi.com/dataset/test2/graph1> a owl:Thing .
+}
+
+GRAPH <http://mobi.com/dataset/test2/graph2> {
+    <http://mobi.com/dataset/test2/graph2> a owl:Thing .
+}
+
+GRAPH <http://mobi.com/dataset/test2/graph3> {
+    <http://mobi.com/dataset/test2/graph3> a owl:Thing .
+}
+
+GRAPH <http://mobi.com/dataset/test2_system_dng> {
+    <http://test.com/someThing> a owl:Thing .
+}
+
+GRAPH <http://mobi.com/record/dataset/test3> {
+    <http://mobi.com/record/dataset/test3> a dataset:DatasetRecord, mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://mobi.com/test/catalog-local> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        dataset:repository "system" ;
+        dataset:dataset <http://mobi.com/dataset/test3> .
+}
+
+GRAPH <http://mobi.com/dataset/test3> {
+    <http://mobi.com/dataset/test3> a dataset:Dataset ;
+        dataset:defaultNamedGraph <http://mobi.com/dataset/test3/graph1> , <http://mobi.com/dataset/test3/graph4> ;
+        dataset:namedGraph <http://mobi.com/dataset/test3/graph2>, <http://mobi.com/dataset/test3/graph3> ,
+            <http://mobi.com/dataset/test3/graph5> ;
+        dataset:systemDefaultNamedGraph <http://mobi.com/dataset/test3_system_dng> .
+}
+
+GRAPH <http://mobi.com/dataset/test3/graph1> {
+    <http://mobi.com/dataset/test3/graph1> a owl:Thing .
+}
+
+GRAPH <http://mobi.com/dataset/test3/graph2> {
+    <http://mobi.com/dataset/test3/graph2> a owl:Thing .
+}
+
+GRAPH <http://mobi.com/dataset/test3/graph3> {
+    <http://mobi.com/dataset/test3/graph3> a owl:Thing .
+}
+
+GRAPH <http://mobi.com/dataset/test3/graph4> {
+    <http://mobi.com/dataset/test3/graph4> a owl:Thing .
+}
+
+GRAPH <http://mobi.com/dataset/test3/graph5> {
+    <http://mobi.com/dataset/test3/graph3> a owl:Thing .
+}
+
+GRAPH <http://mobi.com/record/dataset/test4> {
+    <http://mobi.com/record/dataset/test4> a dataset:DatasetRecord, mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://mobi.com/test/catalog-local> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        dataset:repository "system" ;
+        dataset:dataset <http://mobi.com/dataset/test4> .
+}
+
+GRAPH <http://mobi.com/dataset/test4> {
+    <http://mobi.com/dataset/test4> a dataset:Dataset ;
+        dataset:defaultNamedGraph <http://mobi.com/dataset/test3/graph4> ;
+        dataset:namedGraph <http://mobi.com/dataset/test3/graph5> ;
+        dataset:systemDefaultNamedGraph <http://mobi.com/dataset/test4_system_dng> .
+}
+
+GRAPH <http://mobi.com/record/dataset/test5> {
+    <http://mobi.com/record/dataset/test5> a dataset:DatasetRecord, mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://mobi.com/test/catalog-local> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        dataset:repository "test" ;
+        dataset:dataset <http://mobi.com/dataset/test5> .
+}
+
+GRAPH <http://mobi.com/record/dataset/test6> {
+    <http://mobi.com/record/dataset/test6> a dataset:DatasetRecord, mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://mobi.com/test/catalog-local> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        dataset:repository "test" ;
+        dataset:dataset <http://mobi.com/dataset/test6> .
+}
+
+GRAPH <http://mobi.com/record/dataset/test7> {
+    <http://mobi.com/record/dataset/test7> a dataset:DatasetRecord, mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://mobi.com/test/catalog-local> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        dataset:repository "test" ;
+        dataset:dataset <http://mobi.com/dataset/test7> .
+}
+
+GRAPH <http://mobi.com/record/dataset/test8> {
+    <http://mobi.com/record/dataset/test8> a dataset:DatasetRecord, mcat:UnversionedRecord, mcat:Record ;
+        mcat:catalog <http://mobi.com/test/catalog-local> ;
+        dc:title "Dataset" ;
+        dc:description "Description" ;
+        dc:identifier "Dataset" ;
+        dc:issued "2016-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-03-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher matuser:tester ;
+        dataset:repository "system" ;
+        dataset:dataset <http://mobi.com/dataset/test8> .
+}
+
+GRAPH <http://mobi.com/dataset/test8> {
+    <http://mobi.com/dataset/test8> a dataset:Dataset ;
+        dataset:systemDefaultNamedGraph <http://mobi.com/dataset/test8_system_dng> .
+}
+
+### OTHER DATA
+
+
+
+### CATALOG
+
+GRAPH <http://mobi.com/test/catalog-local> {
+    <http://mobi.com/test/catalog-local> a mcat:Catalog .
+}
+
+GRAPH <http://mobi.com/test/catalog-distributed> {
+    <http://mobi.com/test/catalog-distributed> a mcat:Catalog .
+}

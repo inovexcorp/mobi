@@ -1,0 +1,9 @@
+<http://mobi.com/ontologies/uhtc/CrystalStructure> a <http://www.w3.org/2002/07/owl#Class> ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Crystal Structure" ;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The crystal structure of a material" ;
+    <http://www.w3.org/2002/07/owl#deprecated> "true"^^xsd:boolean .
+
+<http://mobi.com/ontologies/uhtc> a <http://www.w3.org/2002/07/owl#Ontology> ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "UHTC" ;
+    <http://purl.org/dc/elements/1.1/title> "UHTC" ;
+    <http://purl.org/dc/elements/1.1/description> "A material ontology" .
