@@ -1297,6 +1297,7 @@ describe('Ontology State Service', function() {
                 }, function(response) {
                     expect(response).toEqual(error);
                 });
+            scope.$apply();
         });
     });
     describe('getEntityByRecordId returns', function() {

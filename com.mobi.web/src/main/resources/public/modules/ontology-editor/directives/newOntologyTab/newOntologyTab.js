@@ -27,9 +27,9 @@
         .module('newOntologyTab', [])
         .directive('newOntologyTab', newOntologyTab);
 
-        newOntologyTab.$inject = ['$filter', 'REGEX', 'ontologyStateService', 'prefixes', 'stateManagerService', 'utilService', 'ontologyUtilsManagerService'];
+        newOntologyTab.$inject = ['$q', '$filter', 'REGEX', 'ontologyStateService', 'prefixes', 'stateManagerService', 'utilService', 'ontologyUtilsManagerService'];
 
-        function newOntologyTab($filter, REGEX, ontologyStateService, prefixes, stateManagerService, utilService, ontologyUtilsManagerService) {
+        function newOntologyTab($q, $filter, REGEX, ontologyStateService, prefixes, stateManagerService, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -61,6 +61,7 @@
                     }
 
                     dvm.create = function() {
+                        dvm.ontology = _.pick(dvm.ontology, ['@id', '@type']);
                         util.setDctermsValue(dvm.ontology, 'title', dvm.title);
                         if (dvm.description) {
                             util.setDctermsValue(dvm.ontology, 'description', dvm.description);
@@ -71,12 +72,15 @@
                                 '@id': angular.copy(prefixes.skos).slice(0, -1)
                             }];
                         }
-                        dvm.os.createOntology(dvm.ontology, dvm.title, dvm.description,
-                            _.join(_.map(dvm.keywords, _.trim), ','), dvm.type).then(response =>
-                                sm.createOntologyState(response.recordId, response.branchId, response.commitId)
-                                    .then(() => {
-                                        dvm.os.showNewTab = false;
-                                    }, onError), onError);
+                        dvm.os.createOntology(dvm.ontology, dvm.title, dvm.description, _.join(_.map(dvm.keywords, _.trim), ','), dvm.type)
+                            .then(response => sm.createOntologyState(response.recordId, response.branchId, response.commitId), $q.reject)
+                            .then(() => {
+                                if (dvm.type === 'vocabulary') {
+                                    return dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, 'vocabulary', true, dvm.os.listItem.inProgressCommit, true);
+                                }
+                                return $q.resolve();
+                            }, $q.reject)
+                            .then(() => dvm.os.showNewTab = false, onError);
                     }
 
                     function onError(errorMessage) {
