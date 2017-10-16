@@ -275,7 +275,7 @@
              * @param {string} description The description for the OntologyRecord.
              * @param {string} keywords The keywords for the OntologyRecord.
              * @param {string} type The type (either "ontology" or "vocabulary") for the document being created.
-             * @returns {Promise} A promise with the entityIRI and ontologyId for the state of the newly created
+             * @returns {Promise} A promise with the ontologyId, recordId, branchId, and commitId for the state of the newly created
              * ontology.
              */
             self.uploadJson = function(ontologyJson, title, description, keywords) {

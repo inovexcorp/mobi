@@ -280,8 +280,8 @@
              *
              * @param {string} recordId The record ID of the ontology you want to get from the repository.
              * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
-             * @returns {Promise} A promise containing the ontology id, record id, branch id, commit id,
-             *                    inProgressCommit, and JSON-LD serialization of the ontology.
+             * @returns {Promise} A promise containing the record id, branch id, commit id, inProgressCommit,
+             * and JSON-LD serialization of the ontology.
              */
             self.getOntology = function(recordId, rdfFormat = 'jsonld') {
                 var state = sm.getOntologyStateByRecordId(recordId);
@@ -346,14 +346,15 @@
              *
              * @description
              * Uploads the provided JSON-LD as a new ontology and creates a new list item for the new ontology.
-             * Returns a promise with the entityIRI and ontologyId for the state of the newly created ontology.
+             * Returns a promise with the entityIRI, recordId, branchId, and commitId for the state of the newly
+             * created ontology.
              *
              * @param {string} ontologyJson The JSON-LD representing the ontology.
              * @param {string} title The title for the OntologyRecord.
              * @param {string} description The description for the OntologyRecord.
              * @param {string} keywords The keywords for the OntologyRecord.
              * @param {string} type The type (either "ontology" or "vocabulary") for the document being created.
-             * @returns {Promise} A promise with the entityIRI and ontologyId for the state of the newly created
+             * @returns {Promise} A promise with the entityIRI, recordId, branchId, and commitId for the state of the newly created
              * ontology.
              */
             self.createOntology = function(ontologyJson, title, description, keywords, type = 'ontology') {
