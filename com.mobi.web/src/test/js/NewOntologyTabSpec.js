@@ -189,6 +189,7 @@ describe('New Ontology Tab directive', function() {
                         expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(controller.ontology, controller.title, controller.description, 'one,two', controller.type);
                         expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
                         expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'vocabulary', true, ontologyStateSvc.listItem.inProgressCommit, true);
+                        expect(controller.error).toBe(this.errorMessage);
                     });
                 });
             });

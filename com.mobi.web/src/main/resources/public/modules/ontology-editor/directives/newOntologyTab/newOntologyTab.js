@@ -78,7 +78,7 @@
                                     return dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, 'vocabulary', true, dvm.os.listItem.inProgressCommit, true);
                                 }
                                 return $q.resolve();
-                            }, onError)
+                            }, $q.reject)
                             .then(() => dvm.os.showNewTab = false, onError);
                     }
 
