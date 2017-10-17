@@ -24,7 +24,7 @@ package com.mobi.web.security.util;
  */
 
 import com.mobi.federation.api.FederationService;
-import com.mobi.federation.api.jaas.token.FederationTokenCallback;
+import com.mobi.federation.utils.api.token.FederationTokenCallback;
 import com.mobi.jaas.api.modules.token.TokenCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

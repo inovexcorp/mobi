@@ -1,4 +1,4 @@
-package com.mobi.federation.api;
+package com.mobi.federation.utils.api;
 
 /*-
  * #%L
@@ -23,12 +23,13 @@ package com.mobi.federation.api;
  * #L%
  */
 
+import com.mobi.federation.api.FederationService;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 
 import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 
-public interface FederationUserUtils {
+public interface UserUtils {
     /**
      * Creates the map entry for this node in the replicated user map for the federation.
      *

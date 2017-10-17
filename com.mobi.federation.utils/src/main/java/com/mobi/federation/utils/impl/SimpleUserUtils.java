@@ -1,4 +1,4 @@
-package com.mobi.federation.hazelcast;
+package com.mobi.federation.utils.impl;
 
 /*-
  * #%L
@@ -23,18 +23,19 @@ package com.mobi.federation.hazelcast;
  * #L%
  */
 
-import static com.mobi.federation.api.serializable.SerializedUser.getAsUser;
+import static com.mobi.federation.utils.serializable.SerializedUser.getAsUser;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.federation.api.FederationService;
-import com.mobi.federation.api.FederationUserUtils;
-import com.mobi.federation.api.serializable.SerializedUser;
+import com.mobi.federation.utils.serializable.SerializedUser;
+import com.mobi.federation.utils.api.UserUtils;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.rdf.api.ValueFactory;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -42,19 +43,19 @@ import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 
 @Component
-public class HazelcastFederationUserUtils implements FederationUserUtils {
+public class SimpleUserUtils implements UserUtils {
     public static final String FEDERATION_USERS_KEY = "federation.users";
 
     private UserFactory userFactory;
     private ValueFactory vf;
 
     @Reference
-    void setUserFactory(UserFactory userFactory) {
+    protected void setUserFactory(UserFactory userFactory) {
         this.userFactory = userFactory;
     }
 
     @Reference
-    void setValueFactory(ValueFactory vf) {
+    protected void setValueFactory(ValueFactory vf) {
         this.vf = vf;
     }
 
@@ -89,7 +90,7 @@ public class HazelcastFederationUserUtils implements FederationUserUtils {
         if (!userExists(users, username)) {
             users.add(new SerializedUser(user));
         } else {
-            throw new IllegalStateException("A user with username " + username + " already exists on node "
+            throw new IllegalArgumentException("A user with username " + username + " already exists on node "
                     + nodeId.toString() + " in federation " + federationId);
         }
     }
@@ -104,15 +105,16 @@ public class HazelcastFederationUserUtils implements FederationUserUtils {
         if (userExists(users, username)) {
             users.removeIf(serializedUser -> serializedUser.getUsername().equals(username));
         } else {
-            throw new IllegalStateException("User with username " + username + " does not exist on node "
+            throw new IllegalArgumentException("User with username " + username + " does not exist on node "
                     + nodeId.toString() + " in federation " + federationId);
         }
     }
 
     @Override
     public void updateUser(FederationService service, User user) {
-        String username = user.getUsername().orElseThrow(() ->
-                new IllegalArgumentException("The user must have a username.")).stringValue();
+        if (!user.getUsername().isPresent()) {
+            throw new IllegalArgumentException("The user must have a username.");
+        }
         String userIRI = user.getResource().stringValue();
 
         Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
@@ -120,11 +122,15 @@ public class HazelcastFederationUserUtils implements FederationUserUtils {
         String federationId = service.getFederationId();
         Set<SerializedUser> users = getNodeUsers(userMap, nodeId, federationId);
 
-        if (users.stream().anyMatch(serializedUser -> serializedUser.getUserIRI().equals(userIRI))) {
-            users.removeIf(serializedUser -> serializedUser.getUsername().equals(username));
+        Optional<SerializedUser> optional = users.stream()
+                .filter(serializedUser -> serializedUser.getUserIRI().equals(userIRI))
+                .findFirst();
+
+        if (optional.isPresent()) {
+            users.remove(optional.get());
             users.add(new SerializedUser(user));
         } else {
-            throw new IllegalStateException("User with IRI " + userIRI + " does not exist on node "
+            throw new IllegalArgumentException("User with IRI " + userIRI + " does not exist on node "
                     + nodeId.toString() + " in federation " + federationId);
         }
     }
@@ -135,11 +141,12 @@ public class HazelcastFederationUserUtils implements FederationUserUtils {
         String federationId = service.getFederationId();
         Set<SerializedUser> users = getNodeUsers(userMap, UUID.fromString(nodeId), federationId);
 
-        if (userExists(users, username)) {
-            return getAsUser(users.stream()
-                    .filter(user -> user.getUsername().equals(username))
-                    .findFirst()
-                    .get(), userFactory, vf);
+        Optional<SerializedUser> optional = users.stream()
+                .filter(user -> user.getUsername().equals(username))
+                .findFirst();
+
+        if (optional.isPresent()) {
+            return getAsUser(optional.get(), userFactory, vf);
         }
         throw new IllegalArgumentException("User " + username + " does not exist on node " + nodeId
                 + " in federation " + federationId);
@@ -148,7 +155,7 @@ public class HazelcastFederationUserUtils implements FederationUserUtils {
     @Override
     public void verifyUser(FederationService service, String username) throws FailedLoginException {
         Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
-        if (service.getFederationNodeIds().stream().anyMatch(nodeId -> validateUser(userMap, username, nodeId))) {
+        if (service.getFederationNodeIds().stream().noneMatch(nodeId -> validateUser(userMap, username, nodeId))) {
             throw new FailedLoginException("User " + username + " not found in federation "
                     + service.getFederationId());
         }

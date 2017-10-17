@@ -102,6 +102,7 @@
         <module>com.mobi.analytic.rest</module>
         <module>com.mobi.prov.rest</module>
         <module>com.mobi.sparql.cli</module>
+        <module>com.mobi.federation.utils</module>
     </modules>
 
     <properties>

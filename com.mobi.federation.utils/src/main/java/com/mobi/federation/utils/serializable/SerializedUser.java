@@ -1,4 +1,4 @@
-package com.mobi.federation.api.serializable;
+package com.mobi.federation.utils.serializable;
 
 /*-
  * #%L

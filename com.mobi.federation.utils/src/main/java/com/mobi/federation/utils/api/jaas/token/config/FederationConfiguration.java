@@ -1,4 +1,4 @@
-package com.mobi.federation.api.jaas.token.config;
+package com.mobi.federation.utils.api.jaas.token.config;
 
 /*-
  * #%L
@@ -27,8 +27,8 @@ import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Modified;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.federation.api.FederationUserUtils;
-import com.mobi.federation.api.jaas.token.FederationTokenLoginModule;
+import com.mobi.federation.utils.api.UserUtils;
+import com.mobi.federation.utils.api.jaas.token.FederationTokenLoginModule;
 import com.mobi.jaas.api.config.MobiConfiguration;
 import com.mobi.jaas.proxy.ProxyLoginModule;
 import org.osgi.framework.BundleContext;
@@ -41,7 +41,7 @@ import javax.security.auth.login.Configuration;
 @Component(provide = FederationConfiguration.class)
 public class FederationConfiguration extends MobiConfiguration {
     public static final String USER_UTILS = "user-utils";
-    protected FederationUserUtils userUtils;
+    protected UserUtils userUtils;
     private BundleContext context;
 
     @Activate
@@ -55,7 +55,7 @@ public class FederationConfiguration extends MobiConfiguration {
     }
 
     @Reference
-    public void setFederationUserUtils(FederationUserUtils userUtils) {
+    public void setUserUtils(UserUtils userUtils) {
         this.userUtils = userUtils;
     }
 

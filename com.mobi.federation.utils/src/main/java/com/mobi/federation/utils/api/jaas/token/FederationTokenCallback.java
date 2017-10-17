@@ -1,4 +1,4 @@
-package com.mobi.federation.api.jaas.token;
+package com.mobi.federation.utils.api.jaas.token;
 
 /*-
  * #%L

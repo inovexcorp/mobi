@@ -1,4 +1,4 @@
-package com.mobi.federation.api.jaas.token;
+package com.mobi.federation.utils.api.jaas.token;
 
 /*-
  * #%L
@@ -23,10 +23,10 @@ package com.mobi.federation.api.jaas.token;
  * #L%
  */
 
-import com.mobi.federation.api.jaas.token.config.FederationConfiguration;
+import com.mobi.federation.utils.api.UserUtils;
+import com.mobi.federation.utils.api.jaas.token.config.FederationConfiguration;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
-import com.mobi.federation.api.FederationUserUtils;
 import com.mobi.jaas.api.modules.token.TokenLoginModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +41,7 @@ import javax.security.auth.login.LoginException;
 public class FederationTokenLoginModule extends TokenLoginModule<FederationTokenCallback> {
 
     private static final Logger LOG = LoggerFactory.getLogger(FederationTokenLoginModule.class);
-    private FederationUserUtils userUtils;
+    private UserUtils userUtils;
 
     @Override
     protected FederationTokenCallback[] getCallbacks() {
@@ -63,7 +63,7 @@ public class FederationTokenLoginModule extends TokenLoginModule<FederationToken
     @Override
     public void initialize(Subject subject, CallbackHandler handler, Map<String, ?> state, Map<String, ?> options) {
         super.initialize(subject, handler, state, options);
-        userUtils = (FederationUserUtils) options.get(FederationConfiguration.USER_UTILS);
+        userUtils = (UserUtils) options.get(FederationConfiguration.USER_UTILS);
         LOG.debug("Initialized SimpleTokenLoginModule");
     }
 }

@@ -35,6 +35,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ReplicatedMap;
 import com.hazelcast.osgi.HazelcastOSGiInstance;
 import com.hazelcast.osgi.HazelcastOSGiService;
+import com.mobi.federation.utils.api.UserUtils;
 import com.mobi.jaas.api.engines.Engine;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
@@ -42,7 +43,6 @@ import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import com.mobi.exception.MobiException;
 import com.mobi.federation.api.FederationService;
 import com.mobi.federation.api.FederationServiceConfig;
-import com.mobi.federation.api.FederationUserUtils;
 import com.mobi.federation.api.ontologies.federation.FederationNode;
 import com.mobi.federation.api.ontologies.federation.FederationNodeFactory;
 import com.mobi.federation.hazelcast.config.HazelcastConfigurationFactory;
@@ -116,7 +116,7 @@ public class HazelcastFederationService implements FederationService {
     private Mobi mobiServer;
     private ValueFactory vf;
     private FederationNodeFactory federationNodeFactory;
-    private FederationUserUtils userUtils;
+    private UserUtils userUtils;
     private Engine rdfEngine;
 
     /**
@@ -190,7 +190,7 @@ public class HazelcastFederationService implements FederationService {
     }
 
     @Reference
-    void setFederationUserUtils(FederationUserUtils userUtils) {
+    void setUserUtils(UserUtils userUtils) {
         this.userUtils = userUtils;
     }
 

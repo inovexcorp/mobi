@@ -23,12 +23,17 @@ package com.mobi.federation.hazelcast;
  * #L%
  */
 
-import com.mobi.federation.api.FederationUserUtils;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.mobi.federation.utils.api.UserUtils;
 import com.mobi.jaas.api.engines.Engine;
 import junit.framework.TestCase;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.mobi.federation.api.FederationService;
@@ -52,7 +57,6 @@ import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
 import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -89,7 +93,7 @@ public class HazelcastFederationServiceTest extends TestCase {
     private ServiceRegistration<FederationService> registration;
 
     @Mock
-    private FederationUserUtils userUtils;
+    private UserUtils userUtils;
 
     @Mock
     private Engine engine;
@@ -106,12 +110,12 @@ public class HazelcastFederationServiceTest extends TestCase {
         UUID u1 = UUID.randomUUID();
         UUID u2 = UUID.randomUUID();
         UUID u3 = UUID.randomUUID();
-        Mockito.when(mobi1.getServerIdentifier()).thenReturn(u1);
-        Mockito.when(mobi2.getServerIdentifier()).thenReturn(u2);
-        Mockito.when(mobi3.getServerIdentifier()).thenReturn(u3);
-        Mockito.when(context.registerService(Mockito.eq(FederationService.class), Mockito.any(FederationService.class), Mockito.any()))
+        when(mobi1.getServerIdentifier()).thenReturn(u1);
+        when(mobi2.getServerIdentifier()).thenReturn(u2);
+        when(mobi3.getServerIdentifier()).thenReturn(u3);
+        when(context.registerService(eq(FederationService.class), any(FederationService.class), any()))
                 .thenReturn(registration);
-        Mockito.when(engine.getUsers()).thenReturn(Collections.EMPTY_SET);
+        when(engine.getUsers()).thenReturn(Collections.EMPTY_SET);
 
         fnf.setModelFactory(mf);
         fnf.setValueFactory(vf);
@@ -137,21 +141,21 @@ public class HazelcastFederationServiceTest extends TestCase {
         s1.setValueFactory(vf);
         s1.setHazelcastOSGiService(hazelcastOSGiService);
         s1.setRdfEngine(engine);
-        s1.setFederationUserUtils(userUtils);
+        s1.setUserUtils(userUtils);
         final HazelcastFederationService s2 = new HazelcastFederationService();
         s2.setMobiServer(mobi2);
         s2.setFederationNodeFactory(fnf);
         s2.setValueFactory(vf);
         s2.setHazelcastOSGiService(hazelcastOSGiService);
         s2.setRdfEngine(engine);
-        s2.setFederationUserUtils(userUtils);
+        s2.setUserUtils(userUtils);
         final HazelcastFederationService s3 = new HazelcastFederationService();
         s3.setMobiServer(mobi3);
         s3.setFederationNodeFactory(fnf);
         s3.setValueFactory(vf);
         s3.setHazelcastOSGiService(hazelcastOSGiService);
         s3.setRdfEngine(engine);
-        s3.setFederationUserUtils(userUtils);
+        s3.setUserUtils(userUtils);
         ForkJoinPool pool = new ForkJoinPool(3);
 
         ForkJoinTask<?> task1 = createNode(pool, s1, 5123, new HashSet<>(Arrays.asList("127.0.0.1:5234", "127.0.0.1:5345")));
@@ -161,13 +165,13 @@ public class HazelcastFederationServiceTest extends TestCase {
         task2.get();
         task3.get();
 
-        Mockito.verify(context, Mockito.timeout(30000L)
+        verify(context, timeout(30000L)
                 .times(3))
-                .registerService(Mockito.any(Class.class), Mockito.any(HazelcastFederationService.class), Mockito.any(Dictionary.class));
+                .registerService(any(Class.class), any(HazelcastFederationService.class), any(Dictionary.class));
 
-        Assert.assertNotNull(s1.getHazelcastInstance());
-        Assert.assertNotNull(s2.getHazelcastInstance());
-        Assert.assertNotNull(s3.getHazelcastInstance());
+        assertNotNull(s1.getHazelcastInstance());
+        assertNotNull(s2.getHazelcastInstance());
+        assertNotNull(s3.getHazelcastInstance());
 
         assertEquals(3, s1.getMemberCount());
         assertEquals(3, s2.getMemberCount());
