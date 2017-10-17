@@ -357,11 +357,14 @@ describe('Mapper State service', function() {
         expect(result).toContain({ontologyId: ontologies[0].id, classObj: classes1[0]});
         expect(result).toContain({ontologyId: ontologies[1].id, classObj: classes2[0]});
     });
-    describe('should reflect the change of a property value in the difference', function() {
+    fdescribe('should reflect the change of a property value in the difference', function() {
         var entityId = 'entity', propId = 'prop', newValue = 'new', originalValue = 'original', otherValue = 'other';
         beforeEach(function () {
             utilSvc.getPropertyValue.and.callFake(function(obj, propId) {
                 return _.get(obj, "['" + propId + "'][0]['@value']", '');
+            });
+            utilSvc.getPropertyId.and.callFake(function(obj, propId) {
+                return _.get(obj, "['" + propId + "'][0]['@id']", '');
             });
         });
         it('unless the new value is the same as the original', function() {
@@ -372,92 +375,183 @@ describe('Mapper State service', function() {
             expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
         });
         describe('if the new value is different', function() {
-            it('and the property was just set', function() {
-                var additionObj = {'@id': entityId};
-                additionObj[propId] = [{'@value': originalValue}];
-                mapperStateSvc.mapping.difference.additions.push(additionObj);
-                var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
-                mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
-                expect(additionObj[propId]).toEqual([{'@value': newValue}]);
-                expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
+            describe('and the property has a @id value', function() {
+                it('and the property was just set', function() {
+                    var additionObj = {'@id': entityId};
+                    additionObj[propId] = [{'@id': originalValue}];
+                    mapperStateSvc.mapping.difference.additions.push(additionObj);
+                    var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
+                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue, true);
+                    expect(additionObj[propId]).toEqual([{'@id': newValue}]);
+                    expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
+                });
+                it('and the entity was just opened', function() {
+                    var expectedAddition = {'@id': entityId};
+                    expectedAddition[propId] = [{'@id': newValue}];
+                    var expectedDeletion = {'@id': entityId};
+                    expectedDeletion[propId] = [{'@id': originalValue}];
+                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue, true);
+                    expect(mapperStateSvc.mapping.difference.additions).toContain(expectedAddition);
+                    expect(mapperStateSvc.mapping.difference.deletions).toContain(expectedDeletion);
+                });
+                it('and the entity was opened and the property already changed', function() {
+                    var additionObj = {'@id': entityId};
+                    additionObj[propId] = [{'@id': originalValue}];
+                    mapperStateSvc.mapping.difference.additions.push(additionObj);
+                    var deletionObj = {'@id': entityId};
+                    deletionObj[propId] = [{'@id': otherValue}];
+                    mapperStateSvc.mapping.difference.deletions.push(deletionObj);
+                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue, true);
+                    expect(additionObj[propId]).toEqual([{'@id': newValue}]);
+                    expect(deletionObj[propId]).toEqual([{'@id': otherValue}]);
+                });
+                it('and nothing has been set on the entity', function() {
+                    var expectedAddition = {'@id': entityId};
+                    expectedAddition[propId] = [{'@id': newValue}];
+                    var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
+                    mapperStateSvc.changeProp(entityId, propId, newValue, '', true);
+                    expect(mapperStateSvc.mapping.difference.additions).toContain(expectedAddition);
+                    expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
+                });
+                it('and the entity was opened and another property was altered', function() {
+                    var additionObj = {'@id': entityId};
+                    mapperStateSvc.mapping.difference.additions.push(additionObj);
+                    var deletionObj = {'@id': entityId};
+                    mapperStateSvc.mapping.difference.deletions.push(deletionObj);
+                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue, true);
+                    expect(additionObj[propId]).toEqual([{'@id': newValue}]);
+                    expect(deletionObj[propId]).toEqual([{'@id': originalValue}]);
+                });
+                it('and the property was not set and another property was changed', function() {
+                    var additionObj = {'@id': entityId};
+                    mapperStateSvc.mapping.difference.additions.push(additionObj);
+                    var deletionObj = {'@id': entityId};
+                    mapperStateSvc.mapping.difference.deletions.push(deletionObj);
+                    mapperStateSvc.changeProp(entityId, propId, newValue, '', true);
+                    expect(additionObj[propId]).toEqual([{'@id': newValue}]);
+                    expect(_.has(deletionObj, "['" + propId + "']")).toEqual(false);
+                });
+                it('and the property was not set and another property was added', function() {
+                    var additionObj = {'@id': entityId};
+                    mapperStateSvc.mapping.difference.additions.push(additionObj);
+                    var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
+                    mapperStateSvc.changeProp(entityId, propId, newValue, '', true);
+                    expect(additionObj[propId]).toEqual([{'@id': newValue}]);
+                    expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
+                });
+                it('and the property was changed back with no other changes', function() {
+                    var additionObj = {'@id': entityId};
+                    additionObj[propId] = [{'@id': originalValue}];
+                    mapperStateSvc.mapping.difference.additions.push(additionObj);
+                    var deletionObj = {'@id': entityId};
+                    deletionObj[propId] = [{'@id': newValue}];
+                    mapperStateSvc.mapping.difference.deletions.push(deletionObj);
+                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue, true);
+                    expect(mapperStateSvc.mapping.difference.additions).toEqual([]);
+                    expect(mapperStateSvc.mapping.difference.deletions).toEqual([]);
+                });
+                it('and the property was changed back with other changes', function() {
+                    var expectedAddition = {'@id': entityId, test: true};
+                    var additionObj = angular.copy(expectedAddition);
+                    additionObj[propId] = [{'@id': originalValue}];
+                    mapperStateSvc.mapping.difference.additions.push(additionObj);
+                    var expectedDeletion = {'@id': entityId, test: false};
+                    var deletionObj = angular.copy(expectedDeletion);
+                    deletionObj[propId] = [{'@id': newValue}];
+                    mapperStateSvc.mapping.difference.deletions.push(deletionObj);
+                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue, true);
+                    expect(mapperStateSvc.mapping.difference.additions).toContain(expectedAddition);
+                    expect(mapperStateSvc.mapping.difference.deletions).toContain(expectedDeletion);
+                });
             });
-            it('and the entity was just opened', function() {
-                var expectedAddition = {'@id': entityId};
-                expectedAddition[propId] = [{'@value': newValue}];
-                var expectedDeletion = {'@id': entityId};
-                expectedDeletion[propId] = [{'@value': originalValue}];
-                mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
-                expect(mapperStateSvc.mapping.difference.additions).toContain(expectedAddition);
-                expect(mapperStateSvc.mapping.difference.deletions).toContain(expectedDeletion);
-            });
-            it('and the entity was opened and the property already changed', function() {
-                var additionObj = {'@id': entityId};
-                additionObj[propId] = [{'@value': originalValue}];
-                mapperStateSvc.mapping.difference.additions.push(additionObj);
-                var deletionObj = {'@id': entityId};
-                deletionObj[propId] = [{'@value': otherValue}];
-                mapperStateSvc.mapping.difference.deletions.push(deletionObj);
-                mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
-                expect(additionObj[propId]).toEqual([{'@value': newValue}]);
-                expect(deletionObj[propId]).toEqual([{'@value': otherValue}]);
-            });
-            it('and nothing has been set on the entity', function() {
-                var expectedAddition = {'@id': entityId};
-                expectedAddition[propId] = [{'@value': newValue}];
-                var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
-                mapperStateSvc.changeProp(entityId, propId, newValue, '');
-                expect(mapperStateSvc.mapping.difference.additions).toContain(expectedAddition);
-                expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
-            });
-            it('and the entity was opened and another property was altered', function() {
-                var additionObj = {'@id': entityId};
-                mapperStateSvc.mapping.difference.additions.push(additionObj);
-                var deletionObj = {'@id': entityId};
-                mapperStateSvc.mapping.difference.deletions.push(deletionObj);
-                mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
-                expect(additionObj[propId]).toEqual([{'@value': newValue}]);
-                expect(deletionObj[propId]).toEqual([{'@value': originalValue}]);
-            });
-            it('and the property was not set and another property was changed', function() {
-                var additionObj = {'@id': entityId};
-                mapperStateSvc.mapping.difference.additions.push(additionObj);
-                var deletionObj = {'@id': entityId};
-                mapperStateSvc.mapping.difference.deletions.push(deletionObj);
-                mapperStateSvc.changeProp(entityId, propId, newValue, '');
-                expect(additionObj[propId]).toEqual([{'@value': newValue}]);
-                expect(_.has(deletionObj, "['" + propId + "']")).toEqual(false);
-            });
-            it('and the property was not set and another property was added', function() {
-                var additionObj = {'@id': entityId};
-                mapperStateSvc.mapping.difference.additions.push(additionObj);
-                var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
-                mapperStateSvc.changeProp(entityId, propId, newValue, '');
-                expect(additionObj[propId]).toEqual([{'@value': newValue}]);
-                expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
-            });
-            it('and the property was changed back with no other changes', function() {
-                var additionObj = {'@id': entityId};
-                additionObj[propId] = [{'@value': originalValue}];
-                mapperStateSvc.mapping.difference.additions.push(additionObj);
-                var deletionObj = {'@id': entityId};
-                deletionObj[propId] = [{'@value': newValue}];
-                mapperStateSvc.mapping.difference.deletions.push(deletionObj);
-                mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
-                expect(mapperStateSvc.mapping.difference.additions).toEqual([]);
-                expect(mapperStateSvc.mapping.difference.deletions).toEqual([]);
-            });
-            it('and the property was changed back with other changes', function() {
-                var expectedAddition = {'@id': entityId, test: true};
-                var additionObj = angular.copy(expectedAddition);
-                additionObj[propId] = [{'@value': originalValue}];
-                mapperStateSvc.mapping.difference.additions.push(additionObj);
-                var expectedDeletion = {'@id': entityId, test: false};
-                var deletionObj = angular.copy(expectedDeletion);
-                deletionObj[propId] = [{'@value': newValue}];
-                mapperStateSvc.mapping.difference.deletions.push(deletionObj);
-                mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
-                expect(mapperStateSvc.mapping.difference.additions).toContain(expectedAddition);
-                expect(mapperStateSvc.mapping.difference.deletions).toContain(expectedDeletion);
+            describe('and the property has a @value value', function() {
+                it('and the property was just set', function() {
+                    var additionObj = {'@id': entityId};
+                    additionObj[propId] = [{'@value': originalValue}];
+                    mapperStateSvc.mapping.difference.additions.push(additionObj);
+                    var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
+                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
+                    expect(additionObj[propId]).toEqual([{'@value': newValue}]);
+                    expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
+                });
+                it('and the entity was just opened', function() {
+                    var expectedAddition = {'@id': entityId};
+                    expectedAddition[propId] = [{'@value': newValue}];
+                    var expectedDeletion = {'@id': entityId};
+                    expectedDeletion[propId] = [{'@value': originalValue}];
+                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
+                    expect(mapperStateSvc.mapping.difference.additions).toContain(expectedAddition);
+                    expect(mapperStateSvc.mapping.difference.deletions).toContain(expectedDeletion);
+                });
+                it('and the entity was opened and the property already changed', function() {
+                    var additionObj = {'@id': entityId};
+                    additionObj[propId] = [{'@value': originalValue}];
+                    mapperStateSvc.mapping.difference.additions.push(additionObj);
+                    var deletionObj = {'@id': entityId};
+                    deletionObj[propId] = [{'@value': otherValue}];
+                    mapperStateSvc.mapping.difference.deletions.push(deletionObj);
+                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
+                    expect(additionObj[propId]).toEqual([{'@value': newValue}]);
+                    expect(deletionObj[propId]).toEqual([{'@value': otherValue}]);
+                });
+                it('and nothing has been set on the entity', function() {
+                    var expectedAddition = {'@id': entityId};
+                    expectedAddition[propId] = [{'@value': newValue}];
+                    var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
+                    mapperStateSvc.changeProp(entityId, propId, newValue, '');
+                    expect(mapperStateSvc.mapping.difference.additions).toContain(expectedAddition);
+                    expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
+                });
+                it('and the entity was opened and another property was altered', function() {
+                    var additionObj = {'@id': entityId};
+                    mapperStateSvc.mapping.difference.additions.push(additionObj);
+                    var deletionObj = {'@id': entityId};
+                    mapperStateSvc.mapping.difference.deletions.push(deletionObj);
+                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
+                    expect(additionObj[propId]).toEqual([{'@value': newValue}]);
+                    expect(deletionObj[propId]).toEqual([{'@value': originalValue}]);
+                });
+                it('and the property was not set and another property was changed', function() {
+                    var additionObj = {'@id': entityId};
+                    mapperStateSvc.mapping.difference.additions.push(additionObj);
+                    var deletionObj = {'@id': entityId};
+                    mapperStateSvc.mapping.difference.deletions.push(deletionObj);
+                    mapperStateSvc.changeProp(entityId, propId, newValue, '');
+                    expect(additionObj[propId]).toEqual([{'@value': newValue}]);
+                    expect(_.has(deletionObj, "['" + propId + "']")).toEqual(false);
+                });
+                it('and the property was not set and another property was added', function() {
+                    var additionObj = {'@id': entityId};
+                    mapperStateSvc.mapping.difference.additions.push(additionObj);
+                    var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
+                    mapperStateSvc.changeProp(entityId, propId, newValue, '');
+                    expect(additionObj[propId]).toEqual([{'@value': newValue}]);
+                    expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
+                });
+                it('and the property was changed back with no other changes', function() {
+                    var additionObj = {'@id': entityId};
+                    additionObj[propId] = [{'@value': originalValue}];
+                    mapperStateSvc.mapping.difference.additions.push(additionObj);
+                    var deletionObj = {'@id': entityId};
+                    deletionObj[propId] = [{'@value': newValue}];
+                    mapperStateSvc.mapping.difference.deletions.push(deletionObj);
+                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
+                    expect(mapperStateSvc.mapping.difference.additions).toEqual([]);
+                    expect(mapperStateSvc.mapping.difference.deletions).toEqual([]);
+                });
+                it('and the property was changed back with other changes', function() {
+                    var expectedAddition = {'@id': entityId, test: true};
+                    var additionObj = angular.copy(expectedAddition);
+                    additionObj[propId] = [{'@value': originalValue}];
+                    mapperStateSvc.mapping.difference.additions.push(additionObj);
+                    var expectedDeletion = {'@id': entityId, test: false};
+                    var deletionObj = angular.copy(expectedDeletion);
+                    deletionObj[propId] = [{'@value': newValue}];
+                    mapperStateSvc.mapping.difference.deletions.push(deletionObj);
+                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
+                    expect(mapperStateSvc.mapping.difference.additions).toContain(expectedAddition);
+                    expect(mapperStateSvc.mapping.difference.deletions).toContain(expectedDeletion);
+                });
             });
         });
     })
