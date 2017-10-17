@@ -415,16 +415,26 @@ describe('Mapping Config Overlay directive', function() {
             });
             describe('if it changed', function() {
                 beforeEach(function() {
+                    this.oldOntologyInfo = {
+                        recordId: 'oldRecord',
+                        branchId: 'oldBranch',
+                        commitId: 'oldCommit',
+                    };
+                    mappingManagerSvc.getSourceOntologyInfo.and.returnValue(this.oldOntologyInfo);
                     this.classMapping = {'@id': 'classMapping'};
                     mappingManagerSvc.getAllClassMappings.and.returnValue([this.classMapping]);
                     controller.classes = [{classObj: {'@id': 'class1'}}, {classObj: {'@id': 'class2'}}];
                     mappingManagerSvc.getClassIdByMapping.and.returnValue('class1');
+                    mappingManagerSvc.getMappingEntity.and.returnValue({'@id': 'mapping'});
                 });
                 it('setting appropriate state', function() {
                     controller.set();
                     expect(mapperStateSvc.sourceOntologies).toEqual(controller.selectedOntologyState.latest.ontologies);
                     expect(mappingManagerSvc.setSourceOntologyInfo).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, this.ontologyInfo.recordId, this.ontologyInfo.branchId, this.ontologyInfo.commitId);
                     expect(mapperStateSvc.mapping.ontology).toBe(controller.selectedRecord);
+                    expect(mapperStateSvc.changeProp).toHaveBeenCalledWith('mapping', prefixes.delim + 'sourceRecord', this.ontologyInfo.recordId, this.oldOntologyInfo.recordId, true);
+                    expect(mapperStateSvc.changeProp).toHaveBeenCalledWith('mapping', prefixes.delim + 'sourceBranch', this.ontologyInfo.branchId, this.oldOntologyInfo.branchId, true);
+                    expect(mapperStateSvc.changeProp).toHaveBeenCalledWith('mapping', prefixes.delim + 'sourceCommit', this.ontologyInfo.commitId, this.oldOntologyInfo.commitId, true);
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
                     expect(mapperStateSvc.availableClasses).toEqual([{classObj: {'@id': 'class2'}}]);
