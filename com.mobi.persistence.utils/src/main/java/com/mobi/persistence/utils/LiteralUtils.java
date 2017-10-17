@@ -1,4 +1,4 @@
-package com.mobi.rdf.core.utils;
+package com.mobi.persistence.utils;
 
 /*-
  * #%L

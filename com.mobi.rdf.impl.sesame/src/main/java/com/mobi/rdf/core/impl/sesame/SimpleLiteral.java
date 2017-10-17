@@ -24,10 +24,10 @@ package com.mobi.rdf.core.impl.sesame;
  */
 
 
+import com.mobi.persistence.utils.LiteralUtils;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.LiteralUtils;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
