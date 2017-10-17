@@ -1,8 +1,8 @@
-package com.mobi.jaas.api.config;
+package com.mobi.federation.api.jaas.token;
 
 /*-
  * #%L
- * org.matonto.jaas.api
+ * federation.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,6 +23,27 @@ package com.mobi.jaas.api.config;
  * #L%
  */
 
-public class FederationLoginModuleConfig {
-    public static final String USER_UTILS = "user-utils";
+import com.mobi.federation.api.FederationService;
+import com.mobi.jaas.api.modules.token.TokenCallback;
+
+public class FederationTokenCallback extends TokenCallback {
+
+    private FederationService service;
+    private String nodeId;
+
+    public FederationService getService() {
+        return service;
+    }
+
+    public void setService(FederationService service) {
+        this.service = service;
+    }
+
+    public String getNodeId() {
+        return nodeId;
+    }
+
+    public void setNodeId(String nodeId) {
+        this.nodeId = nodeId;
+    }
 }

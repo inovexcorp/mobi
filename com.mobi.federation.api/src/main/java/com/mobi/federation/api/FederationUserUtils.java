@@ -23,31 +23,63 @@ package com.mobi.federation.api;
  * #L%
  */
 
-// import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 
 import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 
 public interface FederationUserUtils {
-//    /**
-//     * Adds a User to the user replicated map for the identified federation.
-//     *
-//     * @param service The FederationService to add the user to.
-//     * @param user The User to add to the map.
-//     */
-//    void addUser(FederationService service, User user);
-
     /**
      * Creates the map entry for this node in the replicated user map for the federation.
      *
-     * @param service The FederationService to update.
+     * @param service The {@link FederationService} to add the map entry to.
      */
     void createMapEntry(FederationService service);
 
     /**
+     * Removes the map entry for this node in the replicated user map for the federation.
+     *
+     * @param service The {@link FederationService} to remove the map entry from.
+     */
+    void removeMapEntry(FederationService service);
+
+    /**
+     * Adds a User to the replicated user map for the identified federation.
+     *
+     * @param service The {@link FederationService} to add the user to.
+     * @param user    The User to add to the map.
+     */
+    void addUser(FederationService service, User user);
+
+    /**
+     * Removes a User from the replicated user map for the identified federation.
+     *
+     * @param service  The {@link FederationService} to add the user to.
+     * @param username The username of the {@link User} to delete.
+     */
+    void removeUser(FederationService service, String username);
+
+    /**
+     * Updates a User in the replicated user map for the identified federation.
+     *
+     * @param service The {@link FederationService} to add the user to.
+     * @param user    The User to update in the map.
+     */
+    void updateUser(FederationService service, User user);
+
+    /**
+     * Gets a User from the replicated user map for the identified federation defined on the identified node.
+     *
+     * @param service  The {@link FederationService} to add the user to.
+     * @param username The username of the {@link User} to get.
+     * @param nodeId   The node ID.
+     */
+    User getUser(FederationService service, String username, String nodeId);
+
+    /**
      * Validates that the user exists in the identified federation.
      *
-     * @param service The FederationService to search.
+     * @param service  The {@link FederationService} to search.
      * @param username The username to validate.
      * @throws FailedLoginException Thrown if the user does not exist.
      */
@@ -56,9 +88,9 @@ public interface FederationUserUtils {
     /**
      * Validates that the user exists on the identified node in the identified federation.
      *
-     * @param service The FederationService to search.
+     * @param service  The {@link FederationService} to search.
      * @param username The username to validate.
-     * @param nodeId The node ID.
+     * @param nodeId   The node ID.
      * @throws FailedLoginException Thrown if the user does not exist.
      */
     void verifyUser(FederationService service, String username, String nodeId) throws LoginException;

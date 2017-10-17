@@ -30,6 +30,8 @@ import com.mobi.federation.api.ontologies.federation.FederationNode;
 import com.mobi.federation.api.ontologies.federation.Node;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
+import org.jasypt.encryption.pbe.config.EnvironmentStringPBEConfig;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -170,4 +172,18 @@ public interface FederationService {
      * @throws IOException Thrown if an input or output exception occurs.
      */
     Optional<SignedJWT> verifyToken(String tokenString, HttpServletResponse res) throws IOException;
+
+    /**
+     * Gets the encryptor needed to decrypt the shared key needed to verify federation tokens.
+     *
+     * @return The {@link StandardPBEStringEncryptor} needed for decryption.
+     */
+    static StandardPBEStringEncryptor getEncryptor() {
+        StandardPBEStringEncryptor enc = new StandardPBEStringEncryptor();
+        EnvironmentStringPBEConfig env = new EnvironmentStringPBEConfig();
+        env.setAlgorithm("PBEWithMD5AndDES");
+        env.setPassword("ENCRYPTION_PASSWORD");
+        enc.setConfig(env);
+        return enc;
+    }
 }

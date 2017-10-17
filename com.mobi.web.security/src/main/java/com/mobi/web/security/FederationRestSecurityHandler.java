@@ -28,9 +28,8 @@ import aQute.bnd.annotation.component.Reference;
 import com.eclipsesource.jaxrs.provider.security.AuthenticationHandler;
 import com.eclipsesource.jaxrs.provider.security.AuthorizationHandler;
 import com.mobi.federation.api.FederationService;
+import com.mobi.federation.api.jaas.token.config.FederationConfiguration;
 import com.mobi.jaas.api.config.MobiConfiguration;
-import com.mobi.jaas.api.engines.EngineManager;
-import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.principals.UserPrincipal;
 import com.mobi.jaas.api.utils.TokenUtils;
 import com.mobi.web.security.util.AuthenticationProps;
@@ -51,18 +50,12 @@ import javax.ws.rs.core.SecurityContext;
 public class FederationRestSecurityHandler implements AuthenticationHandler, AuthorizationHandler {
     private static final Logger LOG = LoggerFactory.getLogger(RestSecurityHandler.class.getName());
 
-    protected MobiConfiguration mobiConfiguration;
-    protected EngineManager engineManager;
+    protected FederationConfiguration configuration;
     private Map<String, FederationService> federationServiceMap = new HashMap<>();
 
     @Reference
-    protected void setMobiConfiguration(MobiConfiguration configuration) {
-        this.mobiConfiguration = configuration;
-    }
-
-    @Reference
-    protected void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
+    protected void setFederationConfiguration(FederationConfiguration configuration) {
+        this.configuration = configuration;
     }
 
     @Reference(type = '*', dynamic = true)
@@ -81,9 +74,10 @@ public class FederationRestSecurityHandler implements AuthenticationHandler, Aut
         Subject subject = new Subject();
         String tokenString = TokenUtils.getTokenString(containerRequestContext);
         String federationId = containerRequestContext.getProperty("federationId") + "";
+        String nodeId = containerRequestContext.getProperty("nodeId") + "";
 
-        if (federationServiceMap.containsKey(federationId) && !RestSecurityUtils.authenticateToken("mobi", subject,
-                tokenString, mobiConfiguration, federationServiceMap.get(federationId))) {
+        if (federationServiceMap.containsKey(federationId) && !RestSecurityUtils.authenticateToken("mobi-federation",
+                subject, tokenString, configuration, federationServiceMap.get(federationId), nodeId)) {
             return null;
         }
 
@@ -104,16 +98,8 @@ public class FederationRestSecurityHandler implements AuthenticationHandler, Aut
         return SecurityContext.BASIC_AUTH;
     }
 
-    // TODO: update this to use the federation user utils
     @Override
     public boolean isUserInRole(Principal principal, String role) {
-        if (principal instanceof UserPrincipal) {
-            for (Role roleObj : engineManager.getUserRoles(principal.getName())) {
-                if (roleObj.getResource().stringValue().contains(role)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return principal instanceof UserPrincipal && role.equals("remote-user");
     }
 }

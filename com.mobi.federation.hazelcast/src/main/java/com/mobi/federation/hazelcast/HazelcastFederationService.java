@@ -35,6 +35,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ReplicatedMap;
 import com.hazelcast.osgi.HazelcastOSGiInstance;
 import com.hazelcast.osgi.HazelcastOSGiService;
+import com.mobi.jaas.api.engines.Engine;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
@@ -116,6 +117,7 @@ public class HazelcastFederationService implements FederationService {
     private ValueFactory vf;
     private FederationNodeFactory federationNodeFactory;
     private FederationUserUtils userUtils;
+    private Engine rdfEngine;
 
     /**
      * {@link HazelcastOSGiService} instance.
@@ -165,7 +167,7 @@ public class HazelcastFederationService implements FederationService {
     /**
      * Encryptor needed to decrypt the configuration's sharedKey to properly populate the tokenKey.
      */
-    private StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
+    private StandardPBEStringEncryptor encryptor = FederationService.getEncryptor();
 
     @Reference
     void setMobiServer(Mobi mobiServer) {
@@ -190,6 +192,11 @@ public class HazelcastFederationService implements FederationService {
     @Reference
     void setFederationUserUtils(FederationUserUtils userUtils) {
         this.userUtils = userUtils;
+    }
+
+    @Reference(target = "(engineName=RdfEngine)")
+    protected void setRdfEngine(Engine engine) {
+        this.rdfEngine = engine;
     }
 
     /**
@@ -250,7 +257,7 @@ public class HazelcastFederationService implements FederationService {
                 this.hazelcastInstance.getCluster().addMembershipListener(listener);
                 this.tokenKey = encryptor.decrypt(serviceConfig.sharedKey()).getBytes(StandardCharsets.UTF_8);
                 registerWithFederationNodes(hazelcastInstance);
-                userUtils.createMapEntry(this);
+                registerUsers();
             } finally {
                 this.semaphore.release();
             }
@@ -400,6 +407,14 @@ public class HazelcastFederationService implements FederationService {
         } catch (UnsupportedEncodingException e) {
             LOGGER.warn("Unable to create Node IRI for: " + getNodeId(), e);
         }
+    }
+
+    /**
+     * Simple method that will initialize the user map and add all current users to the map for this service.
+     */
+    private void registerUsers() {
+        userUtils.createMapEntry(this);
+        rdfEngine.getUsers().forEach(user -> userUtils.addUser(this, user));
     }
 
     private Optional<String> getHostAddress() {

@@ -23,10 +23,16 @@ package com.mobi.federation.hazelcast;
  * #L%
  */
 
+import static com.mobi.federation.api.serializable.SerializedUser.getAsUser;
+
 import aQute.bnd.annotation.component.Component;
+import aQute.bnd.annotation.component.Reference;
 import com.mobi.federation.api.FederationService;
 import com.mobi.federation.api.FederationUserUtils;
 import com.mobi.federation.api.serializable.SerializedUser;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
+import com.mobi.rdf.api.ValueFactory;
 
 import java.util.Map;
 import java.util.Set;
@@ -39,14 +45,110 @@ import javax.security.auth.login.LoginException;
 public class HazelcastFederationUserUtils implements FederationUserUtils {
     public static final String FEDERATION_USERS_KEY = "federation.users";
 
+    private UserFactory userFactory;
+    private ValueFactory vf;
+
+    @Reference
+    void setUserFactory(UserFactory userFactory) {
+        this.userFactory = userFactory;
+    }
+
+    @Reference
+    void setValueFactory(ValueFactory vf) {
+        this.vf = vf;
+    }
+
     @Override
     public void createMapEntry(FederationService service) {
-        service.getDistributedMap(FEDERATION_USERS_KEY).put(service.getNodeId(), new TreeSet<>());
+        Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
+        UUID nodeId = service.getNodeId();
+        if (!userMap.containsKey(nodeId)) {
+            userMap.put(nodeId, new TreeSet<>());
+        }
+    }
+
+    @Override
+    public void removeMapEntry(FederationService service) {
+        Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
+        UUID nodeId = service.getNodeId();
+        if (userMap.containsKey(nodeId)) {
+            userMap.remove(nodeId);
+        }
+    }
+
+    @Override
+    public void addUser(FederationService service, User user) {
+        String username = user.getUsername().orElseThrow(() ->
+                new IllegalArgumentException("The user must have a username.")).stringValue();
+
+        Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
+        UUID nodeId = service.getNodeId();
+        String federationId = service.getFederationId();
+        Set<SerializedUser> users = getNodeUsers(userMap, nodeId, federationId);
+
+        if (!userExists(users, username)) {
+            users.add(new SerializedUser(user));
+        } else {
+            throw new IllegalStateException("A user with username " + username + " already exists on node "
+                    + nodeId.toString() + " in federation " + federationId);
+        }
+    }
+
+    @Override
+    public void removeUser(FederationService service, String username) {
+        Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
+        UUID nodeId = service.getNodeId();
+        String federationId = service.getFederationId();
+        Set<SerializedUser> users = getNodeUsers(userMap, nodeId, federationId);
+
+        if (userExists(users, username)) {
+            users.removeIf(serializedUser -> serializedUser.getUsername().equals(username));
+        } else {
+            throw new IllegalStateException("User with username " + username + " does not exist on node "
+                    + nodeId.toString() + " in federation " + federationId);
+        }
+    }
+
+    @Override
+    public void updateUser(FederationService service, User user) {
+        String username = user.getUsername().orElseThrow(() ->
+                new IllegalArgumentException("The user must have a username.")).stringValue();
+        String userIRI = user.getResource().stringValue();
+
+        Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
+        UUID nodeId = service.getNodeId();
+        String federationId = service.getFederationId();
+        Set<SerializedUser> users = getNodeUsers(userMap, nodeId, federationId);
+
+        if (users.stream().anyMatch(serializedUser -> serializedUser.getUserIRI().equals(userIRI))) {
+            users.removeIf(serializedUser -> serializedUser.getUsername().equals(username));
+            users.add(new SerializedUser(user));
+        } else {
+            throw new IllegalStateException("User with IRI " + userIRI + " does not exist on node "
+                    + nodeId.toString() + " in federation " + federationId);
+        }
+    }
+
+    @Override
+    public User getUser(FederationService service, String username, String nodeId) {
+        Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
+        String federationId = service.getFederationId();
+        Set<SerializedUser> users = getNodeUsers(userMap, UUID.fromString(nodeId), federationId);
+
+        if (userExists(users, username)) {
+            return getAsUser(users.stream()
+                    .filter(user -> user.getUsername().equals(username))
+                    .findFirst()
+                    .get(), userFactory, vf);
+        }
+        throw new IllegalArgumentException("User " + username + " does not exist on node " + nodeId
+                + " in federation " + federationId);
     }
 
     @Override
     public void verifyUser(FederationService service, String username) throws FailedLoginException {
-        if (service.getFederationNodeIds().stream().anyMatch(nodeId -> validateUser(service, username, nodeId))) {
+        Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
+        if (service.getFederationNodeIds().stream().anyMatch(nodeId -> validateUser(userMap, username, nodeId))) {
             throw new FailedLoginException("User " + username + " not found in federation "
                     + service.getFederationId());
         }
@@ -58,23 +160,49 @@ public class HazelcastFederationUserUtils implements FederationUserUtils {
         if (!service.getFederationNodeIds().contains(nodeUUID)) {
             throw new LoginException("Node " + nodeId + " is not in federation " + service.getFederationId());
         }
-        if (!validateUser(service, username, nodeUUID)) {
+        Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
+        if (!validateUser(userMap, username, nodeUUID)) {
             throw new FailedLoginException("User " + username + " not found in node " + nodeId + " in federation "
                     + service.getFederationId());
         }
     }
 
     /**
-     * Validates that the provided username is a user registered to the node within the provided federation.
+     * Validates that the provided username is a user registered to the node within the provided user map.
      *
-     * @param service  The FederationService.
+     * @param userMap  The replicated user map.
      * @param username The user's username.
      * @param nodeId   The node ID.
      * @return True if the user exists on the identified node; otherwise, false.
      */
-    private boolean validateUser(FederationService service, String username, UUID nodeId) {
-        Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
-        return userMap.containsKey(nodeId)
-                && userMap.get(nodeId).stream().anyMatch(user -> user.getUsername().equals(username));
+    private boolean validateUser(Map<UUID, Set<SerializedUser>> userMap, String username, UUID nodeId) {
+        return userMap.containsKey(nodeId) && userExists(userMap.get(nodeId), username);
+    }
+
+    /**
+     * Checks for the existence of the user identified by the provided username in the {@link SerializedUser} set.
+     *
+     * @param users    The Set of users to check.
+     * @param username The user's username.
+     * @return True if the user exists in the set; otherwise, false.
+     */
+    private boolean userExists(Set<SerializedUser> users, String username) {
+        return users.stream().anyMatch(user -> user.getUsername().equals(username));
+    }
+
+    /**
+     * Gets a {@link Set} of {@link SerializedUser}s associated with the identified node in the identified federation.
+     *
+     * @param userMap      The replicated user map.
+     * @param nodeId       The node ID.
+     * @param federationId The federation ID.
+     * @return A {@link Set} of {@link SerializedUser}s for the node.
+     */
+    private Set<SerializedUser> getNodeUsers(Map<UUID, Set<SerializedUser>> userMap, UUID nodeId, String federationId) {
+        if (userMap.containsKey(nodeId)) {
+            return userMap.get(nodeId);
+        }
+        throw new IllegalArgumentException("Users for node " + nodeId.toString() + " could not be found in federation "
+                + federationId);
     }
 }

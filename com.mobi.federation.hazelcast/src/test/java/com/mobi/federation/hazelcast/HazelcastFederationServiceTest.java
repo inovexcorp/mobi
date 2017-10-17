@@ -23,6 +23,8 @@ package com.mobi.federation.hazelcast;
  * #L%
  */
 
+import com.mobi.federation.api.FederationUserUtils;
+import com.mobi.jaas.api.engines.Engine;
 import junit.framework.TestCase;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -30,7 +32,25 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import com.mobi.federation.api.FederationService;
+import com.mobi.federation.api.ontologies.federation.FederationNodeFactory;
 import com.mobi.platform.config.api.server.Mobi;
+import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
+import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
+import com.mobi.rdf.orm.conversion.impl.BooleanValueConverter;
+import com.mobi.rdf.orm.conversion.impl.DateValueConverter;
+import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
+import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
+import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
+import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
+import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
+import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
+import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
+import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
+import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
+import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -39,6 +59,7 @@ import org.osgi.framework.ServiceRegistration;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -67,6 +88,17 @@ public class HazelcastFederationServiceTest extends TestCase {
     @Mock
     private ServiceRegistration<FederationService> registration;
 
+    @Mock
+    private FederationUserUtils userUtils;
+
+    @Mock
+    private Engine engine;
+
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ModelFactory mf = LinkedHashModelFactory.getInstance();
+    private final ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
+    private final FederationNodeFactory fnf = new FederationNodeFactory();
+
     @Test
     public void testFederation() throws Exception {
         final FakeHazelcastOsgiService hazelcastOSGiService = new FakeHazelcastOsgiService();
@@ -79,22 +111,47 @@ public class HazelcastFederationServiceTest extends TestCase {
         Mockito.when(mobi3.getServerIdentifier()).thenReturn(u3);
         Mockito.when(context.registerService(Mockito.eq(FederationService.class), Mockito.any(FederationService.class), Mockito.any()))
                 .thenReturn(registration);
+        Mockito.when(engine.getUsers()).thenReturn(Collections.EMPTY_SET);
 
-        Mockito.doAnswer(invocation -> {
-            Thread.sleep(500L);
-            return null;
-        }).when(registration).unregister();
+        fnf.setModelFactory(mf);
+        fnf.setValueFactory(vf);
+        fnf.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(fnf);
+
+        vcr.registerValueConverter(new ResourceValueConverter());
+        vcr.registerValueConverter(new IRIValueConverter());
+        vcr.registerValueConverter(new DoubleValueConverter());
+        vcr.registerValueConverter(new IntegerValueConverter());
+        vcr.registerValueConverter(new FloatValueConverter());
+        vcr.registerValueConverter(new ShortValueConverter());
+        vcr.registerValueConverter(new StringValueConverter());
+        vcr.registerValueConverter(new ValueValueConverter());
+        vcr.registerValueConverter(new LiteralValueConverter());
+        vcr.registerValueConverter(new BooleanValueConverter());
+        vcr.registerValueConverter(new DateValueConverter());
 
         System.setProperty("java.net.preferIPv4Stack", "true");
         final HazelcastFederationService s1 = new HazelcastFederationService();
         s1.setMobiServer(mobi1);
+        s1.setFederationNodeFactory(fnf);
+        s1.setValueFactory(vf);
         s1.setHazelcastOSGiService(hazelcastOSGiService);
+        s1.setRdfEngine(engine);
+        s1.setFederationUserUtils(userUtils);
         final HazelcastFederationService s2 = new HazelcastFederationService();
         s2.setMobiServer(mobi2);
+        s2.setFederationNodeFactory(fnf);
+        s2.setValueFactory(vf);
         s2.setHazelcastOSGiService(hazelcastOSGiService);
+        s2.setRdfEngine(engine);
+        s2.setFederationUserUtils(userUtils);
         final HazelcastFederationService s3 = new HazelcastFederationService();
         s3.setMobiServer(mobi3);
+        s3.setFederationNodeFactory(fnf);
+        s3.setValueFactory(vf);
         s3.setHazelcastOSGiService(hazelcastOSGiService);
+        s3.setRdfEngine(engine);
+        s3.setFederationUserUtils(userUtils);
         ForkJoinPool pool = new ForkJoinPool(3);
 
         ForkJoinTask<?> task1 = createNode(pool, s1, 5123, new HashSet<>(Arrays.asList("127.0.0.1:5234", "127.0.0.1:5345")));
@@ -123,9 +180,11 @@ public class HazelcastFederationServiceTest extends TestCase {
         s1.getFederationNodeIds().forEach(System.out::println);
 
         s1.deactivate();
+        Thread.sleep(500L);
         assertEquals(2, s2.getMemberCount());
         assertEquals(2, s3.getMemberCount());
         s2.deactivate();
+        Thread.sleep(500L);
         assertEquals(1, s3.getMemberCount());
         s3.deactivate();
     }
@@ -140,10 +199,12 @@ public class HazelcastFederationServiceTest extends TestCase {
     private ForkJoinTask<?> createNode(ForkJoinPool pool, HazelcastFederationService service, int port, Set<String> members) {
         return pool.submit(() -> {
             final Map<String, Object> map = new HashMap<>();
+            map.put("id", "test.cluster.service");
             map.put("instanceName", service.hashCode());
             map.put("listeningPort", Integer.toString(port));
             map.put("joinMechanism", "TCPIP");
             map.put("tcpIpMembers", StringUtils.join(members, ", "));
+            map.put("sharedKey", FederationService.getEncryptor().encrypt("key"));
             service.activate(context, map);
             try {
                 waitOnInitialize(service);
@@ -153,3 +214,4 @@ public class HazelcastFederationServiceTest extends TestCase {
         });
     }
 }
+
