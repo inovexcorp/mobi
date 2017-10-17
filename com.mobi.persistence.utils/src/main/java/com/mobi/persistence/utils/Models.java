@@ -30,7 +30,6 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.*;
 
 import java.util.*;
 
