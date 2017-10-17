@@ -1,0 +1,15 @@
+@prefix : <http://mobi.com/mappings/newest_mapping/> .
+@prefix delim: <http://mobi.com/ontologies/delimited#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix uhtc: <http://mobi.com/ontologies/uhtc/> .
+
+:Material a                       delim:ClassMapping ;
+          delim:mapsTo            uhtc:Material ;
+          delim:dataProperty      :DataMapping1 ;
+          delim:hasPrefix         "http://mobi.com/data/uhtc/material/" ;
+          delim:localName         "${UUID}" .
+
+:DataMapping1 a                       delim:DataMapping ;
+              delim:columnIndex       "1" ;
+              delim:hasProperty       uhtc:formula .

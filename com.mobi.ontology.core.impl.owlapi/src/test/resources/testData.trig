@@ -1,0 +1,24 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix ontedit: <http://mobi.com/ontologies/ontology-editor#> .
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix records: <http://mobi.com/test/records#> .
+@prefix branches: <http://mobi.com/test/branches#> .
+
+records:ontology-record a ontedit:OntologyRecord ;
+    mcat:branch branches:branch ;
+    mcat:masterBranch branches:branch .
+
+branches:branch a mcat:Branch .
+
+GRAPH <http://mobi.com/test/additions#commit> {
+    <http://test.com/ontology/new> a owl:Ontology .
+}
+
+GRAPH <http://mobi.com/test/additions#used> {
+    <http://test.com/ontology/used> a owl:Ontology .
+}
+
+GRAPH <http://mobi.com/test/additions#no-iri> {
+    <http://test.com/test> dct:title "Title" .
+}

@@ -1,0 +1,45 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="datasets-ontology-picker form-group">
+    <custom-label>Ontologies</custom-label>
+    <div class="input-group ontologies-search-bar">
+        <input type="text" class="form-control" name="ontologies-search" ng-model="dvm.ontologySearchConfig.searchText" placeholder="Search for...">
+        <span class="input-group-btn">
+            <button class="btn btn-primary" type="submit" ng-click="dvm.getOntologies()">Search</button>
+        </span>
+    </div>
+    <div class="ontology-records-list list-group">
+        <button class="list-group-item" ng-repeat="ontology in dvm.ontologies track by ontology['@id']" ng-class="{'active': dvm.isSelected(ontology['@id'])}" ng-click="dvm.selectOntology(ontology)">
+            <span>{{dvm.util.getDctermsValue(ontology, 'title')}}</span>
+        </button>
+    </div>
+    <div class="paging-wrapper">
+        <paging-details total-size="dvm.totalSize" page-index="dvm.ontologySearchConfig.pageIndex" limit="dvm.ontologySearchConfig.limit"></paging-details>
+        <pagination links="dvm.links" current-page="dvm.ontologySearchConfig.pageIndex" get-page="dvm.getRecordPage(direction)"></pagination>
+    </div>
+    <div class="selected-ontologies">
+        <span class="field-name">Selected: </span>
+        <span ng-if="dvm.selectedOntologies.length === 0">(None)</span>
+        <span ng-repeat="ontology in dvm.selectedOntologies track by ontology['@id']">{{dvm.util.getDctermsValue(ontology, 'title')}} <a ng-click="dvm.unselectOntology(ontology['@id'])" class="remove-ontology"><i class="fa fa-times"></i></a> </span>
+    </div>
+</div>

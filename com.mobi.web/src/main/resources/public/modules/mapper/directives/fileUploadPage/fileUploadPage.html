@@ -1,0 +1,56 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="file-upload-page row">
+    <div class="col-xs-5 form-block full-height">
+        <mapping-title></mapping-title>
+        <block>
+            <block-header>
+                <span>Upload File</span>
+            </block-header>
+            <block-content class="padding">
+                <file-upload-form></file-upload-form>
+                <mapping-preview ng-if="!dvm.state.editMapping"></mapping-preview>
+                <div ng-if="dvm.state.editMapping && dvm.state.invalidProps.length" class="invalid-props">
+                    <h3 class="error-display">Missing Columns</h3>
+                    <ul>
+                        <li ng-repeat="columnObj in dvm.state.invalidProps">
+                            Column {{columnObj.index}} - {{dvm.getDataMappingName(columnObj['@id'])}}
+                        </li>
+                    </ul>
+                    <p class="help-block">Click continue to fix the mapping.</p>
+                </div>
+            </block-content>
+            <block-footer>
+                <button class="btn btn-default pull-left" ng-click="dvm.cancel()">Cancel</button>
+                <button class="btn btn-primary pull-right" ng-click="dvm.state.editMapping ? dvm.edit() : dvm.state.displayRunMappingOverlay = true" ng-disabled="!dvm.dm.dataRows || (!dvm.state.editMapping && dvm.state.invalidProps.length > 0)">{{dvm.state.editMapping ? 'Continue' : 'Run'}}</button>
+            </block-footer>
+        </block>
+    </div>
+    <div class="col-xs-7 full-height">
+        <block>
+            <block-content>
+                <preview-data-grid></preview-data-grid>
+            </block-content>
+        </block>
+    </div>
+</div>

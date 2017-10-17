@@ -1,4 +1,4 @@
-MatOnto is covered under the license found in the file `LICENSE.TXT` in the root directory. All licensed third party libraries are listed in the files `THIRD-PARTY.txt` and `THIRD-PARTY-ETC.txt` in this directory. The license for each of those libraries are in the following files:
+Mobi is covered under the license found in the file `LICENSE.TXT` in the root directory. All licensed third party libraries are listed in the files `THIRD-PARTY.txt` and `THIRD-PARTY-ETC.txt` in this directory. The license for each of those libraries are in the following files:
 
 * The Apache Software License, Version 2.0 - `apache_v2.0.txt`
 * Revised BSD License - `revised_bsd_asm.txt`, `revised_bsd_curvesapi.txt`, `revised_bsd_hamcrest.txt`, `revised_bsd_jline.txt`, `revised_bsd_jsonldjava.txt`, and `revised_bsd_openrdf.txt`

@@ -1,0 +1,152 @@
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/qrs> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "7.691880E+06" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasCyclicCrackGrowthRate> "1.300480E-07" .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/yza> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasCyclicCrackGrowthRate> "6.705600E-07" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "1.428492E+07" .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/fgh> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/ghi> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/mno> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasCyclicCrackGrowthRate> "2.616200E-08" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "5.494200E+06" .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/123> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasCyclicCrackGrowthRate> "8.763000E-07" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "1.758144E+07" .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/jkl> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/klm> .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/765> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasCyclicCrackGrowthRate> "0.0000008814" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "21339472.8" .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/432> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/321> .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/234> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/345> .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/bcd> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasCyclicCrackGrowthRate> "4.749800E-06" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "3.648149E+06" .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/stu> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasCyclicCrackGrowthRate> "2.065020E-07" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "8.790720E+06" .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/876> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/765> .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/321> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "38756086.8" .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/678> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/789> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/nop> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/opq> .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/wxy> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "1.098840E+07" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasCyclicCrackGrowthRate> "3.835400E-07" .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/789> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "32965200" .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/567> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "27471000" .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/klm> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasCyclicCrackGrowthRate> "8.483600E-09" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "4.395360E+06" .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/uvw> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasCyclicCrackGrowthRate> "2.921000E-07" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "9.889560E+06" .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/rst> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/stu> .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/cdf> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/dfg> .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/ijk> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "3.845940E+06" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasCyclicCrackGrowthRate> "5.308600E-09" .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/vwx> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/wxy> .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/654> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/543> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/zab> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/123> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/456> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/567> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/dfg> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "4.087685E+06" .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/890> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/987> .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/abc> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/bcd> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/opq> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasCyclicCrackGrowthRate> "6.756400E-08" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "6.593040E+06" .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/ghi> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "3.801986E+06" .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/987> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "38459400" .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/hij> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/ijk> .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/xyz> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/yza> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/lmn> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/mno> .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/543> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "29009376" .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/pqr> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/qrs> .
+
+<http://mobi.com/data/crackgrowthontologyeh/dataset/tuv> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> "DTDH8932AB" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/uvw> .
+
+<http://mobi.com/data/crackgrowthontologyeh/datapair/345> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "2.197680E+07" .

@@ -1,1 +1,0 @@
-(&(objectClass=org.matonto.vfs.api.VirtualFilesystem)(component.name=org.matonto.vfs.basic))

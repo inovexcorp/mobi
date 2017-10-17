@@ -1,9 +1,0 @@
-PREFIX mcat: <http://matonto.org/ontologies/catalog#>
-PREFIX ontedit: <http://matonto.org/ontologies/ontology-editor#>
-
-SELECT ?record
-WHERE {
-	?record a ontedit:OntologyRecord ;
-        mcat:catalog ?catalog ;
-		ontedit:ontologyIRI ?ontologyIRI .
-}

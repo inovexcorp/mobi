@@ -1,0 +1,13 @@
+PREFIX dataset: <http://mobi.com/ontologies/dataset#>
+
+SELECT
+    DISTINCT ?graph
+WHERE {
+    {
+        ?dataset dataset:defaultNamedGraph ?graph
+    } UNION {
+        ?dataset dataset:namedGraph ?graph
+    } UNION {
+        ?dataset dataset:systemDefaultNamedGraph ?graph
+    }
+}

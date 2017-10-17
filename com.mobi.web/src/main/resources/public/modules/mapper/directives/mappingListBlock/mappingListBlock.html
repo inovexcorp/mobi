@@ -1,0 +1,54 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="mapping-list-block col-xs-4 full-height">
+    <block>
+        <block-header>
+            <span>Mappings</span>
+            <button class="btn btn-link pull-right" ng-click="dvm.createMapping()">
+                <i class="fa fa-plus"></i>Create Mapping
+            </button>
+        </block-header>
+        <block-search ng-model="dvm.state.mappingSearchString" clear-event="dvm.state.mappingSearchString = ''"></block-search>
+        <block-content class="tree scroll-without-buttons">
+            <ul>
+                <li ng-repeat="record in dvm.list | filter:{title: dvm.state.mappingSearchString}">
+                  <a ng-click="dvm.onClick(record)" ng-class="{'active': record.id === dvm.state.mapping.record.id}" ng-bind-html="record.title | highlight:dvm.state.mappingSearchString | trusted"></a>
+                </li>
+            </ul>
+        </block-content>
+        <block-footer class="centered">
+            <button class="btn btn-link" ng-click="dvm.state.displayDeleteMappingConfirm = true" ng-disabled="!dvm.state.mapping">
+                <i class="fa fa-trash"></i>Delete Mapping
+            </button>
+        </block-footer>
+    </block>
+    <confirmation-overlay ng-if="dvm.state.displayDeleteMappingConfirm"
+        class="delete-mapping"
+        header-text="'Delete ' + dvm.state.mapping.record.title"
+        confirm-click="dvm.deleteMapping()"
+        cancel-click="dvm.state.displayDeleteMappingConfirm = false"
+        confirm-text="'Yes'"
+        cancel-text="'No'">
+        Are you sure you want to delete <strong>{{dvm.state.mapping.record.title}}</strong>?
+    </confirmation-overlay>
+</div>

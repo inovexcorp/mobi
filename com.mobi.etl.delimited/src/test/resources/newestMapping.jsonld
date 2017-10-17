@@ -1,0 +1,130 @@
+[
+    {
+        "@id": "http://mobi.com/mappings/test/CrystalStructure",
+        "@type": [
+            "http://mobi.com/ontologies/delimited#ClassMapping"
+        ],
+        "http://mobi.com/ontologies/delimited#mapsTo": [
+            {
+                "@id": "http://mobi.com/ontologies/uhtc/CrystalStructure"
+            }
+        ],
+        "http://mobi.com/ontologies/delimited#hasPrefix": [
+            {
+                "@value": "http://mobi.com/data/uhtc/crystalstructure/"
+            }
+        ],
+        "http://mobi.com/ontologies/delimited#localName": [
+            {
+                "@value": "${3}"
+            }
+        ]
+    },
+    {
+        "@id": "http://mobi.com/mappings/test/DataMapping1",
+        "@type":[
+            "http://mobi.com/ontologies/delimited#DataMapping"
+        ],
+        "http://mobi.com/ontologies/delimited#columnIndex": [
+            {
+                "@value": "2"
+            }
+        ],
+        "http://mobi.com/ontologies/delimited#hasProperty": [
+            {
+                "@id": "http://mobi.com/ontologies/uhtc/formula"
+            }
+        ]
+    },
+    {
+        "@id": "http://mobi.com/mappings/test/DataMapping2",
+        "@type":[
+            "http://mobi.com/ontologies/delimited#DataMapping"
+        ],
+        "http://mobi.com/ontologies/delimited#columnIndex": [
+            {
+                "@value": "7"
+            }
+        ],
+        "http://mobi.com/ontologies/delimited#hasProperty": [
+            {
+                "@id": "http://mobi.com/ontologies/uhtc/density"
+            }
+        ]
+    },
+    {
+        "@id": "http://mobi.com/mappings/test/DataMapping3",
+        "@type":[
+            "http://mobi.com/ontologies/delimited#DataMapping"
+        ],
+        "http://mobi.com/ontologies/delimited#columnIndex": [
+            {
+                "@value": "4"
+            }
+        ],
+        "http://mobi.com/ontologies/delimited#hasProperty": [
+            {
+                "@id": "http://mobi.com/ontologies/uhtc/latticeParameter"
+            }
+        ]
+    },
+    {
+        "@id": "http://mobi.com/mappings/test",
+        "@type": [
+            "http://mobi.com/ontologies/delimited#Mapping"
+        ]
+    },
+    {
+        "@id": "http://mobi.com/mappings/test/Material",
+        "@type": [
+            "http://mobi.com/ontologies/delimited#ClassMapping"
+        ],
+        "http://mobi.com/ontologies/delimited#mapsTo": [
+            {
+                "@id": "http://mobi.com/ontologies/uhtc/Material"
+            }
+        ],
+        "http://mobi.com/ontologies/delimited#dataProperty": [
+            {
+                "@id": "http://mobi.com/mappings/test/DataMapping1"
+            },
+            {
+                "@id": "http://mobi.com/mappings/test/DataMapping2"
+            },
+            {
+                "@id": "http://mobi.com/mappings/test/DataMapping3"
+            }
+        ],
+        "http://mobi.com/ontologies/delimited#objectProperty": [
+            {
+                "@id": "http://mobi.com/mappings/test/ObjectMapping1"
+            }
+        ],
+        "http://mobi.com/ontologies/delimited#hasPrefix": [
+            {
+                "@value": "http://mobi.com/data/uhtc/material/"
+            }
+        ],
+        "http://mobi.com/ontologies/delimited#localName": [
+            {
+                "@value": "${UUID}"
+            }
+        ]
+    },
+    {
+        "@id": "http://mobi.com/mappings/test/ObjectMapping1",
+        "@type":[
+            "http://mobi.com/ontologies/delimited#ObjectMapping"
+        ],
+        "http://mobi.com/ontologies/delimited#classMapping": [
+            {
+                "@id": "http://mobi.com/mappings/test/CrystalStructure"
+            }
+        ],
+        "http://mobi.com/ontologies/delimited#hasProperty": [
+            {
+                "@id": "http://mobi.com/ontologies/uhtc/crystalStructure"
+            }
+        ]
+    }
+]

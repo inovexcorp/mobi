@@ -1,9 +1,0 @@
-version: '2'
-services:
-  matonto:
-    container_name: MatOnto
-    image: matonto:${project.version}
-    build: .
-    ports:
-      - "8443:8443"
-    command: bash -c '/opt/matonto/distribution-${project.version}/bin/karaf'

@@ -1,0 +1,14 @@
+PREFIX dc: <http://purl.org/dc/terms/>
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+
+SELECT
+    ?version
+WHERE {
+	?record a ?type ;
+	    mcat:version ?version .
+    ?version dc:issued ?issued .
+
+	FILTER(?type IN (mcat:VersionedRecord, mcat:VersionedRDFRecord, mcat:OntologyRecord, mcat:MappingRecord, mcat:DatasetRecord))
+}
+ORDER BY DESC(?issued)
+LIMIT 1

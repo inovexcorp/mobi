@@ -1,0 +1,36 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="edit-user-profile-overlay overlay">
+    <form class="content" name="dvm.form">
+        <h6>Edit User Profile</h6>
+        <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
+        <text-input ng-model="dvm.newUser.firstName" input-name="'firstName'" display-text="'First Name'" muted-text="'(Optional)'" ng-class="{'has-success': dvm.form.firstName.$dirty && dvm.form.firstName.$valid, 'has-error': dvm.form.firstName.$dirty && dvm.form.firstName.$invalid}"></text-input>
+        <text-input ng-model="dvm.newUser.lastName" input-name="'lastName'" display-text="'Last Name'" muted-text="'(Optional)'" ng-class="{'has-success': dvm.form.lastName.$dirty && dvm.form.lastName.$valid, 'has-error': dvm.form.lastName.$dirty && dvm.form.lastName.$invalid}"></text-input>
+        <email-input ng-model="dvm.newUser.email" input-name="'email'" ng-class="{'has-success': dvm.form.email.$dirty && dvm.form.email.$valid, 'has-error': dvm.form.email.$dirty && dvm.form.email.$invalid}" muted-text="'(Optional)'"></email-input>
+
+        <div class="btn-container clearfix">
+            <button class="btn btn-primary pull-right" ng-click="dvm.set()" ng-disabled="dvm.form.$invalid">Set</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.state.displayEditUserProfileOverlay = false">Cancel</button>
+        </div>
+    </form>
+</div>
