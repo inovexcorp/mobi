@@ -1,0 +1,21 @@
+@prefix foaf: <http://xmlns.com/foaf/0.1/>
+@prefix : <urn://mobi.com/orm/test/>
+
+
+:testAgent {
+	:testAgent a foaf:Agent ;
+		foaf:gender "male" ;
+		foaf:age "100" ;
+		foaf:mbox :account .
+}
+
+:account {
+	:account a foaf:OnlineAccount ;
+		foaf:accountName "test's mailbox" ;		
+}
+
+
+
+
+
+

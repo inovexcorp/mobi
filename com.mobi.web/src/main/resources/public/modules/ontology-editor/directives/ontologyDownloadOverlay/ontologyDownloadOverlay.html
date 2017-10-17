@@ -1,0 +1,41 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="ontology-download-overlay overlay sm">
+    <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
+        <h6>Download Ontology</h6>
+        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+        <custom-label>Serialization</custom-label>
+        <serialization-select ng-model="dvm.serialization"></serialization-select>
+        <div ng-class="{'has-error': dvm.form.fileName.$error.pattern}" class="form-group">
+            <label class="control-label">File Name</label>
+            <input class="form-control" name="fileName" ng-model="dvm.fileName" ng-pattern="dvm.fileNamePattern" required />
+            <p ng-messages="dvm.form.fileName.$error" class="error-display">
+                <ng-message when="pattern">File names may only contain alphanumeric characters, ., -, and _.</ng-message>
+            </p>
+        </div>
+        <div class="btn-container clearfix">
+            <button class="btn btn-primary pull-right" ng-disabled="!dvm.serialization || dvm.form.$invalid" ng-click="dvm.download()">Download</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.os.showDownloadOverlay = false">Cancel</button>
+        </div>
+    </form>
+</div>

@@ -1,0 +1,31 @@
+
+<http://mobi.com/mappings/crawkgrowth/b1c6e137-5f47-460b-adf8-7b0741c0fba3> a <http://mobi.com/ontologies/delimited#ClassMapping> ;
+	<http://mobi.com/ontologies/delimited#objectProperty> <http://mobi.com/mappings/crawkgrowth/581e87ea-cf56-4c49-9281-feb67723e026> ;
+	<http://mobi.com/ontologies/delimited#hasPrefix> "http://mobi.com/data/crackgrowthontologyeh/dataset/" ;
+	<http://mobi.com/ontologies/delimited#localName> "${UUID}" ;
+	<http://mobi.com/ontologies/delimited#mapsTo> <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
+	<http://mobi.com/ontologies/delimited#dataProperty> <http://mobi.com/mappings/crawkgrowth/3dc392a1-9d14-4fb7-85aa-9b4604908369> .
+
+<http://mobi.com/mappings/crawkgrowth/621ccefa-bbfa-450b-81e1-45c1096c035d> a <http://mobi.com/ontologies/delimited#PropertyMapping> , <http://mobi.com/ontologies/delimited#DataMapping> ;
+	<http://mobi.com/ontologies/delimited#hasProperty> <https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> ;
+	<http://mobi.com/ontologies/delimited#columnIndex> "2" .
+
+<http://mobi.com/mappings/crawkgrowth/c890469a-95f0-4cdb-8da9-5b740e6e8eee> a <http://mobi.com/ontologies/delimited#ClassMapping> ;
+	<http://mobi.com/ontologies/delimited#dataProperty> <http://mobi.com/mappings/crawkgrowth/621ccefa-bbfa-450b-81e1-45c1096c035d> , <http://mobi.com/mappings/crawkgrowth/90341b90-dab0-4ac3-b1fd-62ebc3eed2e3> ;
+	<http://mobi.com/ontologies/delimited#localName> "${UUID}" ;
+	<http://mobi.com/ontologies/delimited#hasPrefix> "http://mobi.com/data/crackgrowthontologyeh/datapair/" ;
+	<http://mobi.com/ontologies/delimited#mapsTo> <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> .
+
+<http://mobi.com/mappings/crawkgrowth/3dc392a1-9d14-4fb7-85aa-9b4604908369> a <http://mobi.com/ontologies/delimited#DataMapping> , <http://mobi.com/ontologies/delimited#PropertyMapping> ;
+	<http://mobi.com/ontologies/delimited#columnIndex> "0" ;
+	<http://mobi.com/ontologies/delimited#hasProperty> <https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataSetName> .
+
+<http://mobi.com/mappings/crawkgrowth/581e87ea-cf56-4c49-9281-feb67723e026> a <http://mobi.com/ontologies/delimited#PropertyMapping> , <http://mobi.com/ontologies/delimited#ObjectMapping> ;
+	<http://mobi.com/ontologies/delimited#hasProperty> <https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> ;
+	<http://mobi.com/ontologies/delimited#classMapping> <http://mobi.com/mappings/crawkgrowth/c890469a-95f0-4cdb-8da9-5b740e6e8eee> .
+
+<http://mobi.com/mappings/crawkgrowth> a <http://mobi.com/ontologies/delimited#Mapping> .
+
+<http://mobi.com/mappings/crawkgrowth/90341b90-dab0-4ac3-b1fd-62ebc3eed2e3> a <http://mobi.com/ontologies/delimited#DataMapping> , <http://mobi.com/ontologies/delimited#PropertyMapping> ;
+	<http://mobi.com/ontologies/delimited#columnIndex> "3" ;
+	<http://mobi.com/ontologies/delimited#hasProperty> <https://mobi.com/ontologies/3/2017/CrackGrowth#hasCyclicCrackGrowthRate> .

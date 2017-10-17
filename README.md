@@ -21,7 +21,7 @@ mvn clean install
 ```
 
 The build creates the Mobi distribution as both a `.tar.gz` file and a `.zip` file in the
-`matonto-distribution/target` directory. Extract one of the files and navigate into that directory.
+`mobi-distribution/target` directory. Extract one of the files and navigate into that directory.
 
 Inside the extracted distribution directory, start up the Mobi Karaf instance. The distribution is configured to automatically deploy the required bundles and services to the runtime using Karaf features. To start the runtime, simply open the command line interface and run the start script.
 
@@ -70,7 +70,7 @@ npm install -g gulp
 
 *NOTE: This action may have to be run as root.*
 
-Once `gulp` is installed, the image cache can be cleared by navigating into the `org.matonto.web` directory and running the following command.
+Once `gulp` is installed, the image cache can be cleared by navigating into the `com.mobi.web` directory and running the following command.
 
 ```
 gulp clearcache
@@ -78,7 +78,7 @@ gulp clearcache
 
 ## Docker
 
-Mobi is also availble as a Docker image. Visit https://hub.docker.com/r/inovexis/mobi/ to find available images. Images can also be built locally. See the `matonto-distribution` module for more information.
+Mobi is also availble as a Docker image. Visit https://hub.docker.com/r/inovexis/mobi/ to find available images. Images can also be built locally. See the `mobi-distribution` module for more information.
 
 ## License
 

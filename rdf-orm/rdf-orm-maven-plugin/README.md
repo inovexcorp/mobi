@@ -5,7 +5,7 @@ Example configuration in your pom:
 
 ```xml
 <plugin>
-    <groupId>org.matonto.orm</groupId>
+    <groupId>com.mobi.orm</groupId>
     <artifactId>rdf-orm-maven-plugin</artifactId>
     <version>${version}</version>
     <executions>
@@ -23,7 +23,7 @@ Example configuration in your pom:
                         <!-- The file containing the ontology RDF -->
                         <ontologyFile>${project.basedir}/src/main/resources/ontology.trig</ontologyFile>
                         <!-- The package name representing this ontology (the package the ontology will be generated in) -->
-                        <outputPackage>org.matonto.ontology</outputPackage>
+                        <outputPackage>com.mobi.ontology</outputPackage>
                     </ontology>
                 </generates>
                 <!-- Ontologies listed in the references section will act as references for the generated source, but won't create Java files. -->
@@ -32,7 +32,7 @@ Example configuration in your pom:
                         <!-- The file containing the ontology RDF -->
                         <ontologyFile>${project.basedir}/src/main/resources/importedOntology.rdf</ontologyFile>
                         <!-- The package that references should use for this ontology data -->
-                        <outputPackage>org.matonto.ontology.reference</outputPackage>
+                        <outputPackage>com.mobi.ontology.reference</outputPackage>
                     </ontology>
                 </references>
                 <!-- The location you want to write your Java classes to -->

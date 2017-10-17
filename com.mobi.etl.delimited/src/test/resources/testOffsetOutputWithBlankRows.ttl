@@ -1,0 +1,54 @@
+<http://mobi.com/data/uhtc/crystalstructure/Hexagonal> a <http://mobi.com/ontologies/uhtc/CrystalStructure> .
+
+<http://mobi.com/data/uhtc/crystalstructure/FCC> a <http://mobi.com/ontologies/uhtc/CrystalStructure> .
+
+<http://mobi.com/data/uhtc/material/abc> a <http://mobi.com/ontologies/uhtc/Material> ;
+	<http://mobi.com/ontologies/uhtc/formula> "HfN" ;
+	<http://mobi.com/ontologies/uhtc/latticeParameter> "4.525" ;
+	<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/FCC> .
+
+<http://mobi.com/data/uhtc/material/bcd> a <http://mobi.com/ontologies/uhtc/Material> ;
+	<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Hexagonal> .
+
+<http://mobi.com/data/uhtc/material/cdf> a <http://mobi.com/ontologies/uhtc/Material> ;
+	<http://mobi.com/ontologies/uhtc/formula> "ZrC" ;
+	<http://mobi.com/ontologies/uhtc/density> "6.56" ;
+	<http://mobi.com/ontologies/uhtc/latticeParameter> "4.693" ;
+	<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/FCC> .
+
+<http://mobi.com/data/uhtc/material/dfg> a <http://mobi.com/ontologies/uhtc/Material> ;
+	<http://mobi.com/ontologies/uhtc/formula> "ZrN" ;
+	<http://mobi.com/ontologies/uhtc/density> "7.29" ;
+	<http://mobi.com/ontologies/uhtc/latticeParameter> "4.578" ;
+	<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/FCC> .
+
+<http://mobi.com/data/uhtc/crystalstructure/Cubic> a <http://mobi.com/ontologies/uhtc/CrystalStructure> .
+
+<http://mobi.com/data/uhtc/material/fgh> a <http://mobi.com/ontologies/uhtc/Material> ;
+	<http://mobi.com/ontologies/uhtc/latticeParameter> "4.242" ;
+	<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/FCC> .
+
+<http://mobi.com/data/uhtc/material/ghi> a <http://mobi.com/ontologies/uhtc/Material> ;
+	<http://mobi.com/ontologies/uhtc/formula> "TaB2" ;
+	<http://mobi.com/ontologies/uhtc/density> "12.54" ;
+	<http://mobi.com/ontologies/uhtc/latticeParameter> "3.098" ;
+	<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Hexagonal> .
+
+<http://mobi.com/data/uhtc/material/hij> a <http://mobi.com/ontologies/uhtc/Material> ;
+	<http://mobi.com/ontologies/uhtc/formula> "TaC" ;
+	<http://mobi.com/ontologies/uhtc/density> "14.5" ;
+	<http://mobi.com/ontologies/uhtc/latticeParameter> "4.455" ;
+	<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Cubic> .
+
+<http://mobi.com/data/uhtc/material/ijk> a <http://mobi.com/ontologies/uhtc/Material> ;
+	<http://mobi.com/ontologies/uhtc/density> "14.3" ;
+	<http://mobi.com/ontologies/uhtc/latticeParameter> "4.33" ;
+	<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Cubic> .
+
+<http://mobi.com/data/uhtc/material/jkl> a <http://mobi.com/ontologies/uhtc/Material> ;
+	<http://mobi.com/ontologies/uhtc/formula> "SiC" ;
+	<http://mobi.com/ontologies/uhtc/density> "3.21" ;
+	<http://mobi.com/ontologies/uhtc/latticeParameter> "4.65" ;
+	<http://mobi.com/ontologies/uhtc/crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Polymorphic> .
+
+<http://mobi.com/data/uhtc/crystalstructure/Polymorphic> a <http://mobi.com/ontologies/uhtc/CrystalStructure> .

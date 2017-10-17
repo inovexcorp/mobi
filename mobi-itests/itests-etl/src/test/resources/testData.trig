@@ -1,0 +1,20 @@
+<http://mobi.com/data/uhtc/material/TaC> a <http://mobi.com/ontologies/uhtc#Material> ;
+    <http://mobi.com/ontologies/uhtc#chemicalFormula> "TaC" ;
+	<http://mobi.com/ontologies/uhtc#meltingPoint> 3.8E3 ;
+	<http://mobi.com/ontologies/uhtc#density> 1.45E1 ;
+    <http://mobi.com/ontologies/uhtc#element> <http://mobi.com/data/uhtc/element/Ta>,
+                                                 <http://mobi.com/data/uhtc/element/C> .
+
+GRAPH <http://mobi.com/data/uhtc/elements> {
+    <http://mobi.com/data/uhtc/element/Ta> a <http://mobi.com/ontologies/uhtc#Element> ;
+    	<http://mobi.com/ontologies/uhtc#atomicWeight> 1.809479E2 ;
+    	<http://mobi.com/ontologies/uhtc#elementName> "Tantalum" ;
+    	<http://mobi.com/ontologies/uhtc#atomicNumber> 73 ;
+    	<http://mobi.com/ontologies/uhtc#symbol> "Ta" .
+
+    <http://mobi.com/data/uhtc/element/C> a <http://mobi.com/ontologies/uhtc#Element> ;
+    	<http://mobi.com/ontologies/uhtc#atomicNumber> 6 ;
+    	<http://mobi.com/ontologies/uhtc#elementName> "Carbon" ;
+    	<http://mobi.com/ontologies/uhtc#symbol> "C" ;
+    	<http://mobi.com/ontologies/uhtc#atomicWeight> 1.2011E1 .
+}

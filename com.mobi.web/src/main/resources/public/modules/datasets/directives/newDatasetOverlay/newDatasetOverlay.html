@@ -1,0 +1,59 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div ng-if="dvm.step === 0" class="new-dataset-info-overlay overlay">
+    <form name="dvm.infoForm" class="clearfix content" novalidate autocomplete="off">
+        <h1>Create New Dataset</h1>
+        <h2>Basic Info</h2>
+        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+        <div class="form-group">
+            <custom-label>Title</custom-label>
+            <input class="form-control" type="text" name="title" ng-model="dvm.recordConfig.title" required focus-me>
+        </div>
+        <text-input ng-model="dvm.recordConfig.datasetIRI" display-text="'Dataset IRI'" muted-text="'(Optional)'"></text-input>
+        <small class="help-block">System will create a default IRI if not provided.</small>
+        <text-area ng-model="dvm.recordConfig.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
+        <keyword-select ng-model="dvm.keywords"></keyword-select>
+        <div class="form-group">
+            <custom-label>Repository ID</custom-label>
+            <p class="form-control-static">{{dvm.recordConfig.repositoryId}}</p>
+        </div>
+        <step-progress-bar step-number="2" current-step="dvm.step"></step-progress-bar>
+        <div class="btn-container clearfix">
+            <button class="btn btn-primary pull-right" ng-disabled="dvm.infoForm.$invalid" ng-click="dvm.step = 1">Next</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.onClose()">Cancel</button>
+        </div>
+    </form>
+</div>
+<div ng-if="dvm.step === 1" class="new-dataset-ontologies-overlay overlay">
+    <form name="dvm.ontologiesForm" class="clearfix content" novalidate autocomplete="off">
+        <h1>Create New Dataset</h1>
+        <h2>Ontologies</h2>
+        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+        <datasets-ontology-picker ontologies="dvm.ontologies" selected-ontologies="dvm.selectedOntologies" error="dvm.error"></datasets-ontology-picker>
+        <step-progress-bar step-number="2" current-step="dvm.step"></step-progress-bar>
+        <div class="btn-container clearfix">
+            <button class="btn btn-primary pull-right" ng-click="dvm.create()">Submit</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.step = 0">Back</button>
+        </div>
+    </form>
+</div>

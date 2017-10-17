@@ -1,7 +1,0 @@
-PREFIX dataset: <http://matonto.org/ontologies/dataset#>
-
-SELECT
-    DISTINCT ?graph
-WHERE {
-    ?dataset dataset:namedGraph ?graph
-}

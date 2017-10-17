@@ -1,2 +1,0 @@
-org.matonto.federation.api
-org.matonto.federation.hazelcast

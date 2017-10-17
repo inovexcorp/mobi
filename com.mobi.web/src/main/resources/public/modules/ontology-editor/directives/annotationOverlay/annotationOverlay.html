@@ -1,0 +1,53 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="annotation-overlay overlay">
+    <form name="dvm.annotationForm" class="content clearfix" novalidate autocomplete="off">
+        <h6>{{dvm.os.editingAnnotation ? 'Edit Annotation' : 'Add Annotation'}}</h6>
+        <div class="form-group">
+            <label class="control-label">Annotation</label>
+            <ui-select ng-model="dvm.os.annotationSelect" ng-disabled="dvm.os.editingAnnotation" autofocus on-select="dvm.selectProp()">
+                <ui-select-match placeholder="Select an annotation">{{dvm.ro.getItemIri($select.selected)}}</ui-select-match>
+                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="annotation in dvm.os.listItem.annotations | filter: $select.search | orderBy:dvm.ontoUtils.getDropDownText" ui-disable-choice="dvm.disableProp(annotation)">
+                    <div ng-bind-html="dvm.ontoUtils.getDropDownText(annotation) | highlight: $select.search | trusted"></div>
+                </ui-select-choices>
+            </ui-select>
+        </div>
+        <div ng-if="dvm.ro.getItemIri(dvm.os.annotationSelect) !== dvm.prefixes.owl + 'deprecated'">
+            <text-area ng-model="dvm.os.annotationValue" display-text="'Value'"></text-area>
+            <language-select ng-model="dvm.os.annotationLanguage"></language-select>
+        </div>
+        <div ng-if="dvm.ro.getItemIri(dvm.os.annotationSelect) === dvm.prefixes.owl + 'deprecated'">
+            <radio-button display-text="'True'" value="'true'" ng-model="dvm.os.annotationValue"></radio-button>
+            <radio-button display-text="'False'" value="'false'" ng-model="dvm.os.annotationValue"></radio-button>
+        </div>
+        <!--<object-select ng-model="dvm.os.annotationType" display-text="'Type'" multi-select="false"
+                       select-list="dvm.os.listItem.dataPropertyRange"></object-select>-->
+        <div class="btn-container clearfix">
+            <button class="btn btn-primary pull-right" ng-if="!dvm.os.editingAnnotation" ng-click="dvm.addAnnotation()"
+                    ng-disabled="dvm.annotationForm.$invalid || dvm.os.annotationSelect === undefined || dvm.os.annotationValue === ''">Add</button>
+            <button class="btn btn-primary pull-right" ng-if="dvm.os.editingAnnotation" ng-click="dvm.editAnnotation()"
+                    ng-disabled="dvm.annotationForm.$invalid || dvm.os.annotationValue === ''">Edit</button>
+            <button class="btn btn-default pull-right" ng-click="dvm.os.showAnnotationOverlay = false;">Cancel</button>
+        </div>
+    </form>
+</div>
