@@ -23,22 +23,46 @@ package com.mobi.rdf.orm.conversion.impl;
  * #L%
  */
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+
+import com.mobi.rdf.api.Literal;
+import com.mobi.rdf.api.Value;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import com.mobi.vocabularies.xsd.XSD;
 import org.junit.Test;
 
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 
 public class DateValueConverterTest extends ValueConverterTestCase<OffsetDateTime> {
+
+    private ValueFactory vf = SimpleValueFactory.getInstance();
 
     public DateValueConverterTest() {
         super(new DateValueConverter(), OffsetDateTime.class);
     }
 
     @Test
-    public void simpleTest() {
-        OffsetDateTime test = OffsetDateTime.now();
-        TestCase.assertEquals(test,
-                valueConverter.convertValue(valueConverter.convertType(test, null), null, OffsetDateTime.class));
+    public void convertTypeReturnsCorrectStringValue() {
+        OffsetDateTime expected = OffsetDateTime.now();
+        Value value = valueConverter.convertType(expected, null);
+        OffsetDateTime actual = OffsetDateTime.parse(value.stringValue());
+        assertEquals(expected.truncatedTo(ChronoUnit.SECONDS), actual);
     }
 
+    @Test
+    public void convertTypeReturnsCorrectDatatype() {
+        OffsetDateTime expected = OffsetDateTime.now();
+        Value value = valueConverter.convertType(expected, null);
+        assertEquals(((Literal) value).getDatatype(), vf.createIRI(XSD.DATE_TIME));
+    }
+
+    @Test
+    public void convertValue() {
+        OffsetDateTime expected = OffsetDateTime.now();
+        Literal literal = vf.createLiteral(expected);
+        OffsetDateTime actual = valueConverter.convertValue(literal, null, OffsetDateTime.class);
+        assertEquals(expected.truncatedTo(ChronoUnit.SECONDS), actual);
+    }
 }
