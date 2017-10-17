@@ -29,7 +29,6 @@ import com.mobi.rdf.api.Literal;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
-import com.mobi.vocabularies.xsd.XSD;
 import org.junit.Test;
 
 import java.time.OffsetDateTime;
@@ -55,7 +54,7 @@ public class DateValueConverterTest extends ValueConverterTestCase<OffsetDateTim
     public void convertTypeReturnsCorrectDatatype() {
         OffsetDateTime expected = OffsetDateTime.now();
         Value value = valueConverter.convertType(expected, null);
-        assertEquals(((Literal) value).getDatatype(), vf.createIRI(XSD.DATE_TIME));
+        assertEquals(((Literal) value).getDatatype(), vf.createIRI("http://www.w3.org/2001/XMLSchema#dateTime"));
     }
 
     @Test

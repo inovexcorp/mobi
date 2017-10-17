@@ -65,9 +65,9 @@ public class DateValueConverter extends AbstractValueConverter<OffsetDateTime> {
     public OffsetDateTime convertValue(final Value value, final Thing thing,
             final Class<? extends OffsetDateTime> desiredType) throws ValueConversionException {
         try {
-            return OffsetDateTime.parse(value.stringValue(), LiteralUtils.LOCAL_TIME_FORMATTER);
+            return OffsetDateTime.parse(value.stringValue(), LiteralUtils.OFFSET_TIME_FORMATTER);
         } catch (DateTimeParseException e) {
-            throw new ValueConversionException("Issue converting value of statement into a date object.", e);
+            throw new ValueConversionException("Issue converting value of statement into an OffsetDateTime object.", e);
         }
     }
 
