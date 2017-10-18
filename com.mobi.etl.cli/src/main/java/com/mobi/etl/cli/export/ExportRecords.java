@@ -23,14 +23,14 @@ package com.mobi.etl.cli.export;
  * #L%
  */
 
+import com.mobi.etl.api.config.rdf.export.RecordExportConfig;
+import com.mobi.etl.api.rdf.export.RecordExportService;
 import org.apache.commons.lang.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import com.mobi.etl.api.config.rdf.export.RecordExportConfig;
-import com.mobi.etl.api.rdf.export.RecordExportService;
 import org.openrdf.rio.RDFFormat;
 
 import java.io.OutputStream;
@@ -47,7 +47,7 @@ public class ExportRecords extends ExportBase implements Action {
     @Reference
     private RecordExportService exportService;
 
-    public void setExportService(RecordExportService exportService) {
+    void setExportService(RecordExportService exportService) {
         this.exportService = exportService;
     }
 

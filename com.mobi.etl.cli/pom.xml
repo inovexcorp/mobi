@@ -49,6 +49,11 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
+            <artifactId>persistence.api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
             <artifactId>persistence.utils</artifactId>
             <version>${project.version}</version>
         </dependency>
