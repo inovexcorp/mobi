@@ -1083,6 +1083,7 @@ describe('Ontology State Service', function() {
         ontologyStateSvc.closeOntology(recordId);
         expect(ontologyStateSvc.list).toEqual([]);
         expect(ontologyStateSvc.setPageTitle).toHaveBeenCalled();
+        expect(ontologyStateSvc.listItem).toEqual({});
     });
     it('removeBranch removes the correct object from the branches list', function() {
         spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);

@@ -1007,7 +1007,7 @@
              */
             self.closeOntology = function(recordId) {
                 if (self.listItem && self.listItem.ontologyRecord.recordId == recordId) {
-                   self.listItem = undefined;
+                   self.listItem = {};
                    self.setPageTitle();
                 }
                 _.remove(self.list, { ontologyRecord: { recordId }});
