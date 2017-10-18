@@ -15,7 +15,7 @@
 	<parent>
 		<artifactId>mobi-itests</artifactId>
 		<groupId>com.mobi</groupId>
-		<version>1.9.38</version>
+		<version>1.9.39</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
@@ -70,12 +70,12 @@
                             <generates>
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/test/resources/ontologies/crazy.trig</ontologyFile>
-                                    <outputPackage>com.mobi.delimited</outputPackage>
+                                    <outputPackage>com.mobi.itests.orm.ontologies.delimited</outputPackage>
                                     <ontologyName>Delimited</ontologyName>
                                 </ontology>
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/test/resources/ontologies/crazy2.trig</ontologyFile>
-                                    <outputPackage>com.mobi.inherit</outputPackage>
+                                    <outputPackage>com.mobi.itests.orm.ontologies.inherit</outputPackage>
                                     <ontologyName>InheritTest</ontologyName>
                                 </ontology>
                                 <ontology>
@@ -85,30 +85,30 @@
                                 </ontology>
                                 <ontology>
                                     <ontologyFile>${project.basedir}/../../com.mobi.rdf.orm.ontologies/src/main/resources/foaf.owl</ontologyFile>
-                                    <outputPackage>com.mobi.foaf</outputPackage>
+                                    <outputPackage>com.mobi.itests.orm.ontologies.foaf</outputPackage>
                                     <ontologyName>FOAF</ontologyName>
                                 </ontology>
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/test/resources/ontologies/test-ont.trig</ontologyFile>
-                                    <outputPackage>com.mobi.test</outputPackage>
+                                    <outputPackage>com.mobi.itests.orm.ontologies.test</outputPackage>
                                 </ontology>
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/test/resources/inheritsImportsTests/child.trig</ontologyFile>
-                                    <outputPackage>com.mobi.inherits.child</outputPackage>
+                                    <outputPackage>com.mobi.itests.orm.ontologies.inherits.child</outputPackage>
                                 </ontology>
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/test/resources/inheritsImportsTests/parent.trig</ontologyFile>
-                                    <outputPackage>com.mobi.inherits.parent</outputPackage>
+                                    <outputPackage>com.mobi.itests.orm.ontologies.inherits.parent</outputPackage>
                                 </ontology>
                             </generates>
                             <references>
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/test/resources/inheritsImportsTests/parent.trig</ontologyFile>
-                                    <outputPackage>com.mobi.inherits.parent</outputPackage>
+                                    <outputPackage>com.mobi.itests.orm.ontologies.inherits.parent</outputPackage>
                                 </ontology>
                                 <ontology>
                                     <ontologyFile>${project.basedir}/../../com.mobi.rdf.orm.ontologies/src/main/resources/foaf.owl</ontologyFile>
-                                    <outputPackage>com.mobi.foaf</outputPackage>
+                                    <outputPackage>com.mobi.itests.orm.ontologies.foaf</outputPackage>
                                     <ontologyName>FOAF</ontologyName>
                                 </ontology>
                             </references>

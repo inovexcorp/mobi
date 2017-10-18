@@ -1083,6 +1083,7 @@ describe('Ontology State Service', function() {
         ontologyStateSvc.closeOntology(recordId);
         expect(ontologyStateSvc.list).toEqual([]);
         expect(ontologyStateSvc.setPageTitle).toHaveBeenCalled();
+        expect(ontologyStateSvc.listItem).toEqual({});
     });
     it('removeBranch removes the correct object from the branches list', function() {
         spyOn(ontologyStateSvc, 'getListItemByRecordId').and.returnValue(listItem);
@@ -1591,6 +1592,11 @@ describe('Ontology State Service', function() {
         it('when the entityIRI is not in the index', function() {
             util.getBeautifulIRI.and.returnValue('entity name');
             expect(ontologyStateSvc.getEntityNameByIndex('iri', {type: 'ontology'})).toBe('entity name');
+            expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
+        });
+        it('when the listItem is undefined', function() {
+            util.getBeautifulIRI.and.returnValue('entity name');
+            expect(ontologyStateSvc.getEntityNameByIndex('iri', undefined)).toBe('entity name');
             expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
         });
     });
