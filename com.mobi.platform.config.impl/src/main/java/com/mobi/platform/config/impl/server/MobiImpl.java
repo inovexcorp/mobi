@@ -123,6 +123,7 @@ public class MobiImpl implements Mobi {
             final NetworkInterface network = NetworkInterface.getByInetAddress(ip);
             final byte[] mac_byte = network.getHardwareAddress();
             if (mac_byte == null) {
+                LOGGER.warn("Could not determine MAC ID to generate server ID. Falling back to random UUID.");
                 return UUID.randomUUID().toString().getBytes("UTF-8");
             }
             return mac_byte;
