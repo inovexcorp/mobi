@@ -1323,7 +1323,7 @@
                 return _.concat([listItem.ontology], _.map(listItem.importedOntologies, 'ontology'));
             }
             function getIndices(listItem) {
-                return _.concat([listItem.index], _.map(listItem.importedOntologies, 'index'));
+                return _.concat([_.get(listItem, 'index')], _.map(_.get(listItem, 'importedOntologies'), 'index'));
             }
             function getEntities(hierarchy, entityIRI, indexObject) {
                 var results = [];

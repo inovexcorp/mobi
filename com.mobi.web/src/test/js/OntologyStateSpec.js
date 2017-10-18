@@ -1593,6 +1593,11 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getEntityNameByIndex('iri', {type: 'ontology'})).toBe('entity name');
             expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
         });
+        it('when the listItem is undefined', function() {
+            util.getBeautifulIRI.and.returnValue('entity name');
+            expect(ontologyStateSvc.getEntityNameByIndex('iri', undefined)).toBe('entity name');
+            expect(util.getBeautifulIRI).toHaveBeenCalledWith('iri');
+        });
     });
     describe('createOntologyListItem should call the correct functions', function() {
         beforeEach(function() {
