@@ -37,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -122,12 +123,14 @@ public class MobiImpl implements Mobi {
             final NetworkInterface network = NetworkInterface.getByInetAddress(ip);
             final byte[] mac_byte = network.getHardwareAddress();
             if (mac_byte == null) {
-                //TODO - use something else generated...?
-                throw new MobiException("No MAC ID could be found for this server");
+                LOGGER.warn("Could not determine MAC ID to generate server ID. Falling back to random UUID.");
+                return UUID.randomUUID().toString().getBytes("UTF-8");
             }
             return mac_byte;
         } catch (SocketException e) {
             throw new MobiException("Issue determining MAC ID of server to generate our unique server ID", e);
+        } catch (UnsupportedEncodingException e) {
+            throw new MobiException("Unsupported character encoding used to generate byte array.", e);
         }
     }
 
