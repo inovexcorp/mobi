@@ -23,8 +23,6 @@ package com.mobi.web.security.util;
  * #L%
  */
 
-import com.mobi.federation.api.FederationService;
-import com.mobi.federation.utils.api.token.FederationTokenCallback;
 import com.mobi.jaas.api.modules.token.TokenCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,21 +54,6 @@ public class RestSecurityUtils {
         }, configuration);
     }
 
-    public static boolean authenticateToken(String realm, Subject subject, String tokenString,
-                                            Configuration configuration, FederationService service, String nodeId) {
-        return authenticateCommon(realm, subject, callbacks -> {
-            for (Callback callback : callbacks) {
-                if (callback instanceof FederationTokenCallback) {
-                    ((FederationTokenCallback) callback).setTokenString(tokenString);
-                    ((FederationTokenCallback) callback).setService(service);
-                    ((FederationTokenCallback) callback).setNodeId(nodeId);
-                } else {
-                    throw new UnsupportedCallbackException(callback);
-                }
-            }
-        }, configuration);
-    }
-
     public static boolean authenticateUser(String realm, Subject subject, String username, String password,
                                            Configuration configuration) {
         return authenticateCommon(realm, subject, callbacks -> {
@@ -86,8 +69,8 @@ public class RestSecurityUtils {
         }, configuration);
     }
 
-    private static boolean authenticateCommon(String realm, Subject subject, CallbackHandler handler,
-                                              Configuration configuration) {
+    public static boolean authenticateCommon(String realm, Subject subject, CallbackHandler handler,
+                                             Configuration configuration) {
         try {
             LoginContext loginContext = new LoginContext(realm, subject, handler, configuration);
             loginContext.login();

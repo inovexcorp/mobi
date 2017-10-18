@@ -1,4 +1,4 @@
-package com.mobi.web.security;
+package com.mobi.federation.utils.security;
 
 /*-
  * #%L
@@ -23,16 +23,18 @@ package com.mobi.web.security;
  * #L%
  */
 
+import static com.mobi.web.security.util.RestSecurityUtils.authenticateCommon;
+
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.eclipsesource.jaxrs.provider.security.AuthenticationHandler;
 import com.eclipsesource.jaxrs.provider.security.AuthorizationHandler;
 import com.mobi.federation.api.FederationService;
-import com.mobi.federation.utils.api.token.config.FederationConfiguration;
+import com.mobi.federation.utils.api.jaas.token.FederationTokenCallback;
+import com.mobi.federation.utils.api.jaas.token.config.FederationConfiguration;
 import com.mobi.jaas.api.principals.UserPrincipal;
 import com.mobi.jaas.api.utils.TokenUtils;
 import com.mobi.web.security.util.AuthenticationProps;
-import com.mobi.web.security.util.RestSecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,12 +44,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.security.auth.Subject;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.login.Configuration;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.SecurityContext;
 
 @Component(immediate = true)
 public class FederationRestSecurityHandler implements AuthenticationHandler, AuthorizationHandler {
-    private static final Logger LOG = LoggerFactory.getLogger(RestSecurityHandler.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(FederationRestSecurityHandler.class);
 
     protected FederationConfiguration configuration;
     private Map<String, FederationService> federationServiceMap = new HashMap<>();
@@ -75,8 +80,8 @@ public class FederationRestSecurityHandler implements AuthenticationHandler, Aut
         String federationId = containerRequestContext.getProperty("federationId") + "";
         String nodeId = containerRequestContext.getProperty("nodeId") + "";
 
-        if (federationServiceMap.containsKey(federationId) && !RestSecurityUtils.authenticateToken("mobi-federation",
-                subject, tokenString, configuration, federationServiceMap.get(federationId), nodeId)) {
+        if (federationServiceMap.containsKey(federationId) && !authenticateToken("mobi-federation", subject,
+                tokenString, configuration, federationServiceMap.get(federationId), nodeId)) {
             return null;
         }
 
@@ -100,5 +105,20 @@ public class FederationRestSecurityHandler implements AuthenticationHandler, Aut
     @Override
     public boolean isUserInRole(Principal principal, String role) {
         return principal instanceof UserPrincipal && role.equals("remote-user");
+    }
+
+    private boolean authenticateToken(String realm, Subject subject, String tokenString, Configuration configuration,
+                                      FederationService service, String nodeId) {
+        return authenticateCommon(realm, subject, callbacks -> {
+            for (Callback callback : callbacks) {
+                if (callback instanceof FederationTokenCallback) {
+                    ((FederationTokenCallback) callback).setTokenString(tokenString);
+                    ((FederationTokenCallback) callback).setService(service);
+                    ((FederationTokenCallback) callback).setNodeId(nodeId);
+                } else {
+                    throw new UnsupportedCallbackException(callback);
+                }
+            }
+        }, configuration);
     }
 }

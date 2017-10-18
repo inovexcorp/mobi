@@ -49,6 +49,7 @@ public interface FederationService {
     String FEDERATION_BASE = "http://mobi.org/federations/%s";
     String FEDERATION_NODE_BASE = FEDERATION_BASE + "/nodes/%s";
     String NODE_REST_ENDPOINT = "https://%s:8443/mobirest"; // XXX: read this from configuration
+    String ENCRYPTION_PASSWORD = "FEDERATION_ENCRYPTION_PASSWORD";
 
     /**
      * Retrieves the configuration associated with this federation.
@@ -182,7 +183,7 @@ public interface FederationService {
         StandardPBEStringEncryptor enc = new StandardPBEStringEncryptor();
         EnvironmentStringPBEConfig env = new EnvironmentStringPBEConfig();
         env.setAlgorithm("PBEWithMD5AndDES");
-        env.setPassword("ENCRYPTION_PASSWORD");
+        env.setPassword(ENCRYPTION_PASSWORD);
         enc.setConfig(env);
         return enc;
     }
