@@ -436,8 +436,9 @@
         }
 
         function getQueryPart(filter) {
-            var predicate = _.last(filter.path).predicate;
-            var range = _.last(filter.path).range;
+            var last = _.last(filter.path);
+            var predicate = last.predicate;
+            var range = last.range;
             var pathDetails = createPathDetails(filter.path);
             switch(filter.type) {
                 case 'Boolean':

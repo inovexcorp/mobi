@@ -153,6 +153,13 @@ describe('Search Form directive', function() {
         it('getLast should return the last element of the array', function() {
             expect(controller.getLast([0, 1])).toBe(1);
         });
+        it('refresh should set the variable correctly and call the correct method', function() {
+            discoverStateSvc.search.properties = [{}];
+            spyOn(controller, 'getTypes');
+            controller.refresh();
+            expect(discoverStateSvc.search.properties).toBeUndefined();
+            expect(controller.getTypes).toHaveBeenCalled();
+        });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
@@ -207,13 +214,14 @@ describe('Search Form directive', function() {
         it('with a .md-list-item-text md-icon', function() {
             expect(element.querySelectorAll('.md-list-item-text md-icon').length).toEqual(1);
         });
-        it('with a button to submit', function() {
-            var buttons = element.querySelectorAll('[type="submit"]');
-            expect(buttons.length).toEqual(1);
-            expect(buttons.text()).toContain('Submit');
+        it('with a .btn-primary', function() {
+            expect(element.querySelectorAll('.btn-primary').length).toBe(1);
         });
-        it('with a .reset-link', function() {
-            expect(element.querySelectorAll('.reset-link').length).toBe(1);
+        it('with a .btn-default', function() {
+            expect(element.querySelectorAll('.btn-default').length).toBe(1);
+        });
+        it('with a .btn-danger', function() {
+            expect(element.querySelectorAll('.btn-danger').length).toBe(1);
         });
         it('depending on whether an error has occurred', function() {
             expect(element.find('error-display').length).toEqual(0);

@@ -87,7 +87,7 @@
                     }
 
                     dvm.shouldDisplayOptGroup = function(type) {
-                        return _.some(dvm.ds.search.properties[type], entity => _.includes(dvm.om.getEntityName(entity), dvm.propertySearch));
+                        return _.some(dvm.ds.search.properties[type], dvm.checkEntityText);
                     }
 
                     dvm.propertyChanged = function() {
@@ -99,7 +99,11 @@
 
                     dvm.showNoDomains = function() {
                         var noDomains = _.get(dvm.ds.search, 'noDomains', []);
-                        return noDomains.length && _.filter(noDomains, entity => _.includes(dvm.om.getEntityName(entity), dvm.propertySearch)).length;
+                        return noDomains.length && _.filter(noDomains, dvm.checkEntityText).length;
+                    }
+
+                    dvm.checkEntityText = function(entity) {
+                        return _.includes(_.toLower(dvm.om.getEntityName(entity)), _.toLower(dvm.propertySearch));
                     }
                 }
             }

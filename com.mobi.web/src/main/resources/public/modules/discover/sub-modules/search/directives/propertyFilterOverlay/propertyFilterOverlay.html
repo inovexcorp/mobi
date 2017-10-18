@@ -10,12 +10,12 @@
   it under the terms of the GNU Affero General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
@@ -24,7 +24,7 @@
     <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
         <h6>Add New Property</h6>
         <div class="main">
-            <div class="path"><span ng-repeat="part in dvm.path">{{dvm.om.getEntityName(part.property)}}</span></div>
+            <div class="path"><span ng-repeat-start="part in dvm.path" class="text">{{dvm.om.getEntityName(part.property)}}</span><span ng-repeat-end ng-if="!$last" class="arrow">&gt;</span></div>
             <property-selector property="dvm.property" range="dvm.range" keys="dvm.keys"></property-selector>
             <filter-selector ng-if="dvm.showFilter" begin="dvm.begin" end="dvm.end" filter-type="dvm.filterType" regex="dvm.regex" value="dvm.value" range="dvm.range" boolean="dvm.boolean"></filter-selector>
         </div>

@@ -105,6 +105,11 @@
                     dvm.getLast = function(path) {
                         return _.last(path);
                     }
+
+                    dvm.refresh = function() {
+                        dvm.ds.search.properties = undefined;
+                        dvm.getTypes();
+                    }
                 }
             }
         }

@@ -3,7 +3,7 @@
 
 .property-filter-overlay {
     z-index: 10;
-    
+
     .path {
         border-bottom: 1px solid $gray-light;
         margin: -10px -10px 10px -10px;
@@ -12,34 +12,37 @@
 
         span {
             margin-left: 8px;
-            text-decoration: underline;
             white-space: nowrap;
+
+            &.text {
+                text-decoration: underline;
+            }
 
             &:first-child {
                 margin-left: 0;
             }
         }
     }
-    
+
     .input-container {
         label {
             width: 100%;
         }
-        
+
         md-input-container {
             margin-top: 0;
             width: 100%;
         }
     }
-    
+
     .range-container {
         display: flex;
-        
+
         md-input-container {
             &:first-child {
                 margin-right: 10px;
             }
-            
+
             &:last-child {
                 margin-left: 10px;
             }

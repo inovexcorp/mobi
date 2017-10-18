@@ -42,7 +42,9 @@ describe('Property Selector directive', function() {
             prefixes = _prefixes_;
         });
 
-        ontologyManagerSvc.getEntityName.and.callFake(_.identity);
+        ontologyManagerSvc.getEntityName.and.callFake(function(entity) {
+            return entity['@id'];
+        });
         discoverStateSvc.search.properties = {key: [{}]};
 
         scope.keys = ['key'];
@@ -200,21 +202,32 @@ describe('Property Selector directive', function() {
                 expect(ontologyManagerSvc.getEntityName).not.toHaveBeenCalled();
             });
             it('nothing left after filter', function() {
-                discoverStateSvc.search.noDomains = ['domain'];
+                discoverStateSvc.search.noDomains = [{'@id': 'domain'}];
                 controller.propertySearch = 'word';
                 expect(controller.showNoDomains()).toBeFalsy();
-                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith('domain');
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({'@id': 'domain'});
             });
-            it('something after filter', function() {
-                discoverStateSvc.search.noDomains = ['domain'];
+            it('something left after filter', function() {
+                discoverStateSvc.search.noDomains = [{'@id': 'domain'}];
                 controller.propertySearch = 'domain';
                 expect(controller.showNoDomains()).toBeTruthy();
-                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith('domain');
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({'@id': 'domain'});
             });
             it('propertySearch is empty', function() {
-                discoverStateSvc.search.noDomains = ['domain'];
+                discoverStateSvc.search.noDomains = [{'@id': 'domain'}];
                 expect(controller.showNoDomains()).toBeTruthy();
-                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith('domain');
+                expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({'@id': 'domain'});
+            });
+        });
+        describe('checkEntityText should', function() {
+            beforeEach(function() {
+                controller.propertySearch = 'te';
+            });
+            it('true when it includes propertySearch text', function() {
+                expect(controller.checkEntityText({'@id': 'text'})).toBe(true);
+            });
+            it('false when it does not include propertySearch text', function() {
+                expect(controller.checkEntityText({'@id': 'other'})).toBe(false);
             });
         });
     });

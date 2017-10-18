@@ -1091,7 +1091,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets a JSONArray of ObjectProperties from the provided Ontology.
      *
-     * @param ontology the Ontology to get the Annotations from.
+     * @param ontology the Ontology to get the ObjectProperties from.
      * @return a JSONArray of ObjectProperties from the provided Ontology.
      */
     private JSONArray getObjectPropertyArray(Ontology ontology) {
