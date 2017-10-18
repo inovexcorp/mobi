@@ -23,6 +23,7 @@ package com.mobi.rdf.core.impl.sesame;
  * #L%
  */
 
+import com.mobi.persistence.utils.LiteralUtils;
 import com.mobi.rdf.api.BNode;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Literal;
@@ -31,7 +32,6 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Statement;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.utils.LiteralUtils;
 import org.openrdf.model.vocabulary.XMLSchema;
 
 import java.time.OffsetDateTime;

@@ -661,13 +661,16 @@
              * @param {string} propId The id of the property that was changed
              * @param {string} newValue The new value of the property
              * @param {string} originalValue The original value of the property
+             * @param {boolean} isId True if it has an '@id'
              */
-            self.changeProp = function(entityId, propId, newValue, originalValue) {
+            self.changeProp = function(entityId, propId, newValue, originalValue, isId = false) {
                 if (newValue !== originalValue) {
+                    var valueKey = isId ? '@id' : '@value';
                     var additionsObj = _.find(self.mapping.difference.additions, {'@id': entityId});
                     var deletionsObj = _.find(self.mapping.difference.deletions, {'@id': entityId});
                     if (additionsObj) {
-                        if (util.getPropertyValue(deletionsObj, propId) === newValue) {
+                        var deletionsValue = isId ? util.getPropertyId(deletionsObj, propId) : util.getPropertyValue(deletionsObj, propId);
+                        if (deletionsValue === newValue) {
                             delete additionsObj[propId];
                             if (_.isEqual(additionsObj, {'@id': entityId})) {
                                 _.remove(self.mapping.difference.additions, additionsObj);
@@ -677,17 +680,17 @@
                                 _.remove(self.mapping.difference.deletions, deletionsObj);
                             }
                         } else {
-                            additionsObj[propId] = [{'@value': newValue}];
+                            additionsObj[propId] = [{[valueKey]: newValue}];
                             if (deletionsObj && originalValue && !_.has(deletionsObj, "['" + propId + "']")) {
-                                deletionsObj[propId] = [{'@value': originalValue}];
+                                deletionsObj[propId] = [{[valueKey]: originalValue}];
                             }
                         }
                     } else {
-                        additionsObj = {'@id': entityId, [propId]: [{'@value': newValue}]};
+                        additionsObj = {'@id': entityId, [propId]: [{[valueKey]: newValue}]};
                         self.mapping.difference.additions.push(additionsObj);
 
                         if (originalValue) {
-                            deletionsObj = {'@id': entityId, [propId]: [{'@value': originalValue}]};
+                            deletionsObj = {'@id': entityId, [propId]: [{[valueKey]: originalValue}]};
                             self.mapping.difference.deletions.push(deletionsObj);
                         }
                     }
