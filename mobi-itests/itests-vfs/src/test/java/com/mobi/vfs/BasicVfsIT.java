@@ -43,6 +43,7 @@ import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Paths;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import javax.inject.Inject;
@@ -97,7 +98,8 @@ public class BasicVfsIT extends KarafTestSupport {
     @Test
     public void testBasicFunctionality() throws Exception {
         final VirtualFilesystem service = getOsgiService(VirtualFilesystem.class);
-        VirtualFile file = service.resolveVirtualFile("file:///tmp/testFile-" + UUID.randomUUID() + ".txt");
+        VirtualFile file = service.resolveVirtualFile("file://" + System.getProperty("user.dir") + "testFile-"
+                + UUID.randomUUID() + ".txt");
         file.create();
         Assert.assertTrue("Virtual file should exist", file.exists());
         file.delete();
