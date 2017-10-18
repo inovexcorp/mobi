@@ -81,7 +81,7 @@ public class HazelcastFederationServiceTest extends TestCase {
                 .thenReturn(registration);
 
         Mockito.doAnswer(invocation -> {
-            Thread.sleep(500L);
+            Thread.sleep(4000L);
             return null;
         }).when(registration).unregister();
 
