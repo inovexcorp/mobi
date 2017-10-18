@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import javax.inject.Inject;
@@ -83,7 +84,8 @@ public class OrmIT extends KarafTestSupport {
         //string
         testConversion("testing", thing, valueConverterRegistry, "String conversion failure");
         //date
-        testConversion(OffsetDateTime.now(), thing, valueConverterRegistry, "Date conversion failure");
+        testConversion(OffsetDateTime.now().truncatedTo(ChronoUnit.SECONDS), thing, valueConverterRegistry,
+                "Date conversion failure");
         //IRI
         IRI iri = vf.createIRI("urn:test");
         testConversion(iri, thing, valueConverterRegistry, "IRI conversion failure");
