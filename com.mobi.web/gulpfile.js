@@ -37,12 +37,12 @@ var jsFiles = function(prefix) {
             prefix + 'js/vendor/manchestersyntax.js',
             prefix + 'js/services/responseObj.js',
             prefix + 'js/services/prefixes.js',
-            prefix + 'js/filters/*.js',
-            prefix + 'js/services/*.js',
-            prefix + 'directives/**/*.js',
-            prefix + 'modules/**/*/services/**/*.js',
-            prefix + 'modules/**/*/directives/**/*.js',
-            prefix + 'modules/**/*.js',
+            prefix + 'js/filters/!(*Spec).js',
+            prefix + 'js/services/!(*Spec).js',
+            prefix + 'directives/**/!(*Spec).js',
+            prefix + 'modules/**/*/services/**/!(*Spec).js',
+            prefix + 'modules/**/*/directives/**/!(*Spec).js',
+            prefix + 'modules/**/!(*Spec).js',
             prefix + 'js/app.module.js',
             prefix + 'js/route.config.js'
         ]
@@ -118,7 +118,7 @@ var createGroupedArray = function(arr, chunkSize) {
     return groups;
 }
 
-var tests = createGroupedArray(glob.sync('./src/test/js/*Spec.js'), 50);
+var tests = createGroupedArray(glob.sync(src + '**/*Spec.js'), 50);
 
 //Method to run jasmine tests
 var runKarma = function(vendorFiles, testFiles, isBuild, done) {
@@ -149,7 +149,7 @@ gulp.task('cacheTemplates', function() {
 
 // Run jasmine tests in PhantomJS with minified source files
 gulp.task('test-minified', ['cacheTemplates', 'minify-scripts'], function(done) {
-    return runKarma([dest + '**/*.js'], './src/test/js/*Spec.js', true, done);
+    return runKarma([dest + '**/*.js'], src + '**/*Spec.js', true, done);
 });
 
 gulp.task('test-minified-1', ['cacheTemplates'], function(done) {
@@ -178,7 +178,7 @@ gulp.task('test-minified-6', ['test-minified-5'], function(done) {
 
 // Run jasmine tests in PhantomJS with unminified source files
 gulp.task('test-unminified', ['cacheTemplates', 'move-custom-js'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), './src/test/js/*Spec.js', true, done);
+    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), src + '**/*Spec.js', true, done);
 });
 
 gulp.task('test-unminified-1', ['cacheTemplates'], function(done) {
@@ -207,7 +207,7 @@ gulp.task('test-unminified-6', ['test-unminified-5'], function(done) {
 
 // Launch TDD environment for jasmine tests in Chrome
 gulp.task('tdd', ['cacheTemplates'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(src)), './src/test/js/*Spec.js', false, done);
+    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(src)), src + '**/*Spec.js', false, done);
 });
 
 // Concatenate and minifies JS Files
@@ -306,7 +306,7 @@ gulp.task('move-node-css', function() {
 
 // Moves all custom js files to build folder
 gulp.task('move-custom-js', function() {
-    return gulp.src(src + '**/*.js')
+    return gulp.src(src + '**/!(*Spec).js')
         .pipe(babel({
             presets: ['es2015']
         }))
