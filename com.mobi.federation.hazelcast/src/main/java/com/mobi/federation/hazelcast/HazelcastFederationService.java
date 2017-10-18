@@ -70,6 +70,7 @@ import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Map;
@@ -374,8 +375,10 @@ public class HazelcastFederationService implements FederationService {
 
     @Override
     public SignedJWT generateToken(HttpServletResponse res, String username) throws IOException {
-        String federationId = getFederationServiceConfig().id();
-        return TokenUtils.generateFederationToken(res, username, tokenKey, federationId, getNodeId().toString());
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("federationId", getFederationId());
+        claims.put("nodeId", getNodeId().toString());
+        return TokenUtils.generateToken(res, username, FEDERATION_SCOPE, tokenKey, claims);
     }
 
     @Override

@@ -50,6 +50,7 @@ public interface FederationService {
     String FEDERATION_NODE_BASE = FEDERATION_BASE + "/nodes/%s";
     String NODE_REST_ENDPOINT = "https://%s:8443/mobirest"; // XXX: read this from configuration
     String ENCRYPTION_PASSWORD = "FEDERATION_ENCRYPTION_PASSWORD";
+    String FEDERATION_SCOPE = "self federation";
 
     /**
      * Retrieves the configuration associated with this federation.

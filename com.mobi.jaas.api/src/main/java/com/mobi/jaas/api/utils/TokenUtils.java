@@ -39,7 +39,9 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -65,7 +67,6 @@ public class TokenUtils {
     private static final String ISSUER = "http://mobi.com/";
     public static final String ANON_SCOPE = "self anon";
     public static final String AUTH_SCOPE = "self /*";
-    public static final String REMOTE_SCOPE = "self federation";
 
     // Attribute set if token verification occurs
     public static final String TOKEN_VERIFICATION_FAILED = "com.mobi.attribute.verificationFailed";
@@ -164,20 +165,6 @@ public class TokenUtils {
         return generateToken(res, username, AUTH_SCOPE);
     }
 
-    public static SignedJWT generateFederationToken(HttpServletResponse res, String username, byte[] key,
-                                                    String federationId, String nodeId) throws IOException {
-        SignedJWT authToken = null;
-        try {
-            authToken = createFederationJWT(username, key, federationId, nodeId);
-        } catch (JOSEException e) {
-            String msg = "Problem Creating JWT Token";
-            LOG.error(msg, e);
-            res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
-        }
-
-        return authToken;
-    }
-
     public static Cookie createSecureTokenCookie(SignedJWT signedJWT) {
         Cookie cookie = new Cookie(TOKEN_NAME, signedJWT.serialize());
         cookie.setSecure(true);
@@ -193,6 +180,20 @@ public class TokenUtils {
         response.setContentType(MediaType.APPLICATION_JSON);
     }
 
+    public static SignedJWT generateToken(HttpServletResponse res, String username, String scope, byte[] key,
+                                          @Nullable Map<String, Object> claims) throws IOException {
+        SignedJWT authToken = null;
+        try {
+            authToken = createJWT(username, scope, key, claims);
+        } catch (JOSEException e) {
+            String msg = "Problem Creating JWT Token";
+            LOG.error(msg, e);
+            res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
+        }
+
+        return authToken;
+    }
+
     /**
      * Creates a JWT Token String.
      *
@@ -206,7 +207,7 @@ public class TokenUtils {
             throws IOException {
         SignedJWT authToken = null;
         try {
-            authToken = createJWT(username, scope);
+            authToken = createJWT(username, scope, KEY, null);
         } catch (JOSEException e) {
             String msg = "Problem Creating JWT Token";
             LOG.error(msg, e);
@@ -221,68 +222,35 @@ public class TokenUtils {
      *
      * @param username The sub of the token
      * @param scope The scope of the token
+     * @param key The key (or secret) of the token
+     * @param customClaims The map of custom claims to add to the token
      * @return The String representing the encoded and compact JWT Token
      * @throws JOSEException if there is a problem creating the token
      */
-    private static SignedJWT createJWT(String username, String scope) throws JOSEException {
-        // Create HMAC signer
-        JWSSigner signer = new MACSigner(KEY);
-
-        // Prepare JWT with claims set
-        JWTClaimsSet claimsSet = createCommonBuilder(username, scope).build();
-
-        SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);
-
-        // Apply the HMAC protection
-        signedJWT.sign(signer);
-
-        return signedJWT;
-    }
-
-    /**
-     * Creates a JWT Token String to be used by a federation.
-     *
-     * @param username The sub of the token
-     * @param key The key (or secret) of the HMAC signer
-     * @param federationId The node's federation ID
-     * @param nodeId The node's ID
-     * @return The String representing the encoded and compact JWT Token
-     * @throws JOSEException if there is a problem creating the token
-     */
-    private static SignedJWT createFederationJWT(String username, byte[] key, String federationId, String nodeId)
+    private static SignedJWT createJWT(String username, String scope, byte[] key, Map<String, Object> customClaims)
             throws JOSEException {
         // Create HMAC signer
         JWSSigner signer = new MACSigner(key);
 
-        // Prepare JWT with claims set
-        JWTClaimsSet claimsSet = createCommonBuilder(username, REMOTE_SCOPE)
-                .claim("federationId", federationId)
-                .claim("nodeId", nodeId)
-                .build();
+        Date now = new Date();
+        Date expirationDate = new Date(now.getTime() + TOKEN_DURATION);
 
-        SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);
+        // Prepare JWT Builder with claims set
+        JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder()
+                .subject(username)
+                .issuer(ISSUER)
+                .expirationTime(expirationDate)
+                .claim("scope", scope);
+
+        if (customClaims != null) {
+            customClaims.forEach(builder::claim);
+        }
+
+        SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), builder.build());
 
         // Apply the HMAC protection
         signedJWT.sign(signer);
 
         return signedJWT;
-    }
-
-    /**
-     * Creates the basic JWTClaimsSet.Builder to be used by all Tokens.
-     *
-     * @param username The sub of the token
-     * @param scope The scope of the token
-     * @return The Builder with all common configurations populated
-     */
-    private static JWTClaimsSet.Builder createCommonBuilder(String username, String scope) {
-        Date now = new Date();
-        Date expirationDate = new Date(now.getTime() + TOKEN_DURATION);
-
-        return new JWTClaimsSet.Builder()
-                .subject(username)
-                .issuer(ISSUER)
-                .expirationTime(expirationDate)
-                .claim("scope", scope);
     }
 }
