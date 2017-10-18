@@ -77,7 +77,9 @@
                         return dvm.mm.getPropMappingTitle(dvm.util.getBeautifulIRI(classId), dvm.util.getBeautifulIRI(propId));
                     }
                     dvm.cancel = function() {
-                    	dvm.state.displayCancelConfirm = true;
+                    	dvm.state.initialize();
+                        dvm.state.resetEdit();
+                        dvm.dm.reset();
                     }
                     dvm.edit = function() {
                         var classMappings = dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld);

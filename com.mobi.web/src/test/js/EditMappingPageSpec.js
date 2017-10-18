@@ -47,25 +47,38 @@ describe('Edit Mapping Page directive', function() {
 
     describe('controller methods', function() {
         describe('should set the correct state for saving a mapping', function() {
-            var step;
             beforeEach(function() {
-                step = mapperStateSvc.step;
+                this.step = mapperStateSvc.step;
             });
-            it('unless an error occurs', function() {
-                mapperStateSvc.saveMapping.and.returnValue($q.reject('Error message'));
-                controller.save();
-                scope.$apply();
-                expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
-                expect(mapperStateSvc.step).toBe(step);
-                expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
-                expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
-                expect(delimitedManagerSvc.reset).not.toHaveBeenCalled();
-                expect(controller.errorMessage).toBe('Error message');
+            describe('if the mapping has changed', function() {
+                beforeEach(function() {
+                    mapperStateSvc.isMappingChanged.and.returnValue(true);
+                });
+                it('unless an error occurs', function() {
+                    mapperStateSvc.saveMapping.and.returnValue($q.reject('Error message'));
+                    controller.save();
+                    scope.$apply();
+                    expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
+                    expect(mapperStateSvc.step).toBe(this.step);
+                    expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
+                    expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
+                    expect(delimitedManagerSvc.reset).not.toHaveBeenCalled();
+                    expect(controller.errorMessage).toBe('Error message');
+                });
+                it('successfully', function() {
+                    controller.save();
+                    scope.$apply();
+                    expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
+                    expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
+                    expect(mapperStateSvc.initialize).toHaveBeenCalled();
+                    expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                    expect(delimitedManagerSvc.reset).toHaveBeenCalled();
+                    expect(controller.errorMessage).toBe('');
+                });
             });
-            it('successfully', function() {
+            it('if the mapping has not changed', function() {
                 controller.save();
-                scope.$apply();
-                expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
+                expect(mapperStateSvc.saveMapping).not.toHaveBeenCalled();
                 expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                 expect(mapperStateSvc.initialize).toHaveBeenCalled();
                 expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -73,9 +86,34 @@ describe('Edit Mapping Page directive', function() {
                 expect(controller.errorMessage).toBe('');
             });
         });
-        it('should set the correct state for canceling', function() {
-            controller.cancel();
-            expect(mapperStateSvc.displayCancelConfirm).toBe(true);
+        describe('should set the correct state for canceling', function() {
+            it('if the mapping has been changed', function() {
+                mapperStateSvc.isMappingChanged.and.returnValue(true);
+                controller.cancel();
+                expect(mapperStateSvc.displayCancelConfirm).toBe(true);
+            });
+            it('if the mapping has not been changed', function() {
+                controller.cancel();
+                expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
+                expect(mapperStateSvc.initialize).toHaveBeenCalled();
+                expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                expect(delimitedManagerSvc.reset).toHaveBeenCalled();
+                expect(controller.errorMessage).toBe('');
+            });
+        });
+        describe('should test whether the mapping is saveable when', function() {
+            it('there are no class mappings and there are no invalid property mappings', function() {
+                mappingManagerSvc.getAllClassMappings.and.returnValue([]);
+                expect(controller.isSaveable()).toEqual(false);
+            });
+            it('there are class mappings and there are no invalid property mappings', function () {
+                mappingManagerSvc.getAllClassMappings.and.returnValue([{}]);
+                expect(controller.isSaveable()).toEqual(true);
+            });
+            it('there are invalid property mappings', function() {
+                mapperStateSvc.invalidProps = [{}];
+                expect(controller.isSaveable()).toEqual(false);
+            });
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -114,28 +152,18 @@ describe('Edit Mapping Page directive', function() {
                 expect(['Cancel', 'Save', 'Save & Run']).toContain(angular.element(buttons[2]).text().trim());
             });
         });
-        describe('with disabled buttons if', function() {
-            it('no changes have been made', function() {
-                var buttons = element.querySelectorAll('tab block-footer button.btn-primary');
-                _.forEach(_.toArray(buttons), function(button) {
-                    expect(angular.element(button).attr('disabled')).toBeTruthy();
-                });
+        it('with disabled buttons if the mapping is not saveable', function() {
+            spyOn(controller, 'isSaveable');
+            scope.$digest();
+            var buttons = _.toArray(element.querySelectorAll('tab block-footer button.btn-primary'));
+            _.forEach(buttons, function(button) {
+                expect(angular.element(button).attr('disabled')).toBeTruthy();
             });
-            it('there are invalid property mappings', function() {
-                mapperStateSvc.invalidProps = [{}];
-                scope.$digest();
-                var buttons = element.querySelectorAll('tab block-footer button.btn-primary');
-                _.forEach(_.toArray(buttons), function(button) {
-                    expect(angular.element(button).attr('disabled')).toBeTruthy();
-                });
-            });
-            it('unless changes have been made and there are no invalid property mappings', function () {
-                mapperStateSvc.isMappingChanged.and.returnValue(true);
-                scope.$digest();
-                var buttons = element.querySelectorAll('tab block-footer button.btn-primary');
-                _.forEach(_.toArray(buttons), function(button) {
-                    expect(angular.element(button).attr('disabled')).toBeFalsy();
-                });
+
+            controller.isSaveable.and.returnValue(true);
+            scope.$digest();
+            _.forEach(buttons, function(button) {
+                expect(angular.element(button).attr('disabled')).toBeFalsy();
             });
         });
     });
