@@ -80,7 +80,9 @@ describe('File Upload Page directive', function() {
         });
         it('should set the correct state for canceling', function() {
             controller.cancel();
-            expect(mapperStateSvc.displayCancelConfirm).toBe(true);
+            expect(mapperStateSvc.initialize).toHaveBeenCalled();
+            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+            expect(delimitedManagerSvc.reset).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {

@@ -80,7 +80,7 @@
                     }, onError);
 
                     dvm.run = function() {
-                        if (dvm.state.editMapping) {
+                        if (dvm.state.editMapping && dvm.state.isMappingChanged()) {
                             dvm.state.saveMapping().then(runMapping, onError);
                         } else {
                             runMapping(dvm.state.mapping.record.id);

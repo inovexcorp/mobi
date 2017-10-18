@@ -75,11 +75,22 @@
                         preview: false
                     };
 
+                    dvm.isSaveable = function() {
+                        return dvm.state.invalidProps.length === 0 && !!dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld).length;
+                    }
                     dvm.save = function() {
-                        dvm.state.saveMapping().then(success, onError);
+                        if (dvm.state.isMappingChanged()) {
+                            dvm.state.saveMapping().then(success, onError);
+                        } else {
+                            success();
+                        }
                     }
                     dvm.cancel = function() {
-                        dvm.state.displayCancelConfirm = true;
+                        if (dvm.state.isMappingChanged()) {
+                            dvm.state.displayCancelConfirm = true;
+                        } else {
+                            success();
+                        }
                     }
 
                     function onError(errorMessage) {

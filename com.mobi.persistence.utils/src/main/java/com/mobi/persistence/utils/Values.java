@@ -26,7 +26,6 @@ package com.mobi.persistence.utils;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
 
 @Component(provide = Values.class)
