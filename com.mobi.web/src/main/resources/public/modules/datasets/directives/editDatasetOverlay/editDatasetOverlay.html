@@ -34,7 +34,7 @@
         </div>
         <text-area ng-model="dvm.recordConfig.description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
         <keyword-select ng-model="dvm.keywords"></keyword-select>
-        <datasets-ontology-picker ontologies="dvm.ontologies" selected-ontologies="dvm.selectedOntologies" error="dvm.error"></datasets-ontology-picker>
+        <datasets-ontology-picker selected-ontologies="dvm.selectedOntologies" error="dvm.error"></datasets-ontology-picker>
         <div class="btn-container clearfix">
             <button class="btn btn-primary pull-right" ng-disabled="dvm.infoForm.$invalid" ng-click="dvm.update()">Update</button>
             <button class="btn btn-default pull-right" ng-click="dvm.onClose()">Cancel</button>
