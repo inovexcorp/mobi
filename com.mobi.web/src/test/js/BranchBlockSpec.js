@@ -51,6 +51,17 @@ describe('Branch Block directive', function() {
         this.controller = this.element.controller('branchBlock');
     });
 
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        catalogManagerSvc = null;
+        catalogStateSvc = null;
+        utilSvc = null;
+        prefixes = null;
+        this.element.remove();
+    });
+
     describe('should initialize with the correct entity for the branch', function() {
         it('successfully', function() {
             expect(this.controller.branch).toEqual(this.branch);

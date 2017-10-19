@@ -49,6 +49,16 @@ describe('Record Block directive', function() {
         this.controller = this.element.controller('recordBlock');
     });
 
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        catalogManagerSvc = null;
+        catalogStateSvc = null;
+        utilSvc = null;
+        this.element.remove();
+    });
+
     describe('should initialize', function() {
         describe('if the record is found', function() {
             it('successfully', function() {
