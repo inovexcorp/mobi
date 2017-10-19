@@ -71,6 +71,8 @@ describe('Branch Block directive', function() {
             catalogManagerSvc.getRecordBranch.and.returnValue($q.reject('Error message'));
             this.element = $compile(angular.element('<branch-block></branch-block>'))(scope);
             scope.$digest();
+            this.controller = this.element.controller('branchBlock');
+            expect(this.controller.branch).toEqual({});
             expect(catalogStateSvc.resetPagination).toHaveBeenCalled();
             expect(catalogStateSvc.catalogs.local.openedPath).toEqual([]);
         });

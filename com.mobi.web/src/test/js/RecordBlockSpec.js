@@ -73,6 +73,8 @@ describe('Record Block directive', function() {
             catalogManagerSvc.getRecord.and.returnValue($q.reject('Error message'));
             this.element = $compile(angular.element('<record-block></record-block>'))(scope);
             scope.$digest();
+            this.controller = this.element.controller('recordBlock');
+            expect(this.controller.record).toEqual({});
             expect(catalogStateSvc.resetPagination).toHaveBeenCalled();
             expect(catalogStateSvc.catalogs.local.openedPath).toEqual([]);
         });

@@ -72,10 +72,9 @@
                 dvm.util = utilService;
                 var currentCatalog = dvm.state.getCurrentCatalog();
 
-                dvm.branch = _.last(currentCatalog.openedPath);
                 dvm.recordId = _.get(_.nth(currentCatalog.openedPath, -2), '@id', '');
-
-                dvm.cm.getRecordBranch(dvm.branch['@id'], dvm.recordId, currentCatalog.catalog['@id'])
+                dvm.branch = {};
+                dvm.cm.getRecordBranch(_.last(currentCatalog.openedPath)['@id'], dvm.recordId, currentCatalog.catalog['@id'])
                     .then(response => {
                         dvm.branch = response;
                         currentCatalog.openedPath[currentCatalog.openedPath.length - 1] = response;

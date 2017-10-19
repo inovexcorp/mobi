@@ -76,9 +76,8 @@
                 dvm.util = utilService;
                 var currentCatalog = dvm.state.getCurrentCatalog();
 
-                dvm.record = _.last(currentCatalog.openedPath);
-
-                dvm.cm.getRecord(dvm.record['@id'], currentCatalog.catalog['@id'])
+                dvm.record = {};
+                dvm.cm.getRecord(_.last(currentCatalog.openedPath)['@id'], currentCatalog.catalog['@id'])
                     .then(response => {
                         dvm.record = response;
                         currentCatalog.openedPath[currentCatalog.openedPath.length - 1] = response;
