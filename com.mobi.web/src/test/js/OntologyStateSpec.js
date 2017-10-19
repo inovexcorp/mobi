@@ -1618,7 +1618,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.getIris.and.returnValue($q.when(irisResponse));
             ontologyManagerSvc.getImportedIris.and.returnValue($q.when(importedIrisResponse));
             ontologyStateSvc.createOntologyListItem(ontologyId, recordId, branchId, commitId, ontology,
-                inProgressCommit, true).then(function(response) {
+                inProgressCommit, false).then(function(response) {
                     expect(ontologyManagerSvc.getIris).toHaveBeenCalledWith(recordId, branchId, commitId);
                     expect(ontologyManagerSvc.getImportedIris).toHaveBeenCalledWith(recordId, branchId, commitId);
                     expect(ontologyManagerSvc.getClassHierarchies).toHaveBeenCalledWith(recordId, branchId, commitId);
@@ -1677,7 +1677,7 @@ describe('Ontology State Service', function() {
                     expect(_.get(response, 'annotationPropertyIndex')).toEqual(annotationPropertyHierarchiesResponse.index);
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotationPropertyHierarchy, recordId, response);
                     expect(_.get(response, 'flatAnnotationPropertyHierarchy')).toEqual([{prop: 'flatten'}]);
-                    expect(_.get(_.get(response, 'ontologyState'), 'upToDate')).toBe(true);
+                    expect(_.get(response, 'ontologyState.upToDate')).toBe(false);
                     expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([ontology, [{
                         '@id': 'ontologyId',
@@ -1786,7 +1786,7 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.getIris.and.returnValue($q.when(irisResponse));
             ontologyManagerSvc.getImportedIris.and.returnValue($q.when(importedIrisResponse));
             ontologyStateSvc.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology,
-                inProgressCommit, true).then(function(response) {
+                inProgressCommit, false).then(function(response) {
                     expect(ontologyManagerSvc.getIris).toHaveBeenCalledWith(recordId, branchId, commitId);
                     expect(ontologyManagerSvc.getImportedIris).toHaveBeenCalledWith(recordId, branchId, commitId);
                     expect(ontologyManagerSvc.getConceptHierarchies).toHaveBeenCalledWith(recordId, branchId, commitId);
@@ -1811,7 +1811,7 @@ describe('Ontology State Service', function() {
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemeHierarchy, recordId, response);
                     expect(_.get(response, 'flatConceptSchemeHierarchy')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'branches')).toEqual(branches);
-                    expect(_.get(_.get(response, 'ontologyState'), 'upToDate')).toBe(true);
+                    expect(_.get(response, 'ontologyState.upToDate')).toBe(false);
                     expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
                     expect(_.get(response, 'failedImports')).toEqual(['failedId']);
                 }, function() {
