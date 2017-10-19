@@ -274,19 +274,17 @@ describe('Ontology State Service', function() {
             ['node1a','node2c','node3b','node3a'],
             ['node1b','node3b','node3a']
         ];
-        var xsdDatatypes = _.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], function(item) {
+        ontologyManagerSvc.defaultDatatypes = _.concat(_.map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], function(item) {
             return {
                 'namespace': prefixes.xsd,
                 'localName': item
             }
-        });
-        var rdfDatatypes = _.map(['langString'], function(item) {
+        }), _.map(['langString'], function(item) {
             return {
                 namespace: prefixes.rdf,
                 localName: item
             }
-        });
-        ontologyManagerSvc.defaultDatatypes = _.concat(xsdDatatypes, rdfDatatypes);
+        }));
         ontologyObj = {
             '@id': ontologyId,
             '@type': [prefixes.owl + 'Ontology'],
@@ -343,6 +341,78 @@ describe('Ontology State Service', function() {
         branch[prefixes.catalog + 'head'] = [{'@id': commitId}];
     });
 
+    afterEach(function() {
+        ontologyStateSvc = null;
+        $q = null;
+        scope = null;
+        util = null;
+        stateManagerSvc = null;
+        ontologyManagerSvc = null;
+        updateRefsSvc = null;
+        prefixes = null;
+        catalogManagerSvc = null;
+        hierarchy = null;
+        indexObject = null;
+        expectedPaths = null;
+        ontologyState = null;
+        defaultDatatypes = null;
+        ontologyObj = null;
+        classObj = null;
+        dataPropertyObj = null;
+        individualObj = null;
+        ontology = null;
+        getResponse = null;
+        httpSvc = null;
+        $document = null;
+        responseObj = null;
+        $state = null;
+        error = null;
+        format = null;
+        title = null;
+        description = null;
+        keywords = null;
+        inProgressCommit = null;
+        emptyInProgressCommit = null;
+        recordId = null;
+        recordTitle = null;
+        branchId = null;
+        commitId = null;
+        ontologyId = null;
+        catalogId = null;
+        anonymous = null;
+        branch = null;
+        commitObj = null;
+        ontologyType = null;
+        vocabularyType = null;
+        jsonFilter = null;
+        differenceObj = null;
+        index = null;
+        importedOntologies = null;
+        importedOntologyIds = null;
+        classId = null;
+        classId2 = null;
+        objectPropertyId = null;
+        objectPropertyId2 = null;
+        datatypeId = null;
+        datatypeId2 = null;
+        annotationId = null;
+        annotationId2 = null;
+        dataPropertyId = null;
+        dataPropertyId2 = null;
+        individualId = null;
+        individualId2 = null;
+        irisResponse = null;
+        importedIrisResponse = null;
+        classHierarchiesResponse = null;
+        conceptHierarchiesResponse = null;
+        conceptSchemeHierarchiesResponse = null;
+        classesWithIndividualsResponse = null;
+        dataPropertyHierarchiesResponse = null;
+        objectPropertyHierarchiesResponse = null;
+        annotationPropertyHierarchiesResponse = null;
+        branches = null;
+    });
+
     describe('getOntology calls the correct methods', function() {
         var expected, expected2;
         beforeEach(function() {
@@ -361,22 +431,20 @@ describe('Ontology State Service', function() {
                 inProgressCommit: emptyInProgressCommit
             };
         });
+        afterEach(function() {
+            expected = null;
+            expected2 = null;
+        });
         describe('if state exists', function() {
-            var getDeferred;
             beforeEach(function() {
-                getDeferred = $q.defer();
-                catalogManagerSvc.getInProgressCommit.and.returnValue(getDeferred.promise);
                 stateManagerSvc.getOntologyStateByRecordId.and.returnValue({model: [ontologyState]});
             });
             describe('and getInProgressCommit is resolved', function() {
-                var getOntologyDeferred;
                 beforeEach(function() {
-                    getDeferred.resolve(inProgressCommit);
-                    getOntologyDeferred = $q.defer();
-                    ontologyManagerSvc.getOntology.and.returnValue(getOntologyDeferred.promise);
+                    catalogManagerSvc.getInProgressCommit.and.returnValue($q.resolve(inProgressCommit));
                 });
                 it('and getOntology is resolved', function() {
-                    getOntologyDeferred.resolve(ontology);
+                    ontologyManagerSvc.getOntology.and.returnValue($q.resolve(ontology));
                     ontologyStateSvc.getOntology(recordId, format)
                         .then(function(response) {
                             expect(response).toEqual(expected);
@@ -389,21 +457,15 @@ describe('Ontology State Service', function() {
                     expect(stateManagerSvc.deleteOntologyState).not.toHaveBeenCalled();
                 });
                 describe('and getOntology is rejected', function() {
-                    var deleteDeferred;
                     beforeEach(function() {
-                        getOntologyDeferred.reject(error);
-                        deleteDeferred = $q.defer();
-                        stateManagerSvc.deleteOntologyState.and.returnValue(deleteDeferred.promise);
+                        ontologyManagerSvc.getOntology.and.returnValue($q.reject(error));
                     });
                     describe('and deleteOntologyState is resolved', function() {
-                        var getLatestDeferred;
                         beforeEach(function() {
-                            deleteDeferred.resolve();
-                            getLatestDeferred = $q.defer();
-                            spyOn(ontologyStateSvc, 'getLatestOntology').and.returnValue(getLatestDeferred.promise);
+                            stateManagerSvc.deleteOntologyState.and.returnValue($q.resolve());
                         });
                         it('and getLatestOntology is resolved', function() {
-                            getLatestDeferred.resolve(expected2);
+                            spyOn(ontologyStateSvc, 'getLatestOntology').and.returnValue($q.resolve(expected2));
                             ontologyStateSvc.getOntology(recordId, format)
                                 .then(function(response) {
                                     expect(response).toEqual(expected2);
@@ -417,7 +479,7 @@ describe('Ontology State Service', function() {
                             expect(ontologyStateSvc.getLatestOntology).toHaveBeenCalledWith(recordId, format);
                         });
                         it('and getLatestOntology is rejected', function() {
-                            getLatestDeferred.reject(error);
+                            spyOn(ontologyStateSvc, 'getLatestOntology').and.returnValue($q.reject(error));
                             ontologyStateSvc.getOntology(recordId, format).then(function() {
                                 fail('Promise should have rejected');
                             }, function(response) {
@@ -431,7 +493,7 @@ describe('Ontology State Service', function() {
                         });
                     });
                     it('and deleteOntologyState is rejected', function() {
-                        deleteDeferred.reject(error);
+                        stateManagerSvc.deleteOntologyState.and.returnValue($q.reject(error));
                         ontologyStateSvc.getOntology(recordId, format).then(function(response) {
                             fail('Promise should have rejected');
                         }, function(response) {
@@ -448,7 +510,7 @@ describe('Ontology State Service', function() {
                 describe('with message "InProgressCommit could not be found"', function() {
                     var getOntologyDeferred;
                     beforeEach(function() {
-                        getDeferred.reject('InProgressCommit could not be found');
+                        catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject('InProgressCommit could not be found'));
                         getOntologyDeferred = $q.defer();
                         ontologyManagerSvc.getOntology.and.returnValue(getOntologyDeferred.promise);
                     });

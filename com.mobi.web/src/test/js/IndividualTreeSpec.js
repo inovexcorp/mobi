@@ -119,7 +119,7 @@ describe('Individual Tree directive', function() {
             expect(this.element.querySelectorAll('.imported').length).toBe(0);
         });
     });
-    describe('this.controller methods', function() {
+    describe('controller methods', function() {
         it('isImported returns the correct value', function() {
             ontologyStateSvc.listItem.index = {iri: {}};
             expect(this.controller.isImported('iri')).toBe(false);
