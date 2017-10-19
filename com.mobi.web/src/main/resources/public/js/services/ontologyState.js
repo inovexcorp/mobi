@@ -1383,6 +1383,7 @@
                 listItem.blankNodes = blankNodes;
                 listItem.index = index;
                 listItem.inProgressCommit = inProgressCommit;
+                listItem.ontologyState.upToDate = upToDate;
                 return listItem;
             }
             function findValuesMissingDatatypes(object) {
