@@ -22,7 +22,7 @@
  */
 
 describe('Individual Tree directive', function() {
-    var $compile, scope, element, ontologyStateSvc, ontologyManagerSvc, util, controller;
+    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, util;
 
     beforeEach(function() {
         module('templates');
@@ -78,42 +78,52 @@ describe('Individual Tree directive', function() {
         }];
         ontologyStateSvc.getOpened.and.returnValue(true);
 
-        element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
+        this.element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
         scope.$digest();
-        controller = element.controller('individualTree');
+        this.controller = this.element.controller('individualTree');
     });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyManagerSvc = null;
+        ontologyStateSvc = null;
+        util = null;
+        this.element.remove();
+    });
+
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            spyOn(controller, 'isShown').and.returnValue(true);
+            spyOn(this.controller, 'isShown').and.returnValue(true);
             scope.$apply();
         });
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('tree')).toBe(true);
-            expect(element.hasClass('individual-tree')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('tree')).toBe(true);
+            expect(this.element.hasClass('individual-tree')).toBe(true);
         });
         it('based on .repeater-container', function() {
-            expect(element.querySelectorAll('.repeater-container').length).toBe(1);
+            expect(this.element.querySelectorAll('.repeater-container').length).toBe(1);
         });
         it('based on tree-items', function() {
-            expect(element.find('tree-item').length).toBe(3);
+            expect(this.element.find('tree-item').length).toBe(3);
         });
         it('based on .tree-item-wrapper', function() {
-            expect(element.querySelectorAll('.tree-item-wrapper').length).toBe(6);
+            expect(this.element.querySelectorAll('.tree-item-wrapper').length).toBe(6);
         });
         it('based on .imported', function() {
-            expect(element.querySelectorAll('.imported').length).toBe(3);
-            spyOn(controller, 'isImported').and.returnValue(false);
+            expect(this.element.querySelectorAll('.imported').length).toBe(3);
+            spyOn(this.controller, 'isImported').and.returnValue(false);
             scope.$digest();
-            expect(element.querySelectorAll('.imported').length).toBe(0);
+            expect(this.element.querySelectorAll('.imported').length).toBe(0);
         });
     });
-    describe('controller methods', function() {
+    describe('this.controller methods', function() {
         it('isImported returns the correct value', function() {
             ontologyStateSvc.listItem.index = {iri: {}};
-            expect(controller.isImported('iri')).toBe(false);
-            expect(controller.isImported('other')).toBe(true);
+            expect(this.controller.isImported('iri')).toBe(false);
+            expect(this.controller.isImported('other')).toBe(true);
         });
         describe('isShown should return', function() {
             describe('true when', function() {
@@ -124,7 +134,7 @@ describe('Individual Tree directive', function() {
                         path: ['recordId', 'otherIRI', 'andAnotherIRI', 'iri']
                     };
                     ontologyStateSvc.areParentsOpen.and.returnValue(true);
-                    expect(controller.isShown(node)).toBe(true);
+                    expect(this.controller.isShown(node)).toBe(true);
                     expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(node, ontologyStateSvc.getOpened);
                 });
                 it('indent is 0 and the parent path has a length of 2', function() {
@@ -133,7 +143,7 @@ describe('Individual Tree directive', function() {
                         entityIRI: 'iri',
                         path: ['recordId', 'iri']
                     };
-                    expect(controller.isShown(node)).toBe(true);
+                    expect(this.controller.isShown(node)).toBe(true);
                 });
             });
             describe('false when', function() {
@@ -144,7 +154,7 @@ describe('Individual Tree directive', function() {
                         path: ['recordId', 'otherIRI', 'iri']
                     };
                     ontologyStateSvc.areParentsOpen.and.returnValue(false);
-                    expect(controller.isShown(node)).toBe(false);
+                    expect(this.controller.isShown(node)).toBe(false);
                     expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(node, ontologyStateSvc.getOpened);
                 });
                 it('indent is 0 and the parent path does not have a length of 2', function() {
@@ -153,7 +163,7 @@ describe('Individual Tree directive', function() {
                         entityIRI: 'iri',
                         path: ['recordId', 'otherIRI', 'iri']
                     };
-                    expect(controller.isShown(node)).toBe(false);
+                    expect(this.controller.isShown(node)).toBe(false);
                 });
             });
         });
