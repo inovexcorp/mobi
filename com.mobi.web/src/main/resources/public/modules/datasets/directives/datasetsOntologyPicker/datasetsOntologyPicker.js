@@ -141,8 +141,7 @@
                                     if (ontology) {
                                         dvm.selectedOntologies.push(ontology);
                                     } else {
-                                        cm.getRecord(id, cm.localCatalog['@id'])
-                                                .then(ontology => dvm.selectedOntologies.push(ontology), onError);
+                                        onError('Selected ontology could not be found');
                                     }
                                 });
                             }
