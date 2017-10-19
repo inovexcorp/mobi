@@ -117,6 +117,7 @@
                                     dvm.state.paginationConfig.pageIndex -= 1;
                                 }
                                 dvm.state.setResults();
+                                dvm.state.submittedSearch = !!dvm.state.paginationConfig.searchText;
                             }, onError);
                     }
                     dvm.clear = function() {

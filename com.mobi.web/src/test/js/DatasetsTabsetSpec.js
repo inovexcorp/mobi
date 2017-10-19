@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Datasets Tabset directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        datasetStateSvc;
+    var $compile, scope, datasetStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -38,9 +34,16 @@ describe('Datasets Tabset directive', function() {
             datasetStateSvc = _datasetStateService_;
         });
 
-        element = $compile(angular.element('<datasets-tabset></dataset-tabset>'))(scope);
+        this.element = $compile(angular.element('<datasets-tabset></dataset-tabset>'))(scope);
         scope.$digest();
-        controller = element.controller('datasetsTabset');
+        this.controller = this.element.controller('datasetsTabset');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        datasetStateSvc = null;
+        this.element.remove();
     });
 
     it('should initialize by setting the dataset record results', function() {
@@ -49,38 +52,40 @@ describe('Datasets Tabset directive', function() {
     describe('controller methods', function() {
         it('should set the correct state if the enter key is pressed', function() {
             datasetStateSvc.setResults.calls.reset();
-            controller.onKeyUp({keyCode: 0});
+            this.controller.onKeyUp({keyCode: 0});
             expect(datasetStateSvc.resetPagination).not.toHaveBeenCalled();
             expect(datasetStateSvc.setResults).not.toHaveBeenCalled();
+            expect(datasetStateSvc.submittedSearch).toBeFalsy();
 
-            controller.onKeyUp({keyCode: 13});
+            this.controller.onKeyUp({keyCode: 13});
             expect(datasetStateSvc.resetPagination).toHaveBeenCalled();
             expect(datasetStateSvc.setResults).toHaveBeenCalled();
+            expect(datasetStateSvc.submittedSearch).toEqual(!!datasetStateSvc.paginationConfig.searchText);
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.hasClass('datasets-tabset')).toBe(true);
+            expect(this.element.hasClass('datasets-tabset')).toBe(true);
         });
         it('with a .blue-bar', function() {
-            expect(element.querySelectorAll('.blue-bar').length).toBe(1);
+            expect(this.element.querySelectorAll('.blue-bar').length).toBe(1);
         });
         it('with a .white-bar', function() {
-            expect(element.querySelectorAll('.white-bar').length).toBe(1);
+            expect(this.element.querySelectorAll('.white-bar').length).toBe(1);
         });
         it('with datasets-list', function() {
-            expect(element.find('datasets-list').length).toBe(1);
+            expect(this.element.find('datasets-list').length).toBe(1);
         });
         it('depending on whether a new dataset is being created', function() {
-            expect(element.find('new-dataset-overlay').length).toBe(0);
+            expect(this.element.find('new-dataset-overlay').length).toBe(0);
 
             datasetStateSvc.showNewOverlay = true;
             scope.$digest();
-            expect(element.find('new-dataset-overlay').length).toBe(1);
+            expect(this.element.find('new-dataset-overlay').length).toBe(1);
         });
     });
     it('should set the correct state when the new dataset button is clicked', function() {
-        var button = angular.element(element.querySelectorAll('.actions button')[0]);
+        var button = angular.element(this.element.querySelectorAll('.actions button')[0]);
         button.triggerHandler('click');
         expect(datasetStateSvc.showNewOverlay).toBe(true);
     });

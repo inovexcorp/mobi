@@ -55,8 +55,8 @@
                         </div>
                     </div>
                 </div>
-                <info-message ng-if="!dvm.state.results.length && dvm.state.paginationConfig.searchText" class="no-match">No datasets match your search text.</info-message>
-                <info-message ng-if="!dvm.state.results.length && !dvm.state.paginationConfig.searchText" class="no-results">No datasets are available.</info-message>
+                <info-message ng-if="!dvm.state.results.length && dvm.state.submittedSearch" class="no-match">No datasets match your search text.</info-message>
+                <info-message ng-if="!dvm.state.results.length && !dvm.state.submittedSearch" class="no-results">No datasets are available.</info-message>
             </block-content>
             <block-footer>
                 <div class="paging-container clearfix">
