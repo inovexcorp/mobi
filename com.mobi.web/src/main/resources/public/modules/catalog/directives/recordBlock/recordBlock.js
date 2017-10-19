@@ -81,12 +81,11 @@
                     .then(response => {
                         dvm.record = response;
                         currentCatalog.openedPath[currentCatalog.openedPath.length - 1] = response;
+                        tryToGetBranches();
                     }, () => {
                         dvm.state.resetPagination();
                         currentCatalog.openedPath = _.initial(currentCatalog.openedPath);
                     });
-
-                tryToGetBranches();
 
                 dvm.changeSort = function() {
                     tryToGetBranches();

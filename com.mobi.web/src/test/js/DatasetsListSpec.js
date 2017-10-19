@@ -231,7 +231,7 @@ describe('Datasets List directive', function() {
             });
         });
     });
-    describe('replaces the this.element with the correct html', function() {
+    describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('datasets-list')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
