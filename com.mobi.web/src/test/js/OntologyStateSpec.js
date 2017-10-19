@@ -2993,87 +2993,101 @@ describe('Ontology State Service', function() {
                 derivedConceptSchemes: ['scheme']
             }
         });
-        it('a concept', function() {
-            ontologyManagerSvc.isConcept.and.returnValue(true);
+        it('an ontology', function() {
+            ontologyManagerSvc.isOntology.and.returnValue(true);
             ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(entity, ontologyStateSvc.listItem.derivedConcepts);
-            expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('concepts');
+            expect(ontologyManagerSvc.isOntology).toHaveBeenCalledWith(entity);
+            expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('project');
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatConceptHierarchy, 'iri');
         });
-        it('a concept scheme', function() {
-            ontologyManagerSvc.isConcept.and.returnValue(false);
-            ontologyManagerSvc.isConceptScheme.and.returnValue(true);
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(entity, ontologyStateSvc.listItem.derivedConceptSchemes);
-            expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('schemes');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatConceptSchemeHierarchy, 'iri');
+        describe('of type ontology and the entity is', function() {
+            beforeEach(function() {
+                ontologyStateSvc.listItem.ontologyRecord.type = 'ontology';
+            });
+            it('a class', function() {
+                ontologyManagerSvc.isOntology.and.returnValue(false);
+                ontologyManagerSvc.isClass.and.returnValue(true);
+                ontologyStateSvc.goTo('iri');
+                expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(entity);
+                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('classes');
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatClassHierarchy, 'iri');
+            });
+            it('a datatype property', function() {
+                ontologyManagerSvc.isOntology.and.returnValue(false);
+                ontologyManagerSvc.isClass.and.returnValue(false);
+                ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
+                spyOn(ontologyStateSvc, 'setDataPropertiesOpened');
+                ontologyStateSvc.goTo('iri');
+                expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(entity);
+                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatDataPropertyHierarchy, 'iri');
+                expect(ontologyStateSvc.setDataPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, true);
+            });
+            it('an object property', function() {
+                ontologyManagerSvc.isOntology.and.returnValue(false);
+                ontologyManagerSvc.isClass.and.returnValue(false);
+                ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+                ontologyManagerSvc.isObjectProperty.and.returnValue(true);
+                spyOn(ontologyStateSvc, 'setObjectPropertiesOpened');
+                ontologyStateSvc.goTo('iri');
+                expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(entity);
+                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatObjectPropertyHierarchy, 'iri');
+                expect(ontologyStateSvc.setObjectPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, true);
+            });
+            it('an annotation property', function() {
+                ontologyManagerSvc.isOntology.and.returnValue(false);
+                ontologyManagerSvc.isClass.and.returnValue(false);
+                ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+                ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+                ontologyManagerSvc.isAnnotation.and.returnValue(true);
+                spyOn(ontologyStateSvc, 'setAnnotationPropertiesOpened');
+                ontologyStateSvc.goTo('iri');
+                expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(entity);
+                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatAnnotationPropertyHierarchy, 'iri');
+                expect(ontologyStateSvc.setAnnotationPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, true);
+            });
+            it('an individual', function() {
+                ontologyManagerSvc.isOntology.and.returnValue(false);
+                ontologyManagerSvc.isClass.and.returnValue(false);
+                ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+                ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+                ontologyManagerSvc.isIndividual.and.returnValue(true);
+                ontologyStateSvc.goTo('iri');
+                expect(ontologyManagerSvc.isIndividual).toHaveBeenCalledWith(entity);
+                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('individuals');
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                expect(ontologyStateSvc.openAt).not.toHaveBeenCalled();
+            });
         });
-        it('a class', function() {
-            ontologyManagerSvc.isConcept.and.returnValue(false);
-            ontologyManagerSvc.isConceptScheme.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(true);
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(entity);
-            expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('classes');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatClassHierarchy, 'iri');
-        });
-        it('a datatype property', function() {
-            ontologyManagerSvc.isConcept.and.returnValue(false);
-            ontologyManagerSvc.isConceptScheme.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(false);
-            ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
-            spyOn(ontologyStateSvc, 'setDataPropertiesOpened');
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(entity);
-            expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatDataPropertyHierarchy, 'iri');
-            expect(ontologyStateSvc.setDataPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, true);
-        });
-        it('an object property', function() {
-            ontologyManagerSvc.isConcept.and.returnValue(false);
-            ontologyManagerSvc.isConceptScheme.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(false);
-            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-            ontologyManagerSvc.isObjectProperty.and.returnValue(true);
-            spyOn(ontologyStateSvc, 'setObjectPropertiesOpened');
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(entity);
-            expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatObjectPropertyHierarchy, 'iri');
-            expect(ontologyStateSvc.setObjectPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, true);
-        });
-        it('an annotation property', function() {
-            ontologyManagerSvc.isConcept.and.returnValue(false);
-            ontologyManagerSvc.isConceptScheme.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(false);
-            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-            ontologyManagerSvc.isAnnotation.and.returnValue(true);
-            spyOn(ontologyStateSvc, 'setAnnotationPropertiesOpened');
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(entity);
-            expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('properties');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatAnnotationPropertyHierarchy, 'iri');
-            expect(ontologyStateSvc.setAnnotationPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, true);
-        });
-        it('an individual', function() {
-            ontologyManagerSvc.isConcept.and.returnValue(false);
-            ontologyManagerSvc.isConceptScheme.and.returnValue(false);
-            ontologyManagerSvc.isClass.and.returnValue(false);
-            ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-            ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-            ontologyManagerSvc.isIndividual.and.returnValue(true);
-            ontologyStateSvc.goTo('iri');
-            expect(ontologyManagerSvc.isIndividual).toHaveBeenCalledWith(entity);
-            expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('individuals');
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-            expect(ontologyStateSvc.openAt).not.toHaveBeenCalled();
+        describe('of type vocabulary and the entity is', function() {
+            beforeEach(function() {
+                ontologyStateSvc.listItem.ontologyRecord.type = 'vocabulary';
+            });
+            it('a concept', function() {
+                ontologyManagerSvc.isOntology.and.returnValue(false);
+                ontologyManagerSvc.isConcept.and.returnValue(true);
+                ontologyStateSvc.goTo('iri');
+                expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(entity, ontologyStateSvc.listItem.derivedConcepts);
+                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('concepts');
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatConceptHierarchy, 'iri');
+            });
+            it('a concept scheme', function() {
+                ontologyManagerSvc.isOntology.and.returnValue(false);
+                ontologyManagerSvc.isConcept.and.returnValue(false);
+                ontologyManagerSvc.isConceptScheme.and.returnValue(true);
+                ontologyStateSvc.goTo('iri');
+                expect(ontologyManagerSvc.isConceptScheme).toHaveBeenCalledWith(entity, ontologyStateSvc.listItem.derivedConceptSchemes);
+                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('schemes');
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatConceptSchemeHierarchy, 'iri');
+            });
         });
     });
     it('openAt sets all parents open', function() {
