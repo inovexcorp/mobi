@@ -68,10 +68,12 @@
                         if (event.keyCode === 13) {
                             dvm.state.resetPagination();
                             dvm.state.setResults();
+                            dvm.state.submittedSearch = !!dvm.state.paginationConfig.searchText;
                         }
                     }
 
                     dvm.state.setResults();
+                    dvm.state.submittedSearch = !!dvm.state.paginationConfig.searchText;
                 }
             }
         }
