@@ -29,7 +29,7 @@
                 <error-display ng-if="dvm.os.listItem.editorTabStates.search.errorMessage">{{dvm.os.listItem.editorTabStates.search.errorMessage}}</error-display>
                 <info-message ng-if="dvm.os.listItem.editorTabStates.search.infoMessage">{{dvm.os.listItem.editorTabStates.search.infoMessage}}</info-message>
                 <div class="result" ng-repeat="(key, value) in dvm.os.listItem.editorTabStates.search.results track by key">
-                    <span class="result-header text-muted" ng-click="isClosed = !isClosed"><strong>{{key | prefixation}}</strong><i class="fa fa-fw pull-right" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i></span>
+                    <div class="result-header text-muted" ng-click="isClosed = !isClosed"><strong title="{{key}}">{{key | prefixation}}</strong><i class="fa fa-fw pull-right" ng-class="{'fa-chevron-down': isClosed, 'fa-chevron-up': !isClosed}"></i></div>
                     <ul class="tree" ng-if="!isClosed">
                         <tree-item ng-repeat="item in value track by item"
                                    current-entity="dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, item)"

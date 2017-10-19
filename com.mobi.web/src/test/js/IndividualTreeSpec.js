@@ -76,7 +76,7 @@ describe('Individual Tree directive', function() {
             path: ['recordId', 'Class B', 'Class B1', 'Individual B1'],
             indent: 2
         }];
-        ontologyStateSvc.getIndividualsOpened.and.returnValue(true);
+        ontologyStateSvc.getOpened.and.returnValue(true);
 
         element = $compile(angular.element('<individual-tree></individual-tree>'))(scope);
         scope.$digest();
@@ -125,7 +125,7 @@ describe('Individual Tree directive', function() {
                     };
                     ontologyStateSvc.areParentsOpen.and.returnValue(true);
                     expect(controller.isShown(node)).toBe(true);
-                    expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(node, ontologyStateSvc.getIndividualsOpened);
+                    expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(node, ontologyStateSvc.getOpened);
                 });
                 it('indent is 0 and the parent path has a length of 2', function() {
                     var node = {
@@ -145,7 +145,7 @@ describe('Individual Tree directive', function() {
                     };
                     ontologyStateSvc.areParentsOpen.and.returnValue(false);
                     expect(controller.isShown(node)).toBe(false);
-                    expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(node, ontologyStateSvc.getIndividualsOpened);
+                    expect(ontologyStateSvc.areParentsOpen).toHaveBeenCalledWith(node, ontologyStateSvc.getOpened);
                 });
                 it('indent is 0 and the parent path does not have a length of 2', function() {
                     var node = {

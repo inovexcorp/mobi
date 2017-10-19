@@ -2000,12 +2000,12 @@ describe('Ontology State Service', function() {
         expect(ontologyStateSvc.listItem.inProgressCommit.deletions).toEqual([]);
     });
     it('setOpened sets the correct property on the state object', function() {
+        spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
         var path = 'this.is.the.path';
-        ontologyStateSvc.setOpened(path, true);
-        expect(_.get(ontologyStateSvc.listItem.editorTabStates, encodeURIComponent(path) + '.isOpened')).toBe(true);
-
-        ontologyStateSvc.setOpened(path, false);
-        expect(_.get(ontologyStateSvc.listItem.editorTabStates, encodeURIComponent(path) + '.isOpened')).toBe(false);
+        _.forEach([true, false], function(value) {
+            ontologyStateSvc.setOpened(path, value);
+            expect(_.get(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.isOpened')).toBe(value);
+        });
     });
     describe('getOpened gets the correct property value on the state object', function() {
         it('when path is not found, returns false', function() {
@@ -2013,18 +2013,20 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getOpened(path)).toBe(false);
         });
         it('when path is found', function() {
+            spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
             var path = 'this.is.the.path';
             _.forEach([true, false], function(value) {
-                _.set(ontologyStateSvc.listItem.editorTabStates, encodeURIComponent(path) + '.isOpened', value);
+                _.set(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.isOpened', value);
                 expect(ontologyStateSvc.getOpened(path)).toBe(value);
             });
         });
     });
     it('setNoDomainsOpened sets the correct property on the state object', function() {
+        spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
         var path = 'this.is.the.path';
         _.forEach([true, false], function(value) {
             ontologyStateSvc.setNoDomainsOpened(path, value);
-            expect(_.get(ontologyStateSvc.listItem.editorTabStates, encodeURIComponent(path) + '.noDomainsOpened')).toBe(value);
+            expect(_.get(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.noDomainsOpened')).toBe(value);
         });
     });
     describe('getNoDomainsOpened gets the correct property value on the state object', function() {
@@ -2033,38 +2035,20 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getNoDomainsOpened(path)).toBe(false);
         });
         it('when path is found', function() {
+            spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
             var path = 'this.is.the.path';
             _.forEach([true, false], function(value) {
-                _.set(ontologyStateSvc.listItem.editorTabStates, encodeURIComponent(path) + '.noDomainsOpened', value);
+                _.set(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.noDomainsOpened', value);
                 expect(ontologyStateSvc.getNoDomainsOpened(path)).toBe(value);
             });
         });
     });
-    it('setIndividualsOpened sets the correct property on the state object', function() {
-        var path = 'this.is.the.path';
-        _.forEach([true, false], function(value) {
-            ontologyStateSvc.setIndividualsOpened(path, value);
-            expect(_.get(ontologyStateSvc.listItem.editorTabStates, encodeURIComponent(path) + '.individualsOpened')).toBe(value);
-        });
-    });
-    describe('getIndividualsOpened gets the correct property value on the state object', function() {
-        it('when path is not found, returns false', function() {
-            var path = 'this.is.the.path';
-            expect(ontologyStateSvc.getIndividualsOpened(path)).toBe(false);
-        });
-        it('when path is found', function() {
-            var path = 'this.is.the.path';
-            _.forEach([true, false], function(value) {
-                _.set(ontologyStateSvc.listItem.editorTabStates, encodeURIComponent(path) + '.individualsOpened', value);
-                expect(ontologyStateSvc.getIndividualsOpened(path)).toBe(value);
-            });
-        });
-    });
     it('setDataPropertiesOpened sets the correct property on the state object', function() {
+        spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
         var path = 'this.is.the.path';
         _.forEach([true, false], function(value) {
             ontologyStateSvc.setDataPropertiesOpened(path, value);
-            expect(_.get(ontologyStateSvc.listItem.editorTabStates, encodeURIComponent(path) + '.dataPropertiesOpened')).toBe(value);
+            expect(_.get(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.dataPropertiesOpened')).toBe(value);
         });
     });
     describe('getDataPropertiesOpened gets the correct property value on the state object', function() {
@@ -2073,18 +2057,20 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getDataPropertiesOpened(path)).toBe(false);
         });
         it('when path is found', function() {
+            spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
             var path = 'this.is.the.path';
             _.forEach([true, false], function(value) {
-                _.set(ontologyStateSvc.listItem.editorTabStates, encodeURIComponent(path) + '.dataPropertiesOpened', value);
+                _.set(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.dataPropertiesOpened', value);
                 expect(ontologyStateSvc.getDataPropertiesOpened(path)).toBe(value);
             });
         });
     });
     it('setObjectPropertiesOpened sets the correct property on the state object', function() {
+        spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
         var path = 'this.is.the.path';
         _.forEach([true, false], function(value) {
             ontologyStateSvc.setObjectPropertiesOpened(path, value);
-            expect(_.get(ontologyStateSvc.listItem.editorTabStates, encodeURIComponent(path) + '.objectPropertiesOpened')).toBe(value);
+            expect(_.get(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.objectPropertiesOpened')).toBe(value);
         });
     });
     describe('getObjectPropertiesOpened gets the correct property value on the state object', function() {
@@ -2093,18 +2079,20 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getObjectPropertiesOpened(path)).toBe(false);
         });
         it('when path is found', function() {
+            spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
             var path = 'this.is.the.path';
             _.forEach([true, false], function(value) {
-                _.set(ontologyStateSvc.listItem.editorTabStates, encodeURIComponent(path) + '.objectPropertiesOpened', value);
+                _.set(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.objectPropertiesOpened', value);
                 expect(ontologyStateSvc.getObjectPropertiesOpened(path)).toBe(value);
             });
         });
     });
     it('setAnnotationPropertiesOpened sets the correct property on the state object', function() {
+        spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
         var path = 'this.is.the.path';
         _.forEach([true, false], function(value) {
             ontologyStateSvc.setAnnotationPropertiesOpened(path, value);
-            expect(_.get(ontologyStateSvc.listItem.editorTabStates, encodeURIComponent(path) + '.annotationPropertiesOpened')).toBe(value);
+            expect(_.get(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.annotationPropertiesOpened')).toBe(value);
         });
     });
     describe('getAnnotationPropertiesOpened gets the correct property value on the state object', function() {
@@ -2113,9 +2101,10 @@ describe('Ontology State Service', function() {
             expect(ontologyStateSvc.getAnnotationPropertiesOpened(path)).toBe(false);
         });
         it('when path is found', function() {
+            spyOn(ontologyStateSvc, 'getActiveKey').and.returnValue('key');
             var path = 'this.is.the.path';
             _.forEach([true, false], function(value) {
-                _.set(ontologyStateSvc.listItem.editorTabStates, encodeURIComponent(path) + '.annotationPropertiesOpened', value);
+                _.set(ontologyStateSvc.listItem.editorTabStates, 'key.' + encodeURIComponent(path) + '.annotationPropertiesOpened', value);
                 expect(ontologyStateSvc.getAnnotationPropertiesOpened(path)).toBe(value);
             });
         });
@@ -2990,7 +2979,8 @@ describe('Ontology State Service', function() {
                 flatObjectPropertyHierarchy: [],
                 flatAnnotationPropertyHierarchy: [],
                 derivedConcepts: ['concept'],
-                derivedConceptSchemes: ['scheme']
+                derivedConceptSchemes: ['scheme'],
+                flatIndividualsHierarchy: []
             }
         });
         it('a concept', function() {
@@ -3073,7 +3063,7 @@ describe('Ontology State Service', function() {
             expect(ontologyManagerSvc.isIndividual).toHaveBeenCalledWith(entity);
             expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('individuals');
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
-            expect(ontologyStateSvc.openAt).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.flatIndividualsHierarchy, 'iri');
         });
     });
     it('openAt sets all parents open', function() {

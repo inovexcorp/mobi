@@ -1050,12 +1050,6 @@
             self.getNoDomainsOpened = function(recordId) {
                 return _.get(self.listItem.editorTabStates, getOpenPath(recordId, 'noDomainsOpened'), false);
             }
-            self.setIndividualsOpened = function(pathString, isOpened) {
-                _.set(self.listItem.editorTabStates, getOpenPath(pathString, 'individualsOpened'), isOpened);
-            }
-            self.getIndividualsOpened = function(pathString) {
-                return _.get(self.listItem.editorTabStates, getOpenPath(pathString, 'individualsOpened'), false);
-            }
             self.setDataPropertiesOpened = function(recordId, isOpened) {
                 _.set(self.listItem.editorTabStates, getOpenPath(recordId, 'dataPropertiesOpened'), isOpened);
             }
@@ -1280,7 +1274,7 @@
                     self.setAnnotationPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
                     commonGoTo('properties', iri, self.listItem.flatAnnotationPropertyHierarchy);
                 } else if (om.isIndividual(entity)) {
-                    commonGoTo('individuals', iri);
+                    commonGoTo('individuals', iri, self.listItem.flatIndividualsHierarchy);
                 } else if (om.isOntology(entity)) {
                     commonGoTo('project', iri);
                 }
@@ -1345,7 +1339,7 @@
                 }
             }
             function getOpenPath() {
-                return _.join(_.map([...arguments], encodeURIComponent), '.');
+                return self.getActiveKey() + '.' + _.join(_.map([...arguments], encodeURIComponent), '.');
             }
             function setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, type, title) {
                 var listItem = (type === 'ontology') ? angular.copy(ontologyListItemTemplate) : angular.copy(vocabularyListItemTemplate);
