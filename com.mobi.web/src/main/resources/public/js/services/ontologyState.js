@@ -367,7 +367,7 @@
                     .then(branch => {
                         listItem.branches = [branch];
                         self.list.push(listItem);
-                        self.listItem = listItem
+                        self.listItem = listItem;
                         self.setSelected(self.getActiveEntityIRI(), false);
                         self.setPageTitle(listItem.ontologyRecord.type);
                         return {
@@ -898,7 +898,7 @@
              * @returns {Object} An Object which represents the requested entity.
              */
             self.getEntityByRecordId = function(recordId, entityIRI, listItem) {
-                if (listItem) {
+                if (!_.isEmpty(listItem)) {
                     return getEntityFromListItem(listItem, entityIRI);
                 }
                 return getEntityFromListItem(self.getListItemByRecordId(recordId), entityIRI);
@@ -1006,7 +1006,7 @@
              * @param {string} recordId The record ID of the requested ontology.
              */
             self.closeOntology = function(recordId) {
-                if (self.listItem && self.listItem.ontologyRecord.recordId == recordId) {
+                if (_.get(self.listItem, 'ontologyRecord.recordId') == recordId) {
                    self.listItem = {};
                    self.setPageTitle();
                 }
