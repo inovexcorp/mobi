@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Branch Block directive', function() {
-    var $compile,
-        scope,
-        catalogManagerSvc,
-        catalogStateSvc,
-        utilSvc,
-        prefixes,
-        controller;
+    var $compile, scope, $q, catalogManagerSvc, catalogStateSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -38,9 +32,10 @@ describe('Branch Block directive', function() {
         mockPrefixes();
         injectSplitIRIFilter();
 
-        inject(function(_$compile_, _$rootScope_, _catalogManagerService_, _catalogStateService_, _utilService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _catalogManagerService_, _catalogStateService_, _utilService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             catalogManagerSvc = _catalogManagerService_;
             catalogStateSvc = _catalogStateService_;
             utilSvc = _utilService_;
@@ -50,13 +45,24 @@ describe('Branch Block directive', function() {
         catalogStateSvc.getCurrentCatalog.and.returnValue(catalogStateSvc.catalogs.local);
         this.branch = {'@id': 'branch'};
         catalogStateSvc.catalogs.local.openedPath = [this.branch];
+        catalogManagerSvc.getRecordBranch.and.returnValue($q.when(this.branch));
         this.element = $compile(angular.element('<branch-block></branch-block>'))(scope);
         scope.$digest();
-        controller = this.element.controller('branchBlock');
+        this.controller = this.element.controller('branchBlock');
     });
 
-    it('should initialize with the correct entity for the branch', function() {
-        expect(controller.branch).toEqual(this.branch);
+    describe('should initialize with the correct entity for the branch', function() {
+        it('successfully', function() {
+            expect(this.controller.branch).toEqual(this.branch);
+            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branch['@id'], jasmine.any(String), catalogStateSvc.catalogs.local.catalog['@id']);
+        });
+        it('unless an error occurs', function() {
+            catalogManagerSvc.getRecordBranch.and.returnValue($q.reject('Error message'));
+            this.element = $compile(angular.element('<branch-block></branch-block>'))(scope);
+            scope.$digest();
+            expect(catalogStateSvc.resetPagination).toHaveBeenCalled();
+            expect(catalogStateSvc.catalogs.local.openedPath).toEqual([]);
+        });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {

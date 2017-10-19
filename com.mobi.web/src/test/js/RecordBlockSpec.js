@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Record Block directive', function() {
-    var $compile,
-        scope,
-        catalogManagerSvc,
-        catalogStateSvc,
-        utilSvc,
-        $q,
-        controller;
+    var $compile, scope, catalogManagerSvc, catalogStateSvc, utilSvc, $q;
 
     beforeEach(function() {
         module('templates');
@@ -49,23 +43,31 @@ describe('Record Block directive', function() {
         this.record = {'@id': 'record'};
         catalogStateSvc.catalogs.local.openedPath = [this.record];
         catalogManagerSvc.isVersionedRDFRecord.and.returnValue(true);
+        catalogManagerSvc.getRecord.and.returnValue($q.when(this.record));
         this.element = $compile(angular.element('<record-block></record-block>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('recordBlock');
     });
 
     describe('should initialize', function() {
-        it('with the correct entity for the record', function() {
-            controller = this.element.controller('recordBlock');
-            expect(controller.record).toEqual(this.record);
+        describe('if the record is found', function() {
+            it('successfully', function() {
+                expect(this.controller.record).toEqual(this.record);
+                expect(catalogManagerSvc.getRecord).toHaveBeenCalledWith(this.record['@id'], catalogStateSvc.catalogs.local.catalog['@id']);
+            });
+            it('if the record is a VersionedRDFRecord', function() {
+                expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalled();
+            });
         });
-        it('if the record is a VersionedRDFRecord', function() {
-            expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalled();
+        it('unless the record is not found', function() {
+            catalogManagerSvc.getRecord.and.returnValue($q.reject('Error message'));
+            this.element = $compile(angular.element('<record-block></record-block>'))(scope);
+            scope.$digest();
+            expect(catalogStateSvc.resetPagination).toHaveBeenCalled();
+            expect(catalogStateSvc.catalogs.local.openedPath).toEqual([]);
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = this.element.controller('recordBlock');
-        });
         describe('should change the sort', function() {
             beforeEach(function() {
                 catalogManagerSvc.getRecordBranches.calls.reset();
@@ -73,13 +75,13 @@ describe('Record Block directive', function() {
             });
             it('unless the record is not a VersionedRDFRecord', function() {
                 catalogManagerSvc.isVersionedRDFRecord.and.returnValue(false);
-                controller.changeSort();
+                this.controller.changeSort();
                 expect(catalogManagerSvc.getRecordBranches).not.toHaveBeenCalled();
             });
             describe('if the record is a VersionedRDFRecord', function() {
                 beforeEach(function() {
                     catalogManagerSvc.isVersionedRDFRecord.and.returnValue(true);
-                    controller.record = this.record;
+                    this.controller.record = this.record;
                     this.expectedPaginationConfig = {
                         pageIndex: 0,
                         limit: catalogStateSvc.catalogs.local.branches.limit,
@@ -88,17 +90,17 @@ describe('Record Block directive', function() {
                 });
                 it('unless an error occurs', function() {
                     catalogManagerSvc.getRecordBranches.and.returnValue($q.reject('Error Message'));
-                    controller.changeSort();
+                    this.controller.changeSort();
                     scope.$apply();
-                    expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(controller.record['@id'], catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
+                    expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(this.controller.record['@id'], catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
                     expect(catalogStateSvc.currentPage).toBe(0);
                     expect(catalogStateSvc.setPagination).not.toHaveBeenCalled();
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
                 });
                 it('succesfully', function() {
-                    controller.changeSort();
+                    this.controller.changeSort();
                     scope.$apply();
-                    expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(controller.record['@id'], catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
+                    expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(this.controller.record['@id'], catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
                     expect(catalogStateSvc.currentPage).toBe(0);
                     expect(catalogStateSvc.setPagination).toHaveBeenCalled();
                     expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
@@ -106,15 +108,12 @@ describe('Record Block directive', function() {
             });
         });
         it('should open a branch', function() {
-            controller.openBranch({});
+            this.controller.openBranch({});
             expect(catalogStateSvc.resetPagination).toHaveBeenCalled();
             expect(catalogStateSvc.catalogs.local.openedPath).toContain({});
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            controller = this.element.controller('recordBlock');
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('record-block')).toBe(true);
             expect(this.element.hasClass('col-xs-12')).toBe(true);
@@ -172,13 +171,12 @@ describe('Record Block directive', function() {
     });
     it('should call openBranch when a branch button is clicked', function() {
         catalogStateSvc.results = [{}];
-        controller = this.element.controller('recordBlock');
-        spyOn(controller, 'openBranch');
+        spyOn(this.controller, 'openBranch');
         catalogManagerSvc.isVersionedRDFRecord.and.returnValue(true);
         scope.$digest();
 
         var button = angular.element(this.element.querySelectorAll('.branches-list button.branch')[0]);
         button.triggerHandler('click');
-        expect(controller.openBranch).toHaveBeenCalledWith(catalogStateSvc.results[0]);
+        expect(this.controller.openBranch).toHaveBeenCalledWith(catalogStateSvc.results[0]);
     });
 });
