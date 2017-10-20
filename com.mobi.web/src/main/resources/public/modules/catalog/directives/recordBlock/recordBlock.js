@@ -74,22 +74,30 @@
                 dvm.state = catalogStateService;
                 dvm.cm = catalogManagerService;
                 dvm.util = utilService;
-                dvm.record = dvm.state.getCurrentCatalog().openedPath[dvm.state.getCurrentCatalog().openedPath.length - 1];
+                var currentCatalog = dvm.state.getCurrentCatalog();
 
-                tryToGetBranches();
+                dvm.record = {};
+                dvm.cm.getRecord(_.last(currentCatalog.openedPath)['@id'], currentCatalog.catalog['@id'])
+                    .then(response => {
+                        dvm.record = response;
+                        currentCatalog.openedPath[currentCatalog.openedPath.length - 1] = response;
+                        tryToGetBranches();
+                    }, () => {
+                        dvm.state.resetPagination();
+                        currentCatalog.openedPath = _.initial(currentCatalog.openedPath);
+                    });
 
                 dvm.changeSort = function() {
                     tryToGetBranches();
                 }
                 dvm.openBranch = function(branch) {
                     dvm.state.resetPagination();
-                    dvm.state.getCurrentCatalog().openedPath.push(branch);
+                    currentCatalog.openedPath.push(branch);
                 }
 
                 function tryToGetBranches() {
                     if (dvm.cm.isVersionedRDFRecord(dvm.record)) {
                         dvm.state.currentPage = 0;
-                        var currentCatalog = dvm.state.getCurrentCatalog();
                         var paginatedConfig = {
                             pageIndex: dvm.state.currentPage,
                             limit: currentCatalog.branches.limit,

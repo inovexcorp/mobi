@@ -70,8 +70,18 @@
                 dvm.cm = catalogManagerService;
                 dvm.prefixes = prefixes;
                 dvm.util = utilService;
-                dvm.branch = dvm.state.getCurrentCatalog().openedPath[dvm.state.getCurrentCatalog().openedPath.length - 1];
-                dvm.recordId = _.get(dvm.state.getCurrentCatalog().openedPath[dvm.state.getCurrentCatalog().openedPath.length - 2], '@id', '');
+                var currentCatalog = dvm.state.getCurrentCatalog();
+
+                dvm.recordId = _.get(_.nth(currentCatalog.openedPath, -2), '@id', '');
+                dvm.branch = {};
+                dvm.cm.getRecordBranch(_.last(currentCatalog.openedPath)['@id'], dvm.recordId, currentCatalog.catalog['@id'])
+                    .then(response => {
+                        dvm.branch = response;
+                        currentCatalog.openedPath[currentCatalog.openedPath.length - 1] = response;
+                    }, () => {
+                        dvm.state.resetPagination();
+                        currentCatalog.openedPath = _.initial(currentCatalog.openedPath);
+                    });
             },
             templateUrl: 'modules/catalog/directives/branchBlock/branchBlock.html'
         };
