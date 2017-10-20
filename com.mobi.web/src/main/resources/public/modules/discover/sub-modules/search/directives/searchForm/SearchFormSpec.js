@@ -163,7 +163,7 @@ describe('Search Form directive', function() {
                 });
             });
         });
-        it('getLast should return the last this.element of the array', function() {
+        it('getLast should return the last element of the array', function() {
             expect(this.controller.getLast([0, 1])).toBe(1);
         });
         describe('refresh should set the variable correctly and call the correct method when datasetRecordId is', function() {
