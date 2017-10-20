@@ -1675,9 +1675,7 @@ describe('Ontology Manager service', function() {
                     return headers['Content-Type'] === undefined;
                 }).respond(200, { additions: [], deletions: [] });
             ontologyManagerSvc.uploadChangesFile(file, recordId, branchId, commitId)
-                .then(function() {
-                    expect(true).toBe(true);
-                }, function() {
+                .then(_.noop, function() {
                     fail('Promise should have resolved');
                 });
             flushAndVerify($httpBackend);
