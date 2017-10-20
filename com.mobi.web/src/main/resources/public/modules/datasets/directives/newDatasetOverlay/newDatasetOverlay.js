@@ -77,7 +77,6 @@
                         description: ''
                     };
                     dvm.keywords = [];
-                    dvm.ontologies = [];
                     dvm.selectedOntologies = [];
                     dvm.step = 0;
 
