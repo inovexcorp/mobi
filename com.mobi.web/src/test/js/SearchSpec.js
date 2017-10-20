@@ -56,6 +56,19 @@ describe('Search Service', function() {
         };
     });
 
+    afterEach(function() {
+        searchSvc = null;
+        scope = null;
+        $q = null;
+        httpSvc = null;
+        sparqlManagerSvc = null;
+        discoverStateSvc = null;
+        prefixes = null;
+        util = null;
+        datasetManagerSvc = null;
+        ontologyManagerSvc = null;
+    });
+
     describe('getPropertiesForDataset should return the correct list when getDataProperties and getObjectProperties', function() {
         beforeEach(function() {
             datasetManagerSvc.datasetRecords = [[
@@ -98,9 +111,8 @@ describe('Search Service', function() {
         });
     });
     describe('should submit a search query', function() {
-        var query = 'query';
         beforeEach(function() {
-            spyOn(searchSvc, 'createQueryString').and.returnValue(query);
+            spyOn(searchSvc, 'createQueryString').and.returnValue('query');
         });
         it('unless an error occurs', function() {
             sparqlManagerSvc.query.and.returnValue($q.reject('Error Message'));
@@ -109,7 +121,7 @@ describe('Search Service', function() {
             }, function(response) {
                 expect(response).toEqual('Error Message');
                 expect(searchSvc.createQueryString).toHaveBeenCalledWith({});
-                expect(sparqlManagerSvc.query).toHaveBeenCalledWith(query, '', discoverStateSvc.search.targetedId);
+                expect(sparqlManagerSvc.query).toHaveBeenCalledWith('query', '', discoverStateSvc.search.targetedId);
                 expect(httpSvc.cancel).toHaveBeenCalledWith(discoverStateSvc.search.targetedId);
             });
             scope.$apply();
@@ -119,7 +131,7 @@ describe('Search Service', function() {
             searchSvc.submitSearch('', {}).then(function(response) {
                 expect(response).toEqual({});
                 expect(searchSvc.createQueryString).toHaveBeenCalledWith({});
-                expect(sparqlManagerSvc.query).toHaveBeenCalledWith(query, '', discoverStateSvc.search.targetedId);
+                expect(sparqlManagerSvc.query).toHaveBeenCalledWith('query', '', discoverStateSvc.search.targetedId);
                 expect(httpSvc.cancel).toHaveBeenCalledWith(discoverStateSvc.search.targetedId);
             }, function() {
                 fail('Promise should have rejected');

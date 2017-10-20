@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Property Filter Overlay directive', function() {
-    var $compile, scope, element, controller, utilSvc, ontologyManagerSvc, discoverStateSvc, searchSvc;
+    var $compile, scope, utilSvc, ontologyManagerSvc, discoverStateSvc, searchSvc;
 
     beforeEach(function() {
         module('templates');
@@ -42,135 +42,144 @@ describe('Property Filter Overlay directive', function() {
         });
 
         scope.closeOverlay = jasmine.createSpy('closeOverlay');
-        element = $compile(angular.element('<property-filter-overlay close-overlay="closeOverlay()"></property-filter-overlay>'))(scope);
+        this.element = $compile(angular.element('<property-filter-overlay close-overlay="closeOverlay()"></property-filter-overlay>'))(scope);
         scope.$digest();
-        controller = element.controller('propertyFilterOverlay');
-        controller.range = 'range';
-        controller.property = {'@id': 'id'};
+        this.controller = this.element.controller('propertyFilterOverlay');
+        this.controller.range = 'range';
+        this.controller.property = {'@id': 'id'};
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        utilSvc = null;
+        ontologyManagerSvc = null;
+        discoverStateSvc = null;
+        searchSvc = null;
+        this.element.remove();
     });
 
     describe('controller bound variable', function() {
         it('closeOverlay to be called in parent scope', function() {
-            controller.closeOverlay();
+            this.controller.closeOverlay();
             scope.$apply();
             expect(scope.closeOverlay).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('property-filter-overlay')).toBe(true);
-            expect(element.hasClass('overlay')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('property-filter-overlay')).toBe(true);
+            expect(this.element.hasClass('overlay')).toBe(true);
         });
         it('with a form', function() {
-            expect(element.find('form').length).toBe(1);
+            expect(this.element.find('form').length).toBe(1);
         });
         it('with a h6', function() {
-            expect(element.find('h6').length).toBe(1);
+            expect(this.element.find('h6').length).toBe(1);
         });
         it('with a .main', function() {
-            expect(element.querySelectorAll('.main').length).toBe(1);
+            expect(this.element.querySelectorAll('.main').length).toBe(1);
         });
         it('with a .path', function() {
-            expect(element.querySelectorAll('.path').length).toBe(1);
+            expect(this.element.querySelectorAll('.path').length).toBe(1);
         });
         it('with .path spans', function() {
-            expect(element.querySelectorAll('.path span').length).toBe(0);
+            expect(this.element.querySelectorAll('.path span').length).toBe(0);
             scope.$apply();
-            expect(element.querySelectorAll('.path span').length).toBe(1);
+            expect(this.element.querySelectorAll('.path span').length).toBe(1);
         });
         it('with a property-selector', function() {
-            expect(element.find('property-selector').length).toBe(1);
+            expect(this.element.find('property-selector').length).toBe(1);
         });
         it('with a filter-selector', function() {
-            expect(element.find('filter-selector').length).toBe(0);
-            controller.showFilter = true;
+            expect(this.element.find('filter-selector').length).toBe(0);
+            this.controller.showFilter = true;
             scope.$apply();
-            expect(element.find('filter-selector').length).toBe(1);
+            expect(this.element.find('filter-selector').length).toBe(1);
         });
         it('with a .btn-container', function() {
-            expect(element.querySelectorAll('.btn-container').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
         });
         it('with a .btn-primary', function() {
-            expect(element.querySelectorAll('.btn-primary').length).toBe(0);
-            controller.path = [{}];
+            expect(this.element.querySelectorAll('.btn-primary').length).toBe(0);
+            this.controller.path = [{}];
             scope.$apply();
-            expect(element.querySelectorAll('.btn-primary').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn-primary').length).toBe(1);
         });
         it('with a .btn-default', function() {
-            expect(element.querySelectorAll('.btn-default').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn-default').length).toBe(1);
         });
     });
     describe('controller methods', function() {
         describe('submittable should return the correct value when filterType is', function() {
             it('Boolean', function() {
-                controller.filterType = 'Boolean';
-                controller.boolean = undefined;
-                expect(controller.submittable()).toBe(false);
-                controller.boolean = true;
-                expect(controller.submittable()).toBe(true);
-                controller.boolean = false;
-                expect(controller.submittable()).toBe(true);
+                this.controller.filterType = 'Boolean';
+                this.controller.boolean = undefined;
+                expect(this.controller.submittable()).toBe(false);
+                this.controller.boolean = true;
+                expect(this.controller.submittable()).toBe(true);
+                this.controller.boolean = false;
+                expect(this.controller.submittable()).toBe(true);
             });
             it('Contains', function() {
-                controller.filterType = 'Contains';
-                expect(controller.submittable()).toBe(false);
-                controller.value = 'value';
-                expect(controller.submittable()).toBe(true);
+                this.controller.filterType = 'Contains';
+                expect(this.controller.submittable()).toBe(false);
+                this.controller.value = 'value';
+                expect(this.controller.submittable()).toBe(true);
             });
             it('Exact', function() {
-                controller.filterType = 'Exact';
-                expect(controller.submittable()).toBe(false);
-                controller.value = 'value';
-                expect(controller.submittable()).toBe(true);
+                this.controller.filterType = 'Exact';
+                expect(this.controller.submittable()).toBe(false);
+                this.controller.value = 'value';
+                expect(this.controller.submittable()).toBe(true);
             });
             it('Existence', function() {
-                controller.filterType = 'Existence';
-                expect(controller.submittable()).toBe(true);
+                this.controller.filterType = 'Existence';
+                expect(this.controller.submittable()).toBe(true);
             });
             it('Range', function() {
-                controller.filterType = 'Range';
-                expect(controller.submittable()).toBe(false);
-                controller.begin = 'begin';
-                expect(controller.submittable()).toBeFalsy();
-                controller.end = 'end';
-                expect(controller.submittable()).toBe(true);
+                this.controller.filterType = 'Range';
+                expect(this.controller.submittable()).toBe(false);
+                this.controller.begin = 'begin';
+                expect(this.controller.submittable()).toBeFalsy();
+                this.controller.end = 'end';
+                expect(this.controller.submittable()).toBe(true);
             });
             it('Regex', function() {
-                controller.filterType = 'Regex';
-                expect(controller.submittable()).toBe(false);
-                controller.regex = '/[a-zA-Z]/';
-                expect(controller.submittable()).toBe(true);
+                this.controller.filterType = 'Regex';
+                expect(this.controller.submittable()).toBe(false);
+                this.controller.regex = '/[a-zA-Z]/';
+                expect(this.controller.submittable()).toBe(true);
             });
             it('undefined', function() {
-                controller.filterType = undefined;
-                expect(controller.submittable()).toBeFalsy();
-                controller.path = [{}];
-                controller.showFilter = false;
-                expect(controller.submittable()).toBeTruthy();
+                this.controller.filterType = undefined;
+                expect(this.controller.submittable()).toBeFalsy();
+                this.controller.path = [{}];
+                this.controller.showFilter = false;
+                expect(this.controller.submittable()).toBeTruthy();
             });
             it('something else', function() {
-                controller.filterType = 'Other';
-                expect(controller.submittable()).toBe(false);
+                this.controller.filterType = 'Other';
+                expect(this.controller.submittable()).toBe(false);
             });
         });
         describe('submit should adjust the correct lists when filterType is', function() {
-            var config = {};
             beforeEach(function() {
                 utilSvc.getBeautifulIRI.and.returnValue('range');
                 ontologyManagerSvc.getEntityName.and.returnValue('name');
-                controller.value = 'value';
-                controller.path = [{property: {'@id': 'id'}, range: 'range'}, {property: {'@id': 'id2'}, range: 'range2'}];
-                config = {
+                this.controller.value = 'value';
+                this.controller.path = [{property: {'@id': 'id'}, range: 'range'}, {property: {'@id': 'id2'}, range: 'range2'}];
+                this.config = {
                     path: [{predicate: 'id', range: 'range'}, {predicate: 'id2', range: 'range2'}],
                     title: 'name > name'
                 };
             });
             it('Boolean', function() {
-                controller.filterType = 'Boolean';
-                controller.boolean = false;
-                controller.submit();
-                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
+                this.controller.filterType = 'Boolean';
+                this.controller.boolean = false;
+                this.controller.submit();
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(this.config, {
                     boolean: false,
                     display: 'Is false',
                     type: 'Boolean'
@@ -178,9 +187,9 @@ describe('Property Filter Overlay directive', function() {
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Contains', function() {
-                controller.filterType = 'Contains';
-                controller.submit();
-                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
+                this.controller.filterType = 'Contains';
+                this.controller.submit();
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(this.config, {
                     display: 'Contains "value"',
                     type: 'Contains',
                     value: 'value'
@@ -188,9 +197,9 @@ describe('Property Filter Overlay directive', function() {
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Exact', function() {
-                controller.filterType = 'Exact';
-                controller.submit();
-                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
+                this.controller.filterType = 'Exact';
+                this.controller.submit();
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(this.config, {
                     display: 'Exactly matches "value"',
                     type: 'Exact',
                     value: 'value'
@@ -198,18 +207,18 @@ describe('Property Filter Overlay directive', function() {
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Existence', function() {
-                controller.filterType = 'Existence';
-                controller.submit();
-                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
+                this.controller.filterType = 'Existence';
+                this.controller.submit();
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(this.config, {
                     display: 'Existence',
                     type: 'Existence'
                 }));
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Greater than', function() {
-                controller.filterType = 'Greater than';
-                controller.submit();
-                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
+                this.controller.filterType = 'Greater than';
+                this.controller.submit();
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(this.config, {
                     display: 'value > value',
                     type: 'Greater than',
                     value: 'value'
@@ -217,9 +226,9 @@ describe('Property Filter Overlay directive', function() {
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Greater than or equal to', function() {
-                controller.filterType = 'Greater than or equal to';
-                controller.submit();
-                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
+                this.controller.filterType = 'Greater than or equal to';
+                this.controller.submit();
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(this.config, {
                     display: 'value >= value',
                     type: 'Greater than or equal to',
                     value: 'value'
@@ -227,9 +236,9 @@ describe('Property Filter Overlay directive', function() {
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Less than', function() {
-                controller.filterType = 'Less than';
-                controller.submit();
-                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
+                this.controller.filterType = 'Less than';
+                this.controller.submit();
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(this.config, {
                     display: 'value < value',
                     type: 'Less than',
                     value: 'value'
@@ -237,9 +246,9 @@ describe('Property Filter Overlay directive', function() {
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Less than or equal to', function() {
-                controller.filterType = 'Less than or equal to';
-                controller.submit();
-                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
+                this.controller.filterType = 'Less than or equal to';
+                this.controller.submit();
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(this.config, {
                     display: 'value <= value',
                     type: 'Less than or equal to',
                     value: 'value'
@@ -247,11 +256,11 @@ describe('Property Filter Overlay directive', function() {
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Range', function() {
-                controller.begin = 'begin';
-                controller.end = 'end';
-                controller.filterType = 'Range';
-                controller.submit();
-                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
+                this.controller.begin = 'begin';
+                this.controller.end = 'end';
+                this.controller.filterType = 'Range';
+                this.controller.submit();
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(this.config, {
                     begin: 'begin',
                     display: 'begin <= value <= end',
                     end: 'end',
@@ -260,10 +269,10 @@ describe('Property Filter Overlay directive', function() {
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('Regex', function() {
-                controller.filterType = 'Regex';
-                controller.regex = '/[a-zA-Z]/';
-                controller.submit();
-                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(config, {
+                this.controller.filterType = 'Regex';
+                this.controller.regex = '/[a-zA-Z]/';
+                this.controller.submit();
+                expect(discoverStateSvc.search.queryConfig.filters).toContain(_.assign(this.config, {
                     display: 'Matches /[a-zA-Z]/',
                     type: 'Regex',
                     regex: '/[a-zA-Z]/'
@@ -273,22 +282,22 @@ describe('Property Filter Overlay directive', function() {
         });
         describe('propertySelected should set the variables correctly when isObjectProperty returns', function() {
             beforeEach(function() {
-                controller.property = {'@id': 'id'};
+                this.controller.property = {'@id': 'id'};
             });
             it('true', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
-                controller.range = 'range';
-                controller.propertySelected();
-                expect(controller.path).toEqual([{property: {'@id': 'id'}, range: 'range'}]);
-                expect(controller.keys).toEqual(['range']);
-                expect(controller.property).toBeUndefined();
-                expect(controller.range).toBeUndefined();
+                this.controller.range = 'range';
+                this.controller.propertySelected();
+                expect(this.controller.path).toEqual([{property: {'@id': 'id'}, range: 'range'}]);
+                expect(this.controller.keys).toEqual(['range']);
+                expect(this.controller.property).toBeUndefined();
+                expect(this.controller.range).toBeUndefined();
             });
             it('false', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-                controller.showFilter = false;
-                controller.propertySelected();
-                expect(controller.showFilter).toBe(true);
+                this.controller.showFilter = false;
+                this.controller.propertySelected();
+                expect(this.controller.showFilter).toBe(true);
             });
         });
     });
