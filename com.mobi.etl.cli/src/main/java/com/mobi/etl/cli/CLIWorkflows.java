@@ -28,6 +28,7 @@ import com.mobi.etl.api.ontologies.etl.WorkflowFactory;
 import com.mobi.etl.api.workflows.WorkflowManager;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
+import com.mobi.rdf.api.ModelFactory;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
@@ -70,10 +71,18 @@ public class CLIWorkflows implements Action {
         this.workflowFactory = workflowFactory;
     }
 
+    @Reference
+    private ModelFactory mf;
+
+    void setMf(ModelFactory mf) {
+        this.mf = mf;
+    }
+
     // Command Parameters
 
     @Argument(name = "operation", description = "The action to perform.\n"
-            + "mobi:workflows -f/--file <file> deploy - Deploys a Workflow defined in RDF to Mobi.",
+            + "mobi:workflows -f/--file <file> deploy - Deploys one or more Workflows defined in RDF to Mobi. "
+            + "To deploy multiple Workflows, they must each be defined in a separate named graph.",
             required = true)
     private String operation = null;
 
@@ -102,6 +111,17 @@ public class CLIWorkflows implements Action {
         RDFFormat format = Rio.getParserFormatForFileName(file.getName()).orElseThrow(() ->
                 new IOException("Unsupported RDF file type"));
         Model model = transformer.mobiModel(Rio.parse(new FileInputStream(file), "", format));
+        if (format.supportsContexts()) {
+            model.contexts().forEach(resource -> {
+                Model workflowModel = mf.createModel(model).filter(null, null, null, resource);
+                getWorkflowAndAdd(workflowModel);
+            });
+        } else {
+            getWorkflowAndAdd(model);
+        }
+    }
+
+    private void getWorkflowAndAdd(Model model) {
         Collection<Workflow> workflows = workflowFactory.getAllExisting(model);
         if (workflows.size() == 0 || workflows.size() > 1) {
             throw new IllegalArgumentException("RDF file must contain exactly one Workflow");
