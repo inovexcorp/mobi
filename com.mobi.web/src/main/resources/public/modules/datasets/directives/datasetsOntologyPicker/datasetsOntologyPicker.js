@@ -58,7 +58,6 @@
                 scope: {},
                 bindToController: {
                     error: '=',
-                    ontologies: '=',
                     selectedOntologies: '='
                 },
                 controllerAs: 'dvm',
@@ -66,6 +65,7 @@
                     var dvm = this;
                     var cm = catalogManagerService;
                     var state = datasetStateService;
+                    dvm.ontologies = [];
                     dvm.util = utilService;
 
                     dvm.ontologySearchConfig = {
@@ -82,7 +82,7 @@
                     };
 
                     dvm.getOntologies = function() {
-                        cm.getRecords(cm.localCatalog['@id'], dvm.ontologySearchConfig).then(parseOntologyResults, errorMessage => {
+                        return cm.getRecords(cm.localCatalog['@id'], dvm.ontologySearchConfig).then(parseOntologyResults, errorMessage => {
                             dvm.ontologies = [];
                             dvm.links = {
                                 next: '',
@@ -129,23 +129,23 @@
                         dvm.links.next = _.get(links, 'next', '');
                         dvm.error = '';
                     }
-                    // Begin Initialization...
-                    dvm.getOntologies();
 
-                    if (state.selectedDataset) {
-                        dvm.selectedOntologies = [];
-                        var selectedOntologies = _.map(state.selectedDataset.identifiers,
-                                identifier => dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
-                        _.forEach(selectedOntologies, id => {
-                            var ontology = _.find(dvm.ontologies, {'@id': id});
-                            if (ontology) {
-                                dvm.selectedOntologies.push(ontology);
-                            } else {
-                                cm.getRecord(id, cm.localCatalog['@id'])
-                                        .then(ontology => dvm.selectedOntologies.push(ontology), onError);
+                    // Begin Initialization...
+                    dvm.getOntologies()
+                        .then(() => {
+                            if (state.showEditOverlay) {
+                                dvm.selectedOntologies = [];
+                                var selectedOntologies = _.map(state.selectedDataset.identifiers, identifier => dvm.util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'));
+                                _.forEach(selectedOntologies, id => {
+                                    var ontology = _.find(dvm.ontologies, {'@id': id});
+                                    if (ontology) {
+                                        dvm.selectedOntologies.push(ontology);
+                                    } else {
+                                        onError('Selected ontology could not be found');
+                                    }
+                                });
                             }
                         });
-                    }
                 }
             }
         }

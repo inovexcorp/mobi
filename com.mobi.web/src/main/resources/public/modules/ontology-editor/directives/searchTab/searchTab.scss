@@ -13,8 +13,14 @@
     .result-header {
         border-bottom: 1px solid $gray-light;
         cursor: pointer;
-        display: inline-block;
+        display: flex;
         padding: 5px 0;
-        width: 100%;
+
+        strong {
+            display: inline-block;
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     }
 }
