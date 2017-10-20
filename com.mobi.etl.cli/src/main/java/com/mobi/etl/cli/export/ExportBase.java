@@ -50,11 +50,11 @@ public class ExportBase {
     }
 
     @Option(name = "-f", aliases = "--output-file", description = "The output file for the exported record data")
-    protected String filepathParam = null;
+    private String filepathParam = null;
 
-    @Option(name = "-t", aliases = "--format", description = "The output format (ttl, trig, trix, rdf/xml, jsonld, " +
-            "n3, nquads, ntriples)")
-    protected String formatParam = null;
+    @Option(name = "-t", aliases = "--format", description = "The output format (ttl, trig, trix, rdf/xml, jsonld, "
+            + "n3, nquads, ntriples)")
+    private String formatParam = null;
 
     protected OutputStream getOuput() throws IOException {
         if (filepathParam != null) {
