@@ -43,11 +43,11 @@
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.util = utilService;
-                    
+
                     dvm.isShown = function(node) {
-                        return (node.indent > 0 && dvm.os.areParentsOpen(node, dvm.os.getIndividualsOpened)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
+                        return (node.indent > 0 && dvm.os.areParentsOpen(node, dvm.os.getOpened)) || (node.indent === 0 && _.get(node, 'path', []).length === 2);
                     }
-                    
+
                     dvm.isImported = function(entityIRI) {
                         return !_.has(dvm.os.listItem.index, entityIRI);
                     }

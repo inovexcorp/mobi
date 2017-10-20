@@ -644,8 +644,6 @@ function mockOntologyState() {
             this.setNoDomainsOpened = jasmine.createSpy('setNoDomainsOpened');
             this.getNoDomainsOpened = jasmine.createSpy('getNoDomainsOpened').and.returnValue(true);
             this.getUnsavedEntities = jasmine.createSpy('getUnsavedEntities');
-            this.setIndividualsOpened = jasmine.createSpy('setIndividualsOpened');
-            this.getIndividualsOpened = jasmine.createSpy('getIndividualsOpened').and.returnValue(false);
             this.getDataPropertiesOpened = jasmine.createSpy('getDataPropertiesOpened');
             this.setDataPropertiesOpened = jasmine.createSpy('setDataPropertiesOpened');
             this.getObjectPropertiesOpened = jasmine.createSpy('getObjectPropertiesOpened');
