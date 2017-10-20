@@ -25,6 +25,7 @@ package com.mobi.federation.hazelcast;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -133,6 +134,11 @@ public class HazelcastFederationServiceTest extends TestCase {
         vcr.registerValueConverter(new LiteralValueConverter());
         vcr.registerValueConverter(new BooleanValueConverter());
         vcr.registerValueConverter(new DateValueConverter());
+
+        doAnswer(invocation -> {
+            Thread.sleep(4000L);
+            return null;
+        }).when(registration).unregister();
 
         System.setProperty("java.net.preferIPv4Stack", "true");
         final HazelcastFederationService s1 = new HazelcastFederationService();

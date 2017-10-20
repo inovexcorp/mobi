@@ -162,17 +162,35 @@ describe('New Ontology Tab directive', function() {
                     expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
                     expect(ontologyStateSvc.showNewTab).toBe(false);
                 });
-                it('if it is a vocabulary', function() {
-                    controller.type = 'vocabulary';
-                    controller.create();
-                    scope.$apply();
-                    expect(controller.ontology[prefixes.owl + 'imports']).toEqual([{'@id': prefixes.skos.slice(0, -1)}]);
-                    expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(controller.ontology, 'title', controller.title);
-                    expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(controller.ontology, 'description', controller.description);
-                    expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.ontology, controller.language);
-                    expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(controller.ontology, controller.title, controller.description, 'one,two', controller.type);
-                    expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
-                    expect(ontologyStateSvc.showNewTab).toBe(false);
+                describe('if it is a vocabulary and updateOntology', function() {
+                    beforeEach(function() {
+                        controller.type = 'vocabulary';
+                        controller.create();
+                    });
+                    it('resolves', function() {
+                        ontologyStateSvc.updateOntology.and.returnValue($q.resolve());
+                        scope.$apply();
+                        expect(controller.ontology[prefixes.owl + 'imports']).toEqual([{'@id': prefixes.skos.slice(0, -1)}]);
+                        expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(controller.ontology, 'title', controller.title);
+                        expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(controller.ontology, 'description', controller.description);
+                        expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.ontology, controller.language);
+                        expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(controller.ontology, controller.title, controller.description, 'one,two', controller.type);
+                        expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
+                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'vocabulary', true, ontologyStateSvc.listItem.inProgressCommit, true);
+                        expect(ontologyStateSvc.showNewTab).toBe(false);
+                    });
+                    it('rejects', function() {
+                        ontologyStateSvc.updateOntology.and.returnValue($q.reject(this.errorMessage));
+                        scope.$apply();
+                        expect(controller.ontology[prefixes.owl + 'imports']).toEqual([{'@id': prefixes.skos.slice(0, -1)}]);
+                        expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(controller.ontology, 'title', controller.title);
+                        expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(controller.ontology, 'description', controller.description);
+                        expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.ontology, controller.language);
+                        expect(ontologyStateSvc.createOntology).toHaveBeenCalledWith(controller.ontology, controller.title, controller.description, 'one,two', controller.type);
+                        expect(stateManagerSvc.createOntologyState).toHaveBeenCalledWith(this.response.recordId, this.response.branchId, this.response.commitId);
+                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'vocabulary', true, ontologyStateSvc.listItem.inProgressCommit, true);
+                        expect(controller.error).toBe(this.errorMessage);
+                    });
                 });
             });
         });

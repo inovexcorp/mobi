@@ -67,65 +67,93 @@ describe('Run Mapping Overlay directive', function() {
     });
     describe('controller methods', function() {
         describe('should set the correct state for running mapping', function() {
-            var step;
             beforeEach(function() {
-                step = mapperStateSvc.step;
+                this.step = mapperStateSvc.step;
                 mapperStateSvc.displayRunMappingOverlay = true;
             });
             describe('if it is also being saved', function() {
-                var saveDeferred;
-                beforeEach(function() {
-                    saveDeferred = $q.defer();
-                    mapperStateSvc.saveMapping.and.returnValue(saveDeferred.promise);
-                    mapperStateSvc.editMapping = true;
-                });
-                it('unless an error occurs', function() {
-                    saveDeferred.reject('Error message');
-                    controller.run();
-                    scope.$apply();
-                    expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
-                    expect(delimitedManagerSvc.mapAndDownload).not.toHaveBeenCalled();
-                    expect(delimitedManagerSvc.mapAndUpload).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.step).toBe(step);
-                    expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
-                    expect(delimitedManagerSvc.reset).not.toHaveBeenCalled();
-                    expect(mapperStateSvc.displayRunMappingOverlay).toBe(true);
-                    expect(controller.errorMessage).toEqual('Error message');
-                });
-                describe('successfully', function() {
-                    var newId = 'id';
+                describe('and there are changes', function() {
                     beforeEach(function() {
-                        saveDeferred.resolve(newId);
+                        mapperStateSvc.editMapping = true;
+                        mapperStateSvc.isMappingChanged.and.returnValue(true);
                     });
-                    it('downloading the data', function() {
+                    it('unless an error occurs', function() {
+                        mapperStateSvc.saveMapping.and.returnValue($q.reject('Error message'));
                         controller.run();
                         scope.$apply();
                         expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
-                        expect(mapperStateSvc.mapping.record.id).toEqual(newId);
-                        expect(delimitedManagerSvc.mapAndDownload).toHaveBeenCalledWith(newId, controller.format, controller.fileName);
+                        expect(delimitedManagerSvc.mapAndDownload).not.toHaveBeenCalled();
+                        expect(delimitedManagerSvc.mapAndUpload).not.toHaveBeenCalled();
+                        expect(mapperStateSvc.step).toBe(this.step);
+                        expect(mapperStateSvc.initialize).not.toHaveBeenCalled();
+                        expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
+                        expect(delimitedManagerSvc.reset).not.toHaveBeenCalled();
+                        expect(mapperStateSvc.displayRunMappingOverlay).toBe(true);
+                        expect(controller.errorMessage).toEqual('Error message');
+                    });
+                    describe('successfully', function() {
+                        beforeEach(function() {
+                            this.newId = 'id';
+                            mapperStateSvc.saveMapping.and.returnValue($q.when(this.newId));
+                        });
+                        it('downloading the data', function() {
+                            controller.run();
+                            scope.$apply();
+                            expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
+                            expect(mapperStateSvc.mapping.record.id).toEqual(this.newId);
+                            expect(delimitedManagerSvc.mapAndDownload).toHaveBeenCalledWith(this.newId, controller.format, controller.fileName);
+                            expect(delimitedManagerSvc.mapAndUpload).not.toHaveBeenCalled();
+                            expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
+                            expect(mapperStateSvc.initialize).toHaveBeenCalled();
+                            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                            expect(delimitedManagerSvc.reset).toHaveBeenCalled();
+                            expect(mapperStateSvc.displayRunMappingOverlay).toBe(false);
+                            expect(controller.errorMessage).toEqual('');
+                        });
+                        it('uploading the data', function() {
+                            controller.runMethod = 'upload';
+                            controller.run();
+                            scope.$apply();
+                            expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
+                            expect(mapperStateSvc.mapping.record.id).toEqual(this.newId);
+                            expect(delimitedManagerSvc.mapAndDownload).not.toHaveBeenCalled();
+                            expect(delimitedManagerSvc.mapAndUpload).toHaveBeenCalledWith(this.newId, controller.datasetRecordIRI);
+                            expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
+                            expect(mapperStateSvc.initialize).toHaveBeenCalled();
+                            expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
+                            expect(delimitedManagerSvc.reset).toHaveBeenCalled();
+                            expect(mapperStateSvc.displayRunMappingOverlay).toBe(false);
+                            expect(controller.errorMessage).toEqual('');
+                        });
+                    });
+                });
+                describe('and there are no changes', function() {
+                    beforeEach(function() {
+                        mapperStateSvc.isMappingChanged.and.returnValue(false);
+                    });
+                    it('and downloads the data', function() {
+                        controller.run();
+                        expect(mapperStateSvc.saveMapping).not.toHaveBeenCalled();
+                        expect(delimitedManagerSvc.mapAndDownload).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, controller.format, controller.fileName);
                         expect(delimitedManagerSvc.mapAndUpload).not.toHaveBeenCalled();
                         expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                         expect(mapperStateSvc.initialize).toHaveBeenCalled();
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(delimitedManagerSvc.reset).toHaveBeenCalled();
                         expect(mapperStateSvc.displayRunMappingOverlay).toBe(false);
-                        expect(controller.errorMessage).toEqual('');
                     });
-                    it('uploading the data', function() {
+                    it('and uploads the data', function() {
                         controller.runMethod = 'upload';
                         controller.run();
                         scope.$apply();
-                        expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
-                        expect(mapperStateSvc.mapping.record.id).toEqual(newId);
+                        expect(mapperStateSvc.saveMapping).not.toHaveBeenCalled();
                         expect(delimitedManagerSvc.mapAndDownload).not.toHaveBeenCalled();
-                        expect(delimitedManagerSvc.mapAndUpload).toHaveBeenCalledWith(newId, controller.datasetRecordIRI);
+                        expect(delimitedManagerSvc.mapAndUpload).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, controller.datasetRecordIRI);
                         expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                         expect(mapperStateSvc.initialize).toHaveBeenCalled();
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(delimitedManagerSvc.reset).toHaveBeenCalled();
                         expect(mapperStateSvc.displayRunMappingOverlay).toBe(false);
-                        expect(controller.errorMessage).toEqual('');
                     });
                 });
             });

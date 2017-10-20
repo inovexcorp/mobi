@@ -138,8 +138,8 @@
                         var ontologyState = _.find(dvm.ontologyStates, {recordId: dvm.selectedRecord['@id']});
                         if (ontologyState && !_.isEqual(ontologyState, dvm.selectedOntologyState)) {
                             dvm.selectedOntologyState = ontologyState;
-                            dvm.selectedVersion = 'latest';
-                            dvm.classes = dvm.selectedOntologyState.latest.classes;
+                            dvm.selectedVersion = _.has(dvm.selectedOntologyState, 'latest') ? 'latest' : 'saved';
+                            dvm.classes = dvm.selectedOntologyState[dvm.selectedVersion].classes;
                             dvm.errorMessage = '';
                         } else if (!ontologyState) {
                             ontologyState = {
@@ -166,6 +166,7 @@
                                 versionObj.classes = dvm.state.getClasses(versionObj.ontologies);
                                 dvm.classes = versionObj.classes;
                                 ontologyState.latest = versionObj;
+                                dvm.selectedVersion = 'latest';
                                 dvm.ontologyStates.push(ontologyState);
                                 dvm.selectedOntologyState = ontologyState;
                                 dvm.errorMessage = '';
@@ -243,9 +244,9 @@
                             });
                             mm.setSourceOntologyInfo(dvm.state.mapping.jsonld, selectedOntologyInfo.recordId, selectedOntologyInfo.branchId, selectedOntologyInfo.commitId);
                             var mappingId = mm.getMappingEntity(dvm.state.mapping.jsonld)['@id'];
-                            dvm.state.changeProp(mappingId, prefixes.delim + 'sourceRecord', selectedOntologyInfo.recordId, originalOntologyInfo.recordId);
-                            dvm.state.changeProp(mappingId, prefixes.delim + 'sourceBranch', selectedOntologyInfo.branchId, originalOntologyInfo.branchId);
-                            dvm.state.changeProp(mappingId, prefixes.delim + 'sourceCommit', selectedOntologyInfo.commitId, originalOntologyInfo.commitId);
+                            dvm.state.changeProp(mappingId, prefixes.delim + 'sourceRecord', selectedOntologyInfo.recordId, originalOntologyInfo.recordId, true);
+                            dvm.state.changeProp(mappingId, prefixes.delim + 'sourceBranch', selectedOntologyInfo.branchId, originalOntologyInfo.branchId, true);
+                            dvm.state.changeProp(mappingId, prefixes.delim + 'sourceCommit', selectedOntologyInfo.commitId, originalOntologyInfo.commitId, true);
                             dvm.state.mapping.ontology = dvm.selectedRecord;
                             dvm.state.resetEdit();
                             var classMappings = mm.getAllClassMappings(dvm.state.mapping.jsonld);

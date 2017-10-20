@@ -26,9 +26,7 @@ package com.mobi.persistence.utils;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Statement;
 import com.mobi.query.api.QueryResult;
-import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Statement;
 
 import java.util.ArrayList;
 import java.util.List;

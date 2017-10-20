@@ -31,7 +31,7 @@
         <span class="field-name">Properties:</span>
         <ul class="props">
             <li ng-if="dvm.props.length === 0" class="last">None</li>
-            <li ng-repeat="prop in dvm.props | limitTo:10 track by $index" ng-class="{'last': $last, 'limited': $last && dvm.props.length > 10}" title="{{prop.propObj['@id']}}">{{dvm.om.getEntityName(prop.propObj)}} <span class="text-muted deprecated" ng-if="dvm.om.isDeprecated(prop.propObj)">(Deprecated)</span></li>
+            <li ng-repeat="prop in dvm.props | limitTo:10 track by $index" ng-class="{'last': $last, 'limited': $last && dvm.props.length > 10}" title="{{prop.propObj['@id']}}">{{dvm.om.getEntityName(prop.propObj)}}<span class="text-muted deprecated" ng-if="dvm.om.isDeprecated(prop.propObj)"> (Deprecated)</span></li>
         </ul>
     </div>
 </div>

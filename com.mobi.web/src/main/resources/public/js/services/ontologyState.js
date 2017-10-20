@@ -280,8 +280,8 @@
              *
              * @param {string} recordId The record ID of the ontology you want to get from the repository.
              * @param {string} [rdfFormat='jsonld'] The format string to identify the serialization requested.
-             * @returns {Promise} A promise containing the ontology id, record id, branch id, commit id,
-             *                    inProgressCommit, and JSON-LD serialization of the ontology.
+             * @returns {Promise} A promise containing the record id, branch id, commit id, inProgressCommit,
+             * and JSON-LD serialization of the ontology.
              */
             self.getOntology = function(recordId, rdfFormat = 'jsonld') {
                 var state = sm.getOntologyStateByRecordId(recordId);
@@ -346,14 +346,15 @@
              *
              * @description
              * Uploads the provided JSON-LD as a new ontology and creates a new list item for the new ontology.
-             * Returns a promise with the entityIRI and ontologyId for the state of the newly created ontology.
+             * Returns a promise with the entityIRI, recordId, branchId, and commitId for the state of the newly
+             * created ontology.
              *
              * @param {string} ontologyJson The JSON-LD representing the ontology.
              * @param {string} title The title for the OntologyRecord.
              * @param {string} description The description for the OntologyRecord.
              * @param {string} keywords The keywords for the OntologyRecord.
              * @param {string} type The type (either "ontology" or "vocabulary") for the document being created.
-             * @returns {Promise} A promise with the entityIRI and ontologyId for the state of the newly created
+             * @returns {Promise} A promise with the entityIRI, recordId, branchId, and commitId for the state of the newly created
              * ontology.
              */
             self.createOntology = function(ontologyJson, title, description, keywords, type = 'ontology') {
@@ -366,7 +367,7 @@
                     .then(branch => {
                         listItem.branches = [branch];
                         self.list.push(listItem);
-                        self.listItem = listItem
+                        self.listItem = listItem;
                         self.setSelected(self.getActiveEntityIRI(), false);
                         self.setPageTitle(listItem.ontologyRecord.type);
                         return {
@@ -897,7 +898,7 @@
              * @returns {Object} An Object which represents the requested entity.
              */
             self.getEntityByRecordId = function(recordId, entityIRI, listItem) {
-                if (listItem) {
+                if (!_.isEmpty(listItem)) {
                     return getEntityFromListItem(listItem, entityIRI);
                 }
                 return getEntityFromListItem(self.getListItemByRecordId(recordId), entityIRI);
@@ -1005,8 +1006,8 @@
              * @param {string} recordId The record ID of the requested ontology.
              */
             self.closeOntology = function(recordId) {
-                if (self.listItem && self.listItem.ontologyRecord.recordId == recordId) {
-                   self.listItem = undefined;
+                if (_.get(self.listItem, 'ontologyRecord.recordId') == recordId) {
+                   self.listItem = {};
                    self.setPageTitle();
                 }
                 _.remove(self.list, { ontologyRecord: { recordId }});
@@ -1263,25 +1264,29 @@
             }
             self.goTo = function(iri) {
                 var entity = self.getEntityByRecordId(self.listItem.ontologyRecord.recordId, iri);
-                if (om.isConcept(entity, self.listItem.derivedConcepts)) {
-                    commonGoTo('concepts', iri, self.listItem.flatConceptHierarchy);
-                } else if (om.isConceptScheme(entity, self.listItem.derivedConceptSchemes)) {
-                    commonGoTo('schemes', iri, self.listItem.flatConceptSchemeHierarchy);
-                } else if (om.isClass(entity)) {
-                    commonGoTo('classes', iri, self.listItem.flatClassHierarchy);
-                } else if (om.isDataTypeProperty(entity)) {
-                    self.setDataPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
-                    commonGoTo('properties', iri, self.listItem.flatDataPropertyHierarchy);
-                } else if (om.isObjectProperty(entity)) {
-                    self.setObjectPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
-                    commonGoTo('properties', iri, self.listItem.flatObjectPropertyHierarchy);
-                } else if (om.isAnnotation(entity)) {
-                    self.setAnnotationPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
-                    commonGoTo('properties', iri, self.listItem.flatAnnotationPropertyHierarchy);
-                } else if (om.isIndividual(entity)) {
-                    commonGoTo('individuals', iri);
-                } else if (om.isOntology(entity)) {
+                if (om.isOntology(entity)) {
                     commonGoTo('project', iri);
+                } else if (self.listItem.ontologyRecord.type === 'ontology') {
+                    if (om.isClass(entity)) {
+                        commonGoTo('classes', iri, self.listItem.flatClassHierarchy);
+                    } else if (om.isDataTypeProperty(entity)) {
+                        self.setDataPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
+                        commonGoTo('properties', iri, self.listItem.flatDataPropertyHierarchy);
+                    } else if (om.isObjectProperty(entity)) {
+                        self.setObjectPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
+                        commonGoTo('properties', iri, self.listItem.flatObjectPropertyHierarchy);
+                    } else if (om.isAnnotation(entity)) {
+                        self.setAnnotationPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
+                        commonGoTo('properties', iri, self.listItem.flatAnnotationPropertyHierarchy);
+                    } else if (om.isIndividual(entity)) {
+                        commonGoTo('individuals', iri);
+                    }
+                } else if (self.listItem.ontologyRecord.type === 'vocabulary') {
+                    if (om.isConcept(entity, self.listItem.derivedConcepts)) {
+                        commonGoTo('concepts', iri, self.listItem.flatConceptHierarchy);
+                    } else if (om.isConceptScheme(entity, self.listItem.derivedConceptSchemes)) {
+                        commonGoTo('schemes', iri, self.listItem.flatConceptSchemeHierarchy);
+                    }
                 }
             }
             self.openAt = function(flatHierarchy, entityIRI) {
@@ -1322,7 +1327,7 @@
                 return _.concat([listItem.ontology], _.map(listItem.importedOntologies, 'ontology'));
             }
             function getIndices(listItem) {
-                return _.concat([listItem.index], _.map(listItem.importedOntologies, 'index'));
+                return _.concat([_.get(listItem, 'index')], _.map(_.get(listItem, 'importedOntologies'), 'index'));
             }
             function getEntities(hierarchy, entityIRI, indexObject) {
                 var results = [];
@@ -1382,6 +1387,7 @@
                 listItem.blankNodes = blankNodes;
                 listItem.index = index;
                 listItem.inProgressCommit = inProgressCommit;
+                listItem.ontologyState.upToDate = upToDate;
                 return listItem;
             }
             function findValuesMissingDatatypes(object) {
