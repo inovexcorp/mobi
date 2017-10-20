@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,55 +21,9 @@
  * #L%
  */
 describe('Ontology Manager service', function() {
-    var $httpBackend, ontologyManagerSvc, catalogManagerSvc, scope, prefixes, $q, windowSvc, util, ontologyObj, paramSerializer, classObj, objectPropertyObj, dataPropertyObj,annotationObj, individualObj, restrictionObj, conceptObj, schemeObj, ontology, importedClassObj, importedDataPropertyObj, importedObjectPropertyObj, importedAnnotationObj, importedIndividualObj, importedRestrictionObj, importedConceptObj, importedSchemeObj, importedOntObj, importedOntology, ontologies, httpSvc;
-    var recordId = 'recordId';
-    var ontologyId = 'ontologyId';
-    var branchId = 'branchId';
-    var commitId = 'commitId';
-    var catalogId = 'catalogId';
-    var format = 'jsonld';
-    var file = {};
-    var title = 'title';
-    var description = 'description';
-    var keywords = 'keyword1,keyword2';
-    var error = 'error';
-    var records = {
-        data: [{
-            'dcterms:identifier': 'id1'
-        }, {
-            'dcterms:identifier': 'id2'
-        }]
-    }
-    var fileName = 'fileName';
-    var anonymous = 'anonymous';
-    var classId = 'classId';
-    var objectPropertyId = 'objectPropertyId';
-    var dataPropertyId = 'dataPropertyId';
-    var annotationId = 'annotationId';
-    var individualId = 'individualId';
-    var restrictionId = 'restrictionId';
-    var blankNodeId = '_:genid0';
-    var blankNodeObj = {
-        '@id': blankNodeId
-    }
-    var usages = {
-        results: {
-            bindings: []
-        }
-    };
-    var conceptId = 'conceptId';
-    var schemeId = 'schemeId';
-    var searchResults = [];
-    var searchText = 'searchText';
-    var importedClassId = 'importedClassId';
-    var importedDataPropertyId = 'importedDataPropertyId';
-    var importedObjectPropertyId = 'importedObjectPropertyId';
-    var importedAnnotationId = 'importedAnnotationId';
-    var importedIndividualId = 'importedIndividualId';
-    var importedRestrictionId = 'importedRestrictionId';
-    var importedConceptId = 'importedConceptId';
-    var importedSchemeId = 'importedSchemeId';
-    var importedOntologyId = 'importedOntologyId';
+    var $httpBackend, ontologyManagerSvc, catalogManagerSvc, scope, prefixes, $q, windowSvc, util, ontologyObj, paramSerializer, classObj, objectPropertyObj, dataPropertyObj, annotationObj, individualObj, restrictionObj, conceptObj, schemeObj, ontology, importedClassObj, importedDataPropertyObj, importedObjectPropertyObj, importedAnnotationObj, importedIndividualObj, importedRestrictionObj, importedConceptObj, importedSchemeObj, importedOntObj, importedOntology, ontologies, httpSvc;
+
+    var recordId, ontologyId, branchId, commitId, catalogId, format, file, title, description, keywords, error, records, fileName, anonymous, classId, objectPropertyId, dataPropertyId, annotationId, individualId, restrictionId, blankNodeId, blankNodeObj, usages, conceptId, schemeId, searchResults, searchText, importedClassId, importedDataPropertyId, importedObjectPropertyId, importedAnnotationId, importedIndividualId, importedRestrictionId, importedConceptId, importedSchemeId, importedOntologyId;
 
     beforeEach(function() {
         module('ontologyManager');
@@ -98,6 +52,54 @@ describe('Ontology Manager service', function() {
             httpSvc = _httpService_;
         });
 
+        recordId = 'recordId';
+        ontologyId = 'ontologyId';
+        branchId = 'branchId';
+        commitId = 'commitId';
+        catalogId = 'catalogId';
+        format = 'jsonld';
+        file = {};
+        title = 'title';
+        description = 'description';
+        keywords = 'keyword1,keyword2';
+        error = 'error';
+        records = {
+            data: [{
+                'dcterms:identifier': 'id1'
+            }, {
+                'dcterms:identifier': 'id2'
+            }]
+        };
+        fileName = 'fileName';
+        anonymous = 'anonymous';
+        classId = 'classId';
+        objectPropertyId = 'objectPropertyId';
+        dataPropertyId = 'dataPropertyId';
+        annotationId = 'annotationId';
+        individualId = 'individualId'
+        restrictionId = 'restrictionId';
+        blankNodeId = '_:genid0';
+        blankNodeObj = {
+            '@id': blankNodeId
+        };
+        usages = {
+            results: {
+                bindings: []
+            }
+        };
+        conceptId = 'conceptId';
+        schemeId = 'schemeId';
+        searchResults = [];
+        searchText = 'searchText';
+        importedClassId = 'importedClassId';
+        importedDataPropertyId = 'importedDataPropertyId';
+        importedObjectPropertyId = 'importedObjectPropertyId';
+        importedAnnotationId = 'importedAnnotationId';
+        importedIndividualId = 'importedIndividualId';
+        importedRestrictionId = 'importedRestrictionId';
+        importedConceptId = 'importedConceptId';
+        importedSchemeId = 'importedSchemeId';
+        importedOntologyId = 'importedOntologyId';
         catalogManagerSvc.localCatalog = {'@id': catalogId};
         ontologyManagerSvc.initialize();
         ontologyObj = {
@@ -106,15 +108,15 @@ describe('Ontology Manager service', function() {
             mobi: {
                 anonymous: anonymous
             }
-        }
+        };
         classObj = {
             '@id': classId,
             '@type': [prefixes.owl + 'Class']
-        }
+        };
         objectPropertyObj = {
             '@id': objectPropertyId,
             '@type': [prefixes.owl + 'ObjectProperty']
-        }
+        };
         objectPropertyObj[prefixes.rdfs + 'domain'] = [{'@id': classId}];
         dataPropertyObj = {
             '@id': dataPropertyId,
@@ -131,17 +133,16 @@ describe('Ontology Manager service', function() {
         restrictionObj = {
             '@id': restrictionId,
             '@type': [prefixes.owl + 'Restriction']
-        }
+        };
         conceptObj = {
             '@id': conceptId,
             '@type': [prefixes.skos + 'Concept']
-        }
+        };
         schemeObj = {
             '@id': schemeId,
             '@type': [prefixes.skos + 'ConceptScheme']
-        }
+        };
         ontology = [ontologyObj, classObj, dataPropertyObj];
-
         importedOntObj = {
             '@id': importedOntologyId,
             '@type': [prefixes.owl + 'Ontology'],
@@ -149,16 +150,14 @@ describe('Ontology Manager service', function() {
               anonymous: anonymous,
               imported: true
             }
-        }
-
+        };
         importedClassObj = {
             '@id': importedClassId,
             '@type': [prefixes.owl + 'Class'],
             mobi: {
               imported: true
             }
-        }
-
+        };
         importedDataPropertyObj = {
             '@id': importedDataPropertyId,
             '@type': [prefixes.owl + 'DatatypeProperty'],
@@ -166,13 +165,11 @@ describe('Ontology Manager service', function() {
                 imported: true
             }
         };
-
         importedObjectPropertyObj = {
             '@id': importedObjectPropertyId,
             '@type': [prefixes.owl + 'ObjectProperty']
-        }
+        };
         importedObjectPropertyObj[prefixes.rdfs + 'domain'] = [{'@id': importedClassId}];
-
         importedAnnotationObj = {
             '@id': importedAnnotationId,
             '@type': [prefixes.owl + 'AnnotationProperty']
@@ -184,23 +181,89 @@ describe('Ontology Manager service', function() {
         importedRestrictionObj = {
             '@id': importedRestrictionId,
             '@type': [prefixes.owl + 'Restriction']
-        }
+        };
         importedConceptObj = {
             '@id': importedConceptId,
             '@type': [prefixes.skos + 'Concept']
-        }
+        };
         importedSchemeObj = {
             '@id': importedSchemeId,
             '@type': [prefixes.skos + 'ConceptScheme']
-        }
-
+        };
         importedOntology = [importedOntObj, importedClassObj, importedDataPropertyObj];
-
         ontologies = [];
         ontologies.push(ontology);
         ontologies.push(importedOntology);
+    });
 
-
+    afterEach(function() {
+        $httpBackend = null;
+        ontologyManagerSvc = null;
+        catalogManagerSvc = null;
+        scope = null;
+        prefixes = null;
+        $q = null;
+        windowSvc = null;
+        util = null;
+        ontologyObj = null;
+        paramSerializer = null;
+        classObj = null;
+        objectPropertyObj = null;
+        dataPropertyObj = null;
+        annotationObj = null;
+        individualObj = null;
+        restrictionObj = null;
+        conceptObj = null;
+        schemeObj = null;
+        ontology = null;
+        importedClassObj = null;
+        importedDataPropertyObj = null;
+        importedObjectPropertyObj = null;
+        importedAnnotationObj = null;
+        importedIndividualObj = null;
+        importedRestrictionObj = null;
+        importedConceptObj = null;
+        importedSchemeObj = null;
+        importedOntObj = null;
+        importedOntology = null;
+        ontologies = null;
+        httpSvc = null;
+        recordId = null;
+        ontologyId = null;
+        branchId = null;
+        commitId = null;
+        catalogId = null;
+        format = null;
+        file = null;
+        title = null;
+        description = null;
+        keywords = null;
+        error = null;
+        records = null;
+        fileName = null;
+        anonymous = null;
+        classId = null;
+        objectPropertyId = null;
+        dataPropertyId = null;
+        annotationId = null;
+        individualId = null;
+        restrictionId = null;
+        blankNodeId = null;
+        blankNodeObj = null;
+        usages = null;
+        conceptId = null;
+        schemeId = null;
+        searchResults = null;
+        searchText = null;
+        importedClassId = null;
+        importedDataPropertyId = null;
+        importedObjectPropertyId = null;
+        importedAnnotationId = null;
+        importedIndividualId = null;
+        importedRestrictionId = null;
+        importedConceptId = null;
+        importedSchemeId = null;
+        importedOntologyId = null;
     });
 
     it('reset should clear the proper variables', function() {
@@ -209,40 +272,39 @@ describe('Ontology Manager service', function() {
         expect(ontologyManagerSvc.ontologyRecords).toEqual([]);
     });
     describe('getAllOntologyRecords gets a list of all ontology records', function() {
-        var config;
         beforeEach(function () {
-            config = {
+            this.config = {
                 pageIndex: 0,
                 limit: 100,
                 recordType: prefixes.ontologyEditor + 'OntologyRecord'
             };
         });
         it('with a sorting option', function() {
-            config.sortOption = {label: 'Test'};
+            this.config.sortOption = {label: 'Test'};
             catalogManagerSvc.getRecords.and.returnValue($q.when(records));
-            ontologyManagerSvc.getAllOntologyRecords(config.sortOption)
+            ontologyManagerSvc.getAllOntologyRecords(this.config.sortOption)
                 .then(function(response) {
-                    expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogId, config, '');
                     expect(response).toEqual(records.data);
                 }, function() {
                     fail('Promise should have resolved');
                 });
             scope.$apply();
+            expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogId, this.config, '');
         });
         it('with a promise id', function() {
             var sortOption = {label: 'Title (asc)'};
             var id = 'id';
             catalogManagerSvc.sortOptions = [sortOption];
-            config.sortOption = sortOption;
+            this.config.sortOption = sortOption;
             catalogManagerSvc.getRecords.and.returnValue($q.when(records));
             ontologyManagerSvc.getAllOntologyRecords(undefined, id)
                 .then(function(response) {
-                    expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogId, config, id);
                     expect(response).toEqual(records.data);
                 }, function() {
                     fail('Promise should have resolved');
                 });
             scope.$apply();
+            expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogId, this.config, id);
         });
         it('unless an error occurs', function() {
             catalogManagerSvc.getRecords.and.returnValue($q.reject(error));
@@ -250,14 +312,14 @@ describe('Ontology Manager service', function() {
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(catalogManagerSvc.getRecords).toHaveBeenCalled();
                     expect(response).toEqual(error);
                 });
             scope.$apply();
+            expect(catalogManagerSvc.getRecords).toHaveBeenCalled();
         });
     });
     describe('uploadFile hits the proper endpoint', function() {
-        it('with description and keywords', function(done) {
+        it('with description and keywords', function() {
             $httpBackend.expectPOST('/mobirest/ontologies',
                 function(data) {
                     return data instanceof FormData;
@@ -265,16 +327,12 @@ describe('Ontology Manager service', function() {
                     return headers['Content-Type'] === undefined;
                 }).respond(200, {ontologyId: ontologyId, recordId: recordId});
             ontologyManagerSvc.uploadFile(file, title, description, keywords)
-                .then(function() {
-                    expect(true).toBe(true);
-                    done();
-                }, function() {
+                .then(_.noop, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
-        it('with no description or keywords', function(done) {
+        it('with no description or keywords', function() {
             $httpBackend.expectPOST('/mobirest/ontologies',
                 function(data) {
                     return data instanceof FormData;
@@ -282,36 +340,28 @@ describe('Ontology Manager service', function() {
                     return headers['Content-Type'] === undefined;
                 }).respond(200, {ontologyId: ontologyId, recordId: recordId});
             ontologyManagerSvc.uploadFile(file, title)
-                .then(function() {
-                    expect(true).toBe(true);
-                    done();
-                }, function() {
+                .then(_.noop, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
-        it('unless an error occurs', function(done) {
+        it('unless an error occurs', function() {
             $httpBackend.expectPOST('/mobirest/ontologies',
                 function(data) {
                     return data instanceof FormData;
-                },
-                function(headers) {
+                }, function(headers) {
                     return headers['Content-Type'] === undefined;
                 }).respond(400, null, null, error);
             ontologyManagerSvc.uploadFile(file, title)
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
-                }, function() {
-                    expect(util.rejectError).toHaveBeenCalled();
-                    done();
                 });
             flushAndVerify($httpBackend);
+            expect(util.rejectError).toHaveBeenCalled();
         });
     });
     describe('uploadJson hits the proper endpoint', function() {
-        it('with description and keywords', function(done) {
+        it('with description and keywords', function() {
             var params = paramSerializer({
                 title: title,
                 description: description,
@@ -324,14 +374,12 @@ describe('Ontology Manager service', function() {
             ontologyManagerSvc.uploadJson(ontologyObj, title, description, keywords)
                 .then(function(data) {
                     expect(data).toEqual({ontologyId: ontologyId, recordId: recordId});
-                    done();
                 }, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
-        it('with no description or keywords', function(done) {
+        it('with no description or keywords', function() {
             var params = paramSerializer({ title: title });
             $httpBackend.expectPOST('/mobirest/ontologies?' + params, ontologyObj,
                 function(headers) {
@@ -340,14 +388,12 @@ describe('Ontology Manager service', function() {
             ontologyManagerSvc.uploadJson(ontologyObj, title)
                 .then(function(data) {
                     expect(data).toEqual({ontologyId: ontologyId, recordId: recordId});
-                    done();
                 }, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
-        it('unless an error occurs', function(done) {
+        it('unless an error occurs', function() {
             var params = paramSerializer({ title: title });
             $httpBackend.expectPOST('/mobirest/ontologies?' + params, ontologyObj,
                 function(headers) {
@@ -356,13 +402,11 @@ describe('Ontology Manager service', function() {
             ontologyManagerSvc.uploadJson(ontologyObj, title)
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
                 }, function(response) {
                     expect(response).toEqual(error);
-                    expect(util.onError).toHaveBeenCalled();
-                    done();
                 });
-                flushAndVerify($httpBackend);
+            flushAndVerify($httpBackend);
+            expect(util.onError).toHaveBeenCalled();
         });
     });
     describe('downloadOntology should set the $window.location properly', function() {
@@ -384,13 +428,12 @@ describe('Ontology Manager service', function() {
         });
     });
     describe('getOntology hits the proper endpoint', function() {
-        var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId, rdfFormat: format, clearCache: false, skolemize: true });
+            this.params = paramSerializer({ branchId: branchId, commitId: commitId, rdfFormat: format, clearCache: false, skolemize: true });
         });
         it('unless an error occurs', function() {
             util.rejectError.and.returnValue($q.reject(error));
-            $httpBackend.expectGET('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+            $httpBackend.expectGET('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?' + this.params,
                 function(headers) {
                     return headers['Accept'] === 'text/plain';
                 }).respond(400, null, null, error);
@@ -399,15 +442,15 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have rejected');
                 }, function(response) {
                     expect(response).toEqual(error);
-                    expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
-                        status: 400,
-                        statusText: error
-                    }));
                 });
             flushAndVerify($httpBackend);
+            expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: error
+            }));
         });
         it('successfully', function() {
-            $httpBackend.expectGET('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+            $httpBackend.expectGET('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?' + this.params,
                 function(headers) {
                     return headers['Accept'] === 'text/plain';
                 }).respond(200, ontology);
@@ -421,56 +464,77 @@ describe('Ontology Manager service', function() {
         });
     });
     describe('getIris retrieves all IRIs in an ontology', function() {
-        var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId });
+            this.params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/iris?' + params).respond(400, null, null, error);
+        it('unless an error occurs', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/iris?' + this.params).respond(400, null, null, error);
             ontologyManagerSvc.getIris(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
                 }, function(response) {
                     expect(response).toEqual(error);
-                    expect(util.onError).toHaveBeenCalled();
-                    done();
                 });
             flushAndVerify($httpBackend);
+            expect(util.onError).toHaveBeenCalled();
         });
-        it('successfully', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/iris?' + params).respond(200, {});
+        it('successfully', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/iris?' + this.params).respond(200, {});
             ontologyManagerSvc.getIris(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual({});
-                    done();
                 }, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
     });
     describe('getDataProperties retrieves all data properties in an ontology', function() {
-        var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId });
+            this.params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
         it('unless an error occurs', function() {
             util.rejectError.and.returnValue($q.reject(error));
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/data-properties?' + params).respond(400, null, null, error);
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/data-properties?' + this.params).respond(400, null, null, error);
             ontologyManagerSvc.getDataProperties(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: 'error'}));
                     expect(response).toEqual(error);
                 });
             flushAndVerify($httpBackend);
+            expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: 'error'}));
         });
         it('successfully', function() {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/data-properties?' + params).respond(200, [{}]);
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/data-properties?' + this.params).respond(200, [{}]);
             ontologyManagerSvc.getDataProperties(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual([{}]);
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
+    describe('getObjProperties retrieves all data properties in an ontology', function() {
+        beforeEach(function() {
+            this.params = paramSerializer({ branchId: branchId, commitId: commitId });
+        });
+        it('unless an error occurs', function() {
+            util.rejectError.and.returnValue($q.reject(error));
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/object-properties?' + this.params).respond(400, null, null, error);
+            ontologyManagerSvc.getObjProperties(recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual(error);
+                });
+            flushAndVerify($httpBackend);
+            expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: 'error'}));
+        });
+        it('successfully', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/object-properties?' + this.params).respond(200, [{}]);
+            ontologyManagerSvc.getObjProperties(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual([{}]);
                 }, function() {
@@ -480,159 +544,136 @@ describe('Ontology Manager service', function() {
         });
     });
     describe('getImportedIris retrieves all IRIs in an ontology', function() {
-        var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId });
+            this.params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/imported-iris?' + params).respond(400, null, null, error);
+        it('unless an error occurs', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/imported-iris?' + this.params).respond(400, null, null, error);
             ontologyManagerSvc.getImportedIris(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
                 }, function(response) {
                     expect(response).toEqual(error);
-                    expect(util.onError).toHaveBeenCalled();
-                    done();
                 });
             flushAndVerify($httpBackend);
+            expect(util.onError).toHaveBeenCalled();
         });
-        it('unless there are none', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/imported-iris?' + params).respond(204);
+        it('unless there are none', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/imported-iris?' + this.params).respond(204);
             ontologyManagerSvc.getImportedIris(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual([]);
-                    done();
                 }, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
-        it('successfully', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/imported-iris?' + params).respond(200, [{}]);
+        it('successfully', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/imported-iris?' + this.params).respond(200, [{}]);
             ontologyManagerSvc.getImportedIris(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual([{}]);
-                    done();
                 }, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
     });
     describe('getClassHierarchies retrieves all IRIs in an ontology', function() {
-        var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId });
+            this.params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/class-hierarchies?' + params).respond(400, null, null, error);
+        it('unless an error occurs', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/class-hierarchies?' + this.params).respond(400, null, null, error);
             ontologyManagerSvc.getClassHierarchies(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
                 }, function(response) {
                     expect(response).toEqual(error);
-                    expect(util.onError).toHaveBeenCalled();
-                    done();
                 });
             flushAndVerify($httpBackend);
+            expect(util.onError).toHaveBeenCalled();
         });
-        it('successfully', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/class-hierarchies?' + params).respond(200, {});
+        it('successfully', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/class-hierarchies?' + this.params).respond(200, {});
             ontologyManagerSvc.getClassHierarchies(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual({});
-                    done();
                 }, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
     });
     describe('getClassesWithIndividuals retrieves all IRIs in an ontology', function() {
-        var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId });
+            this.params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/classes-with-individuals?' + params).respond(400, null, null, error);
+        it('unless an error occurs', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/classes-with-individuals?' + this.params).respond(400, null, null, error);
             ontologyManagerSvc.getClassesWithIndividuals(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
                 }, function(response) {
                     expect(response).toEqual(error);
-                    expect(util.onError).toHaveBeenCalled();
-                    done();
                 });
             flushAndVerify($httpBackend);
+            expect(util.onError).toHaveBeenCalled();
         });
-        it('successfully', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/classes-with-individuals?' + params).respond(200, {});
+        it('successfully', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/classes-with-individuals?' + this.params).respond(200, {});
             ontologyManagerSvc.getClassesWithIndividuals(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual({});
-                    done();
                 }, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
     });
     describe('getDataPropertyHierarchies retrieves all IRIs in an ontology', function() {
-        var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId });
+            this.params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/data-property-hierarchies?' + params).respond(400, null, null, error);
+        it('unless an error occurs', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/data-property-hierarchies?' + this.params).respond(400, null, null, error);
             ontologyManagerSvc.getDataPropertyHierarchies(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
                 }, function(response) {
                     expect(response).toEqual(error);
-                    expect(util.onError).toHaveBeenCalled();
-                    done();
                 });
             flushAndVerify($httpBackend);
+            expect(util.onError).toHaveBeenCalled();
         });
-        it('successfully', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/data-property-hierarchies?' + params).respond(200, {});
+        it('successfully', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/data-property-hierarchies?' + this.params).respond(200, {});
             ontologyManagerSvc.getDataPropertyHierarchies(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual({});
-                    done();
                 }, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
     });
     describe('getObjectPropertyHierarchies retrieves all IRIs in an ontology', function() {
-        var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId });
+            this.params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/object-property-hierarchies?' + params).respond(400, null, null, error);
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/object-property-hierarchies?' + this.params).respond(400, null, null, error);
             ontologyManagerSvc.getObjectPropertyHierarchies(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
                     expect(response).toEqual(error);
-                    expect(util.onError).toHaveBeenCalled();
                 });
             flushAndVerify($httpBackend);
+            expect(util.onError).toHaveBeenCalled();
         });
         it('successfully', function() {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/object-property-hierarchies?' + params).respond(200, {});
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/object-property-hierarchies?' + this.params).respond(200, {});
             ontologyManagerSvc.getObjectPropertyHierarchies(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual({});
@@ -643,54 +684,48 @@ describe('Ontology Manager service', function() {
         });
     });
     describe('getAnnotationPropertyHierarchies retrieves all IRIs in an ontology', function() {
-        var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId });
+            this.params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/annotation-property-hierarchies?' + params).respond(400, null, null, error);
+        it('unless an error occurs', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/annotation-property-hierarchies?' + this.params).respond(400, null, null, error);
             ontologyManagerSvc.getAnnotationPropertyHierarchies(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
                 }, function(response) {
                     expect(response).toEqual(error);
-                    expect(util.onError).toHaveBeenCalled();
-                    done();
                 });
             flushAndVerify($httpBackend);
+            expect(util.onError).toHaveBeenCalled();
         });
-        it('successfully', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/annotation-property-hierarchies?' + params).respond(200, {});
+        it('successfully', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/annotation-property-hierarchies?' + this.params).respond(200, {});
             ontologyManagerSvc.getAnnotationPropertyHierarchies(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual({});
-                    done();
                 }, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
     });
     describe('getConceptHierarchies retrieves all IRIs in an ontology', function() {
-        var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId });
+            this.params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/concept-hierarchies?' + params).respond(400, null, null, error);
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/concept-hierarchies?' + this.params).respond(400, null, null, error);
             ontologyManagerSvc.getConceptHierarchies(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
                     expect(response).toEqual(error);
-                    expect(util.onError).toHaveBeenCalled();
                 });
             flushAndVerify($httpBackend);
+            expect(util.onError).toHaveBeenCalled();
         });
         it('successfully', function() {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/concept-hierarchies?' + params).respond(200, {});
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/concept-hierarchies?' + this.params).respond(200, {});
             ontologyManagerSvc.getConceptHierarchies(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual({});
@@ -701,23 +736,22 @@ describe('Ontology Manager service', function() {
         });
     });
     describe('getConceptSchemeHierarchies retrieves all IRIs in an ontology', function() {
-        var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId });
+            this.params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/concept-scheme-hierarchies?' + params).respond(400, null, null, error);
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/concept-scheme-hierarchies?' + this.params).respond(400, null, null, error);
             ontologyManagerSvc.getConceptSchemeHierarchies(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
                     expect(response).toEqual(error);
-                    expect(util.onError).toHaveBeenCalled();
                 });
             flushAndVerify($httpBackend);
+            expect(util.onError).toHaveBeenCalled();
         });
         it('successfully', function() {
-            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/concept-scheme-hierarchies?' + params).respond(200, {});
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/concept-scheme-hierarchies?' + this.params).respond(200, {});
             ontologyManagerSvc.getConceptSchemeHierarchies(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual({});
@@ -728,241 +762,198 @@ describe('Ontology Manager service', function() {
         });
     });
     describe('getImportedOntologies should call the proper functions', function() {
-        var params;
         beforeEach(function() {
-            params = paramSerializer({
+            this.params = paramSerializer({
                 branchId: branchId,
                 commitId: commitId,
                 rdfFormat: format
             });
         });
-        it('when get succeeds', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/recordId/imported-ontologies?' + params)
+        it('when get succeeds', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/recordId/imported-ontologies?' + this.params)
                 .respond(200, [ontology]);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual([ontology]);
-                    done();
                 }, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
-        it('when get is empty', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/recordId/imported-ontologies?' + params)
+        it('when get is empty', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/recordId/imported-ontologies?' + this.params)
                 .respond(204);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual([]);
-                    done();
                 }, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
-        it('when another success response', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/recordId/imported-ontologies?' + params)
+        it('when another success response', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/recordId/imported-ontologies?' + this.params)
                 .respond(201, null, null, error);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
                 }, function(response) {
                     expect(response).toEqual(error);
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
-        it('when get fails', function(done) {
-            $httpBackend.expectGET('/mobirest/ontologies/recordId/imported-ontologies?' + params)
+        it('when get fails', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/recordId/imported-ontologies?' + this.params)
                 .respond(400, null, null, error);
             ontologyManagerSvc.getImportedOntologies(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
                 }, function(response) {
                     expect(response).toEqual(error);
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
     });
     describe('getEntityUsages should call the proper functions', function() {
-        var params, getDeferred, config;
         beforeEach(function() {
-            params = paramSerializer({
+            this.params = paramSerializer({
                 branchId: branchId,
                 commitId: commitId
             });
-            config = {
+            this.config = {
                 params: {
                     branchId: branchId,
                     commitId: commitId,
                     queryType: 'select'
                 }
             }
-            getDeferred = $q.defer();
-            httpSvc.get.and.returnValue(getDeferred.promise);
         });
         describe('when get succeeds', function() {
             describe('with no id set', function() {
-                it('and queryType is select', function(done) {
-                    $httpBackend.expectGET('/mobirest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=select')
+                it('and queryType is select', function() {
+                    $httpBackend.expectGET('/mobirest/ontologies/recordId/entity-usages/classId?' + this.params + '&queryType=select')
                         .respond(200, usages);
                     ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'select')
                         .then(function(response) {
                             expect(response).toEqual(usages.results.bindings);
-                            done();
                         }, function() {
                             fail('Promise should have resolved');
-                            done();
                         });
                     flushAndVerify($httpBackend);
                 });
-                it('and queryType is construct', function(done) {
-                    $httpBackend.expectGET('/mobirest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=construct')
+                it('and queryType is construct', function() {
+                    $httpBackend.expectGET('/mobirest/ontologies/recordId/entity-usages/classId?' + this.params + '&queryType=construct')
                         .respond(200, usages);
                     ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'construct')
                         .then(function(response) {
                             expect(response).toEqual(usages);
-                            done();
                         }, function() {
                             fail('Promise should have resolved');
-                            done();
                         });
                     flushAndVerify($httpBackend);
                 });
             });
             describe('when id is set', function() {
                 beforeEach(function() {
-                    getDeferred.resolve({data: usages});
+                    httpSvc.get.and.returnValue($q.when({data: usages}));
                 });
-                it('and queryType is select', function(done) {
+                it('and queryType is select', function() {
                     ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'select', 'usages')
                         .then(function(response) {
-                            expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(classId), config, 'usages');
                             expect(response).toEqual(usages.results.bindings);
-                            done();
                         }, function() {
                             fail('Promise should have resolved');
-                            done();
                         });
                     scope.$apply();
+                    expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(classId), this.config, 'usages');
                 });
-                it('and queryType is construct', function(done) {
-                    config.params.queryType = 'construct';
+                it('and queryType is construct', function() {
+                    this.config.params.queryType = 'construct';
                     ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'construct', 'usages')
                         .then(function(response) {
-                            expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(classId), config, 'usages');
                             expect(response).toEqual(usages);
-                            done();
                         }, function() {
                             fail('Promise should have resolved');
-                            done();
                         });
                     scope.$apply();
+                    expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(classId), this.config, 'usages');
                 });
             });
         });
         describe('when get fails', function() {
-            it('when id is not set', function(done) {
-                $httpBackend.expectGET('/mobirest/ontologies/recordId/entity-usages/classId?' + params + '&queryType=select')
+            it('when id is not set', function() {
+                $httpBackend.expectGET('/mobirest/ontologies/recordId/entity-usages/classId?' + this.params + '&queryType=select')
                     .respond(400, null, null, error);
                 ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId)
                     .then(function() {
                         fail('Promise should have rejected');
-                        done();
                     }, function(response) {
                         expect(response).toEqual(error);
-                        done();
                     });
                 flushAndVerify($httpBackend);
             });
             it('when id is set', function() {
-                getDeferred.reject(error);
+                httpSvc.get.and.returnValue($q.reject(error));
                 ontologyManagerSvc.getEntityUsages(recordId, branchId, commitId, classId, 'select', 'usages')
                     .then(function() {
                         fail('Promise should have rejected');
-                    }, function() {
-                        expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(classId), config, 'usages');
-                        expect(util.onError).toHaveBeenCalledWith(error, jasmine.any(Object));
                     });
                 scope.$apply();
+                expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/ontologies/' + encodeURIComponent(recordId) + '/entity-usages/' + encodeURIComponent(classId), this.config, 'usages');
+                expect(util.onError).toHaveBeenCalledWith(error, jasmine.any(Object));
             });
         });
     });
     describe('getSearchResults should call the correct functions', function() {
-        var params, getDeferred;
-        beforeEach(function() {
-            params = paramSerializer({
-                searchText: searchText,
-                branchId: branchId,
-                commitId: commitId
-            });
-            getDeferred = $q.defer();
-            httpSvc.get.and.returnValue(getDeferred.promise);
-        });
-        it('when get succeeds', function(done) {
-            getDeferred.resolve({status: 200, data: searchResults});
+        it('when get succeeds', function() {
+            httpSvc.get.and.returnValue($q.when({status: 200, data: searchResults}));
             ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
                 .then(function(response) {
                     expect(response).toEqual(searchResults);
-                    done();
                 }, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             scope.$apply();
         });
-        it('when get is empty', function(done) {
-            getDeferred.resolve({status: 204});
+        it('when get is empty', function() {
+            httpSvc.get.and.returnValue($q.when({status: 204}));
             ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
                 .then(function(response) {
                     expect(response).toEqual([]);
-                    done();
                 }, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             scope.$apply();
         });
-        it('when get succeeds with different code', function(done) {
-            getDeferred.resolve({status: 201});
+        it('when get succeeds with different code', function() {
+            httpSvc.get.and.returnValue($q.when({status: 201}));
             ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
                 }, function(response) {
                     expect(response).toEqual('An error has occurred with your search.');
-                    done();
                 });
             scope.$apply();
         });
-        it('when get fails', function(done) {
-            getDeferred.reject(error);
+        it('when get fails', function() {
+            httpSvc.get.and.returnValue($q.reject(error));
             ontologyManagerSvc.getSearchResults(recordId, branchId, commitId, searchText)
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
-                }, function() {
-                    expect(util.onError).toHaveBeenCalledWith(error, jasmine.any(Object), 'An error has occurred with your search.');
-                    done();
                 });
             scope.$apply();
+            expect(util.onError).toHaveBeenCalledWith(error, jasmine.any(Object), 'An error has occurred with your search.');
         });
     });
     describe('getFailedImports calls the correct functions when GET /mobirest/ontologies/{recordId}/failed-imports', function() {
-        var params;
         beforeEach(function() {
-            params = paramSerializer({
+            this.params = paramSerializer({
                 branchId: branchId,
                 commitId: commitId
             });
         });
         it('succeeds', function() {
-            $httpBackend.expectGET('/mobirest/ontologies/recordId/failed-imports?' + params).respond(200, ['failedId']);
+            $httpBackend.expectGET('/mobirest/ontologies/recordId/failed-imports?' + this.params).respond(200, ['failedId']);
             ontologyManagerSvc.getFailedImports(recordId, branchId, commitId)
                 .then(function(response) {
                     expect(response).toEqual(['failedId']);
@@ -972,16 +963,16 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('fails', function() {
-            $httpBackend.expectGET('/mobirest/ontologies/recordId/failed-imports?' + params).respond(400, null, null, 'error');
+            $httpBackend.expectGET('/mobirest/ontologies/recordId/failed-imports?' + this.params).respond(400, null, null, 'error');
             util.rejectError.and.returnValue($q.reject('util-error'));
             ontologyManagerSvc.getFailedImports(recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
                     expect(response).toBe('util-error');
-                    expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'error', status: 400}));
                 });
             flushAndVerify($httpBackend);
+            expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'error', status: 400}));
         });
     });
     describe('isOntology should return', function() {
@@ -1043,8 +1034,7 @@ describe('Ontology Manager service', function() {
     });
     describe('hasClasses should return', function() {
         it('true if there are any class entities in the ontology', function() {
-            expect(ontologyManagerSvc
-                .hasClasses([[classObj, ontologyObj], [importedClassObj, importedOntObj]])).toBe(true);
+            expect(ontologyManagerSvc.hasClasses([[classObj, ontologyObj], [importedClassObj, importedOntObj]])).toBe(true);
         });
         it('true if there are class entities only in the ontology', function() {
             expect(ontologyManagerSvc.hasClasses([[classObj, ontologyObj], [importedOntObj]])).toBe(true);
@@ -1058,16 +1048,13 @@ describe('Ontology Manager service', function() {
     });
     describe('getClasses should return', function() {
         it('correct class objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getClasses([[classObj, ontologyObj],[importedClassObj, importedOntObj]]))
-                .toEqual([classObj, importedClassObj]);
+            expect(ontologyManagerSvc.getClasses([[classObj, ontologyObj],[importedClassObj, importedOntObj]])).toEqual([classObj, importedClassObj]);
         });
         it('correct class objects if there are any only in the ontology', function() {
             expect(ontologyManagerSvc.getClasses([[classObj, ontologyObj], [importedOntObj]])).toEqual([classObj]);
         });
         it('correct class objects if there are any only in the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getClasses([[ontologyObj], [importedClassObj, importedOntObj]])).toEqual([importedClassObj]);
+            expect(ontologyManagerSvc.getClasses([[ontologyObj], [importedClassObj, importedOntObj]])).toEqual([importedClassObj]);
         });
         it('undefined if there are no classes in the ontology', function() {
             expect(ontologyManagerSvc.getClasses([[ontologyObj],[importedOntObj]])).toEqual([]);
@@ -1075,16 +1062,13 @@ describe('Ontology Manager service', function() {
     });
     describe('getClassIRIs should return', function() {
         it('classId if there are classes in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getClassIRIs([[ontologyObj, classObj],[importedOntObj, importedClassObj]]))
-                .toEqual([classId, importedClassId]);
+            expect(ontologyManagerSvc.getClassIRIs([[ontologyObj, classObj],[importedOntObj, importedClassObj]])).toEqual([classId, importedClassId]);
         });
         it('classId if there are classes only in the ontology', function() {
             expect(ontologyManagerSvc.getClassIRIs([[ontologyObj, classObj],[importedOntObj]])).toEqual([classId]);
         });
         it('classId if there are classes only in the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getClassIRIs([[ontologyObj],[importedOntObj, importedClassObj]])).toEqual([importedClassId]);
+            expect(ontologyManagerSvc.getClassIRIs([[ontologyObj],[importedOntObj, importedClassObj]])).toEqual([importedClassId]);
         });
         it('[] if there are no classes in the ontology', function() {
             expect(ontologyManagerSvc.getClassIRIs([[ontologyObj],[importedOntObj]])).toEqual([]);
@@ -1092,56 +1076,35 @@ describe('Ontology Manager service', function() {
     });
     describe('hasClassProperties should return', function() {
         it('true if there are any entities with a domain of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc
-                .hasClassProperties([[classObj, ontologyObj, objectPropertyObj],
-                    [importedClassObj, importedOntObj, importedObjectPropertyObj]], classId)).toBe(true);
+            expect(ontologyManagerSvc.hasClassProperties([[classObj, ontologyObj, objectPropertyObj], [importedClassObj, importedOntObj, importedObjectPropertyObj]], classId)).toBe(true);
         });
         it('true if there are any entities with a domain of the provided class in the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .hasClassProperties([[classObj, ontologyObj],
-                    [importedClassObj, importedOntObj, importedObjectPropertyObj]], importedClassId)).toBe(true);
+            expect(ontologyManagerSvc.hasClassProperties([[classObj, ontologyObj], [importedClassObj, importedOntObj, importedObjectPropertyObj]], importedClassId)).toBe(true);
         });
         it('false if there is not an ontology entity in the ontology', function() {
-            expect(ontologyManagerSvc
-                .hasClassProperties([[classObj, ontologyObj],[importedClassObj, importedOntObj]], classId)).toBe(false);
+            expect(ontologyManagerSvc.hasClassProperties([[classObj, ontologyObj],[importedClassObj, importedOntObj]], classId)).toBe(false);
         });
     });
     describe('getClassProperties should return', function() {
         it('correct objects if there are any entities with a domain of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getClassProperties([[classObj, ontologyObj, objectPropertyObj],
-                    [importedClassObj, importedOntObj, importedObjectPropertyObj]], classId))
-                .toEqual([objectPropertyObj]);
+            expect(ontologyManagerSvc.getClassProperties([[classObj, ontologyObj, objectPropertyObj], [importedClassObj, importedOntObj, importedObjectPropertyObj]], classId)).toEqual([objectPropertyObj]);
         });
         it('correct objects if there are any entities with a domain of the provided class in the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getClassProperties([[classObj, ontologyObj, objectPropertyObj],
-                    [importedClassObj, importedOntObj, importedObjectPropertyObj]], importedClassId))
-                .toEqual([importedObjectPropertyObj]);
+            expect(ontologyManagerSvc.getClassProperties([[classObj, ontologyObj, objectPropertyObj], [importedClassObj, importedOntObj, importedObjectPropertyObj]], importedClassId)).toEqual([importedObjectPropertyObj]);
         });
         it('[] if there are no entities with a domain of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getClassProperties([[classObj, ontologyObj], [importedClassObj, importedOntObj]], classId))
-                .toEqual([]);
+            expect(ontologyManagerSvc.getClassProperties([[classObj, ontologyObj], [importedClassObj, importedOntObj]], classId)).toEqual([]);
         });
     });
     describe('getClassPropertyIRIs should return', function() {
         it('correct IRIs if there are any entities with a domain of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getClassPropertyIRIs([[classObj, ontologyObj, objectPropertyObj],
-                    [importedClassObj, importedOntObj, importedObjectPropertyObj]], classId))
-                .toEqual([objectPropertyId]);
+            expect(ontologyManagerSvc.getClassPropertyIRIs([[classObj, ontologyObj, objectPropertyObj], [importedClassObj, importedOntObj, importedObjectPropertyObj]], classId)).toEqual([objectPropertyId]);
         });
         it('correct IRIs if there are any entities with a domain of the provided class in the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getClassPropertyIRIs([[classObj, ontologyObj, objectPropertyObj],
-                    [importedClassObj, importedOntObj, importedObjectPropertyObj]], importedClassId))
-                .toEqual([importedObjectPropertyId]);
+            expect(ontologyManagerSvc.getClassPropertyIRIs([[classObj, ontologyObj, objectPropertyObj], [importedClassObj, importedOntObj, importedObjectPropertyObj]], importedClassId)).toEqual([importedObjectPropertyId]);
         });
         it('[] if there are not any entities with a domain of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getClassPropertyIRIs([[classObj, ontologyObj], [importedClassObj, importedOntObj]], classId))
-                .toEqual([]);
+            expect(ontologyManagerSvc.getClassPropertyIRIs([[classObj, ontologyObj], [importedClassObj, importedOntObj]], classId)).toEqual([]);
         });
     });
     describe('isObjectProperty should return', function() {
@@ -1173,93 +1136,64 @@ describe('Ontology Manager service', function() {
     });
     describe('hasNoDomainProperties should return', function() {
         it('true if the ontology contains a property without the rdfs:domain set', function() {
-            expect(ontologyManagerSvc
-                .hasNoDomainProperties([[ontologyObj, dataPropertyObj], [importedOntObj, importedDataPropertyObj]]))
-                .toBe(true);
+            expect(ontologyManagerSvc.hasNoDomainProperties([[ontologyObj, dataPropertyObj], [importedOntObj, importedDataPropertyObj]])).toBe(true);
         });
         it('true if only the ontology contains a property without the rdfs:domain set', function() {
-            expect(ontologyManagerSvc
-                .hasNoDomainProperties([[ontologyObj, dataPropertyObj], [importedOntObj, importedObjectPropertyObj]]))
-                .toBe(true);
+            expect(ontologyManagerSvc.hasNoDomainProperties([[ontologyObj, dataPropertyObj], [importedOntObj, importedObjectPropertyObj]])).toBe(true);
         });
         it('true if only the imported ontology contains a property without the rdfs:domain set', function() {
-            expect(ontologyManagerSvc
-                .hasNoDomainProperties([[ontologyObj, objectPropertyObj], [importedOntObj, importedDataPropertyObj]]))
-                .toBe(true);
+            expect(ontologyManagerSvc.hasNoDomainProperties([[ontologyObj, objectPropertyObj], [importedOntObj, importedDataPropertyObj]])).toBe(true);
         });
         it('false if the ontology does not contain any properties', function() {
             expect(ontologyManagerSvc.hasNoDomainProperties([[ontologyObj], [importedOntObj]])).toBe(false);
         });
         it('false if the ontology does not contain any properties without rdfs:domains', function() {
-            expect(ontologyManagerSvc
-                .hasNoDomainProperties([[ontologyObj, objectPropertyObj], [importedOntObj, importedObjectPropertyObj]]))
-                .toBe(false);
+            expect(ontologyManagerSvc.hasNoDomainProperties([[ontologyObj, objectPropertyObj], [importedOntObj, importedObjectPropertyObj]])).toBe(false);
         });
     });
     describe('getNoDomainProperties should return', function() {
         it('correct object if the ontology contains a property without the rdfs:domain set', function() {
-            expect(ontologyManagerSvc
-                .getNoDomainProperties([[ontologyObj, dataPropertyObj], [importedOntObj, importedDataPropertyObj]]))
-                .toEqual([dataPropertyObj, importedDataPropertyObj]);
+            expect(ontologyManagerSvc.getNoDomainProperties([[ontologyObj, dataPropertyObj], [importedOntObj, importedDataPropertyObj]])).toEqual([dataPropertyObj, importedDataPropertyObj]);
         });
         it('correct object if the ontology contains a property without the rdfs:domain set', function() {
-            expect(ontologyManagerSvc
-                .getNoDomainProperties([[ontologyObj, dataPropertyObj], [importedOntObj]])).toEqual([dataPropertyObj]);
+            expect(ontologyManagerSvc.getNoDomainProperties([[ontologyObj, dataPropertyObj], [importedOntObj]])).toEqual([dataPropertyObj]);
         });
         it('correct object if the imported ontology contains a property without the rdfs:domain set', function() {
-            expect(ontologyManagerSvc
-                .getNoDomainProperties([[ontologyObj], [importedOntObj, importedDataPropertyObj]]))
-                .toEqual([importedDataPropertyObj]);
+            expect(ontologyManagerSvc.getNoDomainProperties([[ontologyObj], [importedOntObj, importedDataPropertyObj]])).toEqual([importedDataPropertyObj]);
         });
         it('[] if the ontology does not contain any properties', function() {
             expect(ontologyManagerSvc.getNoDomainProperties([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
         it('[] if the ontology does not contain any properties without rdfs:domains', function() {
-            expect(ontologyManagerSvc
-                .getNoDomainProperties([[ontologyObj, objectPropertyObj], [importedOntObj, importedObjectPropertyObj]]))
-                .toEqual([]);
+            expect(ontologyManagerSvc.getNoDomainProperties([[ontologyObj, objectPropertyObj], [importedOntObj, importedObjectPropertyObj]])).toEqual([]);
         });
     });
     describe('getNoDomainPropertyIRIs should return', function() {
         it('correct IRI if the ontology contains a property without the rdfs:domain set', function() {
-            expect(ontologyManagerSvc
-                .getNoDomainPropertyIRIs([[ontologyObj, dataPropertyObj], [importedOntObj, importedDataPropertyObj]]))
-                .toEqual([dataPropertyId, importedDataPropertyId]);
+            expect(ontologyManagerSvc.getNoDomainPropertyIRIs([[ontologyObj, dataPropertyObj], [importedOntObj, importedDataPropertyObj]])).toEqual([dataPropertyId, importedDataPropertyId]);
         });
         it('correct IRI if only the ontology contains a property without the rdfs:domain set', function() {
-            expect(ontologyManagerSvc
-                .getNoDomainPropertyIRIs([[ontologyObj, dataPropertyObj], [importedOntObj, importedObjectPropertyObj]]))
-                .toEqual([dataPropertyId]);
+            expect(ontologyManagerSvc.getNoDomainPropertyIRIs([[ontologyObj, dataPropertyObj], [importedOntObj, importedObjectPropertyObj]])).toEqual([dataPropertyId]);
         });
         it('correct IRI if only the imported ontology contains a property without the rdfs:domain set', function() {
-            expect(ontologyManagerSvc
-                .getNoDomainPropertyIRIs([[ontologyObj, objectPropertyObj], [importedOntObj, importedDataPropertyObj]]))
-                .toEqual([importedDataPropertyId]);
+            expect(ontologyManagerSvc.getNoDomainPropertyIRIs([[ontologyObj, objectPropertyObj], [importedOntObj, importedDataPropertyObj]])).toEqual([importedDataPropertyId]);
         });
         it('[] if the ontology does not contain any properties', function() {
             expect(ontologyManagerSvc.getNoDomainPropertyIRIs([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
         it('[] if the ontology does not contain any properties without rdfs:domains', function() {
-            expect(ontologyManagerSvc
-                .getNoDomainPropertyIRIs([[ontologyObj, objectPropertyObj],
-                    [importedOntObj, importedObjectPropertyObj]])).toEqual([]);
+            expect(ontologyManagerSvc.getNoDomainPropertyIRIs([[ontologyObj, objectPropertyObj], [importedOntObj, importedObjectPropertyObj]])).toEqual([]);
         });
     });
     describe('hasObjectProperties should return', function() {
         it('true if there are any object property entities in the ontology', function() {
-            expect(ontologyManagerSvc
-                .hasObjectProperties([[objectPropertyObj, ontologyObj], [importedObjectPropertyObj, importedOntObj]]))
-                .toBe(true);
+            expect(ontologyManagerSvc.hasObjectProperties([[objectPropertyObj, ontologyObj], [importedObjectPropertyObj, importedOntObj]])).toBe(true);
         });
         it('true if there are any object property entities only in the ontology', function() {
-            expect(ontologyManagerSvc
-                .hasObjectProperties([[objectPropertyObj, ontologyObj], [importedOntObj]]))
-                .toBe(true);
+            expect(ontologyManagerSvc.hasObjectProperties([[objectPropertyObj, ontologyObj], [importedOntObj]])).toBe(true);
         });
         it('true if there are any object property entities only in the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .hasObjectProperties([[ontologyObj], [importedObjectPropertyObj, importedOntObj]]))
-                .toBe(true);
+            expect(ontologyManagerSvc.hasObjectProperties([[ontologyObj], [importedObjectPropertyObj, importedOntObj]])).toBe(true);
         });
         it('false if there are not any object property entities in the ontology', function() {
             expect(ontologyManagerSvc.hasObjectProperties([[ontologyObj], [importedOntObj]])).toBe(false);
@@ -1267,19 +1201,13 @@ describe('Ontology Manager service', function() {
     });
     describe('getObjectProperties should return', function() {
         it('correct object property objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getObjectProperties([[objectPropertyObj, ontologyObj], [importedObjectPropertyObj, importedOntObj]]))
-                .toEqual([objectPropertyObj, importedObjectPropertyObj]);
+            expect(ontologyManagerSvc.getObjectProperties([[objectPropertyObj, ontologyObj], [importedObjectPropertyObj, importedOntObj]])).toEqual([objectPropertyObj, importedObjectPropertyObj]);
         });
         it('correct object property objects if there are any only in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getObjectProperties([[objectPropertyObj, ontologyObj], [importedOntObj]]))
-                .toEqual([objectPropertyObj]);
+            expect(ontologyManagerSvc.getObjectProperties([[objectPropertyObj, ontologyObj], [importedOntObj]])).toEqual([objectPropertyObj]);
         });
         it('correct object property objects if there are any only in the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getObjectProperties([[ontologyObj], [importedObjectPropertyObj, importedOntObj]]))
-                .toEqual([importedObjectPropertyObj]);
+            expect(ontologyManagerSvc.getObjectProperties([[ontologyObj], [importedObjectPropertyObj, importedOntObj]])).toEqual([importedObjectPropertyObj]);
         });
         it('undefined if there are no object properties in the ontology', function() {
             expect(ontologyManagerSvc.getObjectProperties([[ontologyObj],[importedOntObj]])).toEqual([]);
@@ -1287,19 +1215,13 @@ describe('Ontology Manager service', function() {
     });
     describe('getObjectPropertyIRIs should return', function() {
         it('objectPropertyId if there are object properties in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getObjectPropertyIRIs([[ontologyObj, objectPropertyObj], [importedObjectPropertyObj, importedOntObj]]))
-                .toEqual([objectPropertyId, importedObjectPropertyId]);
+            expect(ontologyManagerSvc.getObjectPropertyIRIs([[ontologyObj, objectPropertyObj], [importedObjectPropertyObj, importedOntObj]])).toEqual([objectPropertyId, importedObjectPropertyId]);
         });
         it('objectPropertyId if there are object properties only in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getObjectPropertyIRIs([[ontologyObj, objectPropertyObj], [importedOntObj]]))
-                .toEqual([objectPropertyId]);
+            expect(ontologyManagerSvc.getObjectPropertyIRIs([[ontologyObj, objectPropertyObj], [importedOntObj]])).toEqual([objectPropertyId]);
         });
         it('objectPropertyId if there are object properties only in the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getObjectPropertyIRIs([[ontologyObj], [importedObjectPropertyObj, importedOntObj]]))
-                .toEqual([importedObjectPropertyId]);
+            expect(ontologyManagerSvc.getObjectPropertyIRIs([[ontologyObj], [importedObjectPropertyObj, importedOntObj]])).toEqual([importedObjectPropertyId]);
         });
         it('[] if there are no object properties in the ontology', function() {
             expect(ontologyManagerSvc.getObjectPropertyIRIs([[ontologyObj], [importedOntObj]])).toEqual([]);
@@ -1307,17 +1229,13 @@ describe('Ontology Manager service', function() {
     });
     describe('hasDataTypeProperties should return', function() {
         it('true if there are any data property entities in the ontology', function() {
-            expect(ontologyManagerSvc
-                .hasDataTypeProperties([[dataPropertyObj, ontologyObj], [importedDataPropertyObj, importedOntObj]]))
-                .toBe(true);
+            expect(ontologyManagerSvc.hasDataTypeProperties([[dataPropertyObj, ontologyObj], [importedDataPropertyObj, importedOntObj]])).toBe(true);
         });
         it('true if there are any data property entities only in the ontology', function() {
-            expect(ontologyManagerSvc
-                .hasDataTypeProperties([[dataPropertyObj, ontologyObj], [importedOntObj]])).toBe(true);
+            expect(ontologyManagerSvc.hasDataTypeProperties([[dataPropertyObj, ontologyObj], [importedOntObj]])).toBe(true);
         });
         it('true if there are any data property entities only in the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .hasDataTypeProperties([[ontologyObj], [importedDataPropertyObj, importedOntObj]])).toBe(true);
+            expect(ontologyManagerSvc.hasDataTypeProperties([[ontologyObj], [importedDataPropertyObj, importedOntObj]])).toBe(true);
         });
         it('false if there are not any data property entities in the ontology', function() {
             expect(ontologyManagerSvc.hasDataTypeProperties([[ontologyObj], [importedOntObj]])).toBe(false);
@@ -1325,19 +1243,13 @@ describe('Ontology Manager service', function() {
     });
     describe('getDataTypeProperties should return', function() {
         it('correct data property objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getDataTypeProperties([[dataPropertyObj, ontologyObj], [importedDataPropertyObj, importedOntObj]]))
-                .toEqual([dataPropertyObj, importedDataPropertyObj]);
+            expect(ontologyManagerSvc.getDataTypeProperties([[dataPropertyObj, ontologyObj], [importedDataPropertyObj, importedOntObj]])).toEqual([dataPropertyObj, importedDataPropertyObj]);
         });
         it('correct data property objects if there are any only in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getDataTypeProperties([[dataPropertyObj, ontologyObj], [importedOntObj]]))
-                .toEqual([dataPropertyObj]);
+            expect(ontologyManagerSvc.getDataTypeProperties([[dataPropertyObj, ontologyObj], [importedOntObj]])).toEqual([dataPropertyObj]);
         });
         it('correct data property objects if there are any only in the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getDataTypeProperties([[ontologyObj], [importedDataPropertyObj, importedOntObj]]))
-                .toEqual([importedDataPropertyObj]);
+            expect(ontologyManagerSvc.getDataTypeProperties([[ontologyObj], [importedDataPropertyObj, importedOntObj]])).toEqual([importedDataPropertyObj]);
         });
         it('undefined if there are no data properties in the ontology', function() {
             expect(ontologyManagerSvc.getDataTypeProperties([[ontologyObj], [importedOntObj]])).toEqual([]);
@@ -1345,18 +1257,13 @@ describe('Ontology Manager service', function() {
     });
     describe('getDataTypePropertyIRIs should return', function() {
         it('dataPropertyId if there are data properties in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getDataTypePropertyIRIs([[ontologyObj, dataPropertyObj], [importedDataPropertyObj, importedOntObj]]))
-                .toEqual([dataPropertyId, importedDataPropertyId]);
+            expect(ontologyManagerSvc.getDataTypePropertyIRIs([[ontologyObj, dataPropertyObj], [importedDataPropertyObj, importedOntObj]])).toEqual([dataPropertyId, importedDataPropertyId]);
         });
         it('dataPropertyId if there are data properties in only the ontology', function() {
-            expect(ontologyManagerSvc.getDataTypePropertyIRIs([[ontologyObj, dataPropertyObj], [importedOntObj]]))
-                .toEqual([dataPropertyId]);
+            expect(ontologyManagerSvc.getDataTypePropertyIRIs([[ontologyObj, dataPropertyObj], [importedOntObj]])).toEqual([dataPropertyId]);
         });
         it('dataPropertyId if there are data properties in only the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getDataTypePropertyIRIs([[ontologyObj], [importedDataPropertyObj, importedOntObj]]))
-                .toEqual([importedDataPropertyId]);
+            expect(ontologyManagerSvc.getDataTypePropertyIRIs([[ontologyObj], [importedDataPropertyObj, importedOntObj]])).toEqual([importedDataPropertyId]);
         });
         it('[] if there are no data properties in the ontology', function() {
             expect(ontologyManagerSvc.getDataTypePropertyIRIs([[ontologyObj], [importedOntObj]])).toEqual([]);
@@ -1372,15 +1279,13 @@ describe('Ontology Manager service', function() {
     });
     describe('hasAnnotations should return', function() {
         it('true if there are any annotation entities in the ontology', function() {
-            expect(ontologyManagerSvc
-                .hasAnnotations([[annotationObj, ontologyObj], [importedAnnotationObj, importedOntObj]])).toBe(true);
+            expect(ontologyManagerSvc.hasAnnotations([[annotationObj, ontologyObj], [importedAnnotationObj, importedOntObj]])).toBe(true);
         });
         it('true if there are any annotation entities in only the ontology', function() {
             expect(ontologyManagerSvc.hasAnnotations([[annotationObj, ontologyObj], [importedOntObj]])).toBe(true);
         });
         it('true if there are any annotation entities in only the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .hasAnnotations([[ontologyObj], [importedAnnotationObj, importedOntObj]])).toBe(true);
+            expect(ontologyManagerSvc.hasAnnotations([[ontologyObj], [importedAnnotationObj, importedOntObj]])).toBe(true);
         });
         it('false if there are not any annotation entities in the ontology', function() {
             expect(ontologyManagerSvc.hasAnnotations([[ontologyObj], [importedOntObj]])).toBe(false);
@@ -1388,18 +1293,13 @@ describe('Ontology Manager service', function() {
     });
     describe('getAnnotations should return', function() {
         it('correct annotation objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getAnnotations([[annotationObj, ontologyObj], [importedAnnotationObj, importedOntObj]]))
-                .toEqual([annotationObj, importedAnnotationObj]);
+            expect(ontologyManagerSvc.getAnnotations([[annotationObj, ontologyObj], [importedAnnotationObj, importedOntObj]])).toEqual([annotationObj, importedAnnotationObj]);
         });
         it('correct annotation objects if there are any in only the ontology', function() {
-            expect(ontologyManagerSvc
-                .getAnnotations([[annotationObj, ontologyObj], [importedOntObj]])).toEqual([annotationObj]);
+            expect(ontologyManagerSvc.getAnnotations([[annotationObj, ontologyObj], [importedOntObj]])).toEqual([annotationObj]);
         });
         it('correct annotation objects if there are any in only the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getAnnotations([[ontologyObj], [importedAnnotationObj, importedOntObj]]))
-                .toEqual([importedAnnotationObj]);
+            expect(ontologyManagerSvc.getAnnotations([[ontologyObj], [importedAnnotationObj, importedOntObj]])).toEqual([importedAnnotationObj]);
         });
         it('undefined if there are no annotations in the ontology', function() {
             expect(ontologyManagerSvc.getAnnotations([[ontologyObj], [importedOntObj]])).toEqual([]);
@@ -1407,19 +1307,13 @@ describe('Ontology Manager service', function() {
     });
     describe('getAnnotationIRIs should return', function() {
         it('annotationId if there are annotations in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getAnnotationIRIs([[ontologyObj, annotationObj], [importedAnnotationObj, importedOntObj]]))
-                .toEqual([annotationId, importedAnnotationId]);
+            expect(ontologyManagerSvc.getAnnotationIRIs([[ontologyObj, annotationObj], [importedAnnotationObj, importedOntObj]])).toEqual([annotationId, importedAnnotationId]);
         });
         it('annotationId if there are annotations in only the ontology', function() {
-            expect(ontologyManagerSvc
-                .getAnnotationIRIs([[ontologyObj, annotationObj], [importedOntObj]]))
-                .toEqual([annotationId]);
+            expect(ontologyManagerSvc.getAnnotationIRIs([[ontologyObj, annotationObj], [importedOntObj]])).toEqual([annotationId]);
         });
         it('annotationId if there are annotations in only the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getAnnotationIRIs([[ontologyObj], [importedAnnotationObj, importedOntObj]]))
-                .toEqual([importedAnnotationId]);
+            expect(ontologyManagerSvc.getAnnotationIRIs([[ontologyObj], [importedAnnotationObj, importedOntObj]])).toEqual([importedAnnotationId]);
         });
         it('[] if there are no annotations in the ontology', function() {
             expect(ontologyManagerSvc.getAnnotationIRIs([[ontologyObj], [importedOntObj]])).toEqual([]);
@@ -1435,16 +1329,13 @@ describe('Ontology Manager service', function() {
     });
     describe('hasIndividuals should return', function() {
         it('true if there are any individual entities in the ontology', function() {
-            expect(ontologyManagerSvc
-                .hasIndividuals([[individualObj, ontologyObj], [importedIndividualObj, importedOntObj]])).toBe(true);
+            expect(ontologyManagerSvc.hasIndividuals([[individualObj, ontologyObj], [importedIndividualObj, importedOntObj]])).toBe(true);
         });
         it('true if there are any individual entities in only the ontology', function() {
-            expect(ontologyManagerSvc
-                .hasIndividuals([[individualObj, ontologyObj], [importedOntObj]])).toBe(true);
+            expect(ontologyManagerSvc.hasIndividuals([[individualObj, ontologyObj], [importedOntObj]])).toBe(true);
         });
         it('true if there are any individual entities in only the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .hasIndividuals([[ontologyObj], [importedIndividualObj, importedOntObj]])).toBe(true);
+            expect(ontologyManagerSvc.hasIndividuals([[ontologyObj], [importedIndividualObj, importedOntObj]])).toBe(true);
         });
         it('false if there are not any individual entities in the ontology', function() {
             expect(ontologyManagerSvc.hasIndividuals([[ontologyObj], [importedOntObj]])).toBe(false);
@@ -1452,19 +1343,13 @@ describe('Ontology Manager service', function() {
     });
     describe('getIndividuals should return', function() {
         it('correct individual objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getIndividuals([[individualObj, ontologyObj], [importedIndividualObj, importedOntObj]]))
-                .toEqual([individualObj, importedIndividualObj]);
+            expect(ontologyManagerSvc.getIndividuals([[individualObj, ontologyObj], [importedIndividualObj, importedOntObj]])).toEqual([individualObj, importedIndividualObj]);
         });
         it('correct individual objects if there are any in only the ontology', function() {
-            expect(ontologyManagerSvc
-                .getIndividuals([[individualObj, ontologyObj], [importedOntObj]]))
-                .toEqual([individualObj]);
+            expect(ontologyManagerSvc.getIndividuals([[individualObj, ontologyObj], [importedOntObj]])).toEqual([individualObj]);
         });
         it('correct individual objects if there are any in only the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getIndividuals([[ontologyObj], [importedIndividualObj, importedOntObj]]))
-                .toEqual([importedIndividualObj]);
+            expect(ontologyManagerSvc.getIndividuals([[ontologyObj], [importedIndividualObj, importedOntObj]])).toEqual([importedIndividualObj]);
         });
         it('undefined if there are no individuals in the ontology', function() {
             expect(ontologyManagerSvc.getIndividuals([[ontologyObj], [importedOntObj]])).toEqual([]);
@@ -1491,8 +1376,7 @@ describe('Ontology Manager service', function() {
                 '@id': individualId,
                 '@type': [prefixes.owl + 'NamedIndividual']
             }
-            expect(ontologyManagerSvc.getNoTypeIndividuals([[diffIndividualObj, ontologyObj]]))
-                .toEqual([diffIndividualObj]);
+            expect(ontologyManagerSvc.getNoTypeIndividuals([[diffIndividualObj, ontologyObj]])).toEqual([diffIndividualObj]);
         });
         it('undefined if there are no individuals in the ontology with no other @type', function() {
             expect(ontologyManagerSvc.getNoTypeIndividuals([[ontologyObj, individualObj]])).toEqual([]);
@@ -1503,40 +1387,24 @@ describe('Ontology Manager service', function() {
     });
     describe('hasClassIndividuals should return', function() {
         it('true if there are any entities with a type of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc
-                .hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj],
-                    [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], classId))
-                .toBe(true);
+            expect(ontologyManagerSvc.hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], classId)).toBe(true);
         });
         it('true if there are any entities with a type of the provided class in the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj],
-                    [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], importedClassId))
-                .toBe(true);
+            expect(ontologyManagerSvc.hasClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], importedClassId)).toBe(true);
         });
         it('false if there are no entities with a type of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc
-                .hasClassIndividuals([[classObj, ontologyObj], [importedClassObj, importedOntObj]], classId))
-                .toBe(false);
+            expect(ontologyManagerSvc.hasClassIndividuals([[classObj, ontologyObj], [importedClassObj, importedOntObj]], classId)).toBe(false);
         });
     });
     describe('getClassIndividuals should return', function() {
         it('correct object if there are any entities with a type of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj],
-                    [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], classId))
-                .toEqual([individualObj]);
+            expect(ontologyManagerSvc.getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], classId)).toEqual([individualObj]);
         });
         it('correct object if there are any entities with a type of the provided class in the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj],
-                    [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], importedClassId))
-                .toEqual([importedIndividualObj]);
+            expect(ontologyManagerSvc.getClassIndividuals([[individualObj, ontologyObj, objectPropertyObj], [importedIndividualObj, importedOntObj, importedObjectPropertyObj]], importedClassId)).toEqual([importedIndividualObj]);
         });
         it('[] if there are no entities with a type of the provided class in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getClassIndividuals([[classObj, ontologyObj], [importedClassObj, importedOntObj]], classId))
-                .toEqual([]);
+            expect(ontologyManagerSvc.getClassIndividuals([[classObj, ontologyObj], [importedClassObj, importedOntObj]], classId)).toEqual([]);
         });
     });
     describe('isRestriction should return', function() {
@@ -1549,19 +1417,13 @@ describe('Ontology Manager service', function() {
     });
     describe('getRestrictions should return', function() {
         it('correct restriction objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getRestrictions([[restrictionObj, ontologyObj], [importedRestrictionObj, importedOntObj]]))
-                .toEqual([restrictionObj, importedRestrictionObj]);
+            expect(ontologyManagerSvc.getRestrictions([[restrictionObj, ontologyObj], [importedRestrictionObj, importedOntObj]])).toEqual([restrictionObj, importedRestrictionObj]);
         });
         it('correct restriction objects if there are any in only the ontology', function() {
-            expect(ontologyManagerSvc
-                .getRestrictions([[restrictionObj, ontologyObj], [importedOntObj]]))
-                .toEqual([restrictionObj]);
+            expect(ontologyManagerSvc.getRestrictions([[restrictionObj, ontologyObj], [importedOntObj]])).toEqual([restrictionObj]);
         });
         it('correct restriction objects if there are any in only the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getRestrictions([[ontologyObj], [importedRestrictionObj, importedOntObj]]))
-                .toEqual([importedRestrictionObj]);
+            expect(ontologyManagerSvc.getRestrictions([[ontologyObj], [importedRestrictionObj, importedOntObj]])).toEqual([importedRestrictionObj]);
         });
         it('undefined if there are no restrictions in the ontology', function() {
             expect(ontologyManagerSvc.getRestrictions([[ontologyObj], [importedOntObj]])).toEqual([]);
@@ -1711,16 +1573,13 @@ describe('Ontology Manager service', function() {
     });
     describe('hasConcepts should return', function() {
         it('true if there are any concept entities in the ontology', function() {
-            expect(ontologyManagerSvc
-                .hasConcepts([[conceptObj, ontologyObj], [importedConceptObj, importedOntObj]])).toBe(true);
+            expect(ontologyManagerSvc.hasConcepts([[conceptObj, ontologyObj], [importedConceptObj, importedOntObj]])).toBe(true);
         });
         it('true if there are any concept entities in only the ontology', function() {
-            expect(ontologyManagerSvc
-                .hasConcepts([[conceptObj, ontologyObj], [importedOntObj]])).toBe(true);
+            expect(ontologyManagerSvc.hasConcepts([[conceptObj, ontologyObj], [importedOntObj]])).toBe(true);
         });
         it('true if there are any concept entities in only the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .hasConcepts([[ontologyObj], [importedConceptObj, importedOntObj]])).toBe(true);
+            expect(ontologyManagerSvc.hasConcepts([[ontologyObj], [importedConceptObj, importedOntObj]])).toBe(true);
         });
         it('false if there are not any concept entities in the ontology', function() {
             expect(ontologyManagerSvc.hasConcepts([[ontologyObj], [importedOntObj]])).toBe(false);
@@ -1728,19 +1587,13 @@ describe('Ontology Manager service', function() {
     });
     describe('getConcepts should return', function() {
         it('correct concept objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getConcepts([[conceptObj, ontologyObj], [importedConceptObj, importedOntObj]]))
-                .toEqual([conceptObj, importedConceptObj]);
+            expect(ontologyManagerSvc.getConcepts([[conceptObj, ontologyObj], [importedConceptObj, importedOntObj]])).toEqual([conceptObj, importedConceptObj]);
         });
         it('correct concept objects if there are any in only the ontology', function() {
-            expect(ontologyManagerSvc
-                .getConcepts([[conceptObj, ontologyObj], [importedOntObj]]))
-                .toEqual([conceptObj]);
+            expect(ontologyManagerSvc.getConcepts([[conceptObj, ontologyObj], [importedOntObj]])).toEqual([conceptObj]);
         });
         it('correct concept objects if there are any in only the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getConcepts([[ontologyObj], [importedConceptObj, importedOntObj]]))
-                .toEqual([importedConceptObj]);
+            expect(ontologyManagerSvc.getConcepts([[ontologyObj], [importedConceptObj, importedOntObj]])).toEqual([importedConceptObj]);
         });
         it('undefined if there are no concepts in the ontology', function() {
             expect(ontologyManagerSvc.getConcepts([[ontologyObj], [importedOntObj]])).toEqual([]);
@@ -1748,19 +1601,13 @@ describe('Ontology Manager service', function() {
     });
     describe('getConceptIRIs should return', function() {
         it('conceptId if there are concepts in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getConceptIRIs([[ontologyObj, conceptObj], [importedOntObj, importedConceptObj]]))
-                .toEqual([conceptId, importedConceptId]);
+            expect(ontologyManagerSvc.getConceptIRIs([[ontologyObj, conceptObj], [importedOntObj, importedConceptObj]])).toEqual([conceptId, importedConceptId]);
         });
         it('conceptId if there are concepts in only the ontology', function() {
-            expect(ontologyManagerSvc
-                .getConceptIRIs([[ontologyObj, conceptObj], [importedOntObj]]))
-                .toEqual([conceptId]);
+            expect(ontologyManagerSvc.getConceptIRIs([[ontologyObj, conceptObj], [importedOntObj]])).toEqual([conceptId]);
         });
         it('conceptId if there are concepts in only the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getConceptIRIs([[ontologyObj], [importedOntObj, importedConceptObj]]))
-                .toEqual([importedConceptId]);
+            expect(ontologyManagerSvc.getConceptIRIs([[ontologyObj], [importedOntObj, importedConceptObj]])).toEqual([importedConceptId]);
         });
         it('[] if there are no concepts in the ontology', function() {
             expect(ontologyManagerSvc.getConceptIRIs([[ontologyObj], [importedOntObj]])).toEqual([]);
@@ -1776,16 +1623,13 @@ describe('Ontology Manager service', function() {
     });
     describe('hasConceptSchemes should return', function() {
         it('true if there are any concept scheme entities in the ontology', function() {
-            expect(ontologyManagerSvc
-                .hasConceptSchemes([[schemeObj, ontologyObj], [importedSchemeObj, importedOntObj]])).toBe(true);
+            expect(ontologyManagerSvc.hasConceptSchemes([[schemeObj, ontologyObj], [importedSchemeObj, importedOntObj]])).toBe(true);
         });
         it('true if there are any concept scheme entities in only the ontology', function() {
-            expect(ontologyManagerSvc
-                .hasConceptSchemes([[schemeObj, ontologyObj], [importedOntObj]])).toBe(true);
+            expect(ontologyManagerSvc.hasConceptSchemes([[schemeObj, ontologyObj], [importedOntObj]])).toBe(true);
         });
         it('true if there are any concept scheme entities in only the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .hasConceptSchemes([[ontologyObj], [importedSchemeObj, importedOntObj]])).toBe(true);
+            expect(ontologyManagerSvc.hasConceptSchemes([[ontologyObj], [importedSchemeObj, importedOntObj]])).toBe(true);
         });
         it('false if there are not any concept scheme entities in the ontology', function() {
             expect(ontologyManagerSvc.hasConceptSchemes([[ontologyObj], [importedOntObj]])).toBe(false);
@@ -1793,19 +1637,13 @@ describe('Ontology Manager service', function() {
     });
     describe('getConceptSchemes should return', function() {
         it('correct concept scheme objects if there are any in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getConceptSchemes([[schemeObj, ontologyObj], [importedSchemeObj, importedOntObj]]))
-                .toEqual([schemeObj, importedSchemeObj]);
+            expect(ontologyManagerSvc.getConceptSchemes([[schemeObj, ontologyObj], [importedSchemeObj, importedOntObj]])).toEqual([schemeObj, importedSchemeObj]);
         });
         it('correct concept scheme objects if there are any in only the ontology', function() {
-            expect(ontologyManagerSvc
-                .getConceptSchemes([[schemeObj, ontologyObj], [importedOntObj]]))
-                .toEqual([schemeObj]);
+            expect(ontologyManagerSvc.getConceptSchemes([[schemeObj, ontologyObj], [importedOntObj]])).toEqual([schemeObj]);
         });
         it('correct concept scheme objects if there are any in only the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getConceptSchemes([[ontologyObj], [importedSchemeObj, importedOntObj]]))
-                .toEqual([importedSchemeObj]);
+            expect(ontologyManagerSvc.getConceptSchemes([[ontologyObj], [importedSchemeObj, importedOntObj]])).toEqual([importedSchemeObj]);
         });
         it('undefined if there are no concept schemes in the ontology', function() {
             expect(ontologyManagerSvc.getConceptSchemes([[ontologyObj], [importedOntObj]])).toEqual([]);
@@ -1813,81 +1651,62 @@ describe('Ontology Manager service', function() {
     });
     describe('getConceptSchemeIRIs should return', function() {
         it('schemeId if there are concept schemes in the ontology', function() {
-            expect(ontologyManagerSvc
-                .getConceptSchemeIRIs([[ontologyObj, schemeObj], [importedOntObj, importedSchemeObj]]))
-                .toEqual([schemeId, importedSchemeId]);
+            expect(ontologyManagerSvc.getConceptSchemeIRIs([[ontologyObj, schemeObj], [importedOntObj, importedSchemeObj]])).toEqual([schemeId, importedSchemeId]);
         });
         it('schemeId if there are concept schemes in only the ontology', function() {
-            expect(ontologyManagerSvc
-                .getConceptSchemeIRIs([[ontologyObj, schemeObj], [importedOntObj]]))
-                .toEqual([schemeId]);
+            expect(ontologyManagerSvc.getConceptSchemeIRIs([[ontologyObj, schemeObj], [importedOntObj]])).toEqual([schemeId]);
         });
         it('schemeId if there are concept schemes in only the imported ontology', function() {
-            expect(ontologyManagerSvc
-                .getConceptSchemeIRIs([[ontologyObj], [importedOntObj, importedSchemeObj]]))
-                .toEqual([importedSchemeId]);
+            expect(ontologyManagerSvc.getConceptSchemeIRIs([[ontologyObj], [importedOntObj, importedSchemeObj]])).toEqual([importedSchemeId]);
         });
         it('[] if there are no concept schemes in the ontology', function() {
             expect(ontologyManagerSvc.getConceptSchemeIRIs([[ontologyObj], [importedOntObj]])).toEqual([]);
         });
     });
     describe('uploadChangesFile hits the proper endpoint', function() {
-        var params;
         beforeEach(function() {
-            params = paramSerializer({ branchId: branchId, commitId: commitId });
+            this.params = paramSerializer({ branchId: branchId, commitId: commitId });
         });
-        it('with recordId, branchId and commitId', function(done) {
-            $httpBackend.expectPUT('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+        it('with recordId, branchId and commitId', function() {
+            $httpBackend.expectPUT('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?' + this.params,
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
                     return headers['Content-Type'] === undefined;
                 }).respond(200, { additions: [], deletions: [] });
             ontologyManagerSvc.uploadChangesFile(file, recordId, branchId, commitId)
-                .then(function() {
-                    expect(true).toBe(true);
-                    done();
-                }, function() {
+                .then(_.noop, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
-        it('with no branchId', function(done) {
-            params = paramSerializer({ branchId: undefined, commitId: commitId });
-            $httpBackend.expectPUT('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+        it('with no branchId', function() {
+            this.params = paramSerializer({ branchId: undefined, commitId: commitId });
+            $httpBackend.expectPUT('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?' + this.params,
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
                     return headers['Content-Type'] === undefined;
                 }).respond(200, { additions: [], deletions: [] });
             ontologyManagerSvc.uploadChangesFile(file, recordId, undefined, commitId)
-                .then(function() {
-                    expect(true).toBe(true);
-                    done();
-                }, function() {
+                .then(_.noop, function() {
                     fail('Promise should have resolved');
-                    done();
                 });
             flushAndVerify($httpBackend);
         });
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectPUT('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?' + params,
+        it('unless an error occurs', function() {
+            $httpBackend.expectPUT('/mobirest/ontologies/' + encodeURIComponent(recordId) + '?' + this.params,
                 function(data) {
                     return data instanceof FormData;
-                },
-                function(headers) {
+                }, function(headers) {
                     return headers['Content-Type'] === undefined;
                 }).respond(400, null, null, error);
             ontologyManagerSvc.uploadChangesFile(file, recordId, branchId, commitId)
                 .then(function() {
                     fail('Promise should have rejected');
-                    done();
-                }, function() {
-                    expect(util.rejectError).toHaveBeenCalled();
-                    done();
                 });
             flushAndVerify($httpBackend);
+            expect(util.rejectError).toHaveBeenCalled();
         });
     });
 });

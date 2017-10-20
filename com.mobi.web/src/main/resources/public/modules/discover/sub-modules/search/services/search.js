@@ -81,12 +81,12 @@
                 }
             });
             var ontologyArray = _.reject(datasetArray, item => _.has(item, '@type'));
-            return $q.all(_.map(ontologyArray, identifier => {
+            return $q.all(_.flatten(_.map(ontologyArray, identifier => {
                 var recordId = util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord');
                 var branchId = util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch');
                 var commitId = util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit');
-                return om.getDataProperties(recordId, branchId, commitId);
-            })).then(response => _.flatten(response));
+                return [om.getDataProperties(recordId, branchId, commitId), om.getObjProperties(recordId, branchId, commitId)];
+            }))).then(response => _.flatten(response));
         }
         /**
          * @ngdoc method
@@ -175,13 +175,16 @@
          * @param {string} predicate The predicate's existence which is being searched for
          * @param {string} variable The variable name to use in the query
          * @param {string} label The label to identify this variable
+         * @param {Object} pathDetails The details associated with the property path
+         * @param {string} pathDetails.variable The variable name to use for the booleanPattern
+         * @param {Object[]} pathDetails.patterns The list of patterns needed for the query
          * @return {Object} A part of a SPARQL query object
          */
-        self.createExistenceQuery = function(predicate, label) {
-            var existencePattern = createPattern('?Entity', predicate, getNextVariable(label));
+        self.createExistenceQuery = function(predicate, label, pathDetails) {
+            var existencePattern = createPattern(pathDetails.variable, predicate, getNextVariable(label));
             return {
                 type: 'group',
-                patterns: [existencePattern]
+                patterns: _.concat(pathDetails.patterns, [existencePattern])
             };
         }
         /**
@@ -197,14 +200,17 @@
          * @param {string} keyword The keyword to filter results by
          * @param {string} variable The variable name to use in the query
          * @param {string} label The label to identify this variable
+         * @param {Object} pathDetails The details associated with the property path
+         * @param {string} pathDetails.variable The variable name to use for the booleanPattern
+         * @param {Object[]} pathDetails.patterns The list of patterns needed for the query
          * @return {Object} A part of a SPARQL query object
          */
-        self.createContainsQuery = function(predicate, keyword, label) {
+        self.createContainsQuery = function(predicate, keyword, label, pathDetails) {
             var variable = getNextVariable(label);
-            var containsPattern = createPattern('?Entity', predicate, variable);
+            var containsPattern = createPattern(pathDetails.variable, predicate, variable);
             return {
                 type: 'group',
-                patterns: [containsPattern, createKeywordFilter(keyword, variable)]
+                patterns: _.concat(pathDetails.patterns, [containsPattern, createKeywordFilter(keyword, variable)])
             };
         }
         /**
@@ -221,11 +227,14 @@
          * @param {string} range The range of the keyword
          * @param {string} variable The variable name to use in the query
          * @param {string} label The label to identify this variable
+         * @param {Object} pathDetails The details associated with the property path
+         * @param {string} pathDetails.variable The variable name to use for the booleanPattern
+         * @param {Object[]} pathDetails.patterns The list of patterns needed for the query
          * @return {Object} A part of a SPARQL query object
          */
-        self.createExactQuery = function(predicate, keyword, range, label) {
+        self.createExactQuery = function(predicate, keyword, range, label, pathDetails) {
             var variable = getNextVariable(label);
-            var exactPattern = createPattern('?Entity', predicate, variable);
+            var exactPattern = createPattern(pathDetails.variable, predicate, variable);
             var exactFilter = createFilter({
                 type: 'operation',
                 operator: '=',
@@ -233,7 +242,7 @@
             });
             return {
                 type: 'group',
-                patterns: [exactPattern, exactFilter]
+                patterns: _.concat(pathDetails.patterns, [exactPattern, exactFilter])
             };
         }
         /**
@@ -249,11 +258,14 @@
          * @param {string} regex The regex to filter results by
          * @param {string} variable The variable name to use in the query
          * @param {string} label The label to identify this variable
+         * @param {Object} pathDetails The details associated with the property path
+         * @param {string} pathDetails.variable The variable name to use for the booleanPattern
+         * @param {Object[]} pathDetails.patterns The list of patterns needed for the query
          * @return {Object} A part of a SPARQL query object
          */
-        self.createRegexQuery = function(predicate, regex, label) {
+        self.createRegexQuery = function(predicate, regex, label, pathDetails) {
             var variable = getNextVariable(label);
-            var regexPattern = createPattern('?Entity', predicate, variable);
+            var regexPattern = createPattern(pathDetails.variable, predicate, variable);
             var regexFilter = createFilter({
                 type: 'operation',
                 operator: 'regex',
@@ -261,7 +273,7 @@
             });
             return {
                 type: 'group',
-                patterns: [regexPattern, regexFilter]
+                patterns: _.concat(pathDetails.patterns, [regexPattern, regexFilter])
             };
         }
         /**
@@ -282,13 +294,16 @@
          * @param {string} rangeConfig.greaterThanOrEqualTo The value that the result must be greater than or equal to
          * @param {string} variable The variable name to use in the query
          * @param {string} label The label to identify this variable
+         * @param {Object} pathDetails The details associated with the property path
+         * @param {string} pathDetails.variable The variable name to use for the booleanPattern
+         * @param {Object[]} pathDetails.patterns The list of patterns needed for the query
          * @return {Object} A part of a SPARQL query object
          */
-        self.createRangeQuery = function(predicate, predRange, rangeConfig, label) {
+        self.createRangeQuery = function(predicate, predRange, rangeConfig, label, pathDetails) {
             var variable = getNextVariable(label);
             var config = angular.copy(rangeConfig);
-            var rangePattern = createPattern('?Entity', predicate, variable);
-            var patterns = [rangePattern];
+            var rangePattern = createPattern(pathDetails.variable, predicate, variable);
+            var patterns = _.concat(pathDetails.patterns, [rangePattern]);
             if (util.getInputType(predRange) === 'datetime-local') {
                 _.forOwn(config, (value, key) => {
                     config[key] = JSON.stringify(value) + '^^<' + prefixes.xsd + 'dateTime>';
@@ -320,12 +335,15 @@
          * @param {string} predicate The predicate's existence which is being searched for
          * @param {boolean} value The value which is being searched for
          * @param {string} label The label to identify this variable
+         * @param {Object} pathDetails The details associated with the property path
+         * @param {string} pathDetails.variable The variable name to use for the booleanPattern
+         * @param {Object[]} pathDetails.patterns The list of patterns needed for the query
          * @return {Object} A part of a SPARQL query object
          */
-        self.createBooleanQuery = function(predicate, value, label) {
+        self.createBooleanQuery = function(predicate, value, label, pathDetails) {
             var variable = getNextVariable(label);
             var values = value ? [true, 1] : [false, 0];
-            var booleanPattern = createPattern('?Entity', predicate, variable);
+            var booleanPattern = createPattern(pathDetails.variable, predicate, variable);
             var booleanFilter = createFilter({
                 type: 'operation',
                 operator: 'in',
@@ -333,7 +351,7 @@
             });
             return {
                 type: 'group',
-                patterns: [booleanPattern, booleanFilter]
+                patterns: _.concat(pathDetails.patterns, [booleanPattern, booleanFilter])
             };
         }
 
@@ -382,7 +400,7 @@
         function createFilter(expression) {
             return { type: 'filter', expression };
         }
-        
+
         function createVariableExpression(variable) {
             var updated = '?' + variable.slice(0, -1);
             return {
@@ -396,7 +414,7 @@
                 variable: updated + 's'
             };
         }
-        
+
         function createBindOperation(value, variable) {
             return {
                 type: 'operation',
@@ -408,39 +426,59 @@
                 }]
             };
         }
-        
+
         function getNextVariable(label) {
             var variable = 'var' + index++;
-            _.set(variables, variable + 's', label);
+            if (label) {
+                _.set(variables, variable + 's', label);
+            }
             return '?' + variable;
         }
 
         function getQueryPart(filter) {
+            var last = _.last(filter.path);
+            var predicate = last.predicate;
+            var range = last.range;
+            var pathDetails = createPathDetails(filter.path);
             switch(filter.type) {
                 case 'Boolean':
-                    return self.createBooleanQuery(filter.predicate, filter.boolean, filter.title);
+                    return self.createBooleanQuery(predicate, filter.boolean, filter.title, pathDetails);
                 case 'Contains':
-                    return self.createContainsQuery(filter.predicate, filter.value, filter.title);
+                    return self.createContainsQuery(predicate, filter.value, filter.title, pathDetails);
                 case 'Exact':
-                    return self.createExactQuery(filter.predicate, filter.value, filter.range, filter.title);
+                    return self.createExactQuery(predicate, filter.value, range, filter.title, pathDetails);
                 case 'Existence':
-                    return self.createExistenceQuery(filter.predicate, filter.title);
+                case undefined:
+                    return self.createExistenceQuery(predicate, filter.title, pathDetails);
                 case 'Greater than':
-                    return self.createRangeQuery(filter.predicate, filter.range, {greaterThan: filter.value}, filter.title);
+                    return self.createRangeQuery(predicate, range, {greaterThan: filter.value}, filter.title, pathDetails);
                 case 'Greater than or equal to':
-                    return self.createRangeQuery(filter.predicate, filter.range, {greaterThanOrEqualTo: filter.value}, filter.title);
+                    return self.createRangeQuery(predicate, range, {greaterThanOrEqualTo: filter.value}, filter.title, pathDetails);
                 case 'Less than':
-                    return self.createRangeQuery(filter.predicate, filter.range, {lessThan: filter.value}, filter.title);
+                    return self.createRangeQuery(predicate, range, {lessThan: filter.value}, filter.title, pathDetails);
                 case 'Less than or equal to':
-                    return self.createRangeQuery(filter.predicate, filter.range, {lessThanOrEqualTo: filter.value}, filter.title);
+                    return self.createRangeQuery(predicate, range, {lessThanOrEqualTo: filter.value}, filter.title, pathDetails);
                 case 'Range':
-                    return self.createRangeQuery(filter.predicate, filter.range, {
+                    return self.createRangeQuery(predicate, range, {
                         greaterThanOrEqualTo: filter.begin,
                         lessThanOrEqualTo: filter.end
-                    }, filter.title);
+                    }, filter.title, pathDetails);
                 case 'Regex':
-                    return self.createRegexQuery(filter.predicate, filter.regex, filter.title);
+                    return self.createRegexQuery(predicate, filter.regex, filter.title, pathDetails);
             }
+        }
+
+        function createPathDetails(path) {
+            var start = _.initial(path);
+            var variable = '?Entity';
+            var patterns = [];
+            _.forEach(start, part => {
+                let oldVariable = variable;
+                variable = getNextVariable();
+                patterns.push(createPattern(oldVariable, part.predicate, variable));
+                patterns.push(createPattern(variable, prefixes.rdf + 'type', part.range));
+            });
+            return {variable, patterns};
         }
     }
 })();

@@ -22,7 +22,7 @@
  */
 (function() {
     'use strict';
-    
+
     angular
         /**
          * @ngdoc overview
@@ -48,9 +48,9 @@
          * they want to add to their search.
          */
         .directive('propertySelector', propertySelector);
-        
+
         propertySelector.$inject = ['discoverStateService', 'ontologyManagerService', 'prefixes', 'utilService'];
-        
+
         function propertySelector(discoverStateService, ontologyManagerService, prefixes, utilService) {
             return {
                 restrict: 'E',
@@ -77,39 +77,33 @@
                     dvm.getSelectedPropertyText = function() {
                         return dvm.property ? dvm.om.getEntityName(dvm.property) : '';
                     }
-                    
+
                     dvm.getSelectedRangeText = function() {
                         return dvm.range ? dvm.util.getBeautifulIRI(dvm.range) : '';
                     }
-                    
+
                     dvm.orderRange = function(range) {
                         return dvm.util.getBeautifulIRI(range['@id']);
                     }
-                    
+
                     dvm.shouldDisplayOptGroup = function(type) {
-                        if (!filterArrayWithSearch(dvm.ds.search.properties[type]).length) {
-                            return false;
-                        }
-                        if (dvm.ds.search.queryConfig.types.length) {
-                            return _.includes(_.map(dvm.ds.search.queryConfig.types, 'classIRI'), type);
-                        }
-                        return true;
+                        return _.some(dvm.ds.search.properties[type], dvm.checkEntityText);
                     }
-                    
+
                     dvm.propertyChanged = function() {
                         dvm.ranges = _.get(dvm.property, prefixes.rdfs + 'range', [{'@id': prefixes.xsd + 'string'}]);
                         if (dvm.ranges.length === 1) {
                             dvm.range = dvm.ranges[0]['@id'];
                         }
                     }
-                    
+
                     dvm.showNoDomains = function() {
                         var noDomains = _.get(dvm.ds.search, 'noDomains', []);
-                        return noDomains.length && filterArrayWithSearch(noDomains).length;
+                        return noDomains.length && _.filter(noDomains, dvm.checkEntityText).length;
                     }
-                    
-                    function filterArrayWithSearch(array) {
-                        return _.filter(array, entity => _.includes(dvm.om.getEntityName(entity), dvm.propertySearch));
+
+                    dvm.checkEntityText = function(entity) {
+                        return _.includes(_.toLower(dvm.om.getEntityName(entity)), _.toLower(dvm.propertySearch));
                     }
                 }
             }
