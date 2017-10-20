@@ -107,6 +107,5 @@ public class CLIWorkflows implements Action {
             throw new IllegalArgumentException("RDF file must contain exactly one Workflow");
         }
         workflowManager.addWorkflow(workflows.iterator().next());
-
     }
 }
