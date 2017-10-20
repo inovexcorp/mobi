@@ -93,7 +93,7 @@ public class HazelcastFederationServiceTest {
                 .thenReturn(registration);
 
         doAnswer(invocation -> {
-            Thread.sleep(500L);
+            Thread.sleep(4000L);
             return null;
         }).when(registration).unregister();
     }

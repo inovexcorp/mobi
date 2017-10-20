@@ -138,8 +138,8 @@
                         var ontologyState = _.find(dvm.ontologyStates, {recordId: dvm.selectedRecord['@id']});
                         if (ontologyState && !_.isEqual(ontologyState, dvm.selectedOntologyState)) {
                             dvm.selectedOntologyState = ontologyState;
-                            dvm.selectedVersion = 'latest';
-                            dvm.classes = dvm.selectedOntologyState.latest.classes;
+                            dvm.selectedVersion = _.has(dvm.selectedOntologyState, 'latest') ? 'latest' : 'saved';
+                            dvm.classes = dvm.selectedOntologyState[dvm.selectedVersion].classes;
                             dvm.errorMessage = '';
                         } else if (!ontologyState) {
                             ontologyState = {
@@ -166,6 +166,7 @@
                                 versionObj.classes = dvm.state.getClasses(versionObj.ontologies);
                                 dvm.classes = versionObj.classes;
                                 ontologyState.latest = versionObj;
+                                dvm.selectedVersion = 'latest';
                                 dvm.ontologyStates.push(ontologyState);
                                 dvm.selectedOntologyState = ontologyState;
                                 dvm.errorMessage = '';

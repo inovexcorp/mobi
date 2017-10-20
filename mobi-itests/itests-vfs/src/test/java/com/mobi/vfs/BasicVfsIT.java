@@ -26,14 +26,14 @@ package com.mobi.vfs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import com.mobi.itests.support.KarafTestSupport;
 import com.mobi.vfs.api.TemporaryVirtualFile;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
@@ -97,7 +97,8 @@ public class BasicVfsIT extends KarafTestSupport {
     @Test
     public void testBasicFunctionality() throws Exception {
         final VirtualFilesystem service = getOsgiService(VirtualFilesystem.class);
-        VirtualFile file = service.resolveVirtualFile("file:///tmp/testFile-" + UUID.randomUUID() + ".txt");
+        VirtualFile file = service.resolveVirtualFile("file://" + System.getProperty("user.dir") + "testFile-"
+                + UUID.randomUUID() + ".txt");
         file.create();
         Assert.assertTrue("Virtual file should exist", file.exists());
         file.delete();

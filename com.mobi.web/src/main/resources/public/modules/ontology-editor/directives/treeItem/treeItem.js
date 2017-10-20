@@ -69,7 +69,7 @@
                     }
 
                     dvm.saved = dvm.isSaved();
-                    
+
                     $scope.$watch(() => os.listItem.inProgressCommit.additions + os.listItem.inProgressCommit.deletions, () => dvm.saved = dvm.isSaved() );
                 }]
             }

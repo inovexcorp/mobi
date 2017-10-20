@@ -83,7 +83,6 @@
 
                     dvm.keywords = _.map(ds.selectedDataset.record[prefixes.catalog + 'keyword'], '@value');
                     dvm.keywords.sort();
-                    dvm.ontologies = [];
                     dvm.selectedOntologies = [];
 
                     dvm.update = function() {
