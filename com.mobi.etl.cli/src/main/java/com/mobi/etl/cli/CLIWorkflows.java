@@ -29,6 +29,7 @@ import com.mobi.etl.api.workflows.WorkflowManager;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.Resource;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
@@ -44,6 +45,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Set;
 
 @Command(scope = "mobi", name = "workflows", description = "Manage Workflows deployed in Mobi")
 @Service
@@ -113,21 +115,24 @@ public class CLIWorkflows implements Action {
                 new IOException("Unsupported RDF file type"));
         Model model = transformer.mobiModel(Rio.parse(new FileInputStream(file), "", format));
         if (format.supportsContexts()) {
-            model.contexts().stream()
-                    .map(resource -> mf.createModel(model).filter(null, null, null, resource))
-                    .map(this::getWorkflow)
-                    .forEach(workflow -> {
-                        try {
-                            addWorkflow(workflow);
-                        } catch (Exception e) {
-                            System.err.println("ERROR: Workflow " + workflow.getResource() + " could not be deployed."
-                                    + " Reason: " + e.getMessage());
-                        }
-                    });
-
+            Set<Resource> contexts = model.contexts();
+            if (contexts.size() == 0) {
+                System.out.println("No named graphs found");
+            } else {
+                contexts.stream()
+                        .map(resource -> mf.createModel(model).filter(null, null, null, resource))
+                        .map(this::getWorkflow)
+                        .forEach(workflow -> {
+                            try {
+                                addWorkflow(workflow);
+                            } catch (Exception e) {
+                                System.err.println("ERROR: Workflow " + workflow.getResource() + " could not be "
+                                        + "deployed. Reason: " + e.getMessage());
+                            }
+                        });
+            }
         } else {
-            Workflow workflow = getWorkflow(model);
-            addWorkflow(workflow);
+            addWorkflow(getWorkflow(model));
         }
     }
 
