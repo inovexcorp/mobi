@@ -33,8 +33,8 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
 RUN ["node"]
 # Base Mobi assembly in the /opt/mobi directory.
 WORKDIR /opt/mobi
-ADD ./mobi-distribution-$MOBI_VERSION.tar.gz ./
-CMD ./mobi-distribution-$MOBI_VERSION/bin/karaf
+ADD ./${project.artifactId}-$MOBI_VERSION.tar.gz ./
+CMD ./${project.artifactId}-$MOBI_VERSION/bin/karaf
 
 EXPOSE 8443
 

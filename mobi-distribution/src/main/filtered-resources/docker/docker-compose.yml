@@ -6,4 +6,4 @@ services:
     build: .
     ports:
       - "8443:8443"
-    command: bash -c '/opt/mobi/mobi-distribution-${project.version}/bin/karaf'
+    command: bash -c '/opt/mobi/${project.artifactId}-${project.version}/bin/karaf'

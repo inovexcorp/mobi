@@ -240,7 +240,7 @@
                         <resource>
                             <targetPath>/</targetPath>
                             <directory>${project.build.directory}</directory>
-                            <include>mobi-distribution-${project.version}.tar.gz</include>
+                            <include>${project.artifactId}-${project.version}.tar.gz</include>
                         </resource>
                     </resources>
                 </configuration>
