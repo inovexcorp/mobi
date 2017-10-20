@@ -28,7 +28,8 @@ var gulp = require('gulp'),
 // Project specific path variables
 var src = './src/main/resources/public/',
     dest = './target/classes/build/',
-    nodeDir = './node_modules/';
+    nodeDir = './node_modules/',
+    spec = src + '**/*Spec.js';
 
 // JS and CSS file lists
 // NOTE: This is where we determine the order in which JS files are loaded
@@ -118,7 +119,7 @@ var createGroupedArray = function(arr, chunkSize) {
     return groups;
 }
 
-var tests = createGroupedArray(glob.sync(src + '**/*Spec.js'), 50);
+var tests = createGroupedArray(glob.sync(spec), 50);
 
 //Method to run jasmine tests
 var runKarma = function(vendorFiles, testFiles, isBuild, done) {
@@ -149,7 +150,7 @@ gulp.task('cacheTemplates', function() {
 
 // Run jasmine tests in PhantomJS with minified source files
 gulp.task('test-minified', ['cacheTemplates', 'minify-scripts'], function(done) {
-    return runKarma([dest + '**/*.js'], src + '**/*Spec.js', true, done);
+    return runKarma([dest + '**/*.js'], spec, true, done);
 });
 
 gulp.task('test-minified-1', ['cacheTemplates'], function(done) {
@@ -178,7 +179,7 @@ gulp.task('test-minified-6', ['test-minified-5'], function(done) {
 
 // Run jasmine tests in PhantomJS with unminified source files
 gulp.task('test-unminified', ['cacheTemplates', 'move-custom-js'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), src + '**/*Spec.js', true, done);
+    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), spec, true, done);
 });
 
 gulp.task('test-unminified-1', ['cacheTemplates'], function(done) {
@@ -207,7 +208,7 @@ gulp.task('test-unminified-6', ['test-unminified-5'], function(done) {
 
 // Launch TDD environment for jasmine tests in Chrome
 gulp.task('tdd', ['cacheTemplates'], function(done) {
-    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(src)), src + '**/*Spec.js', false, done);
+    return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(src)), spec, false, done);
 });
 
 // Concatenate and minifies JS Files
