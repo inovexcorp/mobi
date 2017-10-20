@@ -25,7 +25,10 @@
         <block-content class="padding">
             <error-display ng-if="dvm.errorMessage">{{dvm.errorMessage}}</error-display>
             <form name="dvm.searchForm">
-                <dataset-form-group ng-model="dvm.ds.search.datasetRecordId" on-select="dvm.getTypes()"></dataset-form-group>
+                <div class="dataset-wrapper">
+                    <dataset-form-group ng-model="dvm.ds.search.datasetRecordId" on-select="dvm.getTypes()"></dataset-form-group>
+                    <a class="refresh-link" ng-click="dvm.refresh()" uib-tooltip="Refreshes the dataset metadata" tooltip-append-to-body="true"><i class="fa fa-refresh"></i>Refresh</a>
+                </div>
                 <div class="strike">AND</div>
                 <div class="form-group">
                     <custom-label>Keywords</custom-label>
@@ -63,13 +66,13 @@
                         <custom-label class="property-label">Properties</custom-label>
                         <button type="button" ng-disabled="!dvm.ds.search.datasetRecordId" class="pull-right btn btn-link property-link" ng-click="dvm.showPropertyFilterOverlay = true"><i class="fa fa-fw fa-plus"></i>Property</button>
                     </div>
-                    <md-list>
+                    <md-list ng-class="{disabled: !dvm.ds.search.datasetRecordId}">
                         <md-list-item ng-repeat="meta in dvm.ds.search.queryConfig.filters" class="md-3-line">
                             <div class="md-list-item-text">
                                 <h3 title="{{meta.title}}">{{meta.title}}</h3>
                                 <p>Range: {{dvm.util.getBeautifulIRI(dvm.getLast(meta.path).range)}}</p>
                                 <p>Filter: {{meta.display}}</p>
-                                <md-icon class="md-secondary fa fa-trash-o" ng-click="dvm.removeFilter($index)" aria-label="Remove filter"></md-icon>
+                                <md-icon class="md-secondary fa fa-trash-o" ng-click="dvm.removeFilter($index)" ng-disabled="!dvm.ds.search.datasetRecordId" aria-label="Remove filter"></md-icon>
                             </div>
                         </md-list-item>
                     </md-list>
@@ -77,9 +80,8 @@
             </form>
         </block-content>
         <block-footer class="btn-container clearfix">
-            <button type="submit" class="btn btn-primary" ng-disabled="!dvm.isSubmittable()" ng-click="dvm.submit()">Submit</button>
-            <button class="btn btn-default" ng-click="dvm.refresh()" ng-disabled="!dvm.ds.search.datasetRecordId">Refresh</button>
-            <button class="btn btn-danger pull-right" ng-click="dvm.ds.resetSearchQueryConfig()">Clear</button>
+            <button type="submit" class="btn btn-primary pull-right" ng-disabled="!dvm.isSubmittable()" ng-click="dvm.submit()">Submit</button>
+            <a class="btn btn-link pull-right" ng-click="dvm.ds.resetSearchQueryConfig()">Clear</a>
         </block-footer>
     </block>
     <property-filter-overlay ng-if="dvm.showPropertyFilterOverlay" close-overlay="dvm.showPropertyFilterOverlay = false"></property-filter-overlay>

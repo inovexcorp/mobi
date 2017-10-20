@@ -82,7 +82,7 @@ describe('Search Form directive', function() {
                 exploreSvc.getClassDetails.and.returnValue($q.when([{ontologyRecordTitle: 'title', prop: 'details'}]));
                 controller.getTypes();
                 scope.$apply();
-                expect(discoverStateSvc.search.queryConfig.types).toEqual([]);
+                expect(discoverStateSvc.resetSearchQueryConfig).toHaveBeenCalled();
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('id');
                 expect(angular.copy(discoverStateSvc.search.typeObject)).toEqual({title: [{ontologyRecordTitle: 'title', prop: 'details'}]});
                 expect(controller.errorMessage).toBe('');
@@ -91,7 +91,7 @@ describe('Search Form directive', function() {
                 exploreSvc.getClassDetails.and.returnValue($q.reject('error'));
                 controller.getTypes();
                 scope.$apply();
-                expect(discoverStateSvc.search.queryConfig.types).toEqual([]);
+                expect(discoverStateSvc.resetSearchQueryConfig).toHaveBeenCalled();
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('id');
                 expect(discoverStateSvc.search.typeObject).toEqual({});
                 expect(controller.errorMessage).toBe('error');
@@ -157,7 +157,6 @@ describe('Search Form directive', function() {
             discoverStateSvc.search.properties = [{}];
             spyOn(controller, 'getTypes');
             controller.refresh();
-            expect(discoverStateSvc.search.properties).toBeUndefined();
             expect(controller.getTypes).toHaveBeenCalled();
         });
     });
@@ -175,8 +174,17 @@ describe('Search Form directive', function() {
         it('with a .strike', function() {
             expect(element.querySelectorAll('.strike').length).toEqual(3);
         });
+        it('with a .dataset-wrapper', function() {
+            expect(element.querySelectorAll('.dataset-wrapper').length).toEqual(1);
+        });
         it('with a dataset-form-group', function() {
             expect(element.find('dataset-form-group').length).toEqual(1);
+        });
+        it('with a .refresh-link', function() {
+            expect(element.querySelectorAll('.refresh-link').length).toEqual(1);
+        });
+        it('with a .fa-refresh', function() {
+            expect(element.querySelectorAll('.fa-refresh').length).toEqual(1);
         });
         it('with a block-footer', function() {
             expect(element.find('block-footer').length).toEqual(1);
@@ -217,11 +225,8 @@ describe('Search Form directive', function() {
         it('with a .btn-primary', function() {
             expect(element.querySelectorAll('.btn-primary').length).toBe(1);
         });
-        it('with a .btn-default', function() {
-            expect(element.querySelectorAll('.btn-default').length).toBe(1);
-        });
-        it('with a .btn-danger', function() {
-            expect(element.querySelectorAll('.btn-danger').length).toBe(1);
+        it('with a .btn-container .btn-link', function() {
+            expect(element.querySelectorAll('.btn-container .btn-link').length).toBe(1);
         });
         it('depending on whether an error has occurred', function() {
             expect(element.find('error-display').length).toEqual(0);
