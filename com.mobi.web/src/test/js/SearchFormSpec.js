@@ -77,12 +77,14 @@ describe('Search Form directive', function() {
             beforeEach(function() {
                 discoverStateSvc.search.datasetRecordId = 'id';
                 discoverStateSvc.search.typeObject = {key: []};
+                discoverStateSvc.search.properties = [{}];
             });
             it('resolves', function() {
                 exploreSvc.getClassDetails.and.returnValue($q.when([{ontologyRecordTitle: 'title', prop: 'details'}]));
                 controller.getTypes();
                 scope.$apply();
                 expect(discoverStateSvc.resetSearchQueryConfig).toHaveBeenCalled();
+                expect(discoverStateSvc.search.properties).toBeUndefined();
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('id');
                 expect(angular.copy(discoverStateSvc.search.typeObject)).toEqual({title: [{ontologyRecordTitle: 'title', prop: 'details'}]});
                 expect(controller.errorMessage).toBe('');
@@ -92,6 +94,7 @@ describe('Search Form directive', function() {
                 controller.getTypes();
                 scope.$apply();
                 expect(discoverStateSvc.resetSearchQueryConfig).toHaveBeenCalled();
+                expect(discoverStateSvc.search.properties).toBeUndefined();
                 expect(exploreSvc.getClassDetails).toHaveBeenCalledWith('id');
                 expect(discoverStateSvc.search.typeObject).toEqual({});
                 expect(controller.errorMessage).toBe('error');
@@ -153,11 +156,21 @@ describe('Search Form directive', function() {
         it('getLast should return the last element of the array', function() {
             expect(controller.getLast([0, 1])).toBe(1);
         });
-        it('refresh should set the variable correctly and call the correct method', function() {
-            discoverStateSvc.search.properties = [{}];
-            spyOn(controller, 'getTypes');
-            controller.refresh();
-            expect(controller.getTypes).toHaveBeenCalled();
+        describe('refresh should set the variable correctly and call the correct method when datasetRecordId is', function() {
+            beforeEach(function() {
+                discoverStateSvc.search.properties = [{}];
+                spyOn(controller, 'getTypes');
+            });
+            it('empty', function() {
+                discoverStateSvc.search.datasetRecordId = '';
+                controller.refresh();
+                expect(controller.getTypes).not.toHaveBeenCalled();
+            });
+            it('populated', function() {
+                discoverStateSvc.search.datasetRecordId = 'id';
+                controller.refresh();
+                expect(controller.getTypes).toHaveBeenCalled();
+            });
         });
     });
     describe('replaces the element with the correct html', function() {

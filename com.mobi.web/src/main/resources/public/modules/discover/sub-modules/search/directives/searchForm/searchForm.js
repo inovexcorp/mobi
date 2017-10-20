@@ -80,6 +80,7 @@
 
                     dvm.getTypes = function() {
                         dvm.ds.resetSearchQueryConfig();
+                        dvm.ds.search.properties = undefined;
                         es.getClassDetails(dvm.ds.search.datasetRecordId)
                             .then(details => {
                                 dvm.ds.search.typeObject = _.groupBy(details, 'ontologyRecordTitle');
@@ -107,7 +108,9 @@
                     }
 
                     dvm.refresh = function() {
-                        dvm.getTypes();
+                        if (dvm.ds.search.datasetRecordId) {
+                            dvm.getTypes();
+                        }
                     }
                 }
             }
