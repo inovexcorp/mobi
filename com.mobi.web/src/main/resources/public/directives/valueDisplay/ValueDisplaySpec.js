@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Value Display directive', function() {
-    var $compile, scope, element, isolatedScope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -33,67 +33,75 @@ describe('Value Display directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
-        
+
         scope.value = {'@id': 'new'};
-        element = $compile(angular.element('<value-display value="value"></value-display>'))(scope);
+        this.element = $compile(angular.element('<value-display value="value"></value-display>'))(scope);
         scope.$digest();
-        isolatedScope = element.isolateScope();
-        controller = element.controller('valueDisplay');
+        this.isolatedScope = this.element.isolateScope();
+        this.controller = this.element.controller('valueDisplay');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
         it('value should be one way bound', function() {
-            isolatedScope.value = {'@id': 'different'};
+            this.isolatedScope.value = {'@id': 'different'};
             scope.$digest();
             expect(scope.value).toEqual({'@id': 'new'});
         });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('SPAN');
-            expect(element.hasClass('value-display')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('SPAN');
+            expect(this.element.hasClass('value-display')).toBe(true);
         });
         it('with a .has-id', function() {
-            expect(element.querySelectorAll('.has-id').length).toBe(1);
+            expect(this.element.querySelectorAll('.has-id').length).toBe(1);
 
             scope.value = {};
             scope.$apply();
 
-            expect(element.querySelectorAll('.has-id').length).toBe(0);
+            expect(this.element.querySelectorAll('.has-id').length).toBe(0);
         });
         it('with a .has-value', function() {
-            expect(element.querySelectorAll('.has-value').length).toBe(0);
+            expect(this.element.querySelectorAll('.has-value').length).toBe(0);
 
             scope.value = {'@value': 'value'};
             scope.$apply();
 
-            expect(element.querySelectorAll('.has-value').length).toBe(1);
+            expect(this.element.querySelectorAll('.has-value').length).toBe(1);
         });
         it('with a .text-muted.lang-display', function() {
-            expect(element.querySelectorAll('.text-muted.lang-display').length).toBe(0);
+            expect(this.element.querySelectorAll('.text-muted.lang-display').length).toBe(0);
 
             scope.value = {'@value': 'value', '@language': 'en'};
             scope.$apply();
 
-            expect(element.querySelectorAll('.text-muted.lang-display').length).toBe(1);
+            expect(this.element.querySelectorAll('.text-muted.lang-display').length).toBe(1);
         });
         it('with a .text-muted.type-display', function() {
-            expect(element.querySelectorAll('.text-muted.type-display').length).toBe(0);
+            expect(this.element.querySelectorAll('.text-muted.type-display').length).toBe(0);
 
             scope.value = {'@value': 'value', '@type': 'type'};
             scope.$apply();
 
-            expect(element.querySelectorAll('.text-muted.type-display').length).toBe(1);
+            expect(this.element.querySelectorAll('.text-muted.type-display').length).toBe(1);
         });
     });
     describe('controller methods', function() {
         describe('has should return', function() {
-            var obj = {prop: 'value'};
+            beforeEach(function() {
+                this.obj = {prop: 'value'};
+            });
             it('true when property is present', function() {
-                expect(controller.has(obj, 'prop')).toBe(true);
+                expect(this.controller.has(this.obj, 'prop')).toBe(true);
             });
             it('false when property is not present', function() {
-                expect(controller.has(obj, 'missing')).toBe(false);
+                expect(this.controller.has(this.obj, 'missing')).toBe(false);
             });
         });
     });

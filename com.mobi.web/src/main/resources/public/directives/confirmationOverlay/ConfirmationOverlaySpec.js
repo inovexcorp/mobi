@@ -21,8 +21,7 @@
  * #L%
  */
 describe('Confirmation Overlay directive', function() {
-    var $compile,
-        scope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -32,52 +31,50 @@ describe('Confirmation Overlay directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
-        
+
         scope.cancelText = 'cancel';
         scope.confirmText = 'confirm';
         scope.cancelClick = jasmine.createSpy('cancelClick');
         scope.confirmClick = jasmine.createSpy('confirmClick');
         scope.headerText = 'header';
         scope.size = '';
-
         this.element = $compile(angular.element('<confirmation-overlay cancel-text="cancelText" confirm-text="confirmText" cancel-click="cancelClick()" confirm-click="confirmClick()" header-text="headerText" size="size"></confirmation-overlay>'))(scope);
         scope.$digest();
+        this.isolatedScope = this.element.isolateScope();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
         it('cancelText should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.cancelText = 'Cancel';
+            this.isolatedScope.cancelText = 'Cancel';
             scope.$digest();
             expect(scope.cancelText).toEqual('Cancel');
         });
         it('confirmText should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.confirmText = 'Confirm';
+            this.isolatedScope.confirmText = 'Confirm';
             scope.$digest();
             expect(scope.confirmText).toEqual('Confirm');
         });
         it('cancelClick should be called in parent scope when invoked', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.cancelClick();
-
+            this.isolatedScope.cancelClick();
             expect(scope.cancelClick).toHaveBeenCalled();
         });
         it('confirmClick should be called in parent scope when invoked', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.confirmClick();
-
+            this.isolatedScope.confirmClick();
             expect(scope.confirmClick).toHaveBeenCalled();
         });
         it('headerText should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.headerText = 'Header';
+            this.isolatedScope.headerText = 'Header';
             scope.$digest();
             expect(scope.headerText).toEqual('Header');
         });
         it('size should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.size = 'large';
+            this.isolatedScope.size = 'large';
             scope.$digest();
             expect(scope.size).toEqual('large');
         });
@@ -97,7 +94,7 @@ describe('Confirmation Overlay directive', function() {
             scope.$digest();
             expect(this.element.hasClass('lg')).toBe(true);
             expect(this.element.hasClass('sm')).toBe(false);
-            
+
             scope.size = 'small';
             scope.$digest();
             expect(this.element.hasClass('lg')).toBe(false);

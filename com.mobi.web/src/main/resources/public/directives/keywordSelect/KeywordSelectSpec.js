@@ -22,10 +22,7 @@
  */
 
 describe('Keyword Select directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -37,30 +34,34 @@ describe('Keyword Select directive', function() {
         });
 
         scope.bindModel = '';
-        element = $compile(angular.element('<keyword-select ng-model="bindModel"></keyword-select>'))(scope);
+        this.element = $compile(angular.element('<keyword-select ng-model="bindModel"></keyword-select>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('keywordSelect');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('controller bound variable', function() {
-        beforeEach(function() {
-            controller = element.controller('keywordSelect');
-        });
         it('bindModel is two way bound', function() {
-            controller.bindModel = 'test';
+            this.controller.bindModel = 'test';
             scope.$digest();
             expect(scope.bindModel).toBe('test');
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('keyword-select')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('keyword-select')).toBe(true);
         });
         it('with a custom-label', function() {
-            expect(element.find('custom-label').length).toBe(1);
+            expect(this.element.find('custom-label').length).toBe(1);
         });
         it('with a ui-select', function() {
-            expect(element.find('ui-select').length).toBe(1);
+            expect(this.element.find('ui-select').length).toBe(1);
         });
     });
 });

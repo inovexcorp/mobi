@@ -21,8 +21,7 @@
  * #L%
  */
 describe('Unique Value directive', function() {
-    var $compile,
-        scope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('uniqueValue');
@@ -36,6 +35,12 @@ describe('Unique Value directive', function() {
         scope.value = '';
         this.element = $compile(angular.element('<form name="exampleForm"><input unique-value="list" ng-model="value" /></form>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('should set the correct validity state', function() {

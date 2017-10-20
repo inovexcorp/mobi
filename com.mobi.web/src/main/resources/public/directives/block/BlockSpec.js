@@ -21,10 +21,7 @@
  * #L%
  */
 describe('Block directive', function() {
-    var $compile,
-        element,
-        controller,
-        scope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -35,15 +32,22 @@ describe('Block directive', function() {
             scope = _$rootScope_;
         });
 
-        element = $compile(angular.element('<block></block>'))(scope);
+        this.element = $compile(angular.element('<block></block>'))(scope);
         scope.$digest();
     });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
+    });
+
     describe('contains the correct html', function() {
         it('for a DIV tag', function() {
-            expect(element.prop('tagName')).toBe('DIV');
+            expect(this.element.prop('tagName')).toBe('DIV');
         });
         it('based on .block', function() {
-            expect(element.hasClass('block')).toBe(true);
+            expect(this.element.hasClass('block')).toBe(true);
         });
     });
 });

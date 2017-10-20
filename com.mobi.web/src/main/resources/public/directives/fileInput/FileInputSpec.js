@@ -21,8 +21,7 @@
  * #L%
  */
 describe('File Input directive', function() {
-    var $compile,
-        scope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('fileInput');
@@ -31,15 +30,19 @@ describe('File Input directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
+
+        scope.file = undefined;
+        this.element = $compile(angular.element('<file-input ng-model="file"></file-input>'))(scope);
+        scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('replaces the directive with the correct html', function() {
-        beforeEach(function() {
-            scope.file = undefined;
-
-            this.element = $compile(angular.element('<file-input ng-model="file"></file-input>'))(scope);
-            scope.$digest();
-        });
         it('for an input', function() {
             expect(this.element.prop('tagName')).toBe('INPUT');
             expect(this.element.prop('type')).toBe('file');

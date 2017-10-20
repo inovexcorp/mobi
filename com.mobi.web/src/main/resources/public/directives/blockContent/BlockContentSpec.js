@@ -21,9 +21,7 @@
  * #L%
  */
 describe('Block content directive', function() {
-    var $compile,
-        element,
-        scope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -36,17 +34,24 @@ describe('Block content directive', function() {
 
         var parent = $compile('<div></div>')(scope);
         parent.data('$blockController', {});
-        element = angular.element('<block-content></block-content>');
-        parent.append(element);
-        element = $compile(element)(scope);
+        this.element = angular.element('<block-content></block-content>');
+        parent.append(this.element);
+        this.element = $compile(this.element)(scope);
         scope.$digest();
     });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
+    });
+
     describe('contains the correct html', function() {
         it('for a DIV tag', function() {
-            expect(element.prop('tagName')).toBe('DIV');
+            expect(this.element.prop('tagName')).toBe('DIV');
         });
         it('based on .block-content', function() {
-            expect(element.hasClass('block-content')).toBe(true);
+            expect(this.element.hasClass('block-content')).toBe(true);
         });
     });
 });

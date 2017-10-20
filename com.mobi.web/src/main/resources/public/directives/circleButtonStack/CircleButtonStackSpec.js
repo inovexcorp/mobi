@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Circle Button Stack directive', function() {
-    var $compile, scope, element;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -32,19 +32,25 @@ describe('Circle Button Stack directive', function() {
             scope = _$rootScope_;
         });
 
-        element = $compile(angular.element('<circle-button-stack></circle-button-stack>'))(scope);
+        this.element = $compile(angular.element('<circle-button-stack></circle-button-stack>'))(scope);
         scope.$digest();
     });
 
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
+    });
+
     describe('replaces the element with the correct html', function() {
-        it('for a DIV', function() {
-            expect(element.prop('tagName')).toBe('DIV');
+        it('for wrapping containers', function() {
+            expect(this.element.prop('tagName')).toBe('DIV');
         });
-        it('based on .hidden-buttoms', function() {
-            expect(element.querySelectorAll('.hidden-buttons').length).toBe(1);
+        it('with a .hidden-buttons', function() {
+            expect(this.element.querySelectorAll('.hidden-buttons').length).toBe(1);
         });
-        it('based on circle-button', function() {
-            expect(element.find('circle-button').length).toBe(1);
+        it('with a circle-button', function() {
+            expect(this.element.find('circle-button').length).toBe(1);
         });
     });
 });

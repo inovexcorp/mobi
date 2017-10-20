@@ -21,12 +21,7 @@
  * #L%
  */
 describe('Record Keywords directive', function() {
-    var $compile,
-        scope,
-        element,
-        isolatedScope,
-        controller,
-        prefixes;
+    var $compile, scope, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -41,49 +36,51 @@ describe('Record Keywords directive', function() {
 
         scope.record = {};
         scope.record[prefixes.catalog + 'keyword'] = [{'@value': 'b'}, {'@value': 'a'}];
-        element = $compile(angular.element('<record-keywords record="record"></record-keywords>'))(scope);
+        this.element = $compile(angular.element('<record-keywords record="record"></record-keywords>'))(scope);
         scope.$digest();
+        this.isolatedScope = this.element.isolateScope();
+        this.controller = this.element.controller('recordKeywords');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        prefixes = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            isolatedScope = element.isolateScope();
-        })
         it('record should be one way bound', function() {
             var previousRecord = angular.copy(scope.record);
-            isolatedScope.record = {'@id': ''};
+            this.isolatedScope.record = {'@id': ''};
             scope.$digest();
             expect(scope.record).toEqual(previousRecord);
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('recordKeywords');
-        });
         it('should return all the record keywords sorting alphabetically', function() {
-            expect(controller.getKeywords(scope.record)).toEqual(['a', 'b']);
+            expect(this.controller.getKeywords(scope.record)).toEqual(['a', 'b']);
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            controller = element.controller('recordKeywords');
-            spyOn(controller, 'getKeywords').and.returnValue(['a', 'b']);
+            spyOn(this.controller, 'getKeywords').and.returnValue(['a', 'b']);
         });
         it('for wrapping containers', function() {
-            expect(element.hasClass('record-keywords')).toBe(true);
+            expect(this.element.hasClass('record-keywords')).toBe(true);
         });
         it('with a field-name span', function() {
-            expect(element.querySelectorAll('span.field-name').length).toBe(1);
+            expect(this.element.querySelectorAll('span.field-name').length).toBe(1);
         });
         it('depending on how many keywords there are', function() {
-            expect(element.querySelectorAll('.keywords li').length).toBe(2);
+            expect(this.element.querySelectorAll('.keywords li').length).toBe(2);
 
-            controller.getKeywords.and.returnValue([]);
+            this.controller.getKeywords.and.returnValue([]);
             scope.$digest();
-            expect(element.querySelectorAll('.keywords li').length).toBe(1);
+            expect(this.element.querySelectorAll('.keywords li').length).toBe(1);
         });
         it('depending on whether a list item is last', function() {
-            var listItems = element.querySelectorAll('.keywords li');
+            var listItems = this.element.querySelectorAll('.keywords li');
             expect(angular.element(listItems[0]).hasClass('last')).toBe(false);
             expect(angular.element(listItems[1]).hasClass('last')).toBe(true);
         });
