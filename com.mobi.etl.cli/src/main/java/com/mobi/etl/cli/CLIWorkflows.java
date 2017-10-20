@@ -35,6 +35,7 @@ import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.apache.karaf.shell.support.ShellUtil;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.Rio;
 
@@ -112,20 +113,34 @@ public class CLIWorkflows implements Action {
                 new IOException("Unsupported RDF file type"));
         Model model = transformer.mobiModel(Rio.parse(new FileInputStream(file), "", format));
         if (format.supportsContexts()) {
-            model.contexts().forEach(resource -> {
-                Model workflowModel = mf.createModel(model).filter(null, null, null, resource);
-                getWorkflowAndAdd(workflowModel);
-            });
+            model.contexts().stream()
+                    .map(resource -> mf.createModel(model).filter(null, null, null, resource))
+                    .map(this::getWorkflow)
+                    .forEach(workflow -> {
+                        try {
+                            addWorkflow(workflow);
+                        } catch (Exception e) {
+                            System.err.println("ERROR: Workflow " + workflow.getResource() + " could not be deployed."
+                                    + " Reason: " + e.getMessage());
+                        }
+                    });
+
         } else {
-            getWorkflowAndAdd(model);
+            Workflow workflow = getWorkflow(model);
+            addWorkflow(workflow);
         }
     }
 
-    private void getWorkflowAndAdd(Model model) {
+    private Workflow getWorkflow(Model model) {
         Collection<Workflow> workflows = workflowFactory.getAllExisting(model);
         if (workflows.size() == 0 || workflows.size() > 1) {
-            throw new IllegalArgumentException("RDF file must contain exactly one Workflow");
+            throw new IllegalArgumentException("RDF must contain exactly one Workflow");
         }
-        workflowManager.addWorkflow(workflows.iterator().next());
+        return workflows.iterator().next();
+    }
+
+    private void addWorkflow(Workflow workflow) throws Exception {
+        workflowManager.addWorkflow(workflow);
+        System.out.println("Workflow " + workflow.getResource() + " successfully deployed\n");
     }
 }
