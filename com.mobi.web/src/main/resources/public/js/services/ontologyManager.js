@@ -466,6 +466,25 @@
             }
             /**
              * @ngdoc method
+             * @name getObjProperties
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/ontologies/{recordId}/object-properties endpoint and retrieves an array of object properties
+             * within the ontology.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @return {Promise} A promise with an array containing a list of object properties.
+             */
+            self.getObjProperties = function(recordId, branchId, commitId) {
+                var config = { params: { branchId, commitId } };
+                return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/object-properties', config)
+                    .then(response => response.data, util.rejectError);
+            }
+            /**
+             * @ngdoc method
              * @name getClassesWithIndividuals
              * @methodOf ontologyManager.service:ontologyManagerService
              *

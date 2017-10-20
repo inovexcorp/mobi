@@ -23,26 +23,26 @@
 <div class="property-selector">
     <div ng-if="!dvm.property" class="form-group">
         <custom-label>Property</custom-label>
-        <md-select ng-model="dvm.property" md-on-close="dvm.propertySearch = ''" md-selected-text="dvm.getSelectedPropertyText()" ng-change="dvm.propertyChanged()">
+        <md-select ng-model="dvm.property" md-on-close="dvm.propertySearch = ''" md-selected-text="dvm.getSelectedPropertyText()" ng-change="dvm.propertyChanged()" aria-label="Property">
             <md-select-header>
                 <input ng-model="dvm.propertySearch" type="search" class="search-form-searchbox" ng-keydown="$event.stopPropagation()" placeholder="Search...">
             </md-select-header>
-            <md-optgroup ng-repeat="key in dvm.keys | filter:dvm.shouldDisplayOptGroup track by $index" label="{{dvm.util.getBeautifulIRI(key)}}">
-                <md-option ng-value="property" ng-repeat="property in dvm.ds.search.properties[key] | orderBy:dvm.om.getEntityName | filter:dvm.propertySearch track by $index">{{dvm.om.getEntityName(property)}} :: {{property['@id']}}</md-option>
+            <md-optgroup ng-repeat="key in dvm.keys | filter:dvm.shouldDisplayOptGroup" label="{{dvm.util.getBeautifulIRI(key)}}">
+                <md-option ng-value="property" ng-repeat="property in dvm.ds.search.properties[key] | orderBy:dvm.om.getEntityName | filter:dvm.checkEntityText">{{dvm.om.getEntityName(property)}} :: {{property['@id']}}</md-option>
             </md-optgroup>
             <md-optgroup ng-if="dvm.showNoDomains()">
                 <label class="md-container-ignore">No Domains</label>
-                <md-option ng-value="property" ng-repeat="property in dvm.ds.search.noDomains | orderBy:dvm.om.getEntityName | filter:dvm.propertySearch track by $index">{{dvm.om.getEntityName(property)}} :: {{property['@id']}}</md-option>
+                <md-option ng-value="property" ng-repeat="property in dvm.ds.search.noDomains | orderBy:dvm.om.getEntityName | filter:dvm.checkEntityText">{{dvm.om.getEntityName(property)}} :: {{property['@id']}}</md-option>
             </md-optgroup>
         </md-select>
     </div>
     <div ng-if="dvm.property && dvm.ranges.length > 1" class="form-group">
         <custom-label>Range</custom-label>
-        <md-select ng-model="dvm.range" md-on-close="dvm.rangeSearch = ''" md-selected-text="dvm.getSelectedRangeText()">
+        <md-select ng-model="dvm.range" md-on-close="dvm.rangeSearch = ''" md-selected-text="dvm.getSelectedRangeText()" aria-label="Range">
             <md-select-header>
                 <input ng-model="dvm.rangeSearch" type="search" class="search-form-searchbox" ng-keydown="$event.stopPropagation()" placeholder="Search...">
             </md-select-header>
-            <md-option ng-value="range['@id']" ng-repeat="range in dvm.ranges | orderBy:dvm.orderRange | filter:dvm.rangeSearch track by $index">{{dvm.util.getBeautifulIRI(range['@id'])}} :: {{range['@id']}}</md-option>
+            <md-option ng-value="range['@id']" ng-repeat="range in dvm.ranges | orderBy:dvm.orderRange | filter:dvm.rangeSearch">{{dvm.util.getBeautifulIRI(range['@id'])}} :: {{range['@id']}}</md-option>
         </md-select>
     </div>
 </div>
