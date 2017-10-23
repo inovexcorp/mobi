@@ -23,14 +23,14 @@ package com.mobi.etl.cli.export;
  * #L%
  */
 
+import com.mobi.etl.api.config.rdf.export.RDFExportConfig;
+import com.mobi.etl.api.rdf.export.RDFExportService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import com.mobi.etl.api.config.rdf.export.RDFExportConfig;
-import com.mobi.etl.api.rdf.export.RDFExportService;
 import org.openrdf.rio.RDFFormat;
 
 import java.io.OutputStream;
@@ -44,7 +44,7 @@ public class ExportRDF extends ExportBase implements Action {
     @Reference
     private RDFExportService exportService;
 
-    public void setExportService(RDFExportService exportService) {
+    void setExportService(RDFExportService exportService) {
         this.exportService = exportService;
     }
 
@@ -52,24 +52,24 @@ public class ExportRDF extends ExportBase implements Action {
 
     @Option(name = "-r", aliases = "--repository", description = "The id of the repository that data will be "
             + "exported from")
-    String repositoryId = null;
+    private String repositoryId = null;
 
     @Option( name = "-subj", aliases = "--subject", description = "A subject filter for exported data.")
-    String subj = null;
+    private String subj = null;
 
     @Option(name = "-pred", aliases = "--predicate", description = "A predicate filter for exported data.")
-    String predicate = null;
+    private String predicate = null;
 
-    @Option(name = "-objIRI", aliases = "--objectIRI", description = "An object filter for exported data. Takes " +
-            "precedence over ObjectLiteral")
-    String objIRI = null;
+    @Option(name = "-objIRI", aliases = "--objectIRI", description = "An object filter for exported data. Takes "
+            + "precedence over ObjectLiteral")
+    private String objIRI = null;
 
-    @Option(name = "-objLit", aliases = "--objectLiteral", description = "An object literal filter for exported data. " +
-            "ObjectIRI takes precedence")
-    String objLit = null;
+    @Option(name = "-objLit", aliases = "--objectLiteral", description = "An object literal filter for exported data. "
+            + "ObjectIRI takes precedence")
+    private String objLit = null;
 
     @Option(name = "-g", aliases = "--graph", description = "A graph filter for exported data.")
-    String graph = null;
+    private String graph = null;
 
     // Implementation
 

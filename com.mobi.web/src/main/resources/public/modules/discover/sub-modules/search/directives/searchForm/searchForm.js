@@ -79,7 +79,8 @@
                     }
 
                     dvm.getTypes = function() {
-                        dvm.ds.search.queryConfig.types = [];
+                        dvm.ds.resetSearchQueryConfig();
+                        dvm.ds.search.properties = undefined;
                         es.getClassDetails(dvm.ds.search.datasetRecordId)
                             .then(details => {
                                 dvm.ds.search.typeObject = _.groupBy(details, 'ontologyRecordTitle');
@@ -93,13 +94,23 @@
                     dvm.getSelectedText = function() {
                         return _.join(_.map(dvm.ds.search.queryConfig.types, 'classTitle'), ', ');
                     }
-                    
+
                     dvm.removeFilter = function(index) {
                         _.pullAt(dvm.ds.search.queryConfig.filters, index);
                     }
 
                     dvm.isSubmittable = function() {
                          return dvm.ds.search.datasetRecordId && (dvm.ds.search.queryConfig.keywords.length || dvm.ds.search.queryConfig.types.length || dvm.ds.search.queryConfig.filters.length);
+                    }
+
+                    dvm.getLast = function(path) {
+                        return _.last(path);
+                    }
+
+                    dvm.refresh = function() {
+                        if (dvm.ds.search.datasetRecordId) {
+                            dvm.getTypes();
+                        }
                     }
                 }
             }

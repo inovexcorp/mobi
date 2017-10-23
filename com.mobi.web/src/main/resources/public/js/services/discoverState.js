@@ -96,6 +96,7 @@
         self.reset = function() {
             setStates();
         }
+
         /**
          * @ngdoc method
          * @name resetPagedInstanceDetails
