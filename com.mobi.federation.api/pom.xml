@@ -83,7 +83,7 @@
                         <Bundle-Name>Mobi Federation API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.federation.api*
+                            com.mobi.federation.api.*
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>

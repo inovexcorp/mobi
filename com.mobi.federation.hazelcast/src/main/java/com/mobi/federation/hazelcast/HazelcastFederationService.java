@@ -35,11 +35,6 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.ReplicatedMap;
 import com.hazelcast.osgi.HazelcastOSGiInstance;
 import com.hazelcast.osgi.HazelcastOSGiService;
-import com.mobi.federation.utils.api.UserUtils;
-import com.mobi.jaas.api.engines.Engine;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jwt.SignedJWT;
-import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import com.mobi.exception.MobiException;
 import com.mobi.federation.api.FederationService;
 import com.mobi.federation.api.FederationServiceConfig;
@@ -49,10 +44,15 @@ import com.mobi.federation.hazelcast.config.HazelcastConfigurationFactory;
 import com.mobi.federation.hazelcast.config.HazelcastFederationServiceConfig;
 import com.mobi.federation.hazelcast.listener.FederationServiceLifecycleListener;
 import com.mobi.federation.hazelcast.serializable.HazelcastFederationNode;
+import com.mobi.federation.utils.api.UserUtils;
+import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.utils.TokenUtils;
 import com.mobi.platform.config.api.server.Mobi;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ValueFactory;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jwt.SignedJWT;
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.slf4j.Logger;
@@ -99,7 +99,7 @@ public class HazelcastFederationService implements FederationService {
     /**
      * Key where we'll store a {@link com.hazelcast.core.ReplicatedMap} of federated nodes and metadata about them.
      */
-    public static final String FEDERATION_NODES_KEY = "federation.nodes";
+    private static final String FEDERATION_NODES_KEY = "federation.nodes";
 
     /**
      * The name of this service type.
@@ -196,7 +196,7 @@ public class HazelcastFederationService implements FederationService {
     }
 
     @Reference(target = "(engineName=RdfEngine)")
-    protected void setRdfEngine(Engine engine) {
+    void setRdfEngine(Engine engine) {
         this.rdfEngine = engine;
     }
 
@@ -321,7 +321,7 @@ public class HazelcastFederationService implements FederationService {
 
     @Override
     public FederationServiceConfig getFederationServiceConfig() {
-        return Configurable.createConfigurable(HazelcastFederationServiceConfig.class, configuration);
+        return Configurable.createConfigurable(HazelcastFederationServiceConfig.class, this.configuration);
     }
 
     @Override
@@ -378,17 +378,17 @@ public class HazelcastFederationService implements FederationService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("federationId", getFederationId());
         claims.put("nodeId", getNodeId().toString());
-        return TokenUtils.generateToken(response, username, FEDERATION_SCOPE, tokenKey, claims);
+        return TokenUtils.generateToken(response, username, FEDERATION_SCOPE, this.tokenKey, claims);
     }
 
     @Override
     public Optional<SignedJWT> verifyToken(String tokenString) throws ParseException, JOSEException {
-        return TokenUtils.verifyToken(tokenString, tokenKey);
+        return TokenUtils.verifyToken(tokenString, this.tokenKey);
     }
 
     @Override
     public Optional<SignedJWT> verifyToken(String tokenString, HttpServletResponse res) throws IOException {
-        return TokenUtils.verifyToken(tokenString, res, tokenKey);
+        return TokenUtils.verifyToken(tokenString, res, this.tokenKey);
     }
 
     /**
@@ -418,6 +418,7 @@ public class HazelcastFederationService implements FederationService {
     private void registerUsers() {
         userUtils.createMapEntry(this);
         rdfEngine.getUsers().forEach(user -> userUtils.addUser(this, user));
+        LOGGER.info("Successfully added users to federation infrastructure.");
     }
 
     private Optional<String> getHostAddress() {
