@@ -23,16 +23,7 @@
 /* global expect, FormData */
 
 describe('Dataset Manager service', function() {
-    var $httpBackend,
-        $httpParamSerializer,
-        datasetManagerSvc,
-        catalogManagerSvc,
-        utilSvc,
-        $q,
-        scope,
-        prefixes,
-        discoverStateSvc,
-        recordId = 'http://mobi.com/records/test';
+    var $httpBackend, $httpParamSerializer, datasetManagerSvc, catalogManagerSvc, utilSvc, $q, scope, prefixes, discoverStateSvc;
 
     beforeEach(function() {
         module('datasetManager');
@@ -54,7 +45,21 @@ describe('Dataset Manager service', function() {
             discoverStateSvc = _discoverStateService_;
         });
 
+        this.recordId = 'http://mobi.com/records/test';
         utilSvc.paginatedConfigToParams.and.callFake(_.identity);
+        utilSvc.rejectError.and.returnValue($q.reject('Error Message'));
+    });
+
+    afterEach(function() {
+        $httpBackend = null;
+        $httpParamSerializer = null;
+        datasetManagerSvc = null;
+        catalogManagerSvc = null;
+        utilSvc = null;
+        $q = null;
+        scope = null;
+        prefixes = null;
+        discoverStateSvc = null;
     });
 
     describe('should retrieve a list of DatasetRecords', function() {
@@ -68,37 +73,44 @@ describe('Dataset Manager service', function() {
         });
         it('unless an error occurs', function() {
             $httpBackend.whenGET('/mobirest/datasets').respond(400, null, null, 'Error Message');
-            datasetManagerSvc.getDatasetRecords().then(function() {
-                fail('Promise should have rejected');
-            }, function() {
-                expect(utilSvc.rejectError).toHaveBeenCalled();
-            });
+            datasetManagerSvc.getDatasetRecords()
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
         });
         it('with all config passed', function() {
             var params = $httpParamSerializer(this.config);
             $httpBackend.whenGET('/mobirest/datasets?' + params).respond(200, []);
-            datasetManagerSvc.getDatasetRecords(this.config).then(function(response) {
-                expect(response.data).toEqual([]);
-            }, function() {
-                fail('Promise should have resolved');
-            });
+            datasetManagerSvc.getDatasetRecords(this.config)
+                .then(function(response) {
+                    expect(response.data).toEqual([]);
+                }, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without any config', function() {
             $httpBackend.whenGET('/mobirest/datasets').respond(200, []);
-            datasetManagerSvc.getDatasetRecords().then(function(response) {
-                expect(response.data).toEqual([]);
-            }, function() {
-                fail('Promise should have resolved');
-            });
+            datasetManagerSvc.getDatasetRecords()
+                .then(function(response) {
+                    expect(response.data).toEqual([]);
+                }, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a DatasetRecord', function() {
         it('unless an error occurs', function() {
-            $httpBackend.whenGET('/mobirest/datasets/recordId').respond(400, null, null, 'Error Message');
-            datasetManagerSvc.getDatasetRecord('recordId')
+            $httpBackend.whenGET('/mobirest/datasets/' + encodeURIComponent(this.recordId)).respond(400, null, null, 'Error Message');
+            datasetManagerSvc.getDatasetRecord(this.recordId)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
@@ -110,8 +122,8 @@ describe('Dataset Manager service', function() {
             flushAndVerify($httpBackend);
         });
         it('when resolved', function() {
-            $httpBackend.whenGET('/mobirest/datasets/recordId').respond(200, {});
-            datasetManagerSvc.getDatasetRecord('recordId')
+            $httpBackend.whenGET('/mobirest/datasets/' + encodeURIComponent(this.recordId)).respond(200, {});
+            datasetManagerSvc.getDatasetRecord(this.recordId)
                 .then(function(response) {
                     expect(response).toEqual({});
                 }, function() {
@@ -136,153 +148,173 @@ describe('Dataset Manager service', function() {
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            datasetManagerSvc.createDatasetRecord(this.recordConfig).then(function() {
-                fail('Promise should have rejected');
-            }, function() {
-                expect(utilSvc.rejectError).toHaveBeenCalled();
-            });
+            datasetManagerSvc.createDatasetRecord(this.recordConfig)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
         });
         describe('when no error occurs', function() {
             beforeEach(function() {
                 $httpBackend.expectPOST('/mobirest/datasets',
                     function(data) {
                         return data instanceof FormData;
-                    }).respond(200, recordId);
+                    }).respond(200, this.recordId);
             });
             it('when getDatasetRecord is rejected', function() {
                 spyOn(datasetManagerSvc, 'getDatasetRecord').and.returnValue($q.reject({prop: 'error'}));
-                datasetManagerSvc.createDatasetRecord(this.recordConfig).then(function() {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith({prop: 'error'});
-                });
+                datasetManagerSvc.createDatasetRecord(this.recordConfig)
+                    .then(function() {
+                        fail('Promise should have rejected');
+                    }, _.noop);
                 flushAndVerify($httpBackend);
+                expect(utilSvc.rejectError).toHaveBeenCalledWith({prop: 'error'});
             });
             describe('when getDatasetRecord is resolved', function() {
-                var record = {'@id': recordId};
                 beforeEach(function() {
-                    spyOn(datasetManagerSvc, 'getDatasetRecord').and.returnValue($q.when(record));
+                    this.record = {'@id': this.recordId};
+                    spyOn(datasetManagerSvc, 'getDatasetRecord').and.returnValue($q.when(this.record));
                 });
                 it('using a datasetIRI, description, keywords, and ontologies', function() {
-                    datasetManagerSvc.createDatasetRecord(this.recordConfig).then(function(response) {
-                        expect(datasetManagerSvc.datasetRecords).toContain(record);
-                        expect(response).toBe(recordId);
-                    }, function() {
-                        fail('Promise should have resolved');
-                    });
+                    var self = this;
+                    datasetManagerSvc.createDatasetRecord(this.recordConfig)
+                        .then(function(response) {
+                            expect(response).toBe(self.recordId);
+                        }, function() {
+                            fail('Promise should have resolved');
+                        });
                     flushAndVerify($httpBackend);
+                    expect(datasetManagerSvc.datasetRecords).toContain(this.record);
                 });
                 it('not using a datasetIRI, description, keywords, or ontologies', function() {
                     delete this.recordConfig.datasetIRI;
                     delete this.recordConfig.description;
                     delete this.recordConfig.keywords;
                     delete this.recordConfig.ontologies;
-                    datasetManagerSvc.createDatasetRecord(this.recordConfig).then(function(response) {
-                        expect(datasetManagerSvc.datasetRecords).toContain(record);
-                        expect(response).toBe(recordId);
-                    }, function() {
-                        fail('Promise should have resolved');
-                    });
+                    var self = this;
+                    datasetManagerSvc.createDatasetRecord(this.recordConfig)
+                        .then(function(response) {
+                            expect(response).toBe(self.recordId);
+                        }, function() {
+                            fail('Promise should have resolved');
+                        });
                     flushAndVerify($httpBackend);
+                    expect(datasetManagerSvc.datasetRecords).toContain(this.record);
                 });
             });
         });
     });
     describe('should delete a DatasetRecord', function() {
         it('unless an error occurs', function() {
-            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(recordId) + '?force=false').respond(400, null, null, 'Error Message');
-            datasetManagerSvc.deleteDatasetRecord(recordId).then(function() {
-                fail('Promise should have rejected');
-            }, function() {
-                expect(utilSvc.rejectError).toHaveBeenCalled();
-            });
+            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '?force=false').respond(400, null, null, 'Error Message');
+            datasetManagerSvc.deleteDatasetRecord(this.recordId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
         });
         it('with force delete', function() {
-            var datasetRecord = [{'@id': recordId, '@type': [prefixes.dataset + 'DatasetRecord']}];
+            var datasetRecord = [{'@id': this.recordId, '@type': [prefixes.dataset + 'DatasetRecord']}];
             datasetManagerSvc.datasetRecords = [datasetRecord];
-            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(recordId) + '?force=true').respond(200);
-            datasetManagerSvc.deleteDatasetRecord(recordId, true).then(function() {
-                expect(datasetManagerSvc.datasetRecords).toEqual([]);
-                expect(discoverStateSvc.cleanUpOnDatasetDelete).toHaveBeenCalledWith(recordId);
-            }, function() {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '?force=true').respond(200);
+            datasetManagerSvc.deleteDatasetRecord(this.recordId, true)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
+            expect(datasetManagerSvc.datasetRecords).toEqual([]);
+            expect(discoverStateSvc.cleanUpOnDatasetDelete).toHaveBeenCalledWith(this.recordId);
         });
         it('without force delete', function() {
-            var datasetRecord = [{'@id': recordId, '@type': [prefixes.dataset + 'DatasetRecord']}];
+            var datasetRecord = [{'@id': this.recordId, '@type': [prefixes.dataset + 'DatasetRecord']}];
             datasetManagerSvc.datasetRecords = [datasetRecord];
-            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(recordId) + '?force=false').respond(200);
-            datasetManagerSvc.deleteDatasetRecord(recordId).then(function() {
-                expect(datasetManagerSvc.datasetRecords).toEqual([]);
-                expect(discoverStateSvc.cleanUpOnDatasetDelete).toHaveBeenCalledWith(recordId);
-            }, function() {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '?force=false').respond(200);
+            datasetManagerSvc.deleteDatasetRecord(this.recordId)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
+            expect(datasetManagerSvc.datasetRecords).toEqual([]);
+            expect(discoverStateSvc.cleanUpOnDatasetDelete).toHaveBeenCalledWith(this.recordId);
         });
     });
     describe('should clear a DatasetRecord', function() {
         it('unless an error occurs', function() {
-            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(recordId) + '/data?force=false').respond(400, null, null, 'Error Message');
-            datasetManagerSvc.clearDatasetRecord(recordId).then(function() {
-                fail('Promise should have rejected');
-            }, function() {
-                expect(utilSvc.rejectError).toHaveBeenCalled();
-            });
+            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '/data?force=false').respond(400, null, null, 'Error Message');
+            datasetManagerSvc.clearDatasetRecord(this.recordId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
         });
         it('with force delete', function() {
-            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(recordId) + '/data?force=true').respond(200);
-            datasetManagerSvc.clearDatasetRecord(recordId, true).then(function() {
-                expect(discoverStateSvc.cleanUpOnDatasetClear).toHaveBeenCalledWith(recordId);
-            }, function() {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '/data?force=true').respond(200);
+            datasetManagerSvc.clearDatasetRecord(this.recordId, true)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
+            expect(discoverStateSvc.cleanUpOnDatasetClear).toHaveBeenCalledWith(this.recordId);
         });
         it('without force delete', function() {
-            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(recordId) + '/data?force=false').respond(200);
-            datasetManagerSvc.clearDatasetRecord(recordId).then(function() {
-                expect(discoverStateSvc.cleanUpOnDatasetClear).toHaveBeenCalledWith(recordId);
-            }, function() {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenDELETE('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '/data?force=false').respond(200);
+            datasetManagerSvc.clearDatasetRecord(this.recordId)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
+            expect(discoverStateSvc.cleanUpOnDatasetClear).toHaveBeenCalledWith(this.recordId);
         });
     });
     describe('should update a DatasetRecord', function() {
         it('unless an error occurs', function() {
             catalogManagerSvc.updateRecord.and.returnValue($q.reject('Error Message'));
-            datasetManagerSvc.updateDatasetRecord(recordId, '', []).then(function() {
-                fail('Promise should have rejected');
-            }, function(error) {
-                expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(recordId, '', []);
-                expect(error).toEqual('Error Message');
-            });
+            datasetManagerSvc.updateDatasetRecord(this.recordId, '', [])
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(error) {
+                    expect(error).toEqual('Error Message');
+                });
             scope.$apply();
+            expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(this.recordId, '', []);
         });
         it('on success.', function() {
             expected = [
                 [{'@id': 'record1', 'dcterms:title': [{'@value': 'title 1'}]}],
                 [{'@id': 'record3', 'dcterms:title': [{'@value': 'title 3'}]}],
-                [{'@id': recordId, 'dcterms:title': [{'@value': ''}]}]
+                [{'@id': this.recordId, 'dcterms:title': [{'@value': ''}]}]
             ];
             datasetManagerSvc.datasetRecords = [
                 [{'@id': 'record1', 'dcterms:title': [{'@value': 'title 1'}]}],
-                [{'@id': recordId, 'dcterms:title': [{'@value': 'title 2'}]}],
+                [{'@id': this.recordId, 'dcterms:title': [{'@value': 'title 2'}]}],
                 [{'@id': 'record3', 'dcterms:title': [{'@value': 'title 3'}]}]
             ];
             catalogManagerSvc.updateRecord.and.returnValue($q.resolve(''));
-            datasetManagerSvc.updateDatasetRecord(recordId, '', expected[2]).then(function() {
-                expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(recordId, '', expected[2]);
-                expect(datasetManagerSvc.datasetRecords).toEqual(expected);
-            }, function() {
-                fail('Promise should have resolved');
-            });
+            datasetManagerSvc.updateDatasetRecord(this.recordId, '', expected[2])
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             scope.$apply();
+            expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(this.recordId, '', expected[2]);
+            expect(datasetManagerSvc.datasetRecords).toEqual(expected);
         });
     });
     describe('initialize should call the correct method when getDatasetRecords was', function() {

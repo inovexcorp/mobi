@@ -72,6 +72,29 @@ describe('Login Manager service', function() {
         });
     });
 
+    afterEach(function() {
+        loginManagerSvc = null;
+        $httpBackend = null;
+        state = null;
+        scope = null;
+        $q = null;
+        analyticManagerSvc = null;
+        analyticStateSvc = null;
+        catalogManagerSvc = null;
+        catalogStateSvc = null;
+        datasetManagerSvc = null;
+        datasetStateSvc = null;
+        delimitedManagerSvc = null;
+        discoverStateSvc = null;
+        mapperStateSvc = null;
+        ontologyManagerSvc = null;
+        ontologyStateSvc = null;
+        sparqlManagerSvc = null;
+        stateManagerSvc = null;
+        userManagerSvc = null;
+        userStateSvc = null;
+    });
+
     describe('should log into an account', function() {
         beforeEach(function() {
             this.params = {
@@ -81,49 +104,60 @@ describe('Login Manager service', function() {
         });
         it('unless the credentials are wrong', function() {
             $httpBackend.expectGET('/mobirest/user/login' + createQueryString(this.params)).respond(401, {});
-            loginManagerSvc.login(this.params.username, this.params.password).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(response).toBe('This email/password combination is not correct.');
-            });
+            loginManagerSvc.login(this.params.username, this.params.password)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('This email/password combination is not correct.');
+                });
             flushAndVerify($httpBackend);
         });
         it('unless an error occurs', function() {
             $httpBackend.expectGET('/mobirest/user/login' + createQueryString(this.params)).respond(400, {});
-            loginManagerSvc.login(this.params.username, this.params.password).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(response).toBe('An error has occured. Please try again later.');
-            });
+            loginManagerSvc.login(this.params.username, this.params.password)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('An error has occured. Please try again later.');
+                });
             flushAndVerify($httpBackend);
         });
         it('unless something else went wrong', function() {
             $httpBackend.expectGET('/mobirest/user/login' + createQueryString(this.params)).respond(201, {});
-            loginManagerSvc.login(this.params.username, this.params.password).then(function(response) {
-                expect(response).not.toBe(true);
-                expect(state.go).not.toHaveBeenCalled();
-                expect(loginManagerSvc.currentUser).toBeFalsy();
-            });
+            loginManagerSvc.login(this.params.username, this.params.password)
+                .then(function(response) {
+                    expect(response).not.toBe(true);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
+            expect(state.go).not.toHaveBeenCalled();
+            expect(loginManagerSvc.currentUser).toBeFalsy();
         });
         it('unless the account is anonymous', function() {
             $httpBackend.expectGET('/mobirest/user/login' + createQueryString(this.params)).respond(200, {scope: 'self anon'});
-            loginManagerSvc.login(this.params.username, this.params.password).then(function(response) {
-                expect(response).not.toBe(true);
-                expect(state.go).not.toHaveBeenCalled();
-                expect(loginManagerSvc.currentUser).toBeFalsy();
-            });
+            loginManagerSvc.login(this.params.username, this.params.password)
+                .then(function(response) {
+                    expect(response).not.toBe(true);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
+            expect(state.go).not.toHaveBeenCalled();
+            expect(loginManagerSvc.currentUser).toBeFalsy();
         });
         it('if everything was passed correctly', function() {
             var params = this.params;
             $httpBackend.expectGET('/mobirest/user/login' + createQueryString(params)).respond(200, {sub: params.username});
-            loginManagerSvc.login(params.username, params.password).then(function(response) {
-                expect(response).toBe(true);
-                expect(state.go).toHaveBeenCalledWith('root.home');
-                expect(loginManagerSvc.currentUser).toBe(params.username);
-            });
+            loginManagerSvc.login(params.username, params.password)
+                .then(function(response) {
+                    expect(response).toBe(true);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
+            expect(state.go).toHaveBeenCalledWith('root.home');
+            expect(loginManagerSvc.currentUser).toBe(params.username);
         });
     });
     it('should log a user out', function() {
@@ -147,67 +181,76 @@ describe('Login Manager service', function() {
     describe('should get the current login', function() {
         it('unless an error occurs', function() {
             $httpBackend.expectGET('/mobirest/user/current').respond(400, {});
-            loginManagerSvc.getCurrentLogin().then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(response).toEqual({});
-            });
+            loginManagerSvc.getCurrentLogin()
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual({});
+                });
             flushAndVerify($httpBackend);
         });
         it('unless something else went wrong', function() {
             $httpBackend.expectGET('/mobirest/user/current').respond(201, {});
-            loginManagerSvc.getCurrentLogin().then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(response).toEqual({});
-            });
+            loginManagerSvc.getCurrentLogin()
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual({});
+                });
             flushAndVerify($httpBackend);
         });
         it('successfully', function() {
             $httpBackend.expectGET('/mobirest/user/current').respond(200, {});
-            loginManagerSvc.getCurrentLogin().then(function(response) {
-                expect(response).toEqual({});
-            });
+            loginManagerSvc.getCurrentLogin()
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should correctly test authentication', function() {
         it('unless an error happened', function() {
             spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.reject({}));
-            loginManagerSvc.isAuthenticated().then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(loginManagerSvc.currentUser).toBe('');
-                expect(response).toEqual({});
-                expect(state.go).toHaveBeenCalledWith('login');
-            });
+            loginManagerSvc.isAuthenticated()
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual({});
+                });
             scope.$apply();
+            expect(loginManagerSvc.currentUser).toBe('');
+            expect(state.go).toHaveBeenCalledWith('login');
         });
         it('unless no one is logged in', function() {
             spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.resolve({scope: 'self anon'}));
-            loginManagerSvc.isAuthenticated().then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(loginManagerSvc.currentUser).toBe('');
-                expect(response).toEqual({scope: 'self anon'});
-                expect(state.go).toHaveBeenCalledWith('login');
-            });
+            loginManagerSvc.isAuthenticated()
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual({scope: 'self anon'});
+                });
             scope.$apply();
+            expect(loginManagerSvc.currentUser).toBe('');
+            expect(state.go).toHaveBeenCalledWith('login');
         });
         it('if a user is logged in', function() {
             spyOn(loginManagerSvc, 'getCurrentLogin').and.returnValue($q.resolve({sub: 'user'}));
-            loginManagerSvc.isAuthenticated().then(function(response) {
-                expect(loginManagerSvc.currentUser).toBe('user');
-                expect(catalogManagerSvc.initialize).toHaveBeenCalled();
-                expect(catalogStateSvc.initialize).toHaveBeenCalled();
-                expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
-                expect(ontologyStateSvc.initialize).toHaveBeenCalled();
-                expect(userManagerSvc.initialize).toHaveBeenCalled();
-                expect(stateManagerSvc.initialize).toHaveBeenCalled();
-                expect(datasetManagerSvc.initialize).toHaveBeenCalled();
-                expect(state.go).not.toHaveBeenCalled();
-            });
+            loginManagerSvc.isAuthenticated()
+                .then(_.noop, function(response) {
+                    fail('Promise should have resolved');
+                });
             scope.$apply();
+            expect(loginManagerSvc.currentUser).toBe('user');
+            expect(catalogManagerSvc.initialize).toHaveBeenCalled();
+            expect(catalogStateSvc.initialize).toHaveBeenCalled();
+            expect(ontologyManagerSvc.initialize).toHaveBeenCalled();
+            expect(ontologyStateSvc.initialize).toHaveBeenCalled();
+            expect(userManagerSvc.initialize).toHaveBeenCalled();
+            expect(stateManagerSvc.initialize).toHaveBeenCalled();
+            expect(datasetManagerSvc.initialize).toHaveBeenCalled();
+            expect(state.go).not.toHaveBeenCalled();
         });
     });
 });

@@ -21,10 +21,7 @@
  * #L%
  */
 describe('Catalog State service', function() {
-    var $httpBackend,
-        catalogStateSvc,
-        catalogManagerSvc,
-        utilSvc;
+    var $httpBackend, catalogStateSvc, catalogManagerSvc, utilSvc;
 
     beforeEach(function() {
         module('catalogState');
@@ -36,6 +33,13 @@ describe('Catalog State service', function() {
             catalogManagerSvc = _catalogManagerService_;
             utilSvc = _utilService_;
         });
+    });
+
+    afterEach(function () {
+        $httpBackend = null;
+        catalogStateSvc = null;
+        catalogManagerSvc = null;
+        utilSvc = null;
     });
 
     it('should initialize catalogs state', function() {

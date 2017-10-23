@@ -21,8 +21,7 @@
  * #L%
  */
 describe('Update Refs service', function() {
-    var updateRefsSvc,
-        responseObjSvc;
+    var updateRefsSvc, responseObjSvc;
 
     beforeEach(function() {
         module('responseObj');
@@ -41,13 +40,19 @@ describe('Update Refs service', function() {
         inject(function(updateRefsService, _responseObj_) {
             updateRefsSvc = updateRefsService;
             responseObjSvc = _responseObj_;
-            spyOn(responseObjSvc, 'getItemIri').and.callFake(function(obj) {
-                return _.get(obj, 'iri', '');
-            });
-            spyOn(responseObjSvc, 'validateItem').and.callFake(function(obj) {
-                return typeof obj === 'object';
-            });
         });
+
+        spyOn(responseObjSvc, 'getItemIri').and.callFake(function(obj) {
+            return _.get(obj, 'iri', '');
+        });
+        spyOn(responseObjSvc, 'validateItem').and.callFake(function(obj) {
+            return typeof obj === 'object';
+        });
+    });
+
+    afterEach(function() {
+        updateRefsSvc = null;
+        responseObjSvc = null;
     });
 
     it('should replace all instances of a key in an object with the new key', function() {
