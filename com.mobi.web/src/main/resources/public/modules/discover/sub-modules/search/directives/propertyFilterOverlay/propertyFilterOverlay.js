@@ -22,7 +22,7 @@
  */
 (function() {
     'use strict';
-    
+
     angular
         /**
          * @ngdoc overview
@@ -49,9 +49,9 @@
          * the property filter for the search page.
          */
         .directive('propertyFilterOverlay', propertyFilterOverlay);
-        
+
         propertyFilterOverlay.$inject = ['discoverStateService', 'utilService', 'searchService', 'prefixes', 'ontologyManagerService'];
-        
+
         function propertyFilterOverlay(discoverStateService, utilService, searchService, prefixes, ontologyManagerService) {
             return {
                 restrict: 'E',
@@ -62,7 +62,7 @@
                     closeOverlay: '&'
                 },
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     var util = utilService;
                     var ds = discoverStateService;
@@ -78,6 +78,8 @@
                     dvm.value = undefined;
                     dvm.regex = undefined;
                     dvm.boolean = undefined;
+                    dvm.showFilter = false;
+                    dvm.path = [];
 
                     dvm.submittable = function() {
                         switch (dvm.filterType) {
@@ -96,6 +98,8 @@
                                 return dvm.begin !== undefined && dvm.end !== undefined;
                             case 'Regex':
                                 return dvm.regex !== undefined;
+                            case undefined:
+                                return dvm.path.length && !dvm.showFilter;
                             default:
                                 return false;
                         }
@@ -117,6 +121,7 @@
                                 config.value = dvm.value;
                                 break;
                             case 'Existence':
+                            case undefined:
                                 config.display = 'Existence';
                                 break;
                             case 'Greater than':
@@ -152,12 +157,24 @@
                                 }
                         }
                         ds.search.queryConfig.filters.push(_.assign(config, {
-                            predicate: dvm.property['@id'],
-                            range: dvm.range,
-                            title: dvm.om.getEntityName(dvm.property),
+                            path: _.map(dvm.path, item => ({predicate: item.property['@id'], range: item.range})),
+                            title: _.join(_.map(dvm.path, item => dvm.om.getEntityName(item.property)), ' > '),
                             type: dvm.filterType
                         }));
                         dvm.closeOverlay();
+                    }
+
+                    dvm.propertySelected = function() {
+                        if (dvm.property) {
+                            dvm.path.push({property: angular.copy(dvm.property), range: dvm.range});
+                            if (dvm.om.isObjectProperty(dvm.property)) {
+                                dvm.keys = [dvm.range];
+                                dvm.property = undefined;
+                                dvm.range = undefined;
+                            } else {
+                                dvm.showFilter = true;
+                            }
+                        }
                     }
 
                     function setProperties() {
@@ -187,6 +204,10 @@
                     }
 
                     function getKeys() {
+                        var selectedTypes = _.map(ds.search.queryConfig.types, 'classIRI');
+                        if (selectedTypes.length) {
+                            return _.sortBy(_.intersection(selectedTypes, _.keys(ds.search.properties)));
+                        }
                         return _.sortBy(_.keys(ds.search.properties));
                     }
 
@@ -199,7 +220,9 @@
                     }
 
                     setProperties();
-                }
+
+                    $scope.$watch('dvm.range', dvm.propertySelected);
+                }]
             }
         }
 })();
