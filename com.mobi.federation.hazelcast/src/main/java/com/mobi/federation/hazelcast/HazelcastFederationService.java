@@ -374,11 +374,11 @@ public class HazelcastFederationService implements FederationService {
     }
 
     @Override
-    public SignedJWT generateToken(HttpServletResponse res, String username) throws IOException {
+    public SignedJWT generateToken(HttpServletResponse response, String username) throws IOException {
         Map<String, Object> claims = new HashMap<>();
         claims.put("federationId", getFederationId());
         claims.put("nodeId", getNodeId().toString());
-        return TokenUtils.generateToken(res, username, FEDERATION_SCOPE, tokenKey, claims);
+        return TokenUtils.generateToken(response, username, FEDERATION_SCOPE, tokenKey, claims);
     }
 
     @Override
