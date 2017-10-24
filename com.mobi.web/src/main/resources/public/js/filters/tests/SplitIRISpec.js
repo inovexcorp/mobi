@@ -31,6 +31,11 @@ describe('Split IRI filter', function() {
         });
     });
 
+    afterEach(function() {
+        $filter = null;
+        responseObj = null;
+    });
+
     it('returns an object with empty string values if iri is falsey or an object', function() {
         var result;
         _.forEach([false, '', 0, undefined, null, {}, []], function(value) {
@@ -87,7 +92,7 @@ describe('Split IRI filter', function() {
                         begin: 'a:a/a',
                         then: ':',
                         end: 'a'
-                    }  
+                    }
                 }
             ];
         _.forEach(tests, function(test) {

@@ -21,8 +21,7 @@
  * #L%
  */
 describe('User State service', function() {
-    var $httpBackend,
-        userStateSvc;
+    var userStateSvc;
 
     beforeEach(function() {
         module('userState');
@@ -30,6 +29,10 @@ describe('User State service', function() {
         inject(function(userStateService) {
             userStateSvc = userStateService;
         });
+    });
+
+    afterEach(function() {
+        userStateSvc = null;
     });
 
     it('should reset variables', function() {

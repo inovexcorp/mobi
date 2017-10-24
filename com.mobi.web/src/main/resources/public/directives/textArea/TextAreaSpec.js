@@ -21,78 +21,67 @@
  * #L%
  */
 describe('Text Area directive', function() {
-    var $compile,
-        scope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
-        angular.module('customLabel', []);
         module('textArea');
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
+
+        scope.bindModel = '';
+        scope.changeEvent = jasmine.createSpy('changeEvent');
+        scope.displayText = '';
+        scope.mutedText = '';
+        scope.required = true;
+        scope.textAreaName = '';
+        this.element = $compile(angular.element('<text-area ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText" required="required" text-area-name="textAreaName"></text-area>'))(scope);
+        scope.$digest();
+        this.isolatedScope = this.element.isolateScope();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            scope.bindModel = '';
-            scope.changeEvent = jasmine.createSpy('changeEvent');
-            scope.displayText = '';
-            scope.mutedText = '';
-            scope.required = true;
-            scope.textAreaName = '';
-
-            this.element = $compile(angular.element('<text-area ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText" required="required" text-area-name="textAreaName"></text-area>'))(scope);
-            scope.$digest();
-        });
         it('bindModel should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.bindModel = 'Test';
+            this.isolatedScope.bindModel = 'Test';
             scope.$digest();
             expect(scope.bindModel).toEqual('Test');
         });
         it('changeEvent should be called in parent scope when invoked', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.changeEvent();
-
+            this.isolatedScope.changeEvent();
             expect(scope.changeEvent).toHaveBeenCalled();
         });
         it('displayText should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.displayText = 'Test';
+            this.isolatedScope.displayText = 'Test';
             scope.$digest();
             expect(scope.displayText).toEqual('');
         });
         it('mutedText should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.mutedText = 'Test';
+            this.isolatedScope.mutedText = 'Test';
             scope.$digest();
             expect(scope.mutedText).toEqual('');
         });
         it('required should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.required = false;
+            this.isolatedScope.required = false;
             scope.$digest();
             expect(scope.required).toBe(true);
         });
         it('textAreaName should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.textAreaName = 'Test';
+            this.isolatedScope.textAreaName = 'Test';
             scope.$digest();
             expect(scope.textAreaName).toBe('');
         });
     });
     describe('contains the correct html', function() {
         beforeEach(function() {
-            scope.bindModel = '';
-            scope.changeEvent = jasmine.createSpy('changeEvent');
-            scope.displayText = '';
-            scope.mutedText = '';
-
-            this.element = $compile(angular.element('<text-area ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText" required="required" text-area-name="textAreaName"></text-area>'))(scope);
-            scope.$digest();
             this.firstChild = angular.element(this.element.children()[0]);
         });
         it('for wrapping containers', function() {
@@ -106,20 +95,15 @@ describe('Text Area directive', function() {
         });
         it('depending on whether it is required or not', function() {
             var textArea = angular.element(this.firstChild.find('textarea')[0]);
-            expect(textArea.attr('required')).toBeFalsy();
-
-            scope.required = true;
-            scope.$digest();
             expect(textArea.attr('required')).toBeTruthy();
+
+            scope.required = false;
+            scope.$digest();
+            expect(textArea.attr('required')).toBeFalsy();
         });
     });
     it('should call changeEvent when the text in the textarea changes', function() {
-        scope.bindModel = '';
-        scope.changeEvent = jasmine.createSpy('changeEvent');
-        var element = $compile(angular.element('<text-area ng-model="bindModel" change-event="changeEvent()" display-text="displayText" muted-text="mutedText" required="required" text-area-name="textAreaName"></text-area>'))(scope);
-        scope.$digest();
-
-        var input = angular.element(element.find('textarea')[0]);
+        var input = angular.element(this.element.find('textarea')[0]);
         input.val('Test').triggerHandler('input');
         expect(scope.changeEvent).toHaveBeenCalled();
     });

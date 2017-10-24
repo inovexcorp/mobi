@@ -33,6 +33,12 @@ describe('Http service', function() {
         });
     });
 
+    afterEach(function() {
+        httpSvc = null;
+        $http = null;
+        $q = null;
+    });
+
     describe('isPending should return', function() {
         it('true if id exists in pending array', function() {
             httpSvc.pending = [{
@@ -44,30 +50,27 @@ describe('Http service', function() {
             expect(httpSvc.isPending('id')).toBe(false);
         });
     });
-
     describe('cancel should resolve the correct canceller', function() {
-        var resolve;
         beforeEach(function() {
-            resolve = jasmine.createSpy('resolve');
+            this.resolve = jasmine.createSpy('resolve');
             httpSvc.pending = [{
                 id: 'id',
                 canceller: {
-                    resolve: resolve
+                    resolve: this.resolve
                 }
             }];
         });
         it('if id is present', function() {
             spyOn(httpSvc, 'isPending').and.returnValue(true);
             httpSvc.cancel('id', false);
-            expect(resolve).toHaveBeenCalled();
+            expect(this.resolve).toHaveBeenCalled();
         });
         it('if id is not present', function() {
             spyOn(httpSvc, 'isPending').and.returnValue(false);
             httpSvc.cancel('not-there');
-            expect(resolve).not.toHaveBeenCalled();
+            expect(this.resolve).not.toHaveBeenCalled();
         });
     });
-
     describe('get should call the correct methods when id', function() {
         beforeEach(function() {
             spyOn($http, 'get').and.callThrough();

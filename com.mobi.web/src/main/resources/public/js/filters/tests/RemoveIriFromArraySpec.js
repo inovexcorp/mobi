@@ -21,8 +21,7 @@
  * #L%
  */
 describe('Remove IRI From Array filter', function() {
-    var $filter,
-        responseObjSvc;
+    var $filter, responseObjSvc;
 
     beforeEach(function() {
         module('responseObj');
@@ -35,6 +34,11 @@ describe('Remove IRI From Array filter', function() {
                 return _.get(obj, 'iri', '');
             });
         });
+    });
+
+    afterEach(function() {
+        $filter = null;
+        responseObjSvc = null;
     });
 
     it('returns an array with the passed value if not an array and item is falsey', function() {

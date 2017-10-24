@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Custom Header directive', function() {
-    var $compile, scope, element, controller, isolatedScope, loginManagerSvc, userManagerSvc;
+    var $compile, scope, loginManagerSvc, userManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -37,36 +37,43 @@ describe('Custom Header directive', function() {
         });
 
         scope.pageTitle = '';
-        element = $compile(angular.element('<custom-header page-title="pageTitle"></custom-header>'))(scope);
+        this.element = $compile(angular.element('<custom-header page-title="pageTitle"></custom-header>'))(scope);
         scope.$digest();
-        isolatedScope = element.isolateScope();
-        controller = element.controller('customHeader');
+        this.isolatedScope = this.element.isolateScope();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        loginManagerSvc = null;
+        userManagerSvc = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
         it('pageTitle should be one way bound', function() {
-            isolatedScope.pageTitle = 'Title';
+            this.isolatedScope.pageTitle = 'Title';
             scope.$digest();
             expect(scope.pageTitle).toEqual('');
         });
     });
-    describe('contains the correct html', function() {
+    describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.hasClass('main-header')).toBe(true);
-            expect(element.querySelectorAll('.actions').length).toBe(1);
+            expect(this.element.hasClass('main-header')).toBe(true);
+            expect(this.element.querySelectorAll('.actions').length).toBe(1);
         });
         it('for user management item', function(){
             userManagerSvc.isAdmin.and.returnValue(false);
             scope.$digest();
-            expect(element.find('li').length).toBe(1);
+            expect(this.element.find('li').length).toBe(1);
 
             userManagerSvc.isAdmin.and.returnValue(true);
             scope.$digest();
-            expect(element.find('li').length).toBe(3);
+            expect(this.element.find('li').length).toBe(3);
         });
     });
     it('should logout when the link is clicked', function() {
-        var link = angular.element(element.querySelectorAll('a[title="Logout"]')[0]);
+        var link = angular.element(this.element.querySelectorAll('a[title="Logout"]')[0]);
         link.triggerHandler('click');
         expect(loginManagerSvc.logout).toHaveBeenCalled();
     });

@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Block search directive', function() {
-    var $compile,
-        element,
-        controller,
-        isolatedScope,
-        scope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -42,50 +38,53 @@ describe('Block search directive', function() {
 
         var parent = $compile('<div></div>')(scope);
         parent.data('$blockController', {});
-        element = angular.element('<block-search ng-model="bindModel" keyup-event="keyupEvent()" clear-event="clearEvent()"></block-search>');
-        parent.append(element);
-        element = $compile(element)(scope);
+        this.element = angular.element('<block-search ng-model="bindModel" keyup-event="keyupEvent()" clear-event="clearEvent()"></block-search>');
+        parent.append(this.element);
+        this.element = $compile(this.element)(scope);
         scope.$digest();
+        this.isolatedScope = this.element.isolateScope();
     });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
+    });
+
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            isolatedScope = element.isolateScope();
-        });
         it('bindModel should be two way bound', function() {
-            isolatedScope.bindModel = 'test';
+            this.isolatedScope.bindModel = 'test';
             scope.$digest();
             expect(scope.bindModel).toBe('test');
         })
         it('keyupEvent should be called in parent scope when invoked', function() {
-            isolatedScope.keyupEvent();
+            this.isolatedScope.keyupEvent();
             expect(scope.keyupEvent).toHaveBeenCalled();
         });
         it('clearEvent should be called in parent scope when invoked', function() {
-            isolatedScope.clearEvent();
+            this.isolatedScope.clearEvent();
             expect(scope.clearEvent).toHaveBeenCalled();
         });
     });
-    describe('contains the correct html', function() {
-        it('for a DIV tag', function() {
-            expect(element.prop('tagName')).toBe('DIV');
+    describe('replaces the element with the correct html', function() {
+        it('for wrapping containers', function() {
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('search')).toBe(true);
         });
-        it('based on .search', function() {
-            expect(element.hasClass('search')).toBe(true);
+        it('with an i', function() {
+            expect(this.element.find('i').length).toBe(1);
         });
-        it('based on i', function() {
-            expect(element.find('i').length).toBe(1);
+        it('with a .fa-search', function() {
+            expect(this.element.querySelectorAll('.fa-search').length).toBe(1);
         });
-        it('based on .fa-search', function() {
-            expect(element.querySelectorAll('.fa-search').length).toBe(1);
+        it('with a input', function() {
+            expect(this.element.find('input').length).toBe(1);
         });
-        it('based on input', function() {
-            expect(element.find('input').length).toBe(1);
+        it('with an a', function() {
+            expect(this.element.find('a').length).toBe(1);
         });
-        it('based on a', function() {
-            expect(element.find('a').length).toBe(1);
-        });
-        it('based on .fa-times-circle', function() {
-            expect(element.querySelectorAll('.fa-times-circle').length).toBe(1);
+        it('with a .fa-times-circle', function() {
+            expect(this.element.querySelectorAll('.fa-times-circle').length).toBe(1);
         });
     });
 });

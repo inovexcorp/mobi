@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Mapper State service', function() {
-    var $q, scope, mapperStateSvc, prefixes, ontologyManagerSvc, mappingManagerSvc, delimitedManagerSvc, utilSvc, catalogManagerSvc;
+    var mapperStateSvc, $q, scope, prefixes, ontologyManagerSvc, mappingManagerSvc, delimitedManagerSvc, utilSvc, catalogManagerSvc;
 
     beforeEach(function() {
         module('mapperState');
@@ -44,8 +44,8 @@ describe('Mapper State service', function() {
             catalogManagerSvc = _catalogManagerService_;
         });
 
-        catalogId = 'catalog';
-        catalogManagerSvc.localCatalog = {'@id': catalogId};
+        this.catalogId = 'catalog';
+        catalogManagerSvc.localCatalog = {'@id': this.catalogId};
         mapperStateSvc.mapping = {
             jsonld: [],
             record: {id: 'mapping'},
@@ -54,6 +54,18 @@ describe('Mapper State service', function() {
                 deletions: []
             }
         };
+    });
+
+    afterEach(function() {
+        mapperStateSvc = null;
+        $q = null;
+        scope = null;
+        prefixes = null;
+        ontologyManagerSvc = null;
+        mappingManagerSvc = null;
+        delimitedManagerSvc = null;
+        utilSvc = null;
+        catalogManagerSvc = null;
     });
 
     it('should initialize important variables', function() {
@@ -94,62 +106,47 @@ describe('Mapper State service', function() {
     });
     describe('should save the current mapping', function() {
         describe('if it is a new mapping', function() {
-            var uploadDeferred;
             beforeEach(function() {
                 mapperStateSvc.newMapping = true;
-                uploadDeferred = $q.defer();
-                mappingManagerSvc.upload.and.returnValue(uploadDeferred.promise);
             });
-            it('unless an error occurs', function(done) {
-                uploadDeferred.reject('Error message');
-                mapperStateSvc.saveMapping().then(function(response) {
-                    fail('Promise should have rejected');
-                    done();
-                }, function(response) {
-                    expect(response).toEqual('Error message');
-                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.record.title, mapperStateSvc.mapping.record.description, mapperStateSvc.mapping.record.keywords);
-                    expect(catalogManagerSvc.createInProgressCommit).not.toHaveBeenCalled();
-                    done();
-                });
+            it('unless an error occurs', function() {
+                mappingManagerSvc.upload.and.returnValue($q.reject('Error message'));
+                mapperStateSvc.saveMapping()
+                    .then(function(response) {
+                        fail('Promise should have rejected');
+                    }, function(response) {
+                        expect(response).toEqual('Error message');
+                    });
                 scope.$apply();
+                expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.record.title, mapperStateSvc.mapping.record.description, mapperStateSvc.mapping.record.keywords);
+                expect(catalogManagerSvc.createInProgressCommit).not.toHaveBeenCalled();
             });
-            it('successfully', function(done) {
-                uploadDeferred.resolve('id');
+            it('successfully', function() {
+                mappingManagerSvc.upload.and.returnValue($q.when('id'));
                 mapperStateSvc.saveMapping().then(function(response) {
                     expect(response).toEqual('id');
-                    expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.record.title, mapperStateSvc.mapping.record.description, mapperStateSvc.mapping.record.keywords);
-                    expect(catalogManagerSvc.createInProgressCommit).not.toHaveBeenCalled();
-                    done();
                 }, function(response) {
                     fail('Promise should have resolved');
-                    done();
                 });
                 scope.$apply();
+                expect(mappingManagerSvc.upload).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, mapperStateSvc.mapping.record.title, mapperStateSvc.mapping.record.description, mapperStateSvc.mapping.record.keywords);
+                expect(catalogManagerSvc.createInProgressCommit).not.toHaveBeenCalled();
             });
         });
         describe('if it is an existing mapping', function() {
-            var createDeferred;
             beforeEach(function() {
                 mapperStateSvc.newMapping = false;
-                createDeferred = $q.defer();
-                catalogManagerSvc.createInProgressCommit.and.returnValue(createDeferred.promise);
             });
             describe("and createInProgressCommit resolves", function() {
-                var updateDeferred;
                 beforeEach(function() {
-                    createDeferred.resolve();
-                    updateDeferred = $q.defer();
-                    catalogManagerSvc.updateInProgressCommit.and.returnValue(updateDeferred.promise);
+                    catalogManagerSvc.createInProgressCommit.and.returnValue($q.when());
                 });
                 describe('and updateInProgressCommit resolves', function() {
-                    var createCommitDeferred;
                     beforeEach(function() {
-                        updateDeferred.resolve();
-                        createCommitDeferred = $q.defer();
-                        catalogManagerSvc.createBranchCommit.and.returnValue(createCommitDeferred.promise);
+                        catalogManagerSvc.updateInProgressCommit.and.returnValue($q.when());
                     });
-                    it('and createBranchCommit resolves', function(done) {
-                        createCommitDeferred.resolve('');
+                    it('and createBranchCommit resolves', function() {
+                        catalogManagerSvc.createBranchCommit.and.returnValue($q.when(''));
                         var add1 = {'@id': 'add1'};
                         var add2 = {'@id': 'add2'};
                         var add3 = {'@id': 'add3'};
@@ -174,65 +171,61 @@ describe('Mapper State service', function() {
                             }
                         });
                         utilSvc.getBeautifulIRI.and.callFake(_.identity);
-                        mapperStateSvc.saveMapping().then(function(response) {
-                            expect(response).toEqual(mapperStateSvc.mapping.record.id);
-                            expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId);
-                            expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
-                            expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId, mapperStateSvc.mapping.difference);
-                            expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.branch, mapperStateSvc.mapping.record.id, catalogId, 'Changed Class, Prop 1, add3, Prop 2');
-                            done();
-                        }, function(response) {
-                            fail('Promise should have resolved');
-                            done();
-                        });
+                        mapperStateSvc.saveMapping()
+                            .then(function(response) {
+                                expect(response).toEqual(mapperStateSvc.mapping.record.id);
+                            }, function(response) {
+                                fail('Promise should have resolved');
+                            });
                         scope.$apply();
+                        expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId);
+                        expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
+                        expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId, mapperStateSvc.mapping.difference);
+                        expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.branch, mapperStateSvc.mapping.record.id, this.catalogId, 'Changed Class, Prop 1, add3, Prop 2');
                     });
-                    it('and createBranchCommit rejects', function(done) {
-                        createCommitDeferred.reject('Error message');
-                        mapperStateSvc.saveMapping().then(function(response) {
+                    it('and createBranchCommit rejects', function() {
+                        catalogManagerSvc.createBranchCommit.and.returnValue($q.reject('Error message'));
+                        mapperStateSvc.saveMapping()
+                            .then(function(response) {
+                                fail('Promise should have rejected');
+                            }, function(response) {
+                                expect(response).toEqual('Error message');
+                            });
+                        scope.$apply();
+                        expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId);
+                        expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
+                        expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId, mapperStateSvc.mapping.difference);
+                        expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.branch, mapperStateSvc.mapping.record.id, this.catalogId, jasmine.any(String));
+                    });
+                });
+                it('and updateInProgressCommit rejects', function() {
+                    catalogManagerSvc.updateInProgressCommit.and.returnValue($q.reject('Error message'));
+                    mapperStateSvc.saveMapping()
+                        .then(function(response) {
                             fail('Promise should have rejected');
-                            done();
                         }, function(response) {
                             expect(response).toEqual('Error message');
-                            expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId);
-                            expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
-                            expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId, mapperStateSvc.mapping.difference);
-                            expect(catalogManagerSvc.createBranchCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.branch, mapperStateSvc.mapping.record.id, catalogId, jasmine.any(String));
-                            done();
                         });
-                        scope.$apply();
-                    });
-                });
-                it('and updateInProgressCommit rejects', function(done) {
-                    updateDeferred.reject('Error message');
-                    mapperStateSvc.saveMapping().then(function(response) {
-                        fail('Promise should have rejected');
-                        done();
-                    }, function(response) {
-                        expect(response).toEqual('Error message');
-                        expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId);
-                        expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
-                        expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId, mapperStateSvc.mapping.difference);
-                        expect(catalogManagerSvc.createBranchCommit).not.toHaveBeenCalled();
-                        done();
-                    });
                     scope.$apply();
+                    expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId);
+                    expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
+                    expect(catalogManagerSvc.updateInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId, mapperStateSvc.mapping.difference);
+                    expect(catalogManagerSvc.createBranchCommit).not.toHaveBeenCalled();
                 });
             });
-            it('and createInProgressCommit rejects', function(done) {
-                createDeferred.reject('Error message');
-                mapperStateSvc.saveMapping().then(function(response) {
-                    fail('Promise should have rejected');
-                    done();
-                }, function(response) {
-                    expect(response).toEqual('Error message');
-                    expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, catalogId);
-                    expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
-                    expect(catalogManagerSvc.updateInProgressCommit).not.toHaveBeenCalled();
-                    expect(catalogManagerSvc.createBranchCommit).not.toHaveBeenCalled();
-                    done();
-                });
+            it('and createInProgressCommit rejects', function() {
+                catalogManagerSvc.createInProgressCommit.and.returnValue($q.reject('Error message'));
+                mapperStateSvc.saveMapping()
+                    .then(function(response) {
+                        fail('Promise should have rejected');
+                    }, function(response) {
+                        expect(response).toEqual('Error message');
+                    });
                 scope.$apply();
+                expect(catalogManagerSvc.createInProgressCommit).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.catalogId);
+                expect(mappingManagerSvc.upload).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.updateInProgressCommit).not.toHaveBeenCalled();
+                expect(catalogManagerSvc.createBranchCommit).not.toHaveBeenCalled();
             });
         });
     });
@@ -358,8 +351,12 @@ describe('Mapper State service', function() {
         expect(result).toContain({ontologyId: ontologies[1].id, classObj: classes2[0]});
     });
     describe('should reflect the change of a property value in the difference', function() {
-        var entityId = 'entity', propId = 'prop', newValue = 'new', originalValue = 'original', otherValue = 'other';
-        beforeEach(function () {
+        beforeEach(function() {
+            this.entityId = 'entity';
+            this.propId = 'prop';
+            this.newValue = 'new';
+            this.originalValue = 'original';
+            this.otherValue = 'other';
             utilSvc.getPropertyValue.and.callFake(function(obj, propId) {
                 return _.get(obj, "['" + propId + "'][0]['@value']", '');
             });
@@ -370,216 +367,217 @@ describe('Mapper State service', function() {
         it('unless the new value is the same as the original', function() {
             var additions = angular.copy(mapperStateSvc.mapping.difference.additions);
             var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
-            mapperStateSvc.changeProp(entityId, propId, newValue, newValue);
+            mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, this.newValue);
             expect(mapperStateSvc.mapping.difference.additions).toEqual(additions);
             expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
         });
         describe('if the new value is different', function() {
             describe('and the property has a @id value', function() {
                 it('and the property was just set', function() {
-                    var additionObj = {'@id': entityId};
-                    additionObj[propId] = [{'@id': originalValue}];
+                    var additionObj = {'@id': this.entityId};
+                    additionObj[this.propId] = [{'@id': this.originalValue}];
                     mapperStateSvc.mapping.difference.additions.push(additionObj);
                     var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
-                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue, true);
-                    expect(additionObj[propId]).toEqual([{'@id': newValue}]);
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, this.originalValue, true);
+                    expect(additionObj[this.propId]).toEqual([{'@id': this.newValue}]);
                     expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
                 });
                 it('and the entity was just opened', function() {
-                    var expectedAddition = {'@id': entityId};
-                    expectedAddition[propId] = [{'@id': newValue}];
-                    var expectedDeletion = {'@id': entityId};
-                    expectedDeletion[propId] = [{'@id': originalValue}];
-                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue, true);
+                    var expectedAddition = {'@id': this.entityId};
+                    expectedAddition[this.propId] = [{'@id': this.newValue}];
+                    var expectedDeletion = {'@id': this.entityId};
+                    expectedDeletion[this.propId] = [{'@id': this.originalValue}];
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, this.originalValue, true);
                     expect(mapperStateSvc.mapping.difference.additions).toContain(expectedAddition);
                     expect(mapperStateSvc.mapping.difference.deletions).toContain(expectedDeletion);
                 });
                 it('and the entity was opened and the property already changed', function() {
-                    var additionObj = {'@id': entityId};
-                    additionObj[propId] = [{'@id': originalValue}];
+                    var additionObj = {'@id': this.entityId};
+                    additionObj[this.propId] = [{'@id': this.originalValue}];
                     mapperStateSvc.mapping.difference.additions.push(additionObj);
-                    var deletionObj = {'@id': entityId};
-                    deletionObj[propId] = [{'@id': otherValue}];
+                    var deletionObj = {'@id': this.entityId};
+                    deletionObj[this.propId] = [{'@id': this.otherValue}];
                     mapperStateSvc.mapping.difference.deletions.push(deletionObj);
-                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue, true);
-                    expect(additionObj[propId]).toEqual([{'@id': newValue}]);
-                    expect(deletionObj[propId]).toEqual([{'@id': otherValue}]);
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, this.originalValue, true);
+                    expect(additionObj[this.propId]).toEqual([{'@id': this.newValue}]);
+                    expect(deletionObj[this.propId]).toEqual([{'@id': this.otherValue}]);
                 });
                 it('and nothing has been set on the entity', function() {
-                    var expectedAddition = {'@id': entityId};
-                    expectedAddition[propId] = [{'@id': newValue}];
+                    var expectedAddition = {'@id': this.entityId};
+                    expectedAddition[this.propId] = [{'@id': this.newValue}];
                     var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
-                    mapperStateSvc.changeProp(entityId, propId, newValue, '', true);
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, '', true);
                     expect(mapperStateSvc.mapping.difference.additions).toContain(expectedAddition);
                     expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
                 });
                 it('and the entity was opened and another property was altered', function() {
-                    var additionObj = {'@id': entityId};
+                    var additionObj = {'@id': this.entityId};
                     mapperStateSvc.mapping.difference.additions.push(additionObj);
-                    var deletionObj = {'@id': entityId};
+                    var deletionObj = {'@id': this.entityId};
                     mapperStateSvc.mapping.difference.deletions.push(deletionObj);
-                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue, true);
-                    expect(additionObj[propId]).toEqual([{'@id': newValue}]);
-                    expect(deletionObj[propId]).toEqual([{'@id': originalValue}]);
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, this.originalValue, true);
+                    expect(additionObj[this.propId]).toEqual([{'@id': this.newValue}]);
+                    expect(deletionObj[this.propId]).toEqual([{'@id': this.originalValue}]);
                 });
                 it('and the property was not set and another property was changed', function() {
-                    var additionObj = {'@id': entityId};
+                    var additionObj = {'@id': this.entityId};
                     mapperStateSvc.mapping.difference.additions.push(additionObj);
-                    var deletionObj = {'@id': entityId};
+                    var deletionObj = {'@id': this.entityId};
                     mapperStateSvc.mapping.difference.deletions.push(deletionObj);
-                    mapperStateSvc.changeProp(entityId, propId, newValue, '', true);
-                    expect(additionObj[propId]).toEqual([{'@id': newValue}]);
-                    expect(_.has(deletionObj, "['" + propId + "']")).toEqual(false);
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, '', true);
+                    expect(additionObj[this.propId]).toEqual([{'@id': this.newValue}]);
+                    expect(_.has(deletionObj, "['" + this.propId + "']")).toEqual(false);
                 });
                 it('and the property was not set and another property was added', function() {
-                    var additionObj = {'@id': entityId};
+                    var additionObj = {'@id': this.entityId};
                     mapperStateSvc.mapping.difference.additions.push(additionObj);
                     var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
-                    mapperStateSvc.changeProp(entityId, propId, newValue, '', true);
-                    expect(additionObj[propId]).toEqual([{'@id': newValue}]);
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, '', true);
+                    expect(additionObj[this.propId]).toEqual([{'@id': this.newValue}]);
                     expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
                 });
                 it('and the property was changed back with no other changes', function() {
-                    var additionObj = {'@id': entityId};
-                    additionObj[propId] = [{'@id': originalValue}];
+                    var additionObj = {'@id': this.entityId};
+                    additionObj[this.propId] = [{'@id': this.originalValue}];
                     mapperStateSvc.mapping.difference.additions.push(additionObj);
-                    var deletionObj = {'@id': entityId};
-                    deletionObj[propId] = [{'@id': newValue}];
+                    var deletionObj = {'@id': this.entityId};
+                    deletionObj[this.propId] = [{'@id': this.newValue}];
                     mapperStateSvc.mapping.difference.deletions.push(deletionObj);
-                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue, true);
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, this.originalValue, true);
                     expect(mapperStateSvc.mapping.difference.additions).toEqual([]);
                     expect(mapperStateSvc.mapping.difference.deletions).toEqual([]);
                 });
                 it('and the property was changed back with other changes', function() {
-                    var expectedAddition = {'@id': entityId, test: true};
+                    var expectedAddition = {'@id': this.entityId, test: true};
                     var additionObj = angular.copy(expectedAddition);
-                    additionObj[propId] = [{'@id': originalValue}];
+                    additionObj[this.propId] = [{'@id': this.originalValue}];
                     mapperStateSvc.mapping.difference.additions.push(additionObj);
-                    var expectedDeletion = {'@id': entityId, test: false};
+                    var expectedDeletion = {'@id': this.entityId, test: false};
                     var deletionObj = angular.copy(expectedDeletion);
-                    deletionObj[propId] = [{'@id': newValue}];
+                    deletionObj[this.propId] = [{'@id': this.newValue}];
                     mapperStateSvc.mapping.difference.deletions.push(deletionObj);
-                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue, true);
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, this.originalValue, true);
                     expect(mapperStateSvc.mapping.difference.additions).toContain(expectedAddition);
                     expect(mapperStateSvc.mapping.difference.deletions).toContain(expectedDeletion);
                 });
             });
             describe('and the property has a @value value', function() {
                 it('and the property was just set', function() {
-                    var additionObj = {'@id': entityId};
-                    additionObj[propId] = [{'@value': originalValue}];
+                    var additionObj = {'@id': this.entityId};
+                    additionObj[this.propId] = [{'@value': this.originalValue}];
                     mapperStateSvc.mapping.difference.additions.push(additionObj);
                     var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
-                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
-                    expect(additionObj[propId]).toEqual([{'@value': newValue}]);
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, this.originalValue);
+                    expect(additionObj[this.propId]).toEqual([{'@value': this.newValue}]);
                     expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
                 });
                 it('and the entity was just opened', function() {
-                    var expectedAddition = {'@id': entityId};
-                    expectedAddition[propId] = [{'@value': newValue}];
-                    var expectedDeletion = {'@id': entityId};
-                    expectedDeletion[propId] = [{'@value': originalValue}];
-                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
+                    var expectedAddition = {'@id': this.entityId};
+                    expectedAddition[this.propId] = [{'@value': this.newValue}];
+                    var expectedDeletion = {'@id': this.entityId};
+                    expectedDeletion[this.propId] = [{'@value': this.originalValue}];
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, this.originalValue);
                     expect(mapperStateSvc.mapping.difference.additions).toContain(expectedAddition);
                     expect(mapperStateSvc.mapping.difference.deletions).toContain(expectedDeletion);
                 });
                 it('and the entity was opened and the property already changed', function() {
-                    var additionObj = {'@id': entityId};
-                    additionObj[propId] = [{'@value': originalValue}];
+                    var additionObj = {'@id': this.entityId};
+                    additionObj[this.propId] = [{'@value': this.originalValue}];
                     mapperStateSvc.mapping.difference.additions.push(additionObj);
-                    var deletionObj = {'@id': entityId};
-                    deletionObj[propId] = [{'@value': otherValue}];
+                    var deletionObj = {'@id': this.entityId};
+                    deletionObj[this.propId] = [{'@value': this.otherValue}];
                     mapperStateSvc.mapping.difference.deletions.push(deletionObj);
-                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
-                    expect(additionObj[propId]).toEqual([{'@value': newValue}]);
-                    expect(deletionObj[propId]).toEqual([{'@value': otherValue}]);
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, this.originalValue);
+                    expect(additionObj[this.propId]).toEqual([{'@value': this.newValue}]);
+                    expect(deletionObj[this.propId]).toEqual([{'@value': this.otherValue}]);
                 });
                 it('and nothing has been set on the entity', function() {
-                    var expectedAddition = {'@id': entityId};
-                    expectedAddition[propId] = [{'@value': newValue}];
+                    var expectedAddition = {'@id': this.entityId};
+                    expectedAddition[this.propId] = [{'@value': this.newValue}];
                     var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
-                    mapperStateSvc.changeProp(entityId, propId, newValue, '');
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, '');
                     expect(mapperStateSvc.mapping.difference.additions).toContain(expectedAddition);
                     expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
                 });
                 it('and the entity was opened and another property was altered', function() {
-                    var additionObj = {'@id': entityId};
+                    var additionObj = {'@id': this.entityId};
                     mapperStateSvc.mapping.difference.additions.push(additionObj);
-                    var deletionObj = {'@id': entityId};
+                    var deletionObj = {'@id': this.entityId};
                     mapperStateSvc.mapping.difference.deletions.push(deletionObj);
-                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
-                    expect(additionObj[propId]).toEqual([{'@value': newValue}]);
-                    expect(deletionObj[propId]).toEqual([{'@value': originalValue}]);
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, this.originalValue);
+                    expect(additionObj[this.propId]).toEqual([{'@value': this.newValue}]);
+                    expect(deletionObj[this.propId]).toEqual([{'@value': this.originalValue}]);
                 });
                 it('and the property was not set and another property was changed', function() {
-                    var additionObj = {'@id': entityId};
+                    var additionObj = {'@id': this.entityId};
                     mapperStateSvc.mapping.difference.additions.push(additionObj);
-                    var deletionObj = {'@id': entityId};
+                    var deletionObj = {'@id': this.entityId};
                     mapperStateSvc.mapping.difference.deletions.push(deletionObj);
-                    mapperStateSvc.changeProp(entityId, propId, newValue, '');
-                    expect(additionObj[propId]).toEqual([{'@value': newValue}]);
-                    expect(_.has(deletionObj, "['" + propId + "']")).toEqual(false);
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, '');
+                    expect(additionObj[this.propId]).toEqual([{'@value': this.newValue}]);
+                    expect(_.has(deletionObj, "['" + this.propId + "']")).toEqual(false);
                 });
                 it('and the property was not set and another property was added', function() {
-                    var additionObj = {'@id': entityId};
+                    var additionObj = {'@id': this.entityId};
                     mapperStateSvc.mapping.difference.additions.push(additionObj);
                     var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
-                    mapperStateSvc.changeProp(entityId, propId, newValue, '');
-                    expect(additionObj[propId]).toEqual([{'@value': newValue}]);
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, '');
+                    expect(additionObj[this.propId]).toEqual([{'@value': this.newValue}]);
                     expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
                 });
                 it('and the property was changed back with no other changes', function() {
-                    var additionObj = {'@id': entityId};
-                    additionObj[propId] = [{'@value': originalValue}];
+                    var additionObj = {'@id': this.entityId};
+                    additionObj[this.propId] = [{'@value': this.originalValue}];
                     mapperStateSvc.mapping.difference.additions.push(additionObj);
-                    var deletionObj = {'@id': entityId};
-                    deletionObj[propId] = [{'@value': newValue}];
+                    var deletionObj = {'@id': this.entityId};
+                    deletionObj[this.propId] = [{'@value': this.newValue}];
                     mapperStateSvc.mapping.difference.deletions.push(deletionObj);
-                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, this.originalValue);
                     expect(mapperStateSvc.mapping.difference.additions).toEqual([]);
                     expect(mapperStateSvc.mapping.difference.deletions).toEqual([]);
                 });
                 it('and the property was changed back with other changes', function() {
-                    var expectedAddition = {'@id': entityId, test: true};
+                    var expectedAddition = {'@id': this.entityId, test: true};
                     var additionObj = angular.copy(expectedAddition);
-                    additionObj[propId] = [{'@value': originalValue}];
+                    additionObj[this.propId] = [{'@value': this.originalValue}];
                     mapperStateSvc.mapping.difference.additions.push(additionObj);
-                    var expectedDeletion = {'@id': entityId, test: false};
+                    var expectedDeletion = {'@id': this.entityId, test: false};
                     var deletionObj = angular.copy(expectedDeletion);
-                    deletionObj[propId] = [{'@value': newValue}];
+                    deletionObj[this.propId] = [{'@value': this.newValue}];
                     mapperStateSvc.mapping.difference.deletions.push(deletionObj);
-                    mapperStateSvc.changeProp(entityId, propId, newValue, originalValue);
+                    mapperStateSvc.changeProp(this.entityId, this.propId, this.newValue, this.originalValue);
                     expect(mapperStateSvc.mapping.difference.additions).toContain(expectedAddition);
                     expect(mapperStateSvc.mapping.difference.deletions).toContain(expectedDeletion);
                 });
             });
         });
-    })
+    });
     describe('should reflect the deletion of entity in the difference', function() {
-        var entity = {'@id': 'entity', test: [false]};
+        beforeEach(function () {
+            this.entity = {'@id': 'entity', test: [false]};
+        });
         it('if the entire entity was added originally', function() {
-            mapperStateSvc.mapping.difference.additions.push(angular.copy(entity));
+            mapperStateSvc.mapping.difference.additions.push(angular.copy(this.entity));
             var deletions = angular.copy(mapperStateSvc.mapping.difference.deletions);
-            mapperStateSvc.deleteEntity(entity);
+            mapperStateSvc.deleteEntity(this.entity);
             expect(mapperStateSvc.mapping.difference.additions.length).toEqual(0);
             expect(mapperStateSvc.mapping.difference.deletions).toEqual(deletions);
         });
         describe('if no part of the entity was added', function() {
-            var additions;
             beforeEach(function() {
-                additions = angular.copy(mapperStateSvc.mapping.difference.additions);
+                this.additions = angular.copy(mapperStateSvc.mapping.difference.additions);
             });
             it('or deleted', function() {
-                mapperStateSvc.deleteEntity(entity);
-                expect(mapperStateSvc.mapping.difference.additions).toEqual(additions);
-                expect(mapperStateSvc.mapping.difference.deletions).toContain(entity);
+                mapperStateSvc.deleteEntity(this.entity);
+                expect(mapperStateSvc.mapping.difference.additions).toEqual(this.additions);
+                expect(mapperStateSvc.mapping.difference.deletions).toContain(this.entity);
             });
             it('and a part was deleted', function() {
-                var originalDeletionObj = {'@id': entity['@id'], test: [true]};
-                var expected = _.merge({}, originalDeletionObj, entity);
+                var originalDeletionObj = {'@id': this.entity['@id'], test: [true]};
+                var expected = _.merge({}, originalDeletionObj, this.entity);
                 mapperStateSvc.mapping.difference.deletions.push(originalDeletionObj);
-                mapperStateSvc.deleteEntity(entity);
-                expect(mapperStateSvc.mapping.difference.additions).toEqual(additions);
+                mapperStateSvc.deleteEntity(this.entity);
+                expect(mapperStateSvc.mapping.difference.additions).toEqual(this.additions);
                 expect(originalDeletionObj).toEqual(expected);
             });
         });
