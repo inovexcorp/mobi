@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Commit Info Overlay directive', function() {
-    var $compile,
-        scope,
-        element,
-        isolatedScope,
-        controller;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -42,67 +38,73 @@ describe('Commit Info Overlay directive', function() {
         scope.additions = [];
         scope.deletions = [];
         scope.overlayFlag = true;
-        element = $compile(angular.element('<commit-info-overlay commit="commit" additions="additions" deletions="deletions" overlay-flag="overlayFlag"></commit-info-overlay>'))(scope);
+        this.element = $compile(angular.element('<commit-info-overlay commit="commit" additions="additions" deletions="deletions" overlay-flag="overlayFlag"></commit-info-overlay>'))(scope);
         scope.$digest();
-        isolatedScope = element.isolateScope();
-        controller = element.controller('commitInfoOverlay');
+        this.isolatedScope = this.element.isolateScope();
+        this.controller = this.element.controller('commitInfoOverlay');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
         it('commit is one way bound', function() {
-            isolatedScope.commit = {id: ''};
+            this.isolatedScope.commit = {id: ''};
             scope.$digest();
             expect(scope.commit).toEqual({});
         });
         it('additions is one way bound', function() {
-            isolatedScope.additions = [{}];
+            this.isolatedScope.additions = [{}];
             scope.$digest();
             expect(scope.additions).toEqual([]);
         });
         it('deletions is one way bound', function() {
-            isolatedScope.deletions = [{}];
+            this.isolatedScope.deletions = [{}];
             scope.$digest();
             expect(scope.deletions).toEqual([]);
         });
     });
     describe('controller bound variable', function() {
         it('overlayFlag is two way bound', function() {
-            controller.overlayFlag = false;
+            this.controller.overlayFlag = false;
             scope.$digest();
             expect(scope.overlayFlag).toBe(false);
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('commit-info-overlay')).toBe(true);
-            expect(element.querySelectorAll('.content').length).toBe(1);
-            expect(element.querySelectorAll('.main').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('commit-info-overlay')).toBe(true);
+            expect(this.element.querySelectorAll('.content').length).toBe(1);
+            expect(this.element.querySelectorAll('.main').length).toBe(1);
         });
         it('depending on whether there are additions and deletions', function() {
-            expect(element.querySelectorAll('.changes-container p').length).toBe(1);
-            expect(element.querySelectorAll('.changes-container commit-changes-display').length).toBe(0);
+            expect(this.element.querySelectorAll('.changes-container p').length).toBe(1);
+            expect(this.element.querySelectorAll('.changes-container commit-changes-display').length).toBe(0);
 
             scope.additions = [{}];
             scope.$digest();
-            expect(element.querySelectorAll('.changes-container p').length).toBe(0);
-            expect(element.querySelectorAll('.changes-container commit-changes-display').length).toBe(1);
+            expect(this.element.querySelectorAll('.changes-container p').length).toBe(0);
+            expect(this.element.querySelectorAll('.changes-container commit-changes-display').length).toBe(1);
 
             scope.additions = [];
             scope.deletions = [{}];
             scope.$digest();
-            expect(element.querySelectorAll('.changes-container p').length).toBe(0);
-            expect(element.querySelectorAll('.changes-container commit-changes-display').length).toBe(1);
+            expect(this.element.querySelectorAll('.changes-container p').length).toBe(0);
+            expect(this.element.querySelectorAll('.changes-container commit-changes-display').length).toBe(1);
         });
         it('with a button to close', function() {
-            var buttons = element.querySelectorAll('.btn-container button');
+            var buttons = this.element.querySelectorAll('.btn-container button');
             expect(buttons.length).toBe(1);
             expect(angular.element(buttons[0]).text().trim()).toBe('Close');
         });
     });
     describe('controller methods', function() {
         it('should close the overlay', function() {
-            controller.close();
+            this.controller.close();
             scope.$digest();
             expect(scope.overlayFlag).toBe(false);
         });

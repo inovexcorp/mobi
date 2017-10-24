@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Mapping Manager service', function() {
-    var $httpBackend, $httpParamSerializer, mappingManagerSvc, ontologyManagerSvc, utilSvc, uuidSvc, windowSvc, prefixes, splitIRI, camelCase, $q, scope;
+    var mappingManagerSvc, $httpBackend, $httpParamSerializer, ontologyManagerSvc, utilSvc, uuidSvc, windowSvc, prefixes, splitIRI, camelCase, $q, scope;
 
     beforeEach(function() {
         module('mappingManager');
@@ -55,92 +55,121 @@ describe('Mapping Manager service', function() {
             $q = _$q_;
             scope = _$rootScope_;
         });
+
+        utilSvc.rejectError.and.returnValue($q.reject('Error Message'));
     });
+
+    afterEach(function() {
+        mappingManagerSvc = null;
+        $httpBackend = null;
+        $httpParamSerializer = null;
+        ontologyManagerSvc = null;
+        utilSvc = null;
+        uuidSvc = null;
+        windowSvc = null;
+        prefixes = null;
+        splitIRI = null;
+        camelCase = null;
+        $q = null;
+        scope = null;
+    });
+
     describe('should get a list of mapping records', function() {
-        var params;
         beforeEach(function() {
-            params = $httpParamSerializer({sort: prefixes.dcterms + 'title'});
+            this.params = $httpParamSerializer({sort: prefixes.dcterms + 'title'});
         });
-        it('unless an error occors', function(done) {
-            $httpBackend.expectGET('/mobirest/mappings?' + params).respond(400, null, null, 'Error Message');
-            mappingManagerSvc.getMappingRecords().then(function(response) {
-                fail('Promise should have rejected');
-                done();
-            }, function(response) {
-                expect(_.isString(response)).toBe(true);
-                done();
-            });
+        it('unless an error occors', function() {
+            $httpBackend.expectGET('/mobirest/mappings?' + this.params).respond(400, null, null, 'Error Message');
+            mappingManagerSvc.getMappingRecords()
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
         });
-        it('successfully', function(done) {
-            $httpBackend.expectGET('/mobirest/mappings?' + params).respond(200, []);
-            mappingManagerSvc.getMappingRecords().then(function(response) {
-                expect(response).toEqual([]);
-                done();
-            }, function(response) {
-                fail('Promise should have resolved');
-                done();
-            });
+        it('successfully', function() {
+            $httpBackend.expectGET('/mobirest/mappings?' + this.params).respond(200, []);
+            mappingManagerSvc.getMappingRecords()
+                .then(function(response) {
+                    expect(response).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should upload a mapping', function() {
-        var title = 'title', description = 'description', keywords = [];
-        it('unless an error occurs', function(done) {
+        beforeEach(function () {
+            this.title = 'title';
+            this.description = 'description';
+            this.keywords = [];
+        });
+        it('unless an error occurs', function() {
             $httpBackend.expectPOST('/mobirest/mappings',
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
                     return headers['Content-Type'] === undefined && headers['Accept'] === 'text/plain';
                 }).respond(400, null, null, 'Error Message');
-            mappingManagerSvc.upload([], title, description, keywords).then(function(response) {
-                fail('Promise should have rejected');
-                done();
-            }, function(response) {
-                expect(_.isString(response)).toBe(true);
-                done();
-            });
+            mappingManagerSvc.upload([], this.title, this.description, this.keywords)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
         });
-        it('successfully', function(done) {
+        it('successfully', function() {
             $httpBackend.expectPOST('/mobirest/mappings',
                 function(data) {
                     return data instanceof FormData;
                 }, function(headers) {
                     return headers['Content-Type'] === undefined && headers['Accept'] === 'text/plain';
                 }).respond(200, 'mapping');
-            mappingManagerSvc.upload([], title, description, keywords).then(function(response) {
-                expect(response).toBe('mapping');
-                done();
-            }, function(response) {
-                fail('Promise should have resolved');
-                done();
-            });
+            mappingManagerSvc.upload([], this.title, this.description, this.keywords)
+                .then(function(response) {
+                    expect(response).toBe('mapping');
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a mapping by id', function() {
-        var id = 'mapping-record';
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectGET('/mobirest/mappings/' + id).respond(400, null, null, 'Error Message');
-            mappingManagerSvc.getMapping(id).then(function(response) {
-                fail('Promise should have rejected');
-                done();
-            }, function(response) {
-                expect(_.isString(response)).toBe(true);
-                done();
-            });
-            flushAndVerify($httpBackend);
+        beforeEach(function() {
+            this.id = 'mapping-record';
         });
-        it('successfully', function(done) {
-            $httpBackend.expectGET('/mobirest/mappings/' + id).respond(200, []);
-            mappingManagerSvc.getMapping(id).then(function(response) {
-                expect(response).toEqual([]);
-                done();
-            }, function(response) {
-                fail('Promise should have resolved');
-                done();
-            });
+        it('unless an error occurs', function() {
+            $httpBackend.expectGET('/mobirest/mappings/' + this.id).respond(400, null, null, 'Error Message');
+            mappingManagerSvc.getMapping(this.id)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
+        });
+        it('successfully', function() {
+            $httpBackend.expectGET('/mobirest/mappings/' + this.id).respond(200, []);
+            mappingManagerSvc.getMapping(this.id)
+                .then(function(response) {
+                    expect(response).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
@@ -149,27 +178,31 @@ describe('Mapping Manager service', function() {
         expect(windowSvc.location).toBe('/mobirest/mappings/mapping?format=jsonld');
     });
     describe('should delete a mapping by id', function() {
-        var id = 'mappingname';
-        it('unless an error occurs', function(done) {
-            $httpBackend.expectDELETE('/mobirest/mappings/' + id).respond(400, null, null, 'Error Message');
-            mappingManagerSvc.deleteMapping(id).then(function(response) {
-                fail('Promise should have rejected');
-                done();
-            }, function(response) {
-                expect(_.isString(response)).toBe(true);
-                done();
-            });
-            flushAndVerify($httpBackend);
+        beforeEach(function() {
+            this.id = 'mappingname';
         });
-        it('successfully', function(done) {
-            $httpBackend.expectDELETE('/mobirest/mappings/' + id).respond(200, '');
-            mappingManagerSvc.deleteMapping(id).then(function(response) {
-                expect(response).toEqual('');
-                done();
-            }, function(response) {
-                fail('Promise should have resolved');
-                done();
-            });
+        it('unless an error occurs', function() {
+            $httpBackend.expectDELETE('/mobirest/mappings/' + this.id).respond(400, null, null, 'Error Message');
+            mappingManagerSvc.deleteMapping(this.id)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'Error Message'
+            }));
+        });
+        it('successfully', function() {
+            $httpBackend.expectDELETE('/mobirest/mappings/' + this.id).respond(200, '');
+            mappingManagerSvc.deleteMapping(this.id)
+                .then(function(response) {
+                    expect(response).toEqual('');
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
@@ -618,36 +651,37 @@ describe('Mapping Manager service', function() {
         expect(mappingManagerSvc.areCompatible({}, [])).toBe(false);
     });
     describe('should collect incompatible entities within a mapping based on its source ontologies when', function() {
-        var mapping = {jsonld: []};
-        var sourceOntologies = [{}];
-        var classMapping = {id: 'classMapping'};
-        var classObj = {'id': 'class'};
-        var dataPropMapping = {id: 'dataMapping'};
-        var dataPropObj = {'id': 'dataProp'};
-        var objectPropMapping = {id: 'objectMapping'};
-        var objectPropObj = {'id': 'objectProp'};
         beforeEach(function() {
+            this.mapping = {jsonld: []};
+            this.sourceOntologies = [{}];
+            this.classMapping = {id: 'classMapping'};
+            this.classObj = {'id': 'class'};
+            this.dataPropMapping = {id: 'dataMapping'};
+            this.dataPropObj = {'id': 'dataProp'};
+            this.objectPropMapping = {id: 'objectMapping'};
+            this.objectPropObj = {'id': 'objectProp'};
+            var self = this;
             ontologyManagerSvc.getEntity.and.callFake(function(arr, id) {
-                if (id === classObj.id) {
-                    return classObj;
-                } else if (id === dataPropObj.id) {
-                    return dataPropObj;
-                } else if (id === objectPropObj.id) {
-                    return objectPropObj;
+                if (id === self.classObj.id) {
+                    return self.classObj;
+                } else if (id === self.dataPropObj.id) {
+                    return self.dataPropObj;
+                } else if (id === self.objectPropObj.id) {
+                    return self.objectPropObj;
                 } else {
                     return undefined;
                 }
             });
             spyOn(mappingManagerSvc, 'getPropIdByMapping').and.callFake(function(propObj) {
-                if (propObj === objectPropMapping) {
-                    return objectPropObj.id;
-                } else if (propObj === dataPropMapping) {
-                    return dataPropObj.id;
+                if (propObj === self.objectPropMapping) {
+                    return self.objectPropObj.id;
+                } else if (propObj === self.dataPropMapping) {
+                    return self.dataPropObj.id;
                 } else {
                     return '';
                 }
             });
-            spyOn(mappingManagerSvc, 'getClassIdByMapping').and.returnValue(classObj.id);
+            spyOn(mappingManagerSvc, 'getClassIdByMapping').and.returnValue(this.classObj.id);
             spyOn(mappingManagerSvc, 'getAllClassMappings');
             spyOn(mappingManagerSvc, 'getAllDataMappings');
             spyOn(mappingManagerSvc, 'getAllObjectMappings');
@@ -655,65 +689,65 @@ describe('Mapping Manager service', function() {
             spyOn(mappingManagerSvc, 'findSourceOntologyWithProp');
         });
         it('class does not exist', function() {
-            mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
-            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping]);
+            mappingManagerSvc.getAllClassMappings.and.returnValue([this.classMapping]);
+            expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.classMapping]);
         });
         it('class is deprecated', function() {
-            mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
+            mappingManagerSvc.getAllClassMappings.and.returnValue([this.classMapping]);
             mappingManagerSvc.findSourceOntologyWithClass.and.returnValue({});
             ontologyManagerSvc.isDeprecated.and.returnValue(true);
-            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping]);
+            expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.classMapping]);
         });
         it('data property does not exist and is not an annotation property', function() {
-            mappingManagerSvc.getAllDataMappings.and.returnValue([dataPropMapping]);
-            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([dataPropMapping]);
+            mappingManagerSvc.getAllDataMappings.and.returnValue([this.dataPropMapping]);
+            expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.dataPropMapping]);
         });
         it('data property is an annotation property', function() {
-            mappingManagerSvc.getAllDataMappings.and.returnValue([dataPropMapping]);
-            mappingManagerSvc.annotationProperties = [dataPropObj.id];
-            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([]);
+            mappingManagerSvc.getAllDataMappings.and.returnValue([this.dataPropMapping]);
+            mappingManagerSvc.annotationProperties = [this.dataPropObj.id];
+            expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([]);
         });
         it('data property is deprecated', function() {
-            mappingManagerSvc.getAllDataMappings.and.returnValue([dataPropMapping]);
+            mappingManagerSvc.getAllDataMappings.and.returnValue([this.dataPropMapping]);
             mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
             ontologyManagerSvc.isDeprecated.and.returnValue(true);
-            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([dataPropMapping]);
+            expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.dataPropMapping]);
         });
         it('data property is not a data property', function() {
-            mappingManagerSvc.getAllDataMappings.and.returnValue([dataPropMapping]);
+            mappingManagerSvc.getAllDataMappings.and.returnValue([this.dataPropMapping]);
             mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
-            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([dataPropMapping]);
+            expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.dataPropMapping]);
         });
         it('object property does not exist', function() {
-            mappingManagerSvc.getAllObjectMappings.and.returnValue([objectPropMapping]);
-            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([objectPropMapping]);
+            mappingManagerSvc.getAllObjectMappings.and.returnValue([this.objectPropMapping]);
+            expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.objectPropMapping]);
         });
         it('object property is deprecated', function() {
-            mappingManagerSvc.getAllObjectMappings.and.returnValue([objectPropMapping]);
+            mappingManagerSvc.getAllObjectMappings.and.returnValue([this.objectPropMapping]);
             mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
             ontologyManagerSvc.isDeprecated.and.returnValue(true);
-            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([objectPropMapping]);
+            expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.objectPropMapping]);
         });
         it('object property is not a object property', function() {
-            mappingManagerSvc.getAllObjectMappings.and.returnValue([objectPropMapping]);
+            mappingManagerSvc.getAllObjectMappings.and.returnValue([this.objectPropMapping]);
             mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
             ontologyManagerSvc.isObjectProperty.and.returnValue(false);
-            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([objectPropMapping]);
+            expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.objectPropMapping]);
         });
         it('object property range class is not the same', function() {
-            mappingManagerSvc.getAllObjectMappings.and.returnValue([objectPropMapping]);
+            mappingManagerSvc.getAllObjectMappings.and.returnValue([this.objectPropMapping]);
             mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
             ontologyManagerSvc.isObjectProperty.and.returnValue(true);
-            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([objectPropMapping]);
+            expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.objectPropMapping]);
         });
         it('Object property range is incompatible', function() {
-            mappingManagerSvc.getAllClassMappings.and.returnValue([classMapping]);
-            mappingManagerSvc.getAllObjectMappings.and.returnValue([objectPropMapping]);
+            mappingManagerSvc.getAllClassMappings.and.returnValue([this.classMapping]);
+            mappingManagerSvc.getAllObjectMappings.and.returnValue([this.objectPropMapping]);
             mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({});
             ontologyManagerSvc.isObjectProperty.and.returnValue(true);
-            utilSvc.getPropertyId.and.returnValue(classObj.id);
-            expect(mappingManagerSvc.findIncompatibleMappings(mapping, sourceOntologies)).toEqual([classMapping, objectPropMapping]);
+            utilSvc.getPropertyId.and.returnValue(this.classObj.id);
+            expect(mappingManagerSvc.findIncompatibleMappings(this.mapping, this.sourceOntologies)).toEqual([this.classMapping, this.objectPropMapping]);
         });
     });
     describe('should get a data mapping from a class mapping', function() {

@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Tabset directive', function() {
-    var $compile,
-        element,
-        $timeout,
-        controller,
-        scope;
+    var $compile, $timeout, scope;
 
     beforeEach(function() {
         module('templates');
@@ -39,65 +35,66 @@ describe('Tabset directive', function() {
             $timeout = _$timeout_;
         });
 
-        element = $compile(angular.element('<tabset></tabset>'))(scope);
+        this.element = $compile(angular.element('<tabset></tabset>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('tabset');
     });
-    describe('contains the correct html', function() {
-        it('for a DIV tag', function() {
-            expect(element.prop('tagName')).toBe('DIV');
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $timeout = null;
+        this.element.remove();
+    });
+
+    describe('replaces the element with the correct html', function() {
+        it('for wrapping containers', function() {
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('tabset')).toBe(true);
         });
-        it('based on .tabset', function() {
-            expect(element.hasClass('tabset')).toBe(true);
+        it('with a .tabset-headings', function() {
+            expect(this.element.querySelectorAll('.tabset-headings').length).toBe(1);
         });
-        it('based on .tabset-headings', function() {
-            expect(element.querySelectorAll('.tabset-headings').length).toBe(1);
-        });
-        it('based on .heading', function() {
-            element.controller('tabset').tabs = [{}];
+        it('depending on the number of tabs', function() {
+            this.controller.tabs = [{}];
             scope.$digest();
-            expect(element.querySelectorAll('.heading').length).toBe(1);
+            expect(this.element.querySelectorAll('.heading').length).toBe(1);
         });
-        it('based on .tabset-contents', function() {
-            expect(element.querySelectorAll('.tabset-contents').length).toBe(1);
+        it('with a .tabset-contents', function() {
+            expect(this.element.querySelectorAll('.tabset-contents').length).toBe(1);
         });
         describe('if tab.marked is', function() {
-            beforeEach(function() {
-                controller = element.controller('tabset');
-            });
             it('true', function() {
-                controller.tabs = [{id: 'tab1', marked: true}];
+                this.controller.tabs = [{id: 'tab1', marked: true}];
                 scope.$digest();
-                expect(element.querySelectorAll('.marked').length).toBe(1);
+                expect(this.element.querySelectorAll('.marked').length).toBe(1);
             });
             it('false', function() {
-                controller.tabs = [{id: 'tab1', marked: false}];
+                this.controller.tabs = [{id: 'tab1', marked: false}];
                 scope.$digest();
-                expect(element.querySelectorAll('.marked').length).toBe(0);
+                expect(this.element.querySelectorAll('.marked').length).toBe(0);
             });
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('tabset');
-        });
         it('addTab adds an element to the array', function() {
-            controller.addTab({});
-            expect(controller.tabs.length).toBe(1);
+            this.controller.addTab({});
+            expect(this.controller.tabs.length).toBe(1);
         });
         it('removeTab removes an element from the array', function() {
             var tab = {id: 'tab1'};
-            controller.tabs = [tab];
-            controller.removeTab(tab);
-            expect(controller.tabs).not.toContain(tab);
+            this.controller.tabs = [tab];
+            this.controller.removeTab(tab);
+            expect(this.controller.tabs).not.toContain(tab);
         });
         it('select sets the active property to true for passed in tab and false for the others and calls onClick', function() {
             var tab1 = {id: 'tab1', active: true, onClick: jasmine.createSpy('onClick')};
             var tab2 = {id: 'tab2', active: false, onClick: jasmine.createSpy('onClick')};
-            controller.tabs = [tab1, tab2];
-            controller.select(tab2);
+            this.controller.tabs = [tab1, tab2];
+            this.controller.select(tab2);
             $timeout.flush();
-            expect(_.find(controller.tabs, {id: 'tab1'}).active).toBe(false);
-            expect(_.find(controller.tabs, {id: 'tab2'}).active).toBe(true);
+            expect(_.find(this.controller.tabs, {id: 'tab1'}).active).toBe(false);
+            expect(_.find(this.controller.tabs, {id: 'tab2'}).active).toBe(true);
             expect(tab2.onClick).toHaveBeenCalled();
         });
     });

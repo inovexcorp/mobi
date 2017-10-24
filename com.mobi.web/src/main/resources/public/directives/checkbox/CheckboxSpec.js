@@ -21,9 +21,7 @@
  * #L%
  */
 describe('Checkbox directive', function() {
-    var $compile,
-        $timeout,
-        scope;
+    var $compile, $timeout, scope;
 
     beforeEach(function() {
         module('templates');
@@ -34,62 +32,53 @@ describe('Checkbox directive', function() {
             $timeout = _$timeout_;
             scope = _$rootScope_;
         });
+
+        scope.ngModel = false;
+        scope.displayText = '';
+        scope.isDisabledWhen = false;
+        scope.changeEvent = jasmine.createSpy('changeEvent');
+        this.element = $compile(angular.element('<checkbox ng-model="ngModel" display-text="displayText" is-disabled-when="isDisabledWhen" change-event="changeEvent()"></checkbox>'))(scope);
+        scope.$digest();
+        this.isolatedScope = this.element.isolateScope();
+        this.controller = this.element.controller('checkbox');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        $timeout = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            scope.ngModel = false;
-            scope.displayText = '';
-            scope.isDisabledWhen = false;
-            scope.changeEvent = jasmine.createSpy('changeEvent');
-            this.element = $compile(angular.element('<checkbox ng-model="ngModel" display-text="displayText" is-disabled-when="isDisabledWhen" change-event="changeEvent()"></checkbox>'))(scope);
-            scope.$digest();
-        });
         it('bindModel should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.bindModel = true;
+            this.isolatedScope.bindModel = true;
             scope.$digest();
             expect(scope.ngModel).toEqual(true);
         });
         it('displayText should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.displayText = 'abc';
+            this.isolatedScope.displayText = 'abc';
             scope.$digest();
             expect(scope.displayText).toEqual('abc');
         });
         it('isDisabledWhen should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.isDisabledWhen = true;
+            this.isolatedScope.isDisabledWhen = true;
             scope.$digest();
             expect(scope.isDisabledWhen).toEqual(true);
         });
         it('changeEvent should be called in parent scope when invoked', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.changeEvent();
-
+            this.isolatedScope.changeEvent();
             expect(scope.changeEvent).toHaveBeenCalled();
         });
     });
     describe('controller methods', function() {
         it('should call changeEvent', function() {
-            scope.changeEvent = jasmine.createSpy('changeEvent');
-            scope.ngModel = false;
-            var element = $compile(angular.element('<checkbox ng-model="ngModel" display-text="displayText" is-disabled-when="isDisabledWhen" change-event="changeEvent()"></checkbox>'))(scope);
-            scope.$digest();
-            var controller = element.controller('checkbox');
-            controller.onChange();
+            this.controller.onChange();
             $timeout.flush();
             expect(scope.changeEvent).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            scope.ngModel = false;
-            scope.displayText = '';
-            scope.isDisabledWhen = false;
-            this.element = $compile(angular.element('<checkbox ng-model="ngModel" display-text="displayText" is-disabled-when="isDisabledWhen" change-event="changeEvent()"></checkbox>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('checkbox')).toBe(true);
             expect(this.element.querySelectorAll('.control-label').length).toBe(1);
@@ -109,15 +98,9 @@ describe('Checkbox directive', function() {
         });
     });
     it('calls changeEvent if value of checkbox is changed', function() {
-        scope.changeEvent = jasmine.createSpy('changeEvent');
-        scope.ngModel = false;
-        var element = $compile(angular.element('<checkbox ng-model="ngModel" display-text="displayText" is-disabled-when="isDisabledWhen" change-event="changeEvent()"></checkbox>'))(scope);
+        spyOn(this.controller, 'onChange');
+        this.element.find('input')[0].click();
         scope.$digest();
-        var controller = element.controller('checkbox');
-        spyOn(controller, 'onChange');
-
-        element.find('input')[0].click();
-        scope.$digest();
-        expect(controller.onChange).toHaveBeenCalled();
+        expect(this.controller.onChange).toHaveBeenCalled();
     });
 });

@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Block footer directive', function() {
-    var $compile,
-        element,
-        controller,
-        isolatedScope,
-        scope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -38,17 +34,22 @@ describe('Block footer directive', function() {
 
         var parent = $compile('<div></div>')(scope);
         parent.data('$blockController', {});
-        element = angular.element('<block-footer></block-footer>');
-        parent.append(element);
-        element = $compile(element)(scope);
+        this.element = angular.element('<block-footer></block-footer>');
+        parent.append(this.element);
+        this.element = $compile(this.element)(scope);
         scope.$digest();
     });
-    describe('contains the correct html', function() {
-        it('for a DIV tag', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-        });
-        it('based on .block-footer', function() {
-            expect(element.hasClass('block-footer')).toBe(true);
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
+    });
+
+    describe('replaces the element with the correct html', function() {
+        it('for wrapping containers', function() {
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('block-footer')).toBe(true);
         });
     });
 });

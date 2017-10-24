@@ -21,8 +21,7 @@
  * #L%
  */
 describe('Trusted filter', function() {
-    var $filter,
-        $sce;
+    var $filter, $sce;
 
     beforeEach(function() {
         module('trusted');
@@ -31,6 +30,11 @@ describe('Trusted filter', function() {
             $filter = _$filter_;
             $sce = _$sce_;
         });
+    });
+
+    afterEach(function() {
+        $filter = null;
+        $sce = null;
     });
 
     it('returns undefined if text is falsey or an object', function() {

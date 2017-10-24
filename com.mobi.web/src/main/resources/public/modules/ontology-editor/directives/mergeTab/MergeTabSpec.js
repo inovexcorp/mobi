@@ -21,14 +21,7 @@
  * #L%
  */
 describe('Merge Tab directive', function() {
-    var $compile, scope, $q, element, controller, ontologyStateSvc, catalogManagerSvc, catalogId,
-        util;
-
-    var error = 'error';
-    var commitId = 'commitId';
-    var branchId = 'branchId';
-    var branch = {'@id': branchId};
-    var targetId = 'targetId';
+    var $compile, scope, $q, ontologyStateSvc, catalogManagerSvc, util;
 
     beforeEach(function() {
         module('templates');
@@ -52,168 +45,173 @@ describe('Merge Tab directive', function() {
             util = _utilService_;
         });
 
-        ontologyStateSvc.listItem.ontologyRecord.branchId = branchId;
-        ontologyStateSvc.listItem.branches = [branch];
-        catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
+        this.catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
+        this.error = 'error';
+        this.commitId = 'commitId';
+        this.branchId = 'branchId';
+        this.branch = {'@id': this.branchId};
+        this.targetId = 'targetId';
 
-        element = $compile(angular.element('<merge-tab></merge-tab>'))(scope);
+        ontologyStateSvc.listItem.ontologyRecord.branchId = this.branchId;
+        ontologyStateSvc.listItem.branches = [this.branch];
+
+        this.element = $compile(angular.element('<merge-tab></merge-tab>'))(scope);
         scope.$digest();
-        controller = element.controller('mergeTab');
-        controller.targetId = targetId;
+        this.controller = this.element.controller('mergeTab');
+        this.controller.targetId = this.targetId;
     });
 
-    describe('contains the correct html', function() {
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        ontologyStateSvc = null;
+        catalogManagerSvc = null;
+        util = null;
+        this.element.remove();
+    });
+
+    describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('merge-tab')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('merge-tab')).toBe(true);
         });
         _.forEach(['block', 'block-content', 'ui-select', 'button', 'checkbox'], function(item) {
             it('for ' + item, function() {
-                expect(element.find(item).length).toBe(1);
+                expect(this.element.find(item).length).toBe(1);
             });
         });
         it('depending on whether there is an error', function() {
-            expect(element.find('error-display').length).toBe(0);
-            controller.error = error;
+            expect(this.element.find('error-display').length).toBe(0);
+            this.controller.error = this.error;
             scope.$digest();
-            expect(element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toBe(1);
         });
         it('with a .merge-message', function() {
-            expect(element.querySelectorAll('.merge-message').length).toBe(1);
+            expect(this.element.querySelectorAll('.merge-message').length).toBe(1);
         });
         it('depending on whether there are conflicts', function() {
-            expect(element.querySelectorAll('.form-container').length).toBe(1);
-            expect(element.querySelectorAll('.conflicts-container').length).toBe(0);
+            expect(this.element.querySelectorAll('.form-container').length).toBe(1);
+            expect(this.element.querySelectorAll('.conflicts-container').length).toBe(0);
 
-            controller.conflicts = [{}];
+            this.controller.conflicts = [{}];
             scope.$digest();
-            expect(element.querySelectorAll('.form-container').length).toBe(0);
-            expect(element.querySelectorAll('.conflicts-container').length).toBe(1);
+            expect(this.element.querySelectorAll('.form-container').length).toBe(0);
+            expect(this.element.querySelectorAll('.conflicts-container').length).toBe(1);
         });
     });
     describe('controller methods', function() {
         describe('attemptMerge calls the correct functions', function() {
-            var getDeferred;
-            beforeEach(function() {
-                getDeferred = $q.defer();
-                catalogManagerSvc.getBranchConflicts.and.returnValue(getDeferred.promise);
-                controller.attemptMerge();
-            });
             describe('when getBranchConflicts is resolved', function() {
                 it('and is empty', function() {
-                    spyOn(controller, 'merge');
-                    getDeferred.resolve([]);
+                    catalogManagerSvc.getBranchConflicts.and.returnValue($q.when([]));
+                    spyOn(this.controller, 'merge');
+                    this.controller.attemptMerge();
                     scope.$apply();
-                    expect(controller.merge).toHaveBeenCalled();
+                    expect(this.controller.merge).toHaveBeenCalled();
                 });
             });
             it('when getBranchConflicts is rejected', function() {
-                getDeferred.reject(error);
+                catalogManagerSvc.getBranchConflicts.and.returnValue($q.reject(this.error));
+                this.controller.attemptMerge();
                 scope.$apply();
-                expect(controller.error).toEqual(error);
+                expect(this.controller.error).toEqual(this.error);
             });
         });
         it('mergeWithResolutions calls the correct functions', function() {
-            spyOn(controller, 'merge');
+            spyOn(this.controller, 'merge');
             var selectedLeft = {resolved: 'left', right: {additions: ['add-right'], deletions: ['del-right']}};
             var selectedRight = {resolved: 'right', left: {additions: ['add-left'], deletions: ['del-left']}};
-            controller.conflicts = [selectedLeft, selectedRight];
-            controller.mergeWithResolutions();
-            expect(controller.resolutions.additions).toEqual(['del-right', 'del-left']);
-            expect(controller.resolutions.deletions).toEqual(['add-right', 'add-left']);
-            expect(controller.merge).toHaveBeenCalled();
+            this.controller.conflicts = [selectedLeft, selectedRight];
+            this.controller.mergeWithResolutions();
+            expect(this.controller.resolutions.additions).toEqual(['del-right', 'del-left']);
+            expect(this.controller.resolutions.deletions).toEqual(['add-right', 'add-left']);
+            expect(this.controller.merge).toHaveBeenCalled();
         });
         describe('merge calls the correct functions', function() {
-            var mergeDefer;
-            beforeEach(function() {
-                mergeDefer = $q.defer();
-                catalogManagerSvc.mergeBranches.and.returnValue(mergeDefer.promise);
-                controller.merge();
-            });
             describe('when mergeBranches is resolved', function() {
-                var changeDefer;
                 beforeEach(function() {
-                    changeDefer = $q.defer();
-                    ontologyStateSvc.updateOntology.and.returnValue(changeDefer.promise);
-                    mergeDefer.resolve(commitId);
+                    catalogManagerSvc.mergeBranches.and.returnValue($q.when(this.commitId));
                 });
-                describe('and changeBranch is resolved', function() {
+                describe('and updateOntology is resolved', function() {
                     beforeEach(function() {
-                        changeDefer.resolve();
+                        ontologyStateSvc.updateOntology.and.returnValue($q.when());
                     });
                     describe('and controller.checkbox is truthy', function() {
-                        var deleteDefer;
                         beforeEach(function() {
-                            deleteDefer = $q.defer();
-                            catalogManagerSvc.deleteRecordBranch.and.returnValue(deleteDefer.promise);
-                            controller.checkbox = true;
+                            this.controller.checkbox = true;
                         });
                         it('and deleteRecordBranch is resolved', function() {
-                            deleteDefer.resolve();
+                            catalogManagerSvc.deleteRecordBranch.and.returnValue($q.when());
+                            this.controller.merge();
                             scope.$apply();
-                            expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(branchId, targetId,
-                                ontologyStateSvc.listItem.ontologyRecord.recordId, catalogId, jasmine.any(Object));
+                            expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.targetId,
+                                ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, jasmine.any(Object));
                             expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord
-                                .recordId, targetId, commitId, ontologyStateSvc.listItem.ontologyRecord.type);
-                            expect(catalogManagerSvc.deleteRecordBranch).toHaveBeenCalledWith(branchId,
-                                ontologyStateSvc.listItem.ontologyRecord.recordId, catalogId);
+                                .recordId, this.targetId, this.commitId, ontologyStateSvc.listItem.ontologyRecord.type);
+                            expect(catalogManagerSvc.deleteRecordBranch).toHaveBeenCalledWith(this.branchId,
+                                ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                             expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord
-                                .recordId, branchId);
-                            expect(controller.targetId).toBe(undefined);
+                                .recordId, this.branchId);
+                            expect(this.controller.targetId).toBe(undefined);
                             expect(util.createSuccessToast).toHaveBeenCalled();
                         });
                         it('and deleteRecordBranch is rejected', function() {
-                            deleteDefer.reject(error);
+                            catalogManagerSvc.deleteRecordBranch.and.returnValue($q.reject(this.error));
+                            this.controller.merge();
                             scope.$apply();
-                            expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(branchId, targetId,
-                                ontologyStateSvc.listItem.ontologyRecord.recordId, catalogId, jasmine.any(Object));
+                            expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.targetId,
+                                ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, jasmine.any(Object));
                             expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord
-                                .recordId, targetId, commitId, ontologyStateSvc.listItem.ontologyRecord.type);
-                            expect(catalogManagerSvc.deleteRecordBranch).toHaveBeenCalledWith(branchId,
-                                ontologyStateSvc.listItem.ontologyRecord.recordId, catalogId);
-                            expect(controller.error).toEqual(error);
+                                .recordId, this.targetId, this.commitId, ontologyStateSvc.listItem.ontologyRecord.type);
+                            expect(catalogManagerSvc.deleteRecordBranch).toHaveBeenCalledWith(this.branchId,
+                                ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
+                            expect(this.controller.error).toEqual(this.error);
                         });
                     });
                     it('and controller.checkbox if falsy', function() {
-                        controller.checkbox = false;
+                        this.controller.checkbox = false;
+                        this.controller.merge();
                         scope.$apply();
-                        expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(branchId, targetId,
-                            ontologyStateSvc.listItem.ontologyRecord.recordId, catalogId, jasmine.any(Object));
+                        expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.targetId,
+                            ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, jasmine.any(Object));
                         expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord
-                            .recordId, targetId, commitId, ontologyStateSvc.listItem.ontologyRecord.type);
+                            .recordId, this.targetId, this.commitId, ontologyStateSvc.listItem.ontologyRecord.type);
                         expect(catalogManagerSvc.deleteRecordBranch).not.toHaveBeenCalled();
                         expect(ontologyStateSvc.removeBranch).not.toHaveBeenCalled();
-                        expect(controller.targetId).toBe(undefined);
+                        expect(this.controller.targetId).toBe(undefined);
                         expect(util.createSuccessToast).toHaveBeenCalled();
                     });
                 });
-                it('and changeBranch is rejected', function() {
-                    changeDefer.reject(error);
+                it('and updateOntology is rejected', function() {
+                    ontologyStateSvc.updateOntology.and.returnValue($q.reject(this.error));
+                    this.controller.merge();
                     scope.$apply();
-                    expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(branchId, targetId,
-                        ontologyStateSvc.listItem.ontologyRecord.recordId, catalogId, jasmine.any(Object));
+                    expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.targetId,
+                        ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, jasmine.any(Object));
                     expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                        targetId, commitId, ontologyStateSvc.listItem.ontologyRecord.type);
+                        this.targetId, this.commitId, ontologyStateSvc.listItem.ontologyRecord.type);
                     expect(catalogManagerSvc.deleteRecordBranch).not.toHaveBeenCalled();
-                    expect(controller.error).toEqual(error);
+                    expect(this.controller.error).toEqual(this.error);
                 });
             });
             it('when mergeBranches is rejected', function() {
-                mergeDefer.reject(error);
+                catalogManagerSvc.mergeBranches.and.returnValue($q.reject(this.error));
+                this.controller.merge();
                 scope.$apply();
-                expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(branchId, targetId,
-                    ontologyStateSvc.listItem.ontologyRecord.recordId, catalogId, jasmine.any(Object));
+                expect(catalogManagerSvc.mergeBranches).toHaveBeenCalledWith(this.branchId, this.targetId,
+                    ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId, jasmine.any(Object));
                 expect(ontologyStateSvc.updateOntology).not.toHaveBeenCalled();
                 expect(catalogManagerSvc.deleteRecordBranch).not.toHaveBeenCalled();
-                expect(controller.error).toEqual(error);
+                expect(this.controller.error).toEqual(this.error);
             });
         });
         describe('matchesCurrent returns', function() {
             it('true if it does not match ontologyStateService.listItem.ontologyRecord.branchId', function() {
-                expect(controller.matchesCurrent({'@id': 'differentId'})).toBe(true);
+                expect(this.controller.matchesCurrent({'@id': 'differentId'})).toBe(true);
             });
             it('false if it does match ontologyStateService.listItem.ontologyRecord.branchId', function() {
-                expect(controller.matchesCurrent(branch)).toBe(false);
+                expect(this.controller.matchesCurrent(this.branch)).toBe(false);
             });
         });
     });

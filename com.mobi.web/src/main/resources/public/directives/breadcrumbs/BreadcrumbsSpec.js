@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Breadcrumbs directive', function() {
-    var $compile, scope, element, discoverStateSvc, controller, isolatedScope;
+    var $compile, scope, discoverStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -36,40 +36,46 @@ describe('Breadcrumbs directive', function() {
 
         scope.items = ['', ''];
         scope.onClick = jasmine.createSpy('onClick');
-        element = $compile(angular.element('<breadcrumbs items="items" on-click="onClick()"></breadcrumbs>'))(scope);
+        this.element = $compile(angular.element('<breadcrumbs items="items" on-click="onClick()"></breadcrumbs>'))(scope);
         scope.$digest();
-        controller = element.controller('breadcrumbs');
-        isolatedScope = element.isolateScope();
+        this.isolatedScope = this.element.isolateScope();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        discoverStateSvc = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
         it('items should be one way bound', function() {
-            isolatedScope.items = [];
+            this.isolatedScope.items = [];
             scope.$digest();
             expect(scope.items).toEqual(['', '']);
         });
         it('onClick to be called in parent scope', function() {
-            isolatedScope.onClick();
+            this.isolatedScope.onClick();
             expect(scope.onClick).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('OL');
-            expect(element.hasClass('breadcrumbs')).toBe(true);
-            expect(element.hasClass('breadcrumb')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('OL');
+            expect(this.element.hasClass('breadcrumbs')).toBe(true);
+            expect(this.element.hasClass('breadcrumb')).toBe(true);
         });
         it('depending on how many entities are in the path', function() {
-            expect(element.find('li').length).toBe(2);
+            expect(this.element.find('li').length).toBe(2);
         });
         it('depending on whether an entity is the last in the list', function() {
-            var items = element.find('li');
-            
+            var items = this.element.find('li');
+
             var firstItem = angular.element(items[0]);
             expect(firstItem.hasClass('active')).toBe(false);
             expect(firstItem.find('span').length).toBe(0);
             expect(firstItem.find('a').length).toBe(1);
-            
+
             var secondItem = angular.element(items[1]);
             expect(secondItem.hasClass('active')).toBe(true);
             expect(secondItem.find('span').length).toBe(1);

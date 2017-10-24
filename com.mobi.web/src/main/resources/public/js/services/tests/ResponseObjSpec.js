@@ -27,12 +27,15 @@ describe('Response Obj service', function() {
         module('responseObj');
         injectSplitIRIFilter();
 
-        // To test out a service, you need to inject it and save a copy of it.
-        // Then you call simply access the functions and variables provided
         inject(function(responseObj, _splitIRIFilter_) {
             responseObjSvc = responseObj;
             splitIRI = _splitIRIFilter_;
         });
+    });
+
+    afterEach(function() {
+        responseObjSvc = null;
+        splitIRI = null;
     });
 
     it('validates an item', function() {

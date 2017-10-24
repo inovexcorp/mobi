@@ -21,8 +21,7 @@
  * #L%
  */
 describe('Custom Label directive', function() {
-    var $compile,
-        scope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -32,29 +31,27 @@ describe('Custom Label directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
+
+        scope.mutedText = '';
+        this.element = $compile(angular.element('<custom-label muted-text="mutedText"></custom-label>'))(scope);
+        scope.$digest();
+        this.isolatedScope = this.element.isolateScope();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            scope.mutedText = '';
-
-            this.element = $compile(angular.element('<custom-label muted-text="mutedText"></custom-label>'))(scope);
-            scope.$digest();
-        });
         it('mutedText should be one way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.mutedText = 'Muted';
+            this.isolatedScope.mutedText = 'Muted';
             scope.$digest();
             expect(scope.mutedText).toEqual('');
         });
     });
-    describe('contains the correct html', function() {
-        beforeEach(function() {
-            scope.mutedText = '';
-
-            this.element = $compile(angular.element('<custom-label muted-text="mutedText"></custom-label>'))(scope);
-            scope.$digest();
-        });
+    describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('control-label')).toBe(true);
         });

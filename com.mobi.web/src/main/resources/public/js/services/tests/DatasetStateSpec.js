@@ -21,12 +21,7 @@
  * #L%
  */
 describe('Dataset State service', function() {
-    var $q,
-        $timeout,
-        datasetStateSvc,
-        datasetManagerSvc,
-        utilSvc,
-        prefixes;
+    var datasetStateSvc, $q, $timeout, datasetManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('datasetState');
@@ -42,6 +37,15 @@ describe('Dataset State service', function() {
             utilSvc = _utilService_;
             prefixes = _prefixes_;
         });
+    });
+
+    afterEach(function() {
+        datasetStateSvc = null;
+        $q = null;
+        $timeout = null;
+        datasetManagerSvc = null;
+        utilSvc = null;
+        prefixes = null;
     });
 
     it('should reset all state variables', function() {
@@ -107,7 +111,6 @@ describe('Dataset State service', function() {
         expect(datasetStateSvc.results).toEqual([]);
     });
     describe('should set the pagination variables based on a response', function() {
-        var records;
         beforeEach(function() {
             this.headers = {
                 'x-total-count': 2
@@ -117,7 +120,7 @@ describe('Dataset State service', function() {
             var recordBase = {'@type': [prefixes.dataset + 'DatasetRecord']};
             var identifier1 = _.set({}, "['" + prefixes.dataset + "linksToRecord'][0]['@id']", this.ontologyRecordId1);
             var identifier2 = _.set({}, "['" + prefixes.dataset + "linksToRecord'][0]['@id']", this.ontologyRecordId2);
-            records = [
+            this.records = [
                 {
                     record: _.set(angular.copy(recordBase), '@id', 'record1'),
                     identifiers: [identifier1, identifier2]
@@ -128,7 +131,7 @@ describe('Dataset State service', function() {
                 }
             ];
             this.response = {
-                data: _.map(records, function(obj) {
+                data: _.map(this.records, function(obj) {
                     return _.concat(obj.record, obj.identifiers);
                 }),
                 headers: jasmine.createSpy('headers').and.returnValue(this.headers)
@@ -141,10 +144,10 @@ describe('Dataset State service', function() {
             utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
             datasetStateSvc.setPagination(this.response);
             expect(datasetStateSvc.results.length).toEqual(this.response.data.length);
-            _.forEach(datasetStateSvc.results, function(result, idx) {
-                expect(result.record).toEqual(records[idx].record);
-                expect(result.identifiers).toEqual(records[idx].identifiers);
-            });
+            datasetStateSvc.results.forEach(function(result, idx) {
+                expect(result.record).toEqual(this.records[idx].record);
+                expect(result.identifiers).toEqual(this.records[idx].identifiers);
+            }, this);
             expect(datasetStateSvc.totalSize).toEqual(this.headers['x-total-count']);
             expect(datasetStateSvc.links.next).toBe(nextLink);
             expect(datasetStateSvc.links.prev).toBe(prevLink);
@@ -152,10 +155,10 @@ describe('Dataset State service', function() {
         it('if it does not have links', function() {
             datasetStateSvc.setPagination(this.response);
             expect(datasetStateSvc.results.length).toEqual(this.response.data.length);
-            _.forEach(datasetStateSvc.results, function(result, idx) {
-                expect(result.record).toEqual(records[idx].record);
-                expect(result.identifiers).toEqual(records[idx].identifiers);
-            });
+            datasetStateSvc.results.forEach(function(result, idx) {
+                expect(result.record).toEqual(this.records[idx].record);
+                expect(result.identifiers).toEqual(this.records[idx].identifiers);
+            }, this);
             expect(datasetStateSvc.totalSize).toEqual(this.headers['x-total-count']);
             expect(datasetStateSvc.links.next).toBe('');
             expect(datasetStateSvc.links.prev).toBe('');

@@ -31,6 +31,10 @@ describe('Remove IRI From Array filter', function() {
         });
     });
 
+    afterEach(function() {
+        $filter = null;
+    });
+
     it('returns an empty array if passed value is not an array', function() {
         var result;
         _.forEach([false, '', 0, undefined, null, {}], function(value) {

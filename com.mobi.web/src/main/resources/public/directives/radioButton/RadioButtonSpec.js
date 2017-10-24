@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Radio Button directive', function() {
-    var $compile, $timeout, scope, element, isolatedScope;
+    var $compile, $timeout, scope;
 
     beforeEach(function() {
         module('templates');
@@ -40,68 +40,75 @@ describe('Radio Button directive', function() {
         scope.changeEvent = jasmine.createSpy('changeEvent');
         scope.inline = false;
 
-        element = $compile(angular.element('<radio-button ng-model="ngModel" value="value" display-text="displayText" is-disabled-when="isDisabledWhen" change-event="changeEvent()" inline="inline"></radio-button>'))(scope);
+        this.element = $compile(angular.element('<radio-button ng-model="ngModel" value="value" display-text="displayText" is-disabled-when="isDisabledWhen" change-event="changeEvent()" inline="inline"></radio-button>'))(scope);
         scope.$digest();
-        isolatedScope = element.isolateScope();
+        this.isolatedScope = this.element.isolateScope();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $timeout = null;
+        this.element.remove();
     });
 
     it('calls changeEvent if value of radio button is changed', function() {
-        element.find('input')[0].click();
+        this.element.find('input')[0].click();
         scope.$digest();
         $timeout.flush();
         expect(scope.changeEvent).toHaveBeenCalled();
     });
     describe('in isolated scope', function() {
         it('bindModel should be two way bound', function() {
-            isolatedScope.bindModel = true;
+            this.isolatedScope.bindModel = true;
             scope.$digest();
             expect(scope.ngModel).toEqual(true);
         });
         it('value should be one way bound', function() {
-            isolatedScope.value = 1;
+            this.isolatedScope.value = 1;
             scope.$digest();
             expect(scope.value).toEqual(0);
         });
         it('displayText should be one way bound', function() {
-            isolatedScope.displayText = 'abc';
+            this.isolatedScope.displayText = 'abc';
             scope.$digest();
             expect(scope.displayText).toEqual('');
         });
         it('isDisabledWhen should be one way bound', function() {
-            isolatedScope.isDisabledWhen = true;
+            this.isolatedScope.isDisabledWhen = true;
             scope.$digest();
             expect(scope.isDisabledWhen).toBe(false);
         });
         it('inline should be one way bound', function() {
-            isolatedScope.inline = true;
+            this.isolatedScope.inline = true;
             scope.$digest();
             expect(scope.inline).toBe(false);
         });
         it('changeEvent should be called in parent scope when invoked', function() {
-            isolatedScope.changeEvent();
+            this.isolatedScope.changeEvent();
             expect(scope.changeEvent).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for a label and radio button', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('form-group'));
-            var labelList = element.querySelectorAll('label');
-            var inputList = element.querySelectorAll('input');
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('form-group'));
+            var labelList = this.element.querySelectorAll('label');
+            var inputList = this.element.querySelectorAll('input');
             expect(labelList.length).toBe(1);
             expect(inputList.length).toBe(1);
             var input = inputList[0];
             expect(input.type).toBe('radio');
         });
         it('when inline is false', function() {
-            expect(element.querySelectorAll('label.radio-inline').length).toEqual(0);
-            expect(element.hasClass('wrapper-inline')).toBe(false);
+            expect(this.element.querySelectorAll('label.radio-inline').length).toEqual(0);
+            expect(this.element.hasClass('wrapper-inline')).toBe(false);
         });
         it('when inline is true', function() {
             scope.inline = true;
             scope.$digest();
-            expect(element.querySelectorAll('label.radio-inline').length).toEqual(1);
-            expect(element.hasClass('wrapper-inline')).toBe(true);
+            expect(this.element.querySelectorAll('label.radio-inline').length).toEqual(1);
+            expect(this.element.hasClass('wrapper-inline')).toBe(true);
         });
     });
 });

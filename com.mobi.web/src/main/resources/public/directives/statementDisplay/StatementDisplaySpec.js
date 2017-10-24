@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Statement Display directive', function() {
-    var $compile, scope, element, isolatedScope, splitIRI;
+    var $compile, scope, splitIRI;
 
     beforeEach(function() {
         module('templates');
@@ -33,135 +33,111 @@ describe('Statement Display directive', function() {
             scope = _$rootScope_;
             splitIRI = _splitIRIFilter_;
         });
+    });
 
-        scope.predicate = 'predicate';
-        scope.object = 'object';
-        var parent = $compile('<div></div>')(scope);
-        parent.data('$statementContainerController', {});
-        element = angular.element('<statement-display predicate="predicate" object="object"></statement-display>');
-        parent.append(element);
-        element = $compile(element)(scope);
-        scope.$digest();
+    beforeEach(function compile() {
+        this.compile = function(html, object, splitResult) {
+            if (object === undefined || object === null) {
+                object = 'object';
+            }
+            if (splitResult === undefined || splitResult === null) {
+                splitResult = {};
+            }
+            scope.predicate = 'predicate';
+            scope.object = object;
+            var parent = $compile('<div></div>')(scope);
+            parent.data('$statementContainerController', {});
+            this.element = angular.element(html);
+            parent.append(this.element);
+            this.element = $compile(this.element)(scope);
+            splitIRI.and.returnValue(splitResult);
+            scope.$digest();
+            this.isolatedScope = this.element.isolateScope();
+            this.controller = this.element.controller('statementDisplay');
+        }
+
+        this.compile('<statement-display predicate="predicate" object="object"></statement-display>');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        splitIRI = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            isolatedScope = element.isolateScope();
-        });
         it('predicate should be one way bound', function() {
-            isolatedScope.predicate = 'different';
+            this.isolatedScope.predicate = 'different';
             scope.$apply();
             expect(scope.predicate).toEqual('predicate');
         });
         it('object should be one way bound', function() {
-            isolatedScope.object = 'different';
+            this.isolatedScope.object = 'different';
             scope.$apply();
             expect(scope.object).toEqual('object');
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('TR');
-            expect(element.hasClass('statement-display')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('TR');
+            expect(this.element.hasClass('statement-display')).toBe(true);
         });
         it('with tds', function() {
-            expect(element.find('td').length).toBe(3);
+            expect(this.element.find('td').length).toBe(3);
         });
     });
     describe('check addition attribute', function() {
         it('when present', function() {
-            var parent = $compile('<div></div>')(scope);
-            parent.data('$statementContainerController', {});
-            element = angular.element('<statement-display predicate="predicate" object="object" addition></statement-display>');
-            parent.append(element);
-            element = $compile(element)(scope);
-            scope.$digest();
-            expect(element.isolateScope().isAddition).toBe(true);
-            expect(element.hasClass('addition')).toBe(true);
+            this.compile('<statement-display predicate="predicate" object="object" addition></statement-display>');
+            expect(this.isolatedScope.isAddition).toBe(true);
+            expect(this.element.hasClass('addition')).toBe(true);
         });
         it('when missing', function() {
-            expect(element.isolateScope().isAddition).toBe(false);
-            expect(element.hasClass('addition')).toBe(false);
+            expect(this.isolatedScope.isAddition).toBe(false);
+            expect(this.element.hasClass('addition')).toBe(false);
         });
     });
     describe('check deletion attribute', function() {
         it('when present', function() {
-            var parent = $compile('<div></div>')(scope);
-            parent.data('$statementContainerController', {});
-            element = angular.element('<statement-display predicate="predicate" object="object" deletion></statement-display>');
-            parent.append(element);
-            element = $compile(element)(scope);
-            scope.$digest();
-            expect(element.isolateScope().isDeletion).toBe(true);
-            expect(element.hasClass('deletion')).toBe(true);
+            this.compile('<statement-display predicate="predicate" object="object" deletion></statement-display>');
+            expect(this.isolatedScope.isDeletion).toBe(true);
+            expect(this.element.hasClass('deletion')).toBe(true);
         });
         it('when missing', function() {
-            expect(element.isolateScope().isDeletion).toBe(false);
-            expect(element.hasClass('deletion')).toBe(false);
+            expect(this.isolatedScope.isDeletion).toBe(false);
+            expect(this.element.hasClass('deletion')).toBe(false);
         });
     });
     describe('check controller.o value', function() {
         describe('when @id is present', function() {
-            beforeEach(function() {
-                scope.object = {'@id': 'full/id'};
-                var parent = $compile('<div></div>')(scope);
-                parent.data('$statementContainerController', {});
-                element = angular.element('<statement-display predicate="predicate" object="object" deletion></statement-display>');
-                parent.append(element);
-                element = $compile(element)(scope);
-            });
             it('and split.end is present', function() {
-                splitIRI.and.returnValue({end: 'id'});
-                scope.$digest();
-                var controller = element.controller('statementDisplay');
+                this.compile('<statement-display predicate="predicate" object="object" deletion></statement-display>', {'@id': 'full/id'}, {end: 'id'});
                 expect(splitIRI).toHaveBeenCalledWith('full/id');
-                expect(controller.o).toBe('id');
-                expect(controller.fullObject).toBe('full/id');
+                expect(this.controller.o).toBe('id');
+                expect(this.controller.fullObject).toBe('full/id');
             });
             it('and split.end is empty', function() {
-                splitIRI.and.returnValue({end: ''});
-                scope.$digest();
-                var controller = element.controller('statementDisplay');
+                this.compile('<statement-display predicate="predicate" object="object" deletion></statement-display>', {'@id': 'full/id'}, {end: ''});
                 expect(splitIRI).toHaveBeenCalledWith('full/id');
-                expect(controller.o).toBe('full/id');
-                expect(controller.fullObject).toBe('full/id');
+                expect(this.controller.o).toBe('full/id');
+                expect(this.controller.fullObject).toBe('full/id');
             });
         });
         it('when @value is present', function() {
-            scope.object = {'@value': 'value'};
-            var parent = $compile('<div></div>')(scope);
-            parent.data('$statementContainerController', {});
-            element = angular.element('<statement-display predicate="predicate" object="object" deletion></statement-display>');
-            parent.append(element);
-            element = $compile(element)(scope);
-            scope.$digest();
-            var controller = element.controller('statementDisplay');
-            expect(controller.o).toBe('value');
-            expect(controller.fullObject).toBe('value');
+            this.compile('<statement-display predicate="predicate" object="object" deletion></statement-display>', {'@value': 'value'});
+            expect(this.controller.o).toBe('value');
+            expect(this.controller.fullObject).toBe('value');
         });
         it('when @language is present', function() {
-            scope.object = {'@value': 'value', '@language': 'en'};
-            var parent = $compile('<div></div>')(scope);
-            parent.data('$statementContainerController', {});
-            element = angular.element('<statement-display predicate="predicate" object="object" deletion></statement-display>');
-            parent.append(element);
-            element = $compile(element)(scope);
-            scope.$digest();
-            var controller = element.controller('statementDisplay');
-            expect(controller.o).toBe('value [language: en]');
-            expect(controller.fullObject).toBe('value [language: en]');
+            this.compile('<statement-display predicate="predicate" object="object" deletion></statement-display>', {'@value': 'value', '@language': 'en'});
+            expect(this.controller.o).toBe('value [language: en]');
+            expect(this.controller.fullObject).toBe('value [language: en]');
         });
         it('when none of the above are present', function() {
-            scope.object = 'words';
-            var parent = $compile('<div></div>')(scope);
-            parent.data('$statementContainerController', {});
-            element = angular.element('<statement-display predicate="predicate" object="object" deletion></statement-display>');
-            parent.append(element);
-            element = $compile(element)(scope);
-            scope.$digest();
-            var controller = element.controller('statementDisplay');
-            expect(controller.o).toBe('words');
-            expect(controller.fullObject).toBe('words');
+            this.compile('<statement-display predicate="predicate" object="object" deletion></statement-display>', 'words');
+            expect(this.controller.o).toBe('words');
+            expect(this.controller.fullObject).toBe('words');
         });
     });
 });
