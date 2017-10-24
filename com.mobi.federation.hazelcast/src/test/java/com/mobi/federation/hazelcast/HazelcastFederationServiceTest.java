@@ -148,7 +148,6 @@ public class HazelcastFederationServiceTest {
         assertTrue(s1.getFederationNodeIds().contains(u1));
         assertTrue(s1.getFederationNodeIds().contains(u2));
         assertTrue(s1.getFederationNodeIds().contains(u3));
-        s1.getFederationNodeIds().forEach(System.out::println);
 
         // Test deactivation of one node results in two members
         s1.deactivate();
