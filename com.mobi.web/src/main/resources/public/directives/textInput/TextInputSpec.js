@@ -80,11 +80,11 @@ describe('Text Input directive', function() {
             expect(scope.inputName).toBe('');
         });
     });
-    describe('contains the correct html', function() {
+    describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('form-group')).toBe(true);
         });
-        it('with a custom label', function() {
+        it('with a custom-label', function() {
             expect(this.element.find('custom-label').length).toBe(1);
         });
         it('with a input element for text', function() {

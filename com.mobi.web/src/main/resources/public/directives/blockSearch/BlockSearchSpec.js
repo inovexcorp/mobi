@@ -42,6 +42,7 @@ describe('Block search directive', function() {
         parent.append(this.element);
         this.element = $compile(this.element)(scope);
         scope.$digest();
+        this.isolatedScope = this.element.isolateScope();
     });
 
     afterEach(function() {
@@ -51,9 +52,6 @@ describe('Block search directive', function() {
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            this.isolatedScope = this.element.isolateScope();
-        });
         it('bindModel should be two way bound', function() {
             this.isolatedScope.bindModel = 'test';
             scope.$digest();
@@ -68,26 +66,24 @@ describe('Block search directive', function() {
             expect(scope.clearEvent).toHaveBeenCalled();
         });
     });
-    describe('contains the correct html', function() {
-        it('for a DIV tag', function() {
+    describe('replaces the element with the correct html', function() {
+        it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
-        });
-        it('based on .search', function() {
             expect(this.element.hasClass('search')).toBe(true);
         });
-        it('based on i', function() {
+        it('with an i', function() {
             expect(this.element.find('i').length).toBe(1);
         });
-        it('based on .fa-search', function() {
+        it('with a .fa-search', function() {
             expect(this.element.querySelectorAll('.fa-search').length).toBe(1);
         });
-        it('based on input', function() {
+        it('with a input', function() {
             expect(this.element.find('input').length).toBe(1);
         });
-        it('based on a', function() {
+        it('with an a', function() {
             expect(this.element.find('a').length).toBe(1);
         });
-        it('based on .fa-times-circle', function() {
+        it('with a .fa-times-circle', function() {
             expect(this.element.querySelectorAll('.fa-times-circle').length).toBe(1);
         });
     });

@@ -54,7 +54,7 @@ describe('Value Display directive', function() {
             expect(scope.value).toEqual({'@id': 'new'});
         });
     });
-    describe('contains the correct html', function() {
+    describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('SPAN');
             expect(this.element.hasClass('value-display')).toBe(true);

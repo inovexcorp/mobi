@@ -78,7 +78,7 @@ describe('Catalog Manager service', function() {
             catalogManagerSvc.initialize()
                 .then(function(response) {
                     fail('Promise should have rejected');
-                }, _.noop);
+                });
             flushAndVerify($httpBackend);
             expect(catalogManagerSvc.recordTypes).toEqual([]);
             expect(catalogManagerSvc.localCatalog).toBeUndefined();

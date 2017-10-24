@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Analytic Manager service', function() {
-    var analyticManagerSvc, scope, $httpBackend,$httpParamSerializer, utilSvc, $q;
+    var analyticManagerSvc, scope, $httpBackend, $httpParamSerializer, utilSvc, $q;
 
     beforeEach(function() {
         module('analyticManager');
@@ -53,17 +53,19 @@ describe('Analytic Manager service', function() {
         it('resolves', function() {
             var types = ['type1', 'type2'];
             spyOn(analyticManagerSvc, 'getConfigurationTypes').and.returnValue($q.when(types));
-            analyticManagerSvc.initialize().then(_.noop, function(response) {
-                fail('Promise should have resolved');
-            });
+            analyticManagerSvc.initialize()
+                .then(_.noop, function(response) {
+                    fail('Promise should have resolved');
+                });
             scope.$apply();
             expect(analyticManagerSvc.configurationTypes).toEqual(types);
         });
         it('rejects', function() {
             spyOn(analyticManagerSvc, 'getConfigurationTypes').and.returnValue($q.reject());
-            analyticManagerSvc.initialize().then(function(response) {
-                fail('Promise should have rejected');
-            }, _.noop);
+            analyticManagerSvc.initialize()
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                });
             scope.$apply();
             expect(analyticManagerSvc.configurationTypes).toEqual([]);
         });
@@ -71,20 +73,22 @@ describe('Analytic Manager service', function() {
     describe('should get the IRIs for all record types when GET', function() {
         it('succeeds', function() {
             $httpBackend.whenGET('/mobirest/analytics/configuration-types').respond(200, []);
-            analyticManagerSvc.getConfigurationTypes().then(function(value) {
-                expect(value).toEqual([]);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            analyticManagerSvc.getConfigurationTypes()
+                .then(function(value) {
+                    expect(value).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('fails', function() {
             $httpBackend.whenGET('/mobirest/analytics/configuration-types').respond(400, null, null, 'Error Message');
-            analyticManagerSvc.getConfigurationTypes().then(function(value) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(response).toBe('Error Message');
-            });
+            analyticManagerSvc.getConfigurationTypes()
+                .then(function(value) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
         });
     });

@@ -172,7 +172,7 @@ describe('Dataset Manager service', function() {
                 datasetManagerSvc.createDatasetRecord(this.recordConfig)
                     .then(function() {
                         fail('Promise should have rejected');
-                    }, _.noop);
+                    });
                 flushAndVerify($httpBackend);
                 expect(utilSvc.rejectError).toHaveBeenCalledWith({prop: 'error'});
             });

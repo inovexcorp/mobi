@@ -78,7 +78,7 @@ describe('Static IRI directive', function() {
             ontologyStateSvc.showIriOverlay = true;
             scope.$digest();
         });
-        it('for wrapping containers STATIC-IRI', function() {
+        it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('STATIC-IRI');
             expect(this.element.querySelectorAll('.static-iri').length).toBe(1);
         });

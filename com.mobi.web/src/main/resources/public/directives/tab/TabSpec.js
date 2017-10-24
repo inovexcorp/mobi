@@ -87,11 +87,9 @@ describe('Tab directive', function() {
             expect(scope.onClose).toHaveBeenCalled();
         });
     });
-    describe('contains the correct html', function() {
-        it('for a DIV tag', function() {
+    describe('replaces the element with the correct html', function() {
+        it('for wrapping containers', function() {
             expect(this.elementSansWrapper.prop('tagName')).toBe('DIV');
-        });
-        it('based on .tab', function() {
             expect(this.elementSansWrapper.hasClass('tab')).toBe(true);
         });
     });

@@ -79,7 +79,7 @@ describe('Confirmation Overlay directive', function() {
             expect(scope.size).toEqual('large');
         });
     });
-    describe('contains the correct html', function() {
+    describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('overlay')).toBe(true);
             expect(this.element.querySelectorAll('.content').length).toBe(1);

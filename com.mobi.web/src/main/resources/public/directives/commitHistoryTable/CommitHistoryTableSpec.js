@@ -69,7 +69,7 @@ describe('Commit History Table directive', function() {
         this.element.remove();
     });
 
-    describe('contains the correct html', function() {
+    describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('commit-history-table')).toBe(true);

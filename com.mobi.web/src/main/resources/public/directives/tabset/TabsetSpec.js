@@ -47,22 +47,20 @@ describe('Tabset directive', function() {
         this.element.remove();
     });
 
-    describe('contains the correct html', function() {
-        it('for a DIV tag', function() {
+    describe('replaces the element with the correct html', function() {
+        it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
-        });
-        it('based on .tabset', function() {
             expect(this.element.hasClass('tabset')).toBe(true);
         });
-        it('based on .tabset-headings', function() {
+        it('with a .tabset-headings', function() {
             expect(this.element.querySelectorAll('.tabset-headings').length).toBe(1);
         });
-        it('based on .heading', function() {
+        it('depending on the number of tabs', function() {
             this.controller.tabs = [{}];
             scope.$digest();
             expect(this.element.querySelectorAll('.heading').length).toBe(1);
         });
-        it('based on .tabset-contents', function() {
+        it('with a .tabset-contents', function() {
             expect(this.element.querySelectorAll('.tabset-contents').length).toBe(1);
         });
         describe('if tab.marked is', function() {

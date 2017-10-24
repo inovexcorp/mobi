@@ -24,8 +24,8 @@ describe('Update Refs service', function() {
     var updateRefsSvc, responseObjSvc;
 
     beforeEach(function() {
-        module('responseObj');
         module('updateRefs');
+        mockResponseObj();
 
         module(function($provide) {
             $provide.value('splitIRIFilter', jasmine.createSpy('splitIRIFilter').and.callFake(function(iri) {
@@ -42,10 +42,10 @@ describe('Update Refs service', function() {
             responseObjSvc = _responseObj_;
         });
 
-        spyOn(responseObjSvc, 'getItemIri').and.callFake(function(obj) {
+        responseObjSvc.getItemIri.and.callFake(function(obj) {
             return _.get(obj, 'iri', '');
         });
-        spyOn(responseObjSvc, 'validateItem').and.callFake(function(obj) {
+        responseObjSvc.validateItem.and.callFake(function(obj) {
             return typeof obj === 'object';
         });
     });

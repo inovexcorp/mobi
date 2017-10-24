@@ -88,7 +88,7 @@ describe('SPARQL Manager service', function() {
                     httpSvc.get.and.returnValue($q.reject({statusText: 'Error Message'}));
                     sparqlManagerSvc.query(this.query, this.dataset, this.id).then(function() {
                         fail('Promise should have rejected');
-                    }, _.noop);
+                    });
                     scope.$apply();
                     expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: {query: this.query, dataset: this.dataset}}, this.id);
                     expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
@@ -112,7 +112,7 @@ describe('SPARQL Manager service', function() {
                     sparqlManagerSvc.query(this.query)
                         .then(function(response) {
                             fail('Promise should have rejected');
-                        }, _.noop);
+                        });
                     flushAndVerify($httpBackend);
                     expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 });
@@ -136,7 +136,7 @@ describe('SPARQL Manager service', function() {
                     sparqlManagerSvc.query(this.query, '', this.id)
                         .then(function() {
                             fail('Promise should have rejected');
-                        }, _.noop);
+                        });
                     scope.$apply();
                     expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: {query: this.query}}, this.id);
                     expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
@@ -160,7 +160,7 @@ describe('SPARQL Manager service', function() {
                     sparqlManagerSvc.query(this.query)
                         .then(function(response) {
                             fail('Promise should have rejected');
-                        }, _.noop);
+                        });
                     flushAndVerify($httpBackend);
                     expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 });
@@ -223,7 +223,7 @@ describe('SPARQL Manager service', function() {
                 sparqlManagerSvc.pagedQuery('query', this.paramsObj)
                     .then(function() {
                         fail('Promise should have rejected');
-                    }, _.noop);
+                    });
                 flushAndVerify($httpBackend);
                 expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400}));
             });
@@ -248,7 +248,7 @@ describe('SPARQL Manager service', function() {
                 sparqlManagerSvc.pagedQuery('query', this.paramsObj)
                     .then(function() {
                         fail('Promise should have rejected');
-                    }, _.noop);
+                    });
                 scope.$apply();
                 expect(httpSvc.get).toHaveBeenCalledWith(this.url.slice(0, -1), {params: this.config}, 'id');
                 expect(utilSvc.rejectError).toHaveBeenCalledWith({status: 400});

@@ -57,7 +57,7 @@ describe('Custom Header directive', function() {
             expect(scope.pageTitle).toEqual('');
         });
     });
-    describe('contains the correct html', function() {
+    describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('main-header')).toBe(true);
             expect(this.element.querySelectorAll('.actions').length).toBe(1);

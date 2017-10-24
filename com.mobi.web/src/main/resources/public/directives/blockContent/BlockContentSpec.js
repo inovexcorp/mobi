@@ -46,11 +46,9 @@ describe('Block content directive', function() {
         this.element.remove();
     });
 
-    describe('contains the correct html', function() {
-        it('for a DIV tag', function() {
+    describe('replaces the element with the correct html', function() {
+        it('for wraping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
-        });
-        it('based on .block-content', function() {
             expect(this.element.hasClass('block-content')).toBe(true);
         });
     });
