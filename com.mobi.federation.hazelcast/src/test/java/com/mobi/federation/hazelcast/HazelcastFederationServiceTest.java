@@ -47,6 +47,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -62,6 +64,8 @@ import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.TimeUnit;
 
 public class HazelcastFederationServiceTest {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(HazelcastFederationServiceTest.class);
 
     private UUID u1 = UUID.randomUUID();
     private UUID u2 = UUID.randomUUID();
@@ -93,7 +97,9 @@ public class HazelcastFederationServiceTest {
                 .thenReturn(registration);
 
         doAnswer(invocation -> {
+            LOGGER.info("Waiting here...");
             Thread.sleep(4000L);
+            LOGGER.info("Done waiting.");
             return null;
         }).when(registration).unregister();
     }
@@ -102,6 +108,7 @@ public class HazelcastFederationServiceTest {
     public void testFederation() throws Exception {
         final FakeHazelcastOsgiService hazelcastOSGiService = new FakeHazelcastOsgiService();
 
+        System.setProperty( "hazelcast.logging.type", "slf4j" );
         System.setProperty("java.net.preferIPv4Stack", "true");
         final HazelcastFederationService s1 = new HazelcastFederationService();
         s1.setMobiServer(mobi1);
