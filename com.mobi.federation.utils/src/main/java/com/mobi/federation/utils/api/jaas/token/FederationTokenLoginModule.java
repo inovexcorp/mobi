@@ -25,9 +25,9 @@ package com.mobi.federation.utils.api.jaas.token;
 
 import com.mobi.federation.utils.api.UserUtils;
 import com.mobi.federation.utils.api.jaas.token.config.FederationConfiguration;
+import com.mobi.jaas.api.modules.token.TokenLoginModule;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
-import com.mobi.jaas.api.modules.token.TokenLoginModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

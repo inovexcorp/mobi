@@ -65,8 +65,8 @@ public class TokenUtils {
     private static final long ONE_DAY_MS = ONE_DAY_SEC * 1000;
     private static final long TOKEN_DURATION = ONE_DAY_MS;
     private static final String ISSUER = "http://mobi.com/";
-    public static final String ANON_SCOPE = "self anon";
-    public static final String AUTH_SCOPE = "self /*";
+    private static final String ANON_SCOPE = "self anon";
+    private static final String AUTH_SCOPE = "self /*";
 
     // Attribute set if token verification occurs
     public static final String TOKEN_VERIFICATION_FAILED = "com.mobi.attribute.verificationFailed";
@@ -97,7 +97,7 @@ public class TokenUtils {
         javax.ws.rs.core.Cookie cookie = req.getCookies().get(TOKEN_NAME);
 
         if (cookie == null) {
-            LOG.debug("MatOnto web token cookie not found.");
+            LOG.debug("Mobi web token cookie not found.");
             return null;
         } else {
             return cookie.getValue();

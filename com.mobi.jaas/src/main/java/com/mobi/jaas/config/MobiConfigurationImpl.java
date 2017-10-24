@@ -30,7 +30,7 @@ import aQute.bnd.annotation.component.Reference;
 import com.mobi.jaas.api.config.LoginModuleConfig;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.modules.password.PasswordLoginModule;
-import com.mobi.jaas.api.modules.token.TokenLoginModule;
+import com.mobi.jaas.api.modules.token.SimpleTokenLoginModule;
 import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.jaas.proxy.ProxyLoginModule;
 import com.mobi.jaas.api.config.MobiConfiguration;
@@ -69,7 +69,7 @@ public class MobiConfigurationImpl extends MobiConfiguration {
             tokenOptions.put(LoginModuleConfig.ENGINE, RdfEngine.ENGINE_NAME);
             tokenOptions.put(BundleContext.class.getName(), context);
             tokenOptions.put(ProxyLoginModule.BUNDLE_ID, Long.toString(context.getBundle().getBundleId()));
-            tokenOptions.put(ProxyLoginModule.MODULE, TokenLoginModule.class.getName());
+            tokenOptions.put(ProxyLoginModule.MODULE, SimpleTokenLoginModule.class.getName());
 
             Map<String, Object> passwordOptions = new HashMap<>();
             passwordOptions.put(LoginModuleConfig.ENGINE_MANAGER, engineManager);

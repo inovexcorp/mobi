@@ -54,16 +54,19 @@ public class ResponseLoggingFilter implements ContainerResponseFilter {
             Logger resourceLog = LoggerFactory.getLogger(resourceClass);
 
             if (resourceLog.isInfoEnabled()) {
-                long start = (long) containerRequestContext.getProperty(Filters.REQ_START_TIME);
-                long responseTime = System.currentTimeMillis() - start;
-
                 String path = containerRequestContext.getUriInfo().getPath();
                 String method = containerRequestContext.getMethod();
                 int statusCode = containerResponseContext.getStatusInfo().getStatusCode();
                 String statusMsg = containerResponseContext.getStatusInfo().getReasonPhrase();
 
-                resourceLog.info(
-                        String.format("%s: %s -> %d: %s (%dms)", method, path, statusCode, statusMsg, responseTime));
+                Object startObj = containerRequestContext.getProperty(Filters.REQ_START_TIME);
+                if (startObj != null) {
+                    long responseTime = System.currentTimeMillis() - (long) startObj;
+                    resourceLog.info(String.format("%s: %s -> %d: %s (%dms)", method, path, statusCode, statusMsg,
+                            responseTime));
+                } else {
+                    resourceLog.info(String.format("%s: %s -> %d: %s", method, path, statusCode, statusMsg));
+                }
             }
         }
     }

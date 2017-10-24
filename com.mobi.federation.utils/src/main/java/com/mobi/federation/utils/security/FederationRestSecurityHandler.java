@@ -80,8 +80,8 @@ public class FederationRestSecurityHandler implements AuthenticationHandler, Aut
         String federationId = containerRequestContext.getProperty("federationId") + "";
         String nodeId = containerRequestContext.getProperty("nodeId") + "";
 
-        if (federationServiceMap.containsKey(federationId) && !authenticateToken("mobi-federation", subject,
-                tokenString, configuration, federationServiceMap.get(federationId), nodeId)) {
+        if (federationServiceMap.containsKey(federationId) && !authenticateToken(subject, tokenString, configuration,
+                federationServiceMap.get(federationId), nodeId)) {
             return null;
         }
 
@@ -107,9 +107,9 @@ public class FederationRestSecurityHandler implements AuthenticationHandler, Aut
         return principal instanceof UserPrincipal && role.equals("remote-user");
     }
 
-    private boolean authenticateToken(String realm, Subject subject, String tokenString, Configuration configuration,
+    private boolean authenticateToken(Subject subject, String tokenString, Configuration configuration,
                                       FederationService service, String nodeId) {
-        return authenticateCommon(realm, subject, callbacks -> {
+        return authenticateCommon("mobi-federation", subject, callbacks -> {
             for (Callback callback : callbacks) {
                 if (callback instanceof FederationTokenCallback) {
                     ((FederationTokenCallback) callback).setTokenString(tokenString);
