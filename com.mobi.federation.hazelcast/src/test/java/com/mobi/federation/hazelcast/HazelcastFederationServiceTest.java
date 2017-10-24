@@ -80,12 +80,6 @@ public class HazelcastFederationServiceTest {
     @Mock
     private Mobi mobi3;
 
-    @Mock
-    private BundleContext context;
-
-    @Mock
-    private ServiceRegistration<FederationService> registration;
-
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
@@ -93,15 +87,6 @@ public class HazelcastFederationServiceTest {
         when(mobi1.getServerIdentifier()).thenReturn(u1);
         when(mobi2.getServerIdentifier()).thenReturn(u2);
         when(mobi3.getServerIdentifier()).thenReturn(u3);
-        when(context.registerService(eq(FederationService.class), any(FederationService.class), any()))
-                .thenReturn(registration);
-
-        doAnswer(invocation -> {
-            LOGGER.info("Waiting here...");
-            Thread.sleep(4000L);
-            LOGGER.info("Done waiting.");
-            return null;
-        }).when(registration).unregister();
     }
 
     @Test
@@ -128,10 +113,6 @@ public class HazelcastFederationServiceTest {
         task2.get();
         task3.get();
 
-        verify(context, timeout(30000L)
-                .times(3))
-                .registerService(any(Class.class), any(HazelcastFederationService.class), any(Dictionary.class));
-
         // Test one federation is formed with 3 members
         assertNotNull(s1.getHazelcastInstance());
         assertTrue(s1.getHazelcastInstance().isPresent());
@@ -151,6 +132,7 @@ public class HazelcastFederationServiceTest {
 
         // Test deactivation of one node results in two members
         s1.deactivate();
+        waitABit();
         assertEquals(2, s2.getMemberCount());
         assertEquals(2, s3.getMemberCount());
         assertTrue(s3.getFederationNodeIds().contains(u2));
@@ -158,6 +140,7 @@ public class HazelcastFederationServiceTest {
 
         // Test deactivation of another node results in 1 member
         s2.deactivate();
+        waitABit();
         assertEquals(1, s3.getMemberCount());
         assertTrue(s3.getFederationNodeIds().contains(u3));
 
@@ -191,21 +174,17 @@ public class HazelcastFederationServiceTest {
         task1.get();
         task2.get();
 
-        verify(context, timeout(30000L)
-                .times(2))
-                .registerService(any(Class.class), any(HazelcastFederationService.class), any(Dictionary.class));
-
         // Test one federation is formed with 2 members
         assertTrue(s1.getHazelcastInstance().isPresent());
         assertTrue(s2.getHazelcastInstance().isPresent());
         assertEquals(2, s1.getMemberCount());
         assertEquals(2, s2.getMemberCount());
+        Thread.sleep(100);
         assertTrue(CollectionUtils.isEqualCollection(s1.getFederationNodeIds(), s2.getFederationNodeIds()));
         assertTrue(s1.getFederationNodeIds().contains(u1));
         assertTrue(s1.getFederationNodeIds().contains(u2));
         assertTrue(s2.getFederationNodeIds().contains(u1));
         assertTrue(s2.getFederationNodeIds().contains(u2));
-        s1.getFederationNodeIds().forEach(System.out::println);
 
         HazelcastInstance h1 = s1.getHazelcastInstance().get();
         HazelcastInstance h2 = s2.getHazelcastInstance().get();
@@ -214,6 +193,8 @@ public class HazelcastFederationServiceTest {
         closeConnectionBetween(h1, h2);
         assertEquals(1, s1.getMemberCount());
         assertEquals(1, s2.getMemberCount());
+        System.out.println(s1.getFederationNodeIds());
+        System.out.println(s2.getFederationNodeIds());
         assertTrue(s1.getFederationNodeIds().contains(u1));
         assertTrue(s1.getFederationNodeIds().contains(u2));
         assertTrue(s2.getFederationNodeIds().contains(u1));
@@ -223,6 +204,8 @@ public class HazelcastFederationServiceTest {
         reconnect(h1, h2);
         assertEquals(2, s1.getMemberCount());
         assertEquals(2, s2.getMemberCount());
+        System.out.println(s1.getFederationNodeIds());
+        System.out.println(s2.getFederationNodeIds());
         assertTrue(s1.getFederationNodeIds().contains(u1));
         assertTrue(s1.getFederationNodeIds().contains(u2));
         assertTrue(s2.getFederationNodeIds().contains(u1));
@@ -248,7 +231,7 @@ public class HazelcastFederationServiceTest {
             map.put("listeningPort", Integer.toString(port));
             map.put("joinMechanism", "TCPIP");
             map.put("tcpIpMembers", StringUtils.join(members, ", "));
-            service.activate(context, map);
+            service.activate(map);
             try {
                 waitOnInitialize(service);
             } catch (Exception e) {
@@ -290,4 +273,9 @@ public class HazelcastFederationServiceTest {
         n1.clusterService.merge(n2.address);
     }
 
+    private void waitABit() throws Exception {
+        LOGGER.info("Waiting here...");
+        Thread.sleep(4000L);
+        LOGGER.info("Done waiting.");
+    }
 }
