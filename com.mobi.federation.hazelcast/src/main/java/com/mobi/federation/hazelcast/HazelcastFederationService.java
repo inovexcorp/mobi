@@ -77,6 +77,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Semaphore;
@@ -258,12 +259,19 @@ public class HazelcastFederationService implements FederationService {
                 this.hazelcastInstance.getCluster().addMembershipListener(listener);
                 this.tokenKey = encryptor.decrypt(serviceConfig.sharedKey()).getBytes(StandardCharsets.UTF_8);
                 registerWithFederationNodes(hazelcastInstance);
-                registerUsers();
+            } catch (Exception ex) {
+                LOGGER.error(ex.getMessage(), ex);
             } finally {
                 this.semaphore.release();
             }
         });
         LOGGER.info("Successfully spawned initialization thread.");
+        try {
+            this.initializationTask.get();
+            registerUsers();
+        } catch (InterruptedException | ExecutionException ex) {
+            LOGGER.error(ex.getMessage(), ex);
+        }
     }
 
     @Override
@@ -309,6 +317,10 @@ public class HazelcastFederationService implements FederationService {
                     }
                 }
             }
+
+            // Removing users for this federation service
+            userUtils.removeMapEntry(this);
+            LOGGER.info("Successfully removed users from federation infrastructure");
 
             LOGGER.info("Shutting down underlying hazelcast federation infrastructure");
             this.hazelcastOSGiService.shutdownHazelcastInstance((HazelcastOSGiInstance) this.hazelcastInstance);
@@ -418,7 +430,7 @@ public class HazelcastFederationService implements FederationService {
     private void registerUsers() {
         userUtils.createMapEntry(this);
         rdfEngine.getUsers().forEach(user -> userUtils.addUser(this, user));
-        LOGGER.info("Successfully added users to federation infrastructure.");
+        LOGGER.info("Successfully added users to federation infrastructure");
     }
 
     private Optional<String> getHostAddress() {
