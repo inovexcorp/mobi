@@ -36,7 +36,13 @@ describe('Statement Display directive', function() {
     });
 
     beforeEach(function compile() {
-        this.compile = function(html, object = 'object', splitResult = {}) {
+        this.compile = function(html, object, splitResult) {
+            if (object === undefined || object === null) {
+                object = 'object';
+            }
+            if (splitResult === undefined || splitResult === null) {
+                splitResult = {};
+            }
             scope.predicate = 'predicate';
             scope.object = object;
             var parent = $compile('<div></div>')(scope);
