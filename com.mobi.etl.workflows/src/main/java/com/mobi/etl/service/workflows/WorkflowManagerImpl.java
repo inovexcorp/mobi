@@ -46,8 +46,12 @@ import org.apache.camel.builder.RouteBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -62,6 +66,7 @@ public class WorkflowManagerImpl implements WorkflowManager {
     private static final Logger LOG = LoggerFactory.getLogger(WorkflowManagerImpl.class);
 
     Set<Resource> workflows = new HashSet<>();
+    Set<Resource> failedWorkflows = new HashSet<>();
 
     private CamelContext camelContext;
     private Repository repository;
@@ -104,28 +109,69 @@ public class WorkflowManagerImpl implements WorkflowManager {
     protected void start() {
         try {
             workflows = new HashSet<>();
-            Set<Workflow> workflowSet = getWorkflowsFromRepo();
-            for (Workflow workflow: workflowSet) {
-                Set<Resource> routeIds = getRouteIds(workflow);
-                boolean deployed = routeIds.stream()
-                        .allMatch(resource -> camelContext.getRoute(resource.stringValue()) != null);
-                if (!deployed) {
-                    for (Resource routeId: routeIds) {
-                        camelContext.removeRoute(routeId.stringValue());
+            Queue<Workflow> queue = new LinkedList<>(getWorkflowsFromRepo());
+
+            if (!queue.isEmpty()) {
+                failedWorkflows = new HashSet<>();
+                Runnable task = () -> {
+                    Map<Resource, Integer> attempts = new HashMap<>();
+                    LOG.debug("Redeploying " + queue.size() + " workflows");
+                    Workflow workflow = queue.poll();
+                    while (workflow != null) {
+                        try {
+                            if (failedWorkflows.contains(workflow.getResource())) {
+                                if (attempts.get(workflow.getResource()) > 1) {
+                                    LOG.debug("Attempted to redeploy " + workflow.getResource() + " already. Skipping");
+                                    continue;
+                                }
+                                Thread.sleep(3000);
+                            }
+                            Set<Resource> routeIds = getRouteIds(workflow);
+                            boolean deployed = routeIds.stream()
+                                    .allMatch(resource -> camelContext.getRoute(resource.stringValue()) != null);
+                            if (!deployed) {
+                                for (Resource routeId: routeIds) {
+                                    camelContext.removeRoute(routeId.stringValue());
+                                }
+                                deployWorkflow(workflow);
+                            }
+                            workflows.add(workflow.getResource());
+                            LOG.debug("Workflow " + workflow.getResource() + " successfully re-deployed.");
+                            failedWorkflows.remove(workflow.getResource());
+                            attempts.remove(workflow.getResource());
+                            workflow = queue.poll();
+                        } catch (Exception ex) {
+                            LOG.debug("Workflow " + workflow.getResource() + " could not be re-deployed.");
+                            failedWorkflows.add(workflow.getResource());
+                            queue.add(workflow);
+                            int tries = attempts.getOrDefault(workflow.getResource(), 0);
+                            attempts.put(workflow.getResource(), tries + 1);
+                            workflow = queue.poll();
+                        }
                     }
-                    deployWorkflow(workflow);
-                }
-                workflows.add(workflow.getResource());
+                };
+                Thread thread = new Thread(task);
+                thread.start();
             }
         } catch (Exception e) {
             throw new MobiException("Error in starting WorkflowManager", e);
         }
+        LOG.debug("WorkflowManager initialized and activated");
     }
 
     @Override
     public Set<Workflow> getWorkflows() {
         try (RepositoryConnection conn = repository.getConnection()) {
             return workflows.stream()
+                    .map(resource -> getExpectedWorkflow(resource, conn))
+                    .collect(Collectors.toSet());
+        }
+    }
+
+    @Override
+    public Set<Workflow> getFailedWorkflows() {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            return failedWorkflows.stream()
                     .map(resource -> getExpectedWorkflow(resource, conn))
                     .collect(Collectors.toSet());
         }
@@ -159,15 +205,24 @@ public class WorkflowManagerImpl implements WorkflowManager {
 
     @Override
     public void startWorkflow(Resource workflowIRI) {
-        validateWorkflow(workflowIRI);
-        Set<Resource> routeIds = getRouteIds(getExpectedWorkflow(workflowIRI));
-        try {
-            for (Resource iri : routeIds) {
-                LOG.info("Starting Workflow " + workflowIRI + " routes");
-                camelContext.startRoute(iri.stringValue());
+        if (workflows.contains(workflowIRI)) {
+            Set<Resource> routeIds = getRouteIds(getExpectedWorkflow(workflowIRI));
+            try {
+                for (Resource iri : routeIds) {
+                    LOG.info("Starting Workflow " + workflowIRI + " routes");
+                    camelContext.startRoute(iri.stringValue());
+                }
+            } catch (Exception e) {
+                throw new MobiException("Error in starting Workflow", e);
             }
-        } catch (Exception e) {
-            throw new MobiException("Error in starting Workflow", e);
+        } else if (failedWorkflows.contains(workflowIRI)) {
+            LOG.info("Redeploying failed Workflow " + workflowIRI);
+            Workflow workflow = getExpectedWorkflow(workflowIRI);
+            deployWorkflow(workflow);
+            workflows.add(workflowIRI);
+            failedWorkflows.remove(workflowIRI);
+        } else {
+            throw new IllegalArgumentException("Workflow " + workflowIRI + " does not exist");
         }
     }
 

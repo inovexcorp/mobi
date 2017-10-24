@@ -28,6 +28,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -159,6 +160,7 @@ public class WorkflowManagerImplTest {
         when(camelContext.getRoute(anyString())).thenReturn(route);
 
         service.start();
+        Thread.sleep(100);
         assertTrue(service.workflows.contains(WORKFLOW2_ID));
         verify(camelContext).getRoute(ROUTE2_ID.stringValue());
         verify(camelContext, times(0)).removeRoute(anyString());
@@ -168,10 +170,22 @@ public class WorkflowManagerImplTest {
     @Test
     public void startWithMissingRoutesTest() throws Exception {
         service.start();
+        Thread.sleep(100);
         assertTrue(service.workflows.contains(WORKFLOW2_ID));
         verify(camelContext).getRoute(ROUTE2_ID.stringValue());
         verify(camelContext).removeRoute(ROUTE2_ID.stringValue());
         verify(camelContext).addRoutes(routeBuilder);
+    }
+
+    @Test
+    public void startWithFailedWorkflowTest() throws Exception {
+        // Setup
+        doThrow(new IllegalArgumentException()).when(converterService).convert(any(Workflow.class));
+
+        service.start();
+        Thread.sleep(3100);
+        assertFalse(service.workflows.contains(WORKFLOW2_ID));
+        assertTrue(service.failedWorkflows.contains(WORKFLOW2_ID));
     }
 
     @Test
@@ -187,6 +201,20 @@ public class WorkflowManagerImplTest {
         service.workflows.add(WORKFLOW1_ID);
 
         service.getWorkflows();
+    }
+
+    @Test
+    public void getFailedWorkflowsTest() throws Exception {
+        Set<Workflow> result = service.getFailedWorkflows();
+        assertEquals(0, result.size());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void getFailedWorkflowsWithMissingTest() {
+        // Setup:
+        service.failedWorkflows.add(WORKFLOW1_ID);
+
+        service.getFailedWorkflows();
     }
 
     @Test
