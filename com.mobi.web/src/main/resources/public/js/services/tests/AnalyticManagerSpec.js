@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Analytic Manager service', function() {
-    var analyticManagerSvc, scope, $httpBackend, utilSvc, $q;
+    var analyticManagerSvc, scope, $httpBackend, $httpParamSerializer, utilSvc, $q;
 
     beforeEach(function() {
         module('analyticManager');
@@ -40,93 +40,109 @@ describe('Analytic Manager service', function() {
         utilSvc.rejectError.and.returnValue($q.reject('Error Message'));
     });
 
+    afterEach(function() {
+        analyticManagerSvc = null;
+        scope = null;
+        $httpBackend = null;
+        $httpParamSerializer = null
+        utilSvc = null;
+        $q = null;
+    });
+
     describe('should set the correct initial state when getConfigurationTypes', function() {
         it('resolves', function() {
             var types = ['type1', 'type2'];
             spyOn(analyticManagerSvc, 'getConfigurationTypes').and.returnValue($q.when(types));
-            analyticManagerSvc.initialize().then(function(response) {
-                expect(analyticManagerSvc.configurationTypes).toEqual(types);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            analyticManagerSvc.initialize()
+                .then(_.noop, function(response) {
+                    fail('Promise should have resolved');
+                });
             scope.$apply();
+            expect(analyticManagerSvc.configurationTypes).toEqual(types);
         });
         it('rejects', function() {
             spyOn(analyticManagerSvc, 'getConfigurationTypes').and.returnValue($q.reject());
-            analyticManagerSvc.initialize().then(function(response) {
-                fail('Promise should have rejected');
-            }, function() {
-                expect(true).toBe(true);
-            });
+            analyticManagerSvc.initialize()
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                });
             scope.$apply();
+            expect(analyticManagerSvc.configurationTypes).toEqual([]);
         });
     });
     describe('should get the IRIs for all record types when GET', function() {
         it('succeeds', function() {
             $httpBackend.whenGET('/mobirest/analytics/configuration-types').respond(200, []);
-            analyticManagerSvc.getConfigurationTypes().then(function(value) {
-                expect(value).toEqual([]);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            analyticManagerSvc.getConfigurationTypes()
+                .then(function(value) {
+                    expect(value).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('fails', function() {
-            $httpBackend.whenGET('/mobirest/analytics/configuration-types').respond(400);
-            analyticManagerSvc.getConfigurationTypes().then(function(value) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(true).toBe(true);
-            });
+            $httpBackend.whenGET('/mobirest/analytics/configuration-types').respond(400, null, null, 'Error Message');
+            analyticManagerSvc.getConfigurationTypes()
+                .then(function(value) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should create a new analytic', function() {
-        var url = '/mobirest/analytics';
-        var analyticConfig = {
-            type: 'Type',
-            title: 'Title',
-            description: 'Description',
-            keywords: ['keyword0', 'keyword1'],
-            json: '{}'
-        };
+        beforeEach(function() {
+            this.url = '/mobirest/analytics';
+            this.analyticConfig = {
+                type: 'Type',
+                title: 'Title',
+                description: 'Description',
+                keywords: ['keyword0', 'keyword1'],
+                json: '{}'
+            };
+        });
         it('unless an error occurs', function() {
-            $httpBackend.expectPOST(url,
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            analyticManagerSvc.createAnalytic(analyticConfig).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            analyticManagerSvc.createAnalytic(this.analyticConfig)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a description and keywords', function() {
-            $httpBackend.expectPOST(url,
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, 'id');
-            analyticManagerSvc.createAnalytic(analyticConfig).then(function(response) {
-                expect(response).toBe('id');
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            analyticManagerSvc.createAnalytic(this.analyticConfig)
+                .then(function(response) {
+                    expect(response).toBe('id');
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without a description or keywords', function() {
-            delete analyticConfig.description;
-            delete analyticConfig.keywords;
-            $httpBackend.expectPOST(url,
+            delete this.analyticConfig.description;
+            delete this.analyticConfig.keywords;
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200, 'id');
-            analyticManagerSvc.createAnalytic(analyticConfig).then(function(response) {
-                expect(response).toBe('id');
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            analyticManagerSvc.createAnalytic(this.analyticConfig)
+                .then(function(response) {
+                    expect(response).toBe('id');
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
@@ -138,13 +154,13 @@ describe('Analytic Manager service', function() {
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
-                        status: 400,
-                        statusText: 'error'
-                    }));
                     expect(response).toBe('error');
                 });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'error'
+            }));
         });
         it('when resolved', function() {
             $httpBackend.whenGET('/mobirest/analytics/recordId').respond(200, {});
@@ -158,32 +174,34 @@ describe('Analytic Manager service', function() {
         });
     });
     describe('should update an AnalyticRecord', function() {
-        var url = '/mobirest/analytics/recordId';
-        var analyticConfig = {
-            analyticRecordId: 'recordId',
-            type: 'Type',
-            json: '{}'
-        };
+        beforeEach(function() {
+            this.url = '/mobirest/analytics/recordId';
+            this.analyticConfig = {
+                analyticRecordId: 'recordId',
+                type: 'Type',
+                json: '{}'
+            };
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenPUT(url,
+            $httpBackend.whenPUT(this.url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            analyticManagerSvc.updateAnalytic(analyticConfig)
+            analyticManagerSvc.updateAnalytic(this.analyticConfig)
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                     expect(response).toBe('Error Message');
                 });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('when resolved', function() {
-            $httpBackend.whenPUT(url,
+            $httpBackend.whenPUT(this.url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200);
-            analyticManagerSvc.updateAnalytic(analyticConfig)
+            analyticManagerSvc.updateAnalytic(this.analyticConfig)
                 .then(function(response) {
                     expect(response).toEqual(jasmine.objectContaining({
                         status: 200

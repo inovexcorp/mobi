@@ -21,14 +21,12 @@
  * #L%
  */
 describe('Circle Button directive', function() {
-    var $compile, scope, isolatedScope, element;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
         module('circleButton');
 
-        // To test out a directive, you need to inject $compile and $rootScope
-        // and save them to use
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -37,48 +35,46 @@ describe('Circle Button directive', function() {
         scope.btnIcon = 'fa-square';
         scope.btnSmall = false;
         scope.displayText = 'text';
-
-        // To create a copy of the directive, use the $compile(angular.element())($rootScope)
-        // syntax
-        element = $compile(angular.element('<circle-button btn-icon="btnIcon" btn-small="btnSmall" display-text="displayText"></circle-button>'))(scope);
-        // This needs to be called explicitly if you change anything with the directive,
-        // being either a variable change or a function call
+        this.element = $compile(angular.element('<circle-button btn-icon="btnIcon" btn-small="btnSmall" display-text="displayText"></circle-button>'))(scope);
         scope.$digest();
+        this.isolatedScope = this.element.isolateScope();
+    });
 
-        isolatedScope = element.isolateScope();
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
         it('btnIcon should be one way bound', function() {
-            isolatedScope.btnIcon = 'fa-square-o';
+            this.isolatedScope.btnIcon = 'fa-square-o';
             scope.$digest();
             expect(scope.btnIcon).toEqual('fa-square');
         });
         it('btnSmall should be one way bound', function() {
-            isolatedScope.btnSmall = true;
+            this.isolatedScope.btnSmall = true;
             scope.$digest();
             expect(scope.btnSmall).toEqual(false);
         });
         it('displayText should be one way bound', function() {
-            isolatedScope.displayText = 'new';
+            this.isolatedScope.displayText = 'new';
             scope.$digest();
             expect(scope.displayText).toEqual('text');
         });
     });
     describe('replaces the element with the correct html', function() {
-        it('for a button', function() {
-            expect(element.prop('tagName')).toBe('BUTTON');
+        it('for wrapping containers', function() {
+            expect(this.element.prop('tagName')).toBe('BUTTON');
         });
-        it('based on btnIcon', function() {
-            var iconList = element.querySelectorAll('.' + scope.btnIcon);
-            expect(iconList.length).toBe(1);
+        it('with a btnIcon', function() {
+            expect(this.element.querySelectorAll('.' + scope.btnIcon).length).toBe(1);
         });
-        it('based on btnSmall', function() {
-            expect(element.hasClass('small')).toBe(false);
-            var isolatedScope = element.isolateScope();
+        it('depending on btnSmall', function() {
+            expect(this.element.hasClass('small')).toBe(false);
             scope.btnSmall = true;
             scope.$digest();
-            expect(element.hasClass('small')).toBe(true);
+            expect(this.element.hasClass('small')).toBe(true);
         });
     });
 });

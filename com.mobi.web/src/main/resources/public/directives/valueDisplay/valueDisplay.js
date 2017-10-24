@@ -28,7 +28,7 @@
          * @ngdoc overview
          * @name valueDisplay
          *
-         * @description 
+         * @description
          * The `valueDisplay` module only provides the `valueDisplay` directive which creates
          * a span element which displays a json-ld object in a readable format.
          */
@@ -40,7 +40,7 @@
          * @restrict E
          * @requires util.service:utilService
          *
-         * @description 
+         * @description
          * `valueDisplay` is a directive which creates a span element for displaying json-ld values.
          * It is meant to be used to display a json-ld object in a readable format.
          *
@@ -62,7 +62,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.util = utilService;
-                    
+
                     dvm.has = function(obj, key) {
                         return _.has(obj, key);
                     }

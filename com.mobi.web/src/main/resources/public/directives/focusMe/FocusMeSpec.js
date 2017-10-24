@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Focus Me directive', function() {
-    var $compile, $timeout, scope, element;
+    var $compile, $timeout, scope;
 
     beforeEach(function() {
         module('focusMe');
@@ -32,13 +32,20 @@ describe('Focus Me directive', function() {
             $timeout = _$timeout_;
         });
 
-        element = $compile(angular.element('<input type="text" focus-me />'))(scope);
+        this.element = $compile(angular.element('<input type="text" focus-me />'))(scope);
         scope.$digest();
     });
 
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $timeout = null;
+        this.element.remove();
+    });
+
     it('should set the focus on timeout', function() {
-        spyOn(element[0], 'focus');
+        spyOn(this.element[0], 'focus');
         $timeout.flush();
-        expect(element[0].focus).toHaveBeenCalled();
+        expect(this.element[0].focus).toHaveBeenCalled();
     });
 });

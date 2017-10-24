@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Util service', function() {
-    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, uuid, $filter, $httpBackend, $q, scope, properties, regex, httpSvc;
+    var utilSvc, prefixes, toastr, splitIRIFilter, beautifyFilter, uuid, $filter, $httpBackend, $q, scope, regex, httpSvc;
 
     beforeEach(function() {
         module('util');
@@ -53,7 +53,7 @@ describe('Util service', function() {
             httpSvc = _httpService_;
         });
 
-        properties = [
+        this.properties = [
             prefixes.xsd + 'dateTime',
             prefixes.xsd + 'dateTimeStamp',
             prefixes.xsd + 'decimal',
@@ -66,6 +66,21 @@ describe('Util service', function() {
             prefixes.xsd + 'other',
             prefixes.xsd + 'byte'
         ];
+    });
+
+    afterEach(function() {
+        utilSvc = null;
+        prefixes = null;
+        toastr = null;
+        splitIRIFilter = null;
+        beautifyFilter = null;
+        uuid = null;
+        $filter = null;
+        $httpBackend = null;
+        $q = null;
+        scope = null;
+        regex = null;
+        httpSvc = null;
     });
 
     describe('should get the beautified version of an IRI', function() {
@@ -97,27 +112,28 @@ describe('Util service', function() {
         });
     });
     describe('should get a property value from an entity', function() {
-        var prop = 'property';
         it('if it contains the property', function() {
             var entity = {'property': [{'@value': 'value'}]};
-            expect(utilSvc.getPropertyValue(entity, prop)).toBe('value');
+            expect(utilSvc.getPropertyValue(entity, 'property')).toBe('value');
         });
         it('if it does not contain the property', function() {
-            expect(utilSvc.getPropertyValue({}, prop)).toBe('');
+            expect(utilSvc.getPropertyValue({}, 'property')).toBe('');
         });
     });
     describe('should set a property value for an entity', function() {
-        var prop = 'property', value = 'value';
+        beforeEach(function() {
+            this.value = 'value';
+        });
         it('when not there', function() {
             var entity = {};
-            var expected = {'property': [{'@value': value}]};
-            utilSvc.setPropertyValue(entity, prop, value);
+            var expected = {'property': [{'@value': this.value}]};
+            utilSvc.setPropertyValue(entity, 'property', this.value);
             expect(entity).toEqual(expected);
         });
         it('when there', function() {
             var entity = {'property': [{'@value': 'other'}]};
-            var expected = {'property': [{'@value': 'other'}, {'@value': value}]};
-            utilSvc.setPropertyValue(entity, prop, value);
+            var expected = {'property': [{'@value': 'other'}, {'@value': this.value}]};
+            utilSvc.setPropertyValue(entity, 'property', this.value);
             expect(entity).toEqual(expected);
         });
     });
@@ -138,27 +154,28 @@ describe('Util service', function() {
         expect(_.has(entity, prop)).toEqual(false);
     });
     describe('should get a property id value from an entity', function() {
-        var prop = 'property';
         it('if it contains the property', function() {
             var entity = {'property': [{'@id': 'id'}]};
-            expect(utilSvc.getPropertyId(entity, prop)).toBe('id');
+            expect(utilSvc.getPropertyId(entity, 'property')).toBe('id');
         });
         it('if it does not contain the property', function() {
-            expect(utilSvc.getPropertyId({}, prop)).toBe('');
+            expect(utilSvc.getPropertyId({}, 'property')).toBe('');
         });
     });
     describe('should set a property id value for an entity', function() {
-        var prop = 'property', id = 'id';
+        beforeEach(function() {
+            this.id = 'id';
+        });
         it('when not there', function() {
             var entity = {};
-            var expected = {'property': [{'@id': id}]};
-            utilSvc.setPropertyId(entity, prop, id);
+            var expected = {'property': [{'@id': this.id}]};
+            utilSvc.setPropertyId(entity, 'property', this.id);
             expect(entity).toEqual(expected);
         });
         it('when there', function() {
             var entity = {'property': [{'@id': 'otherId'}]};
-            var expected = {'property': [{'@id': 'otherId'}, {'@id': id}]};
-            utilSvc.setPropertyId(entity, prop, id);
+            var expected = {'property': [{'@id': 'otherId'}, {'@id': this.id}]};
+            utilSvc.setPropertyId(entity, 'property', this.id);
             expect(entity).toEqual(expected);
         });
     });
@@ -259,109 +276,116 @@ describe('Util service', function() {
     });
     describe('should get a page of paginated results from a URL', function() {
         describe('if an id is provided', function() {
-            var id = 'id';
+            beforeEach(function() {
+                this.id = 'id';
+            });
             it('and the call succeeds', function() {
                 httpSvc.get.and.returnValue($q.when({}))
-                utilSvc.getResultsPage('/test', undefined, id).then(function(response) {
-                    expect(httpSvc.get).toHaveBeenCalledWith('/test', undefined, id);
-                    expect(response).toEqual({});
-                }, function(response) {
-                    fail('Promise should have resolved');
-                });
+                utilSvc.getResultsPage('/test', undefined, this.id)
+                    .then(function(response) {
+                        expect(response).toEqual({});
+                    }, function(response) {
+                        fail('Promise should have resolved');
+                    });
                 scope.$apply();
+                expect(httpSvc.get).toHaveBeenCalledWith('/test', undefined, this.id);
             });
             describe('and the call fails', function() {
-                var failFunction;
                 beforeEach(function() {
-                    failFunction = jasmine.createSpy('failFunction').and.returnValue($q.reject('Test'));
+                    this.failFunction = jasmine.createSpy('failFunction').and.returnValue($q.reject('Test'));
                     httpSvc.get.and.returnValue($q.reject({}))
                 });
                 it('with a passed error function', function() {
-                    utilSvc.getResultsPage('/test', failFunction, id).then(function(response) {
-                        fail('Promise should have rejected.');
-                    }, function(response) {
-                        expect(httpSvc.get).toHaveBeenCalledWith('/test', undefined, id);
-                        expect(failFunction).toHaveBeenCalled();
-                        expect(response).toBe('Test');
-                    });
+                    utilSvc.getResultsPage('/test', this.failFunction, this.id)
+                        .then(function(response) {
+                            fail('Promise should have rejected.');
+                        }, function(response) {
+                            expect(response).toBe('Test');
+                        });
                     scope.$apply();
+                    expect(httpSvc.get).toHaveBeenCalledWith('/test', undefined, this.id);
+                    expect(this.failFunction).toHaveBeenCalled();
                 });
                 it('with a default error function', function() {
                     spyOn(utilSvc, 'getErrorMessage').and.returnValue('Test');
-                    utilSvc.getResultsPage('/test', undefined, id).then(function(response) {
-                        fail('Promise should have rejected.');
-                    }, function(response) {
-                        expect(httpSvc.get).toHaveBeenCalledWith('/test', undefined, id);
-                        expect(utilSvc.getErrorMessage).toHaveBeenCalled();
-                        expect(response).toBe('Test');
-                    });
+                    utilSvc.getResultsPage('/test', undefined, this.id)
+                        .then(function(response) {
+                            fail('Promise should have rejected.');
+                        }, function(response) {
+                            expect(response).toBe('Test');
+                        });
                     scope.$apply();
+                    expect(httpSvc.get).toHaveBeenCalledWith('/test', undefined, this.id);
+                    expect(utilSvc.getErrorMessage).toHaveBeenCalled();
                 });
             });
         });
         describe('if id is not provided', function() {
             it('and the call succeeds', function() {
                 $httpBackend.whenGET('/test').respond(200);
-                utilSvc.getResultsPage('/test').then(function(response) {
-                    expect(_.isObject(response)).toBe(true);
-                }, function(response) {
-                    fail('Promise should have resolved');
-                });
+                utilSvc.getResultsPage('/test')
+                    .then(function(response) {
+                        expect(_.isObject(response)).toBe(true);
+                    }, function(response) {
+                        fail('Promise should have resolved');
+                    });
                 flushAndVerify($httpBackend);
             });
             describe('and the call fails', function() {
-                var failFunction;
                 beforeEach(function() {
-                    failFunction = jasmine.createSpy('failFunction').and.returnValue($q.reject('Test'));
+                    this.failFunction = jasmine.createSpy('failFunction').and.returnValue($q.reject('Test'));
                     $httpBackend.whenGET('/test').respond(400);
                 });
                 it('with a passed error function', function() {
-                    utilSvc.getResultsPage('/test', failFunction).then(function(response) {
-                        fail('Promise should have rejected.');
-                    }, function(response) {
-                        expect(failFunction).toHaveBeenCalled();
-                        expect(response).toBe('Test');
-                    });
+                    utilSvc.getResultsPage('/test', this.failFunction)
+                        .then(function(response) {
+                            fail('Promise should have rejected.');
+                        }, function(response) {
+                            expect(response).toBe('Test');
+                        });
                     flushAndVerify($httpBackend);
+                    expect(this.failFunction).toHaveBeenCalled();
                 });
                 it('with a default error function', function() {
                     spyOn(utilSvc, 'getErrorMessage').and.returnValue('Test');
-                    utilSvc.getResultsPage('/test').then(function(response) {
-                        fail('Promise should have rejected.');
-                    }, function(response) {
-                        expect(utilSvc.getErrorMessage).toHaveBeenCalled();
-                        expect(response).toBe('Test');
-                    });
+                    utilSvc.getResultsPage('/test')
+                        .then(function(response) {
+                            fail('Promise should have rejected.');
+                        }, function(response) {
+                            expect(response).toBe('Test');
+                        });
                     flushAndVerify($httpBackend);
+                    expect(utilSvc.getErrorMessage).toHaveBeenCalled();
                 });
             });
         });
     });
     describe('should reject a deferred promise with an error message', function() {
-        var deferred;
         beforeEach(function() {
-            deferred = $q.defer();
+            this.deferred = $q.defer();
             spyOn(utilSvc, 'getErrorMessage').and.returnValue('Test');
         });
         it('unless the response was canceled', function() {
-            utilSvc.onError({status: -1}, deferred, 'Test');
-            deferred.promise.then(function() {
-                fail('Promise should have rejected.');
-            }, function(error) {
-                expect(error).toBe('');
-                expect(utilSvc.getErrorMessage).not.toHaveBeenCalled();
-            });
+            utilSvc.onError({status: -1}, this.deferred, 'Test');
+            this.deferred.promise
+                .then(function() {
+                    fail('Promise should have rejected.');
+                }, function(error) {
+                    expect(error).toBe('');
+                });
             scope.$apply();
+            expect(utilSvc.getErrorMessage).not.toHaveBeenCalled();
         });
         it('successfully', function() {
-            utilSvc.onError({}, deferred, 'Test');
-            deferred.promise.then(function() {
-                fail('Promise should have rejected.');
-            }, function(error) {
-                expect(error).toBe('Test');
-                expect(utilSvc.getErrorMessage).toHaveBeenCalledWith({}, 'Test');
-            });
+            utilSvc.onError({}, this.deferred, 'Test');
+            this.deferred.promise
+                .then(function() {
+                    fail('Promise should have rejected.');
+                }, function(error) {
+                    expect(error).toBe('Test');
+                });
             scope.$apply();
+            expect(utilSvc.getErrorMessage).toHaveBeenCalledWith({}, 'Test');
         });
     });
     describe('should create a rejected promise with an error message', function() {
@@ -369,22 +393,24 @@ describe('Util service', function() {
             spyOn(utilSvc, 'getErrorMessage').and.returnValue('Test');
         });
         it('unless the response was canceled', function() {
-            utilSvc.rejectError({status: -1}, 'Test').then(function() {
-                fail('Promise should have rejected.');
-            }, function(error) {
-                expect(error).toBe('');
-                expect(utilSvc.getErrorMessage).not.toHaveBeenCalled();
-            });
+            utilSvc.rejectError({status: -1}, 'Test')
+                .then(function() {
+                    fail('Promise should have rejected.');
+                }, function(error) {
+                    expect(error).toBe('');
+                });
             scope.$apply();
+            expect(utilSvc.getErrorMessage).not.toHaveBeenCalled();
         });
         it('successfully', function() {
-            utilSvc.rejectError({}, 'Test').then(function() {
-                fail('Promise should have rejected.');
-            }, function(error) {
-                expect(error).toBe('Test');
-                expect(utilSvc.getErrorMessage).toHaveBeenCalledWith({}, 'Test');
-            });
+            utilSvc.rejectError({}, 'Test')
+                .then(function() {
+                    fail('Promise should have rejected.');
+                }, function(error) {
+                    expect(error).toBe('Test');
+                });
             scope.$apply();
+            expect(utilSvc.getErrorMessage).toHaveBeenCalledWith({}, 'Test');
         });
     });
     it('should retrieve an error message from a http response', function() {
@@ -427,24 +453,24 @@ describe('Util service', function() {
         expect(uuid.v4).toHaveBeenCalled();
     });
     it('getInputType should return the proper input type based on datatype', function() {
-        _.forEach([0, 1], function(id) {
-            expect(utilSvc.getInputType(properties[id])).toBe('datetime-local');
-        });
-        _.forEach([2, 3, 4, 5, 6, 7, 8, 10], function(id) {
-            expect(utilSvc.getInputType(properties[id])).toBe('number');
-        });
-        expect(utilSvc.getInputType(properties[9])).toBe('text');
+        [0, 1].forEach(function(id) {
+            expect(utilSvc.getInputType(this.properties[id])).toBe('datetime-local');
+        }, this);
+        [2, 3, 4, 5, 6, 7, 8, 10].forEach(function(id) {
+            expect(utilSvc.getInputType(this.properties[id])).toBe('number');
+        }, this);
+        expect(utilSvc.getInputType(this.properties[9])).toBe('text');
     });
     it('getPattern should return the proper REGEX based on datatype', function() {
-        _.forEach([0, 1], function(id) {
-            expect(utilSvc.getPattern(properties[id])).toBe(regex.DATETIME);
-        });
-        _.forEach([2, 3, 4], function(id) {
-            expect(utilSvc.getPattern(properties[id])).toBe(regex.DECIMAL);
-        });
-        _.forEach([5, 6, 7, 8, 10], function(id) {
-            expect(utilSvc.getPattern(properties[id])).toBe(regex.INTEGER);
-        });
-        expect(utilSvc.getPattern(properties[9])).toBe(regex.ANYTHING);
+        [0, 1].forEach(function(id) {
+            expect(utilSvc.getPattern(this.properties[id])).toBe(regex.DATETIME);
+        }, this);
+        [2, 3, 4].forEach(function(id) {
+            expect(utilSvc.getPattern(this.properties[id])).toBe(regex.DECIMAL);
+        }, this);
+        [5, 6, 7, 8, 10].forEach(function(id) {
+            expect(utilSvc.getPattern(this.properties[id])).toBe(regex.INTEGER);
+        }, this);
+        expect(utilSvc.getPattern(this.properties[9])).toBe(regex.ANYTHING);
     });
 });

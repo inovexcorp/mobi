@@ -21,10 +21,7 @@
  * #L%
  */
 describe('Paging Details directive', function() {
-    var $compile,
-        scope,
-        element,
-        isolatedScope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -38,34 +35,40 @@ describe('Paging Details directive', function() {
         scope.totalSize = 0;
         scope.pageIndex = 0;
         scope.limit = 0;
-        element = $compile(angular.element('<paging-details total-size="totalSize" page-index="pageIndex" limit="limit"></paging-details>'))(scope);
+        this.element = $compile(angular.element('<paging-details total-size="totalSize" page-index="pageIndex" limit="limit"></paging-details>'))(scope);
         scope.$digest();
-        isolatedScope = element.isolateScope();
+        this.isolatedScope = this.element.isolateScope();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
         it('totalSize should be one way bound', function() {
-            isolatedScope.totalSize = 1;
+            this.isolatedScope.totalSize = 1;
             scope.$digest();
             expect(scope.totalSize).toBe(0);
         });
         it('pageIndex should be one way bound', function() {
-            isolatedScope.pageIndex = 1;
+            this.isolatedScope.pageIndex = 1;
             scope.$digest();
             expect(scope.pageIndex).toBe(0);
         });
         it('limit should be one way bound', function() {
-            isolatedScope.limit = 1;
+            this.isolatedScope.limit = 1;
             scope.$digest();
             expect(scope.limit).toBe(0);
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.hasClass('paging-details')).toBe(true);
+            expect(this.element.hasClass('paging-details')).toBe(true);
         });
         it('depending on what numbers are passed', function() {
-            var p = element.find('p');
+            var p = this.element.find('p');
             var tests = [
                 {
                     pageIndex: 0,
