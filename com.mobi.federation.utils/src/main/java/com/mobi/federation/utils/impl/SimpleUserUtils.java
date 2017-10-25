@@ -44,7 +44,7 @@ import javax.security.auth.login.LoginException;
 
 @Component
 public class SimpleUserUtils implements UserUtils {
-    protected static final String FEDERATION_USERS_KEY = "federation.users";
+    static final String FEDERATION_USERS_KEY = "federation.users";
 
     private UserFactory userFactory;
     private ValueFactory vf;
