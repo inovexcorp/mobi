@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<root>
+    <windows>
+        <driver id="marionette">
+            <version id="0.19.0">
+                <bitrate sixtyfourbit="true">
+                    <filelocation>https://github.com/mozilla/geckodriver/releases/download/v0.19.0/geckodriver-v0.19.0-win64.zip</filelocation>
+                    <hash>74551a456120d87d9ab5350fc623b971</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+                <bitrate thirtytwobit="true">
+                    <filelocation>https://github.com/mozilla/geckodriver/releases/download/v0.19.0/geckodriver-v0.19.0-win32.zip</filelocation>
+                    <hash>13e6f714c0f8b4f952ce51be59d6824d</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+            </version>
+        </driver>
+    </windows>
+    <linux>
+        <driver id="marionette">
+            <version id="0.19.0">
+                <bitrate sixtyfourbit="true">
+                    <filelocation>https://github.com/mozilla/geckodriver/releases/download/v0.19.0/geckodriver-v0.19.0-linux64.tar.gz</filelocation>
+                    <hash>ca6935a72fd0527d15a78a17a35e56e8</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+                <bitrate arm="true">
+                    <filelocation>https://github.com/mozilla/geckodriver/releases/download/v0.19.0/geckodriver-v0.19.0-arm7hf.tar.gz</filelocation>
+                    <hash>1278fd771ae023b4becbdb9968f91e8e</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+            </version>
+        </driver>
+    </linux>
+    <osx>
+        <driver id="marionette">
+            <version id="0.19.0">
+                <bitrate thirtytwobit="true" sixtyfourbit="true">
+                    <filelocation>https://github.com/mozilla/geckodriver/releases/download/v0.19.0/geckodriver-v0.19.0-macos.tar.gz</filelocation>
+                    <hash>4cf0bef3a95aeb3d5011d780a3820c2d</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+            </version>
+        </driver>
+    </osx>
+</root>

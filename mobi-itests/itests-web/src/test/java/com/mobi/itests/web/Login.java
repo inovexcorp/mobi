@@ -33,7 +33,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.util.concurrent.TimeUnit;
 
-public class LoginIT {
+public class Login {
     FirefoxDriver wd;
 
     @Before
@@ -43,8 +43,8 @@ public class LoginIT {
     }
     
     @Test
-    public void LoginIT() throws Exception {
-        wd.get(MobiWebTestSuite.url);
+    public void Login() throws Exception {
+        wd.get(WebSuiteIT.url);
         wd.findElement(By.id("username")).click();
         wd.findElement(By.id("username")).clear();
         wd.findElement(By.id("username")).sendKeys("admin");

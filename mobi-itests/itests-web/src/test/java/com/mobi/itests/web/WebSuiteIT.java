@@ -31,16 +31,11 @@ import org.junit.runners.Suite;
 import org.ops4j.pax.exam.junit.PaxExamServer;
 
 @RunWith(Suite.class)
-@Suite.SuiteClasses({LoginIT.class})
-public class MobiWebTestSuite extends KarafTestSupport {
+@Suite.SuiteClasses({Login.class})
+public class WebSuiteIT extends KarafTestSupport {
 
     static String url = "https://localhost:" + HTTPS_PORT + "/mobi/index.html";
 
     @ClassRule
     public static PaxExamServer server = new PaxExamServer();
-
-    @BeforeClass
-    public static void setUp() throws Exception {
-        System.setProperty("webdriver.gecko.driver", MobiWebTestSuite.class.getResource("/drivers/geckodriver").getPath());
-    }
 }
