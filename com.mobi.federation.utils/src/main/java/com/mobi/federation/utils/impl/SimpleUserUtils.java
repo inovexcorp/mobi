@@ -23,12 +23,12 @@ package com.mobi.federation.utils.impl;
  * #L%
  */
 
-import static com.mobi.federation.api.serializable.SerializedUser.getAsUser;
+import static com.mobi.federation.utils.serializable.SerializedUser.getAsUser;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.federation.api.FederationService;
-import com.mobi.federation.api.serializable.SerializedUser;
+import com.mobi.federation.utils.serializable.SerializedUser;
 import com.mobi.federation.utils.api.UserUtils;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;

@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import com.mobi.federation.api.FederationService;
-import com.mobi.federation.api.serializable.SerializedUser;
+import com.mobi.federation.utils.serializable.SerializedUser;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.rdf.api.ModelFactory;
