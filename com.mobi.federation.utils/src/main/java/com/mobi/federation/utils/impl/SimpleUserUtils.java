@@ -44,7 +44,7 @@ import javax.security.auth.login.LoginException;
 
 @Component
 public class SimpleUserUtils implements UserUtils {
-    public static final String FEDERATION_USERS_KEY = "federation.users";
+    private static final String FEDERATION_USERS_KEY = "federation.users";
 
     private UserFactory userFactory;
     private ValueFactory vf;
@@ -89,6 +89,7 @@ public class SimpleUserUtils implements UserUtils {
 
         if (!userExists(users, username)) {
             users.add(new SerializedUser(user));
+            userMap.put(nodeId, users);
         } else {
             throw new IllegalArgumentException("A user with username " + username + " already exists on node "
                     + nodeId.toString() + " in federation " + federationId);
@@ -104,6 +105,7 @@ public class SimpleUserUtils implements UserUtils {
 
         if (userExists(users, username)) {
             users.removeIf(serializedUser -> serializedUser.getUsername().equals(username));
+            userMap.put(nodeId, users);
         } else {
             throw new IllegalArgumentException("User with username " + username + " does not exist on node "
                     + nodeId.toString() + " in federation " + federationId);
@@ -129,6 +131,7 @@ public class SimpleUserUtils implements UserUtils {
         if (optional.isPresent()) {
             users.remove(optional.get());
             users.add(new SerializedUser(user));
+            userMap.put(nodeId, users);
         } else {
             throw new IllegalArgumentException("User with IRI " + userIRI + " does not exist on node "
                     + nodeId.toString() + " in federation " + federationId);
@@ -209,7 +212,7 @@ public class SimpleUserUtils implements UserUtils {
         if (userMap.containsKey(nodeId)) {
             return userMap.get(nodeId);
         }
-        throw new IllegalArgumentException("Users for node " + nodeId.toString() + " could not be found in federation "
-                + federationId);
+        throw new IllegalArgumentException("User map entry for node " + nodeId.toString()
+                + " could not be found in federation " + federationId);
     }
 }
