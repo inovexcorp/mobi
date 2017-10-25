@@ -50,12 +50,12 @@ public class SimpleUserUtils implements UserUtils {
     private ValueFactory vf;
 
     @Reference
-    protected void setUserFactory(UserFactory userFactory) {
+    void setUserFactory(UserFactory userFactory) {
         this.userFactory = userFactory;
     }
 
     @Reference
-    protected void setValueFactory(ValueFactory vf) {
+    void setValueFactory(ValueFactory vf) {
         this.vf = vf;
     }
 
