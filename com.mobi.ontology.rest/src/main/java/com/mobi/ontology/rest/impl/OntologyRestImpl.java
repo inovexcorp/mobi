@@ -456,7 +456,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getObjectPropertiesInOntology(ContainerRequestContext context, String recordIdStr,
                                                   String branchIdStr, String commitIdStr) {
         try {
-            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+            JSONArray result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
                     this::getObjectPropertyArray);
             return Response.ok(result).build();
         } catch (MobiException e) {
@@ -617,7 +617,7 @@ public class OntologyRestImpl implements OntologyRest {
                                                             String branchIdStr, String commitIdStr) {
         try {
             return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
-                    this::getObjectPropertyArray);
+                    this::getObjectPropertyIRIArray);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1075,12 +1075,12 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     /**
-     * Gets a JSONArray of ObjectProperties from the provided Ontology.
+     * Gets a JSONObject of ObjectProperty IRIs from the provided Ontology.
      *
      * @param ontology the Ontology to get the Annotations from.
-     * @return a JSONArray of ObjectProperties from the provided Ontology.
+     * @return a JSONObject of ObjectProperty IRIs from the provided Ontology.
      */
-    private JSONObject getObjectPropertyArray(Ontology ontology) {
+    private JSONObject getObjectPropertyIRIArray(Ontology ontology) {
         List<IRI> iris = ontology.getAllObjectProperties()
                 .stream()
                 .map(Entity::getIRI)
@@ -1089,7 +1089,21 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     /**
-     * Gets a JSONArray of DatatypeProperty IRIs from the provided Ontology.
+     * Gets a JSONArray of ObjectProperties from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the ObjectProperties from.
+     * @return a JSONArray of ObjectProperties from the provided Ontology.
+     */
+    private JSONArray getObjectPropertyArray(Ontology ontology) {
+        Model model = ontology.asModel(modelFactory);
+        return ontology.getAllObjectProperties().stream()
+                .map(property -> getObjectFromJsonld(modelToJsonld(model.filter(property.getIRI(), null, null),
+                        sesameTransformer)))
+                .collect(JSONArray::new, JSONArray::add, JSONArray::add);
+    }
+
+    /**
+     * Gets a JSONObject of DatatypeProperty IRIs from the provided Ontology.
      *
      * @param ontology the Ontology to get the Annotations from.
      * @return a JSONArray of DatatypeProperties from the provided Ontology.
@@ -1218,7 +1232,7 @@ public class OntologyRestImpl implements OntologyRest {
      */
     private JSONObject getAllIRIs(Ontology ontology) {
         return combineJsonObjects(getAnnotationArray(ontology), getClassArray(ontology),
-                getDatatypeArray(ontology), getObjectPropertyArray(ontology), getDataPropertyIRIArray(ontology),
+                getDatatypeArray(ontology), getObjectPropertyIRIArray(ontology), getDataPropertyIRIArray(ontology),
                 getNamedIndividualArray(ontology), getDerivedConceptTypeArray(ontology),
                 getDerivedConceptSchemeTypeArray(ontology));
     }

@@ -23,6 +23,9 @@ package com.mobi.etl.cli;
  * #L%
  */
 
+import com.mobi.etl.api.config.rdf.ImportServiceConfig;
+import com.mobi.etl.api.rdf.RDFImportService;
+import com.mobi.rdf.api.ValueFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
@@ -30,9 +33,6 @@ import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import com.mobi.etl.api.config.rdf.ImportServiceConfig;
-import com.mobi.etl.api.rdf.RDFImportService;
-import com.mobi.rdf.api.ValueFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,36 +44,40 @@ public class CLIImporter implements Action {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CLIImporter.class);
 
+    // Service References
+
     @Reference
     private RDFImportService importService;
+
+    void setImportService(RDFImportService importService) {
+        this.importService = importService;
+    }
 
     @Reference
     private ValueFactory vf;
 
-    //Command Line Arguments and Options
-    @Argument(index = 0, name = "ImportFile", description = "The file to be imported into the repository",
-            required = true)
-    String file = null;
+    void setVf(ValueFactory vf) {
+        this.vf = vf;
+    }
+
+    // Command Parameters
+
+    @Argument(name = "ImportFile", description = "The file to be imported into the repository", required = true)
+    private String file = null;
 
     @Option(name = "-r", aliases = "--repository", description = "The id of the repository the file will be"
             + " imported to")
-    String repositoryId = null;
+    private String repositoryId = null;
 
     @Option( name = "-d", aliases = "--dataset", description = "The id of the DatasetRecord the file will be "
             + "imported to")
-    String datasetRecordId = null;
+    private String datasetRecordId = null;
 
     @Option( name = "-c", aliases = "--continueOnError", description = "If true, continue parsing even if there is an "
             + "error on a line.")
-    boolean continueOnError = false;
+    private boolean continueOnError = false;
 
-    public void setImportService(RDFImportService importService) {
-        this.importService = importService;
-    }
-
-    public void setVf(ValueFactory vf) {
-        this.vf = vf;
-    }
+    // Implementation
 
     @Override
     public Object execute() throws Exception {

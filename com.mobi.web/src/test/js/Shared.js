@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -292,6 +292,7 @@ function mockOntologyManager() {
             this.uploadChangesFile = jasmine.createSpy('uploadChangesFile').and.returnValue($q.when({}));
             this.getFailedImports = jasmine.createSpy('getFailedImports').and.returnValue($q.when([]));
             this.getDataProperties = jasmine.createSpy('getDataProperties').and.returnValue($q.when([]));
+            this.getObjProperties = jasmine.createSpy('getObjProperties').and.returnValue($q.when([]));
         });
     });
 }
@@ -644,8 +645,6 @@ function mockOntologyState() {
             this.setNoDomainsOpened = jasmine.createSpy('setNoDomainsOpened');
             this.getNoDomainsOpened = jasmine.createSpy('getNoDomainsOpened').and.returnValue(true);
             this.getUnsavedEntities = jasmine.createSpy('getUnsavedEntities');
-            this.setIndividualsOpened = jasmine.createSpy('setIndividualsOpened');
-            this.getIndividualsOpened = jasmine.createSpy('getIndividualsOpened').and.returnValue(false);
             this.getDataPropertiesOpened = jasmine.createSpy('getDataPropertiesOpened');
             this.setDataPropertiesOpened = jasmine.createSpy('setDataPropertiesOpened');
             this.getObjectPropertiesOpened = jasmine.createSpy('getObjectPropertiesOpened');

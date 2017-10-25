@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.9.44-SNAPSHOT</version>
+        <version>1.10.3-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -241,7 +241,7 @@
                         <resource>
                             <targetPath>/</targetPath>
                             <directory>${project.build.directory}</directory>
-                            <include>distribution-${project.version}.tar.gz</include>
+                            <include>${project.artifactId}-${project.version}.tar.gz</include>
                         </resource>
                     </resources>
                 </configuration>

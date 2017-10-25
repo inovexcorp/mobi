@@ -18,7 +18,7 @@ RUN set -ex \
   done
 
 ENV NPM_CONFIG_LOGLEVEL info
-ENV NODE_VERSION 4.0.0
+ENV NODE_VERSION 6.9.5
 # Maven filtered to produce correct versioning.
 ENV MOBI_VERSION ${project.version}
 
@@ -33,8 +33,8 @@ RUN curl -SLO "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-
 RUN ["node"]
 # Base Mobi assembly in the /opt/mobi directory.
 WORKDIR /opt/mobi
-ADD ./distribution-$MOBI_VERSION.tar.gz ./
-CMD ./distribution-$MOBI_VERSION/bin/karaf
+ADD ./${project.artifactId}-$MOBI_VERSION.tar.gz ./
+CMD ./${project.artifactId}-$MOBI_VERSION/bin/karaf
 
 EXPOSE 8443
 

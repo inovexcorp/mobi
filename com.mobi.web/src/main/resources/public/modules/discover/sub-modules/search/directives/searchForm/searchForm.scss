@@ -2,6 +2,37 @@
 @import "./src/main/resources/public/css/variables";
 
 .search-form {
+    .dataset-wrapper {
+        display: flex;
+        flex-direction: row;
+
+        .dataset-form-group {
+            flex: 1;
+
+            .flex-container .btn-clear {
+                line-height: 0;
+                margin-left: 5px;
+            }
+        }
+
+        .refresh-link {
+            display: inline-block;
+            height: 33px;
+            line-height: 33px;
+            margin: 25px 0 15px 5px;
+            vertical-align: bottom;
+        }
+
+        a {
+            font-size: 0;
+
+            i {
+                font-size: 14px;
+                line-height: 33px;
+            }
+        }
+    }
+
     .boolean-operator {
         md-radio-group md-radio-button {
             display: inline-block;
@@ -51,6 +82,14 @@
         border: 1px solid $gray-custom;
         min-height: 250px;
         padding: 0;
+
+        &.disabled {
+            opacity: .75;
+
+            md-list-item:hover {
+                background: transparent;
+            }
+        }
 
         md-list-item:hover {
             background: $gray-custom;

@@ -23,13 +23,13 @@ package com.mobi.etl.cli.export;
  * #L%
  */
 
+import com.mobi.etl.api.config.rdf.export.RecordExportConfig;
+import com.mobi.etl.api.rdf.export.DatasetExportService;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import com.mobi.etl.api.config.rdf.export.RecordExportConfig;
-import com.mobi.etl.api.rdf.export.DatasetExportService;
 import org.openrdf.rio.RDFFormat;
 
 import java.io.OutputStream;
@@ -44,14 +44,14 @@ public class ExportDataset extends ExportBase implements Action {
     @Reference
     private DatasetExportService exportService;
 
-    public void setExportService(DatasetExportService exportService) {
+    void setExportService(DatasetExportService exportService) {
         this.exportService = exportService;
     }
 
     // Command Parameters
 
     @Argument(name = "DatasetRecord", description = "The IRI of the DatasetRecord to export", required = true)
-    String datasetParam = null;
+    private String datasetParam = null;
 
     // Implementation
 
