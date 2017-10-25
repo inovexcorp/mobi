@@ -92,7 +92,6 @@ public class HazelcastConfigurationFactory {
             config.setProperty(GroupProperty.MAX_NO_HEARTBEAT_SECONDS.getName(),
                     "" + serviceConfig.maxNoHeartbeatSeconds());
         }
-
     }
 
     private static void configureHazelcastGroup(HazelcastFederationServiceConfig serviceConfig, Config config) {

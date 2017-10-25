@@ -23,9 +23,11 @@ package com.mobi.federation.hazelcast;
  * #L%
  */
 
+import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
@@ -62,10 +64,13 @@ import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 public class HazelcastFederationServiceTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HazelcastFederationServiceTest.class);
+
+    private int waitTime = 10;
 
     private UUID u1 = UUID.randomUUID();
     private UUID u2 = UUID.randomUUID();
@@ -93,7 +98,7 @@ public class HazelcastFederationServiceTest {
     public void testFederation() throws Exception {
         final FakeHazelcastOsgiService hazelcastOSGiService = new FakeHazelcastOsgiService();
 
-        System.setProperty( "hazelcast.logging.type", "slf4j" );
+        System.setProperty("hazelcast.logging.type", "slf4j");
         System.setProperty("java.net.preferIPv4Stack", "true");
         final HazelcastFederationService s1 = new HazelcastFederationService();
         s1.setMobiServer(mobi1);
@@ -121,9 +126,9 @@ public class HazelcastFederationServiceTest {
         assertNotNull(s3.getHazelcastInstance());
         assertTrue(s3.getHazelcastInstance().isPresent());
 
-        assertEquals(3, s1.getMemberCount());
-        assertEquals(3, s2.getMemberCount());
-        assertEquals(3, s3.getMemberCount());
+        waitForEquals(3, s1::getMemberCount, waitTime);
+        waitForEquals(3, s2::getMemberCount, waitTime);
+        waitForEquals(3, s3::getMemberCount, waitTime);
         assertTrue(CollectionUtils.isEqualCollection(s1.getFederationNodeIds(), s2.getFederationNodeIds()));
         assertTrue(CollectionUtils.isEqualCollection(s1.getFederationNodeIds(), s3.getFederationNodeIds()));
         assertTrue(s1.getFederationNodeIds().contains(u1));
@@ -132,23 +137,21 @@ public class HazelcastFederationServiceTest {
 
         // Test deactivation of one node results in two members
         s1.deactivate();
-        waitABit();
-        assertEquals(2, s2.getMemberCount());
-        assertEquals(2, s3.getMemberCount());
+        waitForEquals(2, s2::getMemberCount, waitTime);
+        waitForEquals(2, s3::getMemberCount, waitTime);
         assertTrue(s3.getFederationNodeIds().contains(u2));
         assertTrue(s3.getFederationNodeIds().contains(u3));
 
         // Test deactivation of another node results in 1 member
         s2.deactivate();
-        waitABit();
-        assertEquals(1, s3.getMemberCount());
+        waitForEquals(1, s3::getMemberCount, waitTime);
         assertTrue(s3.getFederationNodeIds().contains(u3));
 
         // Test reactivation of a node results in two members again
         ForkJoinTask<?> task22 = createNode(pool, s2, 5234, new HashSet<>(Collections.singletonList("127.0.0.1:5345")));
         task22.get();
-        assertEquals(2, s2.getMemberCount());
-        assertEquals(2, s3.getMemberCount());
+        waitForEquals(2, s2::getMemberCount, waitTime);
+        waitForEquals(2, s3::getMemberCount, waitTime);
         assertTrue(s3.getFederationNodeIds().contains(u2));
         assertTrue(s3.getFederationNodeIds().contains(u3));
 
@@ -177,9 +180,8 @@ public class HazelcastFederationServiceTest {
         // Test one federation is formed with 2 members
         assertTrue(s1.getHazelcastInstance().isPresent());
         assertTrue(s2.getHazelcastInstance().isPresent());
-        assertEquals(2, s1.getMemberCount());
-        assertEquals(2, s2.getMemberCount());
-        Thread.sleep(100);
+        waitForEquals(2, s1::getMemberCount, waitTime);
+        waitForEquals(2, s2::getMemberCount, waitTime);
         assertTrue(CollectionUtils.isEqualCollection(s1.getFederationNodeIds(), s2.getFederationNodeIds()));
         assertTrue(s1.getFederationNodeIds().contains(u1));
         assertTrue(s1.getFederationNodeIds().contains(u2));
@@ -191,10 +193,8 @@ public class HazelcastFederationServiceTest {
 
         // Test disconnected
         closeConnectionBetween(h1, h2);
-        assertEquals(1, s1.getMemberCount());
-        assertEquals(1, s2.getMemberCount());
-        System.out.println(s1.getFederationNodeIds());
-        System.out.println(s2.getFederationNodeIds());
+        waitForEquals(1, s1::getMemberCount, waitTime);
+        waitForEquals(1, s2::getMemberCount, waitTime);
         assertTrue(s1.getFederationNodeIds().contains(u1));
         assertTrue(s1.getFederationNodeIds().contains(u2));
         assertTrue(s2.getFederationNodeIds().contains(u1));
@@ -202,10 +202,8 @@ public class HazelcastFederationServiceTest {
 
         // Test reconnected
         reconnect(h1, h2);
-        assertEquals(2, s1.getMemberCount());
-        assertEquals(2, s2.getMemberCount());
-        System.out.println(s1.getFederationNodeIds());
-        System.out.println(s2.getFederationNodeIds());
+        waitForEquals(2, s1::getMemberCount, waitTime);
+        waitForEquals(2, s2::getMemberCount, waitTime);
         assertTrue(s1.getFederationNodeIds().contains(u1));
         assertTrue(s1.getFederationNodeIds().contains(u2));
         assertTrue(s2.getFederationNodeIds().contains(u1));
@@ -274,9 +272,17 @@ public class HazelcastFederationServiceTest {
         n1.clusterService.merge(n2.address);
     }
 
-    private void waitABit() throws Exception {
-        LOGGER.info("Waiting here...");
-        Thread.sleep(4000L);
-        LOGGER.info("Done waiting.");
+    private void waitForEquals(Object expected, Supplier<Object> actual, int timeoutSeconds) throws InterruptedException {
+        while (timeoutSeconds > 0) {
+            if (!expected.equals(actual.get())) {
+                LOGGER.info("Waiting for condition...");
+                sleep(1000);
+            } else {
+                LOGGER.info("Condition passed.");
+                return;
+            }
+            timeoutSeconds--;
+        }
+        fail("Timeout while waiting for condition.");
     }
 }
