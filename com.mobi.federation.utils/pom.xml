@@ -83,8 +83,7 @@
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
                             com.mobi.federation.utils.api*,
-                            com.mobi.federation.utils.security,
-                            com.mobi.federation.utils.serializable
+                            com.mobi.federation.utils.security
                         </Export-Package>
                         <Service-Component>*</Service-Component>
                         <build>${maven.build.timestamp}</build>
