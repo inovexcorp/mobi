@@ -294,6 +294,10 @@ public class HazelcastFederationService implements FederationService {
             if (nodeId == null) {
                 LOGGER.warn("Unable to retrieve node ID from hazelcast instance: {}.", federationId);
             } else {
+                // Removing users for this federation service
+                userUtils.removeMapEntry(this);
+                LOGGER.info("Successfully removed users from federation infrastructure");
+
                 if (this.federationNodes == null) {
                     LOGGER.info("Attempting to retrieve distributed data structure for federation: {} on node: {}.",
                             federationId, nodeId);
@@ -317,10 +321,6 @@ public class HazelcastFederationService implements FederationService {
                     }
                 }
             }
-
-            // Removing users for this federation service
-            userUtils.removeMapEntry(this);
-            LOGGER.info("Successfully removed users from federation infrastructure");
 
             LOGGER.info("Shutting down underlying hazelcast federation infrastructure");
             this.hazelcastOSGiService.shutdownHazelcastInstance((HazelcastOSGiInstance) this.hazelcastInstance);
