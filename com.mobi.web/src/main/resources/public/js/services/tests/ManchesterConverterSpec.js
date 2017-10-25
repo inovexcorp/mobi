@@ -68,9 +68,17 @@ describe('Manchester Converter service', function() {
         });
     });
 
+    afterEach(function() {
+        manchesterConverterSvc = null;
+        ontologyManagerSvc = null;
+        prefixes = null;
+        splitIRIFilter = null;
+        antlr = null;
+    });
+
     describe('should convert a Manchester syntax string into JSON-LD', function() {
-        var str, idx, expected,
-            localNameMap = {
+        beforeEach(function() {
+            this.localNameMap = {
                 'ClassA': 'http://test.com/ClassA',
                 'ClassB': 'http://test.com/ClassB',
                 'PropA': 'http://test.com/PropA',
@@ -81,8 +89,7 @@ describe('Manchester Converter service', function() {
                 'IndvA': 'http://test.com/IndvA',
                 'IndvB': 'http://test.com/IndvB',
             };
-        beforeEach(function() {
-            idx = 0;
+            var idx = 0;
             utilSvc.getSkolemizedIRI.and.callFake(function() {
                 var id = '_:genid' + idx;
                 idx++;
@@ -93,193 +100,193 @@ describe('Manchester Converter service', function() {
             });
         });
         it('unless the string is invalid', function() {
-            str = '1 test 2';
-            var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+            var str = '1 test 2';
+            var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
             expect(result.jsonld).toBeUndefined();
             expect(result.errorMessage).toBeTruthy();
         });
         it('unless an invalid local name is used', function() {
-            str = 'test min 0';
-            var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
+            var str = 'test min 0';
+            var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
             expect(result.jsonld).toBeUndefined();
             expect(result.errorMessage).toContain('"test" does not correspond to a known IRI');
         });
         describe('if given a class expression', function() {
             beforeEach(function() {
-                expected = [{'@id': '_:genid0', '@type': [prefixes.owl + 'Class']}];
+                this.expected = [{'@id': '_:genid0', '@type': [prefixes.owl + 'Class']}];
             });
             it('with unionOf', function() {
-                expected.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] } );
-                expected.push({ '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] } );
-                expected[0][prefixes.owl + 'unionOf'] = [{ '@id': '_:genid1' }];
-                expected[1][prefixes.rdf + 'first'] = [{ '@id': localNameMap['ClassA'] }];
-                expected[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
-                expected[2][prefixes.rdf + 'first'] = [{ '@id': localNameMap['ClassB'] }];
-                expected[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
-                str = 'ClassA or ClassB';
-                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                expect(result.jsonld).toEqual(expected);
+                this.expected.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] } );
+                this.expected.push({ '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] } );
+                this.expected[0][prefixes.owl + 'unionOf'] = [{ '@id': '_:genid1' }];
+                this.expected[1][prefixes.rdf + 'first'] = [{ '@id': this.localNameMap['ClassA'] }];
+                this.expected[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
+                this.expected[2][prefixes.rdf + 'first'] = [{ '@id': this.localNameMap['ClassB'] }];
+                this.expected[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
+                var str = 'ClassA or ClassB';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with intersectionOf', function() {
-                expected.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] } );
-                expected.push({ '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] } );
-                expected[0][prefixes.owl + 'intersectionOf'] = [{ '@id': '_:genid1' }];
-                expected[1][prefixes.rdf + 'first'] = [{ '@id': localNameMap['ClassA'] }];
-                expected[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
-                expected[2][prefixes.rdf + 'first'] = [{ '@id': localNameMap['ClassB'] }];
-                expected[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
-                str = 'ClassA and ClassB';
-                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                expect(result.jsonld).toEqual(expected);
+                this.expected.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] } );
+                this.expected.push({ '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] } );
+                this.expected[0][prefixes.owl + 'intersectionOf'] = [{ '@id': '_:genid1' }];
+                this.expected[1][prefixes.rdf + 'first'] = [{ '@id': this.localNameMap['ClassA'] }];
+                this.expected[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
+                this.expected[2][prefixes.rdf + 'first'] = [{ '@id': this.localNameMap['ClassB'] }];
+                this.expected[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
+                var str = 'ClassA and ClassB';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with complementOf', function() {
-                expected[0][prefixes.owl + 'complementOf'] = [{'@id': localNameMap['ClassA']}];
-                str = 'not ClassA';
-                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                expect(result.jsonld).toEqual(expected);
+                this.expected[0][prefixes.owl + 'complementOf'] = [{'@id': this.localNameMap['ClassA']}];
+                var str = 'not ClassA';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with oneOf', function() {
-                expected.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] } );
-                expected.push({ '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] } );
-                expected[0][prefixes.owl + 'oneOf'] = [{ '@id': '_:genid1' }];
-                expected[1][prefixes.rdf + 'first'] = [{ '@id': localNameMap['IndvA'] }];
-                expected[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
-                expected[2][prefixes.rdf + 'first'] = [{ '@id': localNameMap['IndvB'] }];
-                expected[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
-                str = '{IndvA, IndvB}';
-                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                expect(result.jsonld).toEqual(expected);
+                this.expected.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] } );
+                this.expected.push({ '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] } );
+                this.expected[0][prefixes.owl + 'oneOf'] = [{ '@id': '_:genid1' }];
+                this.expected[1][prefixes.rdf + 'first'] = [{ '@id': this.localNameMap['IndvA'] }];
+                this.expected[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
+                this.expected[2][prefixes.rdf + 'first'] = [{ '@id': this.localNameMap['IndvB'] }];
+                this.expected[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
+                var str = '{IndvA, IndvB}';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
         });
         describe('if given a restriction', function() {
             beforeEach(function() {
-                expected = [{'@id': '_:genid0', '@type': [prefixes.owl + 'Restriction']}];
-                expected[0][prefixes.owl + 'onProperty'] = [{'@id': localNameMap['PropA']}];
+                this.expected = [{'@id': '_:genid0', '@type': [prefixes.owl + 'Restriction']}];
+                this.expected[0][prefixes.owl + 'onProperty'] = [{'@id': this.localNameMap['PropA']}];
             });
             it('with someValuesFrom', function() {
-                expected[0][prefixes.owl + 'someValuesFrom'] = [{'@id': localNameMap['ClassA']}];
-                str = 'PropA some ClassA';
-                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                expect(result.jsonld).toEqual(expected);
+                this.expected[0][prefixes.owl + 'someValuesFrom'] = [{'@id': this.localNameMap['ClassA']}];
+                var str = 'PropA some ClassA';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with someValuesFrom', function() {
-                expected[0][prefixes.owl + 'allValuesFrom'] = [{'@id': localNameMap['ClassA']}];
-                str = 'PropA only ClassA';
-                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                expect(result.jsonld).toEqual(expected);
+                this.expected[0][prefixes.owl + 'allValuesFrom'] = [{'@id': this.localNameMap['ClassA']}];
+                var str = 'PropA only ClassA';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             describe('with hasValue', function() {
                 describe('and a literal', function() {
                     it('with a language', function() {
-                        expected[0][prefixes.owl + 'hasValue'] = [{'@value': 'test', '@language': 'en'}];
-                        str = 'PropA value "test"@en';
-                        var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                        expect(result.jsonld).toEqual(expected);
+                        this.expected[0][prefixes.owl + 'hasValue'] = [{'@value': 'test', '@language': 'en'}];
+                        var str = 'PropA value "test"@en';
+                        var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                        expect(result.jsonld).toEqual(this.expected);
                         expect(result.errorMessage).toEqual('');
                     });
                     it('without a language or type', function() {
-                        expected[0][prefixes.owl + 'hasValue'] = [{'@value': 'test'}];
-                        str = 'PropA value "test"';
-                        var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                        expect(result.jsonld).toEqual(expected);
+                        this.expected[0][prefixes.owl + 'hasValue'] = [{'@value': 'test'}];
+                        var str = 'PropA value "test"';
+                        var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                        expect(result.jsonld).toEqual(this.expected);
                         expect(result.errorMessage).toEqual('');
                     });
                     it('with a prefixed type', function() {
-                        expected[0][prefixes.owl + 'hasValue'] = [{'@value': 'true', '@type': prefixes.xsd + 'boolean'}];
-                        str = 'PropA value "true"^^xsd:boolean';
-                        var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                        expect(result.jsonld).toEqual(expected);
+                        this.expected[0][prefixes.owl + 'hasValue'] = [{'@value': 'true', '@type': prefixes.xsd + 'boolean'}];
+                        var str = 'PropA value "true"^^xsd:boolean';
+                        var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                        expect(result.jsonld).toEqual(this.expected);
                         expect(result.errorMessage).toEqual('');
                     });
                     it('with a unprefixed type', function() {
-                        expected[0][prefixes.owl + 'hasValue'] = [{'@value': 'true', '@type': 'http://test.com/datatype'}];
-                        str = 'PropA value "true"^^<http://test.com/datatype>';
-                        var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                        expect(result.jsonld).toEqual(expected);
+                        this.expected[0][prefixes.owl + 'hasValue'] = [{'@value': 'true', '@type': 'http://test.com/datatype'}];
+                        var str = 'PropA value "true"^^<http://test.com/datatype>';
+                        var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                        expect(result.jsonld).toEqual(this.expected);
                         expect(result.errorMessage).toEqual('');
                     });
                 });
                 it('and a resource', function() {
-                    expected[0][prefixes.owl + 'hasValue'] = [{'@id': localNameMap['ClassA']}];
-                    str = 'PropA value ClassA';
-                    var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                    expect(result.jsonld).toEqual(expected);
+                    this.expected[0][prefixes.owl + 'hasValue'] = [{'@id': this.localNameMap['ClassA']}];
+                    var str = 'PropA value ClassA';
+                    var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                    expect(result.jsonld).toEqual(this.expected);
                     expect(result.errorMessage).toEqual('');
                 });
             });
             it('with minCardinality', function() {
-                expected[0][prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
-                str = 'PropA min 1';
-                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                expect(result.jsonld).toEqual(expected);
+                this.expected[0][prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                var str = 'PropA min 1';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with maxCardinality', function() {
-                expected[0][prefixes.owl + 'maxCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
-                str = 'PropA max 1';
-                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                expect(result.jsonld).toEqual(expected);
+                this.expected[0][prefixes.owl + 'maxCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                var str = 'PropA max 1';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with cardinality', function() {
-                expected[0][prefixes.owl + 'cardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
-                str = 'PropA exactly 1';
-                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                expect(result.jsonld).toEqual(expected);
+                this.expected[0][prefixes.owl + 'cardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                var str = 'PropA exactly 1';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with minCardinality', function() {
-                expected[0][prefixes.owl + 'onClass'] = [{'@id': localNameMap['ClassA']}];
-                expected[0][prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
-                str = 'PropA min 1 ClassA';
-                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                expect(result.jsonld).toEqual(expected);
+                this.expected[0][prefixes.owl + 'onClass'] = [{'@id': this.localNameMap['ClassA']}];
+                this.expected[0][prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                var str = 'PropA min 1 ClassA';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with maxCardinality', function() {
-                expected[0][prefixes.owl + 'onClass'] = [{'@id': localNameMap['ClassA']}];
-                expected[0][prefixes.owl + 'maxCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
-                str = 'PropA max 1 ClassA';
-                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                expect(result.jsonld).toEqual(expected);
+                this.expected[0][prefixes.owl + 'onClass'] = [{'@id': this.localNameMap['ClassA']}];
+                this.expected[0][prefixes.owl + 'maxCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                var str = 'PropA max 1 ClassA';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
             it('with cardinality', function() {
-                expected[0][prefixes.owl + 'onClass'] = [{'@id': localNameMap['ClassA']}];
-                expected[0][prefixes.owl + 'cardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
-                str = 'PropA exactly 1 ClassA';
-                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-                expect(result.jsonld).toEqual(expected);
+                this.expected[0][prefixes.owl + 'onClass'] = [{'@id': this.localNameMap['ClassA']}];
+                this.expected[0][prefixes.owl + 'cardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                var str = 'PropA exactly 1 ClassA';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+                expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toEqual('');
             });
         });
         describe('if given a datatype', function() {
             beforeEach(function() {
-                expected = [{'@id': '_:genid0', '@type': [prefixes.rdfs + 'Datatype']}];
+                this.expected = [{'@id': '_:genid0', '@type': [prefixes.rdfs + 'Datatype']}];
             });
             it('with oneOf', function() {
-                expected.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] } );
-                expected.push({ '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] } );
-                expected[0][prefixes.owl + 'oneOf'] = [{ '@id': '_:genid1' }];
-                expected[1][prefixes.rdf + 'first'] = [{ '@value': 'A' }];
-                expected[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
-                expected[2][prefixes.rdf + 'first'] = [{ '@value': 'B' }];
-                expected[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
-                str = '{"A", "B"}';
-                var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap, true);
-                expect(result.jsonld).toEqual(expected);
+                this.expected.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] } );
+                this.expected.push({ '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] } );
+                this.expected[0][prefixes.owl + 'oneOf'] = [{ '@id': '_:genid1' }];
+                this.expected[1][prefixes.rdf + 'first'] = [{ '@value': 'A' }];
+                this.expected[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
+                this.expected[2][prefixes.rdf + 'first'] = [{ '@value': 'B' }];
+                this.expected[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
+                var str = '{"A", "B"}';
+                var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap, true);
+                expect(result.jsonld).toEqual(this.expected);
                 expect(result.errorMessage).toBe('');
             });
         });
         it('with nested blank nodes', function() {
-            str = '(not ClassA) or ((PropD min 1) and (PropE exactly 10)) or (PropA some ClassB) or (PropC value IndvA) or (PropB only {"A", "B"})';
-            expected = [
+            var str = '(not ClassA) or ((PropD min 1) and (PropE exactly 10)) or (PropA some ClassB) or (PropC value IndvA) or (PropB only {"A", "B"})';
+            this.expected = [
                 { //unionOf
                     '@id': '_:genid0',
                     '@type': [prefixes.owl + 'Class']
@@ -353,320 +360,319 @@ describe('Manchester Converter service', function() {
                     '@type': [prefixes.rdf + 'List']
                 }
             ];
-            expected[0][prefixes.owl + 'unionOf'] = [{ '@id': '_:genid2' }];
-            expected[1][prefixes.owl + 'complementOf'] = [{'@id': localNameMap['ClassA']}];
-            expected[2][prefixes.rdf + 'first'] = [{ '@id': '_:genid1' }];
-            expected[2][prefixes.rdf + 'rest'] = [{ '@id': '_:genid4' }];
-            expected[3][prefixes.owl + 'intersectionOf'] = [{ '@id': '_:genid6' }];
-            expected[4][prefixes.rdf + 'first'] = [{ '@id': '_:genid3' }];
-            expected[4][prefixes.rdf + 'rest'] = [{ '@id': '_:genid10' }];
-            expected[5][prefixes.owl + 'onProperty'] = [{'@id': localNameMap['PropD']}];
-            expected[5][prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
-            expected[6][prefixes.rdf + 'first'] = [{ '@id': '_:genid5' }];
-            expected[6][prefixes.rdf + 'rest'] = [{ '@id': '_:genid8' }];
-            expected[7][prefixes.owl + 'onProperty'] = [{'@id': localNameMap['PropE']}];
-            expected[7][prefixes.owl + 'cardinality'] = [{'@value': '10', '@type': prefixes.xsd + 'nonNegativeInteger'}];
-            expected[8][prefixes.rdf + 'first'] = [{ '@id': '_:genid7' }];
-            expected[8][prefixes.rdf + 'rest'] = [{ '@list': [] }];
-            expected[9][prefixes.owl + 'onProperty'] = [{'@id': localNameMap['PropA']}];
-            expected[9][prefixes.owl + 'someValuesFrom'] = [{'@id': localNameMap['ClassB']}];
-            expected[10][prefixes.rdf + 'first'] = [{ '@id': '_:genid9' }];
-            expected[10][prefixes.rdf + 'rest'] = [{ '@id': '_:genid12' }];
-            expected[11][prefixes.owl + 'onProperty'] = [{'@id': localNameMap['PropC']}];
-            expected[11][prefixes.owl + 'hasValue'] = [{'@id': localNameMap['IndvA']}];
-            expected[12][prefixes.rdf + 'first'] = [{ '@id': '_:genid11' }];
-            expected[12][prefixes.rdf + 'rest'] = [{ '@id': '_:genid14' }];
-            expected[13][prefixes.owl + 'onProperty'] = [{'@id': localNameMap['PropB']}];
-            expected[13][prefixes.owl + 'allValuesFrom'] = [{ '@id': '_:genid15' }];
-            expected[14][prefixes.rdf + 'first'] = [{ '@id': '_:genid13' }];
-            expected[14][prefixes.rdf + 'rest'] = [{ '@list': [] }];
-            expected[15][prefixes.owl + 'oneOf'] = [{ '@id': '_:genid16' }];
-            expected[16][prefixes.rdf + 'first'] = [{ '@value': 'A' }];
-            expected[16][prefixes.rdf + 'rest'] = [{ '@id': '_:genid17' }];
-            expected[17][prefixes.rdf + 'first'] = [{ '@value': 'B' }];
-            expected[17][prefixes.rdf + 'rest'] = [{ '@list': [] }];
-            var result = manchesterConverterSvc.manchesterToJsonld(str, localNameMap);
-            expect(result.jsonld).toEqual(expected);
+            this.expected[0][prefixes.owl + 'unionOf'] = [{ '@id': '_:genid2' }];
+            this.expected[1][prefixes.owl + 'complementOf'] = [{'@id': this.localNameMap['ClassA']}];
+            this.expected[2][prefixes.rdf + 'first'] = [{ '@id': '_:genid1' }];
+            this.expected[2][prefixes.rdf + 'rest'] = [{ '@id': '_:genid4' }];
+            this.expected[3][prefixes.owl + 'intersectionOf'] = [{ '@id': '_:genid6' }];
+            this.expected[4][prefixes.rdf + 'first'] = [{ '@id': '_:genid3' }];
+            this.expected[4][prefixes.rdf + 'rest'] = [{ '@id': '_:genid10' }];
+            this.expected[5][prefixes.owl + 'onProperty'] = [{'@id': this.localNameMap['PropD']}];
+            this.expected[5][prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+            this.expected[6][prefixes.rdf + 'first'] = [{ '@id': '_:genid5' }];
+            this.expected[6][prefixes.rdf + 'rest'] = [{ '@id': '_:genid8' }];
+            this.expected[7][prefixes.owl + 'onProperty'] = [{'@id': this.localNameMap['PropE']}];
+            this.expected[7][prefixes.owl + 'cardinality'] = [{'@value': '10', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+            this.expected[8][prefixes.rdf + 'first'] = [{ '@id': '_:genid7' }];
+            this.expected[8][prefixes.rdf + 'rest'] = [{ '@list': [] }];
+            this.expected[9][prefixes.owl + 'onProperty'] = [{'@id': this.localNameMap['PropA']}];
+            this.expected[9][prefixes.owl + 'someValuesFrom'] = [{'@id': this.localNameMap['ClassB']}];
+            this.expected[10][prefixes.rdf + 'first'] = [{ '@id': '_:genid9' }];
+            this.expected[10][prefixes.rdf + 'rest'] = [{ '@id': '_:genid12' }];
+            this.expected[11][prefixes.owl + 'onProperty'] = [{'@id': this.localNameMap['PropC']}];
+            this.expected[11][prefixes.owl + 'hasValue'] = [{'@id': this.localNameMap['IndvA']}];
+            this.expected[12][prefixes.rdf + 'first'] = [{ '@id': '_:genid11' }];
+            this.expected[12][prefixes.rdf + 'rest'] = [{ '@id': '_:genid14' }];
+            this.expected[13][prefixes.owl + 'onProperty'] = [{'@id': this.localNameMap['PropB']}];
+            this.expected[13][prefixes.owl + 'allValuesFrom'] = [{ '@id': '_:genid15' }];
+            this.expected[14][prefixes.rdf + 'first'] = [{ '@id': '_:genid13' }];
+            this.expected[14][prefixes.rdf + 'rest'] = [{ '@list': [] }];
+            this.expected[15][prefixes.owl + 'oneOf'] = [{ '@id': '_:genid16' }];
+            this.expected[16][prefixes.rdf + 'first'] = [{ '@value': 'A' }];
+            this.expected[16][prefixes.rdf + 'rest'] = [{ '@id': '_:genid17' }];
+            this.expected[17][prefixes.rdf + 'first'] = [{ '@value': 'B' }];
+            this.expected[17][prefixes.rdf + 'rest'] = [{ '@list': [] }];
+            var result = manchesterConverterSvc.manchesterToJsonld(str, this.localNameMap);
+            expect(result.jsonld).toEqual(this.expected);
             expect(result.errorMessage).toBe('');
         });
     });
     describe('should convert JSON-LD into Manchester syntax', function() {
-        var blankNode, jsonld, index;
         describe('if given a class expression', function() {
             beforeEach(function() {
-                blankNode = {
+                this.blankNode = {
                     '@id': '_:genid0',
                     '@type': [prefixes.owl + 'Class']
                 };
-                jsonld = [blankNode];
-                index = { '_:genid0': { position: 0 } };
+                this.jsonld = [this.blankNode];
+                this.index = { '_:genid0': { position: 0 } };
             });
             describe('with unionOf', function() {
                 beforeEach(function() {
-                    blankNode[prefixes.owl + 'unionOf'] = [{'@id': '_:genid1'}];
-                    jsonld.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] }, { '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] });
-                    jsonld[1][prefixes.rdf + 'first'] = [{ '@id': 'ClassA' }];
-                    jsonld[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
-                    jsonld[2][prefixes.rdf + 'first'] = [{ '@id': 'ClassB' }];
-                    jsonld[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
-                    index['_:genid1'] = {position: 1};
-                    index['_:genid2'] = {position: 2};
+                    this.blankNode[prefixes.owl + 'unionOf'] = [{'@id': '_:genid1'}];
+                    this.jsonld.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] }, { '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] });
+                    this.jsonld[1][prefixes.rdf + 'first'] = [{ '@id': 'ClassA' }];
+                    this.jsonld[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
+                    this.jsonld[2][prefixes.rdf + 'first'] = [{ '@id': 'ClassB' }];
+                    this.jsonld[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
+                    this.index['_:genid1'] = {position: 1};
+                    this.index['_:genid2'] = {position: 2};
                 });
                 it('and HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index, true);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('ClassA<span class="manchester-expr"> or </span>ClassB');
                 });
                 it('without HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('ClassA or ClassB');
                 });
             });
             describe('with intersectionOf', function() {
                 beforeEach(function() {
-                    blankNode[prefixes.owl + 'intersectionOf'] = [{'@id': '_:genid1'}];
-                    jsonld.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] }, { '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] });
-                    jsonld[1][prefixes.rdf + 'first'] = [{ '@id': 'ClassA' }];
-                    jsonld[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
-                    jsonld[2][prefixes.rdf + 'first'] = [{ '@id': 'ClassB' }];
-                    jsonld[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
-                    index['_:genid1'] = {position: 1};
-                    index['_:genid2'] = {position: 2};
+                    this.blankNode[prefixes.owl + 'intersectionOf'] = [{'@id': '_:genid1'}];
+                    this.jsonld.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] }, { '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] });
+                    this.jsonld[1][prefixes.rdf + 'first'] = [{ '@id': 'ClassA' }];
+                    this.jsonld[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
+                    this.jsonld[2][prefixes.rdf + 'first'] = [{ '@id': 'ClassB' }];
+                    this.jsonld[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
+                    this.index['_:genid1'] = {position: 1};
+                    this.index['_:genid2'] = {position: 2};
                 });
                 it('and HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index, true);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('ClassA<span class="manchester-expr"> and </span>ClassB');
                 });
                 it('without HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('ClassA and ClassB');
                 });
             });
             describe('with complementOf', function() {
                 beforeEach(function() {
-                    blankNode[prefixes.owl + 'complementOf'] = [{'@id': 'ClassA'}];
+                    this.blankNode[prefixes.owl + 'complementOf'] = [{'@id': 'ClassA'}];
                 });
                 it('with HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index, true);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('<span class="manchester-expr">not </span>ClassA');
                 });
                 it('without HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('not ClassA');
                 });
             });
             describe('with oneOf', function() {
                 beforeEach(function() {
-                    blankNode[prefixes.owl + 'oneOf'] = [{'@id': '_:genid1'}];
-                    jsonld.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] }, { '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] });
-                    jsonld[1][prefixes.rdf + 'first'] = [{ '@id': 'ClassA' }];
-                    jsonld[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
-                    jsonld[2][prefixes.rdf + 'first'] = [{ '@id': 'ClassB' }];
-                    jsonld[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
-                    index['_:genid1'] = {position: 1};
-                    index['_:genid2'] = {position: 2};
+                    this.blankNode[prefixes.owl + 'oneOf'] = [{'@id': '_:genid1'}];
+                    this.jsonld.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] }, { '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] });
+                    this.jsonld[1][prefixes.rdf + 'first'] = [{ '@id': 'ClassA' }];
+                    this.jsonld[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
+                    this.jsonld[2][prefixes.rdf + 'first'] = [{ '@id': 'ClassB' }];
+                    this.jsonld[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
+                    this.index['_:genid1'] = {position: 1};
+                    this.index['_:genid2'] = {position: 2};
                 });
                 it('and HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index, true);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('{ClassA, ClassB}');
                 });
                 it('without HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('{ClassA, ClassB}');
                 });
             });
             it('unless it is invalid', function() {
-                var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
-                expect(result).toBe(blankNode['@id']);
+                var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                expect(result).toBe(this.blankNode['@id']);
             });
         });
         describe('if given a restriction', function() {
             beforeEach(function() {
-                blankNode = {
+                this.blankNode = {
                     '@id': '_:genid0',
                     '@type': [prefixes.owl + 'Restriction']
                 };
-                blankNode[prefixes.owl + 'onProperty'] = [{'@id': 'PropA'}];
-                jsonld = [blankNode];
-                index = { '_:genid0': { position: 0 } };
+                this.blankNode[prefixes.owl + 'onProperty'] = [{'@id': 'PropA'}];
+                this.jsonld = [this.blankNode];
+                this.index = { '_:genid0': { position: 0 } };
             });
             describe('with someValuesFrom', function() {
                 beforeEach(function() {
-                    blankNode[prefixes.owl + 'someValuesFrom'] = [{'@id': 'ClassA'}];
+                    this.blankNode[prefixes.owl + 'someValuesFrom'] = [{'@id': 'ClassA'}];
                 });
                 it('with HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index, true);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('PropA<span class="manchester-rest"> some </span>ClassA');
                 });
                 it('without HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA some ClassA');
                 });
 
             });
             describe('with allValuesFrom', function() {
                 beforeEach(function() {
-                    blankNode[prefixes.owl + 'allValuesFrom'] = [{'@id': 'ClassA'}];
+                    this.blankNode[prefixes.owl + 'allValuesFrom'] = [{'@id': 'ClassA'}];
                 });
                 it('with HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index, true);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('PropA<span class="manchester-rest"> only </span>ClassA');
                 });
                 it('without HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA only ClassA');
                 });
             });
             describe('with hasValue', function() {
                 describe('and a literal', function() {
                     it('with a language', function() {
-                        blankNode[prefixes.owl + 'hasValue'] = [{'@value': 'test', '@language': 'en'}];
-                        var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                        this.blankNode[prefixes.owl + 'hasValue'] = [{'@value': 'test', '@language': 'en'}];
+                        var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                         expect(result).toBe('PropA value "test"@en');
                     });
                     it('without a language or type', function() {
-                        blankNode[prefixes.owl + 'hasValue'] = [{'@value': 'test', '@type': prefixes.xsd + 'string'}];
-                        var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                        this.blankNode[prefixes.owl + 'hasValue'] = [{'@value': 'test', '@type': prefixes.xsd + 'string'}];
+                        var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                         expect(result).toBe('PropA value "test"');
                     });
                     it('with a type', function() {
-                        blankNode[prefixes.owl + 'hasValue'] = [{'@value': 'true', '@type': prefixes.xsd + 'boolean'}];
-                        var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                        this.blankNode[prefixes.owl + 'hasValue'] = [{'@value': 'true', '@type': prefixes.xsd + 'boolean'}];
+                        var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                         expect(result).toBe('PropA value "true"^^xsd:boolean');
                     });
                 });
                 it('and a resource', function() {
-                    blankNode[prefixes.owl + 'hasValue'] = [{'@id': 'ClassA'}];
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                    this.blankNode[prefixes.owl + 'hasValue'] = [{'@id': 'ClassA'}];
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA value ClassA');
                 });
             });
             describe('with minCardinality', function() {
                 beforeEach(function() {
-                    blankNode[prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                    this.blankNode[prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
                 });
                 it('with HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index, true);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('PropA<span class="manchester-rest"> min </span><span class="manchester-lit">1</span>');
                 });
                 it('without HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA min 1');
                 });
             });
             describe('with maxCardinality', function() {
                 beforeEach(function() {
-                    blankNode[prefixes.owl + 'maxCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                    this.blankNode[prefixes.owl + 'maxCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
                 });
                 it('with HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index, true);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('PropA<span class="manchester-rest"> max </span><span class="manchester-lit">1</span>');
                 });
                 it('without HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA max 1');
                 });
             });
             describe('with cardinality', function() {
                 beforeEach(function() {
-                    blankNode[prefixes.owl + 'cardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                    this.blankNode[prefixes.owl + 'cardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
                 });
                 it('with HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index, true);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('PropA<span class="manchester-rest"> exactly </span><span class="manchester-lit">1</span>');
                 });
                 it('without HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA exactly 1');
                 });
             });
             describe('with minQualifiedCardinality', function() {
                 beforeEach(function() {
-                    blankNode[prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
-                    blankNode[prefixes.owl + 'onClass'] = [{'@id': 'ClassA'}];
+                    this.blankNode[prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                    this.blankNode[prefixes.owl + 'onClass'] = [{'@id': 'ClassA'}];
                 });
                 it('with HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index, true);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('PropA<span class="manchester-rest"> min </span><span class="manchester-lit">1</span> ClassA');
                 });
                 it('without HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA min 1 ClassA');
                 });
             });
             describe('with maxQualifiedCardinality', function() {
                 beforeEach(function() {
-                    blankNode[prefixes.owl + 'maxCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
-                    blankNode[prefixes.owl + 'onClass'] = [{'@id': 'ClassA'}];
+                    this.blankNode[prefixes.owl + 'maxCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                    this.blankNode[prefixes.owl + 'onClass'] = [{'@id': 'ClassA'}];
                 });
                 it('with HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index, true);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('PropA<span class="manchester-rest"> max </span><span class="manchester-lit">1</span> ClassA');
                 });
                 it('without HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA max 1 ClassA');
                 });
             });
             describe('with qualifiedCardinality', function() {
                 beforeEach(function() {
-                    blankNode[prefixes.owl + 'cardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
-                    blankNode[prefixes.owl + 'onClass'] = [{'@id': 'ClassA'}];
+                    this.blankNode[prefixes.owl + 'cardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                    this.blankNode[prefixes.owl + 'onClass'] = [{'@id': 'ClassA'}];
                 });
                 it('with HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index, true);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('PropA<span class="manchester-rest"> exactly </span><span class="manchester-lit">1</span> ClassA');
                 });
                 it('without HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('PropA exactly 1 ClassA');
                 });
             });
             it('unless it is invalid', function() {
-                var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
-                expect(result).toBe(blankNode['@id']);
+                var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                expect(result).toBe(this.blankNode['@id']);
 
-                delete blankNode[prefixes.owl + 'onProperty'];
-                result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
-                expect(result).toBe(blankNode['@id']);
+                delete this.blankNode[prefixes.owl + 'onProperty'];
+                result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                expect(result).toBe(this.blankNode['@id']);
             });
         });
         describe('if given a datatype', function() {
             beforeEach(function() {
-                blankNode = {
+                this.blankNode = {
                     '@id': '_:genid0',
                     '@type': [prefixes.rdfs + 'Datatype']
                 };
-                jsonld = [blankNode];
-                index = { '_:genid0': { position: 0 } };
+                this.jsonld = [this.blankNode];
+                this.index = { '_:genid0': { position: 0 } };
             });
             describe('with oneOf', function() {
                 beforeEach(function() {
-                    blankNode[prefixes.owl + 'oneOf'] = [{'@id': '_:genid1'}];
-                    jsonld.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] }, { '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] });
-                    jsonld[1][prefixes.rdf + 'first'] = [{ '@value': 'A' }];
-                    jsonld[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
-                    jsonld[2][prefixes.rdf + 'first'] = [{ '@value': 'B' }];
-                    jsonld[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
-                    index['_:genid1'] = { position: 1 };
-                    index['_:genid2'] = { position: 2 };
+                    this.blankNode[prefixes.owl + 'oneOf'] = [{'@id': '_:genid1'}];
+                    this.jsonld.push({ '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] }, { '@id': '_:genid2', '@type': [prefixes.rdf + 'List'] });
+                    this.jsonld[1][prefixes.rdf + 'first'] = [{ '@value': 'A' }];
+                    this.jsonld[1][prefixes.rdf + 'rest'] = [{ '@id': '_:genid2' }];
+                    this.jsonld[2][prefixes.rdf + 'first'] = [{ '@value': 'B' }];
+                    this.jsonld[2][prefixes.rdf + 'rest'] = [{ '@list': [] }];
+                    this.index['_:genid1'] = { position: 1 };
+                    this.index['_:genid2'] = { position: 2 };
                 });
                 it('and HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index, true);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index, true);
                     expect(result).toBe('{<span class="manchester-lit">"A"</span>, <span class="manchester-lit">"B"</span>}');
                 });
                 it('without HTML', function() {
-                    var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
+                    var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
                     expect(result).toBe('{"A", "B"}');
                 });
             });
             it('unless it is invalid', function() {
-                var result = manchesterConverterSvc.jsonldToManchester(blankNode['@id'], jsonld, index);
-                expect(result).toBe(blankNode['@id']);
+                var result = manchesterConverterSvc.jsonldToManchester(this.blankNode['@id'], this.jsonld, this.index);
+                expect(result).toBe(this.blankNode['@id']);
             });
         });
         describe('with nested blank nodes', function() {
             beforeEach(function() {
-                index = {
+                this.index = {
                     '_:genid0': { position: 0, node: { '@id': '_:genid0', '@type': [prefixes.owl + 'Class'] } }, // unionOf
                     '_:genid1': {position: 1, node: { '@id': '_:genid1', '@type': [prefixes.rdf + 'List'] } }, // unionOf - 1
                     '_:genid2': {position: 2, node: { '@id': '_:genid2', '@type': [prefixes.owl + 'Class'] } }, // complementOf
@@ -682,35 +688,35 @@ describe('Manchester Converter service', function() {
                     '_:genid12': {position: 12, node: { '@id': '_:genid12', '@type': [prefixes.owl + 'Restriction'] } }, // allValuesFrom
                     '_:genid13': {position: 13, node: { '@id': '_:genid13', '@type': [prefixes.owl + 'Restriction'] } } // hasValue
                 };
-                index['_:genid0'].node[prefixes.owl + 'unionOf'] = [{'@id': '_:genid1'}];
-                index['_:genid1'].node[prefixes.rdf + 'first'] = [{'@id': '_:genid2'}];
-                index['_:genid1'].node[prefixes.rdf + 'rest'] = [{'@id': '_:genid3'}];
-                index['_:genid2'].node[prefixes.owl + 'complementOf'] = [{'@id': 'ClassA'}];
-                index['_:genid3'].node[prefixes.rdf + 'first'] = [{'@id': '_:genid4'}];
-                index['_:genid3'].node[prefixes.rdf + 'rest'] = [{'@id': '_:genid9'}];
-                index['_:genid4'].node[prefixes.owl + 'intersectionOf'] = [{'@id': '_:genid5'}];
-                index['_:genid5'].node[prefixes.rdf + 'first'] = [{'@id': '_:genid6'}];
-                index['_:genid5'].node[prefixes.rdf + 'rest'] = [{'@id': '_:genid7'}];
-                index['_:genid6'].node[prefixes.owl + 'onProperty'] = [{'@id': 'PropD'}];
-                index['_:genid6'].node[prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
-                index['_:genid7'].node[prefixes.rdf + 'first'] = [{'@id': '_:genid8'}];
-                index['_:genid7'].node[prefixes.rdf + 'rest'] = [{'@list': []}];
-                index['_:genid8'].node[prefixes.owl + 'onProperty'] = [{'@id': 'PropE'}];
-                index['_:genid8'].node[prefixes.owl + 'cardinality'] = [{'@value': '10', '@type': prefixes.xsd + 'nonNegativeInteger'}];
-                index['_:genid9'].node[prefixes.rdf + 'first'] = [{'@id': '_:genid10'}];
-                index['_:genid9'].node[prefixes.rdf + 'rest'] = [{'@id': '_:genid11'}];
-                index['_:genid10'].node[prefixes.owl + 'onProperty'] = [{'@id': 'PropA'}];
-                index['_:genid10'].node[prefixes.owl + 'someValuesFrom'] = [{'@id': 'ClassB'}];
-                index['_:genid11'].node[prefixes.rdf + 'first'] = [{'@id': '_:genid12'}];
-                index['_:genid11'].node[prefixes.rdf + 'rest'] = [{'@list': []}];
-                index['_:genid12'].node[prefixes.owl + 'onProperty'] = [{'@id': 'PropB'}];
-                index['_:genid12'].node[prefixes.owl + 'allValuesFrom'] = [{'@id': '_:genid13'}];
-                index['_:genid13'].node[prefixes.owl + 'onProperty'] = [{'@id': 'PropC'}];
-                index['_:genid13'].node[prefixes.owl + 'hasValue'] = [{'@id': 'ClassC'}];
-                jsonld = _.map(index, 'node');
+                this.index['_:genid0'].node[prefixes.owl + 'unionOf'] = [{'@id': '_:genid1'}];
+                this.index['_:genid1'].node[prefixes.rdf + 'first'] = [{'@id': '_:genid2'}];
+                this.index['_:genid1'].node[prefixes.rdf + 'rest'] = [{'@id': '_:genid3'}];
+                this.index['_:genid2'].node[prefixes.owl + 'complementOf'] = [{'@id': 'ClassA'}];
+                this.index['_:genid3'].node[prefixes.rdf + 'first'] = [{'@id': '_:genid4'}];
+                this.index['_:genid3'].node[prefixes.rdf + 'rest'] = [{'@id': '_:genid9'}];
+                this.index['_:genid4'].node[prefixes.owl + 'intersectionOf'] = [{'@id': '_:genid5'}];
+                this.index['_:genid5'].node[prefixes.rdf + 'first'] = [{'@id': '_:genid6'}];
+                this.index['_:genid5'].node[prefixes.rdf + 'rest'] = [{'@id': '_:genid7'}];
+                this.index['_:genid6'].node[prefixes.owl + 'onProperty'] = [{'@id': 'PropD'}];
+                this.index['_:genid6'].node[prefixes.owl + 'minCardinality'] = [{'@value': '1', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                this.index['_:genid7'].node[prefixes.rdf + 'first'] = [{'@id': '_:genid8'}];
+                this.index['_:genid7'].node[prefixes.rdf + 'rest'] = [{'@list': []}];
+                this.index['_:genid8'].node[prefixes.owl + 'onProperty'] = [{'@id': 'PropE'}];
+                this.index['_:genid8'].node[prefixes.owl + 'cardinality'] = [{'@value': '10', '@type': prefixes.xsd + 'nonNegativeInteger'}];
+                this.index['_:genid9'].node[prefixes.rdf + 'first'] = [{'@id': '_:genid10'}];
+                this.index['_:genid9'].node[prefixes.rdf + 'rest'] = [{'@id': '_:genid11'}];
+                this.index['_:genid10'].node[prefixes.owl + 'onProperty'] = [{'@id': 'PropA'}];
+                this.index['_:genid10'].node[prefixes.owl + 'someValuesFrom'] = [{'@id': 'ClassB'}];
+                this.index['_:genid11'].node[prefixes.rdf + 'first'] = [{'@id': '_:genid12'}];
+                this.index['_:genid11'].node[prefixes.rdf + 'rest'] = [{'@list': []}];
+                this.index['_:genid12'].node[prefixes.owl + 'onProperty'] = [{'@id': 'PropB'}];
+                this.index['_:genid12'].node[prefixes.owl + 'allValuesFrom'] = [{'@id': '_:genid13'}];
+                this.index['_:genid13'].node[prefixes.owl + 'onProperty'] = [{'@id': 'PropC'}];
+                this.index['_:genid13'].node[prefixes.owl + 'hasValue'] = [{'@id': 'ClassC'}];
+                this.jsonld = _.map(this.index, 'node');
             });
             it('and HTML', function() {
-                var result = manchesterConverterSvc.jsonldToManchester(jsonld[0]['@id'], jsonld, index, true);
+                var result = manchesterConverterSvc.jsonldToManchester(this.jsonld[0]['@id'], this.jsonld, this.index, true);
                 expect(result).toBe('(<span class="manchester-expr">not </span>ClassA)<span class="manchester-expr"> or </span>'
                     + '((PropD<span class="manchester-rest"> min </span><span class="manchester-lit">1</span>)'
                     + '<span class="manchester-expr"> and </span>(PropE<span class="manchester-rest"> exactly </span><span class="manchester-lit">10</span>))'
@@ -719,7 +725,7 @@ describe('Manchester Converter service', function() {
                     + '(PropC<span class="manchester-rest"> value </span>ClassC))');
             });
             it('without HTML', function() {
-                var result = manchesterConverterSvc.jsonldToManchester(jsonld[0]['@id'], jsonld, index);
+                var result = manchesterConverterSvc.jsonldToManchester(this.jsonld[0]['@id'], this.jsonld, this.index);
                 expect(result).toBe('(not ClassA) or ((PropD min 1) and (PropE exactly 10)) '
                     + 'or (PropA some ClassB) or (PropB only (PropC value ClassC))');
             });

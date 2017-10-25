@@ -31,6 +31,10 @@ describe('Escape HTML filter', function() {
         });
     });
 
+    afterEach(function() {
+        $filter = null;
+    });
+
     it('returns an empty string when given a falsey value', function() {
         var result;
         _.forEach([false, '', 0, undefined, null], function(value) {

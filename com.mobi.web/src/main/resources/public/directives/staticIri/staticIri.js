@@ -43,7 +43,7 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
-                    
+
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.refresh = {};
@@ -66,7 +66,7 @@
                     dvm.onSuccess = function() {
                         toastr.success('', 'Copied', {timeOut: 2000});
                     }
-                    
+
                     dvm.isOverlay = function() {
                           return (dvm.os.showIriOverlay || dvm.os.showCreateClassOverlay || dvm.os.showCreatePropertyOverlay 
                                   || dvm.os.showCreateIndividualOverlay || dvm.os.showCreateConceptOverlay 

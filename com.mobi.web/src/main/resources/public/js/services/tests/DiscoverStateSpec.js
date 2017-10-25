@@ -31,6 +31,10 @@ describe('Discover State Service', function() {
         });
     });
 
+    afterEach(function() {
+        discoverStateSvc = null;
+    });
+
     it('default variables should be set properly', function() {
         expectInitialState();
     });

@@ -43,70 +43,84 @@ describe('Prov Manager service', function() {
         utilSvc.paginatedConfigToParams.and.callFake(_.identity);
     });
 
+    afterEach(function() {
+        $httpBackend = null;
+        $httpParamSerializer = null;
+        scope = null;
+        provManagerSvc = null;
+        $q = null;
+        utilSvc = null;
+        httpSvc = null;
+    });
+
     describe('should retrieve a list of Activities', function() {
-        var config, id = 'id';
         beforeEach(function() {
-            config = { limit: 10, offset: 0 };
+            this.id = 'id';
+            this.config = { limit: 10, offset: 0 };
         });
         describe('with an id', function() {
             it('unless an error occurs', function() {
                 httpSvc.get.and.returnValue($q.reject({statusText: 'Error Message'}));
-                provManagerSvc.getActivities({}, id).then(function() {
-                    fail('Promise should have rejected');
-                }, function() {
-                    expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/provenance-data', {params: {}}, id);
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith({statusText: 'Error Message'});
-                });
+                provManagerSvc.getActivities({}, this.id)
+                    .then(function() {
+                        fail('Promise should have rejected');
+                    });
                 scope.$apply();
+                expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/provenance-data', {params: {}}, this.id);
+                expect(utilSvc.rejectError).toHaveBeenCalledWith({statusText: 'Error Message'});
             });
             it('with all config passed', function() {
                 httpSvc.get.and.returnValue($q.when({data: {}}));
-                provManagerSvc.getActivities(config, id).then(function(response) {
-                    expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/provenance-data', {params: config}, id);
-                    expect(response.data).toEqual({});
-                }, function() {
-                    fail('Promise should have resolved');
-                });
+                provManagerSvc.getActivities(this.config, this.id)
+                    .then(function(response) {
+                        expect(response.data).toEqual({});
+                    }, function() {
+                        fail('Promise should have resolved');
+                    });
                 scope.$apply();
+                expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/provenance-data', {params: this.config}, this.id);
             });
             it('without any config', function() {
                 httpSvc.get.and.returnValue($q.when({data: {}}));
-                provManagerSvc.getActivities({}, id).then(function(response) {
-                    expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/provenance-data', {params: {}}, id);
-                    expect(response.data).toEqual({});
-                }, function() {
-                    fail('Promise should have resolved');
-                });
+                provManagerSvc.getActivities({}, this.id)
+                    .then(function(response) {
+                        expect(response.data).toEqual({});
+                    }, function() {
+                        fail('Promise should have resolved');
+                    });
                 scope.$apply();
+                expect(httpSvc.get).toHaveBeenCalledWith('/mobirest/provenance-data', {params: {}}, this.id);
             });
         });
         describe('without an id', function() {
             it('unless an error occurs', function() {
                 $httpBackend.whenGET('/mobirest/provenance-data').respond(400, null, null, 'Error Message');
-                provManagerSvc.getActivities({}).then(function() {
-                    fail('Promise should have rejected');
-                }, function() {
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                });
+                provManagerSvc.getActivities({})
+                    .then(function() {
+                        fail('Promise should have rejected');
+                    });
                 flushAndVerify($httpBackend);
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
             });
             it('with all config passed', function() {
-                var params = $httpParamSerializer(config);
+                var params = $httpParamSerializer(this.config);
                 $httpBackend.whenGET('/mobirest/provenance-data?' + params).respond(200, {});
-                provManagerSvc.getActivities(config).then(function(response) {
-                    expect(response.data).toEqual({});
-                }, function() {
-                    fail('Promise should have resolved');
-                });
+                provManagerSvc.getActivities(this.config)
+                    .then(function(response) {
+                        expect(response.data).toEqual({});
+                    }, function() {
+                        fail('Promise should have resolved');
+                    });
                 flushAndVerify($httpBackend);
             });
             it('without any config', function() {
                 $httpBackend.whenGET('/mobirest/provenance-data').respond(200, {});
-                provManagerSvc.getActivities({}).then(function(response) {
-                    expect(response.data).toEqual({});
-                }, function() {
-                    fail('Promise should have resolved');
-                });
+                provManagerSvc.getActivities({})
+                    .then(function(response) {
+                        expect(response.data).toEqual({});
+                    }, function() {
+                        fail('Promise should have resolved');
+                    });
                 flushAndVerify($httpBackend);
             });
         });

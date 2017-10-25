@@ -21,10 +21,7 @@
  * #L%
  */
 describe('Show Properties filter', function() {
-    var $filter,
-        responseObj,
-        entity,
-        properties;
+    var $filter, responseObj;
 
     beforeEach(function() {
         module('showProperties');
@@ -35,40 +32,44 @@ describe('Show Properties filter', function() {
             responseObj = _responseObj_;
         });
 
-        entity = {'prop1': '', 'prop2': ''};
-        properties = ['prop1', 'prop2'];
+        this.entity = {'prop1': '', 'prop2': ''};
+        this.properties = ['prop1', 'prop2'];
+    });
+
+    afterEach(function() {
+        $filter = null;
+        responseObj = null;
     });
 
     describe('returns an empty array', function() {
         it('if properties is not an array', function() {
             _.forEach([false, '', 0, undefined, null], function(value) {
-                var result = $filter('showProperties')(entity, value);
+                var result = $filter('showProperties')(this.entity, value);
                 expect(result).toEqual([]);
             });
         });
         it('if no property can be validated', function() {
             responseObj.validateItem.and.returnValue(false);
-            var result = $filter('showProperties')(entity, properties)
+            var result = $filter('showProperties')(this.entity, this.properties)
             expect(result).toEqual([]);
         });
         it('if entity does not have the property', function() {
             responseObj.getItemIri.and.callFake(function(property) {
                 return property;
             });
-            var result = $filter('showProperties')(entity, ['prop3', 'prop4']);
+            var result = $filter('showProperties')(this.entity, ['prop3', 'prop4']);
             expect(result).toEqual([]);
         });
     });
-
     it('returns an array of items that are validated', function() {
         responseObj.validateItem.and.returnValue(true);
         responseObj.getItemIri.and.callFake(function(property) {
             return property;
         });
-        var result = $filter('showProperties')(entity, properties);
+        var result = $filter('showProperties')(this.entity, this.properties);
         expect(result.length).toBe(2);
 
-        result = $filter('showProperties')(entity, ['prop1', 'prop2', 'prop3', 'prop4']);
+        result = $filter('showProperties')(this.entity, ['prop1', 'prop2', 'prop3', 'prop4']);
         expect(result.length).toBe(2);
     });
 });

@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Catalog Manager service', function() {
-    var catalogManagerSvc, scope, $httpBackend, prefixes, utilSvc, $q, windowSvc, httpSvc,
-        catalogId = 'http://mobi.com/catalogs/local',
-        recordId = 'http://mobi.com/records/test',
-        distributionId = 'http://mobi.com/distributions/test',
-        versionId = 'http://mobi.com/versions/test',
-        branchId = 'http://mobi.com/branches/test',
-        commitId = 'http://mobi.com/commits/test';
+    var catalogManagerSvc, scope, $httpBackend, prefixes, utilSvc, $q, windowSvc, httpSvc;
 
     beforeEach(function() {
         module('catalogManager');
@@ -54,8 +48,26 @@ describe('Catalog Manager service', function() {
             windowSvc = _$window_;
         });
 
+        this.catalogId = 'http://mobi.com/catalogs/local';
+        this.recordId = 'http://mobi.com/records/test';
+        this.distributionId = 'http://mobi.com/distributions/test';
+        this.versionId = 'http://mobi.com/versions/test';
+        this.branchId = 'http://mobi.com/branches/test';
+        this.commitId = 'http://mobi.com/commits/test';
+
         utilSvc.paginatedConfigToParams.and.callFake(_.identity);
         utilSvc.rejectError.and.returnValue($q.reject('Error Message'));
+    });
+
+    afterEach(function() {
+        catalogManagerSvc = null;
+        scope = null;
+        $httpBackend = null;
+        prefixes = null;
+        utilSvc = null;
+        $q = null;
+        windowSvc = null;
+        httpSvc = null;
     });
 
     describe('should set the correct initial state', function() {
@@ -63,12 +75,15 @@ describe('Catalog Manager service', function() {
             spyOn(catalogManagerSvc, 'getRecordTypes').and.returnValue($q.reject());
             spyOn(catalogManagerSvc, 'getSortOptions').and.returnValue($q.reject());
             $httpBackend.whenGET('/mobirest/catalogs').respond(400, '');
-            catalogManagerSvc.initialize().then(function(response) {
-                fail('Promise should have rejected');
-            }, function() {
-                expect(true).toBe(true);
-            });
+            catalogManagerSvc.initialize()
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                });
             flushAndVerify($httpBackend);
+            expect(catalogManagerSvc.recordTypes).toEqual([]);
+            expect(catalogManagerSvc.localCatalog).toBeUndefined();
+            expect(catalogManagerSvc.distributedCatalog).toBeUndefined();
+            expect(catalogManagerSvc.sortOptions).toEqual([]);
         });
         describe('successfully', function() {
             beforeEach(function() {
@@ -79,83 +94,87 @@ describe('Catalog Manager service', function() {
             });
             it('unless a catalog cannot be found', function() {
                 $httpBackend.whenGET('/mobirest/catalogs').respond(200, []);
-                catalogManagerSvc.initialize().then(function(response) {
-                    fail('Promise should have rejected');
-                }, function(error) {
-                    expect(error).toContain('Could not find');
-                });
+                catalogManagerSvc.initialize()
+                    .then(function(response) {
+                        fail('Promise should have rejected');
+                    }, function(error) {
+                        expect(error).toContain('Could not find');
+                    });
                 flushAndVerify($httpBackend);
             });
             it('with all important data', function() {
-                var types = this.types;
-                var sortOptions = this.sortOptions;
                 var localCatalog = {};
                 localCatalog[prefixes.dcterms + 'title'] = [{'@value': 'Mobi Catalog (Local)'}];
                 var distributedCatalog = {};
                 distributedCatalog[prefixes.dcterms + 'title'] = [{'@value': 'Mobi Catalog (Distributed)'}];
                 $httpBackend.whenGET('/mobirest/catalogs').respond(200, [localCatalog, distributedCatalog]);
-                catalogManagerSvc.initialize().then(function(response) {
-                    expect(catalogManagerSvc.recordTypes).toEqual(types);
-                    expect(catalogManagerSvc.localCatalog).toEqual(localCatalog);
-                    expect(catalogManagerSvc.distributedCatalog).toEqual(distributedCatalog);
-                    expect(catalogManagerSvc.sortOptions.length).toEqual(sortOptions.length * 2);
-                    _.forEach(sortOptions, function(option) {
-                        expect(_.find(catalogManagerSvc.sortOptions, {field: option, asc: true})).not.toBeUndefined();
-                        expect(_.find(catalogManagerSvc.sortOptions, {field: option, asc: false})).not.toBeUndefined();
+                catalogManagerSvc.initialize()
+                    .then(_.noop, function(response) {
+                        fail('Promise should have resolved');
                     });
-                }, function(response) {
-                    fail('Promise should have resolved');
-                });
                 flushAndVerify($httpBackend);
+                expect(catalogManagerSvc.recordTypes).toEqual(this.types);
+                expect(catalogManagerSvc.localCatalog).toEqual(localCatalog);
+                expect(catalogManagerSvc.distributedCatalog).toEqual(distributedCatalog);
+                expect(catalogManagerSvc.sortOptions.length).toEqual(this.sortOptions.length * 2);
+                _.forEach(this.sortOptions, function(option) {
+                    expect(_.find(catalogManagerSvc.sortOptions, {field: option, asc: true})).not.toBeUndefined();
+                    expect(_.find(catalogManagerSvc.sortOptions, {field: option, asc: false})).not.toBeUndefined();
+                });
             });
         });
     });
     it('should get the IRIs for all record types', function() {
         $httpBackend.whenGET('/mobirest/catalogs/record-types').respond(200, []);
-        catalogManagerSvc.getRecordTypes().then(function(value) {
-            expect(value).toEqual([]);
-        }, function(response) {
-            fail('Promise should have resolved');
-        });
+        catalogManagerSvc.getRecordTypes()
+            .then(function(value) {
+                expect(value).toEqual([]);
+            }, function(response) {
+                fail('Promise should have resolved');
+            });
         flushAndVerify($httpBackend);
     });
     it('should get the IRIs for all sort options', function() {
         $httpBackend.whenGET('/mobirest/catalogs/sort-options').respond(200, []);
-        catalogManagerSvc.getSortOptions().then(function(value) {
-            expect(value).toEqual([]);
-        }, function(response) {
-            fail('Promise should have resolved');
-        });
-        flushAndVerify($httpBackend);
-    });
-    describe('should get a page of results based on the passed URL', function() {
-        var url = 'mobirest/catalogs/local/records';
-        it('unless there is an error', function() {
-            $httpBackend.expectGET(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getResultsPage(url).then(function(response) {
-                fail('Promise should have rejected');
-            },function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
-            flushAndVerify($httpBackend);
-        });
-        it('successfully', function() {
-            $httpBackend.expectGET(url).respond(200, []);
-            catalogManagerSvc.getResultsPage(url).then(function(response) {
-                expect(response.data).toEqual([]);
+        catalogManagerSvc.getSortOptions()
+            .then(function(value) {
+                expect(value).toEqual([]);
             }, function(response) {
                 fail('Promise should have resolved');
             });
+        flushAndVerify($httpBackend);
+    });
+    describe('should get a page of results based on the passed URL', function() {
+        beforeEach(function() {
+            this.url = 'mobirest/catalogs/local/records';
+        });
+        it('unless there is an error', function() {
+            $httpBackend.expectGET(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getResultsPage(this.url)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                },function(response) {
+                    expect(response).toBe('Error Message');
+                });
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+        });
+        it('successfully', function() {
+            $httpBackend.expectGET(this.url).respond(200, []);
+            catalogManagerSvc.getResultsPage(this.url)
+                .then(function(response) {
+                    expect(response.data).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a list of Records', function() {
-        var promiseId = 'id',
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records',
-            config;
-        beforeEach(function(){
-            config = {
+        beforeEach(function() {
+            this.promiseId = 'id';
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records';
+            this.config = {
                 limit: 10,
                 offset: 0,
                 sort: 'http://purl.org/dc/terms/issued',
@@ -167,38 +186,41 @@ describe('Catalog Manager service', function() {
         });
         describe('unless an error occurs', function() {
             it('with no promise id set', function() {
-                var params = $httpParamSerializer(config);
-                $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
-                catalogManagerSvc.getRecords(catalogId, config).then(function(response) {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                    expect(response).toBe('Error Message');
-                });
+                var params = $httpParamSerializer(this.config);
+                $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+                catalogManagerSvc.getRecords(this.catalogId, this.config)
+                    .then(function(response) {
+                        fail('Promise should have rejected');
+                    }, function(response) {
+                        expect(response).toBe('Error Message');
+                    });
                 flushAndVerify($httpBackend);
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
             });
             it('with a promise id set', function() {
                 httpSvc.get.and.returnValue($q.reject({}));
-                catalogManagerSvc.getRecords(catalogId, config, promiseId).then(function(response) {
-                    fail('Promise should have rejected');
-                }, function(response) {
-                    expect(httpSvc.get).toHaveBeenCalledWith(url, {params: config}, promiseId);
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.any(Object));
-                    expect(response).toBe('Error Message');
-                });
+                catalogManagerSvc.getRecords(this.catalogId, this.config, this.promiseId)
+                    .then(function(response) {
+                        fail('Promise should have rejected');
+                    }, function(response) {
+                        expect(response).toBe('Error Message');
+                    });
                 scope.$apply();
+                expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: this.config}, this.promiseId);
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.any(Object));
             });
         });
         describe('successfully', function() {
             describe('with no promise id set', function() {
                 it('and all config passed', function() {
-                    var params = $httpParamSerializer(config);
-                    $httpBackend.whenGET(url + '?' + params).respond(200, []);
-                    catalogManagerSvc.getRecords(catalogId, config).then(function(response) {
-                        expect(response.data).toEqual([]);
-                    }, function(response) {
-                        fail('Promise should have resolved');
-                    });
+                    var params = $httpParamSerializer(this.config);
+                    $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+                    catalogManagerSvc.getRecords(this.catalogId, this.config)
+                        .then(function(response) {
+                            expect(response.data).toEqual([]);
+                        }, function(response) {
+                            fail('Promise should have resolved');
+                        });
                     flushAndVerify($httpBackend);
                 });
                 it('and no config passed', function() {
@@ -206,12 +228,13 @@ describe('Catalog Manager service', function() {
                         sort: catalogManagerSvc.sortOptions[0].field,
                         ascending: catalogManagerSvc.sortOptions[0].asc
                     });
-                    $httpBackend.whenGET(url + '?' + params).respond(200, []);
-                    catalogManagerSvc.getRecords(catalogId, {}).then(function(response) {
-                        expect(response.data).toEqual([]);
-                    }, function(response) {
-                        fail('Promise should have resolved');
-                    });
+                    $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+                    catalogManagerSvc.getRecords(this.catalogId, {})
+                        .then(function(response) {
+                            expect(response.data).toEqual([]);
+                        }, function(response) {
+                            fail('Promise should have resolved');
+                        });
                     flushAndVerify($httpBackend);
                 });
             });
@@ -220,57 +243,62 @@ describe('Catalog Manager service', function() {
                     httpSvc.get.and.returnValue($q.when({data: []}));
                 });
                 it('and all config passed', function() {
-                    catalogManagerSvc.getRecords(catalogId, config, promiseId).then(function(response) {
-                        expect(httpSvc.get).toHaveBeenCalledWith(url, {params: config}, promiseId);
-                        expect(response.data).toEqual([]);
-                    }, function(response) {
-                        fail('Promise should have resolved');
-                    });
+                    catalogManagerSvc.getRecords(this.catalogId, this.config, this.promiseId)
+                        .then(function(response) {
+                            expect(response.data).toEqual([]);
+                        }, function(response) {
+                            fail('Promise should have resolved');
+                        });
                     scope.$apply();
+                    expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: this.config}, this.promiseId);
                 });
                 it('and no config passed', function() {
                     var params = {
                         sort: catalogManagerSvc.sortOptions[0].field,
                         ascending: catalogManagerSvc.sortOptions[0].asc
                     };
-                    catalogManagerSvc.getRecords(catalogId, {}, promiseId).then(function(response) {
-                        expect(httpSvc.get).toHaveBeenCalledWith(url, {params: params}, promiseId);
-                        expect(response.data).toEqual([]);
-                    }, function(response) {
-                        fail('Promise should have resolved');
-                    });
+                    catalogManagerSvc.getRecords(this.catalogId, {}, this.promiseId)
+                        .then(function(response) {
+                            expect(response.data).toEqual([]);
+                        }, function(response) {
+                            fail('Promise should have resolved');
+                        });
                     scope.$apply();
+                            expect(httpSvc.get).toHaveBeenCalledWith(this.url, {params: params}, this.promiseId);
                 });
             });
         });
     });
     describe('should retrieve a Record', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId);
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId);
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getRecord(recordId, catalogId).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getRecord(this.recordId, this.catalogId)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.whenGET(url).respond(200, {});
-            catalogManagerSvc.getRecord(recordId, catalogId).then(function(response) {
-                expect(response).toEqual({});
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url).respond(200, {});
+            catalogManagerSvc.getRecord(this.recordId, this.catalogId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Record', function() {
-        var recordConfig,
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records';
         beforeEach(function() {
-            recordConfig = {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records';
+            this.recordConfig = {
                 type: prefixes.catalog + 'Record',
                 title: 'Title',
                 description: 'Description',
@@ -278,120 +306,133 @@ describe('Catalog Manager service', function() {
             };
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectPOST(url,
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createRecord(catalogId, recordConfig).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            catalogManagerSvc.createRecord(this.catalogId, this.recordConfig)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a description and keywords', function() {
-            $httpBackend.expectPOST(url,
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, recordId);
-            catalogManagerSvc.createRecord(catalogId, recordConfig).then(function(response) {
-                expect(response).toBe(recordId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+                }).respond(200, this.recordId);
+            var self = this;
+            catalogManagerSvc.createRecord(this.catalogId, this.recordConfig)
+                .then(function(response) {
+                    expect(response).toBe(self.recordId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without a description or keywords', function() {
-            delete recordConfig.description;
-            delete recordConfig.keywords;
-            $httpBackend.expectPOST(url,
+            delete this.recordConfig.description;
+            delete this.recordConfig.keywords;
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, recordId);
-            catalogManagerSvc.createRecord(catalogId, recordConfig).then(function(response) {
-                expect(response).toBe(recordId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+                }).respond(200, this.recordId);
+            var self = this;
+            catalogManagerSvc.createRecord(this.catalogId, this.recordConfig)
+                .then(function(response) {
+                    expect(response).toBe(self.recordId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should update a Record', function() {
-        var newRecord = {},
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId);
+        beforeEach(function() {
+            this.newRecord = {};
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId);
+        });
         it('unless an error occurs', function() {
-            $httpBackend.expectPUT(url, newRecord).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.updateRecord(recordId, catalogId, newRecord).then(function() {
+            $httpBackend.expectPUT(this.url, this.newRecord).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.updateRecord(this.recordId, this.catalogId, this.newRecord).then(function() {
                 fail('Promise should have rejected');
             }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
                 expect(response).toBe('Error Message');
             });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.expectPUT(url, newRecord).respond(200);
-            catalogManagerSvc.updateRecord(recordId, catalogId, newRecord).then(function() {
-                expect(true).toBe(true);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.expectPUT(this.url, this.newRecord).respond(200);
+            var self = this;
+            catalogManagerSvc.updateRecord(this.recordId, this.catalogId, this.newRecord)
+                .then(function(response) {
+                    expect(response).toEqual(self.recordId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should delete a Record', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId);
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId);
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.deleteRecord(recordId, catalogId).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenDELETE(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.deleteRecord(this.recordId, this.catalogId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.whenDELETE(url).respond(200);
-            catalogManagerSvc.deleteRecord(recordId, catalogId).then(function() {
-                expect(true).toBe(true);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenDELETE(this.url).respond(200);
+            catalogManagerSvc.deleteRecord(this.recordId, this.catalogId)
+                .then(_.noop, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a list of Record Distributions', function() {
-        var config = {
+        beforeEach(function() {
+            this.config = {
                 limit: 10,
                 offset: 0,
                 sort: 'http://purl.org/dc/terms/issued',
                 ascending: true
-            },
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions';
-        beforeEach(function() {
+            };
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/distributions';
             catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title', asc: false}];
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer(config);
-            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getRecordDistributions(recordId, catalogId, config).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getRecordDistributions(this.recordId, this.catalogId, this.config)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with all config passed', function() {
-            var params = $httpParamSerializer(config);
-            $httpBackend.whenGET(url + '?' + params).respond(200, []);
-            catalogManagerSvc.getRecordDistributions(recordId, catalogId, config).then(function(response) {
-                expect(response.data).toEqual([]);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getRecordDistributions(this.recordId, this.catalogId, this.config)
+                .then(function(response) {
+                    expect(response.data).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without any config passed', function() {
@@ -399,163 +440,184 @@ describe('Catalog Manager service', function() {
                 sort: catalogManagerSvc.sortOptions[0].field,
                 ascending: catalogManagerSvc.sortOptions[0].asc
             });
-            $httpBackend.whenGET(url + '?' + params).respond(200, []);
-            catalogManagerSvc.getRecordDistributions(recordId, catalogId, {}).then(function(response) {
-                expect(response.data).toEqual([]);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getRecordDistributions(this.recordId, this.catalogId, {})
+                .then(function(response) {
+                    expect(response.data).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Record Distribution', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId);
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/distributions/' + encodeURIComponent(this.distributionId);
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getRecordDistribution(distributionId, recordId, catalogId).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getRecordDistribution(this.distributionId, this.recordId, this.catalogId)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.whenGET(url).respond(200, {});
-            catalogManagerSvc.getRecordDistribution(distributionId, recordId, catalogId).then(function(response) {
-                expect(response).toEqual({});
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url).respond(200, {});
+            catalogManagerSvc.getRecordDistribution(this.distributionId, this.recordId, this.catalogId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Record Distribution', function() {
-        var distributionConfig = {
+        beforeEach(function() {
+            this.distributionConfig = {
                 title: 'Title',
                 description: 'Description',
                 format: 'text/plain',
                 accessURL: 'http://example.com/access',
                 downloadURL: 'http://example.com/download',
-            },
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions';
+            };
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/distributions';
+        });
         it('unless an error occurs', function() {
-            $httpBackend.expectPOST(url,
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createRecordDistribution(recordId, catalogId, distributionConfig).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            catalogManagerSvc.createRecordDistribution(this.recordId, this.catalogId, this.distributionConfig)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a description, format, access URL, and download URL', function() {
-            $httpBackend.expectPOST(url,
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, distributionId);
-            catalogManagerSvc.createRecordDistribution(recordId, catalogId, distributionConfig).then(function(response) {
-                expect(response).toBe(distributionId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+                }).respond(200, this.distributionId);
+            var self = this;
+            catalogManagerSvc.createRecordDistribution(this.recordId, this.catalogId, this.distributionConfig)
+                .then(function(response) {
+                    expect(response).toBe(self.distributionId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without a description, format, access URL, or download URL', function() {
-            delete distributionConfig.description;
-            delete distributionConfig.format;
-            delete distributionConfig.accessURL;
-            delete distributionConfig.downloadURL;
-            $httpBackend.expectPOST(url,
+            delete this.distributionConfig.description;
+            delete this.distributionConfig.format;
+            delete this.distributionConfig.accessURL;
+            delete this.distributionConfig.downloadURL;
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, distributionId);
-            catalogManagerSvc.createRecordDistribution(recordId, catalogId, distributionConfig).then(function(response) {
-                expect(response).toBe(distributionId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+                }).respond(200, this.distributionId);
+            var self = this;
+            catalogManagerSvc.createRecordDistribution(this.recordId, this.catalogId, this.distributionConfig)
+                .then(function(response) {
+                    expect(response).toBe(self.distributionId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should update a Record Distribution', function() {
-        var newDistribution = {},
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId);
+        beforeEach(function() {
+            this.newDistribution = {};
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/distributions/' + encodeURIComponent(this.distributionId);
+        });
         it('unless an error occurs', function() {
-            $httpBackend.expectPUT(url, newDistribution).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.updateRecordDistribution(distributionId, recordId, catalogId, newDistribution).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.expectPUT(this.url, this.newDistribution).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.updateRecordDistribution(this.distributionId, this.recordId, this.catalogId, this.newDistribution)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.expectPUT(url, newDistribution).respond(200);
-            catalogManagerSvc.updateRecordDistribution(distributionId, recordId, catalogId, newDistribution).then(function() {
-                expect(true).toBe(true);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.expectPUT(this.url, this.newDistribution).respond(200);
+            var self = this;
+            catalogManagerSvc.updateRecordDistribution(this.distributionId, this.recordId, this.catalogId, this.newDistribution)
+                .then(function(response) {
+                    expect(response).toBe(self.distributionId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should delete a Record Distribution', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/distributions/' + encodeURIComponent(distributionId);
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/distributions/' + encodeURIComponent(this.distributionId);
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.deleteRecordDistribution(distributionId, recordId, catalogId).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenDELETE(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.deleteRecordDistribution(this.distributionId, this.recordId, this.catalogId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.whenDELETE(url).respond(200);
-            catalogManagerSvc.deleteRecordDistribution(distributionId, recordId, catalogId).then(function() {
-                expect(true).toBe(true);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenDELETE(this.url).respond(200);
+            catalogManagerSvc.deleteRecordDistribution(this.distributionId, this.recordId, this.catalogId)
+                .then(_.noop, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a list of Record Versions', function() {
-        var config = {
+        beforeEach(function() {
+            this.config = {
                 limit: 10,
                 offset: 0,
                 sort: 'http://purl.org/dc/terms/issued',
                 ascending: true
-            },
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions';
-        beforeEach(function() {
+            };
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/versions';
             catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title', asc: false}];
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer(config);
-            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getRecordVersions(recordId, catalogId, config).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getRecordVersions(this.recordId, this.catalogId, this.config)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with all config passed', function() {
-            var params = $httpParamSerializer(config);
-            $httpBackend.whenGET(url + '?' + params).respond(200, []);
-            catalogManagerSvc.getRecordVersions(recordId, catalogId, config).then(function(response) {
-                expect(response.data).toEqual([]);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getRecordVersions(this.recordId, this.catalogId, this.config)
+                .then(function(response) {
+                    expect(response.data).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without any config', function() {
@@ -563,272 +625,305 @@ describe('Catalog Manager service', function() {
                 sort: catalogManagerSvc.sortOptions[0].field,
                 ascending: catalogManagerSvc.sortOptions[0].asc
             });
-            $httpBackend.whenGET(url + '?' + params).respond(200, []);
-            catalogManagerSvc.getRecordVersions(recordId, catalogId, {}).then(function(response) {
-                expect(response.data).toEqual([]);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getRecordVersions(this.recordId, this.catalogId, {})
+                .then(function(response) {
+                    expect(response.data).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve the latest Record Version', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/latest';
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/versions/latest';
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getRecordLatestVersion(recordId, catalogId).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getRecordLatestVersion(this.recordId, this.catalogId)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.whenGET(url).respond(200, {});
-            catalogManagerSvc.getRecordLatestVersion(recordId, catalogId).then(function(response) {
-                expect(response).toEqual({});
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url).respond(200, {});
+            catalogManagerSvc.getRecordLatestVersion(this.recordId, this.catalogId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Record Version', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId);
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/versions/' + encodeURIComponent(this.versionId);
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getRecordVersion(versionId, recordId, catalogId).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getRecordVersion(this.versionId, this.recordId, this.catalogId)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.whenGET(url).respond(200, {});
-            catalogManagerSvc.getRecordVersion(versionId, recordId, catalogId).then(function(response) {
-                expect(response).toEqual({});
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url).respond(200, {});
+            catalogManagerSvc.getRecordVersion(this.versionId, this.recordId, this.catalogId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Version', function() {
-        var versionConfig = {
-                title: 'Title',
-                description: 'Description'
-            },
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions';
+        beforeEach(function () {
+            this.versionConfig = {
+                    title: 'Title',
+                    description: 'Description'
+                };
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/versions';
+        });
         it('unless an error occurs', function() {
-            $httpBackend.expectPOST(url,
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createRecordVersion(recordId, catalogId, versionConfig).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            catalogManagerSvc.createRecordVersion(this.recordId, this.catalogId, this.versionConfig)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a description', function() {
-            $httpBackend.expectPOST(url,
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, versionId);
-            catalogManagerSvc.createRecordVersion(recordId, catalogId, versionConfig).then(function(response) {
-                expect(response).toBe(versionId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+                }).respond(200, this.versionId);
+            var self = this;
+            catalogManagerSvc.createRecordVersion(this.recordId, this.catalogId, this.versionConfig)
+                .then(function(response) {
+                    expect(response).toBe(self.versionId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without a description', function() {
-            delete versionConfig.description;
-            $httpBackend.expectPOST(url,
+            delete this.versionConfig.description;
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, versionId);
-            catalogManagerSvc.createRecordVersion(recordId, catalogId, versionConfig).then(function(response) {
-                expect(response).toBe(versionId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+                }).respond(200, this.versionId);
+            var self = this;
+            catalogManagerSvc.createRecordVersion(this.recordId, this.catalogId, this.versionConfig)
+                .then(function(response) {
+                    expect(response).toBe(self.versionId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Tag', function() {
-        var version,
-            versionConfig = {
-                title: 'Title',
-                description: 'Description'
-            },
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions';
         beforeEach(function() {
-            version = {'@id': versionId};
-            spyOn(catalogManagerSvc, 'getRecordVersion').and.returnValue($q.when(version));
-            spyOn(catalogManagerSvc, 'updateRecordVersion').and.returnValue($q.when(versionId));
+            this.versionConfig = {
+                    title: 'Title',
+                    description: 'Description'
+                };
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/versions';
+            this.version = {'@id': this.versionId};
+            spyOn(catalogManagerSvc, 'getRecordVersion').and.returnValue($q.when(this.version));
+            spyOn(catalogManagerSvc, 'updateRecordVersion').and.returnValue($q.when(this.versionId));
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectPOST(url,
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createRecordTag(recordId, catalogId, versionConfig, commitId).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            catalogManagerSvc.createRecordTag(this.recordId, this.catalogId, this.versionConfig, this.commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a description', function() {
-            var expectedVersion = angular.copy(version);
-            expectedVersion[prefixes.catalog + 'commit'] = [{'@id': commitId}];
-            $httpBackend.expectPOST(url,
+            var expectedVersion = angular.copy(this.version);
+            expectedVersion[prefixes.catalog + 'commit'] = [{'@id': this.commitId}];
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, versionId);
-            catalogManagerSvc.createRecordTag(recordId, catalogId, versionConfig, commitId).then(function(response) {
-                expect(catalogManagerSvc.getRecordVersion).toHaveBeenCalledWith(versionId, recordId, catalogId);
-                expect(catalogManagerSvc.updateRecordVersion).toHaveBeenCalledWith(versionId, recordId, catalogId, expectedVersion);
-                expect(response).toBe(versionId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+                }).respond(200, this.versionId);
+            var self = this;
+            catalogManagerSvc.createRecordTag(this.recordId, this.catalogId, this.versionConfig, this.commitId)
+                .then(function(response) {
+                    expect(response).toBe(self.versionId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
+            expect(catalogManagerSvc.getRecordVersion).toHaveBeenCalledWith(this.versionId, this.recordId, this.catalogId);
+            expect(catalogManagerSvc.updateRecordVersion).toHaveBeenCalledWith(this.versionId, this.recordId, this.catalogId, expectedVersion);
         });
         it('without a description', function() {
-            delete versionConfig.description;
-            var expectedVersion = angular.copy(version);
-            expectedVersion[prefixes.catalog + 'commit'] = [{'@id': commitId}];
-            $httpBackend.expectPOST(url,
+            delete this.versionConfig.description;
+            var expectedVersion = angular.copy(this.version);
+            expectedVersion[prefixes.catalog + 'commit'] = [{'@id': this.commitId}];
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, versionId);
-            catalogManagerSvc.createRecordTag(recordId, catalogId, versionConfig, commitId).then(function(response) {
-                expect(catalogManagerSvc.getRecordVersion).toHaveBeenCalledWith(versionId, recordId, catalogId);
-                expect(catalogManagerSvc.updateRecordVersion).toHaveBeenCalledWith(versionId, recordId, catalogId, expectedVersion);
-                expect(response).toBe(versionId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+                }).respond(200, this.versionId);
+            var self = this;
+            catalogManagerSvc.createRecordTag(this.recordId, this.catalogId, this.versionConfig, this.commitId)
+                .then(function(response) {
+                    expect(response).toBe(self.versionId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
+            expect(catalogManagerSvc.getRecordVersion).toHaveBeenCalledWith(this.versionId, this.recordId, this.catalogId);
+            expect(catalogManagerSvc.updateRecordVersion).toHaveBeenCalledWith(this.versionId, this.recordId, this.catalogId, expectedVersion);
         });
     });
     describe('should update a Record Version', function() {
-        var newVersion = {},
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId);
+        beforeEach(function() {
+            this.newVersion = {};
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/versions/' + encodeURIComponent(this.versionId);
+        });
         it('unless an error occurs', function() {
-            $httpBackend.expectPUT(url, newVersion).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.updateRecordVersion(versionId, recordId, catalogId, newVersion).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.expectPUT(this.url, this.newVersion).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.updateRecordVersion(this.versionId, this.recordId, this.catalogId, this.newVersion)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.expectPUT(url, newVersion).respond(200);
-            catalogManagerSvc.updateRecordVersion(versionId, recordId, catalogId, newVersion).then(function() {
-                expect(true).toBe(true);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.expectPUT(this.url, this.newVersion).respond(200, '');
+            catalogManagerSvc.updateRecordVersion(this.versionId, this.recordId, this.catalogId, this.newVersion)
+                .then(function(response) {
+                    expect(response).toBe('');
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should delete a Record Version', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId);
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/versions/' + encodeURIComponent(this.versionId);
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.deleteRecordVersion(versionId, recordId, catalogId).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenDELETE(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.deleteRecordVersion(this.versionId, this.recordId, this.catalogId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.whenDELETE(url).respond(200);
-            catalogManagerSvc.deleteRecordVersion(versionId, recordId, catalogId).then(function() {
-                expect(true).toBe(true);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenDELETE(this.url).respond(200);
+            catalogManagerSvc.deleteRecordVersion(this.versionId, this.recordId, this.catalogId)
+                .then(_.noop, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve the Commit of a Version', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/commit';
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/versions/' + encodeURIComponent(this.versionId) + '/commit';
+        });
         it('unless an error occurs', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
-            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getVersionCommit(versionId, recordId, catalogId, 'jsonld').then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getVersionCommit(this.versionId, this.recordId, this.catalogId, 'jsonld')
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a format', function() {
             var params = $httpParamSerializer({format: 'turtle'});
-            $httpBackend.whenGET(url + '?' + params).respond(200, {});
-            catalogManagerSvc.getVersionCommit(versionId, recordId, catalogId, 'turtle').then(function(response) {
-                expect(response).toEqual({});
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, {});
+            catalogManagerSvc.getVersionCommit(this.versionId, this.recordId, this.catalogId, 'turtle')
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without a format', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
-            $httpBackend.whenGET(url + '?' + params).respond(200, {});
-            catalogManagerSvc.getVersionCommit(versionId, recordId, catalogId).then(function(response) {
-                expect(response).toEqual({});
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, {});
+            catalogManagerSvc.getVersionCommit(this.versionId, this.recordId, this.catalogId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a list of Version Distributions', function() {
-        var config = {
+        beforeEach(function() {
+            this.config = {
                 limit: 10,
                 offset: 0,
                 sort: 'http://purl.org/dc/terms/issued',
                 ascending: true
-            },
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions';
-        beforeEach(function() {
+            };
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/versions/' + encodeURIComponent(this.versionId) + '/distributions';
             catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title', asc: false}];
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer(config);
-            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, config).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getVersionDistributions(this.versionId, this.recordId, this.catalogId, this.config)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with all config passed', function() {
-            var params = $httpParamSerializer(config);
-            $httpBackend.whenGET(url + '?' + params).respond(200, []);
-            catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, config).then(function(response) {
-                expect(response.data).toEqual([]);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getVersionDistributions(this.versionId, this.recordId, this.catalogId, this.config)
+                .then(function(response) {
+                    expect(response.data).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without any config', function() {
@@ -836,138 +931,155 @@ describe('Catalog Manager service', function() {
                 sort: catalogManagerSvc.sortOptions[0].field,
                 ascending: catalogManagerSvc.sortOptions[0].asc
             });
-            $httpBackend.whenGET(url + '?' + params).respond(200, []);
-            catalogManagerSvc.getVersionDistributions(versionId, recordId, catalogId, {}).then(function(response) {
-                expect(response.data).toEqual([]);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getVersionDistributions(this.versionId, this.recordId, this.catalogId, {})
+                .then(function(response) {
+                    expect(response.data).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Version Distribution', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId);
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/versions/' + encodeURIComponent(this.versionId) + '/distributions/' + encodeURIComponent(this.distributionId);
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getVersionDistribution(distributionId, versionId, recordId, catalogId).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getVersionDistribution(this.distributionId, this.versionId, this.recordId, this.catalogId)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.whenGET(url).respond(200, {});
-            catalogManagerSvc.getVersionDistribution(distributionId, versionId, recordId, catalogId).then(function(response) {
-                expect(response).toEqual({});
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url).respond(200, {});
+            catalogManagerSvc.getVersionDistribution(this.distributionId, this.versionId, this.recordId, this.catalogId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Version Distribution', function() {
-        var distributionConfig = {
+        beforeEach(function () {
+            this.distributionConfig = {
                 title: 'Title',
                 description: 'Description',
                 format: 'text/plain',
                 accessURL: 'http://example.com/access',
                 downloadURL: 'http://example.com/download',
-            },
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions';
+            };
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/versions/' + encodeURIComponent(this.versionId) + '/distributions';
+        });
         it('unless an error occurs', function() {
-            $httpBackend.expectPOST(url,
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createVersionDistribution(versionId, recordId, catalogId, distributionConfig).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            catalogManagerSvc.createVersionDistribution(this.versionId, this.recordId, this.catalogId, this.distributionConfig)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a description, format, access URL, and download URL', function() {
-            $httpBackend.expectPOST(url,
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, distributionId);
-            catalogManagerSvc.createVersionDistribution(versionId, recordId, catalogId, distributionConfig).then(function(response) {
-                expect(response).toBe(distributionId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+                }).respond(200, this.distributionId);
+            var self = this;
+            catalogManagerSvc.createVersionDistribution(this.versionId, this.recordId, this.catalogId, this.distributionConfig)
+                .then(function(response) {
+                    expect(response).toBe(self.distributionId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without a description, format, access URL, or download URL', function() {
-            delete distributionConfig.description;
-            delete distributionConfig.format;
-            delete distributionConfig.accessURL;
-            delete distributionConfig.downloadURL;
-            $httpBackend.expectPOST(url,
+            delete this.distributionConfig.description;
+            delete this.distributionConfig.format;
+            delete this.distributionConfig.accessURL;
+            delete this.distributionConfig.downloadURL;
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, distributionId);
-            catalogManagerSvc.createVersionDistribution(versionId, recordId, catalogId, distributionConfig).then(function(response) {
-                expect(response).toBe(distributionId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+                }).respond(200, this.distributionId);
+            var self = this;
+            catalogManagerSvc.createVersionDistribution(this.versionId, this.recordId, this.catalogId, this.distributionConfig)
+                .then(function(response) {
+                    expect(response).toBe(self.distributionId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should update a Version Distribution', function() {
-        var newDistribution = {},
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId);
+        beforeEach(function() {
+            this.newDistribution = {};
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/versions/' + encodeURIComponent(this.versionId) + '/distributions/' + encodeURIComponent(this.distributionId);
+        });
         it('unless an error occurs', function() {
-            $httpBackend.expectPUT(url, newDistribution).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.updateVersionDistribution(distributionId, versionId, recordId, catalogId, newDistribution).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.expectPUT(this.url, this.newDistribution).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.updateVersionDistribution(this.distributionId, this.versionId, this.recordId, this.catalogId, this.newDistribution)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.expectPUT(url, newDistribution).respond(200);
-            catalogManagerSvc.updateVersionDistribution(distributionId, versionId, recordId, catalogId, newDistribution).then(function() {
-                expect(true).toBe(true);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.expectPUT(this.url, this.newDistribution).respond(200, '');
+            catalogManagerSvc.updateVersionDistribution(this.distributionId, this.versionId, this.recordId, this.catalogId, this.newDistribution)
+                .then(function(response) {
+                    expect(response).toBe('');
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should delete a Version Distribution', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/versions/' + encodeURIComponent(versionId) + '/distributions/' + encodeURIComponent(distributionId);
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/versions/' + encodeURIComponent(this.versionId) + '/distributions/' + encodeURIComponent(this.distributionId);
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.deleteVersionDistribution(distributionId, versionId, recordId, catalogId).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenDELETE(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.deleteVersionDistribution(this.distributionId, this.versionId, this.recordId, this.catalogId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.whenDELETE(url).respond(200);
-            catalogManagerSvc.deleteVersionDistribution(distributionId, versionId, recordId, catalogId).then(function() {
-                expect(true).toBe(true);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenDELETE(this.url).respond(200);
+            catalogManagerSvc.deleteVersionDistribution(this.distributionId, this.versionId, this.recordId, this.catalogId)
+                .then(_.noop, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a list of Record Branches', function() {
-        var config,
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches';
         beforeEach(function() {
-            config = {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches';
+            this.config = {
                 limit: 10,
                 offset: 0,
                 sort: 'http://purl.org/dc/terms/issued',
@@ -977,25 +1089,27 @@ describe('Catalog Manager service', function() {
             catalogManagerSvc.sortOptions = [{field: 'http://purl.org/dc/terms/title', asc: false}];
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer(config);
-            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getRecordBranches(recordId, catalogId, config).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getRecordBranches(this.recordId, this.catalogId, this.config)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with all config passed', function() {
-            config.applyUserFilter = true;
-            var params = $httpParamSerializer(config);
-            $httpBackend.whenGET(url + '?' + params).respond(200, []);
-            catalogManagerSvc.getRecordBranches(recordId, catalogId, config, true).then(function(response) {
-                expect(response.data).toEqual([]);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            this.config.applyUserFilter = true;
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getRecordBranches(this.recordId, this.catalogId, this.config, true)
+                .then(function(response) {
+                    expect(response.data).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without any config', function() {
@@ -1004,586 +1118,651 @@ describe('Catalog Manager service', function() {
                 ascending: catalogManagerSvc.sortOptions[0].asc,
                 applyUserFilter: false
             });
-            $httpBackend.whenGET(url + '?' + params).respond(200, []);
-            catalogManagerSvc.getRecordBranches(recordId, catalogId, {}).then(function(response) {
-                expect(response.data).toEqual([]);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getRecordBranches(this.recordId, this.catalogId, {})
+                .then(function(response) {
+                    expect(response.data).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve the master Branch of a Record', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/master';
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/master';
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getRecordMasterBranch(recordId, catalogId).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getRecordMasterBranch(this.recordId, this.catalogId)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.whenGET(url).respond(200, {});
-            catalogManagerSvc.getRecordMasterBranch(recordId, catalogId).then(function(response) {
-                expect(response).toEqual({});
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url).respond(200, {});
+            catalogManagerSvc.getRecordMasterBranch(this.recordId, this.catalogId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Record Branch', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId);
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId);
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getRecordBranch(branchId, recordId, catalogId).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getRecordBranch(this.branchId, this.recordId, this.catalogId)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.whenGET(url).respond(200, {});
-            catalogManagerSvc.getRecordBranch(branchId, recordId, catalogId).then(function(response) {
-                expect(response).toEqual({});
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url).respond(200, {});
+            catalogManagerSvc.getRecordBranch(this.branchId, this.recordId, this.catalogId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should create a new Branch', function() {
-        var branch,
-            branchConfig = {
+        beforeEach(function() {
+            this.branchConfig = {
                 title: 'Title',
                 description: 'Description'
-            },
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches';
-        beforeEach(function() {
-            branch = {'@id': branchId};
-            spyOn(catalogManagerSvc, 'getRecordBranch').and.returnValue($q.when(branch));
-            spyOn(catalogManagerSvc, 'updateRecordBranch').and.returnValue($q.when(branchId));
+            };
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches';
+            this.branch = {'@id': this.branchId};
+            spyOn(catalogManagerSvc, 'getRecordBranch').and.returnValue($q.when(this.branch));
+            spyOn(catalogManagerSvc, 'updateRecordBranch').and.returnValue($q.when(this.branchId));
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectPOST(url,
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createRecordBranch(recordId, catalogId, branchConfig, commitId).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            catalogManagerSvc.createRecordBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a description', function() {
-            var expectedBranch = angular.copy(branch);
-            expectedBranch[prefixes.catalog + 'head'] = [{'@id': commitId}];
-            $httpBackend.expectPOST(url,
+            var expectedBranch = angular.copy(this.branch);
+            expectedBranch[prefixes.catalog + 'head'] = [{'@id': this.commitId}];
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, branchId);
-            catalogManagerSvc.createRecordBranch(recordId, catalogId, branchConfig, commitId).then(function(response) {
-                expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId);
-                expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId, expectedBranch);
-                expect(response).toBe(branchId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+                }).respond(200, this.branchId);
+            var self = this;
+            catalogManagerSvc.createRecordBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId)
+                .then(function(response) {
+                    expect(response).toBe(self.branchId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
+            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
+            expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId, expectedBranch);
         });
         it('without a description', function() {
-            delete branchConfig.description;
-            var expectedBranch = angular.copy(branch);
-            expectedBranch[prefixes.catalog + 'head'] = [{'@id': commitId}];
-            $httpBackend.expectPOST(url,
+            delete this.branchConfig.description;
+            var expectedBranch = angular.copy(this.branch);
+            expectedBranch[prefixes.catalog + 'head'] = [{'@id': this.commitId}];
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, branchId);
-            catalogManagerSvc.createRecordBranch(recordId, catalogId, branchConfig, commitId).then(function(response) {
-                expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId);
-                expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId, expectedBranch);
-                expect(response).toBe(branchId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+                }).respond(200, this.branchId);
+            var self = this;
+            catalogManagerSvc.createRecordBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId)
+                .then(function(response) {
+                    expect(response).toBe(self.branchId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
+            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
+            expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId, expectedBranch);
         });
     });
     describe('should create a new UserBranch', function() {
-        var branch,
-            branchConfig = {
+        beforeEach(function() {
+            this.branchConfig = {
                 title: 'Title',
                 description: 'Description'
-            },
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches';
-        beforeEach(function() {
-            branch = {'@id': branchId};
-            spyOn(catalogManagerSvc, 'getRecordBranch').and.returnValue($q.when(branch));
-            spyOn(catalogManagerSvc, 'updateRecordBranch').and.returnValue($q.when(branchId));
+            };
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches';
+            this.branch = {'@id': this.branchId};
+            spyOn(catalogManagerSvc, 'getRecordBranch').and.returnValue($q.when(this.branch));
+            spyOn(catalogManagerSvc, 'updateRecordBranch').and.returnValue($q.when(this.branchId));
         });
         it('unless an error occurs', function() {
-            $httpBackend.expectPOST(url,
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createRecordUserBranch(recordId, catalogId, branchConfig, commitId, branchId).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            catalogManagerSvc.createRecordUserBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId, this.branchId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a description', function() {
-            var expectedBranch = angular.copy(branch);
-            expectedBranch[prefixes.catalog + 'head'] = [{'@id': commitId}];
-            expectedBranch[prefixes.catalog + 'createdFrom'] = [{'@id': branchId}];
-            $httpBackend.expectPOST(url,
+            var expectedBranch = angular.copy(this.branch);
+            expectedBranch[prefixes.catalog + 'head'] = [{'@id': this.commitId}];
+            expectedBranch[prefixes.catalog + 'createdFrom'] = [{'@id': this.branchId}];
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, branchId);
-            catalogManagerSvc.createRecordUserBranch(recordId, catalogId, branchConfig, commitId, branchId).then(function(response) {
-                expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId);
-                expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId, expectedBranch);
-                expect(response).toBe(branchId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+                }).respond(200, this.branchId);
+            var self = this;
+            catalogManagerSvc.createRecordUserBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId, this.branchId)
+                .then(function(response) {
+                    expect(response).toBe(self.branchId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
+            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
+            expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId, expectedBranch);
         });
         it('without a description', function() {
-            delete branchConfig.description;
-            var expectedBranch = angular.copy(branch);
-            expectedBranch[prefixes.catalog + 'head'] = [{'@id': commitId}];
-            expectedBranch[prefixes.catalog + 'createdFrom'] = [{'@id': branchId}];
-            $httpBackend.expectPOST(url,
+            delete this.branchConfig.description;
+            var expectedBranch = angular.copy(this.branch);
+            expectedBranch[prefixes.catalog + 'head'] = [{'@id': this.commitId}];
+            expectedBranch[prefixes.catalog + 'createdFrom'] = [{'@id': this.branchId}];
+            $httpBackend.expectPOST(this.url,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, branchId);
-            catalogManagerSvc.createRecordUserBranch(recordId, catalogId, branchConfig, commitId, branchId).then(function(response) {
-                expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId);
-                expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(branchId, recordId, catalogId, expectedBranch);
-                expect(response).toBe(branchId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+                }).respond(200, this.branchId);
+            var self = this;
+            catalogManagerSvc.createRecordUserBranch(this.recordId, this.catalogId, this.branchConfig, this.commitId, this.branchId)
+                .then(function(response) {
+                    expect(response).toBe(self.branchId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
+            expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId);
+            expect(catalogManagerSvc.updateRecordBranch).toHaveBeenCalledWith(this.branchId, this.recordId, this.catalogId, expectedBranch);
         });
     });
     describe('should update a Record Branch', function() {
-        var newBranch = {},
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId);
+        beforeEach(function() {
+            this.newBranch = {};
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId);
+        });
         it('unless an error occurs', function() {
-            $httpBackend.expectPUT(url, newBranch).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.updateRecordBranch(branchId, recordId, catalogId, newBranch).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.expectPUT(this.url, this.newBranch).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.updateRecordBranch(this.branchId, this.recordId, this.catalogId, this.newBranch)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.expectPUT(url, newBranch).respond(200);
-            catalogManagerSvc.updateRecordBranch(branchId, recordId, catalogId, newBranch).then(function() {
-                expect(true).toBe(true);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.expectPUT(this.url, this.newBranch).respond(200);
+            var self = this;
+            catalogManagerSvc.updateRecordBranch(this.branchId, this.recordId, this.catalogId, this.newBranch)
+                .then(function(response) {
+                    expect(response).toBe(self.branchId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should delete a Record Branch', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId);
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId);
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.deleteRecordBranch(branchId, recordId, catalogId).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenDELETE(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.deleteRecordBranch(this.branchId, this.recordId, this.catalogId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.whenDELETE(url).respond(200);
-            catalogManagerSvc.deleteRecordBranch(branchId, recordId, catalogId).then(function() {
-                expect(true).toBe(true);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenDELETE(this.url).respond(200);
+            catalogManagerSvc.deleteRecordBranch(this.branchId, this.recordId, this.catalogId)
+                .then(_.noop, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve Branch Commits', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits';
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/commits';
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getBranchCommits(branchId, recordId, catalogId).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getBranchCommits(this.branchId, this.recordId, this.catalogId)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.whenGET(url).respond(200, []);
-            catalogManagerSvc.getBranchCommits(branchId, recordId, catalogId).then(function(response) {
-                expect(response).toEqual([]);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url).respond(200, []);
+            catalogManagerSvc.getBranchCommits(this.branchId, this.recordId, this.catalogId)
+                .then(function(response) {
+                    expect(response).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should create a new commit on a Branch', function() {
-        var message = 'Message',
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits';
+        beforeEach(function() {
+            this.message = 'Message';
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/commits';
+        });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer({message: message});
-            $httpBackend.expectPOST(url + '?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createBranchCommit(branchId, recordId, catalogId, message).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            var params = $httpParamSerializer({message: this.message});
+            $httpBackend.expectPOST(this.url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.createBranchCommit(this.branchId, this.recordId, this.catalogId, this.message)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            var params = $httpParamSerializer({message: message});
-            $httpBackend.expectPOST(url + '?' + params).respond(200, commitId);
-            catalogManagerSvc.createBranchCommit(branchId, recordId, catalogId, message).then(function(response) {
-                expect(response).toBe(commitId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            var params = $httpParamSerializer({message: this.message});
+            $httpBackend.expectPOST(this.url + '?' + params).respond(200, this.commitId);
+            var self = this;
+            catalogManagerSvc.createBranchCommit(this.branchId, this.recordId, this.catalogId, this.message)
+                .then(function(response) {
+                    expect(response).toBe(self.commitId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve the head Commit of a Branch', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/head';
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/commits/head';
+        });
         it('unless an error occurs', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
-            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getBranchHeadCommit(branchId, recordId, catalogId, 'jsonld').then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getBranchHeadCommit(this.branchId, this.recordId, this.catalogId, 'jsonld')
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a format', function() {
             var params = $httpParamSerializer({format: 'turtle'});
-            $httpBackend.whenGET(url + '?' + params).respond(200, {});
-            catalogManagerSvc.getBranchHeadCommit(branchId, recordId, catalogId, 'turtle').then(function(response) {
-                expect(response).toEqual({});
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, {});
+            catalogManagerSvc.getBranchHeadCommit(this.branchId, this.recordId, this.catalogId, 'turtle')
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without a format', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
-            $httpBackend.whenGET(url + '?' + params).respond(200, {});
-            catalogManagerSvc.getBranchHeadCommit(branchId, recordId, catalogId).then(function(response) {
-                expect(response).toEqual({});
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, {});
+            catalogManagerSvc.getBranchHeadCommit(this.branchId, this.recordId, this.catalogId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve a Branch Commit', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId);
+        beforeEach(function () {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/commits/' + encodeURIComponent(this.commitId);
+        });
         it('unless an error occurs', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
-            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getBranchCommit(commitId, branchId, recordId, catalogId, 'jsonld').then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getBranchCommit(this.commitId, this.branchId, this.recordId, this.catalogId, 'jsonld')
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a format', function() {
             var params = $httpParamSerializer({format: 'turtle'});
-            $httpBackend.whenGET(url + '?' + params).respond(200, {});
-            catalogManagerSvc.getBranchCommit(commitId, branchId, recordId, catalogId, 'turtle').then(function(response) {
-                expect(response).toEqual({});
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, {});
+            catalogManagerSvc.getBranchCommit(this.commitId, this.branchId, this.recordId, this.catalogId, 'turtle')
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without a format', function() {
             var params = $httpParamSerializer({format: 'jsonld'});
-            $httpBackend.whenGET(url + '?' + params).respond(200, {});
-            catalogManagerSvc.getBranchCommit(commitId, branchId, recordId, catalogId).then(function(response) {
-                expect(response).toEqual({});
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, {});
+            catalogManagerSvc.getBranchCommit(this.commitId, this.branchId, this.recordId, this.catalogId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should get the conflicts between two Branches', function() {
-        var config,
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts';
         beforeEach(function() {
-            config = {
+            this.config = {
                 format: 'jsonld',
-                targetId: branchId
+                targetId: this.branchId
             };
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/conflicts';
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer(config);
-            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getBranchConflicts(branchId, branchId, recordId, catalogId, 'jsonld').then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getBranchConflicts(this.branchId, this.branchId, this.recordId, this.catalogId, 'jsonld')
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a format', function() {
-            config.format = 'turtle';
-            var params = $httpParamSerializer(config);
-            $httpBackend.whenGET(url + '?' + params).respond(200, []);
-            catalogManagerSvc.getBranchConflicts(branchId, branchId, recordId, catalogId, 'turtle').then(function(response) {
-                expect(response).toEqual([]);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            this.config.format = 'turtle';
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getBranchConflicts(this.branchId, this.branchId, this.recordId, this.catalogId, 'turtle')
+                .then(function(response) {
+                    expect(response).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without a format', function() {
-            var params = $httpParamSerializer(config);
-            $httpBackend.whenGET(url + '?' + params).respond(200, []);
-            catalogManagerSvc.getBranchConflicts(branchId, branchId, recordId, catalogId).then(function(response) {
-                expect(response).toEqual([]);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getBranchConflicts(this.branchId, this.branchId, this.recordId, this.catalogId)
+                .then(function(response) {
+                    expect(response).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should merge two Branches', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/conflicts/resolution';
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/conflicts/resolution';
+        });
         it('unless an error occurs', function() {
             var differenceObj = {};
-            var params = $httpParamSerializer({targetId: branchId});
-            $httpBackend.expectPOST(url + '?' + params,
+            var params = $httpParamSerializer({targetId: this.branchId});
+            $httpBackend.expectPOST(this.url + '?' + params,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.mergeBranches(branchId, branchId, recordId, catalogId, differenceObj).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            catalogManagerSvc.mergeBranches(this.branchId, this.branchId, this.recordId, this.catalogId, differenceObj)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with additions and deletions', function() {
             var differenceObj = {additions: [], deletions: []};
-            var params = $httpParamSerializer({targetId: branchId});
-            $httpBackend.expectPOST(url + '?' + params,
+            var params = $httpParamSerializer({targetId: this.branchId});
+            $httpBackend.expectPOST(this.url + '?' + params,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, commitId);
-            catalogManagerSvc.mergeBranches(branchId, branchId, recordId, catalogId, differenceObj).then(function(response) {
-                expect(response).toEqual(commitId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+                }).respond(200, this.commitId);
+            var self = this;
+            catalogManagerSvc.mergeBranches(this.branchId, this.branchId, this.recordId, this.catalogId, differenceObj)
+                .then(function(response) {
+                    expect(response).toEqual(self.commitId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without additions and deletions', function() {
             var differenceObj = {};
-            var params = $httpParamSerializer({targetId: branchId});
-            $httpBackend.expectPOST(url + '?' + params,
+            var params = $httpParamSerializer({targetId: this.branchId});
+            $httpBackend.expectPOST(this.url + '?' + params,
                 function(data) {
                     return data instanceof FormData;
-                }).respond(200, commitId);
-            catalogManagerSvc.mergeBranches(branchId, branchId, recordId, catalogId, differenceObj).then(function(response) {
-                expect(response).toEqual(commitId);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+                }).respond(200, this.commitId);
+            var self = this;
+            catalogManagerSvc.mergeBranches(this.branchId, this.branchId, this.recordId, this.catalogId, differenceObj)
+                .then(function(response) {
+                    expect(response).toEqual(self.commitId);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve the compiled resource from a Branch Commit', function() {
-        var config,
-            url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource';
         beforeEach(function() {
-            config = {
+            this.config = {
                 applyInProgressCommit: true,
                 format: 'jsonld'
             };
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/commits/' + encodeURIComponent(this.commitId) + '/resource';
         });
         it('unless an error occurs', function() {
-            var params = $httpParamSerializer(config);
-            $httpBackend.whenGET(url + '?' + params).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getResource(commitId, branchId, recordId, catalogId, true, 'jsonld').then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getResource(this.commitId, this.branchId, this.recordId, this.catalogId, true, 'jsonld')
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with a format', function() {
-            config.format = 'turtle';
-            var params = $httpParamSerializer(config);
-            $httpBackend.whenGET(url + '?' + params).respond(200, '');
-            catalogManagerSvc.getResource(commitId, branchId, recordId, catalogId, true, 'turtle').then(function(response) {
-                expect(response).toBe('');
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            this.config.format = 'turtle';
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, '');
+            catalogManagerSvc.getResource(this.commitId, this.branchId, this.recordId, this.catalogId, true, 'turtle')
+                .then(function(response) {
+                    expect(response).toBe('');
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without a format', function() {
-            var params = $httpParamSerializer(config);
-            $httpBackend.whenGET(url + '?' + params).respond(200, '');
-            catalogManagerSvc.getResource(commitId, branchId, recordId, catalogId, true).then(function(response) {
-                expect(response).toBe('');
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, '');
+            catalogManagerSvc.getResource(this.commitId, this.branchId, this.recordId, this.catalogId, true)
+                .then(function(response) {
+                    expect(response).toBe('');
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should download the compiled resource from a Branch Commit', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(branchId) + '/commits/' + encodeURIComponent(commitId) + '/resource';
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/commits/' + encodeURIComponent(this.commitId) + '/resource';
+        });
         it('with a format', function() {
-            catalogManagerSvc.downloadResource(commitId, branchId, recordId, catalogId, true, 'turtle');
-            expect(windowSvc.location).toBe(url + '?applyInProgressCommit=true&format=turtle&fileName=resource');
+            catalogManagerSvc.downloadResource(this.commitId, this.branchId, this.recordId, this.catalogId, true, 'turtle');
+            expect(windowSvc.location).toBe(this.url + '?applyInProgressCommit=true&format=turtle&fileName=resource');
         });
         it('without a format', function() {
-            catalogManagerSvc.downloadResource(commitId, branchId, recordId, catalogId, true);
-            expect(windowSvc.location).toBe(url + '?applyInProgressCommit=true&format=jsonld&fileName=resource');
+            catalogManagerSvc.downloadResource(this.commitId, this.branchId, this.recordId, this.catalogId, true);
+            expect(windowSvc.location).toBe(this.url + '?applyInProgressCommit=true&format=jsonld&fileName=resource');
         });
     });
     describe('should create a new InProgressCommit for the logged-in User', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
+        beforeEach(function () {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/in-progress-commit';
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenPOST(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.createInProgressCommit(recordId, catalogId).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenPOST(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.createInProgressCommit(this.recordId, this.catalogId)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.whenPOST(url).respond(200);
-            catalogManagerSvc.createInProgressCommit(recordId, catalogId).then(function(response) {
-                expect(true).toBe(true);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenPOST(this.url).respond(200);
+            catalogManagerSvc.createInProgressCommit(this.recordId, this.catalogId)
+                .then(_.noop, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should retrieve an InProgressCommit for the logged-in User', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/in-progress-commit';
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenGET(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.getInProgressCommit(recordId, catalogId).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenGET(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getInProgressCommit(this.recordId, this.catalogId)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.whenGET(url).respond(200, {});
-            catalogManagerSvc.getInProgressCommit(recordId, catalogId).then(function(response) {
-                expect(response).toEqual({});
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenGET(this.url).respond(200, {});
+            catalogManagerSvc.getInProgressCommit(this.recordId, this.catalogId)
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should update an InProgressCommit for the logged-in User', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/in-progress-commit';
+        });
         it('unless an error occurs', function() {
             var differenceObj = {};
-            $httpBackend.whenPUT(url,
+            $httpBackend.whenPUT(this.url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.updateInProgressCommit(recordId, catalogId, differenceObj).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            catalogManagerSvc.updateInProgressCommit(this.recordId, this.catalogId, differenceObj)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('with additions and deletions', function() {
             var differenceObj = {additions: [], deletions: []};
-            $httpBackend.whenPUT(url,
+            $httpBackend.whenPUT(this.url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200);
-            catalogManagerSvc.updateInProgressCommit(recordId, catalogId, differenceObj).then(function(response) {
-                expect(true).toEqual(true);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            catalogManagerSvc.updateInProgressCommit(this.recordId, this.catalogId, differenceObj)
+                .then(_.noop, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
         it('without additions and deletions', function() {
             var differenceObj = {};
-            $httpBackend.whenPUT(url,
+            $httpBackend.whenPUT(this.url,
                 function(data) {
                     return data instanceof FormData;
                 }).respond(200);
-            catalogManagerSvc.updateInProgressCommit(recordId, catalogId, differenceObj).then(function(response) {
-                expect(true).toEqual(true);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            catalogManagerSvc.updateInProgressCommit(this.recordId, this.catalogId, differenceObj)
+                .then(_.noop, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
     describe('should remove an InProgressCommit for the logged-in User', function() {
-        var url = '/mobirest/catalogs/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/in-progress-commit';
+        beforeEach(function() {
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/in-progress-commit';
+        });
         it('unless an error occurs', function() {
-            $httpBackend.whenDELETE(url).respond(400, null, null, 'Error Message');
-            catalogManagerSvc.deleteInProgressCommit(recordId, catalogId).then(function(response) {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
-                expect(response).toBe('Error Message');
-            });
+            $httpBackend.whenDELETE(this.url).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.deleteInProgressCommit(this.recordId, this.catalogId)
+                .then(function(response) {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
         });
         it('successfully', function() {
-            $httpBackend.whenDELETE(url).respond(200);
-            catalogManagerSvc.deleteInProgressCommit(recordId, catalogId).then(function(response) {
-                expect(true).toEqual(true);
-            }, function(response) {
-                fail('Promise should have resolved');
-            });
+            $httpBackend.whenDELETE(this.url).respond(200);
+            catalogManagerSvc.deleteInProgressCommit(this.recordId, this.catalogId)
+                .then(_.noop, function(response) {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });

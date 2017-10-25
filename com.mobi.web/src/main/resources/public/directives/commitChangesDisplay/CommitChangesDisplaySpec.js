@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Commit Changes Display directive', function() {
-    var $compile,
-        scope,
-        element,
-        isolatedScope,
-        controller,
-        utilSvc,
-        ontologyUtilsManagerSvc;
+    var $compile, scope, utilSvc, ontologyUtilsManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -47,75 +41,83 @@ describe('Commit Changes Display directive', function() {
 
         scope.additions = [];
         scope.deletions = [];
-        element = $compile(angular.element('<commit-changes-display additions="additions" deletions="deletions" click-event="clickEvent(event, id)"></commit-changes-display>'))(scope);
+        this.element = $compile(angular.element('<commit-changes-display additions="additions" deletions="deletions" click-event="clickEvent(event, id)"></commit-changes-display>'))(scope);
         scope.$digest();
-        isolatedScope = element.isolateScope();
-        controller = element.controller('commitChangesDisplay');
+        this.isolatedScope = this.element.isolateScope();
+        this.controller = this.element.controller('commitChangesDisplay');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        utilSvc = null;
+        ontologyUtilsManagerSvc = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
         it('additions should be one way bound', function() {
-            isolatedScope.additions = [{}];
+            this.isolatedScope.additions = [{}];
             scope.$digest();
             expect(scope.additions).toEqual([]);
         });
         it('deletions should be one way bound', function() {
-            isolatedScope.deletions = [{}];
+            this.isolatedScope.deletions = [{}];
             scope.$digest();
             expect(scope.deletions).toEqual([]);
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('commit-changes-display')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('commit-changes-display')).toBe(true);
         });
         it('depending on whether there are additions and deletions', function() {
-            expect(element.querySelectorAll('div.property-values').length).toBe(0);
+            expect(this.element.querySelectorAll('div.property-values').length).toBe(0);
 
-            controller.list = ['id'];
-            controller.results = {'id': {additions: [''], deletions: []}};
+            this.controller.list = ['id'];
+            this.controller.results = {'id': {additions: [''], deletions: []}};
             scope.$digest();
-            expect(element.querySelectorAll('div.property-values').length).toBe(controller.list.length);
+            expect(this.element.querySelectorAll('div.property-values').length).toBe(this.controller.list.length);
         });
         it('depending on whether there are additions', function() {
-            expect(element.find('statement-container').length).toBe(0);
-            expect(element.find('statement-display').length).toBe(0);
-            controller.list = ['id'];
-            controller.results = {'id': {additions: [''], deletions: []}};
+            expect(this.element.find('statement-container').length).toBe(0);
+            expect(this.element.find('statement-display').length).toBe(0);
+            this.controller.list = ['id'];
+            this.controller.results = {'id': {additions: [''], deletions: []}};
             scope.$digest();
-            expect(element.find('statement-container').length).toBe(1);
-            expect(element.find('statement-display').length).toBe(1);
+            expect(this.element.find('statement-container').length).toBe(1);
+            expect(this.element.find('statement-display').length).toBe(1);
         });
         it('depending on whether there are deletions', function() {
-            expect(element.find('statement-container').length).toBe(0);
-            expect(element.find('statement-display').length).toBe(0);
-            controller.list = ['id'];
-            controller.results = {'id': {additions: [], deletions: ['']}};
+            expect(this.element.find('statement-container').length).toBe(0);
+            expect(this.element.find('statement-display').length).toBe(0);
+            this.controller.list = ['id'];
+            this.controller.results = {'id': {additions: [], deletions: ['']}};
             scope.$digest();
-            expect(element.find('statement-container').length).toBe(1);
-            expect(element.find('statement-display').length).toBe(1);
+            expect(this.element.find('statement-container').length).toBe(1);
+            expect(this.element.find('statement-display').length).toBe(1);
         });
         it('depending on whether there are additions and deletions', function() {
-            expect(element.find('statement-container').length).toBe(0);
-            expect(element.find('statement-display').length).toBe(0);
-            controller.list = ['id'];
-            controller.results = {'id': {additions: [''], deletions: ['']}};
+            expect(this.element.find('statement-container').length).toBe(0);
+            expect(this.element.find('statement-display').length).toBe(0);
+            this.controller.list = ['id'];
+            this.controller.results = {'id': {additions: [''], deletions: ['']}};
             scope.$digest();
-            expect(element.find('statement-container').length).toBe(2);
-            expect(element.find('statement-display').length).toBe(2);
+            expect(this.element.find('statement-container').length).toBe(2);
+            expect(this.element.find('statement-display').length).toBe(2);
         });
     });
     describe('$scope.$watch triggers when changing the', function() {
         it('additions', function() {
             scope.additions = [{'@id': 'test'}];
             scope.$apply();
-            expect(controller.list).toEqual(['test']);
+            expect(this.controller.list).toEqual(['test']);
         });
         it('deletions', function() {
             scope.deletions = [{'@id': 'test'}];
             scope.$apply();
-            expect(controller.list).toEqual(['test']);
+            expect(this.controller.list).toEqual(['test']);
         });
     });
 });

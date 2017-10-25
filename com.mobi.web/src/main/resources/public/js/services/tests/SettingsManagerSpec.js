@@ -21,9 +21,7 @@
  * #L%
  */
 describe('Settings Manager service', function() {
-    var settingsManagerSvc,
-        $window,
-        $cookies;
+    var settingsManagerSvc, $window, $cookies;
 
     beforeEach(function() {
         module('settingsManager');
@@ -44,6 +42,12 @@ describe('Settings Manager service', function() {
             $window = _$window_;
             $cookies = _$cookies_;
         });
+    });
+
+    afterEach(function() {
+        settingsManagerSvc = null;
+        $window = null;
+        $cookies = null;
     });
 
     it('should return the current settings', function() {

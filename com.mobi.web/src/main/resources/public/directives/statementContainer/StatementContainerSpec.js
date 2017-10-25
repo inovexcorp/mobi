@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Statement Container directive', function() {
-    var $compile, element, scope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -32,34 +32,41 @@ describe('Statement Container directive', function() {
             scope = _$rootScope_;
         });
 
-        element = $compile(angular.element('<statement-container></statement-container>'))(scope);
+        this.element = $compile(angular.element('<statement-container></statement-container>'))(scope);
         scope.$digest();
     });
-    describe('contains the correct html', function() {
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
+    });
+
+    describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('statement-container')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('statement-container')).toBe(true);
         });
         it('without a p', function() {
-            expect(element.find('p').length).toBe(0);
+            expect(this.element.find('p').length).toBe(0);
         });
         it('with a p when additions attribute is set', function() {
-            element = $compile(angular.element('<statement-container additions></statement-container>'))(scope);
+            this.element = $compile(angular.element('<statement-container additions></statement-container>'))(scope);
             scope.$digest();
-            expect(element.find('p').length).toBe(1);
-            expect(angular.element(element.find('p')[0]).text()).toBe('Added Statements:');
+            expect(this.element.find('p').length).toBe(1);
+            expect(angular.element(this.element.find('p')[0]).text()).toBe('Added Statements:');
         });
         it('with a p when deletions attribute is set', function() {
-            element = $compile(angular.element('<statement-container deletions></statement-container>'))(scope);
+            this.element = $compile(angular.element('<statement-container deletions></statement-container>'))(scope);
             scope.$digest();
-            expect(element.find('p').length).toBe(1);
-            expect(angular.element(element.find('p')[0]).text()).toBe('Deleted Statements:');
+            expect(this.element.find('p').length).toBe(1);
+            expect(angular.element(this.element.find('p')[0]).text()).toBe('Deleted Statements:');
         });
         it('with a table', function() {
-            expect(element.find('table').length).toBe(1);
+            expect(this.element.find('table').length).toBe(1);
         });
         it('with a tbody', function() {
-            expect(element.find('tbody').length).toBe(1);
+            expect(this.element.find('tbody').length).toBe(1);
         });
     });
 });
