@@ -92,8 +92,7 @@ import javax.servlet.http.HttpServletResponse;
         name = HazelcastFederationService.NAME,
         properties = {
                 "federationType=hazelcast"
-        },
-        provide = {}
+        }
 )
 public class HazelcastFederationService implements FederationService {
 
@@ -152,11 +151,6 @@ public class HazelcastFederationService implements FederationService {
     private ForkJoinTask<?> initializationTask;
 
     /**
-     * Service registration if it is necessary.
-     */
-    private ServiceRegistration<FederationService> registration;
-
-    /**
      * Lock to protect the hazelcast instance.
      */
     private Semaphore semaphore = new Semaphore(1, true);
@@ -205,10 +199,9 @@ public class HazelcastFederationService implements FederationService {
      * Method that joins the hazelcast federation when the service is activated.
      */
     @Activate
-    void activate(BundleContext context, Map<String, Object> configuration) {
+    void activate(Map<String, Object> configuration) {
         this.configuration = configuration;
         start();
-        this.registration = context.registerService(FederationService.class, this, new Hashtable<>(configuration));
     }
 
     /**
@@ -217,11 +210,11 @@ public class HazelcastFederationService implements FederationService {
      * @param configuration The configuration map for this service
      */
     @Modified
-    void modified(BundleContext context, Map<String, Object> configuration) {
+    void modified(Map<String, Object> configuration) {
         LOGGER.warn("Modified configuration of service! Going to deactivate, and re-activate with new"
                 + " configuration...");
         deactivate();
-        activate(context, configuration);
+        activate(configuration);
     }
 
     /**

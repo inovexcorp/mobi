@@ -97,4 +97,9 @@ public interface HazelcastFederationServiceConfig extends FederationServiceConfi
     @Meta.AD(required = false)
     int multicastTimeoutSeconds();
 
+    /**
+     * The maximum number of seconds before a node is considered inactive based on a lack of heartbeats.
+     */
+    @Meta.AD(required = false)
+    int maxNoHeartbeatSeconds();
 }
