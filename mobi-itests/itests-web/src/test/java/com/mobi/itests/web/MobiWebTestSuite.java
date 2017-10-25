@@ -2,11 +2,11 @@ package com.mobi.itests.web;
 
 /*-
  * #%L
- * com.mobi.itests
+ * itests-web
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,24 +23,24 @@ package com.mobi.itests.web;
  * #L%
  */
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
 import com.mobi.itests.support.KarafTestSupport;
-import org.ops4j.pax.exam.junit.PaxExam;
-import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
-import org.ops4j.pax.exam.spi.reactors.PerClass;
-import org.osgi.framework.Bundle;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
+import org.ops4j.pax.exam.junit.PaxExamServer;
 
-import static org.junit.Assert.assertEquals;
+@RunWith(Suite.class)
+@Suite.SuiteClasses({LoginIT.class})
+public class MobiWebTestSuite extends KarafTestSupport {
 
-@RunWith(PaxExam.class)
-@ExamReactorStrategy(PerClass.class)
-public class WebIT extends KarafTestSupport {
+    static String url = "https://localhost:" + HTTPS_PORT + "/mobi/index.html";
 
-    // TODO: Add selenium tests in here
+    @ClassRule
+    public static PaxExamServer server = new PaxExamServer();
 
-    @Test
-    public void bundleActivates() throws Exception {
-        assertEquals(findBundleByName("com.mobi.repository.impl.sesame").getState(), Bundle.ACTIVE);
+    @BeforeClass
+    public static void setUp() throws Exception {
+        System.setProperty("webdriver.gecko.driver", MobiWebTestSuite.class.getResource("/drivers/geckodriver").getPath());
     }
 }

@@ -48,6 +48,13 @@
             <artifactId>pax-exam-junit4</artifactId>
             <scope>test</scope>
         </dependency>
+        
+        <!-- Selenium Dependencies -->
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>3.6.0</version>
+        </dependency>
 
         <!-- Karaf Dependencies -->
         <dependency>

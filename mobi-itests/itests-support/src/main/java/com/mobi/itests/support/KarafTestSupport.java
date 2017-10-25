@@ -151,9 +151,8 @@ public class KarafTestSupport {
                         .versionAsInProject()
         ));
 
-        Files.list(getFileResource("/etc").toPath()).forEach(path -> {
-            options.add(KarafDistributionOption.replaceConfigurationFile("etc/" + path.getFileName(), path.toFile()));
-        });
+        Files.list(getFileResource("/etc").toPath()).forEach(path ->
+                options.add(KarafDistributionOption.replaceConfigurationFile("etc/" + path.getFileName(), path.toFile())));
 
         return options.toArray(new Option[options.size()]);
     }
