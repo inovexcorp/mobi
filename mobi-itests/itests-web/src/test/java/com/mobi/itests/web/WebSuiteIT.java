@@ -48,9 +48,7 @@ public class WebSuiteIT extends KarafTestSupport {
         switch (browser) {
             case "chrome":
                 ChromeOptions chromeOptions = new ChromeOptions();
-                chromeOptions.setHeadless(true);
-                chromeOptions.addArguments("test-type");
-                chromeOptions.addArguments("no-sandbox");
+                chromeOptions.addArguments("headless");
                 return new ChromeDriver(chromeOptions);
             case "firefox":
                 FirefoxOptions firefoxOptions = new FirefoxOptions();

@@ -23,8 +23,6 @@ package com.mobi.itests.web;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +30,9 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.util.concurrent.TimeUnit;
 
@@ -61,15 +61,18 @@ public class Login {
     @Test
     public void LoginTest() throws Exception {
         driver.get(WebSuiteIT.url);
-        driver.findElement(By.id("username")).click();
-        driver.findElement(By.id("username")).clear();
-        driver.findElement(By.id("username")).sendKeys("admin");
-        driver.findElement(By.id("password")).click();
-        driver.findElement(By.id("password")).clear();
-        driver.findElement(By.id("password")).sendKeys("admin");
+        WebElement username = new WebDriverWait(driver, 10)
+                .until(ExpectedConditions.visibilityOfElementLocated(By.id("username")));
+        username.click();
+        username.clear();
+        username.sendKeys("admin");
+        WebElement password = new WebDriverWait(driver, 10)
+                .until(ExpectedConditions.visibilityOfElementLocated(By.id("password")));
+        password.click();
+        password.clear();
+        password.sendKeys("admin");
         driver.findElement(By.xpath("//section/div/div/form/button")).click();
-        Thread.sleep(1000);
-        assertEquals("Home | Mobi", driver.getTitle());
+        new WebDriverWait(driver, 10).until(ExpectedConditions.titleIs("Home | Mobi"));
     }
     
     @After

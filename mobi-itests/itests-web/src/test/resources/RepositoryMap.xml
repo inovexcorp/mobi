@@ -36,8 +36,8 @@
         <driver id="googlechrome">
             <version id="2.29">
                 <bitrate sixtyfourbit="true">
-                    <filelocation>https://chromedriver.storage.googleapis.com/2.33/chromedriver_mac64.zip</filelocation>
-                    <hash>3d520b8ede8e9deb8c9a2efe2aec5f35</hash>
+                    <filelocation>https://chromedriver.storage.googleapis.com/2.29/chromedriver_mac64.zip</filelocation>
+                    <hash>5d71bc70834c2ad8a7baf7a901d53566</hash>
                     <hashtype>md5</hashtype>
                 </bitrate>
             </version>
