@@ -28,6 +28,11 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
 import org.ops4j.pax.exam.junit.PaxExamServer;
 
 @RunWith(Suite.class)
@@ -38,4 +43,21 @@ public class WebSuiteIT extends KarafTestSupport {
 
     @ClassRule
     public static PaxExamServer server = new PaxExamServer();
+
+    public static WebDriver getDriver(String browser) {
+        switch (browser) {
+            case "chrome":
+                ChromeOptions chromeOptions = new ChromeOptions();
+                chromeOptions.setHeadless(true);
+                chromeOptions.addArguments("test-type");
+                chromeOptions.addArguments("no-sandbox");
+                return new ChromeDriver(chromeOptions);
+            case "firefox":
+                FirefoxOptions firefoxOptions = new FirefoxOptions();
+                firefoxOptions.setHeadless(true);
+                return new FirefoxDriver(firefoxOptions);
+            default:
+                throw new IllegalArgumentException("Unsupported browser");
+        }
+    }
 }

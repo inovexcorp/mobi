@@ -99,6 +99,7 @@
                     <skipTests>${skipITs}</skipTests>
                     <systemPropertyVariables>
                         <webdriver.gecko.driver>${webdriver.gecko.driver}</webdriver.gecko.driver>
+                        <webdriver.chrome.driver>${webdriver.chrome.driver}</webdriver.chrome.driver>
                     </systemPropertyVariables>
                 </configuration>
                 <executions>

@@ -28,36 +28,52 @@ import static org.junit.Assert.assertEquals;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.util.concurrent.TimeUnit;
 
+@RunWith(Parameterized.class)
 public class Login {
-    FirefoxDriver wd;
+
+    private String browser;
+    private WebDriver driver;
+
+    @Parameterized.Parameters
+    public static Object[] data() {
+        return new Object[] {"firefox"};
+//        return new Object[] {"firefox", "chrome"};
+    }
+
+    public Login(String browser) {
+        this.browser = browser;
+    }
 
     @Before
     public void setUp() throws Exception {
-        wd = new FirefoxDriver();
-        wd.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
+        driver = WebSuiteIT.getDriver(browser);
+        driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
     }
     
     @Test
-    public void Login() throws Exception {
-        wd.get(WebSuiteIT.url);
-        wd.findElement(By.id("username")).click();
-        wd.findElement(By.id("username")).clear();
-        wd.findElement(By.id("username")).sendKeys("admin");
-        wd.findElement(By.id("password")).click();
-        wd.findElement(By.id("password")).clear();
-        wd.findElement(By.id("password")).sendKeys("admin");
-        wd.findElement(By.xpath("//section/div/div/form/button")).click();
+    public void LoginTest() throws Exception {
+        driver.get(WebSuiteIT.url);
+        driver.findElement(By.id("username")).click();
+        driver.findElement(By.id("username")).clear();
+        driver.findElement(By.id("username")).sendKeys("admin");
+        driver.findElement(By.id("password")).click();
+        driver.findElement(By.id("password")).clear();
+        driver.findElement(By.id("password")).sendKeys("admin");
+        driver.findElement(By.xpath("//section/div/div/form/button")).click();
         Thread.sleep(1000);
-        assertEquals("Home | Mobi", wd.getTitle());
+        assertEquals("Home | Mobi", driver.getTitle());
     }
     
     @After
     public void tearDown() {
-        wd.quit();
+        driver.quit();
     }
 }

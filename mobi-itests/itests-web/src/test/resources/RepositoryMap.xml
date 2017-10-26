@@ -33,6 +33,15 @@
         </driver>
     </linux>
     <osx>
+        <driver id="googlechrome">
+            <version id="2.29">
+                <bitrate sixtyfourbit="true">
+                    <filelocation>https://chromedriver.storage.googleapis.com/2.33/chromedriver_mac64.zip</filelocation>
+                    <hash>3d520b8ede8e9deb8c9a2efe2aec5f35</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+            </version>
+        </driver>
         <driver id="marionette">
             <version id="0.19.0">
                 <bitrate thirtytwobit="true" sixtyfourbit="true">
