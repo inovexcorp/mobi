@@ -53,6 +53,7 @@ public class WebSuiteIT extends KarafTestSupport {
             case "firefox":
                 FirefoxOptions firefoxOptions = new FirefoxOptions();
                 firefoxOptions.setHeadless(true);
+                firefoxOptions.setCapability("marionette", true);
                 return new FirefoxDriver(firefoxOptions);
             default:
                 throw new IllegalArgumentException("Unsupported browser");
