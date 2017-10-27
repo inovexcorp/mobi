@@ -32,7 +32,9 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxDriverLogLevel;
 import org.openqa.selenium.firefox.FirefoxOptions;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.ops4j.pax.exam.junit.PaxExamServer;
 
 @RunWith(Suite.class)
@@ -53,7 +55,8 @@ public class WebSuiteIT extends KarafTestSupport {
             case "firefox":
                 FirefoxOptions firefoxOptions = new FirefoxOptions();
                 firefoxOptions.setHeadless(true);
-                firefoxOptions.setCapability("marionette", true);
+                firefoxOptions.setAcceptInsecureCerts(true);
+                firefoxOptions.setLogLevel(FirefoxDriverLogLevel.DEBUG);
                 return new FirefoxDriver(firefoxOptions);
             default:
                 throw new IllegalArgumentException("Unsupported browser");
