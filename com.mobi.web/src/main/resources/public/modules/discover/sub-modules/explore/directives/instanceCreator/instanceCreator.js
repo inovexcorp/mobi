@@ -48,7 +48,7 @@
          * available for the new instance in an editable format.
          */
         .directive('instanceCreator', instanceCreator);
-        
+
         instanceCreator.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'exploreUtilsService'];
 
         function instanceCreator($q, discoverStateService, utilService, exploreService, exploreUtilsService) {
@@ -65,7 +65,7 @@
                     dvm.ds = discoverStateService;
                     dvm.util = utilService;
                     dvm.isValid = true;
-                    
+
                     dvm.save = function() {
                         dvm.ds.explore.instance.entity = eu.removeEmptyPropertiesFromArray(dvm.ds.explore.instance.entity);
                         var instance = dvm.ds.getInstance();
@@ -78,7 +78,7 @@
                                 dvm.ds.explore.creating = false;
                             }, dvm.util.createErrorToast);
                     }
-                    
+
                     dvm.cancel = function() {
                         dvm.ds.explore.instance.entity = {};
                         dvm.ds.explore.creating = false;

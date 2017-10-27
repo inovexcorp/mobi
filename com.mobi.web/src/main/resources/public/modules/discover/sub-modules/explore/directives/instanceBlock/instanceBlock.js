@@ -52,7 +52,7 @@
          * pages and pagination controls at the bottom of the page.
          */
         .directive('instanceBlock', instanceBlock);
-        
+
         instanceBlock.$inject = ['$http', '$filter', 'discoverStateService', 'exploreService', 'utilService', 'uuid'];
 
         function instanceBlock($http, $filter, discoverStateService, exploreService, utilService, uuid) {
@@ -67,7 +67,7 @@
                     var es = exploreService;
                     var util = utilService;
                     dvm.ds = discoverStateService;
-                    
+
                     dvm.getPage = function(direction) {
                         var url = (direction === 'next') ? dvm.ds.explore.instanceDetails.links.next : dvm.ds.explore.instanceDetails.links.prev;
                         $http.get(url)
@@ -83,7 +83,7 @@
                                 util.createErrorToast(response.statusText);
                             });
                     }
-                    
+
                     dvm.create = function() {
                         dvm.ds.explore.creating = true;
                         var split = $filter('splitIRI')(_.head(dvm.ds.explore.instanceDetails.data).instanceIRI);
@@ -95,7 +95,7 @@
                         dvm.ds.explore.instance.metadata.instanceIRI = iri;
                         dvm.ds.explore.breadcrumbs.push('New Instance');
                     }
-                    
+
                     dvm.getClassName = function() {
                         return _.last(dvm.ds.explore.breadcrumbs);
                     }
