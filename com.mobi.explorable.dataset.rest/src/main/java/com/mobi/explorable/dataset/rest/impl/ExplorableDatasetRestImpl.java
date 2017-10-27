@@ -87,6 +87,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -272,7 +273,7 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(instanceIRI, "The Instance IRI is required.");
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
-            Model instanceModel = getInstance(instanceIRI, conn);
+            Model instanceModel = getLimitedInstance(instanceIRI, conn);
             if (instanceModel.size() == 0) {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
             }
@@ -335,13 +336,13 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     }
 
     /**
-     * Gets the instance and all associated reified triples
+     * Gets a limited version of the instance
      *
      * @param instanceIRI The ID of the instance to retrieve.
      * @param conn        The DatasetConnection to use to find the triples.
      * @return A Model containing all triples which represent the instance.
      */
-    private Model getInstance(String instanceIRI, DatasetConnection conn) {
+    private Model getLimitedInstance(String instanceIRI, DatasetConnection conn) {
         Model instanceModel = modelFactory.createModel();
         Resource instanceId = factory.createIRI(instanceIRI);
         RepositoryResult<Statement> statements = conn.getStatements(instanceId, null, null);
@@ -354,6 +355,26 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             instanceModel.addAll(getReifiedStatements(conn, instanceId, predicate, object));
             count--;
         }
+        return instanceModel;
+    }
+
+    /**
+     * Gets the instance and all associated reified statements
+     *
+     * @param instanceIRI The ID of the instance to retrieve.
+     * @param conn        The DatasetConnection to use to find the triples.
+     * @return A Model containing all triples which represent the instance.
+     */
+    private Model getInstance(String instanceIRI, DatasetConnection conn) {
+        Model instanceModel = modelFactory.createModel();
+        Resource instanceId = factory.createIRI(instanceIRI);
+        RepositoryResult<Statement> statements = conn.getStatements(instanceId, null, null);
+        statements.forEach(statement -> {
+            IRI predicate = statement.getPredicate();
+            Value object = statement.getObject();
+            instanceModel.add(instanceId, predicate, object);
+            instanceModel.addAll(getReifiedStatements(conn, instanceId, predicate, object));
+        });
         return instanceModel;
     }
 
