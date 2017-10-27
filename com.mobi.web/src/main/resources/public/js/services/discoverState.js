@@ -182,7 +182,7 @@
          * @returns {Object} An object which contains the instance's JSON-LD.
          */
         self.getInstance = function() {
-            return _.find(self.explore.instance.entity, {'@id': self.explore.instance.metadata.instanceIRI});
+            return _.find(self.explore.instance.entity, obj => _.includes(_.get(obj, '@type'), self.explore.classId));
         }
 
         /**

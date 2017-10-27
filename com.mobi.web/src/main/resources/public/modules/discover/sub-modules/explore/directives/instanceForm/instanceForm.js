@@ -124,11 +124,7 @@
                     }
 
                     dvm.setIRI = function(begin, then, end) {
-                        var newIRI = begin + then + end;
-                        dvm.instance['@id'] = newIRI;
-                        if (dvm.ds.explore.creating) {
-                            dvm.ds.explore.instance.metadata.instanceIRI = newIRI;
-                        }
+                        dvm.instance['@id'] = begin + then + end;
                     }
 
                     dvm.addNewProperty = function(property) {

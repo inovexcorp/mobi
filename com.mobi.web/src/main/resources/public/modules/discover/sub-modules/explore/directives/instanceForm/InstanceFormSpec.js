@@ -294,22 +294,9 @@ describe('Instance Form directive', function() {
             expect(this.controller.isChanged('iri')).toBe(true);
             expect(this.controller.isChanged('new')).toBe(false);
         });
-        describe('setIRI should set the proper value when creating is', function() {
-            beforeEach(function() {
-                discoverStateSvc.explore.instance.metadata.instanceIRI = 'other';
-            });
-            it('true', function() {
-                discoverStateSvc.explore.creating = true;
-                this.controller.setIRI('begin', '#', 'end');
-                expect(this.controller.instance['@id']).toBe('begin#end');
-                expect(discoverStateSvc.explore.instance.metadata.instanceIRI).toBe('begin#end');
-            });
-            it('false', function() {
-                discoverStateSvc.explore.creating = false;
-                this.controller.setIRI('begin', '#', 'end');
-                expect(this.controller.instance['@id']).toBe('begin#end');
-                expect(discoverStateSvc.explore.instance.metadata.instanceIRI).toBe('other');
-            });
+        it('setIRI should set the proper value', function() {
+            this.controller.setIRI('begin', '#', 'end');
+            expect(this.controller.instance['@id']).toBe('begin#end');
         });
         it('addNewProperty should set variables correctly', function() {
             spyOn(this.controller, 'addToChanged');
