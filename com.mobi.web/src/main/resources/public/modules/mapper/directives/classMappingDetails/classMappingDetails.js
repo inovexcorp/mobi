@@ -77,17 +77,11 @@
                         var localName = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'localName');
                         return prefix + localName;
                     }
-                    dvm.getPropName = function(propMapping) {
-                        return dvm.util.getBeautifulIRI(dvm.mm.getPropIdByMapping(propMapping));
-                    }
-                    dvm.getClassName = function(classMapping) {
-                        return dvm.util.getBeautifulIRI(dvm.mm.getClassIdByMapping(classMapping));
-                    }
                     dvm.getPropValue = function(propMapping) {
                         if (dvm.mm.isDataMapping(propMapping)) {
                             return dvm.dm.getHeader(dvm.getLinkedColumnIndex(propMapping));
                         } else {
-                            return dvm.getClassName(_.find(dvm.state.mapping.jsonld, {'@id': dvm.getLinkedClassId(propMapping)}));
+                            return dvm.util.getDctermsValue(_.find(dvm.state.mapping.jsonld, {'@id': dvm.getLinkedClassId(propMapping)}), 'title');
                         }
                     }
                     dvm.getDataValuePreview = function(propMapping) {

@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Mapping Preview directive', function() {
-    var $compile, scope, element, controller, utilSvc, ontologyManagerSvc, mapperStateSvc, delimitedManagerSvc, prefixes;
+    var $compile, scope, utilSvc, ontologyManagerSvc, mapperStateSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -30,52 +30,64 @@ describe('Mapping Preview directive', function() {
         mockUtil();
         mockMappingManager();
         mockMapperState();
-        mockDelimitedManager();
 
-        inject(function(_$compile_, _$rootScope_, _utilService_, _mappingManagerService_, _mapperStateService_, _delimitedManagerService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_, _mappingManagerService_, _mapperStateService_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             utilSvc = _utilService_;
             mappingManagerSvc = _mappingManagerService_;
             mapperStateSvc = _mapperStateService_;
-            delimitedManagerSvc = _delimitedManagerService_;
             prefixes = _prefixes_;
         });
 
         mapperStateSvc.mapping = {jsonld: [], record: {description: ''}};
-        element = $compile(angular.element('<mapping-preview></mapping-preview>'))(scope);
+        this.element = $compile(angular.element('<mapping-preview></mapping-preview>'))(scope);
         scope.$digest();
-        controller = element.controller('mappingPreview');
+        this.controller = this.element.controller('mappingPreview');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        utilSvc = null;
+        ontologyManagerSvc = null;
+        mapperStateSvc = null;
+        prefixes = null;
+        this.element.remove();
     });
 
     describe('controller methods', function() {
-        it('should get a class name', function() {
-            var classMapping = {};
-            var result = controller.getClassName(classMapping);
-            expect(mappingManagerSvc.getClassIdByMapping).toHaveBeenCalledWith(classMapping);
-            expect(utilSvc.getBeautifulIRI).toHaveBeenCalled();
-            expect(typeof result).toBe('string');
+        it('should create the IRI template for the class mapping', function() {
+            expect(_.isString(this.controller.getIriTemplate({}))).toBe(true);
+            expect(utilSvc.getPropertyValue).toHaveBeenCalledWith({}, prefixes.delim + 'hasPrefix');
+            expect(utilSvc.getPropertyValue).toHaveBeenCalledWith({}, prefixes.delim + 'localName');
         });
-        it('should get a prop name', function() {
-            var propMapping = {};
-            expect(typeof controller.getPropName(propMapping)).toBe('string');
-            expect(mappingManagerSvc.getPropIdByMapping).toHaveBeenCalledWith(propMapping);
-            expect(utilSvc.getBeautifulIRI).toHaveBeenCalled();
-        });
-        it('should get the column index of a data mapping', function() {
-            utilSvc.getPropertyValue.and.returnValue('0');
-            expect(controller.getColumnIndex({})).toBe('0');
-            expect(utilSvc.getPropertyValue).toHaveBeenCalledWith({}, prefixes.delim + 'columnIndex');
+        describe('should get the value of a property mapping', function() {
+            it('if it is data property', function() {
+                mappingManagerSvc.isDataMapping.and.returnValue(true);
+                utilSvc.getPropertyValue.and.returnValue('0');
+                expect(this.controller.getPropValue({})).toBe('0');
+                expect(utilSvc.getPropertyValue).toHaveBeenCalledWith({}, prefixes.delim + 'columnIndex');
+            });
+            it('if is an object property', function() {
+                mappingManagerSvc.isDataMapping.and.returnValue(false);
+                utilSvc.getDctermsValue.and.returnValue('Class');
+                utilSvc.getPropertyId.and.returnValue('classMapping');
+                mapperStateSvc.mapping.jsonld = [{'@id': 'classMapping'}];
+                expect(this.controller.getPropValue({})).toBe('Class');
+                expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.delim + 'classMapping');
+                expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({'@id': 'classMapping'}, 'title');
+            });
         });
         it('should test whether a property mapping is invalid', function() {
-            expect(controller.isInvalid('')).toBe(false);
+            expect(this.controller.isInvalid('')).toBe(false);
             mapperStateSvc.invalidProps = [{'@id': ''}];
-            expect(controller.isInvalid('')).toBe(true);
+            expect(this.controller.isInvalid('')).toBe(true);
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.hasClass('mapping-preview')).toBe(true);
+            expect(this.element.hasClass('mapping-preview')).toBe(true);
         });
         it('with all class and property mappings displayed', function() {
             mappingManagerSvc.isDataMapping.and.returnValue(false);
@@ -84,36 +96,23 @@ describe('Mapping Preview directive', function() {
             var propMappings = [{}];
             mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
             scope.$digest();
-            var classListItems = element.querySelectorAll('.list > li');
+            var classListItems = this.element.querySelectorAll('.list > li');
             expect(classListItems.length).toBe(classMappings.length);
             _.forEach(classListItems, function(item) {
                 expect(item.querySelectorAll('.props > li').length).toBe(propMappings.length);
             });
         });
-        it('depending on the type of property mapping', function() {
-            var classMappings = [{'@id': ''}];
-            var propMappings = [{'@id': '', 'columnIndex': [{'@value': '0'}]}];
-            mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
-            mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
-            scope.$digest();
-            expect(delimitedManagerSvc.getHeader).toHaveBeenCalled();
-
-            delimitedManagerSvc.getHeader.calls.reset();
-            mappingManagerSvc.isDataMapping.and.returnValue(false);
-            scope.$digest();
-            expect(delimitedManagerSvc.getHeader).not.toHaveBeenCalled();
-        });
         it('depending on whether a property mapping is valid', function() {
-            spyOn(controller, 'isInvalid').and.returnValue(false);
+            spyOn(this.controller, 'isInvalid').and.returnValue(false);
             var classMappings = [{'@id': ''}];
             var propMappings = [{'@id': '', 'columnIndex': [{'@value': '0'}]}];
             mappingManagerSvc.getAllClassMappings.and.returnValue(classMappings);
             mappingManagerSvc.getPropMappingsByClass.and.returnValue(propMappings);
             scope.$digest();
-            var propItem = angular.element(element.querySelectorAll('.props > li')[0]);
+            var propItem = angular.element(this.element.querySelectorAll('.props > li')[0]);
             expect(propItem.hasClass('error-display')).toBe(false);
 
-            controller.isInvalid.and.returnValue(true);
+            this.controller.isInvalid.and.returnValue(true);
             scope.$digest();
             expect(propItem.hasClass('error-display')).toBe(true);
         });
