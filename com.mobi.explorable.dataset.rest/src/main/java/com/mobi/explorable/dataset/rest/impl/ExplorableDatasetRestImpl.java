@@ -272,24 +272,12 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(instanceIRI, "The Instance IRI is required.");
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
-            Model instanceModel = modelFactory.createModel();
-            Resource instanceId = factory.createIRI(instanceIRI);
-            RepositoryResult<Statement> statements = conn.getStatements(instanceId, null, null);
-            int count = 100;
-            while (statements.hasNext() && count > 0) {
-                Statement statement = statements.next();
-                IRI predicate = statement.getPredicate();
-                Value object = statement.getObject();
-                instanceModel.add(instanceId, predicate, object);
-                instanceModel.addAll(getReifiedStatements(conn, instanceId, predicate, object));
-                count--;
-            }
+            Model instanceModel = getInstance(instanceIRI, conn);
             if (instanceModel.size() == 0) {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
-            } else {
-                String json = modelToSkolemizedJsonld(instanceModel, sesameTransformer, bNodeService);
-                return Response.ok(JSONArray.fromObject(json)).build();
             }
+            String json = modelToSkolemizedJsonld(instanceModel, sesameTransformer, bNodeService);
+            return Response.ok(JSONArray.fromObject(json)).build();
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException e) {
@@ -306,24 +294,64 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             RepositoryResult<Statement> statements = conn.getStatements(instanceId, null, null);
             if (!statements.hasNext()) {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
-            } else {
-                RepositoryResult<Statement> reifiedDeclarations = conn.getStatements(null,
-                        sesameTransformer.mobiIRI(RDF.SUBJECT), instanceId);
-                conn.begin();
-                conn.remove(statements);
-                reifiedDeclarations.forEach(statement -> {
-                    RepositoryResult<Statement> reification = conn.getStatements(statement.getSubject(), null, null);
-                    conn.remove(reification);
-                });
-                conn.add(jsonldToDeskolemizedModel(json, sesameTransformer, bNodeService));
-                conn.commit();
-                return Response.ok().build();
             }
+            RepositoryResult<Statement> reifiedDeclarations = conn.getStatements(null,
+                    sesameTransformer.mobiIRI(RDF.SUBJECT), instanceId);
+            conn.begin();
+            conn.remove(statements);
+            reifiedDeclarations.forEach(statement -> {
+                RepositoryResult<Statement> reification = conn.getStatements(statement.getSubject(), null, null);
+                conn.remove(reification);
+            });
+            conn.add(jsonldToDeskolemizedModel(json, sesameTransformer, bNodeService));
+            conn.commit();
+            return Response.ok().build();
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Override
+    public Response deleteInstance(String recordIRI, String instanceIRI) {
+        checkStringParam(recordIRI, "The Dataset Record IRI is required.");
+        checkStringParam(instanceIRI, "The Instance IRI is required.");
+        try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
+            Model instanceModel = getInstance(instanceIRI, conn);
+            if (instanceModel.size() == 0) {
+                throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
+            }
+            conn.remove(instanceModel);
+            return Response.ok().build();
+        } catch (IllegalArgumentException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MobiException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Gets the instance and all associated reified triples
+     *
+     * @param instanceIRI The ID of the instance to retrieve.
+     * @param conn        The DatasetConnection to use to find the triples.
+     * @return A Model containing all triples which represent the instance.
+     */
+    private Model getInstance(String instanceIRI, DatasetConnection conn) {
+        Model instanceModel = modelFactory.createModel();
+        Resource instanceId = factory.createIRI(instanceIRI);
+        RepositoryResult<Statement> statements = conn.getStatements(instanceId, null, null);
+        int count = 100;
+        while (statements.hasNext() && count > 0) {
+            Statement statement = statements.next();
+            IRI predicate = statement.getPredicate();
+            Value object = statement.getObject();
+            instanceModel.add(instanceId, predicate, object);
+            instanceModel.addAll(getReifiedStatements(conn, instanceId, predicate, object));
+            count--;
+        }
+        return instanceModel;
     }
 
     /**
