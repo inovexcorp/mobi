@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Instance Block directive', function() {
-    var $compile, scope, element, discoverStateSvc, $httpBackend, exploreSvc, controller, utilSvc, uuid, splitIRI;
+    var $compile, scope, discoverStateSvc, $httpBackend, exploreSvc, utilSvc, uuid, splitIRI;
 
     beforeEach(function() {
         module('templates');
@@ -47,83 +47,95 @@ describe('Instance Block directive', function() {
             uuid = _uuid_;
             splitIRI = _splitIRIFilter_;
         });
-        
-        element = $compile(angular.element('<instance-block></instance-block>'))(scope);
+
+        this.element = $compile(angular.element('<instance-block></instance-block>'))(scope);
         scope.$digest();
-        controller = element.controller('instanceBlock');
+        this.controller = this.element.controller('instanceBlock');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        discoverStateSvc = null;
+        $httpBackend = null;
+        exploreSvc = null;
+        utilSvc = null;
+        uuid = null;
+        splitIRI = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('instance-block')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('instance-block')).toBe(true);
         });
         it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
+            expect(this.element.find('block').length).toBe(1);
         });
         it('with a block-header', function() {
-            expect(element.find('block-header').length).toBe(1);
+            expect(this.element.find('block-header').length).toBe(1);
         });
         it('with a breadcrumbs', function() {
-            expect(element.find('breadcrumbs').length).toBe(1);
+            expect(this.element.find('breadcrumbs').length).toBe(1);
         });
         it('with a button', function() {
-            expect(element.find('button').length).toBe(1);
+            expect(this.element.find('button').length).toBe(1);
         });
         it('with a block-content', function() {
-            expect(element.querySelectorAll('block-content').length).toBe(1);
+            expect(this.element.querySelectorAll('block-content').length).toBe(1);
         });
         it('with a instance-cards', function() {
-            expect(element.find('instance-cards').length).toBe(1);
+            expect(this.element.find('instance-cards').length).toBe(1);
         });
         it('with a block-footer', function() {
-            expect(element.find('block-footer').length).toBe(1);
+            expect(this.element.find('block-footer').length).toBe(1);
         });
         it('with a paging-details.pull-left', function() {
-            expect(element.querySelectorAll('paging-details.pull-left').length).toBe(1);
+            expect(this.element.querySelectorAll('paging-details.pull-left').length).toBe(1);
         });
         it('with a pagination.pull-right', function() {
-            expect(element.querySelectorAll('pagination.pull-right').length).toBe(1);
+            expect(this.element.querySelectorAll('pagination.pull-right').length).toBe(1);
         });
     });
-    
+
     describe('controller methods', function() {
         describe('getPage should hit the correct endpoint when direction is', function() {
-            var nextLink = 'http://mobi.com/next';
-            var prevLink = 'http://mobi.com/prev';
             beforeEach(function() {
+                this.nextLink = 'http://mobi.com/next';
+                this.prevLink = 'http://mobi.com/prev';
                 discoverStateSvc.explore.instanceDetails.links = {
-                    next: nextLink,
-                    prev: prevLink
+                    next: this.nextLink,
+                    prev: this.prevLink
                 }
                 exploreSvc.createPagedResultsObject.and.returnValue({prop: 'paged', currentPage: 0});
             });
             describe('next and get', function() {
                 it('succeeds', function() {
-                    $httpBackend.expectGET(nextLink).respond(200, [{}]);
-                    controller.getPage('next');
+                    $httpBackend.expectGET(this.nextLink).respond(200, [{}]);
+                    this.controller.getPage('next');
                     flushAndVerify($httpBackend);
                     expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith(jasmine.objectContaining({status: 200, data: [{}]}));
                     expect(discoverStateSvc.explore.instanceDetails).toEqual(jasmine.objectContaining({prop: 'paged', currentPage: 1}));
                 });
                 it('fails', function() {
-                    $httpBackend.expectGET(nextLink).respond(400, null, null, 'error');
-                    controller.getPage('next');
+                    $httpBackend.expectGET(this.nextLink).respond(400, null, null, 'error');
+                    this.controller.getPage('next');
                     flushAndVerify($httpBackend);
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
                 });
             });
             describe('prev and get', function() {
                 it('succeeds', function() {
-                    $httpBackend.expectGET(prevLink).respond(200, [{}]);
-                    controller.getPage('prev');
+                    $httpBackend.expectGET(this.prevLink).respond(200, [{}]);
+                    this.controller.getPage('prev');
                     flushAndVerify($httpBackend);
                     expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith(jasmine.objectContaining({status: 200, data: [{}]}));
                     expect(discoverStateSvc.explore.instanceDetails).toEqual(jasmine.objectContaining({prop: 'paged', currentPage: -1}));
                 });
                 it('fails', function() {
-                    $httpBackend.expectGET(prevLink).respond(400, null, null, 'error');
-                    controller.getPage('prev');
+                    $httpBackend.expectGET(this.prevLink).respond(400, null, null, 'error');
+                    this.controller.getPage('prev');
                     flushAndVerify($httpBackend);
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
                 });
@@ -134,7 +146,7 @@ describe('Instance Block directive', function() {
             discoverStateSvc.explore.instanceDetails.data = [{instanceIRI: 'instanceIRI'}];
             discoverStateSvc.explore.classId = 'classId';
             splitIRI.and.returnValue({begin: 'begin', then: '/', end: 'end'});
-            controller.create();
+            this.controller.create();
             expect(discoverStateSvc.explore.creating).toBe(true);
             expect(splitIRI).toHaveBeenCalledWith('instanceIRI');
             expect(uuid.v4).toHaveBeenCalled();
@@ -145,13 +157,13 @@ describe('Instance Block directive', function() {
         });
         it('getClassName should return the correct value', function() {
             discoverStateSvc.explore.breadcrumbs = ['not-this', 'class'];
-            expect(controller.getClassName()).toBe('class');
+            expect(this.controller.getClassName()).toBe('class');
         });
         it('button should say [Deprecated] if the class is deprecated', function() {
-            expect(angular.element(element.find('button')[0]).text().trim()).not.toContain('[Deprecated]');
+            expect(angular.element(this.element.find('button')[0]).text().trim()).not.toContain('[Deprecated]');
             discoverStateSvc.explore.classDeprecated = true;
             scope.$apply();
-            expect(angular.element(element.find('button')[0]).text().trim()).toContain('[Deprecated]');
+            expect(angular.element(this.element.find('button')[0]).text().trim()).toContain('[Deprecated]');
         });
     });
 });

@@ -141,15 +141,13 @@ describe('Discover State Service', function() {
         expect(discoverStateSvc.explore.creating).toBe(false);
     });
     it('getInstance should return the correct object in the entity', function() {
-        discoverStateSvc.explore.instance.metadata = {
-            instanceIRI: 'id'
-        };
+        discoverStateSvc.explore.classId = 'https://mobi.com#classId';
         discoverStateSvc.explore.instance.entity = [{
-            '@id': 'id'
+            '@type': ['https://mobi.com#classId']
         }, {
             '@id': '_:x1'
         }];
-        expect(discoverStateSvc.getInstance()).toEqual({'@id': 'id'});
+        expect(discoverStateSvc.getInstance()).toEqual({'@type': ['https://mobi.com#classId']});
     });
     it('resetSearchQueryConfig should reset the query config variables', function() {
         discoverStateSvc.search.queryConfig = {

@@ -48,7 +48,7 @@
          * associated with the selected instance in an editable format.
          */
         .directive('instanceEditor', instanceEditor);
-        
+
         instanceEditor.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'exploreUtilsService'];
 
         function instanceEditor($q, discoverStateService, utilService, exploreService, exploreUtilsService) {
@@ -66,7 +66,7 @@
                     dvm.util = utilService;
                     dvm.original = angular.copy(dvm.ds.explore.instance.entity);
                     dvm.isValid = true;
-                    
+
                     dvm.save = function() {
                         dvm.ds.explore.instance.entity = eu.removeEmptyPropertiesFromArray(dvm.ds.explore.instance.entity);
                         var instance = dvm.ds.getInstance();
@@ -79,7 +79,7 @@
                                 dvm.ds.explore.editing = false;
                             }, dvm.util.createErrorToast);
                     }
-                    
+
                     dvm.cancel = function() {
                         dvm.ds.explore.instance.entity = dvm.original;
                         dvm.ds.explore.editing = false;
