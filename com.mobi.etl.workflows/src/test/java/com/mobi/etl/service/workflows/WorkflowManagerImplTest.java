@@ -221,6 +221,7 @@ public class WorkflowManagerImplTest {
     public void addWorkflowTest() throws Exception {
         service.addWorkflow(workflow1);
         assertTrue(service.workflows.contains(WORKFLOW1_ID));
+        verify(converterService).convert(workflow1);
         verify(camelContext).addRoutes(routeBuilder);
         try (RepositoryConnection conn = repo.getConnection()) {
             workflow1.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject(), WORKFLOW1_ID)));
@@ -269,9 +270,24 @@ public class WorkflowManagerImplTest {
     }
 
     @Test
-    public void startWorkflowTest() throws Exception {
+    public void startDeployedWorkflowTest() throws Exception {
         service.startWorkflow(WORKFLOW2_ID);
         verify(camelContext).startRoute(ROUTE2_ID.stringValue());
+    }
+
+    @Test
+    public void startFailedWorkflowTest() throws Exception {
+        // Setup:
+        service.failedWorkflows.add(WORKFLOW1_ID);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(workflow1.getModel(), WORKFLOW1_ID);
+        }
+
+        service.startWorkflow(WORKFLOW1_ID);
+        verify(converterService).convert(any(Workflow.class));
+        verify(camelContext).addRoutes(routeBuilder);
+        assertFalse(service.failedWorkflows.contains(WORKFLOW1_ID));
+        assertTrue(service.workflows.contains(WORKFLOW1_ID));
     }
 
     @Test(expected = IllegalArgumentException.class)

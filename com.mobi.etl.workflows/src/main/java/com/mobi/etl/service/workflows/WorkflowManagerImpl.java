@@ -122,6 +122,7 @@ public class WorkflowManagerImpl implements WorkflowManager {
                             if (failedWorkflows.contains(workflow.getResource())) {
                                 if (attempts.get(workflow.getResource()) > 1) {
                                     LOG.debug("Attempted to redeploy " + workflow.getResource() + " already. Skipping");
+                                    workflow = queue.poll();
                                     continue;
                                 }
                                 Thread.sleep(3000);
