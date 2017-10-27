@@ -221,6 +221,33 @@ describe('Explore Service', function() {
         });
     });
 
+    describe('deleteInstance calls the correct functions when DELETE /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId}', function() {
+        it('succeeds', function() {
+            $httpBackend.expectDELETE('/mobirest/explorable-datasets/recordId/instances/instanceId', this.newInstance).respond(200);
+            exploreSvc.deleteInstance('recordId', 'instanceId')
+                .then(function(response) {
+                    expect(response).toBeUndefined();
+                }, function() {
+                    fail('Should have been resolved.');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('fails', function() {
+            $httpBackend.expectDELETE('/mobirest/explorable-datasets/recordId/instances/instanceId', this.newInstance).respond(400, null, null, 'error');
+            exploreSvc.deleteInstance('recordId', 'instanceId')
+                .then(function() {
+                    fail('Should have been rejected.');
+                }, function(response) {
+                    expect(response).toBe('error');
+                });
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'error'
+            }));
+        });
+    });
+
     describe('createPagedResultsObject should return the correct paged object when the headers of the response', function() {
         beforeEach(function() {
             this.nextLink = 'http://example.com/next';

@@ -701,6 +701,10 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().delete();
         assertEquals(response.getStatus(), 200);
+        verify(datasetConnection).begin();
+        verify(datasetConnection).remove(any(Model.class));
+        verify(datasetConnection).remove((Resource) null, null, vf.createIRI(INSTANCE_ID_STR));
+        verify(datasetConnection).commit();
     }
 
     @Test
@@ -708,6 +712,10 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(REIFIED_ID)).request().delete();
         assertEquals(response.getStatus(), 200);
+        verify(datasetConnection).begin();
+        verify(datasetConnection).remove(any(Model.class));
+        verify(datasetConnection).remove((Resource) null, null, vf.createIRI(REIFIED_ID));
+        verify(datasetConnection).commit();
     }
 
     @Test

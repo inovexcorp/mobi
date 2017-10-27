@@ -322,7 +322,10 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
             if (instanceModel.size() == 0) {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
             }
+            conn.begin();
             conn.remove(instanceModel);
+            conn.remove((Resource) null, null, factory.createIRI(instanceIRI));
+            conn.commit();
             return Response.ok().build();
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
