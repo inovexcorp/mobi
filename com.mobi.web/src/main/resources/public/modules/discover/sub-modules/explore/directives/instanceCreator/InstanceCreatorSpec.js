@@ -109,6 +109,7 @@ describe('Instance Creator directive', function() {
                     discoverStateSvc.explore.breadcrumbs = ['old title'];
                     exploreSvc.getClassInstanceDetails.and.returnValue($q.when({data: data}));
                     discoverStateSvc.explore.instanceDetails.limit = 1;
+                    discoverStateSvc.explore.instanceDetails.total = 3;
                     this.controller.save();
                     scope.$apply();
                     expect(discoverStateSvc.getInstance).toHaveBeenCalled();
@@ -119,6 +120,7 @@ describe('Instance Creator directive', function() {
                     expect(discoverStateSvc.explore.instanceDetails.data).toEqual([data[0]]);
                     expect(discoverStateSvc.explore.instance.metadata).toEqual({instanceIRI: 'id', title: 'title'});
                     expect(_.last(discoverStateSvc.explore.breadcrumbs)).toBe('title');
+                    expect(discoverStateSvc.explore.instanceDetails.total).toBe(4);
                     expect(discoverStateSvc.explore.creating).toEqual(false);
                 });
                 it('rejected', function() {

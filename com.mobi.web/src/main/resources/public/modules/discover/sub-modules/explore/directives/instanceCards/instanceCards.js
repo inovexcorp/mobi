@@ -85,7 +85,17 @@
                                 return es.getClassInstanceDetails(ds.explore.recordId, ds.explore.classId, {});
                             }, $q.reject)
                             .then(response => {
-                                ds.explore.instanceDetails.data = _.slice(response.data, ds.explore.instanceDetails.currentPage * ds.explore.instanceDetails.limit, ds.explore.instanceDetails.limit);
+                                ds.explore.instanceDetails.total--;
+                                var offset = ds.explore.instanceDetails.currentPage * ds.explore.instanceDetails.limit;
+                                var data = _.slice(response.data, offset, offset + ds.explore.instanceDetails.limit);
+                                if (_.isEmpty(data)) {
+                                    // Do get prev page
+                                } else {
+                                    ds.explore.instanceDetails.data = data;
+                                    if (offset + ds.explore.instanceDetails.limit > ds.explore.instanceDetails.total) {
+                                        ds.explore.instanceDetails.links.next = '';
+                                    }
+                                }
                                 dvm.showDeleteOverlay = false;
                             }, errorMessage => dvm.error = errorMessage);
                     }

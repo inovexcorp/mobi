@@ -169,12 +169,14 @@ describe('Instance Cards directive', function() {
                     }];
                     exploreSvc.getClassInstanceDetails.and.returnValue($q.when({data: data}));
                     discoverStateSvc.explore.instanceDetails.limit = 1;
+                    discoverStateSvc.explore.instanceDetails.total = 5;
                     this.controller.delete();
                     scope.$apply();
                     expect(exploreSvc.deleteInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'id');
                     expect(utilSvc.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
                     expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {});
                     expect(discoverStateSvc.explore.instanceDetails.data).toEqual([data[0]]);
+                    expect(discoverStateSvc.explore.instanceDetails.total).toBe(4);
                     expect(this.controller.showDeleteOverlay).toBe(false);
                 });
                 it('rejected', function() {

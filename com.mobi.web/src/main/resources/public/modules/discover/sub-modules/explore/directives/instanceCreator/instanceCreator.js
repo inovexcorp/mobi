@@ -72,7 +72,9 @@
                         es.createInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.entity)
                             .then(() => es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {}), $q.reject)
                             .then(response => {
-                                dvm.ds.explore.instanceDetails.data = _.slice(response.data, dvm.ds.explore.instanceDetails.currentPage * dvm.ds.explore.instanceDetails.limit, dvm.ds.explore.instanceDetails.limit);
+                                dvm.ds.explore.instanceDetails.total++;
+                                var offset = dvm.ds.explore.instanceDetails.currentPage * dvm.ds.explore.instanceDetails.limit;
+                                dvm.ds.explore.instanceDetails.data = _.slice(response.data, offset, offset + dvm.ds.explore.instanceDetails.limit);
                                 dvm.ds.explore.instance.metadata = _.find(response.data, {instanceIRI: instance['@id']});
                                 dvm.ds.explore.breadcrumbs[dvm.ds.explore.breadcrumbs.length - 1] = dvm.ds.explore.instance.metadata.title;
                                 dvm.ds.explore.creating = false;
