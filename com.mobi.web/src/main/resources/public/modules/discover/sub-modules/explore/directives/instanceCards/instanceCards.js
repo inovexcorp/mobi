@@ -66,7 +66,7 @@
                     var eu = exploreUtilsService;
                     dvm.chunks = getChunks(ds.explore.instanceDetails.data);
                     dvm.classTitle = _.last(ds.explore.breadcrumbs);
-                    
+
                     dvm.view = function(item) {
                         es.getInstance(ds.explore.recordId, item.instanceIRI)
                             .then(response => {
@@ -77,14 +77,16 @@
                             }, $q.reject)
                             .then(response => {
                                 ds.explore.instance.objectMap = {};
-                                _.forEach(response.results.bindings, binding => ds.explore.instance.objectMap[binding.object.value] = binding.title.value);
+                                if (_.has(response, 'results')) {
+                                    _.forEach(response.results.bindings, binding => ds.explore.instance.objectMap[binding.object.value] = binding.title.value);
+                                }
                             }, util.createErrorToast);
-                    } 
-                    
+                    }
+
                     $scope.$watch(() => ds.explore.instanceDetails.data, newValue => {
                         dvm.chunks = getChunks(newValue);
                     });
-                    
+
                     function getChunks(data) {
                         return _.chunk(_.orderBy(data, ['title']), 3);
                     }

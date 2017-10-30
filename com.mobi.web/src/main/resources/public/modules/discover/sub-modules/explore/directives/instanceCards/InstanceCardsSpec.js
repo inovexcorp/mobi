@@ -51,7 +51,7 @@ describe('Instance Cards directive', function() {
         }, {
             title: 'a'
         }];
-        element = $compile(angular.element('<instance-cards></instance-cards>'))(scope);
+        this.element = $compile(angular.element('<instance-cards></instance-cards>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('instanceCards');
     });
@@ -69,46 +69,46 @@ describe('Instance Cards directive', function() {
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('instance-cards')).toBe(true);
-            expect(element.hasClass('class-cards')).toBe(true);
-            expect(element.hasClass('full-height')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('instance-cards')).toBe(true);
+            expect(this.element.hasClass('class-cards')).toBe(true);
+            expect(this.element.hasClass('full-height')).toBe(true);
         });
         it('with a .rows-container.full-height', function() {
-            expect(element.querySelectorAll('.rows-container.full-height').length).toBe(1);
+            expect(this.element.querySelectorAll('.rows-container.full-height').length).toBe(1);
         });
         it('with a .row', function() {
-            expect(element.querySelectorAll('.row').length).toBe(2);
+            expect(this.element.querySelectorAll('.row').length).toBe(2);
         });
         it('with a .col-xs-4.card-container', function() {
-            expect(element.querySelectorAll('.col-xs-4.card-container').length).toBe(4);
+            expect(this.element.querySelectorAll('.col-xs-4.card-container').length).toBe(4);
         });
         it('with a md-card', function() {
-            expect(element.find('md-card').length).toBe(4);
+            expect(this.element.find('md-card').length).toBe(4);
         });
         it('with a md-card-title', function() {
-            expect(element.find('md-card-title').length).toBe(4);
+            expect(this.element.find('md-card-title').length).toBe(4);
         });
         it('with a md-card-title-text', function() {
-            expect(element.find('md-card-title-text').length).toBe(4);
+            expect(this.element.find('md-card-title-text').length).toBe(4);
         });
         it('with a .card-header', function() {
-            expect(element.querySelectorAll('.card-header').length).toBe(4);
+            expect(this.element.querySelectorAll('.card-header').length).toBe(4);
         });
         it('with a .md-headline.text', function() {
-            expect(element.querySelectorAll('.md-headline.text').length).toBe(4);
+            expect(this.element.querySelectorAll('.md-headline.text').length).toBe(4);
         });
         it('with a md-card-content', function() {
-            expect(element.find('md-card-content').length).toBe(4);
+            expect(this.element.find('md-card-content').length).toBe(4);
         });
         it('with a .overview', function() {
-            expect(element.querySelectorAll('.overview').length).toBe(4);
+            expect(this.element.querySelectorAll('.overview').length).toBe(4);
         });
         it('with a md-card-actions', function() {
-            expect(element.find('md-card-actions').length).toBe(4);
+            expect(this.element.find('md-card-actions').length).toBe(4);
         });
         it('with a md-button', function() {
-            expect(element.find('md-button').length).toBe(4);
+            expect(this.element.find('md-button').length).toBe(4);
         });
     });
     it('properly defines controller.chunks on load', function() {
@@ -121,7 +121,7 @@ describe('Instance Cards directive', function() {
         }], [{
             title: 'z'
         }]];
-        expect(angular.copy(element.controller('instanceCards').chunks)).toEqual(expected);
+        expect(angular.copy(this.controller.chunks)).toEqual(expected);
     });
     describe('controller methods', function() {
         describe('view should set the correct variables when getInstance is', function() {
@@ -162,7 +162,7 @@ describe('Instance Cards directive', function() {
             });
             it('rejected', function() {
                 exploreSvc.getInstance.and.returnValue($q.reject('error'));
-                controller.view({instanceIRI: 'instanceId', title: 'title'});
+                this.controller.view({instanceIRI: 'instanceId', title: 'title'});
                 scope.$apply();
                 expect(exploreSvc.getInstance).toHaveBeenCalledWith('recordId', 'instanceId');
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
