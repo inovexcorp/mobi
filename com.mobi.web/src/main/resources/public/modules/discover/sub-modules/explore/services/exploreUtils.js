@@ -270,7 +270,7 @@
          */
         self.getNewProperties = function(properties, entity, text) {
             var properties = _.difference(_.map(properties, 'propertyIRI'), _.keys(entity));
-            return text ? _.filter(properties, iri => self.contains(iri, text)) : properties;
+            return text ? _.filter(properties, iri => self.contains(iri.toLowerCase(), text.toLowerCase())) : properties;
         }
         /**
          * @ngdoc method

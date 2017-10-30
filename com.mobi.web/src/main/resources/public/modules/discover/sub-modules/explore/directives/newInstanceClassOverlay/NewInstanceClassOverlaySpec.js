@@ -92,10 +92,21 @@ describe('New Instance Property Overlay directive', function() {
         it('for a .btn.btn-default', function() {
             expect(this.element.querySelectorAll('.btn.btn-default').length).toBe(1);
         });
+        it('depending on whether the selected class is deprecated', function() {
+            var button = angular.element(this.element.querySelectorAll('.btn.btn-primary')[0]);
+            expect(this.element.find('error-display').length).toEqual(0);
+            expect(button.attr('disabled')).toBeFalsy();
+
+            this.controller.selectedClass = {deprecated: true};
+            scope.$digest();
+            expect(this.element.find('error-display').length).toEqual(1);
+            expect(button.attr('disabled')).toBeTruthy();
+        });
     });
     describe('controller methods', function() {
         it('should get filtered classes', function() {
             expect(this.controller.getClasses('test')).toEqual([{id: 'test'}]);
+            expect(this.controller.getClasses('TE')).toEqual([{id: 'test'}]);
             expect(this.controller.getClasses('')).toEqual([{id: 'test'}, {id: 'blah'}]);
         });
     });

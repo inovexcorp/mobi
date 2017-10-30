@@ -25,6 +25,7 @@
         <h6>Add Instance</h6>
         <div class="main">
             <p>Please select a class for the instance.</p>
+            <error-display ng-if="dvm.selectedClass.deprecated">This class is deprecated so new instances cannot be made.</error-display>
             <md-autocomplete required md-input-name="autocomplete" md-items="clazz in dvm.getClasses(dvm.searchText)" placeholder="Enter class IRI..." md-search-text="dvm.searchText" md-no-cache="true" md-require-match md-input-id="auto-complete" md-min-length="0" md-selected-item="dvm.selectedClass" md-item-text="clazz.id">
                 <span md-highlight-text="dvm.searchText">{{clazz.title}} :: {{clazz.id}}{{clazz.deprecated ? '(Deprecated)' : ''}}</span>
             </md-autocomplete>

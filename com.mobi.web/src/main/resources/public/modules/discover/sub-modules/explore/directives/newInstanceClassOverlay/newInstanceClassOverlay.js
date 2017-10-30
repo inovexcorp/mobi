@@ -52,7 +52,7 @@
                     }, 200);
 
                     dvm.getClasses = function(searchText) {
-                        return searchText ? _.filter(dvm.classes, clazz => _.includes(clazz.id, searchText)) : dvm.classes;
+                        return searchText ? _.filter(dvm.classes, clazz => _.includes(clazz.id.toLowerCase(), searchText.toLowerCase())) : dvm.classes;
                     }
                 }
             }

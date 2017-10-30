@@ -214,23 +214,25 @@ describe('Explore Utils Service', function() {
         });
     });
     describe('getNewProperties should return a list of properties that are not set on the entity', function() {
-        var entity = {
-            '@id': 'id',
-            '@type': ['type'],
-            'prop1': [{
-                '@id': 'http://mobi.com/id'
-            }],
-            'prop2': [{
-                '@value': 'value1'
-            }, {
-                '@value': 'value2'
-            }]
-        };
+        beforeEach(function () {
+            this.entity = {
+                '@id': 'id',
+                '@type': ['type'],
+                'prop1': [{
+                    '@id': 'http://mobi.com/id'
+                }],
+                'prop2': [{
+                    '@value': 'value1'
+                }, {
+                    '@value': 'value2'
+                }]
+            };
+        });
         it('without filtering', function() {
-            expect(exploreUtilsSvc.getNewProperties(this.fewProperties, entity, '')).toEqual(['propertyId', 'propertyId2', 'propertyId3']);
+            expect(exploreUtilsSvc.getNewProperties(this.fewProperties, this.entity, '')).toEqual(['propertyId', 'propertyId2', 'propertyId3']);
         });
         it('with filtering', function() {
-            expect(exploreUtilsSvc.getNewProperties(this.fewProperties, entity, '3')).toEqual(['propertyId3']);
+            expect(exploreUtilsSvc.getNewProperties(this.fewProperties, this.entity, 'iD3')).toEqual(['propertyId3']);
         });
     });
     it('removeEmptyProperties should remove properties that are empty arrays', function() {

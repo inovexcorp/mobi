@@ -1047,10 +1047,10 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     /**
-     * Gets a JSONArray of Classes from the provided Ontology.
+     * Gets a JSONObject of Class IRIs from the provided Ontology.
      *
-     * @param ontology the Ontology to get the Annotations from.
-     * @return a JSONArray of Classes from the provided Ontology.
+     * @param ontology the Ontology to get the Class IRIs from.
+     * @return a JSONObject of Class IRIs from the provided Ontology.
      */
     private JSONObject getClassIRIArray(Ontology ontology) {
         List<IRI> iris = ontology.getAllClasses()
@@ -1077,7 +1077,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets a JSONArray of Datatypes from the provided Ontology.
      *
-     * @param ontology the Ontology to get the Annotations from.
+     * @param ontology the Ontology to get the Datatypes from.
      * @return a JSONArray of Datatypes from the provided Ontology.
      */
     private JSONObject getDatatypeArray(Ontology ontology) {
@@ -1091,7 +1091,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets a JSONObject of ObjectProperty IRIs from the provided Ontology.
      *
-     * @param ontology the Ontology to get the Annotations from.
+     * @param ontology the Ontology to get the ObjectProperties from.
      * @return a JSONObject of ObjectProperty IRIs from the provided Ontology.
      */
     private JSONObject getObjectPropertyIRIArray(Ontology ontology) {
@@ -1119,7 +1119,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets a JSONObject of DatatypeProperty IRIs from the provided Ontology.
      *
-     * @param ontology the Ontology to get the Annotations from.
+     * @param ontology the Ontology to get the DatatypeProperty from.
      * @return a JSONArray of DatatypeProperties from the provided Ontology.
      */
     private JSONObject getDataPropertyIRIArray(Ontology ontology) {
@@ -1133,7 +1133,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets a JSONArray of DatatypeProperties from the provided Ontology.
      *
-     * @param ontology the Ontology to get the Annotations from.
+     * @param ontology the Ontology to get the DatatypeProperties from.
      * @return a JSONArray of DatatypeProperties from the provided Ontology.
      */
     private JSONArray getDataPropertyArray(Ontology ontology) {
@@ -1147,7 +1147,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets a JSONArray of NamedIndividuals from the provided Ontology.
      *
-     * @param ontology the Ontology to get the Annotations from.
+     * @param ontology the Ontology to get the NamedIndividuals from.
      * @return a JSONArray of NamedIndividuals from the provided Ontology.
      */
     private JSONObject getNamedIndividualArray(Ontology ontology) {
