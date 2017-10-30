@@ -21,24 +21,30 @@
  * #L%
  */
 describe('Explore Utils Service', function() {
-    var exploreUtilsSvc, utilSvc, allProperties, fewProperties, prefixes, regex, utilSvc, sparqlManagerSvc;
+    var exploreUtilsSvc, scope, $q, utilSvc, prefixes, regex, utilSvc, datasetManagerSvc, ontologyManagerSvc, sparqlManagerSvc;
 
     beforeEach(function() {
         module('exploreUtils');
         mockPrefixes();
         injectRegexConstant();
         mockUtil();
+        mockDatasetManager();
+        mockOntologyManager();
         mockSparqlManager();
 
-        inject(function(exploreUtilsService, _prefixes_, _REGEX_, _utilService_, _sparqlManagerService_) {
+        inject(function(exploreUtilsService, _$rootScope_, _$q_, _prefixes_, _REGEX_, _utilService_, _datasetManagerService_, _ontologyManagerService_, _sparqlManagerService_) {
             exploreUtilsSvc = exploreUtilsService;
+            scope = _$rootScope_;
+            $q = _$q_;
             prefixes = _prefixes_;
             regex = _REGEX_;
             utilSvc = _utilService_;
+            datasetManagerSvc = _datasetManagerService_;
+            ontologyManagerSvc = _ontologyManagerService_;
             sparqlManagerSvc = _sparqlManagerService_;
         });
 
-        fewProperties = [{
+        this.fewProperties = [{
             propertyIRI: 'propertyId',
             type: 'Data',
             range: ['string']
@@ -51,7 +57,7 @@ describe('Explore Utils Service', function() {
             range: [prefixes.xsd + 'boolean']
         }];
 
-        allProperties = [{
+        this.allProperties = [{
             propertyIRI: 'id1',
             range: [prefixes.xsd + 'dateTime']
         }, {
@@ -86,18 +92,14 @@ describe('Explore Utils Service', function() {
 
     afterEach(function() {
         exploreUtilsSvc = null;
+        $q = null;
         utilSvc = null;
-        allProperties = null;
-        fewProperties = null;
         prefixes = null;
         regex = null;
         utilSvc = null;
+        datasetManagerSvc = null;
+        ontologyManagerSvc = null;
         sparqlManagerSvc = null;
-    });
-
-    it('getReferencedTitles calls correct method', function() {
-        exploreUtilsSvc.getReferencedTitles('iri', 'id');
-        expect(sparqlManagerSvc.query).toHaveBeenCalledWith(jasmine.any(String), 'id');
     });
 
     it('getInputType should return the correct input type', function() {
@@ -115,31 +117,31 @@ describe('Explore Utils Service', function() {
         expect(utilSvc.getPattern).toHaveBeenCalledWith('iri');
     });
     it('isPropertyOfType should return the proper boolean based on the properties list', function() {
-        expect(exploreUtilsSvc.isPropertyOfType('propertyId', 'Data', fewProperties)).toBe(true);
-        expect(exploreUtilsSvc.isPropertyOfType('propertyId', 'Object', fewProperties)).toBe(false);
-        expect(exploreUtilsSvc.isPropertyOfType('missingId', 'Data', fewProperties)).toBe(false);
+        expect(exploreUtilsSvc.isPropertyOfType('propertyId', 'Data', this.fewProperties)).toBe(true);
+        expect(exploreUtilsSvc.isPropertyOfType('propertyId', 'Object', this.fewProperties)).toBe(false);
+        expect(exploreUtilsSvc.isPropertyOfType('missingId', 'Data', this.fewProperties)).toBe(false);
     });
     it('isBoolean should return the correct boolean', function() {
-        expect(exploreUtilsSvc.isBoolean('propertyId', fewProperties)).toBe(false);
-        expect(exploreUtilsSvc.isBoolean('propertyId3', fewProperties)).toBe(true);
+        expect(exploreUtilsSvc.isBoolean('propertyId', this.fewProperties)).toBe(false);
+        expect(exploreUtilsSvc.isBoolean('propertyId3', this.fewProperties)).toBe(true);
     });
     it('createIdObj should return an appropriate object', function() {
         expect(exploreUtilsSvc.createIdObj('id')).toEqual({'@id': 'id'});
     });
     describe('createValueObj should create correct object for the provided string', function() {
         it('with a type', function() {
-            expect(exploreUtilsSvc.createValueObj('value', 'propertyId', fewProperties)).toEqual({'@value': 'value', '@type': 'string'});
+            expect(exploreUtilsSvc.createValueObj('value', 'propertyId', this.fewProperties)).toEqual({'@value': 'value', '@type': 'string'});
         });
         it('without a type', function() {
-            expect(exploreUtilsSvc.createValueObj('value', 'propertyId2', fewProperties)).toEqual({'@value': 'value'});
+            expect(exploreUtilsSvc.createValueObj('value', 'propertyId2', this.fewProperties)).toEqual({'@value': 'value'});
         });
     });
     describe('getRange should return the correct range if propertyIRI is', function() {
         it('found', function() {
-            expect(exploreUtilsSvc.getRange('id1', allProperties)).toEqual(prefixes.xsd + 'dateTime');
+            expect(exploreUtilsSvc.getRange('id1', this.allProperties)).toEqual(prefixes.xsd + 'dateTime');
         });
         it('not found', function() {
-            expect(exploreUtilsSvc.getRange('missing-id', allProperties)).toEqual('');
+            expect(exploreUtilsSvc.getRange('missing-id', this.allProperties)).toEqual('');
         });
     });
     describe('contains should return the correct value when the lowered string is', function() {
@@ -150,24 +152,87 @@ describe('Explore Utils Service', function() {
             expect(exploreUtilsSvc.contains('MISSING', 'w')).toBe(false);
         });
     });
+    describe('getClasses should retrieve all classes from ontologies in a dataset', function() {
+        beforeEach(function() {
+            this.datasetId = 'dataset';
+            datasetManagerSvc.datasetRecords = [[{'@id': this.datasetId, '@type': []}, {'id': 'ontology1'}]];
+            utilSvc.getPropertyId.and.callFake(function(obj, propId) {
+                if (propId === prefixes.dataset + 'linksToRecord') {
+                    return 'recordId';
+                } else if (propId === prefixes.dataset + 'linksToBranch') {
+                    return 'branchId';
+                } else if (propId === prefixes.dataset + 'linksToCommit') {
+                    return 'commitId';
+                } else {
+                    return '';
+                }
+            });
+        });
+        it('unless the dataset could not be found', function() {
+            exploreUtilsSvc.getClasses('')
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual('Dataset could not be found');
+                });
+            scope.$apply();
+        });
+        it('unless an error occurs', function() {
+            ontologyManagerSvc.getOntologyClasses.and.returnValue($q.reject('Error Message'));
+            exploreUtilsSvc.getClasses(this.datasetId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual('The Dataset ontologies could not be found');
+                });
+            scope.$apply();
+            expect(ontologyManagerSvc.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
+        });
+        it('unless no classes are retrieved', function() {
+            ontologyManagerSvc.getOntologyClasses.and.returnValue($q.when([]));
+            exploreUtilsSvc.getClasses(this.datasetId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual('The Dataset classes could not be retrieved');
+                });
+            scope.$apply();
+            expect(ontologyManagerSvc.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
+        });
+        it('successfully', function() {
+            utilSvc.getPropertyValue.and.returnValue(true);
+            ontologyManagerSvc.getEntityName.and.returnValue('title');
+            ontologyManagerSvc.getOntologyClasses.and.returnValue($q.when([{'@id': 'classId'}]));
+            exploreUtilsSvc.getClasses(this.datasetId)
+                .then(function(response) {
+                    expect(response).toContain({id: 'classId', title: 'title', deprecated: true});
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            scope.$apply();
+            expect(ontologyManagerSvc.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
+        });
+    });
     describe('getNewProperties should return a list of properties that are not set on the entity', function() {
-        var entity = {
-            '@id': 'id',
-            '@type': ['type'],
-            'prop1': [{
-                '@id': 'http://mobi.com/id'
-            }],
-            'prop2': [{
-                '@value': 'value1'
-            }, {
-                '@value': 'value2'
-            }]
-        };
+        beforeEach(function () {
+            this.entity = {
+                '@id': 'id',
+                '@type': ['type'],
+                'prop1': [{
+                    '@id': 'http://mobi.com/id'
+                }],
+                'prop2': [{
+                    '@value': 'value1'
+                }, {
+                    '@value': 'value2'
+                }]
+            };
+        });
         it('without filtering', function() {
-            expect(exploreUtilsSvc.getNewProperties(fewProperties, entity, '')).toEqual(['propertyId', 'propertyId2', 'propertyId3']);
+            expect(exploreUtilsSvc.getNewProperties(this.fewProperties, this.entity, '')).toEqual(['propertyId', 'propertyId2', 'propertyId3']);
         });
         it('with filtering', function() {
-            expect(exploreUtilsSvc.getNewProperties(fewProperties, entity, '3')).toEqual(['propertyId3']);
+            expect(exploreUtilsSvc.getNewProperties(this.fewProperties, this.entity, 'iD3')).toEqual(['propertyId3']);
         });
     });
     it('removeEmptyProperties should remove properties that are empty arrays', function() {

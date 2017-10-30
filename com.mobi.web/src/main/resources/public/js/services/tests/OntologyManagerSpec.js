@@ -489,6 +489,33 @@ describe('Ontology Manager service', function() {
             flushAndVerify($httpBackend);
         });
     });
+    describe('getOntologyClasses retrieves all classes in an ontology', function() {
+        beforeEach(function() {
+            this.params = paramSerializer({ branchId: branchId, commitId: commitId });
+        });
+        it('unless an error occurs', function() {
+            util.rejectError.and.returnValue($q.reject(error));
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/classes?' + this.params).respond(400, null, null, error);
+            ontologyManagerSvc.getOntologyClasses(recordId, branchId, commitId)
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual(error);
+                });
+            flushAndVerify($httpBackend);
+            expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: 'error'}));
+        });
+        it('successfully', function() {
+            $httpBackend.expectGET('/mobirest/ontologies/' + recordId + '/classes?' + this.params).respond(200, [{}]);
+            ontologyManagerSvc.getOntologyClasses(recordId, branchId, commitId)
+                .then(function(response) {
+                    expect(response).toEqual([{}]);
+                }, function() {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
     describe('getDataProperties retrieves all data properties in an ontology', function() {
         beforeEach(function() {
             this.params = paramSerializer({ branchId: branchId, commitId: commitId });
