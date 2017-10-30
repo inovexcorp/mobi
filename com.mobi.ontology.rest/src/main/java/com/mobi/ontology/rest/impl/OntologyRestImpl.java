@@ -389,7 +389,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getClassesInOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                          String commitIdStr) {
         try {
-            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray);
+            JSONArray result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray);
             return Response.ok(result).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -596,7 +596,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getClassesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                    String branchIdStr, String commitIdStr) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray);
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getClassIRIArray);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1052,12 +1052,26 @@ public class OntologyRestImpl implements OntologyRest {
      * @param ontology the Ontology to get the Annotations from.
      * @return a JSONArray of Classes from the provided Ontology.
      */
-    private JSONObject getClassArray(Ontology ontology) {
+    private JSONObject getClassIRIArray(Ontology ontology) {
         List<IRI> iris = ontology.getAllClasses()
                 .stream()
                 .map(Entity::getIRI)
                 .collect(Collectors.toList());
         return new JSONObject().element("classes", iriListToJsonArray(iris));
+    }
+
+    /**
+     * Gets a JSONArray of Classes from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the Classes from.
+     * @return a JSONArray of Classes form the provided Ontology.
+     */
+    private JSONArray getClassArray(Ontology ontology) {
+        Model model = ontology.asModel(modelFactory);
+        return ontology.getAllClasses().stream()
+                .map(oClass -> getObjectFromJsonld(modelToJsonld(model.filter(oClass.getIRI(), null, null),
+                        sesameTransformer)))
+                .collect(JSONArray::new, JSONArray::add, JSONArray::add);
     }
 
     /**
@@ -1231,7 +1245,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @return the JSONObject with the IRIs for all components of an ontology.
      */
     private JSONObject getAllIRIs(Ontology ontology) {
-        return combineJsonObjects(getAnnotationArray(ontology), getClassArray(ontology),
+        return combineJsonObjects(getAnnotationArray(ontology), getClassIRIArray(ontology),
                 getDatatypeArray(ontology), getObjectPropertyIRIArray(ontology), getDataPropertyIRIArray(ontology),
                 getNamedIndividualArray(ontology), getDerivedConceptTypeArray(ontology),
                 getDerivedConceptSchemeTypeArray(ontology));

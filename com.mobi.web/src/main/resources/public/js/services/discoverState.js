@@ -55,7 +55,26 @@
          *
          * @description
          * 'explore' is an object which holds properties associated with the explore tab in the
-         * discover section of the application.
+         * discover section of the application. The structure is as follows:
+         * ```
+         * {
+         *     recordId: '', // Selected DatasetRecord ID
+         *     breadcrumbs: [],
+         *     classDetails: [], // Information about the classes with instances within the selected dataset
+         *     classId: '',
+         *     classDeprecated: false,
+         *     instance: {
+         *         entity: {}
+         *     },
+         *     instanceDetails: {
+         *         data: [],
+         *         limit: 10, // The limit for the number of instances shown
+         *         metadata: {
+         *             instanceIRI: ''
+         *         }
+         *     },
+         * }
+         * ```
          */
         self.explore = {};
 
