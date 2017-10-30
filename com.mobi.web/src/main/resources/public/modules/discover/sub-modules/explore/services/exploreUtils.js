@@ -73,8 +73,8 @@
                                 'type': 'path',
                                 'pathType': '|',
                                 'items': [
-                                    'http://www.w3.org/2000/01/rdf-schema#label',
-                                    'http://purl.org/dc/termstitle'
+                                    prefixes.rdfs + 'label',
+                                    prefixes.dcterms + 'title'
                                 ]
                             },
                             'object': '?title'
@@ -83,8 +83,8 @@
                 }],
                 'type': 'query',
                 'prefixes': {
-                    'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
-                    'dcterms': 'http://purl.org/dc/terms'
+                    'rdfs': prefixes.rdfs,
+                    'dcterms': prefixes.dcterms
                 }
             });
             return sparql.query(query, datasetRecordIRI);
