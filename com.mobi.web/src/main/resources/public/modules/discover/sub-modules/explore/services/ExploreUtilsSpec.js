@@ -21,19 +21,21 @@
  * #L%
  */
 describe('Explore Utils Service', function() {
-    var exploreUtilsSvc, utilSvc, allProperties, fewProperties, prefixes, regex, utilSvc;
+    var exploreUtilsSvc, utilSvc, allProperties, fewProperties, prefixes, regex, utilSvc, sparqlManagerSvc;
 
     beforeEach(function() {
         module('exploreUtils');
         mockPrefixes();
         injectRegexConstant();
         mockUtil();
+        mockSparqlManager();
 
-        inject(function(exploreUtilsService, _prefixes_, _REGEX_, _utilService_) {
+        inject(function(exploreUtilsService, _prefixes_, _REGEX_, _utilService_, _sparqlManagerService_) {
             exploreUtilsSvc = exploreUtilsService;
             prefixes = _prefixes_;
             regex = _REGEX_;
             utilSvc = _utilService_;
+            sparqlManagerSvc = _sparqlManagerService_;
         });
 
         fewProperties = [{
@@ -80,6 +82,22 @@ describe('Explore Utils Service', function() {
             propertyIRI: 'id10',
             range: [prefixes.xsd + 'other']
         }];
+    });
+
+    afterEach(function() {
+        exploreUtilsSvc = null;
+        utilSvc = null;
+        allProperties = null;
+        fewProperties = null;
+        prefixes = null;
+        regex = null;
+        utilSvc = null;
+        sparqlManagerSvc = null;
+    });
+
+    it('getReferencedTitles calls correct method', function() {
+        exploreUtilsSvc.getReferencedTitles('iri', 'id');
+        expect(sparqlManagerSvc.query).toHaveBeenCalledWith(jasmine.any(String), 'id');
     });
 
     it('getInputType should return the correct input type', function() {

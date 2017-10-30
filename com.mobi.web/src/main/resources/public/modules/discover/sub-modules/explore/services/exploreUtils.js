@@ -37,6 +37,7 @@
          * @ngdoc service
          * @name exploreUtils.service:exploreUtilsService
          * @requires prefixes.service:prefixes
+         * @requires sparqlManager.service:sparqlManagerService
          * @requires utilService.service:utilService
          *
          * @description
@@ -44,12 +45,50 @@
          */
         .service('exploreUtilsService', exploreUtilsService);
 
-    exploreUtilsService.$inject = ['REGEX', 'prefixes', 'utilService'];
+    exploreUtilsService.$inject = ['REGEX', 'prefixes', 'sparqlManagerService', 'utilService'];
 
-    function exploreUtilsService(REGEX, prefixes, utilService) {
+    function exploreUtilsService(REGEX, prefixes, sparqlManagerService, utilService) {
         var self = this;
         var util = utilService;
+        var sparql = sparqlManagerService;
 
+        self.getReferencedTitles = function(instanceIRI, datasetRecordIRI) {
+            var generator = new sparqljs.Generator();
+            var query = generator.stringify({
+                'queryType': 'SELECT',
+                'variables': [
+                    '?object',
+                    '?title'
+                ],
+                'where': [{
+                    'type': 'bgp',
+                    'triples': [{
+                            'subject': instanceIRI,
+                            'predicate': '?p',
+                            'object': '?object'
+                        },
+                        {
+                            'subject': '?object',
+                            'predicate': {
+                                'type': 'path',
+                                'pathType': '|',
+                                'items': [
+                                    'http://www.w3.org/2000/01/rdf-schema#label',
+                                    'http://purl.org/dc/termstitle'
+                                ]
+                            },
+                            'object': '?title'
+                        }
+                    ]
+                }],
+                'type': 'query',
+                'prefixes': {
+                    'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
+                    'dcterms': 'http://purl.org/dc/terms'
+                }
+            });
+            return sparql.query(query, datasetRecordIRI);
+        }
         /**
          * @ngdoc method
          * @name getInputType

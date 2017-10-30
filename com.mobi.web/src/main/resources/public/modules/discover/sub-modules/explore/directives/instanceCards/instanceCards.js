@@ -49,9 +49,9 @@
          */
         .directive('instanceCards', instanceCards);
 
-        instanceCards.$inject = ['discoverStateService', 'exploreService', 'utilService']
+        instanceCards.$inject = ['$q', 'discoverStateService', 'exploreService', 'exploreUtilsService', 'utilService']
 
-        function instanceCards(discoverStateService, exploreService, utilService) {
+        function instanceCards($q, discoverStateService, exploreService, exploreUtilsService, utilService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceCards/instanceCards.html',
@@ -63,6 +63,7 @@
                     var ds = discoverStateService;
                     var es = exploreService;
                     var util = utilService;
+                    var eu = exploreUtilsService;
                     dvm.chunks = getChunks(ds.explore.instanceDetails.data);
                     dvm.classTitle = _.last(ds.explore.breadcrumbs);
                     
@@ -72,6 +73,11 @@
                                 ds.explore.instance.entity = response;
                                 ds.explore.instance.metadata = item;
                                 ds.explore.breadcrumbs.push(item.title);
+                                return eu.getReferencedTitles(item.instanceIRI, ds.explore.recordId);
+                            }, $q.reject)
+                            .then(response => {
+                                ds.explore.instance.objectMap = {};
+                                _.forEach(response.results.bindings, binding => ds.explore.instance.objectMap[binding.object.value] = binding.title.value);
                             }, util.createErrorToast);
                     } 
                     
