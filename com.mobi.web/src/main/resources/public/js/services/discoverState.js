@@ -60,18 +60,26 @@
          * {
          *     recordId: '', // Selected DatasetRecord ID
          *     breadcrumbs: [],
+         *     editing: false,
+         *     creating: false,
          *     classDetails: [], // Information about the classes with instances within the selected dataset
          *     classId: '',
          *     classDeprecated: false,
          *     instance: {
-         *         entity: {}
+         *         entity: {},
+         *         metadata: {
+         *             instanceIRI: ''
+         *         }
          *     },
          *     instanceDetails: {
          *         data: [],
          *         limit: 10, // The limit for the number of instances shown
-         *         metadata: {
-         *             instanceIRI: ''
-         *         }
+         *         links: {
+         *             next: '',
+         *             prev: ''
+         *         },
+         *         total: 10,
+         *         currentPage: 0
          *     },
          * }
          * ```

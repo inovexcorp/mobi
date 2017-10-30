@@ -98,8 +98,5 @@ describe('New Instance Property Overlay directive', function() {
             expect(this.controller.getClasses('test')).toEqual([{id: 'test'}]);
             expect(this.controller.getClasses('')).toEqual([{id: 'test'}, {id: 'blah'}]);
         });
-        it('should get the selected class', function() {
-            expect(this.controller.getSelectedClass('test')).toEqual({id: 'test'});
-        });
     });
 });

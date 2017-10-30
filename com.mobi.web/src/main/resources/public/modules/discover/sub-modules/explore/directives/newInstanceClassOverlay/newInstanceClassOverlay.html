@@ -25,12 +25,12 @@
         <h6>Add Instance</h6>
         <div class="main">
             <p>Please select a class for the instance.</p>
-            <md-autocomplete required md-input-name="autocomplete" md-items="clazz in dvm.getClasses(dvm.searchText)" placeholder="Enter class IRI..." md-search-text="dvm.searchText" md-no-cache="true" md-require-match md-input-id="auto-complete" md-min-length="0">
+            <md-autocomplete required md-input-name="autocomplete" md-items="clazz in dvm.getClasses(dvm.searchText)" placeholder="Enter class IRI..." md-search-text="dvm.searchText" md-no-cache="true" md-require-match md-input-id="auto-complete" md-min-length="0" md-selected-item="dvm.selectedClass" md-item-text="clazz.id">
                 <span md-highlight-text="dvm.searchText">{{clazz.title}} :: {{clazz.id}}{{clazz.deprecated ? '(Deprecated)' : ''}}</span>
             </md-autocomplete>
         </div>
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid || !dvm.getSelectedClass(dvm.searchText).deprecated" ng-click="onSubmit({clazz: dvm.getSelectedClass(dvm.searchText)})">Submit</button>
+            <button class="btn btn-primary pull-right" ng-disabled="dvm.form.$invalid || dvm.selectedClass.deprecated" ng-click="onSubmit({clazz: dvm.selectedClass})">Submit</button>
             <button class="btn btn-default pull-right" ng-click="onCancel()">Cancel</button>
         </div>
     </form>

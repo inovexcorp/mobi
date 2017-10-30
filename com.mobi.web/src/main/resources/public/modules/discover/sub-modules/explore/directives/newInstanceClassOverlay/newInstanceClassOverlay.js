@@ -45,6 +45,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.searchText = '';
+                    dvm.selectedClass = undefined;
 
                     $timeout(function() {
                         document.querySelector('#auto-complete').focus();
@@ -52,9 +53,6 @@
 
                     dvm.getClasses = function(searchText) {
                         return searchText ? _.filter(dvm.classes, clazz => _.includes(clazz.id, searchText)) : dvm.classes;
-                    }
-                    dvm.getSelectedClass = function(searchText) {
-                        return _.find(dvm.classes, {id: searchText});
                     }
                 }
             }
