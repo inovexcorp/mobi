@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Explore Utils Service', function() {
-    var exploreUtilsSvc, scope, $q, utilSvc, prefixes, regex, utilSvc, datasetManagerSvc, ontologyManagerSvc;
+    var exploreUtilsSvc, scope, $q, utilSvc, prefixes, regex, utilSvc, datasetManagerSvc, ontologyManagerSvc, sparqlManagerSvc;
 
     beforeEach(function() {
         module('exploreUtils');
@@ -30,8 +30,9 @@ describe('Explore Utils Service', function() {
         mockUtil();
         mockDatasetManager();
         mockOntologyManager();
+        mockSparqlManager();
 
-        inject(function(exploreUtilsService, _$rootScope_, _$q_, _prefixes_, _REGEX_, _utilService_, _datasetManagerService_, _ontologyManagerService_) {
+        inject(function(exploreUtilsService, _$rootScope_, _$q_, _prefixes_, _REGEX_, _utilService_, _datasetManagerService_, _ontologyManagerService_, _sparqlManagerService_) {
             exploreUtilsSvc = exploreUtilsService;
             scope = _$rootScope_;
             $q = _$q_;
@@ -40,6 +41,7 @@ describe('Explore Utils Service', function() {
             utilSvc = _utilService_;
             datasetManagerSvc = _datasetManagerService_;
             ontologyManagerSvc = _ontologyManagerService_;
+            sparqlManagerSvc = _sparqlManagerService_;
         });
 
         this.fewProperties = [{
@@ -97,6 +99,7 @@ describe('Explore Utils Service', function() {
         utilSvc = null;
         datasetManagerSvc = null;
         ontologyManagerSvc = null;
+        sparqlManagerSvc = null;
     });
 
     it('getInputType should return the correct input type', function() {

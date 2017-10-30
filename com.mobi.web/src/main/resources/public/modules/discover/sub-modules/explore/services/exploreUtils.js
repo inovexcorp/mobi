@@ -37,21 +37,62 @@
          * @ngdoc service
          * @name exploreUtils.service:exploreUtilsService
          * @requires prefixes.service:prefixes
+         * @requires sparqlManager.service:sparqlManagerService
          * @requires utilService.service:utilService
+         * @requires datasetManager.service:datasetManagerService
+         * @requires ontologyManager.service:ontologyManagerService
          *
          * @description
          * `exploreUtilsService` is a service that provides utility functions for the explore sub module.
          */
         .service('exploreUtilsService', exploreUtilsService);
 
-    exploreUtilsService.$inject = ['$q', 'REGEX', 'prefixes', 'utilService', 'datasetManagerService', 'ontologyManagerService'];
+    exploreUtilsService.$inject = ['$q', 'REGEX', 'prefixes', 'utilService', 'datasetManagerService', 'ontologyManagerService', 'sparqlManagerService'];
 
-    function exploreUtilsService($q, REGEX, prefixes, utilService, datasetManagerService, ontologyManagerService) {
+    function exploreUtilsService($q, REGEX, prefixes, utilService, datasetManagerService, ontologyManagerService, sparqlManagerService) {
         var self = this;
         var util = utilService;
         var dm = datasetManagerService;
         var om = ontologyManagerService;
+        var sparql = sparqlManagerService;
 
+        self.getReferencedTitles = function(instanceIRI, datasetRecordIRI) {
+            var generator = new sparqljs.Generator();
+            var query = generator.stringify({
+                'queryType': 'SELECT',
+                'variables': [
+                    '?object',
+                    '?title'
+                ],
+                'where': [{
+                    'type': 'bgp',
+                    'triples': [{
+                            'subject': instanceIRI,
+                            'predicate': '?p',
+                            'object': '?object'
+                        },
+                        {
+                            'subject': '?object',
+                            'predicate': {
+                                'type': 'path',
+                                'pathType': '|',
+                                'items': [
+                                    prefixes.rdfs + 'label',
+                                    prefixes.dcterms + 'title'
+                                ]
+                            },
+                            'object': '?title'
+                        }
+                    ]
+                }],
+                'type': 'query',
+                'prefixes': {
+                    'rdfs': prefixes.rdfs,
+                    'dcterms': prefixes.dcterms
+                }
+            });
+            return sparql.query(query, datasetRecordIRI);
+        }
         /**
          * @ngdoc method
          * @name getInputType

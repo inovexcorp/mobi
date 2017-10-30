@@ -244,7 +244,8 @@
                 instance: {
                     changed: [],
                     entity: [{}],
-                    metadata: {}
+                    metadata: {},
+                    objectMap: {}
                 },
                 instanceDetails: {
                     currentPage: 0,
