@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Instance Creator directive', function() {
-    var $compile, scope, element, discoverStateSvc, controller, exploreSvc, $q, util, exploreUtilsSvc;
+    var $compile, scope, discoverStateSvc, exploreSvc, $q, util, exploreUtilsSvc;
 
     beforeEach(function() {
         module('templates');
@@ -40,44 +40,55 @@ describe('Instance Creator directive', function() {
             util = _utilService_;
             exploreUtilsSvc = _exploreUtilsService_;
         });
-        
-        element = $compile(angular.element('<instance-creator></instance-creator>'))(scope);
+
+        this.element = $compile(angular.element('<instance-creator></instance-creator>'))(scope);
         scope.$digest();
-        controller = element.controller('instanceCreator');
+        this.controller = this.element.controller('instanceCreator');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        discoverStateSvc = null;
+        exploreSvc = null;
+        $q = null;
+        util = null;
+        exploreUtilsSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('instance-creator')).toBe(true);
-            expect(element.hasClass('instance-editor')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('instance-creator')).toBe(true);
+            expect(this.element.hasClass('instance-editor')).toBe(true);
         });
         it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
+            expect(this.element.find('block').length).toBe(1);
         });
         it('with a block-header', function() {
-            expect(element.find('block-header').length).toBe(1);
+            expect(this.element.find('block-header').length).toBe(1);
         });
         it('with a breadcrumbs', function() {
-            expect(element.find('breadcrumbs').length).toBe(1);
+            expect(this.element.find('breadcrumbs').length).toBe(1);
         });
         it('with block-header .links', function() {
-            expect(element.querySelectorAll('block-header .link').length).toBe(2);
+            expect(this.element.querySelectorAll('block-header .link').length).toBe(2);
         });
         it('with a block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('with a instance-form', function() {
-            expect(element.find('instance-form').length).toBe(1);
+            expect(this.element.find('instance-form').length).toBe(1);
         });
     });
     describe('controller methods', function() {
         describe('save should call the correct functions when createInstance is', function() {
-            var instance = {'@id': 'id'};
             beforeEach(function() {
-                discoverStateSvc.explore.instance.entity = [instance];
-                discoverStateSvc.getInstance.and.returnValue(instance);
-                exploreUtilsSvc.removeEmptyProperties.and.returnValue(instance);
+                this.instance = {'@id': 'id'};
+                discoverStateSvc.explore.instance.entity = [this.instance];
+                discoverStateSvc.getInstance.and.returnValue(this.instance);
+                exploreUtilsSvc.removeEmptyProperties.and.returnValue(this.instance);
                 exploreUtilsSvc.removeEmptyPropertiesFromArray.and.returnValue([{prop: 'new'}]);
             });
             describe('resolved and getClassInstanceDetails is', function() {
@@ -98,10 +109,10 @@ describe('Instance Creator directive', function() {
                     discoverStateSvc.explore.breadcrumbs = ['old title'];
                     exploreSvc.getClassInstanceDetails.and.returnValue($q.when({data: data}));
                     discoverStateSvc.explore.instanceDetails.limit = 1;
-                    controller.save();
+                    this.controller.save();
                     scope.$apply();
                     expect(discoverStateSvc.getInstance).toHaveBeenCalled();
-                    expect(exploreUtilsSvc.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([instance]);
+                    expect(exploreUtilsSvc.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([this.instance]);
                     expect(discoverStateSvc.explore.instance.entity).toEqual([{prop: 'new'}]);
                     expect(exploreSvc.createInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.instance.entity);
                     expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {});
@@ -112,10 +123,10 @@ describe('Instance Creator directive', function() {
                 });
                 it('rejected', function() {
                     exploreSvc.getClassInstanceDetails.and.returnValue($q.reject('error'));
-                    controller.save();
+                    this.controller.save();
                     scope.$apply();
                     expect(discoverStateSvc.getInstance).toHaveBeenCalled();
-                    expect(exploreUtilsSvc.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([instance]);
+                    expect(exploreUtilsSvc.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([this.instance]);
                     expect(discoverStateSvc.explore.instance.entity).toEqual([{prop: 'new'}]);
                     expect(exploreSvc.createInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.instance.entity);
                     expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {});
@@ -124,10 +135,10 @@ describe('Instance Creator directive', function() {
             });
             it('rejected', function() {
                 exploreSvc.createInstance.and.returnValue($q.reject('error'));
-                controller.save();
+                this.controller.save();
                 scope.$apply();
                 expect(discoverStateSvc.getInstance).toHaveBeenCalled();
-                expect(exploreUtilsSvc.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([instance]);
+                expect(exploreUtilsSvc.removeEmptyPropertiesFromArray).toHaveBeenCalledWith([this.instance]);
                 expect(discoverStateSvc.explore.instance.entity).toEqual([{prop: 'new'}]);
                 expect(exploreSvc.createInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.instance.entity);
                 expect(exploreSvc.getClassInstanceDetails).not.toHaveBeenCalled();
@@ -137,7 +148,7 @@ describe('Instance Creator directive', function() {
         it('cancel sets the correct variables', function() {
             discoverStateSvc.explore.instance.entity = {'@id': 'entity'};
             discoverStateSvc.explore.breadcrumbs = ['classId', 'new'];
-            controller.cancel();
+            this.controller.cancel();
             expect(discoverStateSvc.explore.instance.entity).toEqual({});
             expect(discoverStateSvc.explore.creating).toBe(false);
             expect(discoverStateSvc.explore.breadcrumbs).toEqual(['classId']);

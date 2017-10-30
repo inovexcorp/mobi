@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Instance Form directive', function() {
-    var $compile, scope, element, discoverStateSvc, controller, prefixes, exploreSvc, $q, util, allProperties, regex, exploreUtilsSvc;
+    var $compile, scope, discoverStateSvc, prefixes, exploreSvc, $q, util, allProperties, regex, exploreUtilsSvc;
 
     beforeEach(function() {
         module('templates');
@@ -59,10 +59,10 @@ describe('Instance Form directive', function() {
         });
         scope.header = 'header';
         scope.isValid = false;
-        element = $compile(angular.element('<instance-form header="header" is-valid="isValid"></instance-form>'))(scope);
+        this.element = $compile(angular.element('<instance-form header="header" is-valid="isValid"></instance-form>'))(scope);
         scope.$digest();
-        controller = element.controller('instanceForm');
-        controller.properties = [{
+        this.controller = this.element.controller('instanceForm');
+        this.controller.properties = [{
             propertyIRI: 'propertyId',
             type: 'Data',
             range: ['string']
@@ -74,7 +74,7 @@ describe('Instance Form directive', function() {
             type: 'Data',
             range: [prefixes.xsd + 'boolean']
         }];
-        controller.changed = ['iri'];
+        this.controller.changed = ['iri'];
         allProperties = [{
             propertyIRI: 'id1',
             range: [prefixes.xsd + 'dateTime']
@@ -108,89 +108,103 @@ describe('Instance Form directive', function() {
         }];
     });
 
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        discoverStateSvc = null;
+        prefixes = null;
+        exploreSvc = null;
+        $q = null;
+        util = null;
+        allProperties = null;
+        regex = null;
+        exploreUtilsSvc = null;
+        this.element.remove();
+    });
+
     describe('in isolated scope', function() {
         it('header should be one way bound', function() {
-            element.isolateScope().header = 'new';
+            this.element.isolateScope().header = 'new';
             scope.$digest();
             expect(scope.header).toBe('header');
         });
     });
     describe('controller bound variables', function() {
         it('isValid should be two way bound', function() {
-            controller.isValid = true;
+            this.controller.isValid = true;
             scope.$digest();
             expect(scope.isValid).toEqual(true);
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('instance-form')).toBe(true);
-            expect(element.hasClass('row')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('instance-form')).toBe(true);
+            expect(this.element.hasClass('row')).toBe(true);
         });
         it('with a .col-xs-8.col-xs-offset-2', function() {
-            expect(element.querySelectorAll('.col-xs-8.col-xs-offset-2').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-xs-8.col-xs-offset-2').length).toBe(1);
         });
         it('with a h2', function() {
-            expect(element.find('h2').length).toBe(1);
+            expect(this.element.find('h2').length).toBe(1);
         });
         it('with a static-iri', function() {
-            expect(element.find('static-iri').length).toBe(1);
+            expect(this.element.find('static-iri').length).toBe(1);
         });
         it('with a .form-group', function() {
-            expect(element.querySelectorAll('.form-group').length).toBe(2);
+            expect(this.element.querySelectorAll('.form-group').length).toBe(2);
         });
         it('with a custom-label', function() {
-            expect(element.find('custom-label').length).toBe(2);
+            expect(this.element.find('custom-label').length).toBe(2);
         });
         it('with a .boolean-property', function() {
-            expect(element.querySelectorAll('.boolean-property').length).toBe(2);
-            
+            expect(this.element.querySelectorAll('.boolean-property').length).toBe(2);
+
             exploreUtilsSvc.isBoolean.and.returnValue(false);
             scope.$digest();
-            
-            expect(element.querySelectorAll('.boolean-property').length).toBe(0);
+
+            expect(this.element.querySelectorAll('.boolean-property').length).toBe(0);
         });
         it('with a .data-property', function() {
             exploreUtilsSvc.isBoolean.and.returnValue(false);
             scope.$digest();
-            
-            expect(element.querySelectorAll('.data-property').length).toBe(2);
-            
+
+            expect(this.element.querySelectorAll('.data-property').length).toBe(2);
+
             exploreUtilsSvc.isPropertyOfType.and.returnValue(false);
             scope.$digest();
-            
-            expect(element.querySelectorAll('.data-property').length).toBe(0);
+
+            expect(this.element.querySelectorAll('.data-property').length).toBe(0);
         });
         it('with a .object-property', function() {
-            expect(element.querySelectorAll('.object-property').length).toBe(2);
-            
+            expect(this.element.querySelectorAll('.object-property').length).toBe(2);
+
             exploreUtilsSvc.isPropertyOfType.and.returnValue(false);
             scope.$digest();
-            
-            expect(element.querySelectorAll('.object-property').length).toBe(0);
+
+            expect(this.element.querySelectorAll('.object-property').length).toBe(0);
         });
         it('with a .btn-container.clearfix', function() {
-            expect(element.querySelectorAll('.btn-container.clearfix').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn-container.clearfix').length).toBe(1);
         });
         it('with a .btn.btn-link', function() {
-            expect(element.querySelectorAll('.btn.btn-link').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn.btn-link').length).toBe(1);
         });
         it('with a new-instance-property-overlay', function() {
-            expect(element.find('new-instance-property-overlay').length).toBe(0);
-            
-            controller.showOverlay = true;
+            expect(this.element.find('new-instance-property-overlay').length).toBe(0);
+
+            this.controller.showOverlay = true;
             scope.$digest();
-            
-            expect(element.find('new-instance-property-overlay').length).toBe(1);
+
+            expect(this.element.find('new-instance-property-overlay').length).toBe(1);
         });
         it('with a property-value-overlay', function() {
-            expect(element.find('property-value-overlay').length).toBe(0);
-            
-            controller.showPropertyValueOverlay = true;
+            expect(this.element.find('property-value-overlay').length).toBe(0);
+
+            this.controller.showPropertyValueOverlay = true;
             scope.$digest();
-            
-            expect(element.find('property-value-overlay').length).toBe(1);
+
+            expect(this.element.find('property-value-overlay').length).toBe(1);
         });
     });
     describe('controller methods', function() {
@@ -212,45 +226,45 @@ describe('Instance Form directive', function() {
                         }));
                     });
                     it('without filtering', function() {
-                        controller.getOptions('propertyId')
+                        this.controller.getOptions('propertyId')
                             .then(function(response) {
-                                expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'string', {offset: 0}, true);
                                 expect(response).toEqual(['propertyId', 'propertyId2', 'propertyId3']);
                             }, function() {
                                 fail('Promise should have resolved');
                             });
                         scope.$apply();
+                        expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'string', {offset: 0}, true);
                     });
                     it('with filtering', function() {
                         exploreUtilsSvc.contains.and.callFake(function(string, part) {
                             return _.includes(_.toLower(string), _.toLower(part));
                         });
-                        controller.searchText.propertyId = '3';
-                        controller.getOptions('propertyId')
+                        this.controller.searchText.propertyId = '3';
+                        this.controller.getOptions('propertyId')
                             .then(function(response) {
-                                expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'string', {offset: 0}, true);
                                 expect(response).toEqual(['propertyId3']);
                             }, function() {
                                 fail('Promise should have resolved');
                             });
                         scope.$apply();
+                        expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'string', {offset: 0}, true);
                     });
                 });
                 it('rejected', function() {
                     exploreSvc.getClassInstanceDetails.and.returnValue($q.reject('error'));
-                    controller.getOptions('propertyId')
+                    this.controller.getOptions('propertyId')
                         .then(function(response) {
-                            expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'string', {offset: 0}, true);
-                            expect(util.createErrorToast).toHaveBeenCalledWith('error');
                             expect(response).toEqual([]);
                         }, function() {
                             fail('Promise should have resolved');
                         });
                     scope.$apply();
+                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'string', {offset: 0}, true);
+                    expect(util.createErrorToast).toHaveBeenCalledWith('error');
                 });
             });
             it('does not have a range', function() {
-                controller.getOptions('propertyId2')
+                this.controller.getOptions('propertyId2')
                     .then(function(response) {
                         expect(response).toEqual([]);
                     }, function() {
@@ -261,46 +275,46 @@ describe('Instance Form directive', function() {
         });
         describe('addToChanged adds the provided iri to the changed array', function() {
             beforeEach(function() {
-                spyOn(controller, 'getMissingProperties').and.returnValue(['missing property']);
+                spyOn(this.controller, 'getMissingProperties').and.returnValue(['missing property']);
             });
             it('when it is new', function() {
-                controller.addToChanged('new');
-                expect(controller.changed).toEqual(['iri', 'new']);
-                expect(controller.getMissingProperties).toHaveBeenCalled();
-                expect(controller.missingProperties).toEqual(['missing property']);
+                this.controller.addToChanged('new');
+                expect(this.controller.changed).toEqual(['iri', 'new']);
+                expect(this.controller.getMissingProperties).toHaveBeenCalled();
+                expect(this.controller.missingProperties).toEqual(['missing property']);
             });
             it('when it is not new', function() {
-                controller.addToChanged('iri');
-                expect(controller.changed).toEqual(['iri']);
-                expect(controller.getMissingProperties).toHaveBeenCalled();
-                expect(controller.missingProperties).toEqual(['missing property']);
+                this.controller.addToChanged('iri');
+                expect(this.controller.changed).toEqual(['iri']);
+                expect(this.controller.getMissingProperties).toHaveBeenCalled();
+                expect(this.controller.missingProperties).toEqual(['missing property']);
             });
         });
         it('isChanged should return the proper value', function() {
-            expect(controller.isChanged('iri')).toBe(true);
-            expect(controller.isChanged('new')).toBe(false);
+            expect(this.controller.isChanged('iri')).toBe(true);
+            expect(this.controller.isChanged('new')).toBe(false);
         });
         it('setIRI should set the proper value', function() {
-            controller.setIRI('begin', '#', 'end');
-            expect(controller.instance['@id']).toBe('begin#end');
+            this.controller.setIRI('begin', '#', 'end');
+            expect(this.controller.instance['@id']).toBe('begin#end');
         });
         it('addNewProperty should set variables correctly', function() {
-            spyOn(controller, 'addToChanged');
-            controller.showOverlay = true;
-            controller.addNewProperty('newProperty');
-            expect(_.has(controller.instance, 'newProperty')).toBe(true);
-            expect(controller.addToChanged).toHaveBeenCalledWith('newProperty');
-            expect(controller.showOverlay).toBe(false);
+            spyOn(this.controller, 'addToChanged');
+            this.controller.showOverlay = true;
+            this.controller.addNewProperty('newProperty');
+            expect(_.has(this.controller.instance, 'newProperty')).toBe(true);
+            expect(this.controller.addToChanged).toHaveBeenCalledWith('newProperty');
+            expect(this.controller.showOverlay).toBe(false);
         });
         it('onSelect sets the correct variables', function() {
-            controller.showPropertyValueOverlay = false;
-            controller.onSelect('text');
-            controller.fullText = 'text';
-            controller.showPropertyValueOverlay = true;
+            this.controller.showPropertyValueOverlay = false;
+            this.controller.onSelect('text');
+            this.controller.fullText = 'text';
+            this.controller.showPropertyValueOverlay = true;
         });
         it('getMissingProperties retrieves the proper list of messages', function() {
             util.getBeautifulIRI.and.callFake(_.identity);
-            controller.properties = [{
+            this.controller.properties = [{
                 propertyIRI: 'propertyId',
                 restrictions: [{
                     cardinality: 1,
@@ -343,7 +357,7 @@ describe('Instance Form directive', function() {
                     classExpressionType: 'DATA_EXACT_CARDINALITY'
                 }]
             }];
-            controller.instance = {
+            this.controller.instance = {
                 '@id': 'id',
                 propertyId7: [{'@value': 'just the one'}],
                 propertyId3: [{'@value': 'one'}, {'@value': 'two'}],
@@ -357,15 +371,15 @@ describe('Instance Form directive', function() {
                 'Must have at least 1 value(s) for propertyId5',
                 'Must have at most 1 value(s) for propertyId6'
             ];
-            expect(controller.getMissingProperties()).toEqual(expected);
+            expect(this.controller.getMissingProperties()).toEqual(expected);
             _.forEach(['propertyId', 'propertyId2', 'propertyId3', 'propertyId4', 'propertyId5', 'propertyId6'], function(item) {
                 expect(util.getBeautifulIRI).toHaveBeenCalledWith(item);
             });
-            expect(controller.isValid).toBe(false);
+            expect(this.controller.isValid).toBe(false);
         });
         describe('getRestrictionText should return the correct value for', function() {
             beforeEach(function() {
-                controller.properties = [{
+                this.controller.properties = [{
                     propertyIRI: 'propertyId',
                     restrictions: [{
                         cardinality: 1,
@@ -388,16 +402,16 @@ describe('Instance Form directive', function() {
                 }];
             });
             it('exact restriction', function() {
-                expect(controller.getRestrictionText('propertyId')).toBe('[exactly 1]');
+                expect(this.controller.getRestrictionText('propertyId')).toBe('[exactly 1]');
             });
             it('min restriction', function() {
-                expect(controller.getRestrictionText('propertyId2')).toBe('[at least 1]');
+                expect(this.controller.getRestrictionText('propertyId2')).toBe('[at least 1]');
             });
             it('max restriction', function() {
-                expect(controller.getRestrictionText('propertyId3')).toBe('[at most 1]');
+                expect(this.controller.getRestrictionText('propertyId3')).toBe('[at most 1]');
             });
             it('no restriction', function() {
-                expect(controller.getRestrictionText('propertyId4')).toBe('');
+                expect(this.controller.getRestrictionText('propertyId4')).toBe('');
             });
         });
         it('cleanUpReification should remove the reification triple from the entity', function() {
@@ -408,7 +422,7 @@ describe('Instance Form directive', function() {
             entity[prefixes.rdf + 'predicate'] = [{'@id': 'predicate'}];
             entity[prefixes.rdf + 'object'] = [{'@value': 'value'}];
             discoverStateSvc.explore.instance.entity = [{}, entity];
-            controller.cleanUpReification({'@value': 'value'}, 'predicate');
+            this.controller.cleanUpReification({'@value': 'value'}, 'predicate');
             expect(discoverStateSvc.explore.instance.entity).toEqual([{}]);
         });
     });

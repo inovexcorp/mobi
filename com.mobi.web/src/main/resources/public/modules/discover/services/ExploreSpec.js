@@ -38,7 +38,14 @@ describe('Explore Service', function() {
 
         utilSvc.rejectError.and.returnValue($q.reject('error'));
     });
-    
+
+    afterEach(function() {
+        exploreSvc = null;
+        $q = null;
+        $httpBackend = null;
+        utilSvc = null;
+    });
+
     describe('getClassDetails calls the correct functions when GET /mobirest/explorable-datasets/{recordId}/class-details', function() {
         it('succeeds', function() {
             var data = [{prop: 'data'}];
@@ -57,16 +64,16 @@ describe('Explore Service', function() {
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
-                        status: 400,
-                        statusText: 'error'
-                    }));
                     expect(response).toBe('error');
                 });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'error'
+            }));
         });
     });
-    
+
     describe('getClassInstanceDetails calls the correct functions when GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/instance-details', function() {
         it('succeeds', function() {
             var data = [{}];
@@ -88,16 +95,16 @@ describe('Explore Service', function() {
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
-                        status: 400,
-                        statusText: 'error'
-                    }));
                     expect(response).toBe('error');
                 });
              flushAndVerify($httpBackend);
+             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                 status: 400,
+                 statusText: 'error'
+             }));
         });
     });
-    
+
     describe('getClassPropertyDetails calls the correct functions when GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/property-details', function() {
         it('succeeds', function() {
             var data = [{}];
@@ -116,21 +123,23 @@ describe('Explore Service', function() {
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
-                        status: 400,
-                        statusText: 'error'
-                    }));
                     expect(response).toBe('error');
                 });
              flushAndVerify($httpBackend);
+             expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                 status: 400,
+                 statusText: 'error'
+             }));
         });
     });
-    
+
     describe('createInstance calls the correct functions when POST /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances', function() {
-        var json = {'@id': 'id'};
+        beforeEach(function() {
+            this.json = {'@id': 'id'};
+        });
         it('succeeds', function() {
-            $httpBackend.expectPOST('/mobirest/explorable-datasets/recordId/instances', json).respond(200, 'instanceId');
-            exploreSvc.createInstance('recordId', json)
+            $httpBackend.expectPOST('/mobirest/explorable-datasets/recordId/instances', this.json).respond(200, 'instanceId');
+            exploreSvc.createInstance('recordId', this.json)
                 .then(function(response) {
                     expect(response).toEqual('instanceId');
                 }, function() {
@@ -139,21 +148,21 @@ describe('Explore Service', function() {
             flushAndVerify($httpBackend);
         });
         it('fails', function() {
-            $httpBackend.expectPOST('/mobirest/explorable-datasets/recordId/instances', json).respond(400, null, null, 'error');
-            exploreSvc.createInstance('recordId', json)
+            $httpBackend.expectPOST('/mobirest/explorable-datasets/recordId/instances', this.json).respond(400, null, null, 'error');
+            exploreSvc.createInstance('recordId', this.json)
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
-                        status: 400,
-                        statusText: 'error'
-                    }));
                     expect(response).toBe('error');
                 });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'error'
+            }));
         });
     });
-    
+
     describe('getInstance calls the correct functions when GET /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId}', function() {
         it('succeeds', function() {
             var data = {'@id': 'instanceId'};
@@ -181,12 +190,14 @@ describe('Explore Service', function() {
             flushAndVerify($httpBackend);
         });
     });
-    
+
     describe('updateInstance calls the correct functions when PUT /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId}', function() {
-        var newInstance = {'@id': 'instanceId', 'prop': 'property'};
+        beforeEach(function() {
+            this.newInstance = {'@id': 'instanceId', 'prop': 'property'};
+        });
         it('succeeds', function() {
-            $httpBackend.expectPUT('/mobirest/explorable-datasets/recordId/instances/instanceId', newInstance).respond(200);
-            exploreSvc.updateInstance('recordId', 'instanceId', newInstance)
+            $httpBackend.expectPUT('/mobirest/explorable-datasets/recordId/instances/instanceId', this.newInstance).respond(200);
+            exploreSvc.updateInstance('recordId', 'instanceId', this.newInstance)
                 .then(function(response) {
                     expect(response).toBeUndefined();
                 }, function() {
@@ -195,52 +206,51 @@ describe('Explore Service', function() {
             flushAndVerify($httpBackend);
         });
         it('fails', function() {
-            $httpBackend.expectPUT('/mobirest/explorable-datasets/recordId/instances/instanceId', newInstance).respond(400, null, null, 'error');
-            exploreSvc.updateInstance('recordId', 'instanceId', newInstance)
+            $httpBackend.expectPUT('/mobirest/explorable-datasets/recordId/instances/instanceId', this.newInstance).respond(400, null, null, 'error');
+            exploreSvc.updateInstance('recordId', 'instanceId', this.newInstance)
                 .then(function() {
                     fail('Should have been rejected.');
                 }, function(response) {
-                    expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
-                        status: 400,
-                        statusText: 'error'
-                    }));
                     expect(response).toBe('error');
                 });
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: 'error'
+            }));
         });
     });
-    
+
     describe('createPagedResultsObject should return the correct paged object when the headers of the response', function() {
-        var response;
-        var nextLink = 'http://example.com/next';
-        var prevLink = 'http://example.com/prev';
-        var headers = jasmine.createSpy('headers');
         beforeEach(function() {
-            response = {
+            this.nextLink = 'http://example.com/next';
+            this.prevLink = 'http://example.com/prev';
+            this.headers = jasmine.createSpy('headers').and.returnValue({
+                'x-total-count': 10,
+                link: 'link'
+            });
+            this.response = {
                 data: ['data'],
-                headers: headers.and.returnValue({
-                    'x-total-count': 10,
-                    link: 'link'
-                })
+                headers: this.headers
             };
-            utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
+            utilSvc.parseLinks.and.returnValue({next: this.nextLink, prev: this.prevLink});
         });
         it('has link', function() {
-            var result = exploreSvc.createPagedResultsObject(response);
+            var result = exploreSvc.createPagedResultsObject(this.response);
             expect(result.data).toEqual(['data']);
-            expect(response.headers).toHaveBeenCalled();
+            expect(this.response.headers).toHaveBeenCalled();
             expect(result.total).toBe(10);
             expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
-            expect(result.links.next).toBe(nextLink);
-            expect(result.links.prev).toBe(prevLink);
+            expect(result.links.next).toBe(this.nextLink);
+            expect(result.links.prev).toBe(this.prevLink);
         });
         it('does not have link', function() {
-            response.headers = headers.and.returnValue({
+            this.response.headers = this.headers.and.returnValue({
                 'x-total-count': 10
             });
-            var result = exploreSvc.createPagedResultsObject(response);
+            var result = exploreSvc.createPagedResultsObject(this.response);
             expect(result.data).toEqual(['data']);
-            expect(response.headers).toHaveBeenCalled();
+            expect(this.response.headers).toHaveBeenCalled();
             expect(result.total).toBe(10);
             expect(utilSvc.parseLinks).not.toHaveBeenCalled();
             expect(_.has(result, 'links')).toBe(false);
