@@ -641,14 +641,16 @@ public class ExplorableDatasetRestImpl implements ExplorableDatasetRest {
     private List<InstanceDetails> getInstanceDetailsFromQueryResults(TupleQueryResult results) {
         List<InstanceDetails> instances = new ArrayList<>();
         results.forEach(instance -> {
-            InstanceDetails instanceDetails = new InstanceDetails();
-            String instanceIRI = instance.getValue(INSTANCE_BINDING).flatMap(value -> Optional.of(value.stringValue()))
-                    .orElse("");
-            instanceDetails.setInstanceIRI(instanceIRI);
-            instanceDetails.setTitle(getValueFromBindingSet(instance, LABEL_BINDING, TITLE_BINDING,
-                    splitCamelCase(factory.createIRI(instanceIRI).getLocalName())));
-            instanceDetails.setDescription(getValueFromBindingSet(instance, COMMENT_BINDING, DESCRIPTION_BINDING, ""));
-            instances.add(instanceDetails);
+            if (instance.size() > 0) {
+                InstanceDetails instanceDetails = new InstanceDetails();
+                String instanceIRI = instance.getValue(INSTANCE_BINDING).flatMap(value -> Optional.of(value.stringValue()))
+                        .orElse("");
+                instanceDetails.setInstanceIRI(instanceIRI);
+                instanceDetails.setTitle(getValueFromBindingSet(instance, LABEL_BINDING, TITLE_BINDING,
+                        splitCamelCase(factory.createIRI(instanceIRI).getLocalName())));
+                instanceDetails.setDescription(getValueFromBindingSet(instance, COMMENT_BINDING, DESCRIPTION_BINDING, ""));
+                instances.add(instanceDetails);
+            }
         });
         return instances;
     }

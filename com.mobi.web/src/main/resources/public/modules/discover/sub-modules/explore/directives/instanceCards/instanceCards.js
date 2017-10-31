@@ -50,9 +50,9 @@
          */
         .directive('instanceCards', instanceCards);
 
-        instanceCards.$inject = ['$q', 'discoverStateService', 'exploreService', 'utilService']
+        instanceCards.$inject = ['$q', 'discoverStateService', 'exploreService', 'exploreUtilsService', 'utilService']
 
-        function instanceCards($q, discoverStateService, exploreService, utilService) {
+        function instanceCards($q, discoverStateService, exploreService, exploreUtilsService, utilService) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceCards/instanceCards.html',
@@ -64,6 +64,7 @@
                     var ds = discoverStateService;
                     var es = exploreService;
                     var util = utilService;
+                    var eu = exploreUtilsService;
                     dvm.chunks = getChunks(ds.explore.instanceDetails.data);
                     dvm.classTitle = _.last(ds.explore.breadcrumbs);
                     dvm.selectedItem = undefined;
@@ -75,6 +76,13 @@
                                 ds.explore.instance.entity = response;
                                 ds.explore.instance.metadata = item;
                                 ds.explore.breadcrumbs.push(item.title);
+                                return eu.getReferencedTitles(item.instanceIRI, ds.explore.recordId);
+                            }, $q.reject)
+                            .then(response => {
+                                ds.explore.instance.objectMap = {};
+                                if (_.has(response, 'results')) {
+                                    _.forEach(response.results.bindings, binding => ds.explore.instance.objectMap[binding.object.value] = binding.title.value);
+                                }
                             }, util.createErrorToast);
                     }
 
@@ -82,11 +90,14 @@
                         es.deleteInstance(ds.explore.recordId, dvm.selectedItem.instanceIRI)
                             .then(() => {
                                 util.createSuccessToast('Instance was successfully deleted.');
-                                return es.getClassInstanceDetails(ds.explore.recordId, ds.explore.classId, {});
+                                ds.explore.instanceDetails.total--;
+                                if (ds.explore.instanceDetails.data.length === 1) {
+                                    ds.explore.instanceDetails.currentPage--;
+                                }
+                                var offset = ds.explore.instanceDetails.currentPage * ds.explore.instanceDetails.limit;
+                                return es.getClassInstanceDetails(ds.explore.recordId, ds.explore.classId, {offset, limit: ds.explore.instanceDetails.limit});
                             }, $q.reject)
                             .then(response => {
-                                ds.explore.instanceDetails.total--;
-                                var offset = ds.explore.instanceDetails.currentPage * ds.explore.instanceDetails.limit;
                                 var data = _.slice(response.data, offset, offset + ds.explore.instanceDetails.limit);
                                 if (_.isEmpty(data)) {
                                     // Do get prev page

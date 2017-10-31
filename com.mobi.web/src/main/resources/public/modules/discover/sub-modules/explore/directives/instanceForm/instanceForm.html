@@ -35,15 +35,15 @@
                 <div class="boolean-property" ng-if="dvm.eu.isBoolean(key, dvm.properties)">
                     <md-checkbox ng-model="dvm.instance[key][0]['@value']" ng-true-value="'1'" ng-false-value="'0'" ng-change="dvm.addToChanged(key)" aria-label="{{dvm.util.getBeautifulIRI(key)}}"></md-checkbox>
                 </div>
-                <md-chips class="data-property" ng-if="dvm.eu.isPropertyOfType(key, 'Data', dvm.properties) && !dvm.eu.isBoolean(key, dvm.properties)" ng-model="dvm.instance[key]" md-transform-chip="dvm.eu.createValueObj($chip, key)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key); dvm.cleanUpReification($chip, key)">
+                <md-chips class="data-property" ng-if="dvm.eu.isPropertyOfType(key, 'Data', dvm.properties) && !dvm.eu.isBoolean(key, dvm.properties)" ng-model="dvm.instance[key]" md-transform-chip="dvm.eu.createValueObj($chip, key)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key); dvm.cleanUpReification($chip, key)" md-add-on-blur>
                     <input type="{{dvm.eu.getInputType(key, dvm.properties)}}" ng-pattern="dvm.eu.getPattern(key, dvm.properties)" placeholder="Enter value...">
                     <md-chip-template ng-click="dvm.onSelect($chip['@value'], key, $index)">{{$chip['@value']}}</md-chip-template>
                 </md-chips>
                 <md-chips class="object-property" ng-if="dvm.eu.isPropertyOfType(key, 'Object', dvm.properties)" ng-model="dvm.instance[key]" md-transform-chip="dvm.eu.createIdObj($chip)" md-on-add="dvm.addToChanged(key)" md-on-remove="dvm.addToChanged(key); dvm.cleanUpReification($chip, key)">
                     <md-autocomplete md-items="iri in dvm.getOptions(key)" placeholder="Enter IRI..." md-search-text="dvm.searchText[key]" md-no-cache="true" md-min-length="0">
-                        <span md-highlight-text="dvm.searchText[key]">{{dvm.util.getBeautifulIRI(iri)}} :: {{iri}}</span>
+                        <span md-highlight-text="dvm.searchText[key]">{{dvm.ds.explore.instance.objectMap[iri] || dvm.util.getBeautifulIRI(iri)}} :: {{iri}}</span>
                     </md-autocomplete>
-                    <md-chip-template ng-click="dvm.onSelect($chip['@id'], key, $index)">{{$chip['@id']}}</md-chip-template>
+                    <md-chip-template ng-click="dvm.onSelect($chip['@id'], key, $index)">{{dvm.ds.explore.instance.objectMap[$chip['@id']] || $chip['@id']}}</md-chip-template>
                 </md-chips>
             </div>
         </form>

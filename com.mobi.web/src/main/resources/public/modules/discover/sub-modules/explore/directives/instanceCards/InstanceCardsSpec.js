@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Instance Cards directive', function() {
-    var $compile, scope, discoverStateSvc, exploreSvc, utilSvc, $q;
+    var $compile, scope, discoverStateSvc, exploreSvc, utilSvc, $q, exploreUtilsSvc;
 
     beforeEach(function() {
         module('templates');
@@ -29,14 +29,16 @@ describe('Instance Cards directive', function() {
         mockDiscoverState();
         mockExplore();
         mockUtil();
+        mockExploreUtils();
 
-        inject(function(_$compile_, _$rootScope_, _discoverStateService_, _exploreService_, _utilService_, _$q_) {
+        inject(function(_$compile_, _$rootScope_, _discoverStateService_, _exploreService_, _utilService_, _$q_, _exploreUtilsService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             discoverStateSvc = _discoverStateService_;
             exploreSvc = _exploreService_;
             utilSvc = _utilService_;
             $q = _$q_;
+            exploreUtilsSvc = _exploreUtilsService_;
         });
 
         discoverStateSvc.explore.recordId = 'recordId';
@@ -61,6 +63,7 @@ describe('Instance Cards directive', function() {
         exploreSvc = null;
         utilSvc = null;
         $q = null;
+        exploreUtilsSvc = null;
         this.element.remove();
     });
 
@@ -128,17 +131,40 @@ describe('Instance Cards directive', function() {
     });
     describe('controller methods', function() {
         describe('view should set the correct variables when getInstance is', function() {
-            it('resolved', function() {
-                var data = {'@id': 'instanceId'};
-                var item = {instanceIRI: 'instanceId', title: 'title'};
-                discoverStateSvc.explore.breadcrumbs = ['', ''];
-                exploreSvc.getInstance.and.returnValue($q.when(data));
-                this.controller.view(item);
-                scope.$apply();
-                expect(exploreSvc.getInstance).toHaveBeenCalledWith('recordId', 'instanceId');
-                expect(discoverStateSvc.explore.instance.entity).toEqual(data);
-                expect(discoverStateSvc.explore.instance.metadata).toEqual(item);
-                expect(discoverStateSvc.explore.breadcrumbs).toEqual(['', '', 'title']);
+            describe('resolved and getReferencedTitles is', function() {
+                beforeEach(function() {
+                    this.data = {'@id': 'instanceId'};
+                    this.item = {instanceIRI: 'instanceId', title: 'title'};
+                    discoverStateSvc.explore.breadcrumbs = ['', ''];
+                    exploreSvc.getInstance.and.returnValue($q.when(this.data));
+                });
+                it('resolved', function() {
+                    exploreUtilsSvc.getReferencedTitles.and.returnValue($q.when({
+                        results: {
+                            bindings: [{
+                                object: {value: 'object'},
+                                title: {value: 'title'}
+                            }]
+                        }
+                    }));
+                    this.controller.view(this.item);
+                    scope.$apply();
+                    expect(exploreSvc.getInstance).toHaveBeenCalledWith('recordId', 'instanceId');
+                    expect(discoverStateSvc.explore.instance.entity).toEqual(this.data);
+                    expect(discoverStateSvc.explore.instance.metadata).toEqual(this.item);
+                    expect(discoverStateSvc.explore.breadcrumbs).toEqual(['', '', 'title']);
+                    expect(discoverStateSvc.explore.instance.objectMap).toEqual({object: 'title'});
+                });
+                it('rejected', function() {
+                    exploreUtilsSvc.getReferencedTitles.and.returnValue($q.reject('error'));
+                    this.controller.view(this.item);
+                    scope.$apply();
+                    expect(exploreSvc.getInstance).toHaveBeenCalledWith('recordId', 'instanceId');
+                    expect(discoverStateSvc.explore.instance.entity).toEqual(this.data);
+                    expect(discoverStateSvc.explore.instance.metadata).toEqual(this.item);
+                    expect(discoverStateSvc.explore.breadcrumbs).toEqual(['', '', 'title']);
+                    expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
+                });
             });
             it('rejected', function() {
                 exploreSvc.getInstance.and.returnValue($q.reject('error'));
