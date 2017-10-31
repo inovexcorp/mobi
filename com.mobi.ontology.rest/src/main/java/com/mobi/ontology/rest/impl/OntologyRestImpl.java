@@ -34,12 +34,6 @@ import static com.mobi.rest.util.RestUtils.modelToJsonld;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.google.common.collect.Iterables;
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONException;
-import net.sf.json.JSONObject;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.builder.Difference;
@@ -76,6 +70,12 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
+import net.sf.json.JSON;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONException;
+import net.sf.json.JSONObject;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openrdf.model.vocabulary.OWL;
 import org.openrdf.model.vocabulary.SKOS;
 import org.slf4j.Logger;
@@ -627,7 +627,8 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getDataPropertiesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                           String branchIdStr, String commitIdStr) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getDataPropertyIRIArray);
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+                    this::getDataPropertyIRIArray);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1069,8 +1070,9 @@ public class OntologyRestImpl implements OntologyRest {
     private JSONArray getClassArray(Ontology ontology) {
         Model model = ontology.asModel(modelFactory);
         return ontology.getAllClasses().stream()
-                .map(oClass -> getObjectFromJsonld(modelToJsonld(model.filter(oClass.getIRI(), null, null),
-                        sesameTransformer)))
+                .map(oClass -> model.filter(oClass.getIRI(), null, null))
+                .filter(m -> !m.isEmpty())
+                .map(m -> getObjectFromJsonld(modelToJsonld(m, sesameTransformer)))
                 .collect(JSONArray::new, JSONArray::add, JSONArray::add);
     }
 
@@ -1321,7 +1323,8 @@ public class OntologyRestImpl implements OntologyRest {
             throw ErrorUtils.sendError(entityIdStr + " was not found within the ontology.",
                     Response.Status.BAD_REQUEST);
         }
-        catalogManager.updateInProgressCommit(catalogManager.getLocalCatalogIRI(), recordId, inProgressCommitIRI, null, model);
+        catalogManager.updateInProgressCommit(catalogManager.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
+                null, model);
         return Response.ok().build();
     }
 
@@ -1338,7 +1341,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     /**
-     * Verifies that the provided JSON-LD contains the proper @type
+     * Verifies that the provided JSON-LD contains the proper @type.
      *
      * @param jsonldStr the JSON-LD of the entity being verified.
      * @param type      the @type that the entity should be.

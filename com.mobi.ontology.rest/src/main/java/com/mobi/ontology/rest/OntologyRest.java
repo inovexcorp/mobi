@@ -59,7 +59,7 @@ public interface OntologyRest {
      * @param description     the description for the OntologyRecord.
      * @param keywords        the comma separated list of keywords associated with the OntologyRecord.
      * @return CREATED with record ID in the data if persisted, BAD REQUEST if publishers can't be found, or INTERNAL
-     * SERVER ERROR if there is a problem creating the OntologyRecord.
+     *      SERVER ERROR if there is a problem creating the OntologyRecord.
      */
     @POST
     @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -83,7 +83,7 @@ public interface OntologyRest {
      * @param keywords     the comma separated list of keywords associated with the OntologyRecord.
      * @param ontologyJson the ontology JSON-LD to upload.
      * @return OK with record ID in the data if persisted, BAD REQUEST if publishers can't be found, or INTERNAL
-     * SERVER ERROR if there is a problem creating the OntologyRecord.
+     *      SERVER ERROR if there is a problem creating the OntologyRecord.
      */
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -110,7 +110,8 @@ public interface OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @param rdfFormat   the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @param clearCache  whether or not the cached version of the identified Ontology should be cleared before retrieval
+     * @param clearCache  whether or not the cached version of the identified Ontology should be cleared before
+     *                    retrieval
      * @param skolemize   whether or not the JSON-LD of the ontology should be skolemized
      * @return a Response with the ontology in the requested format.
      */
@@ -318,9 +319,9 @@ public interface OntologyRest {
      *                        String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                        master Branch.
      * @param commitIdStr     the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
-     *                        String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
-     *                        Commit. The provided commitId must be on the Branch identified by the provided branchId;
-     *                        otherwise, nothing will be returned.
+     *                        String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                        head Commit. The provided commitId must be on the Branch identified by the provided
+     *                        branchId; otherwise, nothing will be returned.
      * @return a Response indicating whether it was successfully deleted.
      */
     @DELETE
@@ -464,9 +465,9 @@ public interface OntologyRest {
      *                      String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                      master Branch.
      * @param commitIdStr   the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
-     *                      String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
-     *                      Commit. The provided commitId must be on the Branch identified by the provided branchId;
-     *                      otherwise, nothing will be returned.
+     *                      String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                      head Commit. The provided commitId must be on the Branch identified by the provided
+     *                      branchId; otherwise, nothing will be returned.
      * @return a Response indicating whether it was successfully deleted.
      */
     @DELETE
@@ -510,8 +511,8 @@ public interface OntologyRest {
      * requester's InProgressCommit.
      *
      * @param context            the context of the request.
-     * @param recordIdStr        the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
-     *                           String begins with "_:".
+     * @param recordIdStr        the String representing the record Resource id. NOTE: Assumes id represents an IRI
+     *                           unless String begins with "_:".
      * @param objectPropertyJson the String representing the new property model.
      * @return a Response indicating whether it was successfully added.
      */
@@ -529,17 +530,17 @@ public interface OntologyRest {
      * Delete object property with requested class ID from ontology identified by the provided IDs from the server.
      *
      * @param context             the context of the request.
-     * @param recordIdStr         the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
-     *                            String begins with "_:".
+     * @param recordIdStr         the String representing the record Resource id. NOTE: Assumes id represents an IRI
+     *                            unless String begins with "_:".
      * @param objectPropertyIdStr the String representing the class Resource id. NOTE: Assumes id represents
      *                            an IRI unless String begins with "_:".
-     * @param branchIdStr         the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
-     *                            String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
-     *                            master Branch.
-     * @param commitIdStr         the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
-     *                            String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
-     *                            Commit. The provided commitId must be on the Branch identified by the provided branchId;
-     *                            otherwise, nothing will be returned.
+     * @param branchIdStr         the String representing the Branch Resource id. NOTE: Assumes id represents an IRI
+     *                            unless String begins with "_:". NOTE: Optional param - if nothing is specified, it
+     *                            will get the master Branch.
+     * @param commitIdStr         the String representing the Commit Resource id. NOTE: Assumes id represents an IRI
+     *                            unless String begins with "_:". NOTE: Optional param - if nothing is specified, it
+     *                            will get the head Commit. The provided commitId must be on the Branch identified by
+     *                            the provided branchId; otherwise, nothing will be returned.
      * @return a Response indicating whether it was successfully deleted.
      */
     @DELETE
@@ -602,17 +603,17 @@ public interface OntologyRest {
      * Delete data property with requested class ID from ontology identified by the provided IDs from the server.
      *
      * @param context           the context of the request.
-     * @param recordIdStr       the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
-     *                          String begins with "_:".
+     * @param recordIdStr       the String representing the record Resource id. NOTE: Assumes id represents an IRI
+     *                          unless String begins with "_:".
      * @param dataPropertyIdStr the String representing the class Resource id. NOTE: Assumes id represents
      *                          an IRI unless String begins with "_:".
-     * @param branchIdStr       the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
-     *                          String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
-     *                          master Branch.
-     * @param commitIdStr       the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
-     *                          String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
-     *                          Commit. The provided commitId must be on the Branch identified by the provided branchId;
-     *                          otherwise, nothing will be returned.
+     * @param branchIdStr       the String representing the Branch Resource id. NOTE: Assumes id represents an IRI
+     *                          unless String begins with "_:". NOTE: Optional param - if nothing is specified, it will
+     *                          get the master Branch.
+     * @param commitIdStr       the String representing the Commit Resource id. NOTE: Assumes id represents an IRI
+     *                          unless String begins with "_:". NOTE: Optional param - if nothing is specified, it will
+     *                          get the head Commit. The provided commitId must be on the Branch identified by the
+     *                          provided branchId; otherwise, nothing will be returned.
      * @return a Response indicating whether it was successfully deleted.
      */
     @DELETE
@@ -683,9 +684,9 @@ public interface OntologyRest {
      *                        String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
      *                        master Branch.
      * @param commitIdStr     the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
-     *                        String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
-     *                        Commit. The provided commitId must be on the Branch identified by the provided branchId;
-     *                        otherwise, nothing will be returned.
+     *                        String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                        head Commit. The provided commitId must be on the Branch identified by the provided
+     *                        branchId; otherwise, nothing will be returned.
      * @return a Response indicating whether it was successfully deleted.
      */
     @DELETE
@@ -916,7 +917,7 @@ public interface OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @return nested JSON structure that represents the class hierarchy for the ontology identified by the provided
-     * IDs.
+     *      IDs.
      */
     @GET
     @Path("{recordId}/class-hierarchies")
@@ -942,7 +943,7 @@ public interface OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @return nested JSON structure that represents the object property hierarchy for the ontology with requested
-     * record ID.
+     *      record ID.
      */
     @GET
     @Path("{recordId}/object-property-hierarchies")
@@ -968,7 +969,7 @@ public interface OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @return nested JSON structure that represents the data property hierarchy for the ontology with requested
-     * record ID.
+     *      record ID.
      */
     @GET
     @Path("{recordId}/data-property-hierarchies")
@@ -994,7 +995,7 @@ public interface OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @return nested JSON structure that represents the annotation property hierarchy for the ontology with requested
-     * record ID.
+     *      record ID.
      */
     @GET
     @Path("{recordId}/annotation-property-hierarchies")
@@ -1020,7 +1021,7 @@ public interface OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @return nested JSON structure that represents the SKOS concept hierarchy for the ontology with requested
-     * record ID.
+     *      record ID.
      */
     @GET
     @Path("{recordId}/concept-hierarchies")
@@ -1073,7 +1074,7 @@ public interface OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @return nested JSON structure that represents the class hierarchy for classes with individuals in the ontology
-     * identified by the provided IDs.
+     *      identified by the provided IDs.
      */
     @GET
     @Path("{recordId}/classes-with-individuals")
