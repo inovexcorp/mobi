@@ -228,7 +228,13 @@ describe('Instance Form directive', function() {
                     it('without filtering', function() {
                         this.controller.getOptions('propertyId')
                             .then(function(response) {
-                                expect(response).toEqual(['propertyId', 'propertyId2', 'propertyId3']);
+                                expect(response).toEqual([{
+                                    instanceIRI: 'propertyId'
+                                }, {
+                                    instanceIRI: 'propertyId2'
+                                }, {
+                                    instanceIRI: 'propertyId3'
+                                }]);
                             }, function() {
                                 fail('Promise should have resolved');
                             });
@@ -242,7 +248,7 @@ describe('Instance Form directive', function() {
                         this.controller.searchText.propertyId = '3';
                         this.controller.getOptions('propertyId')
                             .then(function(response) {
-                                expect(response).toEqual(['propertyId3']);
+                                expect(response).toEqual([{instanceIRI: 'propertyId3'}]);
                             }, function() {
                                 fail('Promise should have resolved');
                             });
@@ -424,6 +430,13 @@ describe('Instance Form directive', function() {
             discoverStateSvc.explore.instance.entity = [{}, entity];
             this.controller.cleanUpReification({'@value': 'value'}, 'predicate');
             expect(discoverStateSvc.explore.instance.entity).toEqual([{}]);
+        });
+        it('transformChip should add the chip iri and title to the objectMap and then transform the chip', function() {
+            discoverStateSvc.explore.instance.objectMap = {};
+            exploreUtilsSvc.createIdObj.and.returnValue({id: 'id'});
+            expect(this.controller.transformChip({instanceIRI: 'iri', title: 'title'})).toEqual({id: 'id'});
+            expect(discoverStateSvc.explore.instance.objectMap).toEqual({iri: 'title'});
+            expect(exploreUtilsSvc.createIdObj).toHaveBeenCalledWith('iri');
         });
     });
 });
