@@ -50,7 +50,7 @@
          * associated with the instance in an editable format.
          */
         .directive('instanceForm', instanceForm);
-        
+
         instanceForm.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'prefixes', 'REGEX', 'exploreUtilsService'];
 
         function instanceForm($q, discoverStateService, utilService, exploreService, prefixes, REGEX, exploreUtilsService) {
@@ -95,15 +95,15 @@
                     dvm.index = 0;
                     dvm.instance = dvm.ds.getInstance();
                     dvm.eu = exploreUtilsService;
-                    
+
                     dvm.getOptions = function(propertyIRI) {
                         var range = dvm.eu.getRange(propertyIRI, dvm.properties);
                         if (range) {
                             return es.getClassInstanceDetails(dvm.ds.explore.recordId, range, {offset: 0}, true)
                                 .then(response => {
-                                    var options = _.filter(_.map(response.data, 'instanceIRI'), iri => !_.some(dvm.instance[propertyIRI], {'@id': iri}));
+                                    var options = _.filter(response.data, item => !_.some(dvm.instance[propertyIRI], {'@id': item.instanceIRI}));
                                     if (dvm.searchText[propertyIRI]) {
-                                        return _.filter(options, iri => dvm.eu.contains(iri, dvm.searchText[propertyIRI]));
+                                        return _.filter(options, item => dvm.eu.contains(item.instanceIRI, dvm.searchText[propertyIRI]));
                                     }
                                     return options;
                                 }, errorMessage => {
@@ -113,33 +113,33 @@
                         }
                         return $q.when([]);
                     }
-                    
+
                     dvm.addToChanged = function(propertyIRI) {
                         dvm.changed = _.uniq(_.concat(dvm.changed, [propertyIRI]));
                         dvm.missingProperties = dvm.getMissingProperties();
                     }
-                    
+
                     dvm.isChanged = function(propertyIRI) {
                         return _.includes(dvm.changed, propertyIRI);
                     }
-                    
+
                     dvm.setIRI = function(begin, then, end) {
                         dvm.instance['@id'] = begin + then + end;
                     }
-                    
+
                     dvm.addNewProperty = function(property) {
                         dvm.instance[property] = [];
                         dvm.addToChanged(property);
                         dvm.showOverlay = false;
                     }
-                    
+
                     dvm.onSelect = function(text, propertyIRI, index) {
                         dvm.fullText = text;
                         dvm.propertyIRI = propertyIRI;
                         dvm.index = index;
                         dvm.showPropertyValueOverlay = true;
                     }
-                    
+
                     dvm.getMissingProperties = function() {
                         var missing = [];
                         _.forEach(dvm.properties, property => {
@@ -157,7 +157,7 @@
                         dvm.isValid = !missing.length;
                         return missing;
                     }
-                    
+
                     dvm.getRestrictionText = function(propertyIRI) {
                         var details = _.find(dvm.properties, {propertyIRI});
                         var results = [];
@@ -172,13 +172,18 @@
                         });
                         return results.length ? ('[' + _.join(results, ', ') + ']') : '';
                     }
-                    
+
                     dvm.cleanUpReification = function($chip, propertyIRI) {
                         var object = angular.copy($chip);
                         _.remove(dvm.ds.explore.instance.entity, {
                             [prefixes.rdf + 'predicate']: [{'@id': propertyIRI}],
                             [prefixes.rdf + 'object']: [object]
                         });
+                    }
+
+                    dvm.transformChip = function(item) {
+                        dvm.ds.explore.instance.objectMap[item.instanceIRI] = item.title;
+                        return dvm.eu.createIdObj(item.instanceIRI)
                     }
 
                     function getProperties() {
@@ -188,12 +193,12 @@
                                 dvm.missingProperties = dvm.getMissingProperties();
                             }, () => dvm.util.createErrorToast('An error occurred retrieving the instance properties.'));
                     }
-                    
+
                     function getReificationProperties() {
                         es.getClassPropertyDetails(dvm.ds.explore.recordId, prefixes.rdf + 'Statement')
                             .then(response => dvm.reificationProperties = response, () => dvm.util.createErrorToast('An error occurred retrieving the reification properties.'));
                     }
-                    
+
                     getProperties();
                     getReificationProperties();
                 }
