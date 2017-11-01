@@ -47,6 +47,7 @@
             'instanceEditor',
             'instanceForm',
             'instanceView',
+            'newInstanceClassOverlay',
             'newInstancePropertyOverlay',
             'propertyValueOverlay',
 
