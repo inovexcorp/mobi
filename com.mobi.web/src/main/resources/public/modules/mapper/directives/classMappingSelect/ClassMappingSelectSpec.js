@@ -21,10 +21,7 @@
  * #L%
  */
 describe('Class Mapping Select directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -42,33 +39,37 @@ describe('Class Mapping Select directive', function() {
 
         scope.bindModel = '';
         scope.onChange = jasmine.createSpy('onChange');
-        element = $compile(angular.element('<class-mapping-select ng-model="bindModel" on-change="onChange()"></class-mapping-select>'))(scope);
+        this.element = $compile(angular.element('<class-mapping-select ng-model="bindModel" on-change="onChange()"></class-mapping-select>'))(scope);
         scope.$digest();
+        this.isolatedScope = this.element.isolateScope();
+        this.controller = this.element.controller('classMappingSelect');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
         it('onChange should be called in the parent scope', function() {
-            var isolatedScope = element.isolateScope();
-            isolatedScope.onChange();
+            this.isolatedScope.onChange();
             expect(scope.onChange).toHaveBeenCalled();
         });
     });
     describe('controller bound variable', function() {
-        beforeEach(function() {
-            controller = element.controller('classMappingSelect');
-        });
         it('selectedProp should be two way bound', function() {
-            controller.bindModel = 'test';
+            this.controller.bindModel = 'test';
             scope.$digest();
             expect(scope.bindModel).toEqual('test');
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.hasClass('class-mapping-select')).toBe(true);
+            expect(this.element.hasClass('class-mapping-select')).toBe(true);
         });
         it('with a ui-select', function() {
-            expect(element.find('ui-select').length).toBe(1);
+            expect(this.element.find('ui-select').length).toBe(1);
         });
     });
 });

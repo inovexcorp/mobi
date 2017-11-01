@@ -76,11 +76,8 @@
                         dvm.state.resetEdit();
                         dvm.dm.reset();
                     }
-                    dvm.getClassName = function(classMappingId) {
-                        return dvm.util.getBeautifulIRI(dvm.mm.getClassIdByMappingId(dvm.state.mapping.jsonld, classMappingId));
-                    }
-                    dvm.getPropName = function(propMappingId) {
-                        return dvm.util.getBeautifulIRI(dvm.mm.getPropIdByMappingId(dvm.state.mapping.jsonld, propMappingId));
+                    dvm.getEntityName = function(id) {
+                        return dvm.util.getDctermsValue(_.find(dvm.state.mapping.jsonld, {'@id': id}), 'title');
                     }
                     dvm.deleteClass = function() {
                         dvm.state.deleteClass(dvm.state.selectedClassMappingId);
