@@ -63,7 +63,7 @@
                     var es = exploreService;
                     var util = utilService;
                     dvm.chunks = getChunks(ds.explore.classDetails);
-                    
+
                     dvm.exploreData = function(item) {
                         es.getClassInstanceDetails(ds.explore.recordId, item.classIRI, {offset: 0, limit: ds.explore.instanceDetails.limit})
                             .then(response => {
@@ -74,11 +74,11 @@
                                 ds.explore.breadcrumbs.push(item.classTitle);
                             }, util.createErrorToast);
                     }
-                    
+
                     $scope.$watch(() => ds.explore.classDetails, newValue => {
                         dvm.chunks = getChunks(newValue);
                     });
-                    
+
                     function getChunks(data) {
                         return _.chunk(_.orderBy(data, ['instancesCount', 'classTitle'], ['desc', 'asc']), 3);
                     }

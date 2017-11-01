@@ -38,6 +38,7 @@
          * @name instanceCards.directive:instanceCards
          * @scope
          * @restrict E
+         * @requires $q
          * @requires discoverState.service:discoverStateService
          * @requires explore.service:exploreService
          * @requires util.service:utilService
@@ -66,6 +67,8 @@
                     var eu = exploreUtilsService;
                     dvm.chunks = getChunks(ds.explore.instanceDetails.data);
                     dvm.classTitle = _.last(ds.explore.breadcrumbs);
+                    dvm.selectedItem = undefined;
+                    dvm.showDeleteOverlay = false;
 
                     dvm.view = function(item) {
                         es.getInstance(ds.explore.recordId, item.instanceIRI)
@@ -81,6 +84,38 @@
                                     _.forEach(response.results.bindings, binding => ds.explore.instance.objectMap[binding.object.value] = binding.title.value);
                                 }
                             }, util.createErrorToast);
+                    }
+
+                    dvm.delete = function() {
+                        es.deleteInstance(ds.explore.recordId, dvm.selectedItem.instanceIRI)
+                            .then(() => {
+                                util.createSuccessToast('Instance was successfully deleted.');
+                                ds.explore.instanceDetails.total--;
+                                if (ds.explore.instanceDetails.total === 0) {
+                                    return es.getClassDetails(ds.explore.recordId);
+                                }
+                                if (ds.explore.instanceDetails.data.length === 1) {
+                                    ds.explore.instanceDetails.currentPage--;
+                                }
+                                var offset = ds.explore.instanceDetails.currentPage * ds.explore.instanceDetails.limit;
+                                return es.getClassInstanceDetails(ds.explore.recordId, ds.explore.classId, {offset, limit: ds.explore.instanceDetails.limit});
+                            }, $q.reject)
+                            .then(response => {
+                                if (ds.explore.instanceDetails.total === 0) {
+                                    ds.explore.classDetails = response;
+                                    ds.clickCrumb(0);
+                                } else {
+                                    var resultsObject = es.createPagedResultsObject(response);
+                                    ds.explore.instanceDetails.data = resultsObject.data;
+                                    ds.explore.instanceDetails.links = resultsObject.links;
+                                }
+                                dvm.showDeleteOverlay = false;
+                            }, errorMessage => dvm.error = errorMessage);
+                    }
+
+                    dvm.showOverlay = function(item) {
+                        dvm.selectedItem = item;
+                        dvm.showDeleteOverlay = true;
                     }
 
                     $scope.$watch(() => ds.explore.instanceDetails.data, newValue => {

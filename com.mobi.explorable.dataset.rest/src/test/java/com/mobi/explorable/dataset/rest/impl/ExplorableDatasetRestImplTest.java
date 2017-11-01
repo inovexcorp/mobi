@@ -288,7 +288,9 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getClassDetailsWhenClassesNotFound() {
+        //Setup:
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(mf.createModel());
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
         assertEquals(response.getStatus(), 200);
@@ -298,9 +300,11 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getClassDetailsWhenDeprecatedClassFound() throws Exception {
+        //Setup:
         InputStream partialData = getClass().getResourceAsStream("/partial-compiled-resource.trig");
         Model partialModel = Values.mobiModel(Rio.parse(partialData, "", RDFFormat.TRIG));
         when(catalogManager.getCompiledResource(vf.createIRI(commitId))).thenReturn(partialModel);
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
         assertEquals(response.getStatus(), 200);
@@ -311,7 +315,9 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getClassDetailsWithEmptyDatasetRecordTest() {
+        //Setup:
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.empty());
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
         assertEquals(response.getStatus(), 400);
@@ -319,7 +325,9 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getClassDetailsWithNoDatasetConnectionTestIllegalArgumentThrown() {
+        //Setup:
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
         assertEquals(response.getStatus(), 400);
@@ -327,7 +335,9 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getClassDetailsWithNoDatasetConnectionTestIllegalStateThrown() {
+        //Setup:
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
         assertEquals(response.getStatus(), 500);
@@ -345,9 +355,11 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getInstanceDetailsDataTest() throws Exception {
+        //Setup:
         String otherClassId = "http://mobi.com/ontologies/uhtc/CrystalStructure";
         JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
                 .getResourceAsStream("/expected-instance-details.json")));
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(otherClassId) + "/instance-details").request().get();
         assertEquals(response.getStatus(), 200);
@@ -374,10 +386,11 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getInstanceDetailsWithOffsetAndLimitTest() {
+        //Setup:
         String pathString = "explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/" + encode(CLASS_ID_STR)
                 + "/instance-details";
-        Response response = target().path(pathString).queryParam("offset", 0).queryParam("limit", 13).request()
-                .get();
+
+        Response response = target().path(pathString).queryParam("offset", 0).queryParam("limit", 13).request().get();
         assertEquals(response.getStatus(), 200);
         JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
         assertEquals(responseArray.size(), 13);
@@ -387,10 +400,11 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getInstanceDetailsWithLinksTest() {
+        //Setup:
         String pathString = "explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/" + encode(CLASS_ID_STR)
                 + "/instance-details";
-        Response response = target().path(pathString).queryParam("offset", 3).queryParam("limit", 3).request()
-                .get();
+
+        Response response = target().path(pathString).queryParam("offset", 3).queryParam("limit", 3).request().get();
         assertEquals(response.getStatus(), 200);
         JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
         assertEquals(responseArray.size(), 3);
@@ -405,10 +419,11 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getInstanceDetailsWithNextLinkTest() {
+        //Setup:
         String pathString = "explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/" + encode(CLASS_ID_STR)
                 + "/instance-details";
-        Response response = target().path(pathString).queryParam("offset", 0).queryParam("limit", 3).request()
-                .get();
+
+        Response response = target().path(pathString).queryParam("offset", 0).queryParam("limit", 3).request().get();
         assertEquals(response.getStatus(), 200);
         JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
         assertEquals(responseArray.size(), 3);
@@ -420,10 +435,11 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getInstanceDetailsWithPrevLinkTest() {
+        //Setup:
         String pathString = "explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/" + encode(CLASS_ID_STR)
                 + "/instance-details";
-        Response response = target().path(pathString).queryParam("offset", 12).queryParam("limit", 3).request()
-                .get();
+
+        Response response = target().path(pathString).queryParam("offset", 12).queryParam("limit", 3).request().get();
         assertEquals(response.getStatus(), 200);
         JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
         assertEquals(responseArray.size(), 1);
@@ -456,8 +472,10 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getClassPropertyDetailsTest() throws Exception {
+        //Setup:
         JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
                 .getResourceAsStream("/expected-class-property-details.json")));
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/property-details").request().get();
         assertEquals(response.getStatus(), 200);
@@ -471,8 +489,10 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getClassPropertyDetailsWhenNotFoundInOntologyTest() throws Exception {
+        //Setup:
         JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
                 .getResourceAsStream("/expected-class-property-details.json")));
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(MISSING_ID) + "/property-details").request().get();
         assertEquals(response.getStatus(), 200);
@@ -486,6 +506,7 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getClassPropertyDetailsWhenNoPropertiesTest() throws Exception {
+        //Setup:
         when(ontology.getAllNoDomainObjectProperties()).thenReturn(Collections.EMPTY_SET);
         when(ontology.getAllNoDomainDataProperties()).thenReturn(Collections.EMPTY_SET);
 
@@ -498,7 +519,9 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getClassPropertyDetailsWithEmptyDatasetRecordTest() {
+        //Setup:
         when(datasetManager.getDatasetRecord(recordId)).thenReturn(Optional.empty());
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/property-details").request().get();
         assertEquals(response.getStatus(), 400);
@@ -588,7 +611,9 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getInstanceTestWithNoDatasetConnectionTestIllegalArgumentThrown() {
+        //Setup:
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().get();
         assertEquals(response.getStatus(), 400);
@@ -596,7 +621,9 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void getInstanceTestWithNoDatasetConnectionTestIllegalStateThrown() {
+        //Setup:
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().get();
         assertEquals(response.getStatus(), 500);
@@ -604,8 +631,10 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void updateInstanceTest() {
+        //Setup:
         JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR)
                 .element(_Thing.title_IRI, new JSONArray().add(new JSONObject().element("@value", "title")));
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance));
         assertEquals(response.getStatus(), 200);
@@ -618,8 +647,10 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void updateInstanceWithReifiedTriplesTest() {
+        //Setup:
         JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR)
                 .element(_Thing.title_IRI, new JSONArray().add(new JSONObject().element("@value", "title")));
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(REIFIED_ID)).request().put(Entity.json(instance));
         assertEquals(response.getStatus(), 200);
@@ -632,8 +663,10 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void updateInstanceTestWhenNotFound() {
+        //Setup:
         JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR)
                 .element(_Thing.title_IRI, new JSONObject().element("@value", "title"));
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(MISSING_ID)).request().put(Entity.json(instance));
         assertEquals(response.getStatus(), 400);
@@ -641,9 +674,11 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void updateInstanceTestWithNoDatasetConnectionTestIllegalArgumentThrown() {
+        //Setup:
         JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR)
                 .element(_Thing.title_IRI, new JSONObject().element("@value", "title"));
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance));
         assertEquals(response.getStatus(), 400);
@@ -651,11 +686,62 @@ public class ExplorableDatasetRestImplTest extends MobiRestTestNg {
 
     @Test
     public void updateInstanceTestWithNoDatasetConnectionTestIllegalStateThrown() {
+        //Setup:
         JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR)
                 .element(_Thing.title_IRI, new JSONObject().element("@value", "title"));
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
+
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance));
+        assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void deleteInstanceTest() {
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
+                + encode(INSTANCE_ID_STR)).request().delete();
+        assertEquals(response.getStatus(), 200);
+        verify(datasetConnection).begin();
+        verify(datasetConnection).remove(any(Model.class));
+        verify(datasetConnection).remove((Resource) null, null, vf.createIRI(INSTANCE_ID_STR));
+        verify(datasetConnection).commit();
+    }
+
+    @Test
+    public void deleteInstanceWithReifiedTriplesTest() {
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
+                + encode(REIFIED_ID)).request().delete();
+        assertEquals(response.getStatus(), 200);
+        verify(datasetConnection).begin();
+        verify(datasetConnection).remove(any(Model.class));
+        verify(datasetConnection).remove((Resource) null, null, vf.createIRI(REIFIED_ID));
+        verify(datasetConnection).commit();
+    }
+
+    @Test
+    public void deleteInstanceTestWhenNotFound() {
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
+                + encode(MISSING_ID)).request().delete();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void deleteInstanceTestWithNoDatasetConnectionTestIllegalArgumentThrown() {
+        //Setup:
+        when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
+
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
+                + encode(MISSING_ID)).request().delete();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void deleteInstanceTestWithNoDatasetConnectionTestIllegalStateThrown() {
+        //Setup:
+        when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
+
+        Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
+                + encode(MISSING_ID)).request().delete();
         assertEquals(response.getStatus(), 500);
     }
 }
