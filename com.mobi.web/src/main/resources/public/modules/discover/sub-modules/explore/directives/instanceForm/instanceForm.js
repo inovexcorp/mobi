@@ -101,9 +101,9 @@
                         if (range) {
                             return es.getClassInstanceDetails(dvm.ds.explore.recordId, range, {offset: 0}, true)
                                 .then(response => {
-                                    var options = _.filter(_.map(response.data, 'instanceIRI'), iri => !_.some(dvm.instance[propertyIRI], {'@id': iri}));
+                                    var options = _.filter(response.data, item => !_.some(dvm.instance[propertyIRI], {'@id': item.instanceIRI}));
                                     if (dvm.searchText[propertyIRI]) {
-                                        return _.filter(options, iri => dvm.eu.contains(iri, dvm.searchText[propertyIRI]));
+                                        return _.filter(options, item => dvm.eu.contains(item.instanceIRI, dvm.searchText[propertyIRI]));
                                     }
                                     return options;
                                 }, errorMessage => {
@@ -179,6 +179,11 @@
                             [prefixes.rdf + 'predicate']: [{'@id': propertyIRI}],
                             [prefixes.rdf + 'object']: [object]
                         });
+                    }
+
+                    dvm.transformChip = function(item) {
+                        dvm.ds.explore.instance.objectMap[item.instanceIRI] = item.title;
+                        return dvm.eu.createIdObj(item.instanceIRI)
                     }
 
                     function getProperties() {
