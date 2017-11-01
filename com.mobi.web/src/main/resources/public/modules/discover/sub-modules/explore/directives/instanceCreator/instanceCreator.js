@@ -49,9 +49,9 @@
          */
         .directive('instanceCreator', instanceCreator);
 
-        instanceCreator.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'exploreUtilsService'];
+        instanceCreator.$inject = ['$q', 'discoverStateService', 'utilService', 'exploreService', 'exploreUtilsService', 'prefixes'];
 
-        function instanceCreator($q, discoverStateService, utilService, exploreService, exploreUtilsService) {
+        function instanceCreator($q, discoverStateService, utilService, exploreService, exploreUtilsService, prefixes) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/explore/directives/instanceCreator/instanceCreator.html',
@@ -70,14 +70,25 @@
                         dvm.ds.explore.instance.entity = eu.removeEmptyPropertiesFromArray(dvm.ds.explore.instance.entity);
                         var instance = dvm.ds.getInstance();
                         es.createInstance(dvm.ds.explore.recordId, dvm.ds.explore.instance.entity)
-                            .then(() => es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {}), $q.reject)
-                            .then(response => {
+                            .then(() => {
                                 dvm.ds.explore.instanceDetails.total++;
                                 var offset = dvm.ds.explore.instanceDetails.currentPage * dvm.ds.explore.instanceDetails.limit;
-                                dvm.ds.explore.instanceDetails.data = _.slice(response.data, offset, offset + dvm.ds.explore.instanceDetails.limit);
-                                dvm.ds.explore.instance.metadata = _.find(response.data, {instanceIRI: instance['@id']});
+                                return es.getClassInstanceDetails(dvm.ds.explore.recordId, dvm.ds.explore.classId, {offset, limit: dvm.ds.explore.instanceDetails.limit});
+                            }, $q.reject)
+                            .then(response => {
+                                var resultsObject = es.createPagedResultsObject(response);
+                                dvm.ds.explore.instanceDetails.data = resultsObject.data;
+                                dvm.ds.explore.instanceDetails.links = resultsObject.links;
+                                var metadata = {instanceIRI: instance['@id']};
+                                metadata.title = getPreferredValue(instance, [prefixes.dcterms + 'title', prefixes.rdfs + 'label'], dvm.util.getBeautifulIRI(instance['@id']));
+                                metadata.description = getPreferredValue(instance, [prefixes.dcterms + 'description', prefixes.rdfs + 'comment'], '');
+                                dvm.ds.explore.instance.metadata = metadata;
                                 dvm.ds.explore.breadcrumbs[dvm.ds.explore.breadcrumbs.length - 1] = dvm.ds.explore.instance.metadata.title;
                                 dvm.ds.explore.creating = false;
+                                return es.getClassDetails(dvm.ds.explore.recordId);
+                            }, $q.reject)
+                            .then(response => {
+                                dvm.ds.explore.classDetails = response;
                             }, dvm.util.createErrorToast);
                     }
 
@@ -85,6 +96,11 @@
                         dvm.ds.explore.instance.entity = {};
                         dvm.ds.explore.creating = false;
                         dvm.ds.explore.breadcrumbs = _.initial(dvm.ds.explore.breadcrumbs);
+                    }
+
+                    function getPreferredValue(entity, props, defaultValue) {
+                        var prop = _.find(props, prop => entity[prop]);
+                        return prop ? _.get(_.find(entity[prop], obj => !obj['@lang'] || obj['@lang'] === 'en'), '@value') : defaultValue;
                     }
                 }
             }
