@@ -270,7 +270,7 @@
              * @returns {Object} The new class mapping object
              */
             self.addClass = function(mapping, ontology, classId) {
-                var classMapping = undefined;
+                var classMapping;
                 var classEntity = om.getEntity([ontology], classId);
                 // Check if class exists in ontology
                 if (classEntity) {
