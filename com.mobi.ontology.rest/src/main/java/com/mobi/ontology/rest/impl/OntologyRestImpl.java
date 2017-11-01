@@ -34,12 +34,6 @@ import static com.mobi.rest.util.RestUtils.modelToJsonld;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.google.common.collect.Iterables;
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONException;
-import net.sf.json.JSONObject;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.builder.Difference;
@@ -76,6 +70,12 @@ import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
+import net.sf.json.JSON;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONException;
+import net.sf.json.JSONObject;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.openrdf.model.vocabulary.OWL;
 import org.openrdf.model.vocabulary.SKOS;
 import org.slf4j.Logger;
@@ -389,7 +389,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getClassesInOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                          String commitIdStr) {
         try {
-            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray);
+            JSONArray result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray);
             return Response.ok(result).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -596,7 +596,7 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getClassesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                    String branchIdStr, String commitIdStr) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getClassArray);
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getClassIRIArray);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -627,7 +627,8 @@ public class OntologyRestImpl implements OntologyRest {
     public Response getDataPropertiesInImportedOntologies(ContainerRequestContext context, String recordIdStr,
                                                           String branchIdStr, String commitIdStr) {
         try {
-            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr, this::getDataPropertyIRIArray);
+            return doWithImportedOntologies(context, recordIdStr, branchIdStr, commitIdStr,
+                    this::getDataPropertyIRIArray);
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -1047,12 +1048,12 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     /**
-     * Gets a JSONArray of Classes from the provided Ontology.
+     * Gets a JSONObject of Class IRIs from the provided Ontology.
      *
-     * @param ontology the Ontology to get the Annotations from.
-     * @return a JSONArray of Classes from the provided Ontology.
+     * @param ontology the Ontology to get the Class IRIs from.
+     * @return a JSONObject of Class IRIs from the provided Ontology.
      */
-    private JSONObject getClassArray(Ontology ontology) {
+    private JSONObject getClassIRIArray(Ontology ontology) {
         List<IRI> iris = ontology.getAllClasses()
                 .stream()
                 .map(Entity::getIRI)
@@ -1061,9 +1062,24 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     /**
+     * Gets a JSONArray of Classes from the provided Ontology.
+     *
+     * @param ontology the Ontology to get the Classes from.
+     * @return a JSONArray of Classes form the provided Ontology.
+     */
+    private JSONArray getClassArray(Ontology ontology) {
+        Model model = ontology.asModel(modelFactory);
+        return ontology.getAllClasses().stream()
+                .map(oClass -> model.filter(oClass.getIRI(), null, null))
+                .filter(m -> !m.isEmpty())
+                .map(m -> getObjectFromJsonld(modelToJsonld(m, sesameTransformer)))
+                .collect(JSONArray::new, JSONArray::add, JSONArray::add);
+    }
+
+    /**
      * Gets a JSONArray of Datatypes from the provided Ontology.
      *
-     * @param ontology the Ontology to get the Annotations from.
+     * @param ontology the Ontology to get the Datatypes from.
      * @return a JSONArray of Datatypes from the provided Ontology.
      */
     private JSONObject getDatatypeArray(Ontology ontology) {
@@ -1077,7 +1093,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets a JSONObject of ObjectProperty IRIs from the provided Ontology.
      *
-     * @param ontology the Ontology to get the Annotations from.
+     * @param ontology the Ontology to get the ObjectProperties from.
      * @return a JSONObject of ObjectProperty IRIs from the provided Ontology.
      */
     private JSONObject getObjectPropertyIRIArray(Ontology ontology) {
@@ -1105,7 +1121,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets a JSONObject of DatatypeProperty IRIs from the provided Ontology.
      *
-     * @param ontology the Ontology to get the Annotations from.
+     * @param ontology the Ontology to get the DatatypeProperty from.
      * @return a JSONArray of DatatypeProperties from the provided Ontology.
      */
     private JSONObject getDataPropertyIRIArray(Ontology ontology) {
@@ -1119,7 +1135,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets a JSONArray of DatatypeProperties from the provided Ontology.
      *
-     * @param ontology the Ontology to get the Annotations from.
+     * @param ontology the Ontology to get the DatatypeProperties from.
      * @return a JSONArray of DatatypeProperties from the provided Ontology.
      */
     private JSONArray getDataPropertyArray(Ontology ontology) {
@@ -1133,7 +1149,7 @@ public class OntologyRestImpl implements OntologyRest {
     /**
      * Gets a JSONArray of NamedIndividuals from the provided Ontology.
      *
-     * @param ontology the Ontology to get the Annotations from.
+     * @param ontology the Ontology to get the NamedIndividuals from.
      * @return a JSONArray of NamedIndividuals from the provided Ontology.
      */
     private JSONObject getNamedIndividualArray(Ontology ontology) {
@@ -1231,7 +1247,7 @@ public class OntologyRestImpl implements OntologyRest {
      * @return the JSONObject with the IRIs for all components of an ontology.
      */
     private JSONObject getAllIRIs(Ontology ontology) {
-        return combineJsonObjects(getAnnotationArray(ontology), getClassArray(ontology),
+        return combineJsonObjects(getAnnotationArray(ontology), getClassIRIArray(ontology),
                 getDatatypeArray(ontology), getObjectPropertyIRIArray(ontology), getDataPropertyIRIArray(ontology),
                 getNamedIndividualArray(ontology), getDerivedConceptTypeArray(ontology),
                 getDerivedConceptSchemeTypeArray(ontology));
@@ -1307,7 +1323,8 @@ public class OntologyRestImpl implements OntologyRest {
             throw ErrorUtils.sendError(entityIdStr + " was not found within the ontology.",
                     Response.Status.BAD_REQUEST);
         }
-        catalogManager.updateInProgressCommit(catalogManager.getLocalCatalogIRI(), recordId, inProgressCommitIRI, null, model);
+        catalogManager.updateInProgressCommit(catalogManager.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
+                null, model);
         return Response.ok().build();
     }
 
@@ -1324,7 +1341,7 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     /**
-     * Verifies that the provided JSON-LD contains the proper @type
+     * Verifies that the provided JSON-LD contains the proper @type.
      *
      * @param jsonldStr the JSON-LD of the entity being verified.
      * @param type      the @type that the entity should be.

@@ -38,6 +38,7 @@
          * @name valueDisplay.directive:valueDisplay
          * @scope
          * @restrict E
+         * @requires discoverState.service:discoverStateService
          * @requires util.service:utilService
          *
          * @description
@@ -48,9 +49,9 @@
          */
         .directive('valueDisplay', valueDisplay);
 
-        valueDisplay.$inject = ['utilService'];
+        valueDisplay.$inject = ['discoverStateService', 'utilService'];
 
-        function valueDisplay(utilService) {
+        function valueDisplay(discoverStateService, utilService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -62,6 +63,7 @@
                 controller: function() {
                     var dvm = this;
                     dvm.util = utilService;
+                    dvm.ds = discoverStateService;
 
                     dvm.has = function(obj, key) {
                         return _.has(obj, key);

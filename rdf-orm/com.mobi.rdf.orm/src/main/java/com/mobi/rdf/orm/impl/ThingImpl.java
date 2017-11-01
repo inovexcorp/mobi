@@ -30,9 +30,6 @@ import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.api.*;
-import com.mobi.rdf.orm.Thing;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -141,9 +138,7 @@ public class ThingImpl implements Thing {
     @Override
     public boolean setProperty(Value value, IRI predicate, IRI... context) {
         // Remove other properties with same prediciate...
-        model.filter(getResource(), predicate, null, context).forEach(stmt -> {
-            model.remove(stmt);
-        });
+        model.remove(getResource(), predicate, null, context);
         return model.add(getResource(), predicate, value, context);
     }
 

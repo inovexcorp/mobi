@@ -55,7 +55,34 @@
          *
          * @description
          * 'explore' is an object which holds properties associated with the explore tab in the
-         * discover section of the application.
+         * discover section of the application. The structure is as follows:
+         * ```
+         * {
+         *     recordId: '', // Selected DatasetRecord ID
+         *     breadcrumbs: [],
+         *     editing: false,
+         *     creating: false,
+         *     classDetails: [], // Information about the classes with instances within the selected dataset
+         *     classId: '',
+         *     classDeprecated: false,
+         *     instance: {
+         *         entity: {},
+         *         metadata: {
+         *             instanceIRI: ''
+         *         }
+         *     },
+         *     instanceDetails: {
+         *         data: [],
+         *         limit: 10, // The limit for the number of instances shown
+         *         links: {
+         *             next: '',
+         *             prev: ''
+         *         },
+         *         total: 10,
+         *         currentPage: 0
+         *     },
+         * }
+         * ```
          */
         self.explore = {};
 
@@ -182,7 +209,7 @@
          * @returns {Object} An object which contains the instance's JSON-LD.
          */
         self.getInstance = function() {
-            return _.find(self.explore.instance.entity, {'@id': self.explore.instance.metadata.instanceIRI});
+            return _.find(self.explore.instance.entity, obj => _.includes(_.get(obj, '@type'), self.explore.classId));
         }
 
         /**
@@ -217,7 +244,8 @@
                 instance: {
                     changed: [],
                     entity: [{}],
-                    metadata: {}
+                    metadata: {},
+                    objectMap: {}
                 },
                 instanceDetails: {
                     currentPage: 0,

@@ -27,6 +27,7 @@ package com.mobi.federation.hazelcast.config;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.MulticastConfig;
 import com.hazelcast.config.TcpIpConfig;
+import com.hazelcast.spi.properties.GroupProperty;
 import org.apache.commons.lang.StringUtils;
 import com.mobi.exception.MobiException;
 import org.slf4j.Logger;
@@ -86,6 +87,10 @@ public class HazelcastConfigurationFactory {
             config.getNetworkConfig().setOutboundPorts(serviceConfig.outboundPorts());
             LOGGER.debug("Configured our outbound ports to: {}",
                     StringUtils.join(serviceConfig.outboundPorts(), ", "));
+        }
+        if (serviceConfig.maxNoHeartbeatSeconds() > 0) {
+            config.setProperty(GroupProperty.MAX_NO_HEARTBEAT_SECONDS.getName(),
+                    "" + serviceConfig.maxNoHeartbeatSeconds());
         }
     }
 

@@ -447,6 +447,25 @@
             }
             /**
              * @ngdoc method
+             * @name getOntologyClasses
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/ontologies/{recordId}/classes endpoint and retrieves an array of the classes
+             * within the ontology.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @return {Promise} A promise with an array containing a list of classes
+             */
+            self.getOntologyClasses = function(recordId, branchId, commitId) {
+                var config = { params: { branchId, commitId } };
+                return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/classes', config)
+                    .then(response => $q.when(response.data), util.rejectError);
+            }
+            /**
+             * @ngdoc method
              * @name getDataProperties
              * @methodOf ontologyManager.service:ontologyManagerService
              *
