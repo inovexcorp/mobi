@@ -1023,6 +1023,7 @@
                 return _.intersection(_.keys(obj), ['recordId', 'branchId', 'commitId']).length === 3;
             }
             function setNewTitle(mappingEntity, entity, existingArr) {
+                var regex = / \((\d+)\)$/g;
                 var entityName = om.getEntityName(entity);
                 var sortedNums = _.map(
                     _.filter(
@@ -1030,7 +1031,6 @@
                         title => _.startsWith(title, entityName)
                     ),
                     title => {
-                        var regex = / \((\d+)\)$/g;
                         var m = regex.exec(title);
                         return  m === null ? 0 : parseInt(m[1], 10);
                     }

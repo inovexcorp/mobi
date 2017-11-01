@@ -42,11 +42,15 @@ describe('Prop Mapping Overlay directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
+        this.compile = function() {
+            this.element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
+            scope.$digest();
+            this.controller = this.element.controller('propMappingOverlay');
+        }
+
         mapperStateSvc.mapping = {jsonld: [], difference: {additions: [], deletions: []}};
         mapperStateSvc.newProp = true;
-        this.element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
-        scope.$digest();
-        this.controller = this.element.controller('propMappingOverlay');
+        this.compile();
     });
 
     afterEach(function() {
@@ -67,50 +71,45 @@ describe('Prop Mapping Overlay directive', function() {
             expect(this.controller.rangeClassMapping).toBeUndefined();
         });
         describe('if a property mapping is being edited', function() {
-            var prop, columnIndex = '0', propId = 'prop';
             beforeEach(function() {
+                this.columnIndex = '0';
+                this.propId = 'prop';
                 mapperStateSvc.newProp = false;
-                prop = {};
+                this.prop = {};
                 var propMapping = {'@id': 'propMap'};
-                utilSvc.getPropertyValue.and.returnValue(columnIndex);
+                utilSvc.getPropertyValue.and.returnValue(this.columnIndex);
                 mapperStateSvc.mapping.jsonld.push(propMapping);
                 mapperStateSvc.selectedPropMappingId = propMapping['@id'];
-                mappingManagerSvc.getPropIdByMapping.and.returnValue(propId);
-                ontologyManagerSvc.getEntity.and.returnValue(prop);
+                mappingManagerSvc.getPropIdByMapping.and.returnValue(this.propId);
+                ontologyManagerSvc.getEntity.and.returnValue(this.prop);
                 mappingManagerSvc.findSourceOntologyWithProp.and.returnValue({id: 'propOntology', entities: []});
                 utilSvc.getPropertyId.and.returnValue('class');
                 mappingManagerSvc.getClassMappingsByClassId.and.returnValue([{}]);
                 mapperStateSvc.availableClasses = [{classObj: {'@id': 'class'}}];
             });
             it('and it is an annotation property', function() {
-                var annotationProp = {propObj: {'@id': propId}, ontologyId: ''};
-                mappingManagerSvc.annotationProperties = [propId];
-                this.element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
-                scope.$digest();
-                this.controller = this.element.controller('propMappingOverlay');
+                var annotationProp = {propObj: {'@id': this.propId}, ontologyId: ''};
+                mappingManagerSvc.annotationProperties = [this.propId];
+                this.compile();
                 expect(this.controller.selectedProp).toEqual(annotationProp);
-                expect(this.controller.selectedColumn).toBe(columnIndex);
+                expect(this.controller.selectedColumn).toBe(this.columnIndex);
                 expect(ontologyManagerSvc.getEntity).not.toHaveBeenCalled();
                 expect(this.controller.rangeClassMapping).toBeUndefined();
                 expect(this.controller.rangeClass).toBeUndefined();
             });
             it('and it is a object property', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
-                this.element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
-                scope.$digest();
-                this.controller = this.element.controller('propMappingOverlay');
-                expect(this.controller.selectedProp).toEqual({ontologyId: 'propOntology', propObj: prop});
+                this.compile();
+                expect(this.controller.selectedProp).toEqual({ontologyId: 'propOntology', propObj: this.prop});
                 expect(this.controller.selectedColumn).toBe('');
                 expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
                 expect(this.controller.rangeClassMapping).not.toBeUndefined();
                 expect(this.controller.rangeClass).not.toBeUndefined();
             });
             it('and it is a data property', function() {
-                this.element = $compile(angular.element('<prop-mapping-overlay></prop-mapping-overlay>'))(scope);
-                scope.$digest();
-                this.controller = this.element.controller('propMappingOverlay');
-                expect(this.controller.selectedProp).toEqual({ontologyId: 'propOntology', propObj: prop});
-                expect(this.controller.selectedColumn).toBe(columnIndex);
+                this.compile();
+                expect(this.controller.selectedProp).toEqual({ontologyId: 'propOntology', propObj: this.prop});
+                expect(this.controller.selectedColumn).toBe(this.columnIndex);
                 expect(ontologyManagerSvc.getEntity).toHaveBeenCalled();
                 expect(this.controller.rangeClassMapping).toBeUndefined();
                 expect(this.controller.rangeClass).toBeUndefined();
