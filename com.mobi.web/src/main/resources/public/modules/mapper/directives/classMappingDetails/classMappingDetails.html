@@ -37,7 +37,7 @@
                     <a class="edit-prop" ng-click="dvm.editProp(propMapping)"><i class="fa fa-pencil"></i></a>
                     <a class="delete-prop" ng-click="dvm.deleteProp(propMapping)"><i class="fa fa-trash"></i></a>
                 </div>
-                <h4 class="list-group-item-heading">{{dvm.getPropName(propMapping)}}</h4>
+                <h4 class="list-group-item-heading">{{dvm.util.getDctermsValue(propMapping, 'title')}}</h4>
                 <div class="list-group-item-text">
                     <div ng-if="dvm.mm.isDataMapping(propMapping)" class="data-prop-value">
                         <div><span class="field-name">Column: </span>{{dvm.getPropValue(propMapping)}}</div>

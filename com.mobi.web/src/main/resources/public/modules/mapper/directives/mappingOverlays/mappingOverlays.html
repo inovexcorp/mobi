@@ -39,21 +39,21 @@
 
 <confirmation-overlay ng-if="dvm.state.displayDeletePropConfirm"
     class="delete-prop"
-    header-text="'Delete ' + dvm.getPropName(dvm.state.selectedPropMappingId)"
+    header-text="'Delete ' + dvm.getEntityName(dvm.state.selectedPropMappingId)"
     confirm-click="dvm.state.displayDeletePropConfirm = false; dvm.deleteProp()"
     cancel-click="dvm.state.displayDeletePropConfirm = false"
     confirm-text="'Yes'"
     cancel-text="'No'">
-        Are you sure you want to delete <strong>{{dvm.getPropName(dvm.state.selectedPropMappingId)}}</strong> from <strong>{{dvm.getClassName(dvm.state.selectedClassMappingId)}}</strong>?
+        Are you sure you want to delete <strong>{{dvm.getEntityName(dvm.state.selectedPropMappingId)}}</strong> from <strong>{{dvm.getEntityName(dvm.state.selectedClassMappingId)}}</strong>?
 </confirmation-overlay>
 
 <confirmation-overlay ng-if="dvm.state.displayDeleteClassConfirm"
     class="delete-class"
-    header-text="'Delete ' + dvm.getClassName(dvm.state.selectedClassMappingId)"
+    header-text="'Delete ' + dvm.getEntityName(dvm.state.selectedClassMappingId)"
     confirm-click="dvm.state.displayDeleteClassConfirm = false; dvm.deleteClass()"
     cancel-click="dvm.state.displayDeleteClassConfirm = false"
     confirm-text="'Yes'"
     cancel-text="'No'">
-        Are you sure you want to delete <strong>{{dvm.getClassName(dvm.state.selectedClassMappingId)}}</strong>?
+        Are you sure you want to delete <strong>{{dvm.getEntityName(dvm.state.selectedClassMappingId)}}</strong>?
         <p class="help-block">Deleting a class will remove any properties that link to it.</p>
 </confirmation-overlay>
