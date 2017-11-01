@@ -45,7 +45,7 @@
          * a selected dataset.
          */
         .directive('classBlock', classBlock);
-        
+
         classBlock.$inject = ['discoverStateService'];
 
         function classBlock(discoverStateService) {

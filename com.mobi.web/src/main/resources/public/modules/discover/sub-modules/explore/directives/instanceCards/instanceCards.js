@@ -91,6 +91,9 @@
                             .then(() => {
                                 util.createSuccessToast('Instance was successfully deleted.');
                                 ds.explore.instanceDetails.total--;
+                                if (ds.explore.instanceDetails.total === 0) {
+                                    return es.getClassDetails(ds.explore.recordId);
+                                }
                                 if (ds.explore.instanceDetails.data.length === 1) {
                                     ds.explore.instanceDetails.currentPage--;
                                 }
@@ -98,14 +101,13 @@
                                 return es.getClassInstanceDetails(ds.explore.recordId, ds.explore.classId, {offset, limit: ds.explore.instanceDetails.limit});
                             }, $q.reject)
                             .then(response => {
-                                var data = _.slice(response.data, offset, offset + ds.explore.instanceDetails.limit);
-                                if (_.isEmpty(data)) {
-                                    // Do get prev page
+                                if (ds.explore.instanceDetails.total === 0) {
+                                    ds.explore.classDetails = response;
+                                    ds.clickCrumb(0);
                                 } else {
-                                    ds.explore.instanceDetails.data = data;
-                                    if (offset + ds.explore.instanceDetails.limit > ds.explore.instanceDetails.total) {
-                                        ds.explore.instanceDetails.links.next = '';
-                                    }
+                                    var resultsObject = es.createPagedResultsObject(response);
+                                    ds.explore.instanceDetails.data = resultsObject.data;
+                                    ds.explore.instanceDetails.links = resultsObject.links;
                                 }
                                 dvm.showDeleteOverlay = false;
                             }, errorMessage => dvm.error = errorMessage);

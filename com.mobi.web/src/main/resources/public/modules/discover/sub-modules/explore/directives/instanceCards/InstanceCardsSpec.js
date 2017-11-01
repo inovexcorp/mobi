@@ -178,41 +178,92 @@ describe('Instance Cards directive', function() {
             beforeEach(function() {
                 this.controller.selectedItem = {instanceIRI: 'id'};
             });
-            describe('resolved and getClassInstanceDetails is', function() {
+            describe('resolved and', function() {
                 beforeEach(function() {
                     exploreSvc.deleteInstance.and.returnValue($q.when());
+                        discoverStateSvc.explore.instanceDetails.limit = 1;
                 });
-                it('resolved', function() {
-                    var data = [{
-                        instanceIRI: 'id',
-                        title: 'title'
-                    }, {
-                        instanceIRI: 'id2'
-                    }, {
-                        instanceIRI: 'id3'
-                    }, {
-                        instanceIRI: 'id4'
-                    }];
-                    exploreSvc.getClassInstanceDetails.and.returnValue($q.when({data: data}));
-                    discoverStateSvc.explore.instanceDetails.limit = 1;
-                    discoverStateSvc.explore.instanceDetails.total = 5;
-                    this.controller.delete();
-                    scope.$apply();
-                    expect(exploreSvc.deleteInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'id');
-                    expect(utilSvc.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
-                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {});
-                    expect(discoverStateSvc.explore.instanceDetails.data).toEqual([data[0]]);
-                    expect(discoverStateSvc.explore.instanceDetails.total).toBe(4);
-                    expect(this.controller.showDeleteOverlay).toBe(false);
+                describe('there are no more instances and getClassDetails is', function() {
+                    beforeEach(function() {
+                        discoverStateSvc.explore.instanceDetails.total = 1;
+                    });
+                    it('resolved', function() {
+                        exploreSvc.getClassDetails.and.returnValue($q.when([{}]));
+                        this.controller.delete();
+                        scope.$apply();
+                        expect(exploreSvc.deleteInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, this.controller.selectedItem.instanceIRI);
+                        expect(utilSvc.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
+                        expect(exploreSvc.getClassDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId);
+                        expect(exploreSvc.getClassInstanceDetails).not.toHaveBeenCalled();
+                        expect(discoverStateSvc.explore.classDetails).toEqual([{}]);
+                        expect(discoverStateSvc.clickCrumb).toHaveBeenCalledWith(0);
+                        expect(this.controller.showDeleteOverlay).toBe(false);
+                    });
+                    it('rejected', function() {
+                        exploreSvc.getClassDetails.and.returnValue($q.reject('error'));
+                        this.controller.delete();
+                        scope.$apply();
+                        expect(exploreSvc.deleteInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, this.controller.selectedItem.instanceIRI);
+                        expect(utilSvc.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
+                        expect(exploreSvc.getClassDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId);
+                        expect(exploreSvc.getClassInstanceDetails).not.toHaveBeenCalled();
+                        expect(discoverStateSvc.explore.classDetails).not.toEqual([{}]);
+                        expect(discoverStateSvc.clickCrumb).not.toHaveBeenCalled();
+                        expect(this.controller.error).toBe('error');
+                    });
                 });
-                it('rejected', function() {
-                    exploreSvc.getClassInstanceDetails.and.returnValue($q.reject('error'));
-                    this.controller.delete();
-                    scope.$apply();
-                    expect(exploreSvc.deleteInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'id');
-                    expect(utilSvc.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
-                    expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {});
-                    expect(this.controller.error).toBe('error');
+                describe('there are more instances and getClassInstanceDetails is', function() {
+                    beforeEach(function() {
+                        discoverStateSvc.explore.instanceDetails.total = 5;
+                        discoverStateSvc.explore.instanceDetails.currentPage = 1;
+                    });
+                    describe('resolved and the instance', function() {
+                        beforeEach(function() {
+                            this.resultsObject = {data: [{ instanceIRI: 'id2'}], links: {prev: 'prev', next: 'next'}};
+                            exploreSvc.getClassInstanceDetails.and.returnValue($q.when({}));
+                            exploreSvc.createPagedResultsObject.and.returnValue(this.resultsObject);
+                        });
+                        it('was the only one on the page', function() {
+                            discoverStateSvc.explore.instanceDetails.data = [{}];
+                            this.controller.delete();
+                            scope.$apply();
+                            expect(exploreSvc.deleteInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, this.controller.selectedItem.instanceIRI);
+                            expect(utilSvc.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
+                            expect(exploreSvc.getClassDetails).not.toHaveBeenCalled();
+                            expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: 0, limit: 1});
+                            expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith({});
+                            expect(discoverStateSvc.explore.instanceDetails.data).toEqual(this.resultsObject.data);
+                            expect(discoverStateSvc.explore.instanceDetails.links).toEqual(this.resultsObject.links);
+                            expect(discoverStateSvc.explore.instanceDetails.total).toBe(4);
+                            expect(discoverStateSvc.explore.instanceDetails.currentPage).toBe(0);
+                            expect(this.controller.showDeleteOverlay).toBe(false);
+                        });
+                        it('was not the only one on the page', function() {
+                            discoverStateSvc.explore.instanceDetails.data = [{}, {}];
+                            this.controller.delete();
+                            scope.$apply();
+                            expect(exploreSvc.deleteInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, this.controller.selectedItem.instanceIRI);
+                            expect(utilSvc.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
+                            expect(exploreSvc.getClassDetails).not.toHaveBeenCalled();
+                            expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: 1, limit: 1});
+                            expect(exploreSvc.createPagedResultsObject).toHaveBeenCalledWith({});
+                            expect(discoverStateSvc.explore.instanceDetails.data).toEqual(this.resultsObject.data);
+                            expect(discoverStateSvc.explore.instanceDetails.links).toEqual(this.resultsObject.links);
+                            expect(discoverStateSvc.explore.instanceDetails.total).toBe(4);
+                            expect(discoverStateSvc.explore.instanceDetails.currentPage).toBe(1);
+                            expect(this.controller.showDeleteOverlay).toBe(false);
+                        });
+                    });
+                    it('rejected', function() {
+                        exploreSvc.getClassInstanceDetails.and.returnValue($q.reject('error'));
+                        this.controller.delete();
+                        scope.$apply();
+                        expect(exploreSvc.deleteInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'id');
+                        expect(utilSvc.createSuccessToast).toHaveBeenCalledWith('Instance was successfully deleted.');
+                        expect(exploreSvc.getClassDetails).not.toHaveBeenCalled();
+                        expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, discoverStateSvc.explore.classId, {offset: 1, limit: 1});
+                        expect(this.controller.error).toBe('error');
+                    });
                 });
             });
             it('rejected', function() {
@@ -220,6 +271,7 @@ describe('Instance Cards directive', function() {
                 this.controller.delete();
                 scope.$apply();
                 expect(exploreSvc.deleteInstance).toHaveBeenCalledWith(discoverStateSvc.explore.recordId, 'id');
+                expect(exploreSvc.getClassDetails).not.toHaveBeenCalled();
                 expect(exploreSvc.getClassInstanceDetails).not.toHaveBeenCalled();
                 expect(this.controller.error).toBe('error');
             });
