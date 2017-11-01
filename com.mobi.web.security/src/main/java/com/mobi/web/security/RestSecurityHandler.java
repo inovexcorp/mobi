@@ -27,18 +27,18 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.eclipsesource.jaxrs.provider.security.AuthenticationHandler;
 import com.eclipsesource.jaxrs.provider.security.AuthorizationHandler;
-import com.mobi.jaas.api.config.MobiConfiguration;
-import com.mobi.jaas.api.engines.EngineManager;
-import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.principals.UserPrincipal;
-import com.mobi.jaas.api.utils.TokenUtils;
 import com.mobi.web.security.util.AuthenticationProps;
-import com.mobi.web.security.util.RestSecurityUtils;
+import com.mobi.web.security.util.api.SecurityHelper;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.Principal;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.security.auth.Subject;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -46,27 +46,36 @@ import javax.ws.rs.core.SecurityContext;
 
 @Component(immediate = true)
 public class RestSecurityHandler implements AuthenticationHandler, AuthorizationHandler {
-    private static final Logger LOG = LoggerFactory.getLogger(RestSecurityHandler.class.getName());
+    private static final Logger LOG = LoggerFactory.getLogger(RestSecurityHandler.class);
 
-    protected MobiConfiguration mobiConfiguration;
-    protected EngineManager engineManager;
+    private Set<SecurityHelper> helpers = new HashSet<>();
+    private LinkedList<SecurityHelper> goodHelpers = new LinkedList<>();
 
-    @Reference
-    protected void setMobiConfiguration(MobiConfiguration configuration) {
-        this.mobiConfiguration = configuration;
+    @Reference(type = '*', dynamic = true)
+    void addSecurityHelper(SecurityHelper helper) {
+        helpers.add(helper);
     }
 
-    @Reference
-    protected void setEngineManager(EngineManager engineManager) {
-        this.engineManager = engineManager;
+    void removeSecurityHelper(SecurityHelper helper) {
+        helpers.remove(helper);
     }
 
     @Override
     public Principal authenticate(ContainerRequestContext containerRequestContext) {
         Subject subject = new Subject();
-        String tokenString = TokenUtils.getTokenString(containerRequestContext);
+        boolean authenticated = false;
 
-        if (!RestSecurityUtils.authenticateToken("mobi", subject, tokenString, mobiConfiguration)) {
+        for (SecurityHelper helper : helpers) {
+            if (helper.authenticate(containerRequestContext, subject)) {
+                LOG.debug("Authenticated using " + helper.getClass().getSimpleName());
+                authenticated = true;
+                goodHelpers.add(helper);
+                break;
+            }
+        }
+
+        if (!authenticated) {
+            LOG.debug("Not authenticated using: " + StringUtils.join(helpers, ", "));
             return null;
         }
 
@@ -89,14 +98,6 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
 
     @Override
     public boolean isUserInRole(Principal principal, String role) {
-        if (principal instanceof UserPrincipal) {
-            for (Role roleObj : engineManager.getUserRoles(principal.getName())) {
-                if (roleObj.getResource().stringValue().contains(role)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        return goodHelpers.size() > 0 && goodHelpers.removeFirst().isUserInRole(principal, role);
     }
 }

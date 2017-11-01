@@ -12,12 +12,12 @@ package com.mobi.federation.utils.security;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -27,38 +27,27 @@ import static com.mobi.web.security.util.RestSecurityUtils.authenticateCommon;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.eclipsesource.jaxrs.provider.security.AuthenticationHandler;
-import com.eclipsesource.jaxrs.provider.security.AuthorizationHandler;
 import com.mobi.federation.api.FederationService;
 import com.mobi.federation.utils.api.jaas.token.FederationTokenCallback;
 import com.mobi.federation.utils.api.jaas.token.config.FederationConfiguration;
 import com.mobi.jaas.api.principals.UserPrincipal;
 import com.mobi.jaas.api.utils.TokenUtils;
-import com.mobi.web.security.util.AuthenticationProps;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.JWTParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.mobi.web.security.util.api.SecurityHelper;
 
 import java.security.Principal;
-import java.text.ParseException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.UnsupportedCallbackException;
 import javax.security.auth.login.Configuration;
 import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.core.SecurityContext;
 
 @Component(immediate = true)
-public class FederationRestSecurityHandler implements AuthenticationHandler, AuthorizationHandler {
-    private static final Logger LOG = LoggerFactory.getLogger(FederationRestSecurityHandler.class);
+public class FederationSecurityHelper implements SecurityHelper {
 
     protected FederationConfiguration configuration;
-    private Map<String, FederationService> federationServiceMap = new HashMap<>();
+    private Map<String, FederationService> serviceMap = new HashMap<>();
 
     @Reference
     protected void setFederationConfiguration(FederationConfiguration configuration) {
@@ -68,50 +57,22 @@ public class FederationRestSecurityHandler implements AuthenticationHandler, Aut
     @Reference(type = '*', dynamic = true)
     void addFederationService(FederationService federationService) {
         String federationId = federationService.getFederationServiceConfig().id();
-        federationServiceMap.put(federationId, federationService);
+        serviceMap.put(federationId, federationService);
     }
 
     void removeFederationService(FederationService federationService) {
         String federationId = federationService.getFederationServiceConfig().id();
-        federationServiceMap.remove(federationId);
+        serviceMap.remove(federationId);
     }
 
     @Override
-    public Principal authenticate(ContainerRequestContext containerRequestContext) {
-        Subject subject = new Subject();
-        String tokenString = TokenUtils.getTokenString(containerRequestContext);
-        String federationId;
-        String nodeId;
+    public boolean authenticate(ContainerRequestContext context, Subject subject) {
+        String tokenString = TokenUtils.getTokenString(context);
+        String federationId = context.getProperty("federationId") + "";
+        String nodeId = context.getProperty("nodeId") + "";
 
-        try {
-            JWTClaimsSet claimsSet = JWTParser.parse(tokenString).getJWTClaimsSet();
-            federationId = claimsSet.getStringClaim("federationId");
-            nodeId = claimsSet.getStringClaim("nodeId");
-        } catch (ParseException ex) {
-            LOG.error(ex.getMessage(), ex);
-            return null;
-        }
-
-        if (federationServiceMap.containsKey(federationId) && !authenticateToken(subject, tokenString, configuration,
-                federationServiceMap.get(federationId), nodeId)) {
-            return null;
-        }
-
-        List<Principal> principals = subject.getPrincipals().stream()
-                .filter(p -> p instanceof UserPrincipal)
-                .collect(Collectors.toList());
-        if (principals.isEmpty()) {
-            LOG.debug("No UserPrincipals found.");
-            return null;
-        }
-        Principal principal = principals.get(0);
-        containerRequestContext.setProperty(AuthenticationProps.USERNAME, principal.getName());
-        return principal;
-    }
-
-    @Override
-    public String getAuthenticationScheme() {
-        return SecurityContext.BASIC_AUTH;
+        return serviceMap.containsKey(federationId) && authenticateToken(subject, tokenString, configuration,
+                serviceMap.get(federationId), nodeId);
     }
 
     @Override
