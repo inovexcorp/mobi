@@ -33,8 +33,13 @@ import com.mobi.federation.utils.api.jaas.token.config.FederationConfiguration;
 import com.mobi.jaas.api.principals.UserPrincipal;
 import com.mobi.jaas.api.utils.TokenUtils;
 import com.mobi.web.security.util.api.SecurityHelper;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.JWTParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.security.Principal;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import javax.security.auth.Subject;
@@ -45,6 +50,7 @@ import javax.ws.rs.container.ContainerRequestContext;
 
 @Component(immediate = true)
 public class FederationSecurityHelper implements SecurityHelper {
+    private static final Logger LOG = LoggerFactory.getLogger(FederationSecurityHelper.class);
 
     protected FederationConfiguration configuration;
     private Map<String, FederationService> serviceMap = new HashMap<>();
@@ -56,23 +62,33 @@ public class FederationSecurityHelper implements SecurityHelper {
 
     @Reference(type = '*', dynamic = true)
     void addFederationService(FederationService federationService) {
-        String federationId = federationService.getFederationServiceConfig().id();
+        String federationId = federationService.getFederationId();
         serviceMap.put(federationId, federationService);
     }
 
     void removeFederationService(FederationService federationService) {
-        String federationId = federationService.getFederationServiceConfig().id();
+        String federationId = federationService.getFederationId();
         serviceMap.remove(federationId);
     }
 
     @Override
     public boolean authenticate(ContainerRequestContext context, Subject subject) {
         String tokenString = TokenUtils.getTokenString(context);
-        String federationId = context.getProperty("federationId") + "";
-        String nodeId = context.getProperty("nodeId") + "";
+        if (tokenString == null) {
+            LOG.debug("Token was null so authentication has failed.");
+            return false;
+        }
+        try {
+            JWTClaimsSet claimsSet = JWTParser.parse(tokenString).getJWTClaimsSet();
+            String federationId = claimsSet.getStringClaim("federationId");
+            String nodeId = claimsSet.getStringClaim("nodeId");
 
-        return serviceMap.containsKey(federationId) && authenticateToken(subject, tokenString, configuration,
-                serviceMap.get(federationId), nodeId);
+            return serviceMap.containsKey(federationId) && authenticateToken(subject, tokenString, configuration,
+                    serviceMap.get(federationId), nodeId);
+        } catch (ParseException ex) {
+            LOG.error(ex.getMessage(), ex);
+            return false;
+        }
     }
 
     @Override
