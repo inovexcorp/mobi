@@ -942,23 +942,6 @@
             }
             /**
              * @ngdoc method
-             * @name getBaseClass
-             * @methodOf mappingManager.service:mappingManagerService
-             *
-             * @description
-             * Finds the base class of a mapping by finding the class mapping that isn't used by an
-             * object property mapping.
-             *
-             * @param {Object[]} mapping The mapping JSON-LD array
-             * @return {Object} The base class mapping object
-             */
-            self.getBaseClass = function(mapping) {
-                var classes = self.getAllClassMappings(mapping);
-                var usedClasses = _.map(self.getAllObjectMappings(mapping), "['" + prefixes.delim + "classMapping'][0]['@id']");
-                return _.get(_.filter(classes, classMap => !_.includes(usedClasses, classMap['@id'])), '0');
-            }
-            /**
-             * @ngdoc method
              * @name getClassMappingsByClassId
              * @methodOf mappingManager.service:mappingManagerService
              *
@@ -967,10 +950,10 @@
              *
              * @param {Object[]} mapping The mapping JSON-LD array
              * @param {string} classId The IRI of the class to filter by
-             * @return {Object[]} THe array of class mappings for the identified class in the mapping
+             * @return {Object[]} The array of class mappings for the identified class in the mapping
              */
             self.getClassMappingsByClassId = function(mapping, classId) {
-                return _.filter(self.getAllClassMappings(mapping), ["['" + prefixes.delim + "mapsTo'][0]['@id']", classId]);
+                return _.filter(self.getAllClassMappings(mapping), [prefixes.delim + 'mapsTo', [{'@id': classId}]]);
             }
             /**
              * @ngdoc method

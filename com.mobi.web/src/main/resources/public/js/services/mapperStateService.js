@@ -173,8 +173,8 @@
              * @type {Object[]}
              *
              * @description
-             * `availableClasses` holds an array of objects representing the classes from all source ontologies
-             * that have not been used for a class mapping yet. Each object has the following structure:
+             * `availableClasses` holds an array of objects representing the classes from all source ontologies.
+             * Each object has the following structure:
              * ```
              * {
              *     ontologyId: '',
@@ -529,10 +529,10 @@
              * @methodOf mapperState.service:mapperStateService
              *
              * @description
-             * Finds all of the column indexes that haven't been mapped to data mappings yet in the currently selected
+             * Finds all of the column indexes that have been mapped to data mappings in the currently selected
              * {@link mapperState.service:mapperStateService#mapping mapping}.
              *
-             * @return {string[]} an array of strings of column indexes that haven't been mapped yet
+             * @return {string[]} an array of strings of column indexes that have been mapped
              */
             self.getMappedColumns = function() {
                 return _.uniq(_.map(mm.getAllDataMappings(self.mapping.jsonld), dataMapping => util.getPropertyValue(dataMapping, prefixes.delim + 'columnIndex')));
@@ -747,12 +747,6 @@
                 });
                 _.forEach(propsLinkingToClass, obj => cleanUpDeletedProp(obj.propMapping, obj.classMappingId));
                 self.removeAvailableProps(classMappingId);
-                var classId = mm.getClassIdByMapping(deletedClass);
-                var ontology = mm.findSourceOntologyWithClass(classId, self.sourceOntologies);
-                if (ontology) {
-                    var classObj = om.getEntity([ontology.entities], classId);
-                    self.availableClasses.push({ontologyId: ontology.id, classObj});
-                }
             }
             /**
              * @ngdoc method

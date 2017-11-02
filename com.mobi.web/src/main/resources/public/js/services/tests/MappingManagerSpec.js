@@ -519,7 +519,7 @@ describe('Mapping Manager service', function() {
         expect(mappingManagerSvc.getClassIdByMapping(classMapping)).toBe('class');
     });
     it('should get the property id of a property mapping by its id', function() {
-        var propMapping = {'@id': 'classId'};
+        var propMapping = {'@id': 'propId'};
         spyOn(mappingManagerSvc, 'getPropIdByMapping').and.returnValue('');
         var result = mappingManagerSvc.getPropIdByMappingId([propMapping], propMapping['@id']);
         expect(mappingManagerSvc.getPropIdByMapping).toHaveBeenCalledWith(propMapping);
@@ -863,15 +863,5 @@ describe('Mapping Manager service', function() {
     it('should return the title of a property mapping', function() {
         var result = mappingManagerSvc.getPropMappingTitle('class', 'prop');
         expect(typeof result).toBe('string');
-    });
-    it('should get the base class mapping of a mapping', function() {
-        var classMapping1 = {'@id': 'class1'};
-        var classMapping2 = {'@id': 'class2'};
-        var objectMapping = {};
-        objectMapping[prefixes.delim + 'classMapping'] = [classMapping2];
-        spyOn(mappingManagerSvc, 'getAllClassMappings').and.returnValue([classMapping1, classMapping2]);
-        spyOn(mappingManagerSvc, 'getAllObjectMappings').and.returnValue([objectMapping]);
-        var result = mappingManagerSvc.getBaseClass([]);
-        expect(result).toEqual(classMapping1);
     });
 });

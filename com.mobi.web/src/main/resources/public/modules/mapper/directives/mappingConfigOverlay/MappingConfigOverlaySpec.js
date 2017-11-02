@@ -47,6 +47,12 @@ describe('Mapping Config Overlay directive', function() {
             $q = _$q_;
         });
 
+        this.compile = function() {
+            this.element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
+            scope.$digest();
+            this.controller = this.element.controller('mappingConfigOverlay');
+        }
+
         this.originalOntology = {id: 'original', entities: [{}]};
         this.importedOntology = {id: 'imported', ontology: []};
         this.originalClassObj = {'@id': 'original'};
@@ -58,14 +64,6 @@ describe('Mapping Config Overlay directive', function() {
         catalogManagerSvc.localCatalog = {'@id': ''};
         catalogManagerSvc.getRecords.and.returnValue($q.when(this.response));
         mapperStateSvc.mapping = {jsonld: [], difference: {additions: [], deletions: []}};
-    });
-
-    beforeEach(function compile() {
-        this.compile = function() {
-            this.element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
-            scope.$digest();
-            this.controller = this.element.controller('mappingConfigOverlay');
-        }
     });
 
     afterEach(function() {
@@ -434,7 +432,6 @@ describe('Mapping Config Overlay directive', function() {
                     this.classMapping = {'@id': 'classMapping'};
                     mappingManagerSvc.getAllClassMappings.and.returnValue([this.classMapping]);
                     this.controller.classes = [{classObj: {'@id': 'class1'}}, {classObj: {'@id': 'class2'}}];
-                    mappingManagerSvc.getClassIdByMapping.and.returnValue('class1');
                     mappingManagerSvc.getMappingEntity.and.returnValue({'@id': 'mapping'});
                 });
                 it('setting appropriate state', function() {
@@ -447,7 +444,7 @@ describe('Mapping Config Overlay directive', function() {
                     expect(mapperStateSvc.changeProp).toHaveBeenCalledWith('mapping', prefixes.delim + 'sourceCommit', this.ontologyInfo.commitId, this.oldOntologyInfo.commitId, true);
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                     expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(this.classMapping['@id']);
-                    expect(mapperStateSvc.availableClasses).toEqual([{classObj: {'@id': 'class2'}}]);
+                    expect(mapperStateSvc.availableClasses).toEqual(this.controller.classes);
                     expect(mapperStateSvc.displayMappingConfigOverlay).toBe(false);
                 });
                 describe('removing incompatible mappings', function() {

@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Class Mapping Overlay directive', function() {
-    var $compile, scope, element, controller, mappingManagerSvc, mapperStateSvc;
+    var $compile, scope, mappingManagerSvc, mapperStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -37,67 +37,75 @@ describe('Class Mapping Overlay directive', function() {
         });
 
         mapperStateSvc.mapping = {jsonld: [], difference: {additions: []}};
-        element = $compile(angular.element('<class-mapping-overlay></class-mapping-overlay>'))(scope);
+        this.element = $compile(angular.element('<class-mapping-overlay></class-mapping-overlay>'))(scope);
         scope.$digest();
-        controller = element.controller('classMappingOverlay');
+        this.controller = this.element.controller('classMappingOverlay');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        mappingManagerSvc = null;
+        mapperStateSvc = null;
+        this.element.remove();
     });
 
     describe('controller methods', function() {
         it('should add a class mapping', function() {
             var classMapping = {'@id': 'classMapping'};
-            controller.selectedClass = {ontologyId: '', classObj: {'@id': ''}};
-            mapperStateSvc.availableClasses = [controller.selectedClass];
-            mapperStateSvc.sourceOntologies = [{id: controller.selectedClass.ontologyId, entities: []}];
+            this.controller.selectedClass = {ontologyId: '', classObj: {'@id': ''}};
+            mapperStateSvc.availableClasses = [this.controller.selectedClass];
+            mapperStateSvc.sourceOntologies = [{id: this.controller.selectedClass.ontologyId, entities: []}];
             mappingManagerSvc.addClass.and.returnValue(classMapping);
-            controller.addClass();
-            expect(mappingManagerSvc.addClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, jasmine.any(Array), controller.selectedClass.classObj['@id']);
+            this.controller.addClass();
+            expect(mappingManagerSvc.addClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, jasmine.any(Array), this.controller.selectedClass.classObj['@id']);
             expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(classMapping['@id']);
-            expect(mapperStateSvc.availableClasses).not.toContain(controller.selectedClass);
+            expect(mapperStateSvc.availableClasses).toContain(this.controller.selectedClass);
             expect(mapperStateSvc.mapping.difference.additions).toContain(classMapping);
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.selectedClassMappingId).toBe(classMapping['@id']);
             expect(mapperStateSvc.displayClassMappingOverlay).toBe(false);
         });
         it('should set the correct state for canceling', function() {
-            controller.cancel();
+            this.controller.cancel();
             expect(mapperStateSvc.displayClassMappingOverlay).toBe(false);
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.hasClass('class-mapping-overlay')).toBe(true);
-            expect(element.querySelectorAll('form.content').length).toBe(1);
+            expect(this.element.hasClass('class-mapping-overlay')).toBe(true);
+            expect(this.element.querySelectorAll('form.content').length).toBe(1);
         });
         it('with a class select', function() {
-            expect(element.find('class-select').length).toBe(1);
+            expect(this.element.find('class-select').length).toBe(1);
         });
         it('with buttons to cancel and submit', function() {
-            var buttons = element.querySelectorAll('.btn-container button');
+            var buttons = this.element.querySelectorAll('.btn-container button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
         it('depending on whether a class is selected', function() {
-            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
-            expect(element.find('class-preview').length).toBe(0);
+            expect(this.element.find('class-preview').length).toBe(0);
 
-            controller.selectedClass = {};
+            this.controller.selectedClass = {};
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
-            expect(element.find('class-preview').length).toBe(1);
+            expect(this.element.find('class-preview').length).toBe(1);
         });
     });
     it('should call addClass when the button is clicked', function() {
-        spyOn(controller, 'addClass');
-        var continueButton = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        spyOn(this.controller, 'addClass');
+        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
         continueButton.triggerHandler('click');
-        expect(controller.addClass).toHaveBeenCalled();
+        expect(this.controller.addClass).toHaveBeenCalled();
     });
     it('should call cancel when the button is clicked', function() {
-        spyOn(controller, 'cancel');
-        var continueButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        spyOn(this.controller, 'cancel');
+        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
         continueButton.triggerHandler('click');
-        expect(controller.cancel).toHaveBeenCalled();
+        expect(this.controller.cancel).toHaveBeenCalled();
     });
 });
