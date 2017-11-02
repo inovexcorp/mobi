@@ -35,9 +35,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.security.auth.Subject;
@@ -48,28 +50,29 @@ import javax.ws.rs.core.SecurityContext;
 public class RestSecurityHandler implements AuthenticationHandler, AuthorizationHandler {
     private static final Logger LOG = LoggerFactory.getLogger(RestSecurityHandler.class);
 
-    private Set<SecurityHelper> helpers = new HashSet<>();
-    private LinkedList<SecurityHelper> goodHelpers = new LinkedList<>();
+    private Map<String, SecurityHelper> helpers = new HashMap<>();
 
     @Reference(type = '*', dynamic = true)
     void addSecurityHelper(SecurityHelper helper) {
-        helpers.add(helper);
+        helpers.put(helper.getClass().getSimpleName(), helper);
     }
 
     void removeSecurityHelper(SecurityHelper helper) {
-        helpers.remove(helper);
+        helpers.remove(helper.getClass().getSimpleName());
     }
 
     @Override
     public Principal authenticate(ContainerRequestContext containerRequestContext) {
         Subject subject = new Subject();
         boolean authenticated = false;
+        String className = "";
 
-        for (SecurityHelper helper : helpers) {
+        for (Map.Entry<String, SecurityHelper> entry : helpers.entrySet()) {
+            SecurityHelper helper = entry.getValue();
             if (helper.authenticate(containerRequestContext, subject)) {
-                LOG.debug("Authenticated using " + helper.getClass().getSimpleName());
+                className = helper.getClass().getSimpleName();
+                LOG.debug("Authenticated using " + className);
                 authenticated = true;
-                goodHelpers.add(helper);
                 break;
             }
         }
@@ -88,7 +91,7 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
         }
         Principal principal = principals.get(0);
         containerRequestContext.setProperty(AuthenticationProps.USERNAME, principal.getName());
-        return principal;
+        return new UserPrincipal(principal.getName(), className);
     }
 
     @Override
@@ -98,6 +101,7 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
 
     @Override
     public boolean isUserInRole(Principal principal, String role) {
-        return goodHelpers.size() > 0 && goodHelpers.removeFirst().isUserInRole(principal, role);
+        return principal instanceof UserPrincipal
+                && helpers.get(((UserPrincipal) principal).getClassName()).isUserInRole(principal, role);
     }
 }
