@@ -135,11 +135,11 @@ describe('Ontology Utils Manager service', function() {
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
         splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
-        ontologyStateSvc.listItem.subObjectProperties = [{namespace: 'begin/', localName: 'end'}];
+        ontologyStateSvc.listItem.objectPropertyIRIs = [{namespace: 'begin/', localName: 'end'}];
         ontologyStateSvc.getOntologiesArray.and.returnValue([{prop: 'ontology'}]);
         ontologyUtilsManagerSvc.deleteObjectProperty();
         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-        expect(ontologyStateSvc.listItem.subObjectProperties.length).toBe(0);
+        expect(ontologyStateSvc.listItem.objectPropertyIRIs.length).toBe(0);
         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectPropertyHierarchy, 'begin/end', ontologyStateSvc.listItem.objectPropertyIndex);
         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectPropertyHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
         expect(ontologyStateSvc.listItem.flatObjectPropertyHierarchy).toEqual([{entityIRI: 'iri'}]);
@@ -149,10 +149,10 @@ describe('Ontology Utils Manager service', function() {
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
         splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
-        ontologyStateSvc.listItem.subDataProperties = [{namespace: 'begin/', localName: 'end'}];
+        ontologyStateSvc.listItem.dataPropertyIRIs = [{namespace: 'begin/', localName: 'end'}];
         ontologyUtilsManagerSvc.deleteDataTypeProperty();
         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-        expect(ontologyStateSvc.listItem.subDataProperties.length).toBe(0);
+        expect(ontologyStateSvc.listItem.dataPropertyIRIs.length).toBe(0);
         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, 'begin/end', ontologyStateSvc.listItem.dataPropertyIndex);
         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.dataPropertyHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
         expect(ontologyStateSvc.listItem.flatDataPropertyHierarchy).toEqual([{entityIRI: 'iri'}]);

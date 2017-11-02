@@ -134,8 +134,8 @@
                 annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.owlAnnotations)),
                 dataPropertyRange: om.defaultDatatypes,
                 classIRIs: [],
-                subDataProperties: [],
-                subObjectProperties: [],
+                dataPropertyIRIs: [],
+                objectPropertyIRIs: [],
                 individuals: [],
                 classHierarchy: [],
                 classIndex: {},
@@ -223,8 +223,8 @@
              *      importedOntologies: [],
              *      importedOntologyIds: [],
              *      annotations: [],
-             *      subDataProperties: [],
-             *      subObjectProperties: [],
+             *      dataPropertyIRIs: [],
+             *      objectPropertyIRIs: [],
              *      dataPropertyRange: [],
              *      classHierarchy: [],
              *      individuals: [],
@@ -523,8 +523,8 @@
                     );
                     listItem.classIRIs = [];
                     _.forEach(_.get(response[0], 'classes', []), iriObj => self.addToClassIRIs(listItem, iriObj));
-                    listItem.subDataProperties = _.get(response[0], 'dataProperties');
-                    listItem.subObjectProperties = _.get(response[0], 'objectProperties');
+                    listItem.dataPropertyIRIs = _.get(response[0], 'dataProperties');
+                    listItem.objectPropertyIRIs = _.get(response[0], 'objectProperties');
                     listItem.individuals = _.get(response[0], 'namedIndividuals');
                     listItem.dataPropertyRange = _.unionWith(
                         _.get(response[0], 'datatypes'),
@@ -542,14 +542,14 @@
                                 self.addToClassIRIs(listItem, iriObj);
                             }
                         });
-                        listItem.subDataProperties = _.unionWith(
+                        listItem.dataPropertyIRIs = _.unionWith(
                             addOntologyIdToArray(iriList.dataProperties, iriList.id),
-                            listItem.subDataProperties,
+                            listItem.dataPropertyIRIs,
                             compareIriObjs
                         );
-                        listItem.subObjectProperties = _.unionWith(
+                        listItem.objectPropertyIRIs = _.unionWith(
                             addOntologyIdToArray(iriList.objectProperties, iriList.id),
-                            listItem.subObjectProperties,
+                            listItem.objectPropertyIRIs,
                             compareIriObjs
                         );
                         listItem.individuals = _.unionWith(
@@ -589,7 +589,7 @@
                     listItem.flatEverythingTree = self.createFlatEverythingTree(getOntologiesArrayByListItem(listItem), listItem);
                     _.pullAllWith(
                         listItem.annotations,
-                        _.concat(om.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties),
+                        _.concat(om.ontologyProperties, listItem.dataPropertyIRIs, listItem.objectPropertyIRIs),
                         compareIriObjs
                     );
                     listItem.failedImports = response[9];
@@ -618,8 +618,8 @@
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
                     listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri));
-                    listItem.subDataProperties = _.get(response[0], 'dataProperties');
-                    listItem.subObjectProperties = _.get(response[0], 'objectProperties');
+                    listItem.dataPropertyIRIs = _.get(response[0], 'dataProperties');
+                    listItem.objectPropertyIRIs = _.get(response[0], 'objectProperties');
                     listItem.derivedConcepts = _.map(_.get(response[0], 'derivedConcepts', []), ro.getItemIri);
                     listItem.derivedConceptSchemes = _.map(_.get(response[0], 'derivedConceptSchemes', []), ro.getItemIri);
                     listItem.annotations = _.unionWith(
@@ -640,14 +640,14 @@
                             listItem.annotations,
                             compareIriObjs
                         );
-                        listItem.subDataProperties = _.unionWith(
+                        listItem.dataPropertyIRIs = _.unionWith(
                             addOntologyIdToArray(iriList.dataProperties, iriList.id),
-                            listItem.subDataProperties,
+                            listItem.dataPropertyIRIs,
                             compareIriObjs
                         );
-                        listItem.subObjectProperties = _.unionWith(
+                        listItem.objectPropertyIRIs = _.unionWith(
                             addOntologyIdToArray(iriList.objectProperties, iriList.id),
-                            listItem.subObjectProperties,
+                            listItem.objectPropertyIRIs,
                             compareIriObjs
                         );
                         listItem.iriList.push(iriList['id']);
@@ -665,7 +665,7 @@
                     });
                     _.pullAllWith(
                         listItem.annotations,
-                        _.concat(om.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties,
+                        _.concat(om.ontologyProperties, listItem.dataPropertyIRIs, listItem.objectPropertyIRIs,
                             angular.copy(om.conceptRelationshipList), angular.copy(om.schemeRelationshipList)),
                         compareIriObjs
                     );

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-fdescribe('Ontology State Service', function() {
+describe('Ontology State Service', function() {
     var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc, $document, responseObj, $state;
 
     var error, format, title, description, keywords, inProgressCommit, emptyInProgressCommit, recordId, recordTitle, branchId, commitId, ontologyId, catalogId, anonymous, branch, commitObj, ontologyType, vocabularyType, jsonFilter, differenceObj, index, importedOntologies, importedOntologyIds, classId, classId2, objectPropertyId, objectPropertyId2, datatypeId, datatypeId2, annotationId, annotationId2, dataPropertyId, dataPropertyId2, individualId, individualId2, irisResponse, importedIrisResponse, classHierarchiesResponse, conceptHierarchiesResponse, conceptSchemeHierarchiesResponse, classesWithIndividualsResponse, dataPropertyHierarchiesResponse, objectPropertyHierarchiesResponse, annotationPropertyHierarchiesResponse, branches, path;
@@ -1547,12 +1547,12 @@ fdescribe('Ontology State Service', function() {
                         { localName: classId2, namespace: classId2, ontologyId: ontologyId }
                     ]);
                     expect(response.isVocabulary).toEqual(true);
-                    expect(_.get(response, 'subDataProperties')).toEqual([{
+                    expect(_.get(response, 'dataPropertyIRIs')).toEqual([{
                         localName: dataPropertyId2, namespace: dataPropertyId2, ontologyId: ontologyId
                     }, {
                         localName: dataPropertyId, namespace: dataPropertyId
                     }]);
-                    expect(_.get(response, 'subObjectProperties')).toEqual([{
+                    expect(_.get(response, 'objectPropertyIRIs')).toEqual([{
                         localName: objectPropertyId2, namespace: objectPropertyId2, ontologyId: ontologyId
                     }, {
                         localName: objectPropertyId, namespace: objectPropertyId
@@ -1688,12 +1688,12 @@ fdescribe('Ontology State Service', function() {
             ontologyManagerSvc.getImportedIris.and.returnValue($q.when(importedIrisResponse));
             ontologyStateSvc.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, false)
                 .then(function(response) {
-                    expect(_.get(response, 'subDataProperties')).toEqual([{
+                    expect(_.get(response, 'dataPropertyIRIs')).toEqual([{
                         localName: dataPropertyId2, namespace: dataPropertyId2, ontologyId: ontologyId
                     }, {
                         localName: dataPropertyId, namespace: dataPropertyId
                     }]);
-                    expect(_.get(response, 'subObjectProperties')).toEqual([{
+                    expect(_.get(response, 'objectPropertyIRIs')).toEqual([{
                         localName: objectPropertyId2, namespace: objectPropertyId2, ontologyId: ontologyId
                     }, {
                         localName: objectPropertyId, namespace: objectPropertyId
