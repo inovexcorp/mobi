@@ -35,10 +35,13 @@ import com.mobi.federation.utils.api.jaas.token.config.FederationConfiguration;
 import com.mobi.jaas.api.principals.UserPrincipal;
 import com.mobi.jaas.api.utils.TokenUtils;
 import com.mobi.web.security.util.AuthenticationProps;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.JWTParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.security.Principal;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,8 +80,17 @@ public class FederationRestSecurityHandler implements AuthenticationHandler, Aut
     public Principal authenticate(ContainerRequestContext containerRequestContext) {
         Subject subject = new Subject();
         String tokenString = TokenUtils.getTokenString(containerRequestContext);
-        String federationId = containerRequestContext.getProperty("federationId") + "";
-        String nodeId = containerRequestContext.getProperty("nodeId") + "";
+        String federationId;
+        String nodeId;
+
+        try {
+            JWTClaimsSet claimsSet = JWTParser.parse(tokenString).getJWTClaimsSet();
+            federationId = claimsSet.getStringClaim("federationId");
+            nodeId = claimsSet.getStringClaim("nodeId");
+        } catch (ParseException ex) {
+            LOG.error(ex.getMessage(), ex);
+            return null;
+        }
 
         if (federationServiceMap.containsKey(federationId) && !authenticateToken(subject, tokenString, configuration,
                 federationServiceMap.get(federationId), nodeId)) {
