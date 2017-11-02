@@ -46,7 +46,8 @@ describe('Create Mapping Overlay directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
-        $q, mappingManagerSvc = null;
+        $q = null;
+        mappingManagerSvc = null;
         mapperStateSvc = null;
         this.element.remove();
     });
