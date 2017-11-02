@@ -21,9 +21,7 @@
  * #L%
  */
 describe('Invalid Ontology Overlay directive', function() {
-    var $compile,
-        scope,
-        mapperStateSvc;
+    var $compile, scope, mapperStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -37,17 +35,22 @@ describe('Invalid Ontology Overlay directive', function() {
             mapperStateSvc = _mapperStateService_;
         });
 
-        mapperStateSvc.mapping = {id: ''};
+        mapperStateSvc.mapping = {record: {title: 'Mapping Title'}};
         this.element = $compile(angular.element('<invalid-ontology-overlay></invalid-ontology-overlay>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('invalidOntologyOverlay');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        mapperStateSvc = null;
+        this.element.remove();
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = this.element.controller('invalidOntologyOverlay');
-        });
         it('should set the correct state for closing the overlay', function() {
-            controller.close();
+            this.controller.close();
             expect(mapperStateSvc.initialize).toHaveBeenCalled();
             expect(mapperStateSvc.invalidOntology).toBe(false);
         });
@@ -56,6 +59,9 @@ describe('Invalid Ontology Overlay directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.hasClass('invalid-ontology-overlay')).toBe(true);
             expect(this.element.querySelectorAll('form.content').length).toBe(1);
+        });
+        it('with the mapping record title', function() {
+            expect(this.element.html()).toContain(mapperStateSvc.mapping.record.title);
         });
         it('with a button for closing', function() {
             var buttons = this.element.find('button');

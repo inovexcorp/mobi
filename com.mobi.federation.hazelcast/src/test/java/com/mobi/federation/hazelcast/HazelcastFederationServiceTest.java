@@ -23,23 +23,33 @@ package com.mobi.federation.hazelcast;
  * #L%
  */
 
-import junit.framework.TestCase;
+import static java.lang.Thread.sleep;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.instance.HazelcastInstanceImpl;
+import com.hazelcast.instance.HazelcastInstanceProxy;
+import com.hazelcast.instance.Node;
+import com.mobi.platform.config.api.server.Mobi;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
-import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import com.mobi.federation.api.FederationService;
-import com.mobi.platform.config.api.server.Mobi;
 import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.runners.MockitoJUnitRunner;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
+import org.mockito.MockitoAnnotations;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.Dictionary;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -48,9 +58,17 @@ import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
-@RunWith(MockitoJUnitRunner.class)
-public class HazelcastFederationServiceTest extends TestCase {
+public class HazelcastFederationServiceTest {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(HazelcastFederationServiceTest.class);
+
+    private static final int WAIT_TIME = 10;
+
+    private UUID u1 = UUID.randomUUID();
+    private UUID u2 = UUID.randomUUID();
+    private UUID u3 = UUID.randomUUID();
 
     @Mock
     private Mobi mobi1;
@@ -61,30 +79,20 @@ public class HazelcastFederationServiceTest extends TestCase {
     @Mock
     private Mobi mobi3;
 
-    @Mock
-    private BundleContext context;
+    @Before
+    public void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
 
-    @Mock
-    private ServiceRegistration<FederationService> registration;
+        when(mobi1.getServerIdentifier()).thenReturn(u1);
+        when(mobi2.getServerIdentifier()).thenReturn(u2);
+        when(mobi3.getServerIdentifier()).thenReturn(u3);
+    }
 
     @Test
     public void testFederation() throws Exception {
         final FakeHazelcastOsgiService hazelcastOSGiService = new FakeHazelcastOsgiService();
 
-        UUID u1 = UUID.randomUUID();
-        UUID u2 = UUID.randomUUID();
-        UUID u3 = UUID.randomUUID();
-        Mockito.when(mobi1.getServerIdentifier()).thenReturn(u1);
-        Mockito.when(mobi2.getServerIdentifier()).thenReturn(u2);
-        Mockito.when(mobi3.getServerIdentifier()).thenReturn(u3);
-        Mockito.when(context.registerService(Mockito.eq(FederationService.class), Mockito.any(FederationService.class), Mockito.any()))
-                .thenReturn(registration);
-
-        Mockito.doAnswer(invocation -> {
-            Thread.sleep(4000L);
-            return null;
-        }).when(registration).unregister();
-
+        System.setProperty("hazelcast.logging.type", "slf4j");
         System.setProperty("java.net.preferIPv4Stack", "true");
         final HazelcastFederationService s1 = new HazelcastFederationService();
         s1.setMobiServer(mobi1);
@@ -104,31 +112,102 @@ public class HazelcastFederationServiceTest extends TestCase {
         task2.get();
         task3.get();
 
-        Mockito.verify(context, Mockito.timeout(30000L)
-                .times(3))
-                .registerService(Mockito.any(Class.class), Mockito.any(HazelcastFederationService.class), Mockito.any(Dictionary.class));
+        // Test one federation is formed with 3 members
+        assertNotNull(s1.getHazelcastInstance());
+        assertTrue(s1.getHazelcastInstance().isPresent());
+        assertNotNull(s2.getHazelcastInstance());
+        assertTrue(s2.getHazelcastInstance().isPresent());
+        assertNotNull(s3.getHazelcastInstance());
+        assertTrue(s3.getHazelcastInstance().isPresent());
 
-        Assert.assertNotNull(s1.getHazelcastInstance());
-        Assert.assertNotNull(s2.getHazelcastInstance());
-        Assert.assertNotNull(s3.getHazelcastInstance());
-
-        assertEquals(3, s1.getMemberCount());
-        assertEquals(3, s2.getMemberCount());
-        assertEquals(3, s3.getMemberCount());
+        waitForEquals(3, s1::getMemberCount, WAIT_TIME);
+        waitForEquals(3, s2::getMemberCount, WAIT_TIME);
+        waitForEquals(3, s3::getMemberCount, WAIT_TIME);
         assertTrue(CollectionUtils.isEqualCollection(s1.getFederationNodeIds(), s2.getFederationNodeIds()));
         assertTrue(CollectionUtils.isEqualCollection(s1.getFederationNodeIds(), s3.getFederationNodeIds()));
         assertTrue(s1.getFederationNodeIds().contains(u1));
         assertTrue(s1.getFederationNodeIds().contains(u2));
         assertTrue(s1.getFederationNodeIds().contains(u3));
-        s1.getFederationNodeIds().forEach(System.out::println);
 
+        // Test deactivation of one node results in two members
         s1.deactivate();
-        assertEquals(2, s2.getMemberCount());
-        assertEquals(2, s3.getMemberCount());
+        waitForEquals(2, s2::getMemberCount, WAIT_TIME);
+        waitForEquals(2, s3::getMemberCount, WAIT_TIME);
+        assertTrue(s3.getFederationNodeIds().contains(u2));
+        assertTrue(s3.getFederationNodeIds().contains(u3));
+
+        // Test deactivation of another node results in 1 member
         s2.deactivate();
-        assertEquals(1, s3.getMemberCount());
+        waitForEquals(1, s3::getMemberCount, WAIT_TIME);
+        assertTrue(s3.getFederationNodeIds().contains(u3));
+
+        // Test reactivation of a node results in two members again
+        ForkJoinTask<?> task22 = createNode(pool, s2, 5234, new HashSet<>(Collections.singletonList("127.0.0.1:5345")));
+        task22.get();
+        waitForEquals(2, s2::getMemberCount, WAIT_TIME);
+        waitForEquals(2, s3::getMemberCount, WAIT_TIME);
+        assertTrue(s3.getFederationNodeIds().contains(u2));
+        assertTrue(s3.getFederationNodeIds().contains(u3));
+
+        // Deactivate remaining nodes
+        s2.deactivate();
         s3.deactivate();
     }
+
+    @Test
+    public void testDisconnected() throws Exception {
+        final FakeHazelcastOsgiService hazelcastOSGiService = new FakeHazelcastOsgiService();
+
+        final HazelcastFederationService s1 = new HazelcastFederationService();
+        s1.setMobiServer(mobi1);
+        s1.setHazelcastOSGiService(hazelcastOSGiService);
+        final HazelcastFederationService s2 = new HazelcastFederationService();
+        s2.setMobiServer(mobi2);
+        s2.setHazelcastOSGiService(hazelcastOSGiService);
+        ForkJoinPool pool = new ForkJoinPool(2);
+
+        ForkJoinTask<?> task1 = createNode(pool, s1, 5123, new HashSet<>(Collections.singletonList("127.0.0.1:5234")));
+        ForkJoinTask<?> task2 = createNode(pool, s2, 5234, new HashSet<>(Collections.singletonList("127.0.0.1:5123")));
+        task1.get();
+        task2.get();
+
+        // Test one federation is formed with 2 members
+        assertTrue(s1.getHazelcastInstance().isPresent());
+        assertTrue(s2.getHazelcastInstance().isPresent());
+        waitForEquals(2, s1::getMemberCount, WAIT_TIME);
+        waitForEquals(2, s2::getMemberCount, WAIT_TIME);
+        assertTrue(CollectionUtils.isEqualCollection(s1.getFederationNodeIds(), s2.getFederationNodeIds()));
+        assertTrue(s1.getFederationNodeIds().contains(u1));
+        assertTrue(s1.getFederationNodeIds().contains(u2));
+        assertTrue(s2.getFederationNodeIds().contains(u1));
+        assertTrue(s2.getFederationNodeIds().contains(u2));
+
+        HazelcastInstance h1 = s1.getHazelcastInstance().get();
+        HazelcastInstance h2 = s2.getHazelcastInstance().get();
+
+        // Test disconnected
+        closeConnectionBetween(h1, h2);
+        waitForEquals(1, s1::getMemberCount, WAIT_TIME);
+        waitForEquals(1, s2::getMemberCount, WAIT_TIME);
+        assertTrue(s1.getFederationNodeIds().contains(u1));
+        assertTrue(s1.getFederationNodeIds().contains(u2));
+        assertTrue(s2.getFederationNodeIds().contains(u1));
+        assertTrue(s2.getFederationNodeIds().contains(u2));
+
+        // Test reconnected
+        reconnect(h1, h2);
+        waitForEquals(2, s1::getMemberCount, WAIT_TIME);
+        waitForEquals(2, s2::getMemberCount, WAIT_TIME);
+        assertTrue(s1.getFederationNodeIds().contains(u1));
+        assertTrue(s1.getFederationNodeIds().contains(u2));
+        assertTrue(s2.getFederationNodeIds().contains(u1));
+        assertTrue(s2.getFederationNodeIds().contains(u2));
+
+        // Deactivate remaining nodes
+        s1.deactivate();
+        s2.deactivate();
+    }
+
 
     private void waitOnInitialize(HazelcastFederationService s) throws Exception {
         Field f = s.getClass().getDeclaredField("initializationTask");
@@ -144,12 +223,60 @@ public class HazelcastFederationServiceTest extends TestCase {
             map.put("listeningPort", Integer.toString(port));
             map.put("joinMechanism", "TCPIP");
             map.put("tcpIpMembers", StringUtils.join(members, ", "));
-            service.activate(context, map);
+            map.put("maxNoHeartbeatSeconds", 10);
+            service.activate(map);
             try {
                 waitOnInitialize(service);
             } catch (Exception e) {
                 throw new RuntimeException("Issue waiting on service initialization", e);
             }
         });
+    }
+
+    private HazelcastInstanceImpl getHazelcastInstanceImpl(HazelcastInstance hz) {
+        HazelcastInstanceImpl impl = null;
+        if (hz instanceof FakeHazelcastOsgiInstance) {
+            HazelcastInstance inst = ((FakeHazelcastOsgiInstance) hz).getDelegatedInstance();
+            if (inst instanceof HazelcastInstanceProxy) {
+                impl = ((HazelcastInstanceProxy) inst).getOriginal();
+            } else if (inst instanceof HazelcastInstanceImpl) {
+                impl = (HazelcastInstanceImpl) inst;
+            }
+        }
+        assertNotNull(impl);
+        return impl;
+    }
+
+    private Node getNode(HazelcastInstance h) {
+        Node n = getHazelcastInstanceImpl(h).node;
+        assertNotNull(n);
+        return n;
+    }
+
+    private void closeConnectionBetween(HazelcastInstance h1, HazelcastInstance h2) {
+        Node n1 = getNode(h1);
+        Node n2 = getNode(h2);
+        n1.clusterService.removeAddress(n2.address, null);
+        n2.clusterService.removeAddress(n1.address, null);
+    }
+
+    private void reconnect(HazelcastInstance h1, HazelcastInstance h2) {
+        Node n1 = getNode(h1);
+        Node n2 = getNode(h2);
+        n1.clusterService.merge(n2.address);
+    }
+
+    private void waitForEquals(Object expected, Supplier<Object> actual, int timeoutSeconds) throws InterruptedException {
+        while (timeoutSeconds > 0) {
+            if (!expected.equals(actual.get())) {
+                LOGGER.info("Waiting for condition...");
+                sleep(1000);
+            } else {
+                LOGGER.info("Condition passed.");
+                return;
+            }
+            timeoutSeconds--;
+        }
+        fail("Timeout while waiting for condition.");
     }
 }

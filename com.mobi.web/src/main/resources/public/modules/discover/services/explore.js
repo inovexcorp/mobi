@@ -46,15 +46,15 @@
          * endpoints.
          */
         .service('exploreService', exploreService);
-    
+
     exploreService.$inject = ['$http', '$q', 'utilService', 'discoverStateService', 'REST_PREFIX'];
-    
+
     function exploreService($http, $q, utilService, discoverStateService, REST_PREFIX) {
         var self = this;
         var prefix = REST_PREFIX + 'explorable-datasets/';
         var util = utilService;
         var ds = discoverStateService;
-        
+
         /**
          * @ngdoc method
          * @name getClassDetails
@@ -70,7 +70,7 @@
             return $http.get(prefix + encodeURIComponent(recordId) + '/class-details')
                 .then(response => response.data, util.rejectError);
         }
-        
+
         /**
          * @ngdoc method
          * @name getClassInstanceDetails
@@ -97,7 +97,7 @@
             return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/instance-details', config)
                 .then(response => response, util.rejectError);
         }
-        
+
         /**
          * @ngdoc method
          * @name getClassPropertyDetails
@@ -116,7 +116,7 @@
             return $http.get(prefix + encodeURIComponent(recordId) + '/classes/' + encodeURIComponent(classId) + '/property-details')
                 .then(response => response.data, util.rejectError);
         }
-        
+
         /**
          * @ngdoc method
          * @name createInstance
@@ -134,7 +134,7 @@
             return $http.post(prefix + encodeURIComponent(recordId) + '/instances', json)
                 .then(response => response.data, util.rejectError);
         }
-        
+
         /**
          * @ngdoc method
          * @name getInstance
@@ -153,7 +153,7 @@
             return $http.get(prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId))
                 .then(response => response.data, util.rejectError);
         }
-        
+
         /**
          * @ngdoc method
          * @name updateInstance
@@ -172,7 +172,25 @@
             return $http.put(prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId), angular.toJson(json))
                 .then(response => $q.when(), util.rejectError);
         }
-        
+
+        /**
+         * @ngdoc method
+         * @name deleteInstance
+         * @methodOf explore.service:exploreService
+         *
+         * @description
+         * Calls the DELETE /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint
+         * and identifies if the instance was deleted.
+         *
+         * @param {string} recordId The id of the Record
+         * @param {string} instanceId The id of the instance
+         * @returns {Promise} A promise that indicates if the instance was deleted successfully.
+         */
+        self.deleteInstance = function(recordId, instanceId) {
+            return $http.delete(prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId))
+                .then(response => $q.when(), util.rejectError);
+        }
+
         /**
          * @ngdoc method
          * @name createPagedResultsObject

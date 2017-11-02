@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Class Cards directive', function() {
-    var $compile, scope, element, discoverStateSvc, exploreSvc, utilSvc, $q, controller;
+    var $compile, scope, discoverStateSvc, exploreSvc, utilSvc, $q;
 
     beforeEach(function() {
         module('templates');
@@ -53,52 +53,62 @@ describe('Class Cards directive', function() {
             instancesCount: 1,
             classTitle: 'a'
         }];
-        element = $compile(angular.element('<class-cards></class-cards>'))(scope);
+        this.element = $compile(angular.element('<class-cards></class-cards>'))(scope);
         scope.$digest();
-        controller = element.controller('classCards');
+        this.controller = this.element.controller('classCards');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        discoverStateSvc = null;
+        exploreSvc = null;
+        utilSvc = null;
+        $q = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('class-cards')).toBe(true);
-            expect(element.hasClass('full-height')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('class-cards')).toBe(true);
+            expect(this.element.hasClass('full-height')).toBe(true);
         });
         it('with a .rows-container.full-height', function() {
-            expect(element.querySelectorAll('.rows-container.full-height').length).toBe(1);
+            expect(this.element.querySelectorAll('.rows-container.full-height').length).toBe(1);
         });
         it('with .rows', function() {
-            expect(element.querySelectorAll('.row').length).toBe(2);
+            expect(this.element.querySelectorAll('.row').length).toBe(2);
         });
         it('with .col-xs-4.card-containers', function() {
-            expect(element.querySelectorAll('.col-xs-4.card-container').length).toBe(4);
+            expect(this.element.querySelectorAll('.col-xs-4.card-container').length).toBe(4);
         });
         it('with md-cards', function() {
-            expect(element.find('md-card').length).toBe(4);
+            expect(this.element.find('md-card').length).toBe(4);
         });
         it('with md-card-titles', function() {
-            expect(element.find('md-card-title').length).toBe(4);
+            expect(this.element.find('md-card-title').length).toBe(4);
         });
         it('with md-card-title-texts', function() {
-            expect(element.find('md-card-title-text').length).toBe(4);
+            expect(this.element.find('md-card-title-text').length).toBe(4);
         });
         it('with .card-headers', function() {
-            expect(element.querySelectorAll('.card-header').length).toBe(4);
+            expect(this.element.querySelectorAll('.card-header').length).toBe(4);
         });
         it('with .md-headline.texts', function() {
-            expect(element.querySelectorAll('.md-headline.text').length).toBe(4);
+            expect(this.element.querySelectorAll('.md-headline.text').length).toBe(4);
         });
         it('with .badges', function() {
-            expect(element.querySelectorAll('.badge').length).toBe(4);
+            expect(this.element.querySelectorAll('.badge').length).toBe(4);
         });
         it('with md-card-contents', function() {
-            expect(element.find('md-card-content').length).toBe(4);
+            expect(this.element.find('md-card-content').length).toBe(4);
         });
         it('with .overviews', function() {
-            expect(element.querySelectorAll('.overview').length).toBe(4);
+            expect(this.element.querySelectorAll('.overview').length).toBe(4);
         });
         it('with .text-muteds', function() {
-            expect(element.querySelectorAll('.text-muted').length).toBe(8);
+            expect(this.element.querySelectorAll('.text-muted').length).toBe(8);
         });
     });
     it('properly defines controller.chunks on load', function() {
@@ -115,7 +125,7 @@ describe('Class Cards directive', function() {
             instancesCount: 1,
             classTitle: 'z'
         }]];
-        expect(angular.copy(controller.chunks)).toEqual(expected);
+        expect(angular.copy(this.controller.chunks)).toEqual(expected);
     });
     describe('controller methods', function() {
         describe('exploreData should set the correct variables when getClassInstances is', function() {
@@ -132,7 +142,7 @@ describe('Class Cards directive', function() {
                 discoverStateSvc.explore.instanceDetails.data = [{prop: 'old'}];
                 exploreSvc.getClassInstanceDetails.and.returnValue($q.when({data: data, headers: headers}));
                 exploreSvc.createPagedResultsObject.and.returnValue({prop: 'paged', data: [{prop: 'new'}]});
-                controller.exploreData({classTitle: 'new', classIRI: 'classId', deprecated: true});
+                this.controller.exploreData({classTitle: 'new', classIRI: 'classId', deprecated: true});
                 scope.$apply();
                 expect(discoverStateSvc.explore.classId).toBe('classId');
                 expect(discoverStateSvc.explore.classDeprecated).toBe(true);
@@ -147,7 +157,7 @@ describe('Class Cards directive', function() {
             });
             it('rejected', function() {
                 exploreSvc.getClassInstanceDetails.and.returnValue($q.reject('error'));
-                controller.exploreData({classTitle: 'new', classIRI: 'classId'});
+                this.controller.exploreData({classTitle: 'new', classIRI: 'classId'});
                 scope.$apply();
                 expect(exploreSvc.getClassInstanceDetails).toHaveBeenCalledWith('recordId', 'classId', {offset: 0, limit: discoverStateSvc.explore.instanceDetails.limit});
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');

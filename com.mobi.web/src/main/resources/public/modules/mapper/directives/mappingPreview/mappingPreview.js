@@ -42,18 +42,17 @@
          * @requires ontologyManager.service:ontologyManagerService
          * @requires mappingManager.service:mappingManagerService
          * @requires mapperState.service:mapperStateService
-         * @requires delimitedManager.service:delimitedManagerService
          *
          * @description
          * `mappingPreview` is a directive that creates a "boxed" div with a preview of a mapping with
          * its description, source ontology, and all its mapped classes and properties. The directive
-         * is replaced bym the contents of its template.
+         * is replaced by the contents of its template.
          */
         .directive('mappingPreview', mappingPreview);
 
-        mappingPreview.$inject = ['prefixes', 'utilService', 'mappingManagerService', 'mapperStateService', 'delimitedManagerService'];
+        mappingPreview.$inject = ['prefixes', 'utilService', 'mappingManagerService', 'mapperStateService'];
 
-        function mappingPreview(prefixes, utilService, mappingManagerService, mapperStateService, delimitedManagerService) {
+        function mappingPreview(prefixes, utilService, mappingManagerService, mapperStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -63,17 +62,20 @@
                     var dvm = this;
                     dvm.state = mapperStateService;
                     dvm.mm = mappingManagerService;
-                    dvm.dm = delimitedManagerService;
                     dvm.util = utilService;
 
-                    dvm.getClassName = function(classMapping) {
-                        return dvm.util.getBeautifulIRI(dvm.mm.getClassIdByMapping(classMapping));
+                    dvm.getIriTemplate = function(classMapping) {
+                        var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
+                        var localName = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'localName');
+                        return prefix + localName;
                     }
-                    dvm.getPropName = function(propMapping) {
-                        return dvm.util.getBeautifulIRI(dvm.mm.getPropIdByMapping(propMapping));
-                    }
-                    dvm.getColumnIndex = function(propMapping) {
-                        return dvm.util.getPropertyValue(propMapping, prefixes.delim + 'columnIndex');
+                    dvm.getPropValue = function(propMapping) {
+                        if (dvm.mm.isDataMapping(propMapping)) {
+                            return dvm.util.getPropertyValue(propMapping, prefixes.delim + 'columnIndex')
+                        } else {
+                            var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.util.getPropertyId(propMapping, prefixes.delim + 'classMapping')});
+                            return dvm.util.getDctermsValue(classMapping, 'title');
+                        }
                     }
                     dvm.isInvalid = function(propMappingId) {
                         return _.some(dvm.state.invalidProps, {'@id': propMappingId});

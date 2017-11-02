@@ -243,6 +243,7 @@ function mockOntologyManager() {
             this.getClassProperties = jasmine.createSpy('getClassProperties').and.returnValue([]);
             this.getClassPropertyIRIs = jasmine.createSpy('getClassPropertyIRIs').and.returnValue([]);
             this.getClassProperty = jasmine.createSpy('getClassProperty').and.returnValue({});
+            this.getOntologyClasses = jasmine.createSpy('getOntologyClasses').and.returnValue($q.when([]));
 
             this.getOntologyById = jasmine.createSpy('getOntologyById').and.returnValue([]);
             this.isObjectProperty = jasmine.createSpy('isObjectProperty');
@@ -1086,6 +1087,7 @@ function mockExplore() {
             this.createInstance = jasmine.createSpy('createInstance').and.returnValue($q.when(''));
             this.getInstance = jasmine.createSpy('getInstance').and.returnValue($q.when({}));
             this.updateInstance = jasmine.createSpy('updateInstance').and.returnValue($q.when({}));
+            this.deleteInstance = jasmine.createSpy('deleteInstance').and.returnValue($q.when());
             this.createPagedResultsObject = jasmine.createSpy('createPagedResultsObject').and.returnValue({});
         });
     });
@@ -1106,6 +1108,8 @@ function mockExploreUtils() {
             this.removeEmptyProperties = jasmine.createSpy('removeEmptyProperties').and.returnValue({});
             this.removeEmptyPropertiesFromArray = jasmine.createSpy('removeEmptyPropertiesFromArray').and.returnValue([]);
             this.getReification = jasmine.createSpy('getReification');
+            this.getClasses = jasmine.createSpy('getClasses').and.returnValue($q.when([]));
+            this.getReferencedTitles = jasmine.createSpy('getReferencedTitles').and.returnValue($q.when());
         });
     });
 }

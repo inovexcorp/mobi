@@ -31,6 +31,7 @@ import io.swagger.annotations.ApiOperation;
 
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -160,4 +161,19 @@ public interface ExplorableDatasetRest {
     Response updateInstance(@PathParam("recordIRI") String recordIRI,
                             @PathParam("instanceIRI") String instanceIRI,
                             String json);
+
+    /**
+     * Deletes an instance owned by a {@link Dataset} in the local {@link Catalog}.
+     *
+     * @param recordIRI   The id of the {@link DatasetRecord} for the {@link Dataset}.
+     * @param instanceIRI The IRI of the instance to delete.
+     * @return A Response indicating whether or not the Record was deleted.
+     */
+    @DELETE
+    @Path("{recordIRI}/instances/{instanceIRI}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @ApiOperation("Deletes an instance by its ID.")
+    Response deleteInstance(@PathParam("recordIRI") String recordIRI,
+                            @PathParam("instanceIRI") String instanceIRI);
 }

@@ -37,19 +37,62 @@
          * @ngdoc service
          * @name exploreUtils.service:exploreUtilsService
          * @requires prefixes.service:prefixes
+         * @requires sparqlManager.service:sparqlManagerService
          * @requires utilService.service:utilService
+         * @requires datasetManager.service:datasetManagerService
+         * @requires ontologyManager.service:ontologyManagerService
          *
          * @description
          * `exploreUtilsService` is a service that provides utility functions for the explore sub module.
          */
         .service('exploreUtilsService', exploreUtilsService);
 
-    exploreUtilsService.$inject = ['REGEX', 'prefixes', 'utilService'];
+    exploreUtilsService.$inject = ['$q', 'REGEX', 'prefixes', 'utilService', 'datasetManagerService', 'ontologyManagerService', 'sparqlManagerService'];
 
-    function exploreUtilsService(REGEX, prefixes, utilService) {
+    function exploreUtilsService($q, REGEX, prefixes, utilService, datasetManagerService, ontologyManagerService, sparqlManagerService) {
         var self = this;
         var util = utilService;
+        var dm = datasetManagerService;
+        var om = ontologyManagerService;
+        var sparql = sparqlManagerService;
 
+        self.getReferencedTitles = function(instanceIRI, datasetRecordIRI) {
+            var generator = new sparqljs.Generator();
+            var query = generator.stringify({
+                'queryType': 'SELECT',
+                'variables': [
+                    '?object',
+                    '?title'
+                ],
+                'where': [{
+                    'type': 'bgp',
+                    'triples': [{
+                            'subject': instanceIRI,
+                            'predicate': '?p',
+                            'object': '?object'
+                        },
+                        {
+                            'subject': '?object',
+                            'predicate': {
+                                'type': 'path',
+                                'pathType': '|',
+                                'items': [
+                                    prefixes.rdfs + 'label',
+                                    prefixes.dcterms + 'title'
+                                ]
+                            },
+                            'object': '?title'
+                        }
+                    ]
+                }],
+                'type': 'query',
+                'prefixes': {
+                    'rdfs': prefixes.rdfs,
+                    'dcterms': prefixes.dcterms
+                }
+            });
+            return sparql.query(query, datasetRecordIRI);
+        }
         /**
          * @ngdoc method
          * @name getInputType
@@ -176,6 +219,44 @@
         }
         /**
          * @ngdoc method
+         * @name contains
+         * @methodOf exploreUtils.service:exploreUtilsService
+         *
+         * @description
+         * Retrieves all the classses within the ontologies linked to the dataset identified by the provided
+         * DatasetRecord ID.
+         *
+         * @param {string} datasetId The IRI of a DatasetRecord
+         * @return {Promise} A Promise with the classes within all the linked ontologies of a DatasetRecord
+         */
+        self.getClasses = function(datasetId) {
+            var datasetArr = _.find(dm.datasetRecords, arr => _.find(arr, {'@id': datasetId}));
+            if (!datasetArr) {
+                return $q.reject('Dataset could not be found');
+            }
+            var ontologies = _.map(_.filter(datasetArr, obj => !_.has(obj, '@type')), identifier => ({
+                recordId: util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'),
+                branchId: util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch'),
+                commitId: util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit'),
+            }));
+            return $q.all(_.map(ontologies, ontology => om.getOntologyClasses(ontology.recordId, ontology.branchId, ontology.commitId)))
+                .then(response => {
+                    var allClasses = _.flattenDeep(response);
+                    if (_.isEmpty(allClasses)) {
+                        return $q.reject('The Dataset classes could not be retrieved');
+                    }
+                    return _.map(allClasses, clazz => {
+                        var deprecated = _.includes(['true', true, '1', 1], util.getPropertyValue(clazz, prefixes.owl + 'deprecated'));
+                        return {
+                            id: clazz['@id'],
+                            title: om.getEntityName(clazz),
+                            deprecated
+                        };
+                    });
+                }, () => $q.reject('The Dataset ontologies could not be found'));
+        }
+        /**
+         * @ngdoc method
          * @name getNewProperties
          * @methodOf exploreUtils.service:exploreUtilsService
          *
@@ -189,7 +270,7 @@
          */
         self.getNewProperties = function(properties, entity, text) {
             var properties = _.difference(_.map(properties, 'propertyIRI'), _.keys(entity));
-            return text ? _.filter(properties, iri => self.contains(iri, text)) : properties;
+            return text ? _.filter(properties, iri => self.contains(iri.toLowerCase(), text.toLowerCase())) : properties;
         }
         /**
          * @ngdoc method

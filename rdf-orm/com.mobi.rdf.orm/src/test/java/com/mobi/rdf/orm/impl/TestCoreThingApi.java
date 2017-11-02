@@ -23,6 +23,9 @@ package com.mobi.rdf.orm.impl;
  * #L%
  */
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
@@ -43,22 +46,6 @@ import junit.framework.TestCase;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.Value;
-import com.mobi.rdf.api.ValueFactory;
-import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactoryService;
-import com.mobi.rdf.core.impl.sesame.ValueFactoryService;
-import com.mobi.rdf.orm.Thing;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
-import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
-import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
-import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
-import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
-import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
 
 import java.util.Optional;
 
@@ -153,4 +140,34 @@ public class TestCoreThingApi {
         TestCase.assertFalse(optional.isPresent());
     }
 
+    @Test
+    public void testSetPropertyWithExistingData() {
+        IRI sub = valueFactory.createIRI("http://test.com/1");
+        IRI pred1 = valueFactory.createIRI("urn:pred1");
+        IRI pred2 = valueFactory.createIRI("urn:pred2");
+        IRI pred3 = valueFactory.createIRI("urn:pred3");
+        IRI context = valueFactory.createIRI("http://test.com/c1");
+
+        Model model =  modelFactory.createModel();
+        model.add(sub, pred1, valueFactory.createLiteral("A"));
+        model.add(sub, pred2, valueFactory.createLiteral("B"));
+        model.add(sub, pred2, valueFactory.createLiteral("C"));
+        model.add(sub, pred3, valueFactory.createLiteral("B"), context);
+        model.add(sub, pred3, valueFactory.createLiteral("C"), context);
+
+        final Thing thing = thingFactory.createNew(valueFactory.createIRI("http://test.com/1"), model);
+
+        thing.setProperty(valueFactory.createLiteral("D"), pred2);
+        thing.setProperty(valueFactory.createLiteral("D"), pred3, context);
+
+        assertEquals(1, thing.getProperties(pred2).size());
+        assertEquals(1, thing.getProperties(pred3).size());
+        assertTrue(thing.getProperty(pred2).isPresent());
+        assertTrue(thing.getProperty(pred3).isPresent());
+        assertEquals(thing.getProperty(pred2).get(), valueFactory.createLiteral("D"));
+        assertEquals(thing.getProperty(pred3).get(), valueFactory.createLiteral("D"));
+
+        assertTrue(thing.getModel().contexts().contains(context));
+        assertEquals(1, thing.getModel().filter(sub, pred3, null).size());
+    }
 }

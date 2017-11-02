@@ -36,10 +36,15 @@
                         <p class="overview">{{item.description}}</p>
                     </md-card-content>
                     <md-card-actions layout="row" layout-align="end">
+                        <md-button ng-click="dvm.showOverlay(item)" class="md-warn">Delete</md-button>
                         <md-button ng-click="dvm.view(item)">View {{dvm.classTitle}}</md-button>
                     </md-card-actions>
                 </md-card>
             </div>
         </div>
     </div>
+    <confirmation-overlay ng-if="dvm.showDeleteOverlay" header-text="'Delete Instance'" confirm-click="dvm.delete()" cancel-click="dvm.showDeleteOverlay = false" confirm-text="'Yes'" cancel-text="'No'">
+        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
+        <p>Are you sure you want to delete <strong>{{dvm.selectedItem.title}}</strong>?</p>
+    </confirmation-overlay>
 </div>

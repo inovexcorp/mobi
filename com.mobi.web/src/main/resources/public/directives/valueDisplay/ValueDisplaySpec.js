@@ -28,6 +28,7 @@ describe('Value Display directive', function() {
         module('valueDisplay');
         injectPrefixationFilter();
         mockUtil();
+        mockDiscoverState();
 
         inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
