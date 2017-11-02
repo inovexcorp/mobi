@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-describe('Ontology State Service', function() {
+fdescribe('Ontology State Service', function() {
     var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc, $document, responseObj, $state;
 
     var error, format, title, description, keywords, inProgressCommit, emptyInProgressCommit, recordId, recordTitle, branchId, commitId, ontologyId, catalogId, anonymous, branch, commitObj, ontologyType, vocabularyType, jsonFilter, differenceObj, index, importedOntologies, importedOntologyIds, classId, classId2, objectPropertyId, objectPropertyId2, datatypeId, datatypeId2, annotationId, annotationId2, dataPropertyId, dataPropertyId2, individualId, individualId2, irisResponse, importedIrisResponse, classHierarchiesResponse, conceptHierarchiesResponse, conceptSchemeHierarchiesResponse, classesWithIndividualsResponse, dataPropertyHierarchiesResponse, objectPropertyHierarchiesResponse, annotationPropertyHierarchiesResponse, branches, path;
@@ -129,7 +129,7 @@ describe('Ontology State Service', function() {
         importedOntologies = [];
         importedOntologyIds = [];
         classId = 'https://classId.com';
-        classId2 = 'classId2';
+        classId2 = prefixes.skos + 'Concept';
         objectPropertyId = 'objectPropertyId';
         objectPropertyId2 = 'objectProperty2';
         datatypeId = 'datatypeId';
@@ -312,9 +312,7 @@ describe('Ontology State Service', function() {
             },
             branches: [branch],
             index: index,
-            ontologyState: {
-                upToDate: true
-            },
+            upToDate: true,
             iriList: [ontologyId, classId, dataPropertyId]
         };
         getResponse = {
@@ -841,18 +839,18 @@ describe('Ontology State Service', function() {
                     });
                     it('and updateOntologyState resolves', function() {
                         stateManagerSvc.updateOntologyState.and.returnValue($q.resolve());
-                        ontologyStateSvc.updateOntology(recordId, branchId, commitId, ontologyType, listItem.ontologyState.upToDate)
+                        ontologyStateSvc.updateOntology(recordId, branchId, commitId, ontologyType, listItem.upToDate)
                             .then(_.noop, function() {
                                 fail('Promise should have resolved');
                             });
                         scope.$apply();
                         expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(recordId, branchId, commitId, 'jsonld', false);
-                        expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, listItem.ontologyRecord.title);
+                        expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.upToDate, listItem.ontologyRecord.title);
                         expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
                     });
                     it('and updateOntologyState rejects', function() {
                         stateManagerSvc.updateOntologyState.and.returnValue($q.reject(error));
-                        ontologyStateSvc.updateOntology(recordId, branchId, commitId, ontologyType, listItem.ontologyState.upToDate)
+                        ontologyStateSvc.updateOntology(recordId, branchId, commitId, ontologyType, listItem.upToDate)
                             .then(function() {
                                 fail('Promise should have rejected');
                             }, function(response) {
@@ -860,13 +858,13 @@ describe('Ontology State Service', function() {
                             });
                         scope.$apply();
                         expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(recordId, branchId, commitId, 'jsonld', false);
-                        expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, listItem.ontologyRecord.title);
+                        expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.upToDate, listItem.ontologyRecord.title);
                         expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
                     });
                 });
                 it('and createOntologyListItem rejects', function() {
                     spyOn(ontologyStateSvc, 'createOntologyListItem').and.returnValue($q.reject(error));
-                    ontologyStateSvc.updateOntology(recordId, branchId, commitId, ontologyType, listItem.ontologyState.upToDate)
+                    ontologyStateSvc.updateOntology(recordId, branchId, commitId, ontologyType, listItem.upToDate)
                         .then(function() {
                             fail('Promise should have rejected');
                         }, function(response) {
@@ -874,7 +872,7 @@ describe('Ontology State Service', function() {
                         });
                     scope.$apply();
                     expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(recordId, branchId, commitId, 'jsonld', false);
-                    expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, listItem.ontologyRecord.title);
+                    expect(ontologyStateSvc.createOntologyListItem).toHaveBeenCalledWith(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.upToDate, listItem.ontologyRecord.title);
                 });
             });
             describe('and type is "vocabulary"', function() {
@@ -884,18 +882,18 @@ describe('Ontology State Service', function() {
                     });
                     it('and updateOntologyState resolves', function() {
                         stateManagerSvc.updateOntologyState.and.returnValue($q.resolve());
-                        ontologyStateSvc.updateOntology(recordId, branchId, commitId, vocabularyType, listItem.ontologyState.upToDate)
+                        ontologyStateSvc.updateOntology(recordId, branchId, commitId, vocabularyType, listItem.upToDate)
                             .then(_.noop, function() {
                                 fail('Promise should have resolved');
                             });
                         scope.$apply();
                         expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(recordId, branchId, commitId, 'jsonld', false);
-                        expect(ontologyStateSvc.createVocabularyListItem).toHaveBeenCalledWith(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, listItem.ontologyRecord.title);
+                        expect(ontologyStateSvc.createVocabularyListItem).toHaveBeenCalledWith(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.upToDate, listItem.ontologyRecord.title);
                         expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
                     });
                     it('and updateOntologyState rejects', function() {
                         stateManagerSvc.updateOntologyState.and.returnValue($q.reject(error));
-                        ontologyStateSvc.updateOntology(recordId, branchId, commitId, vocabularyType, listItem.ontologyState.upToDate)
+                        ontologyStateSvc.updateOntology(recordId, branchId, commitId, vocabularyType, listItem.upToDate)
                             .then(function() {
                                 fail('Promise should have rejected');
                             }, function(response) {
@@ -903,13 +901,13 @@ describe('Ontology State Service', function() {
                             });
                         scope.$apply();
                         expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(recordId, branchId, commitId, 'jsonld', false);
-                        expect(ontologyStateSvc.createVocabularyListItem).toHaveBeenCalledWith(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, listItem.ontologyRecord.title);
+                        expect(ontologyStateSvc.createVocabularyListItem).toHaveBeenCalledWith(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.upToDate, listItem.ontologyRecord.title);
                         expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(recordId, branchId, commitId);
                     });
                 });
                 it('and createVocabularyListItem rejects', function() {
                     spyOn(ontologyStateSvc, 'createVocabularyListItem').and.returnValue($q.reject(error));
-                    ontologyStateSvc.updateOntology(recordId, branchId, commitId, vocabularyType, listItem.ontologyState.upToDate)
+                    ontologyStateSvc.updateOntology(recordId, branchId, commitId, vocabularyType, listItem.upToDate)
                         .then(function() {
                             fail('Promise should have rejected');
                         }, function(response) {
@@ -917,7 +915,7 @@ describe('Ontology State Service', function() {
                         });
                     scope.$apply();
                     expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(recordId, branchId, commitId, 'jsonld', false);
-                    expect(ontologyStateSvc.createVocabularyListItem).toHaveBeenCalledWith(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.ontologyState.upToDate, listItem.ontologyRecord.title);
+                    expect(ontologyStateSvc.createVocabularyListItem).toHaveBeenCalledWith(ontologyId, recordId, branchId, commitId, ontology, emptyInProgressCommit, listItem.upToDate, listItem.ontologyRecord.title);
                 });
             });
         });
@@ -1544,11 +1542,11 @@ describe('Ontology State Service', function() {
                     }, {
                         localName: annotationId, namespace: annotationId
                     }]);
-                    expect(_.get(response, 'subClasses')).toEqual([{
-                        localName: classId2, namespace: classId2, ontologyId: ontologyId
-                    }, {
-                        localName: classId, namespace: classId
-                    }]);
+                    expect(_.get(response, 'classIRIs')).toEqual([
+                        { localName: classId, namespace: classId },
+                        { localName: classId2, namespace: classId2, ontologyId: ontologyId }
+                    ]);
+                    expect(response.isVocabulary).toEqual(true);
                     expect(_.get(response, 'subDataProperties')).toEqual([{
                         localName: dataPropertyId2, namespace: dataPropertyId2, ontologyId: ontologyId
                     }, {
@@ -1589,7 +1587,7 @@ describe('Ontology State Service', function() {
                     expect(_.get(response, 'annotationPropertyIndex')).toEqual(annotationPropertyHierarchiesResponse.index);
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotationPropertyHierarchy, recordId, response);
                     expect(_.get(response, 'flatAnnotationPropertyHierarchy')).toEqual([{prop: 'flatten'}]);
-                    expect(_.get(response, 'ontologyState.upToDate')).toBe(false);
+                    expect(_.get(response, 'upToDate')).toBe(false);
                     expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([ontology, [{
                         '@id': 'ontologyId',
@@ -1709,7 +1707,7 @@ describe('Ontology State Service', function() {
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemeHierarchy, recordId, response);
                     expect(_.get(response, 'flatConceptSchemeHierarchy')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'branches')).toEqual(branches);
-                    expect(_.get(response, 'ontologyState.upToDate')).toBe(false);
+                    expect(_.get(response, 'upToDate')).toBe(false);
                     expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
                     expect(_.get(response, 'failedImports')).toEqual(['failedId']);
                 }, function() {
@@ -3017,7 +3015,7 @@ describe('Ontology State Service', function() {
             it('and getInProgressCommit resolves', function() {
                 catalogManagerSvc.getInProgressCommit.and.returnValue($q.when({ additions: ['a'], deletions: [] }));
                 spyOn(ontologyStateSvc, 'updateOntology').and.returnValue($q.when());
-                ontologyStateSvc.list[0].ontologyState = { upToDate: true };
+                ontologyStateSvc.list[0].upToDate = true;
                 ontologyStateSvc.uploadChanges({}, recordId, branchId, commitId);
                 scope.$apply();
                 expect(ontologyManagerSvc.uploadChangesFile).toHaveBeenCalledWith({}, recordId, branchId, commitId);
@@ -3025,7 +3023,7 @@ describe('Ontology State Service', function() {
             });
             it ('and getInProgressCommit rejects', function() {
                 catalogManagerSvc.getInProgressCommit.and.returnValue($q.reject(error));
-                ontologyStateSvc.list[0].ontologyState = { upToDate: true };
+                ontologyStateSvc.list[0].upToDate = true;
                 ontologyStateSvc.uploadChanges({}, recordId, branchId, commitId);
                 scope.$apply();
                 expect(ontologyManagerSvc.uploadChangesFile).toHaveBeenCalledWith({}, recordId, branchId, commitId);
@@ -3075,6 +3073,44 @@ describe('Ontology State Service', function() {
         it('vocabulary', function() {
             ontologyStateSvc.setPageTitle('vocabulary');
             expect($state.current.data.title).toBe('Vocabulary Editor');
+        });
+    });
+    describe('should add an IRI to classIRIs and update isVocabulary', function() {
+        beforeEach(function () {
+            this.listItem = {isVocabulary: false, classIRIs: []};
+            this.iriObj = {id: 'iriObj'};
+        });
+        it('if IRI is skos:Concept', function() {
+            responseObj.getItemIri.and.returnValue(prefixes.skos + 'Concept');
+            ontologyStateSvc.addToClassIRIs(this.listItem, this.iriObj);
+            expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+            expect(this.listItem.isVocabulary).toEqual(true);
+            expect(this.listItem.classIRIs).toContain(this.iriObj);
+        });
+        it('unless IRI is not skos:Concept', function () {
+            ontologyStateSvc.addToClassIRIs(this.listItem, this.iriObj);
+            expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+            expect(this.listItem.isVocabulary).toEqual(false);
+            expect(this.listItem.classIRIs).toContain(this.iriObj);
+        });
+    });
+    describe('should remove an IRI from classIRIs and update isVocabulary', function() {
+        beforeEach(function () {
+            this.iriObj = {id: 'iriObj'};
+            this.listItem = {isVocabulary: true, classIRIs: [this.iriObj]};
+        });
+        it('if IRI is skos:Concept', function() {
+            responseObj.getItemIri.and.returnValue(prefixes.skos + 'Concept');
+            ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iriObj);
+            expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+            expect(this.listItem.isVocabulary).toEqual(false);
+            expect(this.listItem.classIRIs).toEqual([]);
+        });
+        it('unless IRI is not skos:Concept', function () {
+            ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iriObj);
+            expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+            expect(this.listItem.isVocabulary).toEqual(true);
+            expect(this.listItem.classIRIs).toEqual([]);
         });
     });
 });

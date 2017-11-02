@@ -529,10 +529,9 @@ function mockOntologyState() {
                 selected: {
                     '@id': 'id'
                 },
-                ontologyState: {
-                    active: true,
-                    upToDate: true
-                },
+                active: true,
+                upToDate: true,
+                isVocabulary: false,
                 editorTabStates: {
                    project: {
                        active: true,
@@ -573,7 +572,7 @@ function mockOntologyState() {
                 annotations: [],
                 dataPropertyRange: [],
                 classHierarchy: [],
-                subClasses: [],
+                classIRIs: [],
                 objectPropertyHierarchy: [],
                 subObjectProperties: [],
                 dataPropertyHierarchy: [],
@@ -683,6 +682,8 @@ function mockOntologyState() {
             this.isDerivedConceptScheme = jasmine.createSpy('isDerivedConceptScheme');
             this.hasInProgressCommit = jasmine.createSpy('hasInProgressCommit').and.returnValue(false);
             this.setPageTitle = jasmine.createSpy('setPageTitle');
+            this.addToClassIRIs = jasmine.createSpy('addToClassIRIs');
+            this.removeFromClassIRIs = jasmine.createSpy('removeFromClassIRIs');
         });
     });
 }

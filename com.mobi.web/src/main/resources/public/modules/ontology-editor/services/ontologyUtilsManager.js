@@ -55,7 +55,7 @@
             self.deleteClass = function() {
                 var entityIRI = os.getActiveEntityIRI();
                 var split = $filter('splitIRI')(entityIRI);
-                _.remove(os.listItem.subClasses, {namespace:split.begin + split.then, localName: split.end});
+                os.removeFromClassIRIs(os.listItem, {namespace:split.begin + split.then, localName: split.end});
                 _.pull(os.listItem.classesWithIndividuals, entityIRI);
                 os.deleteEntityFromHierarchy(os.listItem.classHierarchy, entityIRI, os.listItem.classIndex);
                 os.listItem.flatClassHierarchy = os.flattenHierarchy(os.listItem.classHierarchy, os.listItem.ontologyRecord.recordId);
