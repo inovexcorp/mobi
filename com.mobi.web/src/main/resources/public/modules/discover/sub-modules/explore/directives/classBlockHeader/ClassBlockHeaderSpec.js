@@ -62,6 +62,7 @@ describe('Class Block Header directive', function() {
         $q = null;
         util = null;
         exploreUtils = null;
+        splitIRI = null;
         this.element.remove();
     });
 

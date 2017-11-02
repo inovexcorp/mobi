@@ -270,23 +270,25 @@
              * @returns {Object} The new class mapping object
              */
             self.addClass = function(mapping, ontology, classId) {
-                var classEntity = undefined;
+                var classMapping;
+                var classEntity = om.getEntity([ontology], classId);
                 // Check if class exists in ontology
-                if (om.getEntity([ontology], classId)) {
+                if (classEntity) {
                     // Collect IRI sections for prefix and create class mapping
                     var splitIri = $filter('splitIRI')(classId);
                     var ontologyDataName = ($filter('splitIRI')(om.getOntologyIRI(ontology))).end;
-                    classEntity = {
+                    classMapping = {
                         '@id': self.getMappingEntity(mapping)['@id'] + '/' + uuid.v4(),
                         '@type': [prefixes.delim + 'ClassMapping']
                     };
-                    classEntity[prefixes.delim + 'mapsTo'] = [{'@id': classId}];
-                    classEntity[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + splitIri.end.toLowerCase() + '/'}];
-                    classEntity[prefixes.delim + 'localName'] = [{'@value': '${UUID}'}];
-                    mapping.push(classEntity);
+                    setNewTitle(classMapping, classEntity, self.getClassMappingsByClassId(mapping, classId));
+                    classMapping[prefixes.delim + 'mapsTo'] = [{'@id': classId}];
+                    classMapping[prefixes.delim + 'hasPrefix'] = [{'@value': prefixes.data + ontologyDataName + '/' + splitIri.end.toLowerCase() + '/'}];
+                    classMapping[prefixes.delim + 'localName'] = [{'@value': '${UUID}'}];
+                    mapping.push(classMapping);
                 }
 
-                return classEntity;
+                return classMapping;
             }
             /**
              * @ngdoc method
@@ -330,27 +332,28 @@
              * @returns {Object} The new data property mapping object
              */
             self.addDataProp = function(mapping, ontology, classMappingId, propId, columnIndex) {
-                var dataEntity;
+                var propMapping;
                 // Check if class mapping exists and the property exists in the ontology or the property is one of the
                 // supported annotations
-                var propObj = om.getEntity([ontology], propId);
-                if (entityExists(mapping, classMappingId) && ((propObj && om.isDataTypeProperty(propObj)) || _.includes(self.annotationProperties, propId))) {
+                var propEntity = om.getEntity([ontology], propId);
+                if (entityExists(mapping, classMappingId) && ((propEntity && om.isDataTypeProperty(propEntity)) || _.includes(self.annotationProperties, propId))) {
                     // Add new data mapping id to data properties of class mapping
-                    dataEntity = {
+                    propMapping = {
                         '@id': self.getMappingEntity(mapping)['@id'] + '/' + uuid.v4()
                     };
                     var classMapping = getEntityById(mapping, classMappingId);
                     // Sets the dataProperty key if not already present
                     classMapping[prefixes.delim + 'dataProperty'] = getDataProperties(classMapping);
-                    classMapping[prefixes.delim + 'dataProperty'].push(angular.copy(dataEntity));
+                    classMapping[prefixes.delim + 'dataProperty'].push(angular.copy(propMapping));
                     // Create data mapping
-                    dataEntity['@type'] = [prefixes.delim + 'DataMapping', prefixes.delim + 'PropertyMapping'];
-                    dataEntity[prefixes.delim + 'columnIndex'] = [{'@value': `${columnIndex}`}];
-                    dataEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
-                    mapping.push(dataEntity);
+                    util.setDctermsValue(propMapping, 'title', om.getEntityName(propEntity || {'@id': propId}));
+                    propMapping['@type'] = [prefixes.delim + 'DataMapping', prefixes.delim + 'PropertyMapping'];
+                    propMapping[prefixes.delim + 'columnIndex'] = [{'@value': `${columnIndex}`}];
+                    propMapping[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
+                    mapping.push(propMapping);
                 }
 
-                return dataEntity;
+                return propMapping;
             }
             /**
              * @ngdoc method
@@ -371,27 +374,28 @@
              * @returns {Object} The new object property mapping
              */
             self.addObjectProp = function(mapping, ontology, classMappingId, propId, rangeClassMappingId) {
-                var objectEntity;
+                var propMapping;
                 // Check if class mapping exists, range class mapping exists, object property exists in ontology,
                 // and object property range matches the range class mapping
-                var propObj = om.getEntity([ontology], propId);
-                if (entityExists(mapping, classMappingId) && entityExists(mapping, rangeClassMappingId) && propObj && om.isObjectProperty(propObj)
-                        && util.getPropertyId(propObj, prefixes.rdfs + 'range') === getEntityById(mapping, rangeClassMappingId)[prefixes.delim + 'mapsTo'][0]['@id']) {
+                var propEntity = om.getEntity([ontology], propId);
+                if (entityExists(mapping, classMappingId) && entityExists(mapping, rangeClassMappingId) && propEntity && om.isObjectProperty(propEntity)
+                        && util.getPropertyId(propEntity, prefixes.rdfs + 'range') === getEntityById(mapping, rangeClassMappingId)[prefixes.delim + 'mapsTo'][0]['@id']) {
                     // Add new object mapping id to object properties of class mapping
-                    objectEntity = {
+                    propMapping = {
                         '@id': self.getMappingEntity(mapping)['@id'] + '/' + uuid.v4()
                     };
                     var classMapping = getEntityById(mapping, classMappingId);
                     classMapping[prefixes.delim + 'objectProperty'] = getObjectProperties(classMapping);
-                    classMapping[prefixes.delim + 'objectProperty'].push(angular.copy(objectEntity));
+                    classMapping[prefixes.delim + 'objectProperty'].push(angular.copy(propMapping));
                     // Create object mapping
-                    objectEntity['@type'] = [prefixes.delim + 'ObjectMapping', prefixes.delim + 'PropertyMapping'];
-                    objectEntity[prefixes.delim + 'classMapping'] = [{'@id': rangeClassMappingId}];
-                    objectEntity[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
-                    mapping.push(objectEntity);
+                    util.setDctermsValue(propMapping, 'title', om.getEntityName(propEntity));
+                    propMapping['@type'] = [prefixes.delim + 'ObjectMapping', prefixes.delim + 'PropertyMapping'];
+                    propMapping[prefixes.delim + 'classMapping'] = [{'@id': rangeClassMappingId}];
+                    propMapping[prefixes.delim + 'hasProperty'] = [{'@id': propId}];
+                    mapping.push(propMapping);
                 }
 
-                return objectEntity;
+                return propMapping;
             }
             /**
              * @ngdoc method
@@ -970,7 +974,7 @@
             }
             /**
              * @ngdoc method
-             * @name getClassMappingsByClassId
+             * @name getPropMappingsByPropId
              * @methodOf mappingManager.service:mappingManagerService
              *
              * @description
@@ -1017,6 +1021,31 @@
             }
             function validateOntologyInfo(obj) {
                 return _.intersection(_.keys(obj), ['recordId', 'branchId', 'commitId']).length === 3;
+            }
+            function setNewTitle(mappingEntity, entity, existingArr) {
+                var regex = / \((\d+)\)$/g;
+                var entityName = om.getEntityName(entity);
+                var sortedNums = _.map(
+                    _.filter(
+                        _.map(existingArr, obj => util.getDctermsValue(obj, 'title')),
+                        title => _.startsWith(title, entityName)
+                    ),
+                    title => {
+                        var m = regex.exec(title);
+                        return  m === null ? 0 : parseInt(m[1], 10);
+                    }
+                ).sort((a, b) => a - b);
+                var newIdx = '';
+                if (sortedNums[0] === 0) {
+                    newIdx = ` (1)`;
+                } else {
+                    for (var i = 1; i < sortedNums.length; i++) {
+                        if (sortedNums[i] - numArray[i - 1] != 1) {
+                            newIdx = ` (${numArray[i - 1 + 1]})`;
+                        }
+                    }
+                }
+                util.setDctermsValue(mappingEntity, 'title', entityName + newIdx);
             }
         }
 })();

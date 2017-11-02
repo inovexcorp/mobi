@@ -175,6 +175,24 @@
 
         /**
          * @ngdoc method
+         * @name deleteInstance
+         * @methodOf explore.service:exploreService
+         *
+         * @description
+         * Calls the DELETE /mobirest/explorable-datasets/{recordId}/classes/{classId}/instances/{instanceId} endpoint
+         * and identifies if the instance was deleted.
+         *
+         * @param {string} recordId The id of the Record
+         * @param {string} instanceId The id of the instance
+         * @returns {Promise} A promise that indicates if the instance was deleted successfully.
+         */
+        self.deleteInstance = function(recordId, instanceId) {
+            return $http.delete(prefix + encodeURIComponent(recordId) + '/instances/' + encodeURIComponent(instanceId))
+                .then(response => $q.when(), util.rejectError);
+        }
+
+        /**
+         * @ngdoc method
          * @name createPagedResultsObject
          * @methodOf explore.service:exploreService
          *

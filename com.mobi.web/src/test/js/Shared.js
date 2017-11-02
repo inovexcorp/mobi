@@ -1087,6 +1087,7 @@ function mockExplore() {
             this.createInstance = jasmine.createSpy('createInstance').and.returnValue($q.when(''));
             this.getInstance = jasmine.createSpy('getInstance').and.returnValue($q.when({}));
             this.updateInstance = jasmine.createSpy('updateInstance').and.returnValue($q.when({}));
+            this.deleteInstance = jasmine.createSpy('deleteInstance').and.returnValue($q.when());
             this.createPagedResultsObject = jasmine.createSpy('createPagedResultsObject').and.returnValue({});
         });
     });
