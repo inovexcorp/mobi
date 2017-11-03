@@ -3080,18 +3080,26 @@ describe('Ontology State Service', function() {
             this.listItem = {isVocabulary: false, classIRIs: []};
             this.iriObj = {id: 'iriObj'};
         });
-        it('if IRI is skos:Concept', function() {
-            responseObj.getItemIri.and.returnValue(prefixes.skos + 'Concept');
+        it('unless the IRI is already in the list', function() {
+            this.listItem.classIRIs.push(this.iriObj);
             ontologyStateSvc.addToClassIRIs(this.listItem, this.iriObj);
-            expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
-            expect(this.listItem.isVocabulary).toEqual(true);
-            expect(this.listItem.classIRIs).toContain(this.iriObj);
+            expect(responseObj.getItemIri).not.toHaveBeenCalled();
+            expect(this.listItem.classIRIs).toEqual([this.iriObj]);
         });
-        it('unless IRI is not skos:Concept', function () {
-            ontologyStateSvc.addToClassIRIs(this.listItem, this.iriObj);
-            expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
-            expect(this.listItem.isVocabulary).toEqual(false);
-            expect(this.listItem.classIRIs).toContain(this.iriObj);
+        describe('if the IRI does not exist in the list', function () {
+            it('and IRI is skos:Concept', function() {
+                responseObj.getItemIri.and.returnValue(prefixes.skos + 'Concept');
+                ontologyStateSvc.addToClassIRIs(this.listItem, this.iriObj);
+                expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+                expect(this.listItem.isVocabulary).toEqual(true);
+                expect(this.listItem.classIRIs).toContain(this.iriObj);
+            });
+            it('unless IRI is not skos:Concept', function () {
+                ontologyStateSvc.addToClassIRIs(this.listItem, this.iriObj);
+                expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+                expect(this.listItem.isVocabulary).toEqual(false);
+                expect(this.listItem.classIRIs).toContain(this.iriObj);
+            });
         });
     });
     describe('should remove an IRI from classIRIs and update isVocabulary', function() {

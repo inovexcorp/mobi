@@ -538,9 +538,7 @@
                             compareIriObjs
                         );
                         _.forEach(addOntologyIdToArray(iriList.classes, iriList.id), iriObj => {
-                            if (!_.some(listItem.classIRIs, classIRI => compareIriObjs(classIRI, iriObj))) {
-                                self.addToClassIRIs(listItem, iriObj);
-                            }
+                            self.addToClassIRIs(listItem, iriObj);
                         });
                         listItem.dataPropertyIRIs = _.unionWith(
                             addOntologyIdToArray(iriList.dataProperties, iriList.id),
@@ -1314,10 +1312,12 @@
                 _.set($state, 'current.data.title', type === 'vocabulary' ? 'Vocabulary Editor' : 'Ontology Editor');
             }
             self.addToClassIRIs = function(listItem, iriObj) {
-                if (ro.getItemIri(iriObj) === prefixes.skos + 'Concept') {
-                    listItem.isVocabulary = true;
+                if (!_.some(listItem.classIRIs, classIRI => compareIriObjs(classIRI, iriObj))) {
+                    if (ro.getItemIri(iriObj) === prefixes.skos + 'Concept') {
+                        listItem.isVocabulary = true;
+                    }
+                    listItem.classIRIs.push(iriObj);
                 }
-                listItem.classIRIs.push(iriObj);
             }
             self.removeFromClassIRIs = function(listItem, iriObj) {
                 if (ro.getItemIri(iriObj) === prefixes.skos + 'Concept') {
