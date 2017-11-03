@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <root>
     <windows>
+        <driver id="googlechrome">
+            <version id="2.33">
+                <bitrate sixtyfourbit="true" thirtytwobit="true">
+                    <filelocation>https://chromedriver.storage.googleapis.com/2.33/chromedriver_win32.zip</filelocation>
+                    <hash>718df64a6e2b2efde50b26ac22fde229</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+            </version>
+        </driver>
         <driver id="marionette">
             <version id="0.19.0">
                 <bitrate sixtyfourbit="true">
@@ -18,15 +27,15 @@
     </windows>
     <linux>
         <driver id="googlechrome">
-            <version id="2.29">
+            <version id="2.33">
                 <bitrate sixtyfourbit="true">
-                    <filelocation>https://chromedriver.storage.googleapis.com/2.29/chromedriver_linux64.zip</filelocation>
-                    <hash>06a3f9c57ced2e3ea4e7f3ec258b3957</hash>
+                    <filelocation>https://chromedriver.storage.googleapis.com/2.33/chromedriver_linux64.zip</filelocation>
+                    <hash>6dc329fb8ecdff6a9f74eea053434662</hash>
                     <hashtype>md5</hashtype>
                 </bitrate>
                 <bitrate thirtytwobit="true">
-                    <filelocation>https://chromedriver.storage.googleapis.com/2.29/chromedriver_linux32.zip</filelocation>
-                    <hash>ba8f027f85b60ba5b46d3913f8135ec2</hash>
+                    <filelocation>https://chromedriver.storage.googleapis.com/2.33/chromedriver_linux32.zip</filelocation>
+                    <hash>e936493c0f4ceeb7f6b504a491daa25c</hash>
                     <hashtype>md5</hashtype>
                 </bitrate>
             </version>
@@ -48,10 +57,10 @@
     </linux>
     <osx>
         <driver id="googlechrome">
-            <version id="2.29">
+            <version id="2.33">
                 <bitrate sixtyfourbit="true">
-                    <filelocation>https://chromedriver.storage.googleapis.com/2.29/chromedriver_mac64.zip</filelocation>
-                    <hash>5d71bc70834c2ad8a7baf7a901d53566</hash>
+                    <filelocation>https://chromedriver.storage.googleapis.com/2.33/chromedriver_mac64.zip</filelocation>
+                    <hash>3d520b8ede8e9deb8c9a2efe2aec5f35</hash>
                     <hashtype>md5</hashtype>
                 </bitrate>
             </version>

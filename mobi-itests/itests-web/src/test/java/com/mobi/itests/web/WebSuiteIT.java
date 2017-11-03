@@ -50,6 +50,7 @@ public class WebSuiteIT extends KarafTestSupport {
                 ChromeOptions chromeOptions = new ChromeOptions();
                 chromeOptions.setHeadless(true);
                 chromeOptions.addArguments("--no-sandbox");
+                chromeOptions.addArguments("--allow-insecure-localhost");
                 return new ChromeDriver(chromeOptions);
             case "firefox":
                 FirefoxOptions firefoxOptions = new FirefoxOptions();
