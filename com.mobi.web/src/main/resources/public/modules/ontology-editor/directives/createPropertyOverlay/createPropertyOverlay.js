@@ -103,10 +103,10 @@
                         dvm.os.addEntity(dvm.os.listItem, dvm.property);
                         // update relevant lists
                         if (dvm.om.isObjectProperty(dvm.property)) {
-                            commonUpdate('subObjectProperties', 'objectPropertyHierarchy', 'flatObjectPropertyHierarchy', 'objectPropertyIndex', dvm.os.setObjectPropertiesOpened);
+                            commonUpdate('objectPropertyIRIs', 'objectPropertyHierarchy', 'flatObjectPropertyHierarchy', 'objectPropertyIndex', dvm.os.setObjectPropertiesOpened);
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         } else if (dvm.om.isDataTypeProperty(dvm.property)) {
-                            commonUpdate('subDataProperties', 'dataPropertyHierarchy', 'flatDataPropertyHierarchy', 'dataPropertyIndex', dvm.os.setDataPropertiesOpened);
+                            commonUpdate('dataPropertyIRIs', 'dataPropertyHierarchy', 'flatDataPropertyHierarchy', 'dataPropertyIndex', dvm.os.setDataPropertiesOpened);
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         } else if (dvm.om.isAnnotation(dvm.property)) {
                             dvm.values = [];
@@ -121,9 +121,9 @@
                     }
                     dvm.getKey = function() {
                         if (dvm.om.isDataTypeProperty(dvm.property)) {
-                            return 'subDataProperties'
+                            return 'dataPropertyIRIs'
                         }
-                        return 'subObjectProperties';
+                        return 'objectPropertyIRIs';
                     }
                     dvm.typeChange = function() {
                         dvm.values = [];

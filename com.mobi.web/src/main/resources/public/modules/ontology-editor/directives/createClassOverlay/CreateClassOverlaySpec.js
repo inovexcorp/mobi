@@ -21,8 +21,7 @@
  * #L%
  */
 describe('Create Class Overlay directive', function() {
-    var $compile, scope, element, controller, deferred, ontologyStateSvc, prefixes, ontoUtils;
-    var iri = 'iri#';
+    var $compile, scope, $q, ontologyStateSvc, prefixes, ontoUtils, splitIRI;
 
     beforeEach(function() {
         module('templates');
@@ -34,86 +33,96 @@ describe('Create Class Overlay directive', function() {
         mockPrefixes();
         mockOntologyUtilsManager();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_, _splitIRIFilter_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
-            deferred = _$q_.defer();
             prefixes = _prefixes_;
             ontoUtils = _ontologyUtilsManagerService_;
+            splitIRI = _splitIRIFilter_;
         });
 
-        ontologyStateSvc.getDefaultPrefix.and.returnValue(iri);
-        element = $compile(angular.element('<create-class-overlay></create-class-overlay>'))(scope);
+        this.iri = 'iri#';
+        ontologyStateSvc.getDefaultPrefix.and.returnValue(this.iri);
+        this.element = $compile(angular.element('<create-class-overlay></create-class-overlay>'))(scope);
         scope.$digest();
-        controller = element.controller('createClassOverlay');
+        this.controller = this.element.controller('createClassOverlay');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        ontologyStateSvc = null;
+        prefixes = null;
+        ontoUtils = null;
+        splitIRI = null;
+        this.element.remove();
     });
 
     describe('initializes with the correct values', function() {
         it('if parent ontology is opened', function() {
             expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
-            expect(controller.prefix).toBe(iri);
-            expect(controller.clazz['@id']).toBe(controller.prefix);
-            expect(controller.clazz['@type']).toEqual(['Class']);
+            expect(this.controller.prefix).toBe(this.iri);
+            expect(this.controller.clazz['@id']).toBe(this.controller.prefix);
+            expect(this.controller.clazz['@type']).toEqual(['Class']);
         });
         it('if parent ontology is not opened', function() {
             expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
-            expect(controller.prefix).toBe(iri);
-            expect(controller.clazz['@id']).toBe(controller.prefix);
-            expect(controller.clazz['@type']).toEqual(['Class']);
+            expect(this.controller.prefix).toBe(this.iri);
+            expect(this.controller.clazz['@id']).toBe(this.controller.prefix);
+            expect(this.controller.clazz['@type']).toEqual(['Class']);
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('create-class-overlay')).toBe(true);
-            expect(element.hasClass('overlay')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('create-class-overlay')).toBe(true);
+            expect(this.element.hasClass('overlay')).toBe(true);
         });
         it('with a .content', function() {
-            expect(element.querySelectorAll('.content').length).toBe(1);
+            expect(this.element.querySelectorAll('.content').length).toBe(1);
         });
         it('with a form', function() {
-            expect(element.find('form').length).toBe(1);
+            expect(this.element.find('form').length).toBe(1);
         });
         it('with a static-iri', function() {
-            expect(element.find('static-iri').length).toBe(1);
+            expect(this.element.find('static-iri').length).toBe(1);
         });
         it('with a custom-label', function() {
-            expect(element.find('custom-label').length).toBe(1);
+            expect(this.element.find('custom-label').length).toBe(1);
         });
         it('with a text-area', function() {
-            expect(element.find('text-area').length).toBe(1);
+            expect(this.element.find('text-area').length).toBe(1);
         });
         it('with a .btn-container', function() {
-            expect(element.querySelectorAll('.btn-container').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
         });
         it('with an advanced-language-select', function() {
-            expect(element.find('advanced-language-select').length).toBe(1);
+            expect(this.element.find('advanced-language-select').length).toBe(1);
         });
         it('with a super-class-select', function() {
-            expect(element.find('super-class-select').length).toBe(1);
+            expect(this.element.find('super-class-select').length).toBe(1);
         });
         it('depending on whether there is an error', function() {
-            expect(element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toBe(0);
 
-            controller = element.controller('createClassOverlay');
-            controller.error = 'Error';
+            this.controller.error = 'Error';
             scope.$digest();
-            expect(element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toBe(1);
         });
         it('with buttons to create and cancel', function() {
-            var buttons = element.querySelectorAll('.btn-container button');
+            var buttons = this.element.querySelectorAll('.btn-container button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Create']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Create']).toContain(angular.element(buttons[1]).text().trim());
         });
         it('depending on whether the class IRI already exists in the ontology.', function() {
             ontoUtils.checkIri.and.returnValue(true);
-            
             scope.$digest();
-            
-            var disabled = element.querySelectorAll('[disabled]');
+
+            var disabled = this.element.querySelectorAll('[disabled]');
             expect(disabled.length).toBe(1);
             expect(angular.element(disabled[0]).text()).toBe('Create');
         });
@@ -121,27 +130,27 @@ describe('Create Class Overlay directive', function() {
     describe('controller methods', function() {
         describe('nameChanged', function() {
             beforeEach(function() {
-                controller.clazz = {};
-                controller.clazz[prefixes.dcterms + 'title'] = [{'@value': 'Name'}];
-                controller.prefix = 'start';
+                this.controller.clazz = {};
+                this.controller.clazz[prefixes.dcterms + 'title'] = [{'@value': 'Name'}];
+                this.controller.prefix = 'start';
             });
             it('changes iri if iriHasChanged is false', function() {
-                controller.iriHasChanged = false;
-                controller.nameChanged();
-                expect(controller.clazz['@id']).toEqual(controller.prefix + controller.clazz[prefixes.dcterms +
+                this.controller.iriHasChanged = false;
+                this.controller.nameChanged();
+                expect(this.controller.clazz['@id']).toEqual(this.controller.prefix + this.controller.clazz[prefixes.dcterms +
                     'title'][0]['@value']);
             });
             it('does not change iri if iriHasChanged is true', function() {
-                controller.iriHasChanged = true;
-                controller.clazz['@id'] = 'iri';
-                controller.nameChanged();
-                expect(controller.clazz['@id']).toEqual('iri');
+                this.controller.iriHasChanged = true;
+                this.controller.clazz['@id'] = 'iri';
+                this.controller.nameChanged();
+                expect(this.controller.clazz['@id']).toEqual('iri');
             });
         });
         it('onEdit changes iri based on the params', function() {
-            controller.onEdit('begin', 'then', 'end');
-            expect(controller.clazz['@id']).toBe('begin' + 'then' + 'end');
-            expect(controller.iriHasChanged).toBe(true);
+            this.controller.onEdit('begin', 'then', 'end');
+            expect(this.controller.clazz['@id']).toBe('begin' + 'then' + 'end');
+            expect(this.controller.iriHasChanged).toBe(true);
             expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
         describe('create calls the correct manager functions when controller.values', function() {
@@ -150,56 +159,57 @@ describe('Create Class Overlay directive', function() {
                 ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
                 ontologyStateSvc.getOntologiesArray.and.returnValue([]);
                 ontologyStateSvc.listItem.classHierarchy = [];
-                controller.language = 'en';
-                controller.clazz = {'@id': 'class-iri'};
-                controller.clazz[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
-                controller.clazz[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
+                this.controller.language = 'en';
+                this.controller.clazz = {'@id': 'class-iri'};
+                this.controller.clazz[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
+                this.controller.clazz[prefixes.dcterms + 'description'] = [{'@value': 'description'}];
+                splitIRI.and.returnValue({begin: 'begin', then: '/', end: 'end'});
             });
             it('is empty', function() {
-                controller.create();
-                expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.clazz, controller.language);
-                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.clazz);
+                this.controller.create();
+                expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.clazz, this.controller.language);
+                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.clazz);
                 expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
                 expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, controller.clazz);
+                expect(ontologyStateSvc.addToClassIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem, {namespace: 'begin/', localName: 'end'});
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.clazz);
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.flatClassHierarchy).toEqual([{prop: 'entity'}]);
                 expect(ontologyStateSvc.listItem.classHierarchy).toContain({'entityIRI': 'class-iri'});
-                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.clazz['@id']);
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.clazz['@id']);
                 expect(ontologyStateSvc.showCreateClassOverlay).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontoUtils.setSuperClasses).not.toHaveBeenCalled();
             });
             it('has values', function() {
-                controller.values = [{'@id': 'classA'}];
-                controller.create();
-                expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(controller.clazz, controller.language);
-                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, controller.clazz);
+                this.controller.values = [{'@id': 'classA'}];
+                this.controller.create();
+                expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.clazz, this.controller.language);
+                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.clazz);
                 expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
                 expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, controller.clazz);
+                expect(ontologyStateSvc.addToClassIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem, {namespace: 'begin/', localName: 'end'});
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.clazz);
                 expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(controller.clazz['@id']);
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.clazz['@id']);
                 expect(ontologyStateSvc.showCreateClassOverlay).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontologyStateSvc.listItem.classHierarchy).toEqual([]);
-                expect(_.get(controller.clazz, prefixes.rdfs + 'subClassOf')).toEqual([{'@id': 'classA'}]);
+                expect(_.get(this.controller.clazz, prefixes.rdfs + 'subClassOf')).toEqual([{'@id': 'classA'}]);
                 expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('class-iri', ['classA']);
             });
         });
     });
     it('should call create when the button is clicked', function() {
-        controller = element.controller('createClassOverlay');
-        spyOn(controller, 'create');
-
-        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        spyOn(this.controller, 'create');
+        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
         button.triggerHandler('click');
-        expect(controller.create).toHaveBeenCalled();
+        expect(this.controller.create).toHaveBeenCalled();
     });
     it('should set the correct state when the cancel button is clicked', function() {
-        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
         button.triggerHandler('click');
         expect(ontologyStateSvc.showCreateClassOverlay).toBe(false);
     });

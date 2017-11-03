@@ -30,7 +30,7 @@
             <label class="control-label">Object Property</label>
             <ui-select ng-model="dvm.os.propertySelect" ng-disabled="dvm.os.editingProperty" autofocus>
                 <ui-select-match placeholder="Select an object property">{{dvm.ro.getItemIri($select.selected)}}</ui-select-match>
-                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="property in dvm.os.listItem.subObjectProperties | filter: $select.search | orderBy:dvm.ontoUtils.getDropDownText">
+                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="property in dvm.os.listItem.objectPropertyIRIs | filter: $select.search | orderBy:dvm.ontoUtils.getDropDownText">
                     <div ng-bind-html="dvm.ontoUtils.getDropDownText(property) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
