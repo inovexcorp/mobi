@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Object Property Block directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyStateSvc;
+    var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -47,49 +43,54 @@ describe('Object Property Block directive', function() {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
-        element = $compile(angular.element('<object-property-block></object-property-block>'))(scope);
+        this.element = $compile(angular.element('<object-property-block></object-property-block>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('objectPropertyBlock');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('object-property-block')).toBe(true);
-            expect(element.hasClass('annotation-block')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('object-property-block')).toBe(true);
+            expect(this.element.hasClass('annotation-block')).toBe(true);
         });
         it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
+            expect(this.element.find('block').length).toBe(1);
         });
         it('with a block-header', function() {
-            expect(element.find('block-header').length).toBe(1);
+            expect(this.element.find('block-header').length).toBe(1);
         });
         it('with a block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('depending on whether something is selected', function() {
-            expect(element.querySelectorAll('block-header a').length).toBe(1);
+            expect(this.element.querySelectorAll('block-header a').length).toBe(1);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(element.querySelectorAll('block-header a').length).toBe(0);
+            expect(this.element.querySelectorAll('block-header a').length).toBe(0);
         });
         it('depending on how many datatype properties there are', function() {
-            expect(element.find('property-values').length).toBe(2);
+            expect(this.element.find('property-values').length).toBe(2);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(element.find('property-values').length).toBe(0);
+            expect(this.element.find('property-values').length).toBe(0);
         });
         it('depending on whether an object property is being deleted', function() {
-            element.controller('objectPropertyBlock').showRemoveOverlay = true;
+            this.controller.showRemoveOverlay = true;
             scope.$digest();
-            expect(element.find('remove-property-overlay').length).toBe(1);
+            expect(this.element.find('remove-property-overlay').length).toBe(1);
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('objectPropertyBlock');
-        });
         it('should set the correct manager values when opening the Add Object Property Overlay', function() {
-            controller.openAddObjectPropOverlay();
+            this.controller.openAddObjectPropOverlay();
             expect(ontologyStateSvc.editingProperty).toBe(false);
             expect(ontologyStateSvc.propertySelect).toBeUndefined();
             expect(ontologyStateSvc.propertyValue).toBe('');
@@ -97,17 +98,17 @@ describe('Object Property Block directive', function() {
             expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(true);
         });
         it('should set the correct manager values when opening the Remove Object Property Overlay', function() {
-            controller.showRemovePropertyOverlay('key', 1);
-            expect(controller.key).toBe('key');
-            expect(controller.index).toBe(1);
-            expect(controller.showRemoveOverlay).toBe(true);
+            this.controller.showRemovePropertyOverlay('key', 1);
+            expect(this.controller.key).toBe('key');
+            expect(this.controller.index).toBe(1);
+            expect(this.controller.showRemoveOverlay).toBe(true);
         });
         it('should set the correct manager values when editing an object property', function() {
             var propertyIRI = 'prop1';
             ontologyStateSvc.listItem.selected = {
                 'prop1': [{'@id': 'value'}]
             };
-            controller.editObjectProp(propertyIRI, 0);
+            this.controller.editObjectProp(propertyIRI, 0);
             expect(ontologyStateSvc.editingProperty).toBe(true);
             expect(ontologyStateSvc.propertySelect).toEqual(propertyIRI);
             expect(ontologyStateSvc.propertyValue).toBe(ontologyStateSvc.listItem.selected[propertyIRI][0]['@id']);
@@ -116,10 +117,9 @@ describe('Object Property Block directive', function() {
         });
     });
     it('should call openAddObjectPropOverlay when the link is clicked', function() {
-        controller = element.controller('objectPropertyBlock');
-        spyOn(controller, 'openAddObjectPropOverlay');
-        var link = angular.element(element.querySelectorAll('block-header a')[0]);
+        spyOn(this.controller, 'openAddObjectPropOverlay');
+        var link = angular.element(this.element.querySelectorAll('block-header a')[0]);
         link.triggerHandler('click');
-        expect(controller.openAddObjectPropOverlay).toHaveBeenCalled();
+        expect(this.controller.openAddObjectPropOverlay).toHaveBeenCalled();
     });
 });

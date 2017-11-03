@@ -79,7 +79,7 @@
                         dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.clazz['@id']);
-                        _.get(dvm.os.listItem, 'subClasses').push({namespace:split.begin + split.then, localName: split.end});
+                        dvm.os.addToClassIRIs(dvm.os.listItem, {namespace: split.begin + split.then, localName: split.end});
                         if (dvm.values.length) {
                             dvm.clazz[prefixes.rdfs + 'subClassOf'] = dvm.values;
                             dvm.ontoUtils.setSuperClasses(dvm.clazz['@id'], _.map(dvm.values, '@id'));

@@ -50,24 +50,19 @@
                         '@type': []
                     };
 
-                    dvm.subClasses = _.map(dvm.os.listItem.ontologyState.subClasses, obj => dvm.ro.getItemIri(obj));
-
                     dvm.nameChanged = function() {
                         if (!dvm.iriHasChanged) {
                             dvm.individual['@id'] = dvm.prefix + $filter('camelCase')(dvm.name, 'class');
                         }
                     }
-
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.individual['@id'] = iriBegin + iriThen + iriEnd;
                         dvm.os.setCommonIriParts(iriBegin, iriThen);
                     }
-
                     dvm.getItemOntologyIri = function(item) {
                         return _.get(item, 'ontologyId', dvm.os.listItem.ontologyId);
                     }
-
                     dvm.create = function() {
                         // update relevant lists
                         var split = $filter('splitIRI')(dvm.individual['@id']);
@@ -92,7 +87,7 @@
                         var uniqueUris =  _.uniq(_.flattenDeep(paths));
                         _.set(dvm.os.listItem, 'classesWithIndividuals', _.concat(classesWithIndividuals, individuals));
                         _.set(dvm.os.listItem, 'individualsParentPath', _.concat(individualsParentPath, uniqueUris));
-                        
+
                         // add the entity to the ontology
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
                         dvm.os.addEntity(dvm.os.listItem, dvm.individual);
@@ -101,7 +96,7 @@
 
                         // select the new individual
                         dvm.os.selectItem(dvm.individual['@id'], false);
-                        
+
                         // hide the overlay
                         dvm.os.showCreateIndividualOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();

@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Datatype Property Block directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, prefixes;
+    var $compile, scope, ontologyStateSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -45,49 +45,57 @@ describe('Datatype Property Block directive', function() {
             'prop1': [{'@id': 'value1'}],
             'prop2': [{'@value': 'value2'}]
         };
-        element = $compile(angular.element('<datatype-property-block></datatype-property-block>'))(scope);
+        this.element = $compile(angular.element('<datatype-property-block></datatype-property-block>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('datatypePropertyBlock');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        prefixes = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('datatype-property-block')).toBe(true);
-            expect(element.hasClass('annotation-block')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('datatype-property-block')).toBe(true);
+            expect(this.element.hasClass('annotation-block')).toBe(true);
         });
         it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
+            expect(this.element.find('block').length).toBe(1);
         });
         it('with a block-header', function() {
-            expect(element.find('block-header').length).toBe(1);
+            expect(this.element.find('block-header').length).toBe(1);
         });
         it('with a block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('depending on whether something is selected', function() {
-            expect(element.querySelectorAll('block-header a').length).toBe(1);
+            expect(this.element.querySelectorAll('block-header a').length).toBe(1);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(element.querySelectorAll('block-header a').length).toBe(0);
+            expect(this.element.querySelectorAll('block-header a').length).toBe(0);
         });
         it('depending on how many datatype properties there are', function() {
-            expect(element.find('property-values').length).toBe(2);
+            expect(this.element.find('property-values').length).toBe(2);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(element.find('property-values').length).toBe(0);
+            expect(this.element.find('property-values').length).toBe(0);
         });
         it('depending on whether a datatype property is being deleted', function() {
-            element.controller('datatypePropertyBlock').showRemoveOverlay = true;
+            this.controller.showRemoveOverlay = true;
             scope.$digest();
-            expect(element.find('remove-property-overlay').length).toBe(1);
+            expect(this.element.find('remove-property-overlay').length).toBe(1);
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            controller = element.controller('datatypePropertyBlock');
         });
         it('should set the correct manager values when opening the Add Data Property Overlay', function() {
-            controller.openAddDataPropOverlay();
+            this.controller.openAddDataPropOverlay();
             expect(ontologyStateSvc.editingProperty).toBe(false);
             expect(ontologyStateSvc.propertySelect).toBeUndefined();
             expect(ontologyStateSvc.propertyValue).toBe('');
@@ -97,10 +105,10 @@ describe('Datatype Property Block directive', function() {
             expect(ontologyStateSvc.showDataPropertyOverlay).toBe(true);
         });
         it('should set the correct manager values when opening the Remove Data Property Overlay', function() {
-            controller.showRemovePropertyOverlay('key', 1);
-            expect(controller.key).toBe('key');
-            expect(controller.index).toBe(1);
-            expect(controller.showRemoveOverlay).toBe(true);
+            this.controller.showRemovePropertyOverlay('key', 1);
+            expect(this.controller.key).toBe('key');
+            expect(this.controller.index).toBe(1);
+            expect(this.controller.showRemoveOverlay).toBe(true);
         });
         describe('should set the correct manager values when editing a data property', function() {
             it('when @language is present', function() {
@@ -109,7 +117,7 @@ describe('Datatype Property Block directive', function() {
                     'prop1': [{'@value': 'value', '@language': 'lang'}]
                 };
                 ontologyStateSvc.listItem.dataPropertyRange = ['type'];
-                controller.editDataProp(propertyIRI, 0);
+                this.controller.editDataProp(propertyIRI, 0);
                 expect(ontologyStateSvc.editingProperty).toBe(true);
                 expect(ontologyStateSvc.propertySelect).toEqual(propertyIRI);
                 expect(ontologyStateSvc.propertyValue).toBe('value');
@@ -124,7 +132,7 @@ describe('Datatype Property Block directive', function() {
                     'prop1': [{'@value': 'value', '@type': 'type'}]
                 };
                 ontologyStateSvc.listItem.dataPropertyRange = ['type'];
-                controller.editDataProp(propertyIRI, 0);
+                this.controller.editDataProp(propertyIRI, 0);
                 expect(ontologyStateSvc.editingProperty).toBe(true);
                 expect(ontologyStateSvc.propertySelect).toEqual(propertyIRI);
                 expect(ontologyStateSvc.propertyValue).toBe('value');
@@ -136,10 +144,9 @@ describe('Datatype Property Block directive', function() {
         });
     });
     it('should call openAddDataPropOverlay when the link is clicked', function() {
-        controller = element.controller('datatypePropertyBlock');
-        spyOn(controller, 'openAddDataPropOverlay');
-        var link = angular.element(element.querySelectorAll('block-header a')[0]);
+        spyOn(this.controller, 'openAddDataPropOverlay');
+        var link = angular.element(this.element.querySelectorAll('block-header a')[0]);
         link.triggerHandler('click');
-        expect(controller.openAddDataPropOverlay).toHaveBeenCalled();
+        expect(this.controller.openAddDataPropOverlay).toHaveBeenCalled();
     });
 });
