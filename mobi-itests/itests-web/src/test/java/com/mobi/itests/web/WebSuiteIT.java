@@ -24,7 +24,6 @@ package com.mobi.itests.web;
  */
 
 import com.mobi.itests.support.KarafTestSupport;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -34,7 +33,6 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxDriverLogLevel;
 import org.openqa.selenium.firefox.FirefoxOptions;
-import org.openqa.selenium.remote.DesiredCapabilities;
 import org.ops4j.pax.exam.junit.PaxExamServer;
 
 @RunWith(Suite.class)
@@ -50,7 +48,8 @@ public class WebSuiteIT extends KarafTestSupport {
         switch (browser) {
             case "chrome":
                 ChromeOptions chromeOptions = new ChromeOptions();
-                chromeOptions.addArguments("headless");
+                chromeOptions.setHeadless(true);
+                chromeOptions.addArguments("--no-sandbox");
                 return new ChromeDriver(chromeOptions);
             case "firefox":
                 FirefoxOptions firefoxOptions = new FirefoxOptions();
