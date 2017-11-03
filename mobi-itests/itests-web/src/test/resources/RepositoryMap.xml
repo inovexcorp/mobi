@@ -17,6 +17,20 @@
         </driver>
     </windows>
     <linux>
+        <driver id="googlechrome">
+            <version id="2.29">
+                <bitrate sixtyfourbit="true">
+                    <filelocation>https://chromedriver.storage.googleapis.com/2.29/chromedriver_linux64.zip</filelocation>
+                    <hash>06a3f9c57ced2e3ea4e7f3ec258b3957</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+                <bitrate thirtytwobit="true">
+                    <filelocation>https://chromedriver.storage.googleapis.com/2.29/chromedriver_linux32.zip</filelocation>
+                    <hash>ba8f027f85b60ba5b46d3913f8135ec2</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+            </version>
+        </driver>
         <driver id="marionette">
             <version id="0.19.0">
                 <bitrate sixtyfourbit="true">
