@@ -45,11 +45,11 @@ describe('Create Individual Overlay directive', function() {
             ontoUtils = _ontologyUtilsManagerService_;
         });
 
-        this.compile = function() {
-            this.element = $compile(angular.element('<create-individual-overlay></create-individual-overlay>'))(scope);
-            scope.$digest();
-            this.controller = this.element.controller('createIndividualOverlay');
-        }
+        this.iri = 'iri#'
+        ontologyStateSvc.getDefaultPrefix.and.returnValue(this.iri);
+        this.element = $compile(angular.element('<create-individual-overlay></create-individual-overlay>'))(scope);
+        scope.$digest();
+        this.controller = this.element.controller('createIndividualOverlay');
     });
 
     afterEach(function() {
@@ -63,28 +63,13 @@ describe('Create Individual Overlay directive', function() {
         this.element.remove();
     });
 
-    describe('initializes with the correct values', function() {
-        it('if parent ontology is opened', function() {
-            ontologyStateSvc.getDefaultPrefix.and.returnValue('begin/');
-            this.compile();
-            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
-            expect(this.controller.prefix).toBe('begin/');
-            expect(this.controller.individual['@id']).toBe(this.controller.prefix);
-            expect(this.controller.individual['@type']).toEqual([]);
-        });
-        it('if parent ontology is not opened', function() {
-            ontologyStateSvc.getDefaultPrefix.and.returnValue('iri#');
-            this.compile();
-            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
-            expect(this.controller.prefix).toBe('iri#');
-            expect(this.controller.individual['@id']).toBe(this.controller.prefix);
-            expect(this.controller.individual['@type']).toEqual([]);
-        });
+    it('initializes with the correct values', function() {
+        expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
+        expect(this.controller.prefix).toBe(this.iri);
+        expect(this.controller.individual['@id']).toBe(this.controller.prefix);
+        expect(this.controller.individual['@type']).toEqual([]);
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.compile();
-        });
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('create-individual-overlay')).toBe(true);
@@ -145,9 +130,6 @@ describe('Create Individual Overlay directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            this.compile();
-        });
         describe('should update the individual id', function() {
             beforeEach(function() {
                 this.controller.name = 'name';
@@ -211,14 +193,12 @@ describe('Create Individual Overlay directive', function() {
         });
     });
     it('should call create when the button is clicked', function() {
-        this.compile();
         spyOn(this.controller, 'create');
         var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.create).toHaveBeenCalled();
     });
     it('should set the correct state when the cancel button is clicked', function() {
-        this.compile();
         var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
         button.triggerHandler('click');
         expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);

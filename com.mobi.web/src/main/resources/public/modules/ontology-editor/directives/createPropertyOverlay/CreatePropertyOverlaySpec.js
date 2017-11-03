@@ -67,17 +67,26 @@ describe('Create Property Overlay directive', function() {
         this.element.remove();
     });
 
-    describe('initializes with the correct values', function() {
-        it('if parent ontology is opened', function() {
-            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
-            expect(this.controller.prefix).toBe(this.iri);
-            expect(this.controller.property['@id']).toBe(this.controller.prefix);
-        });
-        it('if parent ontology is not opened', function() {
-            expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
-            expect(this.controller.prefix).toBe(this.iri);
-            expect(this.controller.property['@id']).toBe(this.controller.prefix);
-        });
+    it('initializes with the correct values', function() {
+        expect(ontologyStateSvc.getDefaultPrefix).toHaveBeenCalled();
+        expect(this.controller.prefix).toBe(this.iri);
+        expect(this.controller.property['@id']).toBe(this.controller.prefix);
+        expect(this.controller.property[prefixes.dcterms + 'title']).toEqual([{'@value': ''}]);
+        expect(this.controller.property[prefixes.dcterms + 'description']).toEqual([{'@value': ''}]);
+        expect(this.controller.characteristics).toEqual([
+            {
+                checked: false,
+                typeIRI: prefixes.owl + 'FunctionalProperty',
+                displayText: 'Functional Property',
+                objectOnly: false
+            },
+            {
+                checked: false,
+                typeIRI: prefixes.owl + 'AsymmetricProperty',
+                displayText: 'Asymmetric Property',
+                objectOnly: true
+            }
+        ]);
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
