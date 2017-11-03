@@ -44,8 +44,7 @@ public class Login {
 
     @Parameterized.Parameters
     public static Object[] data() {
-        return new Object[] {"firefox"};
-//        return new Object[] {"firefox", "chrome"};
+        return new Object[] {"firefox", "chrome"};
     }
 
     public Login(String browser) {
@@ -54,17 +53,13 @@ public class Login {
 
     @Before
     public void setUp() throws Exception {
-        System.out.println("===================== About to get driver");
         driver = WebSuiteIT.getDriver(browser);
         driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
-        System.out.println("===================== Set up driver");
     }
     
     @Test
     public void LoginTest() throws Exception {
-        System.out.println("===================== About to get page");
         driver.get(WebSuiteIT.url);
-        System.out.println("===================== Got page");
         WebElement username = new WebDriverWait(driver, 10)
                 .until(ExpectedConditions.visibilityOfElementLocated(By.id("username")));
         username.click();
