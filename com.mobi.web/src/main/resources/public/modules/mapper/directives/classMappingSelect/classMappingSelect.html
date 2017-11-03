@@ -25,8 +25,8 @@
         <ui-select-match placeholder="Select a class...">
             <span>{{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
         </ui-select-match>
-        <ui-select-choices repeat="classMapping['@id'] as classMapping in dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld) | filter:$select.search">
-            <span ng-bind-html="dvm.util.getDctermsValue(classMapping, 'title') | highlight:$select.search | trusted"></span>
+        <ui-select-choices repeat="classMapping['@id'] as classMapping in dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld) | filter:$select.search | orderBy:dvm.getTitle">
+            <span ng-bind-html="dvm.getTitle(classMapping) | highlight:$select.search | trusted"></span>
         </ui-select-choices>
     </ui-select>
 </div>

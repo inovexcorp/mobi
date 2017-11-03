@@ -71,6 +71,10 @@
                     dvm.mm = mappingManagerService;
                     dvm.state = mapperStateService;
                     dvm.util = utilService;
+
+                    dvm.getTitle = function(classMapping) {
+                        return dvm.util.getDctermsValue(classMapping, 'title');
+                    }
                 },
                 templateUrl: 'modules/mapper/directives/classMappingSelect/classMappingSelect.html'
             }

@@ -117,12 +117,12 @@
                             var prop;
                             if (dvm.om.isObjectProperty(dvm.selectedProp.propObj)) {
                                 // Add range ClassMapping first
-                                var classMapping = setRangeClassMapping();
+                                var classMappingId = getRangeClassMappingId();
 
                                 // Add ObjectMapping pointing to new range class mapping
-                                propMap = mm.addObjectProp(dvm.state.mapping.jsonld, _.get(ontology, 'entities', []), dvm.state.selectedClassMappingId, propId, classMapping['@id']);
+                                propMap = mm.addObjectProp(dvm.state.mapping.jsonld, _.get(ontology, 'entities', []), dvm.state.selectedClassMappingId, propId, classMappingId);
                                 prop = prefixes.delim + 'objectProperty';
-                                dvm.state.setAvailableProps(classMapping['@id']);
+                                dvm.state.setAvailableProps(classMappingId);
                             } else {
                                 // Add the DataMapping pointing to the selectedColumn
                                 propMap = mm.addDataProp(dvm.state.mapping.jsonld, _.get(ontology, 'entities', []), dvm.state.selectedClassMappingId, propId, dvm.selectedColumn);
@@ -146,14 +146,14 @@
                         } else {
                             if (mm.isDataMapping(dvm.selectedPropMapping)) {
                                 var originalIndex = dvm.util.getPropertyValue(dvm.selectedPropMapping, prefixes.delim + 'columnIndex');
-                                dvm.util.setPropertyValue(dvm.selectedPropMapping, prefixes.delim + 'columnIndex', dvm.selectedColumn);
+                                dvm.selectedPropMapping[prefixes.delim + 'columnIndex'][0]['@value'] = dvm.selectedColumn;
                                 dvm.state.changeProp(dvm.selectedPropMapping['@id'], prefixes.delim + 'columnIndex', dvm.selectedColumn, originalIndex);
                                 _.remove(dvm.state.invalidProps, {'@id': dvm.state.selectedPropMappingId})
                             } else {
-                                var classMapping = setRangeClassMapping();
+                                var classMappingId = getRangeClassMappingId();
                                 var originalClassMappingId = dvm.util.getPropertyId(dvm.selectedPropMapping, prefixes.delim + 'classMapping');
-                                dvm.util.setPropertyId(dvm.selectedPropMapping, prefixes.delim + 'classMapping', classMapping['@id']);
-                                dvm.state.changeProp(dvm.selectedPropMapping['@id'], prefixes.delim + 'classMapping', classMapping['@id'], originalClassMappingId);
+                                dvm.selectedPropMapping[prefixes.delim + 'classMapping'][0]['@id'] = classMappingId;
+                                dvm.state.changeProp(dvm.selectedPropMapping['@id'], prefixes.delim + 'classMapping', classMappingId, originalClassMappingId);
                             }
                         }
 
@@ -167,18 +167,16 @@
                         dvm.state.newProp = false;
                     }
 
-                    function setRangeClassMapping() {
-                        var classMapping;
+                    function getRangeClassMappingId() {
+                        var classMappingId = dvm.rangeClassMappingId;
                         if (dvm.rangeClassMappingId === newClassMappingIdentifier) {
                             // Add a new ClassMapping for the range if that is what was selected
                             var rangeOntology = _.find(dvm.state.sourceOntologies, {id: dvm.rangeClass.ontologyId});
-                            classMapping = mm.addClass(dvm.state.mapping.jsonld, rangeOntology.entities, dvm.rangeClass.classObj['@id']);
+                            var classMapping = mm.addClass(dvm.state.mapping.jsonld, rangeOntology.entities, dvm.rangeClass.classObj['@id']);
+                            classMappingId = classMapping['@id'];
                             dvm.state.mapping.difference.additions.push(angular.copy(classMapping));
-                        } else {
-                            // Otherwise, find the existing selected ClassMapping
-                            classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.rangeClassMappingId});
                         }
-                        return classMapping;
+                        return classMappingId;
                     }
 
                     if (!dvm.state.newProp && dvm.state.selectedPropMappingId) {

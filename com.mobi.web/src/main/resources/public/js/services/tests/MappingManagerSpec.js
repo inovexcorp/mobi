@@ -277,10 +277,18 @@ describe('Mapping Manager service', function() {
             });
             describe('and the class has been mapped before', function() {
                 beforeEach(function() {
-                    spyOn(mappingManagerSvc, 'getClassMappingsByClassId').and.returnValue([{}]);
+                    spyOn(mappingManagerSvc, 'getClassMappingsByClassId').and.returnValue([{}, {}]);
+                    this.titles = [];
+                    this.idx = 0;
+                    var self = this;
+                    utilSvc.getDctermsValue.and.callFake(function() {
+                        var title = self.titles[self.idx];
+                        self.idx++;
+                        return title;
+                    });
                 });
-                it('with a missing number', function() {
-                    utilSvc.getDctermsValue.and.returnValue('Class (1)');
+                it('with missing the no number title', function() {
+                    this.titles = ['Class (1)', 'Class (2)'];
                     var result = mappingManagerSvc.addClass(this.mapping, {}, 'classid');
                     expect(this.mapping).toContain(result);
                     expect(uuidSvc.v4).toHaveBeenCalled();
@@ -290,14 +298,25 @@ describe('Mapping Manager service', function() {
                     expect(result[prefixes.delim + 'localName']).toEqual([{'@value': '${UUID}'}]);
                     expect(result[prefixes.delim + 'mapsTo']).toEqual([{'@id': 'classid'}]);
                 });
-                it('with no missing numbers', function() {
-                    utilSvc.getDctermsValue.and.returnValue('Class');
+                it('with a missing number', function() {
+                    this.titles = ['Class', 'Class (2)'];
                     var result = mappingManagerSvc.addClass(this.mapping, {}, 'classid');
                     expect(this.mapping).toContain(result);
                     expect(uuidSvc.v4).toHaveBeenCalled();
                     expect(result['@type']).toContain(prefixes.delim + 'ClassMapping');
                     expect(_.has(result, prefixes.delim + 'hasPrefix')).toBe(true);
                     expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(result, 'title', 'Class (1)');
+                    expect(result[prefixes.delim + 'localName']).toEqual([{'@value': '${UUID}'}]);
+                    expect(result[prefixes.delim + 'mapsTo']).toEqual([{'@id': 'classid'}]);
+                });
+                it('with no missing numbers', function() {
+                    this.titles = ['Class', 'Class (1)'];
+                    var result = mappingManagerSvc.addClass(this.mapping, {}, 'classid');
+                    expect(this.mapping).toContain(result);
+                    expect(uuidSvc.v4).toHaveBeenCalled();
+                    expect(result['@type']).toContain(prefixes.delim + 'ClassMapping');
+                    expect(_.has(result, prefixes.delim + 'hasPrefix')).toBe(true);
+                    expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(result, 'title', 'Class (2)');
                     expect(result[prefixes.delim + 'localName']).toEqual([{'@value': '${UUID}'}]);
                     expect(result[prefixes.delim + 'mapsTo']).toEqual([{'@id': 'classid'}]);
                 });

@@ -1006,26 +1006,33 @@
                 return _.intersection(_.keys(obj), ['recordId', 'branchId', 'commitId']).length === 3;
             }
             function setNewTitle(mappingEntity, entity, existingArr) {
-                var regex = / \((\d+)\)$/g;
+                var regex = / \((\d+)\)$/;
                 var entityName = om.getEntityName(entity);
                 var sortedNums = _.map(
+                    // Collect all entities with titles that start with the name of the passed entity
                     _.filter(
                         _.map(existingArr, obj => util.getDctermsValue(obj, 'title')),
                         title => _.startsWith(title, entityName)
                     ),
+                    // Collect the index number based on the set string format
                     title => {
                         var m = regex.exec(title);
-                        return  m === null ? 0 : parseInt(m[1], 10);
+                        return m === null ? 0 : parseInt(m[1], 10);
                     }
                 ).sort((a, b) => a - b);
                 var newIdx = '';
+                // If the no-index title exists, find the newIdx for the title
                 if (sortedNums[0] === 0) {
-                    newIdx = ` (1)`;
-                } else {
                     for (var i = 1; i < sortedNums.length; i++) {
-                        if (sortedNums[i] - numArray[i - 1] != 1) {
-                            newIdx = ` (${numArray[i - 1 + 1]})`;
+                        // If there is a missing number between this index and the index of the previous title,
+                        // newIdx is one more than previous
+                        if (sortedNums[i] - sortedNums[i - 1] != 1) {
+                            newIdx = ` (${sortedNums[i - 1] + 1})`;
                         }
+                    }
+                    // If a newIdx was not found, newIdx is the next number
+                    if (!newIdx) {
+                        newIdx = ` (${_.last(sortedNums) + 1})`;
                     }
                 }
                 util.setDctermsValue(mappingEntity, 'title', entityName + newIdx);

@@ -285,6 +285,7 @@ describe('Prop Mapping Overlay directive', function() {
                         mappingManagerSvc.addClass.and.returnValue(this.classMapping);
                         mappingManagerSvc.isDataMapping.and.returnValue(false);
                         utilSvc.getPropertyId.and.returnValue('original');
+                        this.controller.selectedPropMapping[prefixes.delim + 'classMapping'] = [{'@id': 'original'}];
                     });
                     it('and a class mapping was selected', function() {
                         this.controller.rangeClassMappingId = this.classMapping['@id'];
@@ -292,7 +293,7 @@ describe('Prop Mapping Overlay directive', function() {
                         this.controller.set();
                         expect(mappingManagerSvc.addClass).not.toHaveBeenCalled();
                         expect(utilSvc.getPropertyId).toHaveBeenCalledWith(this.controller.selectedPropMapping, prefixes.delim + 'classMapping');
-                        expect(utilSvc.setPropertyId).toHaveBeenCalledWith(this.controller.selectedPropMapping, prefixes.delim + 'classMapping', this.classMapping['@id']);
+                        expect(this.controller.selectedPropMapping[prefixes.delim + 'classMapping']).toEqual([{'@id': this.classMapping['@id']}]);
                         expect(mapperStateSvc.changeProp).toHaveBeenCalledWith(mapperStateSvc.selectedPropMappingId, prefixes.delim + 'classMapping', this.classMapping['@id'], 'original');
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMappingId);
@@ -308,7 +309,7 @@ describe('Prop Mapping Overlay directive', function() {
                         expect(mappingManagerSvc.addClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, rangeOntology.entities, rangeClassId);
                         expect(mapperStateSvc.mapping.difference.additions).toContain(this.classMapping);
                         expect(utilSvc.getPropertyId).toHaveBeenCalledWith(this.controller.selectedPropMapping, prefixes.delim + 'classMapping');
-                        expect(utilSvc.setPropertyId).toHaveBeenCalledWith(this.controller.selectedPropMapping, prefixes.delim + 'classMapping', this.classMapping['@id']);
+                        expect(this.controller.selectedPropMapping[prefixes.delim + 'classMapping']).toEqual([{'@id': this.classMapping['@id']}]);
                         expect(mapperStateSvc.changeProp).toHaveBeenCalledWith(mapperStateSvc.selectedPropMappingId, prefixes.delim + 'classMapping', this.classMapping['@id'], 'original');
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                         expect(mapperStateSvc.selectedClassMappingId).toBe(this.classMappingId);
@@ -320,9 +321,10 @@ describe('Prop Mapping Overlay directive', function() {
                     mapperStateSvc.invalidProps = [{'@id': this.controller.selectedProp.propObj['@id']}];
                     mappingManagerSvc.isDataMapping.and.returnValue(true);
                     utilSvc.getPropertyValue.and.returnValue('10');
+                    this.controller.selectedPropMapping[prefixes.delim + 'columnIndex'] = [{'@value': '10'}]
                     this.controller.set();
                     expect(utilSvc.getPropertyValue).toHaveBeenCalledWith(this.controller.selectedPropMapping, prefixes.delim + 'columnIndex');
-                    expect(utilSvc.setPropertyValue).toHaveBeenCalledWith(this.controller.selectedPropMapping, prefixes.delim + 'columnIndex', this.controller.selectedColumn);
+                    expect(this.controller.selectedPropMapping[prefixes.delim + 'columnIndex']).toEqual([{'@value': '0'}]);
                     expect(mapperStateSvc.changeProp).toHaveBeenCalledWith(mapperStateSvc.selectedPropMappingId, prefixes.delim + 'columnIndex', this.controller.selectedColumn, '10');
                     expect(mapperStateSvc.invalidProps).not.toContain({'@id': this.controller.selectedProp.propObj['@id']});
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
