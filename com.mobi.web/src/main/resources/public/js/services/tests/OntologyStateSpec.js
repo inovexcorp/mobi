@@ -3096,6 +3096,13 @@ describe('Ontology State Service', function() {
                 expect(this.listItem.isVocabulary).toEqual(true);
                 expect(this.listItem.classes.iris).toContain(this.iriObj);
             });
+            it('and IRI is skos:ConceptScheme', function() {
+                responseObj.getItemIri.and.returnValue(prefixes.skos + 'ConceptScheme');
+                ontologyStateSvc.addToClassIRIs(this.listItem, this.iriObj);
+                expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+                expect(this.listItem.isVocabulary).toEqual(true);
+                expect(this.listItem.classes.iris).toContain(this.iriObj);
+            });
             it('unless IRI is not skos:Concept', function () {
                 ontologyStateSvc.addToClassIRIs(this.listItem, this.iriObj);
                 expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
@@ -3109,12 +3116,45 @@ describe('Ontology State Service', function() {
             this.iriObj = {id: 'iriObj'};
             this.listItem = {isVocabulary: true, classes: {iris: [this.iriObj]}};
         });
-        it('if IRI is skos:Concept', function() {
-            responseObj.getItemIri.and.returnValue(prefixes.skos + 'Concept');
-            ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iriObj);
-            expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
-            expect(this.listItem.isVocabulary).toEqual(false);
-            expect(this.listItem.classes.iris).toEqual([]);
+        describe('if IRI is skos:Concept and classIRIs', function() {
+            beforeEach(function() {
+                this.iriObj = {localName: 'Concept', namespace: prefixes.skos};
+                this.listItem.classes.iris = [this.iriObj];
+                responseObj.getItemIri.and.returnValue(prefixes.skos + 'Concept');
+            });
+            it('has skos:ConceptScheme', function() {
+                this.listItem.classes.iris.push({localName: 'ConceptScheme', namespace: prefixes.skos});
+                ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iriObj);
+                expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+                expect(this.listItem.isVocabulary).toEqual(true);
+                expect(this.listItem.classes.iris).toEqual([{localName: 'ConceptScheme', namespace: prefixes.skos}]);
+            });
+            it('does not have skos:ConceptScheme', function() {
+                ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iriObj);
+                expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+                expect(this.listItem.isVocabulary).toEqual(false);
+                expect(this.listItem.classes.iris).toEqual([]);
+            });
+        });
+        describe('if IRI is skos:ConceptScheme and classIRIs', function() {
+            beforeEach(function() {
+                this.iriObj = {localName: 'ConceptScheme', namespace: prefixes.skos};
+                this.listItem.classes.iris = [this.iriObj];
+                responseObj.getItemIri.and.returnValue(prefixes.skos + 'ConceptScheme');
+            });
+            it('has skos:Concept', function() {
+                this.listItem.classes.iris.push({localName: 'Concept', namespace: prefixes.skos});
+                ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iriObj);
+                expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+                expect(this.listItem.isVocabulary).toEqual(true);
+                expect(this.listItem.classes.iris).toEqual([{localName: 'Concept', namespace: prefixes.skos}]);
+            });
+            it('does not have skos:Concept', function() {
+                ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iriObj);
+                expect(responseObj.getItemIri).toHaveBeenCalledWith(this.iriObj);
+                expect(this.listItem.isVocabulary).toEqual(false);
+                expect(this.listItem.classes.iris).toEqual([]);
+            });
         });
         it('unless IRI is not skos:Concept', function () {
             ontologyStateSvc.removeFromClassIRIs(this.listItem, this.iriObj);
