@@ -96,7 +96,7 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>2.18.1</version>
                 <configuration>
-                    <skipTests>${skipITs}</skipTests>
+                    <skipTests>${skipSelenium}</skipTests>
                     <systemPropertyVariables>
                         <webdriver.gecko.driver>${webdriver.gecko.driver}</webdriver.gecko.driver>
                         <webdriver.chrome.driver>${webdriver.chrome.driver}</webdriver.chrome.driver>
