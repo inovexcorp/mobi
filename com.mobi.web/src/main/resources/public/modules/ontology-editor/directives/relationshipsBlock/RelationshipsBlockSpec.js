@@ -134,6 +134,24 @@ describe('Relationships Block directive', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('block-header a').length).toBe(0);
         });
+        it('with a .relationship-header', function() {
+            expect(this.element.querySelectorAll('.relationship-header').length).toBe(1);
+            ontologyStateSvc.getActiveKey.and.returnValue('schemes');
+            scope.$digest();
+            expect(this.element.querySelectorAll('.relationship-header').length).toBe(0);
+        });
+        it('with a .top-concept-header', function() {
+            expect(this.element.querySelectorAll('.top-concept-header').length).toBe(0);
+            ontologyStateSvc.getActiveKey.and.returnValue('schemes');
+            scope.$digest();
+            expect(this.element.querySelectorAll('.top-concept-header').length).toBe(1);
+        });
+        it('with a top-concept-overlay', function() {
+            expect(this.element.find('top-concept-overlay').length).toBe(0);
+            this.controller.showTopConceptOverlay = true;
+            scope.$digest();
+            expect(this.element.find('top-concept-overlay').length).toBe(1);
+        });
     });
     describe('controller methods', function() {
         it('openRemoveOverlay sets the correct variables', function() {
@@ -173,6 +191,18 @@ describe('Relationships Block directive', function() {
             });
             describe('is', function() {
                 removeHierarchyTest(schemeToConcept, conceptToScheme, 'conceptSchemes', 'value1');
+            });
+        });
+        describe('hasTopConceptProperty should call and return the correct value when getEntityByRecordId is', function() {
+            it('present', function() {
+                ontologyStateSvc.getEntityByRecordId.and.returnValue({'@id': 'id'});
+                expect(this.controller.hasTopConceptProperty()).toBe(true);
+                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, prefixes.skos + 'hasTopConcept', ontologyStateSvc.listItem);
+            });
+            it('undefined', function() {
+                ontologyStateSvc.getEntityByRecordId.and.returnValue(undefined);
+                expect(this.controller.hasTopConceptProperty()).toBe(false);
+                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, prefixes.skos + 'hasTopConcept', ontologyStateSvc.listItem);
             });
         });
     });

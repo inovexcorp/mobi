@@ -85,6 +85,8 @@
                     ];
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
+                    dvm.prefixes = prefixes;
+                    dvm.showTopConceptOverlay = false;
 
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
@@ -115,6 +117,10 @@
                         } else if (shouldDelete(axiomObject, schemeToConcept, conceptToScheme)) {
                             deleteFromSchemeHierarchy(axiomObject['@id']);
                         }
+                    }
+
+                    dvm.hasTopConceptProperty = function() {
+                        return !_.isEmpty(dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, prefixes.skos + 'hasTopConcept', dvm.os.listItem));
                     }
 
                     function containsProperty(entity, properties, value) {
