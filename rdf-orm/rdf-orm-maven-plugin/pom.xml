@@ -28,7 +28,7 @@
 	<parent>
 		<artifactId>rdf-orm</artifactId>
 		<groupId>com.mobi</groupId>
-		<version>1.10.10-SNAPSHOT</version>
+		<version>1.10.11-SNAPSHOT</version>
 	</parent>
 	<name>RDF ORM Maven Plugin</name>
 	<packaging>maven-plugin</packaging>
