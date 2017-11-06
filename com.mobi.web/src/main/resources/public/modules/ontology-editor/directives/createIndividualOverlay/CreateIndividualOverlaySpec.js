@@ -165,19 +165,21 @@ describe('Create Individual Overlay directive', function() {
             ontologyStateSvc.listItem = {
                 ontologyRecord: {},
                 ontology: [{}],
-                individuals: [],
+                individuals: { iris: [] },
                 classesWithIndividuals: [],
                 individualsParentPath: [],
                 classesAndIndividuals: {},
-                classHierarchy: [],
-                classIndex: {}
+                classes: {
+                    hierarchy: [],
+                    index: {}
+                }
             };
             ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
             ontologyStateSvc.getPathsTo.and.returnValue([['ClassA']]);
             splitIRIFilter.and.returnValue(split);
             this.controller.individual = {'@id': 'id', '@type': ['ClassA']};
             this.controller.create();
-            expect(ontologyStateSvc.listItem.individuals).toContain({namespace: split.begin + split.then, localName: split.end});
+            expect(ontologyStateSvc.listItem.individuals.iris).toContain({namespace: split.begin + split.then, localName: split.end});
             expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA']);
             expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA': ['id']});
             expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['ClassA']);
@@ -189,7 +191,7 @@ describe('Create Individual Overlay directive', function() {
             expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
-            expect(ontologyStateSvc.listItem.flatIndividualsHierarchy).toEqual([{prop: 'individual'}]);
+            expect(ontologyStateSvc.listItem.individuals.flat).toEqual([{prop: 'individual'}]);
         });
     });
     it('should call create when the button is clicked', function() {

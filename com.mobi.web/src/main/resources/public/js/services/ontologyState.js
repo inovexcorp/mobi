@@ -131,18 +131,35 @@
                 ontology: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
-                annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.owlAnnotations)),
                 dataPropertyRange: om.defaultDatatypes,
-                classIRIs: [],
-                dataPropertyIRIs: [],
-                objectPropertyIRIs: [],
-                individuals: [],
-                classHierarchy: [],
-                classIndex: {},
-                dataPropertyHierarchy: [],
-                dataPropertyIndex: {},
-                objectPropertyHierarchy: [],
-                objectPropertyIndex: {},
+                classes: {
+                    iris: [],
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                dataProperties: {
+                    iris: [],
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                objectProperties: {
+                    iris: [],
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                annotations: {
+                    iris: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.owlAnnotations)),
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                individuals: {
+                    iris: [],
+                    flat: []
+                },
                 blankNodes: {},
                 index: {},
                 additions: [],
@@ -152,12 +169,6 @@
                     deletions: []
                 },
                 branches: [],
-                flatClassHierarchy: [],
-                flatDataPropertyHierarchy: [],
-                flatObjectPropertyHierarchy: [],
-                annotationPropertyHierarchy: [],
-                annotationPropertyIndex: {},
-                flatAnnotationPropertyHierarchy: [],
                 classesAndIndividuals: {},
                 classesWithIndividuals: [],
                 individualsParentPath: [],
@@ -180,15 +191,27 @@
                 ontology: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
-                annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.skosAnnotations, propertyManagerService.owlAnnotations)),
                 derivedConcepts: [],
                 derivedConceptSchemes: [],
-                conceptHierarchy: [],
-                conceptIndex: {},
-                flatConceptHierarchy: [],
-                conceptSchemeHierarchy: [],
-                conceptSchemeIndex: {},
-                flatConceptSchemeHierarchy: [],
+                annotations: {
+                    iris: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.skosAnnotations, propertyManagerService.owlAnnotations))
+                },
+                dataProperties: {
+                    iris: []
+                },
+                objectProperties: {
+                    iris: []
+                },
+                concepts: {
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                conceptSchemes: {
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
                 index: {},
                 additions: [],
                 deletions: [],
@@ -215,25 +238,7 @@
              *
              * @description
              * `list` holds an array of ontology objects which contain properties associated with the ontology.
-             * The structure of the ontology object is:
-             * ```
-             * {
-             *      ontologyId: '',
-             *      ontology: [],
-             *      importedOntologies: [],
-             *      importedOntologyIds: [],
-             *      annotations: [],
-             *      dataPropertyIRIs: [],
-             *      objectPropertyIRIs: [],
-             *      dataPropertyRange: [],
-             *      classHierarchy: [],
-             *      individuals: [],
-             *      classesWithIndividuals: [],
-             *      classIRIs: [],
-             *      blankNodes: {},
-             *      index: {}
-             * }
-             * ```
+             * The structure of the ontology object is based on the templates.
              */
             self.list = [];
 
@@ -515,44 +520,44 @@
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
                     listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri))
-                    listItem.annotations = _.unionWith(
+                    listItem.annotations.iris = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
                         propertyManagerService.defaultAnnotations,
                         propertyManagerService.owlAnnotations,
                         _.isMatch
                     );
-                    listItem.classIRIs = [];
+                    listItem.classes.iris = [];
                     _.forEach(_.get(response[0], 'classes', []), iriObj => self.addToClassIRIs(listItem, iriObj));
-                    listItem.dataPropertyIRIs = _.get(response[0], 'dataProperties');
-                    listItem.objectPropertyIRIs = _.get(response[0], 'objectProperties');
-                    listItem.individuals = _.get(response[0], 'namedIndividuals');
+                    listItem.dataProperties.iris = _.get(response[0], 'dataProperties');
+                    listItem.objectProperties.iris = _.get(response[0], 'objectProperties');
+                    listItem.individuals.iris = _.get(response[0], 'namedIndividuals');
                     listItem.dataPropertyRange = _.unionWith(
                         _.get(response[0], 'datatypes'),
                         om.defaultDatatypes,
                         _.isMatch
                     );
                     _.forEach(response[1], iriList => {
-                        listItem.annotations = _.unionWith(
+                        listItem.annotations.iris = _.unionWith(
                             addOntologyIdToArray(iriList.annotationProperties, iriList.id),
-                            listItem.annotations,
+                            listItem.annotations.iris,
                             compareIriObjs
                         );
                         _.forEach(addOntologyIdToArray(iriList.classes, iriList.id), iriObj => {
                             self.addToClassIRIs(listItem, iriObj);
                         });
-                        listItem.dataPropertyIRIs = _.unionWith(
+                        listItem.dataProperties.iris = _.unionWith(
                             addOntologyIdToArray(iriList.dataProperties, iriList.id),
-                            listItem.dataPropertyIRIs,
+                            listItem.dataProperties.iris,
                             compareIriObjs
                         );
-                        listItem.objectPropertyIRIs = _.unionWith(
+                        listItem.objectProperties.iris = _.unionWith(
                             addOntologyIdToArray(iriList.objectProperties, iriList.id),
-                            listItem.objectPropertyIRIs,
+                            listItem.objectProperties.iris,
                             compareIriObjs
                         );
-                        listItem.individuals = _.unionWith(
+                        listItem.individuals.iris = _.unionWith(
                             addOntologyIdToArray(iriList.namedIndividuals, iriList.id),
-                            listItem.individuals,
+                            listItem.individuals.iris,
                             compareIriObjs
                         );
                         listItem.dataPropertyRange = _.unionWith(
@@ -564,30 +569,30 @@
                         listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(iriList)), ro.getItemIri))
                     });
 
-                    listItem.classHierarchy = response[2].hierarchy;
-                    listItem.classIndex = response[2].index;
-                    listItem.flatClassHierarchy = self.flattenHierarchy(listItem.classHierarchy, recordId, listItem);
-                    listItem.dataPropertyHierarchy = response[4].hierarchy;
-                    listItem.dataPropertyIndex = response[4].index;
-                    listItem.flatDataPropertyHierarchy = self.flattenHierarchy(listItem.dataPropertyHierarchy, recordId, listItem);
-                    listItem.objectPropertyHierarchy = response[5].hierarchy;
-                    listItem.objectPropertyIndex = response[5].index;
-                    listItem.flatObjectPropertyHierarchy = self.flattenHierarchy(listItem.objectPropertyHierarchy, recordId, listItem);
+                    listItem.classes.hierarchy = response[2].hierarchy;
+                    listItem.classes.index = response[2].index;
+                    listItem.classes.flat = self.flattenHierarchy(listItem.classes.hierarchy, recordId, listItem);
+                    listItem.dataProperties.hierarchy = response[4].hierarchy;
+                    listItem.dataProperties.index = response[4].index;
+                    listItem.dataProperties.flat = self.flattenHierarchy(listItem.dataProperties.hierarchy, recordId, listItem);
+                    listItem.objectProperties.hierarchy = response[5].hierarchy;
+                    listItem.objectProperties.index = response[5].index;
+                    listItem.objectProperties.flat = self.flattenHierarchy(listItem.objectProperties.hierarchy, recordId, listItem);
                     listItem.branches = response[6].data;
-                    listItem.annotationPropertyHierarchy = response[7].hierarchy;
-                    listItem.annotationPropertyIndex = response[7].index;
-                    listItem.flatAnnotationPropertyHierarchy = self.flattenHierarchy(listItem.annotationPropertyHierarchy, recordId, listItem);
+                    listItem.annotations.hierarchy = response[7].hierarchy;
+                    listItem.annotations.index = response[7].index;
+                    listItem.annotations.flat = self.flattenHierarchy(listItem.annotations.hierarchy, recordId, listItem);
                     _.forEach(response[8], importedOntObj => {
                         addImportedOntologyToListItem(listItem, importedOntObj, 'ontology');
                     });
                     listItem.classesAndIndividuals = response[3].individuals;
                     listItem.classesWithIndividuals = _.keys(response[3].individuals);
                     listItem.individualsParentPath = self.getIndividualsParentPath(listItem);
-                    listItem.flatIndividualsHierarchy = self.createFlatIndividualTree(listItem);
+                    listItem.individuals.flat = self.createFlatIndividualTree(listItem);
                     listItem.flatEverythingTree = self.createFlatEverythingTree(getOntologiesArrayByListItem(listItem), listItem);
                     _.pullAllWith(
-                        listItem.annotations,
-                        _.concat(om.ontologyProperties, listItem.dataPropertyIRIs, listItem.objectPropertyIRIs),
+                        listItem.annotations.iris,
+                        _.concat(om.ontologyProperties, listItem.dataProperties.iris, listItem.objectProperties.iris),
                         compareIriObjs
                     );
                     listItem.failedImports = response[9];
@@ -598,7 +603,7 @@
             self.getIndividualsParentPath = function(listItem) {
                 var result = [];
                 _.forEach(_.keys(listItem.classesAndIndividuals), classIRI => {
-                    result = _.concat(result, getClassesForIndividuals(listItem.classIndex, classIRI));
+                    result = _.concat(result, getClassesForIndividuals(listItem.classes.index, classIRI));
                 });
                 return _.uniq(result);
             }
@@ -616,11 +621,11 @@
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
                     listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri));
-                    listItem.dataPropertyIRIs = _.get(response[0], 'dataProperties');
-                    listItem.objectPropertyIRIs = _.get(response[0], 'objectProperties');
+                    listItem.dataProperties.iris = _.get(response[0], 'dataProperties');
+                    listItem.objectProperties.iris = _.get(response[0], 'objectProperties');
                     listItem.derivedConcepts = _.map(_.get(response[0], 'derivedConcepts', []), ro.getItemIri);
                     listItem.derivedConceptSchemes = _.map(_.get(response[0], 'derivedConceptSchemes', []), ro.getItemIri);
-                    listItem.annotations = _.unionWith(
+                    listItem.annotations.iris = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
                         propertyManagerService.defaultAnnotations,
                         propertyManagerService.skosAnnotations,
@@ -633,37 +638,37 @@
                         _.isMatch
                     );
                     _.forEach(response[1], iriList => {
-                        listItem.annotations = _.unionWith(
+                        listItem.annotations.iris = _.unionWith(
                             addOntologyIdToArray(iriList.annotationProperties, iriList.id),
-                            listItem.annotations,
+                            listItem.annotations.iris,
                             compareIriObjs
                         );
-                        listItem.dataPropertyIRIs = _.unionWith(
+                        listItem.dataProperties.iris = _.unionWith(
                             addOntologyIdToArray(iriList.dataProperties, iriList.id),
-                            listItem.dataPropertyIRIs,
+                            listItem.dataProperties.iris,
                             compareIriObjs
                         );
-                        listItem.objectPropertyIRIs = _.unionWith(
+                        listItem.objectProperties.iris = _.unionWith(
                             addOntologyIdToArray(iriList.objectProperties, iriList.id),
-                            listItem.objectPropertyIRIs,
+                            listItem.objectProperties.iris,
                             compareIriObjs
                         );
                         listItem.iriList.push(iriList['id']);
                         listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(iriList)), ro.getItemIri))
                     });
-                    listItem.conceptHierarchy = response[2].hierarchy;
-                    listItem.conceptIndex = response[2].index;
-                    listItem.flatConceptHierarchy = self.flattenHierarchy(listItem.conceptHierarchy, recordId, listItem);
-                    listItem.conceptSchemeHierarchy = response[3].hierarchy;
-                    listItem.conceptSchemeIndex = response[3].index;
-                    listItem.flatConceptSchemeHierarchy = self.flattenHierarchy(listItem.conceptSchemeHierarchy, recordId, listItem);
+                    listItem.concepts.hierarchy = response[2].hierarchy;
+                    listItem.concepts.index = response[2].index;
+                    listItem.concepts.flat = self.flattenHierarchy(listItem.concepts.hierarchy, recordId, listItem);
+                    listItem.conceptSchemes.hierarchy = response[3].hierarchy;
+                    listItem.conceptSchemes.index = response[3].index;
+                    listItem.conceptSchemes.flat = self.flattenHierarchy(listItem.conceptSchemes.hierarchy, recordId, listItem);
                     listItem.branches = response[4].data;
                     _.forEach(response[5], importedOntObj => {
                         addImportedOntologyToListItem(listItem, importedOntObj, 'vocabulary');
                     });
                     _.pullAllWith(
-                        listItem.annotations,
-                        _.concat(om.ontologyProperties, listItem.dataPropertyIRIs, listItem.objectPropertyIRIs,
+                        listItem.annotations.iris,
+                        _.concat(om.ontologyProperties, listItem.dataProperties.iris, listItem.objectProperties.iris,
                             angular.copy(om.conceptRelationshipList), angular.copy(om.schemeRelationshipList)),
                         compareIriObjs
                     );
@@ -764,7 +769,7 @@
                 var neededClasses = _.get(listItem, 'individualsParentPath', []);
                 var classesWithIndividuals = _.get(listItem, 'classesAndIndividuals', {});
                 if (neededClasses.length && !_.isEmpty(classesWithIndividuals)) {
-                    _.forEach(_.get(listItem, 'flatClassHierarchy', []), node => {
+                    _.forEach(_.get(listItem, 'classes.flat', []), node => {
                         if (_.includes(neededClasses, node.entityIRI)) {
                             result.push(_.merge({}, node, {isClass: true}));
                             var sortedIndividuals = _.sortBy(_.get(classesWithIndividuals, node.entityIRI), entityIRI => _.lowerCase(self.getEntityNameByIndex(entityIRI, listItem)));
@@ -1258,24 +1263,24 @@
                     commonGoTo('project', iri);
                 } else if (self.listItem.ontologyRecord.type === 'ontology') {
                     if (om.isClass(entity)) {
-                        commonGoTo('classes', iri, self.listItem.flatClassHierarchy);
+                        commonGoTo('classes', iri, self.listItem.classes.flat);
                     } else if (om.isDataTypeProperty(entity)) {
                         self.setDataPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
-                        commonGoTo('properties', iri, self.listItem.flatDataPropertyHierarchy);
+                        commonGoTo('properties', iri, self.listItem.dataProperties.flat);
                     } else if (om.isObjectProperty(entity)) {
                         self.setObjectPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
-                        commonGoTo('properties', iri, self.listItem.flatObjectPropertyHierarchy);
+                        commonGoTo('properties', iri, self.listItem.objectProperties.flat);
                     } else if (om.isAnnotation(entity)) {
                         self.setAnnotationPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
-                        commonGoTo('properties', iri, self.listItem.flatAnnotationPropertyHierarchy);
+                        commonGoTo('properties', iri, self.listItem.annotations.flat);
                     } else if (om.isIndividual(entity)) {
-                        commonGoTo('individuals', iri, self.listItem.flatIndividualsHierarchy);
+                        commonGoTo('individuals', iri, self.listItem.individuals.flat);
                     }
                 } else if (self.listItem.ontologyRecord.type === 'vocabulary') {
                     if (om.isConcept(entity, self.listItem.derivedConcepts)) {
-                        commonGoTo('concepts', iri, self.listItem.flatConceptHierarchy);
+                        commonGoTo('concepts', iri, self.listItem.concepts.flat);
                     } else if (om.isConceptScheme(entity, self.listItem.derivedConceptSchemes)) {
-                        commonGoTo('schemes', iri, self.listItem.flatConceptSchemeHierarchy);
+                        commonGoTo('schemes', iri, self.listItem.conceptSchemes.flat);
                     }
                 }
             }
@@ -1312,22 +1317,22 @@
                 _.set($state, 'current.data.title', type === 'vocabulary' ? 'Vocabulary Editor' : 'Ontology Editor');
             }
             self.addToClassIRIs = function(listItem, iriObj) {
-                if (!existenceCheck(listItem.classIRIs, iriObj)) {
+                if (!existenceCheck(listItem.classes.iris, iriObj)) {
                     var itemIRI = ro.getItemIri(iriObj);
                     if (itemIRI === prefixes.skos + 'Concept' || itemIRI === prefixes.skos + 'ConceptScheme') {
                         listItem.isVocabulary = true;
                     }
-                    listItem.classIRIs.push(iriObj);
+                    listItem.classes.iris.push(iriObj);
                 }
             }
             self.removeFromClassIRIs = function(listItem, iriObj) {
                 var itemIRI = ro.getItemIri(iriObj);
-                var conceptCheck = itemIRI === prefixes.skos + 'Concept' && !existenceCheck(listItem.classIRIs, {localName: 'ConceptScheme', namespace: prefixes.skos});
-                var schemeCheck = itemIRI === prefixes.skos + 'ConceptScheme' && !existenceCheck(listItem.classIRIs, {localName: 'Concept', namespace: prefixes.skos});
+                var conceptCheck = itemIRI === prefixes.skos + 'Concept' && !existenceCheck(listItem.classes.iris, {localName: 'ConceptScheme', namespace: prefixes.skos});
+                var schemeCheck = itemIRI === prefixes.skos + 'ConceptScheme' && !existenceCheck(listItem.classes.iris, {localName: 'Concept', namespace: prefixes.skos});
                 if (conceptCheck || schemeCheck) {
                     listItem.isVocabulary = false;
                 }
-                _.remove(listItem.classIRIs, iriObj);
+                _.remove(listItem.classes.iris, iriObj);
             }
 
             /* Private helper functions */
