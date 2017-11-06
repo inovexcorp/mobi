@@ -208,6 +208,16 @@ public class FullSimpleOntologyTest {
     }
 
     @Test
+    public void getImportsClosureFromFileImports() throws Exception {
+        // Setup:
+        InputStream stream = this.getClass().getResourceAsStream("/test-file-imports-C.ttl");
+        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService);
+
+        Set<Ontology> ontologies = ont.getImportsClosure();
+        assertEquals(3, ontologies.size());
+    }
+
+    @Test
     public void getImportsClosureWithLocalImportsTest() throws Exception {
         Set<Ontology> ontologies = ont1.getImportsClosure();
         assertEquals(3, ontologies.size());
