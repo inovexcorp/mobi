@@ -84,9 +84,9 @@
                             dvm.clazz[prefixes.rdfs + 'subClassOf'] = dvm.values;
                             dvm.ontoUtils.setSuperClasses(dvm.clazz['@id'], _.map(dvm.values, '@id'));
                         } else {
-                            var hierarchy = _.get(dvm.os.listItem, 'classHierarchy');
+                            var hierarchy = _.get(dvm.os.listItem, 'classes.hierarchy');
                             hierarchy.push({'entityIRI': dvm.clazz['@id']});
-                            dvm.os.listItem.flatClassHierarchy = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                            dvm.os.listItem.classes.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                         }
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.clazz);
                         // select the new class

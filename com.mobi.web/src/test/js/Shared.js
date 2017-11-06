@@ -569,16 +569,46 @@ function mockOntologyState() {
                     commitId: '',
                     type: ''
                 },
-                annotations: [],
                 dataPropertyRange: [],
-                classHierarchy: [],
-                classIRIs: [],
-                objectPropertyHierarchy: [],
-                objectPropertyIRIs: [],
-                dataPropertyHierarchy: [],
-                dataPropertyIRIs: [],
+                classes: {
+                    iris: [],
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                objectProperties: {
+                    iris: [],
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                dataProperties: {
+                    iris: [],
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                annotations: {
+                    iris: [],
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                individuals: {
+                    iris: [],
+                    flat: []
+                },
+                concepts: {
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                conceptSchemes: {
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
                 blankNodes: {},
-                individuals: [],
                 index: {},
                 ontologyId: 'ontologyId',
                 additions: [],
@@ -597,19 +627,8 @@ function mockOntologyState() {
                 }],
                 individualsParentPath: [],
                 classesAndIndividuals: [],
-                flatClassHierarchy: [],
-                flatDataPropertyHierarchy: [],
-                flatObjectPropertyHierarchy: [],
-                annotationPropertyHierarchy: [],
-                annotationPropertyIndex: {},
-                flatAnnotationPropertyHierarchy: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
-                conceptHierarchy: [],
-                flatConceptHierarchy: [],
-                conceptSchemeHierarchy: [],
-                conceptSchemeIndex: {},
-                flatConceptSchemeHierarchy: [],
                 iriList: [],
                 failedImports: []
             };

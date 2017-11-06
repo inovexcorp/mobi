@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Annotation Overlay directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, ontoUtils, prefixes;
+    var $compile, scope, ontologyStateSvc, propertyManagerSvc, ontoUtils, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -46,21 +46,31 @@ describe('Annotation Overlay directive', function() {
             prefixes = _prefixes_;
         });
 
-        element = $compile(angular.element('<annotation-overlay></annotation-overlay>'))(scope);
+        this.element = $compile(angular.element('<annotation-overlay></annotation-overlay>'))(scope);
         scope.$digest();
-        controller = element.controller('annotationOverlay');
+        this.controller = this.element.controller('annotationOverlay');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        propertyManagerSvc = null;
+        ontoUtils = null;
+        prefixes = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('annotation-overlay')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('annotation-overlay')).toBe(true);
         });
         it('based on form (.content)', function() {
-            expect(element.querySelectorAll('.content').length).toBe(1);
+            expect(this.element.querySelectorAll('.content').length).toBe(1);
         });
         it('has correct heading based on variable', function() {
-            var tests = [
+            [
                 {
                     value: true,
                     result: 'Edit Annotation'
@@ -69,18 +79,17 @@ describe('Annotation Overlay directive', function() {
                     value: false,
                     result: 'Add Annotation'
                 }
-            ];
-            _.forEach(tests, function(test) {
+            ].forEach(function(test) {
                 ontologyStateSvc.editingAnnotation = test.value;
                 scope.$digest();
 
-                var header = element.find('h6');
+                var header = this.element.find('h6');
                 expect(header.length).toBe(1);
                 expect(header[0].innerHTML).toBe(test.result);
-            });
+            }, this);
         });
         it('has correct button based on variable', function() {
-            var tests = [
+            [
                 {
                     value: true,
                     result: 'Edit'
@@ -89,30 +98,29 @@ describe('Annotation Overlay directive', function() {
                     value: false,
                     result: 'Add'
                 }
-            ];
-            _.forEach(tests, function(test) {
+            ].forEach(function(test) {
                 ontologyStateSvc.editingAnnotation = test.value;
                 scope.$digest();
 
-                var buttons = element.querySelectorAll('button.btn-primary');
+                var buttons = this.element.querySelectorAll('button.btn-primary');
                 expect(buttons.length).toBe(1);
                 expect(buttons[0].innerHTML).toBe(test.result);
-            });
+            }, this);
         });
     });
     describe('controller methods', function() {
         it('disableProp should test whether an annotation is owl:deprecated and whether it has been set already', function() {
             resObj.getItemIri.and.returnValue('test');
-            expect(controller.disableProp({})).toBe(false);
+            expect(this.controller.disableProp({})).toBe(false);
 
             resObj.getItemIri.and.returnValue(prefixes.owl + 'deprecated');
-            expect(controller.disableProp({})).toBe(false);
+            expect(this.controller.disableProp({})).toBe(false);
 
             ontologyStateSvc.listItem.selected[prefixes.owl + 'deprecated'] = [];
-            expect(controller.disableProp({})).toBe(true);
+            expect(this.controller.disableProp({})).toBe(true);
         });
         it('addAnnotation should call the appropriate manager functions', function() {
-            controller.addAnnotation();
+            this.controller.addAnnotation();
             expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationSelect);
             expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationType);
             expect(propertyManagerSvc.add).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, resObj.getItemIri(ontologyStateSvc.annotationSelect), ontologyStateSvc.annotationValue, resObj.getItemIri(ontologyStateSvc.annotationType), ontologyStateSvc.annotationLanguage);
@@ -121,7 +129,7 @@ describe('Annotation Overlay directive', function() {
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });
         it('editAnnotation should call the appropriate manager functions', function() {
-            controller.editAnnotation();
+            this.controller.editAnnotation();
             expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationSelect);
             expect(resObj.getItemIri).toHaveBeenCalledWith(ontologyStateSvc.annotationType);
             expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));

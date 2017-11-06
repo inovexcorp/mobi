@@ -158,7 +158,7 @@ describe('Create Class Overlay directive', function() {
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
                 ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
                 ontologyStateSvc.getOntologiesArray.and.returnValue([]);
-                ontologyStateSvc.listItem.classHierarchy = [];
+                ontologyStateSvc.listItem.classes.hierarchy = [];
                 this.controller.language = 'en';
                 this.controller.clazz = {'@id': 'class-iri'};
                 this.controller.clazz[prefixes.dcterms + 'title'] = [{'@value': 'label'}];
@@ -174,9 +174,9 @@ describe('Create Class Overlay directive', function() {
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
                 expect(ontologyStateSvc.addToClassIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem, {namespace: 'begin/', localName: 'end'});
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.clazz);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classHierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
-                expect(ontologyStateSvc.listItem.flatClassHierarchy).toEqual([{prop: 'entity'}]);
-                expect(ontologyStateSvc.listItem.classHierarchy).toContain({'entityIRI': 'class-iri'});
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+                expect(ontologyStateSvc.listItem.classes.flat).toEqual([{prop: 'entity'}]);
+                expect(ontologyStateSvc.listItem.classes.hierarchy).toContain({'entityIRI': 'class-iri'});
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.clazz['@id']);
                 expect(ontologyStateSvc.showCreateClassOverlay).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
@@ -196,7 +196,7 @@ describe('Create Class Overlay directive', function() {
                 expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.clazz['@id']);
                 expect(ontologyStateSvc.showCreateClassOverlay).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                expect(ontologyStateSvc.listItem.classHierarchy).toEqual([]);
+                expect(ontologyStateSvc.listItem.classes.hierarchy).toEqual([]);
                 expect(_.get(this.controller.clazz, prefixes.rdfs + 'subClassOf')).toEqual([{'@id': 'classA'}]);
                 expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('class-iri', ['classA']);
             });

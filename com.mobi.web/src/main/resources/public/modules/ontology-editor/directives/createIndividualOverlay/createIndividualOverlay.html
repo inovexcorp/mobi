@@ -36,7 +36,7 @@
                     <ui-select-match placeholder="Select a Class">
                         <span title="{{dvm.ro.getItemIri($item)}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
                     </ui-select-match>
-                    <ui-select-choices group-by="dvm.getItemOntologyIri" repeat="dvm.ro.getItemIri(item) as item in dvm.os.listItem.classIRIs | removeIriFromArray:dvm.individual['@type'] | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
+                    <ui-select-choices group-by="dvm.getItemOntologyIri" repeat="dvm.ro.getItemIri(item) as item in dvm.os.listItem.classes.iris | removeIriFromArray:dvm.individual['@type'] | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
                         <div title="{{dvm.ro.getItemIri(item)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(item) | highlight:$select.search | trusted"></div>
                     </ui-select-choices>
                 </ui-select>
