@@ -116,10 +116,9 @@
             };
 
             var ontologyListItemTemplate = {
-                ontologyState: {
-                    active: true,
-                    upToDate: true
-                },
+                active: true,
+                upToDate: true,
+                isVocabulary: false,
                 editorTabStates: angular.copy(ontologyEditorTabStates),
                 ontologyRecord: {
                     title: '',
@@ -134,9 +133,9 @@
                 importedOntologyIds: [],
                 annotations: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.owlAnnotations)),
                 dataPropertyRange: om.defaultDatatypes,
-                subClasses: [],
-                subDataProperties: [],
-                subObjectProperties: [],
+                classIRIs: [],
+                dataPropertyIRIs: [],
+                objectPropertyIRIs: [],
                 individuals: [],
                 classHierarchy: [],
                 classIndex: {},
@@ -167,10 +166,8 @@
                 failedImports: []
             };
             var vocabularyListItemTemplate = {
-                ontologyState: {
-                    active: true,
-                    upToDate: true
-                },
+                active: true,
+                upToDate: true,
                 editorTabStates: angular.copy(vocabularyEditorTabStates),
                 ontologyRecord: {
                     title: '',
@@ -226,13 +223,13 @@
              *      importedOntologies: [],
              *      importedOntologyIds: [],
              *      annotations: [],
-             *      subDataProperties: [],
-             *      subObjectProperties: [],
+             *      dataPropertyIRIs: [],
+             *      objectPropertyIRIs: [],
              *      dataPropertyRange: [],
              *      classHierarchy: [],
              *      individuals: [],
              *      classesWithIndividuals: [],
-             *      subClasses: [],
+             *      classIRIs: [],
              *      blankNodes: {},
              *      index: {}
              * }
@@ -434,7 +431,7 @@
                     .then(() => cm.getInProgressCommit(recordId, catalogId), $q.reject)
                     .then(commit => {
                         var listItem = self.getListItemByRecordId(recordId);
-                        return self.updateOntology(recordId, branchId, commitId, listItem.ontologyRecord.type, listItem.ontologyState.upToDate, commit);
+                        return self.updateOntology(recordId, branchId, commitId, listItem.ontologyRecord.type, listItem.upToDate, commit);
                     }, $q.reject);
             }
             /**
@@ -524,9 +521,10 @@
                         propertyManagerService.owlAnnotations,
                         _.isMatch
                     );
-                    listItem.subClasses = _.get(response[0], 'classes');
-                    listItem.subDataProperties = _.get(response[0], 'dataProperties');
-                    listItem.subObjectProperties = _.get(response[0], 'objectProperties');
+                    listItem.classIRIs = [];
+                    _.forEach(_.get(response[0], 'classes', []), iriObj => self.addToClassIRIs(listItem, iriObj));
+                    listItem.dataPropertyIRIs = _.get(response[0], 'dataProperties');
+                    listItem.objectPropertyIRIs = _.get(response[0], 'objectProperties');
                     listItem.individuals = _.get(response[0], 'namedIndividuals');
                     listItem.dataPropertyRange = _.unionWith(
                         _.get(response[0], 'datatypes'),
@@ -537,32 +535,30 @@
                         listItem.annotations = _.unionWith(
                             addOntologyIdToArray(iriList.annotationProperties, iriList.id),
                             listItem.annotations,
-                            compareListItems
+                            compareIriObjs
                         );
-                        listItem.subClasses = _.unionWith(
-                            addOntologyIdToArray(iriList.classes, iriList.id),
-                            listItem.subClasses,
-                            compareListItems
-                        );
-                        listItem.subDataProperties = _.unionWith(
+                        _.forEach(addOntologyIdToArray(iriList.classes, iriList.id), iriObj => {
+                            self.addToClassIRIs(listItem, iriObj);
+                        });
+                        listItem.dataPropertyIRIs = _.unionWith(
                             addOntologyIdToArray(iriList.dataProperties, iriList.id),
-                            listItem.subDataProperties,
-                            compareListItems
+                            listItem.dataPropertyIRIs,
+                            compareIriObjs
                         );
-                        listItem.subObjectProperties = _.unionWith(
+                        listItem.objectPropertyIRIs = _.unionWith(
                             addOntologyIdToArray(iriList.objectProperties, iriList.id),
-                            listItem.subObjectProperties,
-                            compareListItems
+                            listItem.objectPropertyIRIs,
+                            compareIriObjs
                         );
                         listItem.individuals = _.unionWith(
                             addOntologyIdToArray(iriList.namedIndividuals, iriList.id),
                             listItem.individuals,
-                            compareListItems
+                            compareIriObjs
                         );
                         listItem.dataPropertyRange = _.unionWith(
                             addOntologyIdToArray(iriList.datatypes, iriList.id),
                             listItem.dataPropertyRange,
-                            compareListItems
+                            compareIriObjs
                         );
                         listItem.iriList.push(iriList['id'])
                         listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(iriList)), ro.getItemIri))
@@ -591,8 +587,8 @@
                     listItem.flatEverythingTree = self.createFlatEverythingTree(getOntologiesArrayByListItem(listItem), listItem);
                     _.pullAllWith(
                         listItem.annotations,
-                        _.concat(om.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties),
-                        compareListItems
+                        _.concat(om.ontologyProperties, listItem.dataPropertyIRIs, listItem.objectPropertyIRIs),
+                        compareIriObjs
                     );
                     listItem.failedImports = response[9];
                     deferred.resolve(listItem);
@@ -620,8 +616,8 @@
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
                     listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri));
-                    listItem.subDataProperties = _.get(response[0], 'dataProperties');
-                    listItem.subObjectProperties = _.get(response[0], 'objectProperties');
+                    listItem.dataPropertyIRIs = _.get(response[0], 'dataProperties');
+                    listItem.objectPropertyIRIs = _.get(response[0], 'objectProperties');
                     listItem.derivedConcepts = _.map(_.get(response[0], 'derivedConcepts', []), ro.getItemIri);
                     listItem.derivedConceptSchemes = _.map(_.get(response[0], 'derivedConceptSchemes', []), ro.getItemIri);
                     listItem.annotations = _.unionWith(
@@ -640,17 +636,17 @@
                         listItem.annotations = _.unionWith(
                             addOntologyIdToArray(iriList.annotationProperties, iriList.id),
                             listItem.annotations,
-                            compareListItems
+                            compareIriObjs
                         );
-                        listItem.subDataProperties = _.unionWith(
+                        listItem.dataPropertyIRIs = _.unionWith(
                             addOntologyIdToArray(iriList.dataProperties, iriList.id),
-                            listItem.subDataProperties,
-                            compareListItems
+                            listItem.dataPropertyIRIs,
+                            compareIriObjs
                         );
-                        listItem.subObjectProperties = _.unionWith(
+                        listItem.objectPropertyIRIs = _.unionWith(
                             addOntologyIdToArray(iriList.objectProperties, iriList.id),
-                            listItem.subObjectProperties,
-                            compareListItems
+                            listItem.objectPropertyIRIs,
+                            compareIriObjs
                         );
                         listItem.iriList.push(iriList['id']);
                         listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(iriList)), ro.getItemIri))
@@ -667,9 +663,9 @@
                     });
                     _.pullAllWith(
                         listItem.annotations,
-                        _.concat(om.ontologyProperties, listItem.subDataProperties, listItem.subObjectProperties,
+                        _.concat(om.ontologyProperties, listItem.dataPropertyIRIs, listItem.objectPropertyIRIs,
                             angular.copy(om.conceptRelationshipList), angular.copy(om.schemeRelationshipList)),
-                        compareListItems
+                        compareIriObjs
                     );
                     listItem.failedImports = response[6];
                     deferred.resolve(listItem);
@@ -1315,8 +1311,29 @@
             self.setPageTitle = function(type) {
                 _.set($state, 'current.data.title', type === 'vocabulary' ? 'Vocabulary Editor' : 'Ontology Editor');
             }
+            self.addToClassIRIs = function(listItem, iriObj) {
+                if (!existenceCheck(listItem.classIRIs, iriObj)) {
+                    var itemIRI = ro.getItemIri(iriObj);
+                    if (itemIRI === prefixes.skos + 'Concept' || itemIRI === prefixes.skos + 'ConceptScheme') {
+                        listItem.isVocabulary = true;
+                    }
+                    listItem.classIRIs.push(iriObj);
+                }
+            }
+            self.removeFromClassIRIs = function(listItem, iriObj) {
+                var itemIRI = ro.getItemIri(iriObj);
+                var conceptCheck = itemIRI === prefixes.skos + 'Concept' && !existenceCheck(listItem.classIRIs, {localName: 'ConceptScheme', namespace: prefixes.skos});
+                var schemeCheck = itemIRI === prefixes.skos + 'ConceptScheme' && !existenceCheck(listItem.classIRIs, {localName: 'Concept', namespace: prefixes.skos});
+                if (conceptCheck || schemeCheck) {
+                    listItem.isVocabulary = false;
+                }
+                _.remove(listItem.classIRIs, iriObj);
+            }
 
             /* Private helper functions */
+            function existenceCheck(array, iriObj) {
+                return _.some(array, itemObj => compareIriObjs(itemObj, iriObj));
+            }
             function getOntologiesArrayByListItem(listItem) {
                 return _.concat([listItem.ontology], _.map(listItem.importedOntologies, 'ontology'));
             }
@@ -1381,7 +1398,7 @@
                 listItem.blankNodes = blankNodes;
                 listItem.index = index;
                 listItem.inProgressCommit = inProgressCommit;
-                listItem.ontologyState.upToDate = upToDate;
+                listItem.upToDate = upToDate;
                 return listItem;
             }
             function findValuesMissingDatatypes(object) {
@@ -1483,7 +1500,7 @@
                     listItem[prop].push(filteredJson);
                 }
             }
-            function compareListItems(obj1, obj2) {
+            function compareIriObjs(obj1, obj2) {
                 return _.isEqual(_.get(obj1, 'localName'), _.get(obj2, 'localName'))
                     && _.isEqual(_.get(obj1, 'namespace'), _.get(obj2, 'namespace'));
             }

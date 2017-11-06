@@ -55,7 +55,7 @@
             self.deleteClass = function() {
                 var entityIRI = os.getActiveEntityIRI();
                 var split = $filter('splitIRI')(entityIRI);
-                _.remove(os.listItem.subClasses, {namespace:split.begin + split.then, localName: split.end});
+                os.removeFromClassIRIs(os.listItem, {namespace:split.begin + split.then, localName: split.end});
                 _.pull(os.listItem.classesWithIndividuals, entityIRI);
                 os.deleteEntityFromHierarchy(os.listItem.classHierarchy, entityIRI, os.listItem.classIndex);
                 os.listItem.flatClassHierarchy = os.flattenHierarchy(os.listItem.classHierarchy, os.listItem.ontologyRecord.recordId);
@@ -69,7 +69,7 @@
             self.deleteObjectProperty = function() {
                 var entityIRI = os.getActiveEntityIRI();
                 var split = $filter('splitIRI')(entityIRI);
-                _.remove(os.listItem.subObjectProperties, {namespace:split.begin + split.then, localName: split.end});
+                _.remove(os.listItem.objectPropertyIRIs, {namespace:split.begin + split.then, localName: split.end});
                 os.deleteEntityFromHierarchy(os.listItem.objectPropertyHierarchy, entityIRI, os.listItem.objectPropertyIndex);
                 os.listItem.flatObjectPropertyHierarchy = os.flattenHierarchy(os.listItem.objectPropertyHierarchy, os.listItem.ontologyRecord.recordId);
                 self.commonDelete(entityIRI, true);
@@ -78,7 +78,7 @@
             self.deleteDataTypeProperty = function() {
                 var entityIRI = os.getActiveEntityIRI();
                 var split = $filter('splitIRI')(entityIRI);
-                _.remove(os.listItem.subDataProperties, {namespace:split.begin + split.then, localName: split.end});
+                _.remove(os.listItem.dataPropertyIRIs, {namespace:split.begin + split.then, localName: split.end});
                 os.deleteEntityFromHierarchy(os.listItem.dataPropertyHierarchy, entityIRI, os.listItem.dataPropertyIndex);
                 os.listItem.flatDataPropertyHierarchy = os.flattenHierarchy(os.listItem.dataPropertyHierarchy, os.listItem.ontologyRecord.recordId);
                 self.commonDelete(entityIRI, true);

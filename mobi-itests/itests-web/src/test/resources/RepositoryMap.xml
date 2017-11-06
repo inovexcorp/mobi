@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<root>
+    <windows>
+        <driver id="googlechrome">
+            <version id="2.33">
+                <bitrate sixtyfourbit="true" thirtytwobit="true">
+                    <filelocation>https://chromedriver.storage.googleapis.com/2.33/chromedriver_win32.zip</filelocation>
+                    <hash>718df64a6e2b2efde50b26ac22fde229</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+            </version>
+        </driver>
+        <driver id="marionette">
+            <version id="0.19.0">
+                <bitrate sixtyfourbit="true">
+                    <filelocation>https://github.com/mozilla/geckodriver/releases/download/v0.19.0/geckodriver-v0.19.0-win64.zip</filelocation>
+                    <hash>74551a456120d87d9ab5350fc623b971</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+                <bitrate thirtytwobit="true">
+                    <filelocation>https://github.com/mozilla/geckodriver/releases/download/v0.19.0/geckodriver-v0.19.0-win32.zip</filelocation>
+                    <hash>13e6f714c0f8b4f952ce51be59d6824d</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+            </version>
+        </driver>
+    </windows>
+    <linux>
+        <driver id="googlechrome">
+            <version id="2.33">
+                <bitrate sixtyfourbit="true">
+                    <filelocation>https://chromedriver.storage.googleapis.com/2.33/chromedriver_linux64.zip</filelocation>
+                    <hash>6dc329fb8ecdff6a9f74eea053434662</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+                <bitrate thirtytwobit="true">
+                    <filelocation>https://chromedriver.storage.googleapis.com/2.33/chromedriver_linux32.zip</filelocation>
+                    <hash>e936493c0f4ceeb7f6b504a491daa25c</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+            </version>
+        </driver>
+        <driver id="marionette">
+            <version id="0.19.0">
+                <bitrate sixtyfourbit="true">
+                    <filelocation>https://github.com/mozilla/geckodriver/releases/download/v0.19.0/geckodriver-v0.19.0-linux64.tar.gz</filelocation>
+                    <hash>ca6935a72fd0527d15a78a17a35e56e8</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+                <bitrate arm="true">
+                    <filelocation>https://github.com/mozilla/geckodriver/releases/download/v0.19.0/geckodriver-v0.19.0-arm7hf.tar.gz</filelocation>
+                    <hash>1278fd771ae023b4becbdb9968f91e8e</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+            </version>
+        </driver>
+    </linux>
+    <osx>
+        <driver id="googlechrome">
+            <version id="2.33">
+                <bitrate sixtyfourbit="true">
+                    <filelocation>https://chromedriver.storage.googleapis.com/2.33/chromedriver_mac64.zip</filelocation>
+                    <hash>3d520b8ede8e9deb8c9a2efe2aec5f35</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+            </version>
+        </driver>
+        <driver id="marionette">
+            <version id="0.19.0">
+                <bitrate thirtytwobit="true" sixtyfourbit="true">
+                    <filelocation>https://github.com/mozilla/geckodriver/releases/download/v0.19.0/geckodriver-v0.19.0-macos.tar.gz</filelocation>
+                    <hash>4cf0bef3a95aeb3d5011d780a3820c2d</hash>
+                    <hashtype>md5</hashtype>
+                </bitrate>
+            </version>
+        </driver>
+    </osx>
+</root>

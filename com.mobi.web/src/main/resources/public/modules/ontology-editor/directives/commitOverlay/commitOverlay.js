@@ -47,7 +47,7 @@
                     dvm.error = '';
 
                     dvm.commit = function() {
-                        if (dvm.os.listItem.ontologyState.upToDate) {
+                        if (dvm.os.listItem.upToDate) {
                             createCommit(dvm.os.listItem.ontologyRecord.branchId);
                         } else {
                             var branch = _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId});
@@ -62,7 +62,7 @@
                                         .then(branch => {
                                             dvm.os.listItem.branches.push(branch);
                                             dvm.os.listItem.ontologyRecord.branchId = branch['@id'];
-                                            dvm.os.listItem.ontologyState.upToDate = true;
+                                            dvm.os.listItem.upToDate = true;
                                             createCommit(branch['@id']);
                                         }, onError), onError);
                         }
