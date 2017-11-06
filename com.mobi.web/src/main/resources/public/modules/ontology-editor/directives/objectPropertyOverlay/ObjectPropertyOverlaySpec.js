@@ -43,7 +43,7 @@ describe('Object Property Overlay directive', function() {
             ontoUtils = _ontologyUtilsManagerService_;
         });
 
-        ontologyStateSvc.listItem = {ontologyRecord: {recordId: 'recordId'}, individuals: [{}]};
+        ontologyStateSvc.listItem = {ontologyRecord: {recordId: 'recordId'}, individuals: {iris: [{}]}};
         ontologyStateSvc.propertyValue = 'indiv';
         responseObj.getItemIri.and.returnValue('indiv');
         this.element = $compile(angular.element('<object-property-overlay></object-property-overlay>'))(scope);

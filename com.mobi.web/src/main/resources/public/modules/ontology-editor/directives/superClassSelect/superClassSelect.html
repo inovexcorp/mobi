@@ -30,7 +30,7 @@
                 <ui-select-match placeholder="Select classes">
                     <span title="{{dvm.ro.getItemIri($item)}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
                 </ui-select-match>
-                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="{'@id': dvm.ro.getItemIri(value)} as value in dvm.os.listItem.classIRIs | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
+                <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="{'@id': dvm.ro.getItemIri(value)} as value in dvm.os.listItem.classes.iris | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
                     <div title="{{dvm.ro.getItemIri(value)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(value) | highlight: $select.search | trusted"></div>
                 </ui-select-choices>
             </ui-select>
