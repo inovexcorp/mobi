@@ -155,8 +155,6 @@ public class SimpleOntology implements Ontology {
     // Instance initialization block sets MissingImportListener for handling missing imports for an ontology.
     private final OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration()
             .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
-    private final OWLOntologyWriterConfiguration writerConfig = new OWLOntologyWriterConfiguration()
-            .withRemapAllAnonymousIndividualsIds(false).withSaveIdsForAllAnonymousIndividuals(true);
     private OWLOntologyManager owlManager;
 
     /**
@@ -335,8 +333,23 @@ public class SimpleOntology implements Ontology {
         this.ontologyManager = ontologyManager;
         this.transformer = transformer;
         this.bNodeService = bNodeService;
-        setUpOwlManager();
-        setUpMobiFactory(ontologyManager, transformer);
+        this.owlManager = OWLManager.createOWLOntologyManager();
+        owlManager.addMissingImportListener((MissingImportListener) arg0 -> {
+            missingImports.add(SimpleOntologyValues.mobiIRI(arg0.getImportedOntologyURI()));
+            LOG.warn("Missing import {} ", arg0.getImportedOntologyURI());
+        });
+        owlManager.setOntologyLoaderConfiguration(config);
+        OWLOntologyWriterConfiguration writerConfig = new OWLOntologyWriterConfiguration()
+                .withRemapAllAnonymousIndividualsIds(false)
+                .withSaveIdsForAllAnonymousIndividuals(true);
+        owlManager.setOntologyWriterConfiguration(writerConfig);
+        owlManager.setOntologyConfigurator(owlManager.getOntologyConfigurator()
+                .withRemapAllAnonymousIndividualsIds(false)
+                .withSaveIdsForAllAnonymousIndividuals(true));
+        owlManager.getIRIMappers().add(new MobiOntologyIRIMapper(ontologyManager));
+        OWLOntologyFactory originalFactory = owlManager.getOntologyFactories().iterator().next();
+        owlManager.getOntologyFactories().add(new MobiOntologyFactory(ontologyManager, originalFactory,
+                transformer));
     }
 
     /**
@@ -351,7 +364,6 @@ public class SimpleOntology implements Ontology {
         this.transformer = transformer;
         this.bNodeService = bNodeService;
         this.owlManager = owlManager;
-        setUpMobiFactory(ontologyManager, transformer);
 
         try {
             if (!owlManager.contains(ontology)) {
@@ -873,25 +885,5 @@ public class SimpleOntology implements Ontology {
 
     private <T extends OWLPropertyDomainAxiom<?>> boolean hasNoDomain(Stream<T> stream) {
         return stream.map(HasDomain::getDomain).count() == 0;
-    }
-
-    private void setUpOwlManager() {
-        this.owlManager = OWLManager.createOWLOntologyManager();
-        owlManager.addMissingImportListener((MissingImportListener) arg0 -> {
-            missingImports.add(SimpleOntologyValues.mobiIRI(arg0.getImportedOntologyURI()));
-            LOG.warn("Missing import {} ", arg0.getImportedOntologyURI());
-        });
-        owlManager.setOntologyLoaderConfiguration(config);
-        owlManager.setOntologyWriterConfiguration(writerConfig);
-        owlManager.setOntologyConfigurator(owlManager.getOntologyConfigurator()
-                .withRemapAllAnonymousIndividualsIds(false)
-                .withSaveIdsForAllAnonymousIndividuals(true));
-    }
-
-    private void setUpMobiFactory(OntologyManager ontologyManager, SesameTransformer sesameTransformer) {
-        owlManager.getIRIMappers().add(new MobiOntologyIRIMapper(ontologyManager));
-        OWLOntologyFactory originalFactory = owlManager.getOntologyFactories().iterator().next();
-        owlManager.getOntologyFactories().add(new MobiOntologyFactory(ontologyManager, originalFactory,
-                sesameTransformer));
     }
 }
