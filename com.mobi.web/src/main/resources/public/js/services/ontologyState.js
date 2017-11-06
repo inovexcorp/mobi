@@ -1312,21 +1312,28 @@
                 _.set($state, 'current.data.title', type === 'vocabulary' ? 'Vocabulary Editor' : 'Ontology Editor');
             }
             self.addToClassIRIs = function(listItem, iriObj) {
-                if (!_.some(listItem.classIRIs, classIRI => compareIriObjs(classIRI, iriObj))) {
-                    if (ro.getItemIri(iriObj) === prefixes.skos + 'Concept') {
+                if (!existenceCheck(listItem.classIRIs, iriObj)) {
+                    var itemIRI = ro.getItemIri(iriObj);
+                    if (itemIRI === prefixes.skos + 'Concept' || itemIRI === prefixes.skos + 'ConceptScheme') {
                         listItem.isVocabulary = true;
                     }
                     listItem.classIRIs.push(iriObj);
                 }
             }
             self.removeFromClassIRIs = function(listItem, iriObj) {
-                if (ro.getItemIri(iriObj) === prefixes.skos + 'Concept') {
+                var itemIRI = ro.getItemIri(iriObj);
+                var conceptCheck = itemIRI === prefixes.skos + 'Concept' && !existenceCheck(listItem.classIRIs, {localName: 'ConceptScheme', namespace: prefixes.skos});
+                var schemeCheck = itemIRI === prefixes.skos + 'ConceptScheme' && !existenceCheck(listItem.classIRIs, {localName: 'Concept', namespace: prefixes.skos});
+                if (conceptCheck || schemeCheck) {
                     listItem.isVocabulary = false;
                 }
                 _.remove(listItem.classIRIs, iriObj);
             }
 
             /* Private helper functions */
+            function existenceCheck(array, iriObj) {
+                return _.some(array, itemObj => compareIriObjs(itemObj, iriObj));
+            }
             function getOntologiesArrayByListItem(listItem) {
                 return _.concat([listItem.ontology], _.map(listItem.importedOntologies, 'ontology'));
             }
