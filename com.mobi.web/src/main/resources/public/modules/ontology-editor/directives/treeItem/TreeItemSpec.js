@@ -22,7 +22,7 @@
  */
 
 describe('Tree Item directive', function() {
-    var $compile, scope, element, controller, isolatedScope, ontologyStateSvc, settingsManagerSvc;
+    var $compile, scope, ontologyStateSvc, settingsManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -45,85 +45,88 @@ describe('Tree Item directive', function() {
         scope.isOpened = true;
         scope.isBold = false;
         scope.path = '';
-        element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren" is-bold="isBold"></tree-item>'))(scope);
+        this.element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren" is-bold="isBold"></tree-item>'))(scope);
         scope.$digest();
-        controller = element.controller('treeItem');
+        this.isolatedScope = this.element.isolateScope();
+        this.controller = this.element.controller('treeItem');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        settingsManagerSvc = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            isolatedScope = element.isolateScope();
-        });
         it('hasChildren should be one way bound', function() {
-            isolatedScope.hasChildren = false;
+            this.isolatedScope.hasChildren = false;
             scope.$digest();
             expect(scope.hasChildren).toBe(true);
         });
         it('isActive should be one way bound', function() {
-            isolatedScope.isActive = true;
+            this.isolatedScope.isActive = true;
             scope.$digest();
             expect(scope.isActive).toBe(false);
         });
         it('isBold should be one way bound', function() {
-            isolatedScope.isBold = true;
+            this.isolatedScope.isBold = true;
             scope.$digest();
             expect(scope.isBold).toBe(false);
         });
         it('onClick should be called in parent scope when invoked', function() {
-            isolatedScope.onClick();
+            this.isolatedScope.onClick();
             expect(scope.onClick).toHaveBeenCalled();
         });
     });
     it('controller bound variable', function() {
-        beforeEach(function() {
-            controller = element.controller('treeItem');
-        });
         it('currentEntity should be two way bound', function() {
-            controller.currentEntity = {id: 'new'};
+            this.controller.currentEntity = {id: 'new'};
             scope.$digest();
-            expect(controller.currentEntity).toEqual({id: 'new'});
+            expect(this.controller.currentEntity).toEqual({id: 'new'});
         });
         it('isOpened should be two way bound', function() {
-            controller.isOpened = false;
+            this.controller.isOpened = false;
             scope.$digest();
-            expect(controller.isOpened).toEqual(false);
+            expect(this.controller.isOpened).toEqual(false);
         });
         it('path should be two way bound', function() {
-            controller.path = 'new';
+            this.controller.path = 'new';
             scope.$digest();
-            expect(controller.path).toEqual('new');
+            expect(this.controller.path).toEqual('new');
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('tree-item')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('tree-item')).toBe(true);
         });
         it('depending on whether or not the currentEntity is saved', function() {
-            expect(element.hasClass('saved')).toBe(false);
+            expect(this.element.hasClass('saved')).toBe(false);
 
             scope.currentEntity = {'@id': 'id'};
             ontologyStateSvc.listItem.inProgressCommit = {
                 additions: [{'@id': 'id'}]
             }
             scope.$digest();
-            expect(element.hasClass('saved')).toBe(true);
+            expect(this.element.hasClass('saved')).toBe(true);
         });
         it('depending on whether it has children', function() {
-            var anchor = element.find('a');
+            var anchor = this.element.find('a');
             expect(anchor.length).toBe(1);
             expect(anchor.attr('ng-dblclick')).toBeTruthy();
-            expect(element.find('i').length).toBe(2);
+            expect(this.element.find('i').length).toBe(2);
 
             scope.hasChildren = false;
             scope.$digest();
-            var anchor = element.find('a');
+            var anchor = this.element.find('a');
             expect(anchor.length).toBe(1);
             expect(anchor.attr('ng-dblclick')).toBeFalsy();
-            expect(element.find('i').length).toBe(2);
+            expect(this.element.find('i').length).toBe(2);
         });
         it('depending on whether it is active', function() {
-            var anchor = element.find('a');
+            var anchor = this.element.find('a');
             expect(anchor.hasClass('active')).toBe(false);
 
             scope.isActive = true;
@@ -131,7 +134,7 @@ describe('Tree Item directive', function() {
             expect(anchor.hasClass('active')).toBe(true);
         });
         it('depending on whether it is bold', function() {
-            var span = element.find('span');
+            var span = this.element.find('span');
             expect(span.hasClass('bold')).toBe(false);
 
             scope.isBold = true;
@@ -144,13 +147,13 @@ describe('Tree Item directive', function() {
             it('should return anonymous when not pretty', function() {
                 scope.currentEntity = {mobi: {anonymous: 'anon'}};
                 scope.$digest();
-                var result = controller.getTreeDisplay();
+                var result = this.controller.getTreeDisplay();
                 expect(result).toBe('anon');
                 expect(ontologyStateSvc.getEntityNameByIndex).not.toHaveBeenCalled();
             });
-            it('should call getEntityName if pretty', function() {
+            it('should call getEntityNameByIndex if pretty', function() {
                 settingsManagerSvc.getTreeDisplay.and.returnValue('pretty');
-                element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
+                this.element = $compile(angular.element('<tree-item path="path" is-opened="isOpened" current-entity="currentEntity" is-active="isActive" on-click="onClick()" has-children="hasChildren"></tree-item>'))(scope);
                 scope.$digest();
                 expect(ontologyStateSvc.getEntityNameByIndex).toHaveBeenCalledWith('id', ontologyStateSvc.listItem);
             });
@@ -159,81 +162,81 @@ describe('Tree Item directive', function() {
             it('should call correct manager function', function() {
                 scope.currentEntity = {mobi: {anonymous: 'anon'}};
                 scope.$digest();
-                controller.toggleOpen();
-                expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(controller.path, controller.isOpened);
+                this.controller.toggleOpen();
+                expect(ontologyStateSvc.setOpened).toHaveBeenCalledWith(this.controller.path, this.controller.isOpened);
             });
             it('should return true when not set', function() {
-                controller.isOpened = undefined;
-                controller.toggleOpen();
-                expect(controller.isOpened).toBe(true);
+                this.controller.isOpened = undefined;
+                this.controller.toggleOpen();
+                expect(this.controller.isOpened).toBe(true);
             });
             it('should return true if it is false', function() {
-                controller.isOpened = false;
-                controller.toggleOpen();
-                expect(controller.isOpened).toBe(true);
+                this.controller.isOpened = false;
+                this.controller.toggleOpen();
+                expect(this.controller.isOpened).toBe(true);
             });
             it('should return false if it is true', function() {
-                controller.isOpened = true;
-                controller.toggleOpen();
-                expect(controller.isOpened).toBe(false);
+                this.controller.isOpened = true;
+                this.controller.toggleOpen();
+                expect(this.controller.isOpened).toBe(false);
             });
             it('should be called when double clicked', function() {
-                spyOn(controller, 'toggleOpen');
-                var anchor = element.querySelectorAll('a')[0];
+                spyOn(this.controller, 'toggleOpen');
+                var anchor = this.element.querySelectorAll('a')[0];
                 angular.element(anchor).triggerHandler('dblclick');
-                expect(controller.toggleOpen).toHaveBeenCalled();
+                expect(this.controller.toggleOpen).toHaveBeenCalled();
             });
         });
         describe('isSaved', function() {
             it('check correct value for inProgress.additions is returned', function() {
-                controller.currentEntity = {'@id': 'id'};
+                this.controller.currentEntity = {'@id': 'id'};
                 ontologyStateSvc.listItem.inProgressCommit = {
                     additions: [{'@id': '12345'}]
                 }
-                expect(controller.isSaved()).toBe(false);
+                expect(this.controller.isSaved()).toBe(false);
                 ontologyStateSvc.listItem.inProgressCommit = {
                     additions: [{'@id': 'id'}]
                 }
-                expect(controller.isSaved()).toBe(true);
+                expect(this.controller.isSaved()).toBe(true);
             });
             it('check correct value for inProgress.deletions is returned', function() {
-                controller.currentEntity = {'@id': 'id'};
+                this.controller.currentEntity = {'@id': 'id'};
                 ontologyStateSvc.listItem.inProgressCommit = {
                     deletions: [{'@id': '12345'}]
                 }
-                expect(controller.isSaved()).toBe(false);
+                expect(this.controller.isSaved()).toBe(false);
                 ontologyStateSvc.listItem.inProgressCommit = {
                     deletions: [{'@id': 'id'}]
                 }
-                expect(controller.isSaved()).toBe(true);
+                expect(this.controller.isSaved()).toBe(true);
             });
             it('check correct value for inProgress.additions and inProgress deletions is returned', function() {
-                controller.currentEntity = {'@id': 'id'};
+                this.controller.currentEntity = {'@id': 'id'};
                 ontologyStateSvc.listItem.inProgressCommit = {
                     additions: [{'@id': '12345'}],
                     deletions: [{'@id': '23456'}]
                 }
-                expect(controller.isSaved()).toBe(false);
+                expect(this.controller.isSaved()).toBe(false);
             });
         });
         describe('scope.$watch', function() {
             it('should call isSaved when additions is changed', function() {
-                spyOn(controller, 'isSaved');
+                spyOn(this.controller, 'isSaved');
                 scope.currentEntity = {'@id': 'id'};
                 ontologyStateSvc.listItem.inProgressCommit = {
                     additions: [{'@id': 'id'}]
                 }
                 scope.$digest();
-                expect(controller.isSaved).toHaveBeenCalled();
+                expect(this.controller.isSaved).toHaveBeenCalled();
             });
             it('should call isSaved when deletions is changed', function() {
-                spyOn(controller, 'isSaved');
+                spyOn(this.controller, 'isSaved');
                 scope.currentEntity = {'@id': 'id'};
                 ontologyStateSvc.listItem.inProgressCommit = {
                     deletions: [{'@id': 'id'}]
                 }
                 scope.$digest();
-                expect(controller.isSaved).toHaveBeenCalled();
+                expect(this.controller.isSaved).toHaveBeenCalled();
             });
         });
     });

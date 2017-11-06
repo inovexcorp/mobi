@@ -43,6 +43,10 @@
              on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.individuals.entityIRI, false)">
             <individuals-tab></individuals-tab>
         </tab>
+        <tab heading="'Concepts'" active="dvm.sm.listItem.editorTabStates.concepts.active" hide-tab="!dvm.sm.listItem.isVocabulary"
+            on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.concepts.entityIRI, false)">
+            <concepts-tab></concepts-tab>
+        </tab>
         <tab heading="'Search'" active="dvm.sm.listItem.editorTabStates.search.active"
              on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.search.entityIRI, false)">
             <search-tab></search-tab>

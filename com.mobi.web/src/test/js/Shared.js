@@ -549,6 +549,9 @@ function mockOntologyState() {
                    individuals: {
                        active: false
                    },
+                   concept: {
+                       active: false
+                   },
                    search: {
                        active: false
                    },

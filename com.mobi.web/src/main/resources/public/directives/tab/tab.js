@@ -35,6 +35,7 @@
                 transclude: true,
                 scope: {
                     active: '=?',
+                    hideTab: '<?',
                     heading: '<',
                     isLast: '<',
                     marked: '<',

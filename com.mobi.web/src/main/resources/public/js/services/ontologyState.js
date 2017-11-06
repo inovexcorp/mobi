@@ -76,6 +76,9 @@
                 individuals: {
                     active: false
                 },
+                concepts: {
+                    active: false
+                },
                 search: {
                     active: false
                 },
@@ -132,6 +135,8 @@
                 importedOntologies: [],
                 importedOntologyIds: [],
                 dataPropertyRange: om.defaultDatatypes,
+                derivedConcepts: [],
+                derivedConceptSchemes: [],
                 classes: {
                     iris: [],
                     hierarchy: [],
@@ -158,6 +163,16 @@
                 },
                 individuals: {
                     iris: [],
+                    flat: []
+                },
+                concepts: {
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                conceptSchemes: {
+                    hierarchy: [],
+                    index: {},
                     flat: []
                 },
                 blankNodes: {},
@@ -513,16 +528,19 @@
                     om.getClassesWithIndividuals(recordId, branchId, commitId),
                     om.getDataPropertyHierarchies(recordId, branchId, commitId),
                     om.getObjectPropertyHierarchies(recordId, branchId, commitId),
-                    cm.getRecordBranches(recordId, catalogId),
                     om.getAnnotationPropertyHierarchies(recordId, branchId, commitId),
+                    om.getConceptHierarchies(recordId, branchId, commitId),
+                    om.getConceptSchemeHierarchies(recordId, branchId, commitId),
+                    cm.getRecordBranches(recordId, catalogId),
                     om.getImportedOntologies(recordId, branchId, commitId),
-                    om.getFailedImports(recordId, branchId, commitId)
+                    om.getFailedImports(recordId, branchId, commitId),
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
                     listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri))
                     listItem.annotations.iris = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
                         propertyManagerService.defaultAnnotations,
+                        propertyManagerService.skosAnnotations,
                         propertyManagerService.owlAnnotations,
                         _.isMatch
                     );
@@ -531,6 +549,8 @@
                     listItem.dataProperties.iris = _.get(response[0], 'dataProperties');
                     listItem.objectProperties.iris = _.get(response[0], 'objectProperties');
                     listItem.individuals.iris = _.get(response[0], 'namedIndividuals');
+                    listItem.derivedConcepts = _.map(_.get(response[0], 'derivedConcepts', []), ro.getItemIri);
+                    listItem.derivedConceptSchemes = _.map(_.get(response[0], 'derivedConceptSchemes', []), ro.getItemIri);
                     listItem.dataPropertyRange = _.unionWith(
                         _.get(response[0], 'datatypes'),
                         om.defaultDatatypes,
@@ -578,12 +598,18 @@
                     listItem.objectProperties.hierarchy = response[5].hierarchy;
                     listItem.objectProperties.index = response[5].index;
                     listItem.objectProperties.flat = self.flattenHierarchy(listItem.objectProperties.hierarchy, recordId, listItem);
-                    listItem.branches = response[6].data;
-                    listItem.annotations.hierarchy = response[7].hierarchy;
-                    listItem.annotations.index = response[7].index;
+                    listItem.annotations.hierarchy = response[6].hierarchy;
+                    listItem.annotations.index = response[6].index;
                     listItem.annotations.flat = self.flattenHierarchy(listItem.annotations.hierarchy, recordId, listItem);
-                    _.forEach(response[8], importedOntObj => {
-                        addImportedOntologyToListItem(listItem, importedOntObj, 'ontology');
+                    listItem.concepts.hierarchy = response[7].hierarchy;
+                    listItem.concepts.index = response[7].index;
+                    listItem.concepts.flat = self.flattenHierarchy(listItem.concepts.hierarchy, recordId, listItem);
+                    listItem.conceptSchemes.hierarchy = response[8].hierarchy;
+                    listItem.conceptSchemes.index = response[8].index;
+                    listItem.conceptSchemes.flat = self.flattenHierarchy(listItem.conceptSchemes.hierarchy, recordId, listItem);
+                    listItem.branches = response[9].data;
+                    _.forEach(response[10], importedOntObj => {
+                        addImportedOntologyToListItem(listItem, importedOntObj);
                     });
                     listItem.classesAndIndividuals = response[3].individuals;
                     listItem.classesWithIndividuals = _.keys(response[3].individuals);
@@ -592,10 +618,10 @@
                     listItem.flatEverythingTree = self.createFlatEverythingTree(getOntologiesArrayByListItem(listItem), listItem);
                     _.pullAllWith(
                         listItem.annotations.iris,
-                        _.concat(om.ontologyProperties, listItem.dataProperties.iris, listItem.objectProperties.iris),
+                        _.concat(om.ontologyProperties, listItem.dataProperties.iris, listItem.objectProperties.iris, angular.copy(om.conceptRelationshipList), angular.copy(om.schemeRelationshipList)),
                         compareIriObjs
                     );
-                    listItem.failedImports = response[9];
+                    listItem.failedImports = response[11];
                     deferred.resolve(listItem);
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
                 return deferred.promise;
@@ -664,7 +690,7 @@
                     listItem.conceptSchemes.flat = self.flattenHierarchy(listItem.conceptSchemes.hierarchy, recordId, listItem);
                     listItem.branches = response[4].data;
                     _.forEach(response[5], importedOntObj => {
-                        addImportedOntologyToListItem(listItem, importedOntObj, 'vocabulary');
+                        addImportedOntologyToListItem(listItem, importedOntObj);
                     });
                     _.pullAllWith(
                         listItem.annotations.iris,
@@ -798,7 +824,7 @@
                 listItem.iriList.push(entityJSON['@id']);
                 _.get(listItem, 'index', {})[entityJSON['@id']] = {
                     position: listItem.ontology.length - 1,
-                    label: om.getEntityName(entityJSON, listItem.ontologyRecord.type),
+                    label: om.getEntityName(entityJSON),
                     ontologyIri: listItem.ontologyId
                 }
             }
@@ -1375,7 +1401,7 @@
                     if (_.has(entity, '@id')) {
                         index[entity['@id']] = {
                             position: i,
-                            label: om.getEntityName(entity, type),
+                            label: om.getEntityName(entity),
                             ontologyIri: ontologyId
                         }
                     } else {
@@ -1533,14 +1559,14 @@
             function sortByName(array, listItem) {
                 return _.sortBy(array, entity => _.lowerCase(self.getEntityNameByIndex(entity['@id'], listItem)));
             }
-            function addImportedOntologyToListItem(listItem, importedOntObj, type) {
+            function addImportedOntologyToListItem(listItem, importedOntObj) {
                 var index = {};
                 var blankNodes = {};
                 _.forEach(importedOntObj.ontology, (entity, i) => {
                     if (_.has(entity, '@id')) {
                         index[entity['@id']] = {
                             position: i,
-                            label: om.getEntityName(entity, type),
+                            label: om.getEntityName(entity),
                             ontologyIri: importedOntObj.id
                         }
                         if (om.isBlankNode(entity)) {

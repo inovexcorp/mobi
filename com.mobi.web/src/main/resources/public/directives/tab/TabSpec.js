@@ -33,6 +33,7 @@ describe('Tab directive', function() {
         });
 
         scope.active = true;
+        scope.hideTab = false;
         scope.heading = '';
         scope.isLast = false;
         scope.marked = true;
@@ -43,7 +44,7 @@ describe('Tab directive', function() {
             addTab: jasmine.createSpy('addTab'),
             removeTab: jasmine.createSpy('removeTab')
         });
-        this.element = angular.element('<div><tab active="active" heading="heading" is-last="isLast" marked="marked" on-click="onClick()" on-close="onClose()"></tab></div>');
+        this.element = angular.element('<div><tab active="active" heading="heading" is-last="isLast" marked="marked" hide-tab="hideTab" on-click="onClick()" on-close="onClose()"></tab></div>');
         parent.append(this.element);
         this.element = $compile(this.element)(scope);
         scope.$digest();
@@ -77,6 +78,11 @@ describe('Tab directive', function() {
             this.isolatedScope.marked = false;
             scope.$digest();
             expect(scope.marked).toEqual(true);
+        });
+        it('hideTab should be one way bound', function() {
+            this.isolatedScope.hideTab = true;
+            scope.$digest();
+            expect(scope.hideTab).toEqual(false);
         });
         it('onClick should be called in parent scope when invoked', function() {
             this.isolatedScope.onClick();
