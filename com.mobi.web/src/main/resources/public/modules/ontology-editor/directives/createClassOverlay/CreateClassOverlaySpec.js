@@ -187,7 +187,7 @@ describe('Create Class Overlay directive', function() {
                     this.controller.values = [{'@id': 'classA'}];
                 });
                 it('including a derived concept', function() {
-                    ontologyStateSvc.listItem.derivedConcepts = ['classA'];
+                    ontoUtils.containsDerivedConcept.and.returnValue(true);
                     this.controller.create();
                     expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.clazz, this.controller.language);
                     expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.clazz);
@@ -204,25 +204,6 @@ describe('Create Class Overlay directive', function() {
                     expect(_.get(this.controller.clazz, prefixes.rdfs + 'subClassOf')).toEqual([{'@id': 'classA'}]);
                     expect(ontologyStateSvc.listItem.derivedConcepts).toContain('class-iri');
                     expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('class-iri', ['classA']);
-                });
-                it('including a concept', function() {
-                    this.controller.values = [{'@id': prefixes.skos + 'Concept'}];
-                    this.controller.create();
-                    expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.clazz, this.controller.language);
-                    expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.clazz);
-                    expect(ontologyStateSvc.getOntologiesArray).toHaveBeenCalled();
-                    expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([], ontologyStateSvc.listItem);
-                    expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
-                    expect(ontologyStateSvc.addToClassIRIs).toHaveBeenCalledWith(ontologyStateSvc.listItem, {namespace: 'begin/', localName: 'end'});
-                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.clazz);
-                    expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
-                    expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.clazz['@id']);
-                    expect(ontologyStateSvc.showCreateClassOverlay).toBe(false);
-                    expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-                    expect(ontologyStateSvc.listItem.classes.hierarchy).toEqual([]);
-                    expect(_.get(this.controller.clazz, prefixes.rdfs + 'subClassOf')).toEqual([{'@id': prefixes.skos + 'Concept'}]);
-                    expect(ontologyStateSvc.listItem.derivedConcepts).toContain('class-iri');
-                    expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('class-iri', [prefixes.skos + 'Concept']);
                 });
                 it('without a derived concept', function() {
                     this.controller.create();

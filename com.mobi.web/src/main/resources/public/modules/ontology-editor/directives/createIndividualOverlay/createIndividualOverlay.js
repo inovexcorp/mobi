@@ -98,7 +98,7 @@
                         dvm.os.selectItem(dvm.individual['@id'], false);
 
                         // add to concept hierarchy if an instance of a derived concept
-                        if (_.intersection(dvm.individual['@type'], _.concat(dvm.os.listItem.derivedConcepts, [prefixes.skos + 'Concept'])).length) {
+                        if (dvm.ontoUtils.containsDerivedConcept(dvm.individual['@type'])) {
                             var hierarchy = _.get(dvm.os.listItem, 'concepts.hierarchy');
                             hierarchy.push({'entityIRI': dvm.individual['@id']});
                             dvm.os.listItem.concepts.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);

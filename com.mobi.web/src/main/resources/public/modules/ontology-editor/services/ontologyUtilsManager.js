@@ -37,19 +37,37 @@
             var util = utilService;
             var ro = responseObj;
 
+            /**
+             * @ngdoc method
+             * @name containsDerivedConcept
+             * @methodOf ontologyUtilsManager.service:ontologyUtilsManagerService
+             *
+             * @description
+             * Determines whether the provided array of IRI strings contains a derived skos:Concept or skos:Concept.
+             *
+             * @param {string[]} arr An array of IRI strings
+             * @return {boolean} True if the array contains a dervied skos:Concept or skos:Concept
+             */
+            self.containsDerivedConcept = function(arr) {
+                return !!_.intersection(arr, _.concat(os.listItem.derivedConcepts, [prefixes.skos + 'Concept'])).length;
+            }
+
             self.commonDelete = function(entityIRI, updateEverythingTree = false) {
-                om.getEntityUsages(os.listItem.ontologyRecord.recordId, os.listItem.ontologyRecord.branchId, os.listItem.ontologyRecord.commitId, entityIRI, 'construct')
+                return om.getEntityUsages(os.listItem.ontologyRecord.recordId, os.listItem.ontologyRecord.branchId, os.listItem.ontologyRecord.commitId, entityIRI, 'construct')
                     .then(statements => {
                         var removedEntities = os.removeEntity(os.listItem, entityIRI);
                         _.forEach(removedEntities, entity => os.addToDeletions(os.listItem.ontologyRecord.recordId, entity));
                         _.forEach(statements, statement => os.addToDeletions(os.listItem.ontologyRecord.recordId, statement));
                         ur.remove(os.listItem.ontology, entityIRI);
                         os.unSelectItem();
-                        self.saveCurrentChanges();
                         if (updateEverythingTree) {
                             os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
                         }
-                    }, util.createErrorToast);
+                        return self.saveCurrentChanges();
+                    }, errorMessage => {
+                        util.createErrorToast(errorMessage);
+                        return $q.reject();
+                    });
             }
 
             self.deleteClass = function() {
@@ -63,7 +81,10 @@
                 os.listItem.classesWithIndividuals = _.keys(os.listItem.classesAndIndividuals);
                 os.listItem.individualsParentPath = os.getIndividualsParentPath(os.listItem);
                 os.listItem.individuals.flat = os.createFlatIndividualTree(os.listItem);
-                self.commonDelete(entityIRI, true);
+                self.commonDelete(entityIRI, true)
+                    .then(() => {
+                        os.setVocabularyStuff();
+                    });
             }
 
             self.deleteObjectProperty = function() {
@@ -115,7 +136,10 @@
                 os.listItem.classesWithIndividuals = _.keys(os.listItem.classesAndIndividuals);
                 os.listItem.individualsParentPath = os.getIndividualsParentPath(os.listItem);
                 os.listItem.individuals.flat = os.createFlatIndividualTree(os.listItem);
-                self.commonDelete(entityIRI);
+                self.commonDelete(entityIRI)
+                    .then(() => {
+                        os.setVocabularyStuff();
+                    });
             }
 
             self.deleteConcept = function() {
@@ -167,7 +191,7 @@
             }
 
             self.saveCurrentChanges = function() {
-                os.saveChanges(os.listItem.ontologyRecord.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions})
+                return os.saveChanges(os.listItem.ontologyRecord.recordId, {additions: os.listItem.additions, deletions: os.listItem.deletions})
                     .then(() => os.afterSave(), $q.reject)
                     .then(() => {
                         var entityIRI = os.getActiveEntityIRI();
@@ -176,9 +200,11 @@
                             os.setEntityUsages(entityIRI);
                         }
                         os.listItem.isSaved = os.isCommittable(os.listItem.ontologyRecord.recordId);
+                        return $q.when();
                     }, errorMessage => {
                         util.createErrorToast(errorMessage);
                         os.listItem.isSaved = false;
+                        return $q.reject();
                     });
             }
 

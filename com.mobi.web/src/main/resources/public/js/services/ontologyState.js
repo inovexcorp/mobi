@@ -259,6 +259,8 @@
 
             self.listItem = {};
 
+            self.vocabularySpinnerId = 'concepts-spinner';
+
             /**
              * @ngdoc method
              * @name initialize
@@ -540,7 +542,6 @@
                     listItem.annotations.iris = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
                         propertyManagerService.defaultAnnotations,
-                        propertyManagerService.skosAnnotations,
                         propertyManagerService.owlAnnotations,
                         _.isMatch
                     );
@@ -702,6 +703,22 @@
                     deferred.resolve(listItem);
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
                 return deferred.promise;
+            }
+            self.setVocabularyStuff = function(listItem = self.listItem) {
+                httpService.cancel(self.vocabularySpinnerId);
+                om.getVocabularyStuff(listItem.ontologyRecord.recordId, listItem.ontologyRecord.branchId, listItem.ontologyRecord.commitId, self.vocabularySpinnerId)
+                    .then(response => {
+                        listItem.derivedConcepts = _.map(_.get(response, 'derivedConcepts', []), ro.getItemIri);
+                        listItem.derivedConceptSchemes = _.map(_.get(response, 'derivedConceptSchemes', []), ro.getItemIri);
+                        listItem.concepts.hierarchy = _.get(response, 'concepts.hierarchy', []);
+                        listItem.concepts.index = _.get(response, 'concepts.index', {});
+                        listItem.concepts.flat = self.flattenHierarchy(listItem.concepts.hierarchy, listItem.ontologyRecord.recordId, listItem);
+                        listItem.conceptSchemes.hierarchy = _.get(response, 'conceptSchemes.hierarchy', []);
+                        listItem.conceptSchemes.index = _.get(response, 'conceptSchemes.index', {});
+                        listItem.conceptSchemes.flat = self.flattenHierarchy(listItem.conceptSchemes.hierarchy, listItem.ontologyRecord.recordId, listItem);
+                        _.unset(listItem.editorTabStates.concepts, 'entityIRI');
+                        _.unset(listItem.editorTabStates.concepts, 'usages');
+                    }, util.createErrorToast);
             }
             /**
              * @ngdoc method

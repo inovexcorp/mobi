@@ -1134,6 +1134,93 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 400);
     }
 
+    // Test get vocabulary stuff
+
+    @Test
+    public void testGetVocabularyStuff() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/vocabulary-stuff")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(true);
+        JSONObject responseObject = getResponse(response);
+        assertDerivedConcepts(responseObject, derivedConcepts);
+        assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
+        assertEquals(responseObject.getJSONObject("concepts"), conceptHierarchyResult);
+        assertEquals(responseObject.getJSONObject("conceptSchemes"), conceptSchemeHierarchyResult);
+    }
+
+    @Test
+    public void testGetVocabularyStuffWithNoInProgressCommit() {
+        // Setup:
+        setNoInProgressCommit();
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/vocabulary-stuff")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
+        assertGetOntology(false);
+        JSONObject responseObject = getResponse(response);
+        assertDerivedConcepts(responseObject, derivedConcepts);
+        assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
+        assertEquals(responseObject.getJSONObject("concepts"), conceptHierarchyResult);
+        assertEquals(responseObject.getJSONObject("conceptSchemes"), conceptSchemeHierarchyResult);
+    }
+
+    @Test
+    public void testGetVocabularyStuffWithCommitIdAndMissingBranchId() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/vocabulary-stuff")
+                .queryParam("commitId", commitId.stringValue()).request().get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void testGetVocabularyStuffMissingCommitId() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/vocabulary-stuff")
+                .queryParam("branchId", branchId.stringValue()).request()
+                .get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId, branchId);
+        assertGetOntology(true);
+        JSONObject responseObject = getResponse(response);
+        assertDerivedConcepts(responseObject, derivedConcepts);
+        assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
+        assertEquals(responseObject.getJSONObject("concepts"), conceptHierarchyResult);
+        assertEquals(responseObject.getJSONObject("conceptSchemes"), conceptSchemeHierarchyResult);
+    }
+
+    @Test
+    public void testGetVocabularyStuffMissingBranchIdAndCommitId() {
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/vocabulary-stuff")
+                .request().get();
+
+        assertEquals(response.getStatus(), 200);
+        verify(ontologyManager).retrieveOntology(recordId);
+        assertGetOntology(true);
+        JSONObject responseObject = getResponse(response);
+        assertDerivedConcepts(responseObject, derivedConcepts);
+        assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
+        assertEquals(responseObject.getJSONObject("concepts"), conceptHierarchyResult);
+        assertEquals(responseObject.getJSONObject("conceptSchemes"), conceptSchemeHierarchyResult);
+    }
+
+    @Test
+    public void testGetVocabularyStuffWhenRetrieveOntologyIsEmpty() {
+        // Setup:
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class)))
+                .thenReturn(Optional.empty());
+        Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/vocabulary-stuff")
+                .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
+                .get();
+
+        assertEquals(response.getStatus(), 400);
+    }
+
     // Test get IRIs in ontology
 
     @Test
