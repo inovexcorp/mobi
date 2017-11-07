@@ -186,9 +186,7 @@
                 var newLabel = om.getEntityName(os.listItem.selected);
                 if (_.has(os.listItem.index, "['" + os.listItem.selected['@id'] + "'].label") && os.listItem.index[os.listItem.selected['@id']].label !== newLabel) {
                     os.listItem.index[os.listItem.selected['@id']].label = newLabel;
-                    if (os.listItem.ontologyRecord.type === 'vocabulary') {
-                        os.listItem.concepts.flat = os.flattenHierarchy(os.listItem.concepts.hierarchy, os.listItem.ontologyRecord.recordId);
-                    } else if (om.isClass(os.listItem.selected)) {
+                    if (om.isClass(os.listItem.selected)) {
                         os.listItem.classes.flat = os.flattenHierarchy(os.listItem.classes.hierarchy, os.listItem.ontologyRecord.recordId);
                         os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
                     } else if (om.isDataTypeProperty(os.listItem.selected)) {
@@ -199,6 +197,10 @@
                         os.listItem.flatEverythingTree = os.createFlatEverythingTree(os.getOntologiesArray(), os.listItem);
                     } else if (om.isAnnotation(os.listItem.selected)) {
                         os.listItem.annotations.flat = os.flattenHierarchy(os.listItem.annotations.hierarchy, os.listItem.ontologyRecord.recordId);
+                    } else if (om.isConcept(os.listItem.selected, os.listItem.derivedConcepts)) {
+                        os.listItem.concepts.flat = os.flattenHierarchy(os.listItem.concepts.hierarchy, os.listItem.ontologyRecord.recordId);
+                    } else if (om.isConceptScheme(os.listItem.selected, os.listItem.derivedConceptSchemes)) {
+                        os.listItem.conceptSchemes.flat = os.flattenHierarchy(os.listItem.conceptSchemes.hierarchy, os.listItem.ontologyRecord.recordId);
                     }
                 }
             }

@@ -569,8 +569,7 @@ function mockOntologyState() {
                     title: '',
                     recordId: '',
                     branchId: '',
-                    commitId: '',
-                    type: ''
+                    commitId: ''
                 },
                 dataPropertyRange: [],
                 derivedConcepts: [],
@@ -647,9 +646,7 @@ function mockOntologyState() {
             this.uploadChanges = jasmine.createSpy('uploadChanges').and.returnValue($q.resolve(''));
             this.updateOntology = jasmine.createSpy('updateOntology');
             this.addOntologyToList = jasmine.createSpy('addOntologyToList').and.returnValue($q.when([]));
-            this.addVocabularyToList = jasmine.createSpy('addVocabularyToList').and.returnValue($q.when([]));
             this.createOntologyListItem = jasmine.createSpy('createOntologyListItem').and.returnValue($q.when([]));
-            this.createVocabularyListItem = jasmine.createSpy('createVocabularyListItem').and.returnValue($q.when([]));
             this.addEntity = jasmine.createSpy('addEntity');
             this.removeEntity = jasmine.createSpy('removeEntity');
             this.getListItemByRecordId = jasmine.createSpy('getListItemByRecordId').and.returnValue({});
@@ -705,7 +702,6 @@ function mockOntologyState() {
             this.isDerivedConcept = jasmine.createSpy('isDerivedConcept');
             this.isDerivedConceptScheme = jasmine.createSpy('isDerivedConceptScheme');
             this.hasInProgressCommit = jasmine.createSpy('hasInProgressCommit').and.returnValue(false);
-            this.setPageTitle = jasmine.createSpy('setPageTitle');
             this.addToClassIRIs = jasmine.createSpy('addToClassIRIs');
             this.removeFromClassIRIs = jasmine.createSpy('removeFromClassIRIs');
         });
