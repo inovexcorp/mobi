@@ -70,16 +70,22 @@ public class MobiOntologyFactory implements OWLOntologyFactory {
     @Override
     public OWLOntology createOWLOntology(OWLOntologyManager manager, OWLOntologyID ontologyID, IRI documentIRI,
                                          OWLOntologyCreationHandler handler) throws OWLOntologyCreationException {
+        LOG.trace("Enter createOWLOntology()");
+        long start = System.currentTimeMillis();
         if (!ontologyID.isAnonymous()) {
             LOG.debug("createOWLOntology: {}", ontologyID.toString());
         }
-        return ontologyFactory.createOWLOntology(manager, ontologyID, documentIRI, handler);
+        OWLOntology owlOntology = ontologyFactory.createOWLOntology(manager, ontologyID, documentIRI, handler);
+        LOG.trace("Exit createOWLOntology() {} ms", System.currentTimeMillis() - start);
+        return owlOntology;
     }
 
     @Override
     public OWLOntology loadOWLOntology(OWLOntologyManager manager, OWLOntologyDocumentSource source,
                                        OWLOntologyCreationHandler handler, OWLOntologyLoaderConfiguration config)
             throws OWLOntologyCreationException {
+        LOG.trace("Enter loadOWLOntology()");
+        long start = System.currentTimeMillis();
         OWLOntology existingOntology = null;
         IRI documentIRI = source.getDocumentIRI();
         if (manager.contains(documentIRI)) {
@@ -88,6 +94,8 @@ public class MobiOntologyFactory implements OWLOntologyFactory {
         OWLOntologyID ontologyID = new OWLOntologyID();
         OWLOntology ont = createOWLOntology(manager, ontologyID, documentIRI, handler);
         if (existingOntology == null && !ont.isEmpty()) {
+            // Junk from a previous parse. We should clear the ont
+            LOG.trace("Clearing extraneous ontology");
             manager.removeOntology(ont);
             ont = createOWLOntology(manager, ontologyID, documentIRI, handler);
         }
@@ -98,7 +106,8 @@ public class MobiOntologyFactory implements OWLOntologyFactory {
         org.openrdf.model.Model sesameModel = sesameTransformer.sesameModel(ontologyModel);
         OWLDocumentFormat format = parser.parse(new RioMemoryTripleSource(sesameModel), ont, config);
         handler.setOntologyFormat(ont, format);
-        LOG.debug("loadOWLOntology: {}", ont.getOntologyID().toString());
+        LOG.debug("Loaded imported Ontology: {}", ont.getOntologyID().toString());
+        LOG.trace("Exit loadOWLOntology() {} ms", System.currentTimeMillis() - start);
         return ont;
     }
 }
