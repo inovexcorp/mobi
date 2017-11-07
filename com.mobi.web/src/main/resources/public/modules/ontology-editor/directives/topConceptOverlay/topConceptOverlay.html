@@ -26,7 +26,7 @@
         <div class="form-group">
             <custom-label>Value(s)</custom-label>
             <ui-select multiple ng-model="dvm.values">
-                <ui-select-match placeholder="Select Value(s)">
+                <ui-select-match placeholder="Select Concept(s)">
                     <span title="{{$item}}">{{dvm.ontoUtils.getLabelForIRI($item)}}</span>
                 </ui-select-match>
                 <ui-select-choices group-by="dvm.util.getIRINamespace" repeat="{'@id': iri} as iri in dvm.conceptList | filter:$select.search | orderBy:dvm.ontoUtils.getLabelForIRI track by iri">
@@ -35,7 +35,7 @@
             </ui-select>
         </div>
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-click="dvm.addTopConcept(); onSubmit({relationship: {namespace: dvm.prefixes.skos, localName: 'hasTopConcept'}, values: dvm.values})" ng-disabled="!dvm.values.length">Add</button>
+            <button class="btn btn-primary pull-right" ng-click="dvm.addTopConcept()" ng-disabled="!dvm.values.length">Add</button>
             <button class="btn btn-default pull-right" ng-click="dvm.closeOverlay()">Cancel</button>
         </div>
     </form>

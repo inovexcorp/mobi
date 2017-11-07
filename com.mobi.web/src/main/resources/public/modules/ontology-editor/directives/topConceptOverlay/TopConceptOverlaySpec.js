@@ -60,16 +60,11 @@ describe('Top Concept Overlay directive', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
-        beforeEach(function() {
-            this.isolatedScope = this.element.isolateScope();
-        });
+    describe('controller bound variables', function() {
         it('onSubmit to be called in parent scope', function() {
-            this.isolatedScope.onSubmit();
+            this.controller.onSubmit();
             expect(scope.onSubmit).toHaveBeenCalled();
         });
-    });
-    describe('controller bound variables', function() {
         it('closeOverlay to be called in parent scope', function() {
             this.controller.closeOverlay();
             expect(scope.closeOverlay).toHaveBeenCalled();
