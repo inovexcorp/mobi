@@ -48,6 +48,7 @@ public class FederationServiceCli implements Action {
     private static final String RESTART_OPERATION = "restart";
     private static final String START_OPERATION = "start";
     private static final String STOP_OPERATION = "stop";
+    private static final String ENCRYPT_OPERATION = "encrypt";
 
     private static final String fedInfoFormatString = "%s\nid: %s\ndescription: %s\n\n";
     private static final String fedNodeFormatString = "\t%s"; // TODO: Get more node information
@@ -58,13 +59,21 @@ public class FederationServiceCli implements Action {
     @Argument(name = "operation", description = "Controls the interaction performed with the Federation Services.\n"
             + "mobi:fedsvc view - To view configuration information about connected federations.\n"
             + "mobi:fedsvc -f/--federation <id> view - To view nodes in a federation.\n"
-            + "mobi:fedsvc -f/--federation <id> restart - To restart the connection to the specified federation.\n",
+            + "mobi:fedsvc -f/--federation <id> restart - To restart the connection to the specified federation.\n"
+            + "mobi:fedsvc -i/--input <input> -p/--password <password> encrypt - To generate an encrypted key to use "
+            + "in the configuration.\n",
             required = true)
     private String operation = null;
 
     @Option(name = "-f", aliases = "--federation", description = "Specify the federation id to run the specified"
             + " operation against.")
     private String federation = null;
+
+    @Option(name = "-i", aliases = "--input", description = "The message to be encrypted.")
+    private String input = null;
+
+    @Option(name = "-p", aliases = "--password", description = "Specify the password to use in encryption.")
+    private String password = null;
 
     void setFederationServices(List<FederationService> federationServices) {
         this.federationServices = federationServices;
@@ -88,6 +97,9 @@ public class FederationServiceCli implements Action {
                 break;
             case STOP_OPERATION:
                 stopFederation(federation);
+                break;
+            case ENCRYPT_OPERATION:
+                encrypt(input, password);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown operation: " + operation);
@@ -144,5 +156,15 @@ public class FederationServiceCli implements Action {
         }
         federationServices.stream().filter(service -> service.getFederationServiceConfig().id().equals(federation))
                 .forEach(FederationService::stop);
+    }
+
+    private void encrypt(final String input, final String password) {
+        if (isBlank(input)) {
+            throw new IllegalArgumentException("Input is required for encryption.");
+        }
+        if (isBlank(password)) {
+            throw new IllegalArgumentException("Password is required for encryption.");
+        }
+        System.out.print(FederationService.getEncryptor(password).encrypt(input));
     }
 }
