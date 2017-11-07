@@ -71,18 +71,24 @@
                     var dvm = this;
                     var om = ontologyManagerService;
                     var state = ontologyStateService;
+                    var axiom = prefixes.skos + 'hasTopConcept';
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.util = utilService;
                     dvm.values = [];
-                    dvm.conceptList = om.getConceptIRIs(state.getOntologiesArray(), state.listItem.derivedConcepts);
+                    dvm.conceptList = getConceptList();
 
                     dvm.addTopConcept = function() {
-                        var axiom = prefixes.skos + 'hasTopConcept';
                         state.listItem.selected[axiom] = _.union(_.get(state.listItem.selected, axiom, []), dvm.values);
                         state.addToAdditions(state.listItem.ontologyRecord.recordId, {'@id': state.listItem.selected['@id'], [axiom]: dvm.values});
                         dvm.closeOverlay();
                         dvm.ontoUtils.saveCurrentChanges();
                         dvm.onSubmit({relationship: {namespace: prefixes.skos, localName: 'hasTopConcept'}, values: dvm.values})
+                    }
+
+                    function getConceptList() {
+                        var all = om.getConceptIRIs(state.getOntologiesArray(), state.listItem.derivedConcepts);
+                        var set = _.map(_.get(state.listItem.selected, axiom), '@id');
+                        return _.difference(all, set);
                     }
                 }
             }
