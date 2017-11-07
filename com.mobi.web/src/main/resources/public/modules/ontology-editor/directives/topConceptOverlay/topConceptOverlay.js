@@ -71,7 +71,6 @@
                     var dvm = this;
                     var om = ontologyManagerService;
                     var state = ontologyStateService;
-                    dvm.prefixes = prefixes;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.util = utilService;
                     dvm.values = [];
@@ -83,7 +82,7 @@
                         state.addToAdditions(state.listItem.ontologyRecord.recordId, {'@id': state.listItem.selected['@id'], [axiom]: dvm.values});
                         dvm.closeOverlay();
                         dvm.ontoUtils.saveCurrentChanges();
-                        dvm.onSubmit({relationship: {namespace: dvm.prefixes.skos, localName: 'hasTopConcept'}, values: dvm.values})
+                        dvm.onSubmit({relationship: {namespace: prefixes.skos, localName: 'hasTopConcept'}, values: dvm.values})
                     }
                 }
             }
