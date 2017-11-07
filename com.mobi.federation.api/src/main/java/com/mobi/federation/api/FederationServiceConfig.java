@@ -53,4 +53,10 @@ public interface FederationServiceConfig {
      */
     @Meta.AD
     String sharedKey();
+
+    /**
+     * A password string to generate the encryptor to create and verify tokens.
+     */
+    @Meta.AD
+    String password();
 }

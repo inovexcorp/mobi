@@ -5,15 +5,15 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/>.
 @prefix dct: <http://purl.org/dc/terms/>.
-@prefix : <http://mobi.org/ontologies/federation#> .
-@base <http://mobi.org/ontologies/federation>.
+@prefix : <http://mobi.com/ontologies/federation#> .
+@base <http://mobi.com/ontologies/federation>.
 
-<http://mobi.org/ontologies/federation> a owl:Ontology ;
-    owl:versionIRI <http://mobi.org/ontologies/federation#2.0>;
+<http://mobi.com/ontologies/federation> a owl:Ontology ;
+    owl:versionIRI <http://mobi.com/ontologies/federation#2.0>;
     rdfs:label "Mobi Federation Ontology"@en ;
     rdfs:comment "Ontology defining the structures representing federation topologies in Mobi."@en ;
     dct:creator [foaf:name "Sean Smitz"], [foaf:name "Megan Mercer"];
-    foaf:maker [foaf:name "Mobi"; foaf:homepage <http://mobi.org>];
+    foaf:maker [foaf:name "Mobi"; foaf:homepage <http://mobi.com>];
     dct:modified "2017-10-04"^^xsd:date.
 
 :Federation a owl:Class ;

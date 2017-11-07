@@ -40,16 +40,6 @@
     <dependencies>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>jaas.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>jaas</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
             <artifactId>rdf.orm</artifactId>
             <version>${project.version}</version>
         </dependency>

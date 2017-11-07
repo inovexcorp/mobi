@@ -23,8 +23,6 @@ package com.mobi.federation.api;
  * #L%
  */
 
-import static java.net.URLEncoder.encode;
-
 import com.mobi.federation.api.ontologies.federation.Federation;
 import com.mobi.federation.api.ontologies.federation.FederationNode;
 import com.mobi.federation.api.ontologies.federation.Node;
@@ -46,10 +44,7 @@ import javax.servlet.http.HttpServletResponse;
  * This service represents a way to navigate the local topology of nodes on the local network.
  */
 public interface FederationService {
-    String FEDERATION_BASE = "http://mobi.org/federations/%s";
-    String FEDERATION_NODE_BASE = FEDERATION_BASE + "/nodes/%s";
     String NODE_REST_ENDPOINT = "https://%s:8443/mobirest"; // XXX: read this from configuration
-    String ENCRYPTION_PASSWORD = "FEDERATION_ENCRYPTION_PASSWORD";
     String FEDERATION_SCOPE = "self federation";
 
     /**
@@ -83,27 +78,6 @@ public interface FederationService {
      * Retrieves the unique id of this node in the federation.
      */
     UUID getNodeId();
-
-    /**
-     * Creates a {@link String} to be used as the IRI to identify a federation.
-     *
-     * @param federationId The unique federation ID
-     * @return A {@link String} that can be converted directly to an {@link com.mobi.rdf.api.IRI}.
-     */
-    static String getFederationIri(String federationId) throws UnsupportedEncodingException {
-        return String.format(FEDERATION_BASE, encode(federationId, "UTF-8"));
-    }
-
-    /**
-     * Creates a {@link String} to be used as the IRI to identify a node in the federation.
-     *
-     * @param federationId The unique federation ID
-     * @param nodeId    The unique node ID within the federation.
-     * @return A {@link String} that can be converted directly to an {@link com.mobi.rdf.api.IRI}.
-     */
-    static String getNodeIri(String federationId, String nodeId) throws UnsupportedEncodingException {
-        return String.format(FEDERATION_NODE_BASE, encode(federationId, "UTF-8"), encode(nodeId, "UTF-8"));
-    }
 
     /**
      * Returns the REST services endpoint for the specified node.
@@ -176,15 +150,15 @@ public interface FederationService {
     Optional<SignedJWT> verifyToken(String tokenString, HttpServletResponse res) throws IOException;
 
     /**
-     * Gets the encryptor needed to decrypt the shared key needed to verify federation tokens.
+     * Gets the encryptor to decrypt the shared key to verify and generate federation tokens.
      *
      * @return The {@link StandardPBEStringEncryptor} needed for decryption.
      */
-    static StandardPBEStringEncryptor getEncryptor() {
+    static StandardPBEStringEncryptor getEncryptor(String password) {
         StandardPBEStringEncryptor enc = new StandardPBEStringEncryptor();
         EnvironmentStringPBEConfig env = new EnvironmentStringPBEConfig();
         env.setAlgorithm("PBEWithMD5AndDES");
-        env.setPassword(ENCRYPTION_PASSWORD);
+        env.setPassword(password);
         enc.setConfig(env);
         return enc;
     }

@@ -23,6 +23,8 @@ package com.mobi.federation.hazelcast;
  * #L%
  */
 
+import static java.net.URLEncoder.encode;
+
 import aQute.bnd.annotation.component.Activate;
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.ConfigurationPolicy;
@@ -97,6 +99,11 @@ import javax.servlet.http.HttpServletResponse;
 public class HazelcastFederationService implements FederationService {
 
     /**
+     * Used to create the node IRI needed for the {@link FederationNode}.
+     */
+    private static final String NODE_BASE = "http://mobi.com/nodes/%s";
+
+    /**
      * Key where we'll store a {@link com.hazelcast.core.ReplicatedMap} of federated nodes and metadata about them.
      */
     private static final String FEDERATION_NODES_KEY = "federation.nodes";
@@ -159,11 +166,6 @@ public class HazelcastFederationService implements FederationService {
      * The unique key to generate and verify federation tokens.
      */
     private byte[] tokenKey;
-
-    /**
-     * Encryptor needed to decrypt the configuration's sharedKey to properly populate the tokenKey.
-     */
-    private StandardPBEStringEncryptor encryptor = FederationService.getEncryptor();
 
     @Reference
     void setMobiServer(Mobi mobiServer) {
@@ -250,6 +252,7 @@ public class HazelcastFederationService implements FederationService {
                 this.listener = new FederationServiceLifecycleListener();
                 this.hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
                 this.hazelcastInstance.getCluster().addMembershipListener(listener);
+                StandardPBEStringEncryptor encryptor = FederationService.getEncryptor(serviceConfig.password());
                 this.tokenKey = encryptor.decrypt(serviceConfig.sharedKey()).getBytes(StandardCharsets.UTF_8);
                 registerWithFederationNodes(hazelcastInstance);
             } catch (Exception ex) {
@@ -400,21 +403,16 @@ public class HazelcastFederationService implements FederationService {
      * Simple method that will register this node as it comes alive with the federation registry.
      */
     private void registerWithFederationNodes(final HazelcastInstance hazelcastInstance) {
-        try {
-            this.federationNodes = hazelcastInstance.getReplicatedMap(FEDERATION_NODES_KEY);
-            String iri = FederationService.getNodeIri(getFederationId(), getNodeId().toString());
-            IRI fedNodeIri = vf.createIRI(iri);
-            FederationNode node = federationNodeFactory.createNew(fedNodeIri);
-            node.setNodeId(getNodeId().toString());
-            node.setNodeActive(Boolean.TRUE);
-            node.setNodeLastUpdated(OffsetDateTime.now());
-            getHostAddress().ifPresent(node::setHost);
+        this.federationNodes = hazelcastInstance.getReplicatedMap(FEDERATION_NODES_KEY);
+        IRI fedNodeIri = vf.createIRI(String.format(NODE_BASE, getNodeId().toString()));
+        FederationNode node = federationNodeFactory.createNew(fedNodeIri);
+        node.setNodeId(getNodeId().toString());
+        node.setNodeActive(Boolean.TRUE);
+        node.setNodeLastUpdated(OffsetDateTime.now());
+        getHostAddress().ifPresent(node::setHost);
 
-            //TODO - add remaining metadata about this node.
-            this.federationNodes.put(getNodeId(), new HazelcastFederationNode(node));
-        } catch (UnsupportedEncodingException e) {
-            LOGGER.warn("Unable to create Node IRI for: " + getNodeId(), e);
-        }
+        //TODO - add remaining metadata about this node.
+        this.federationNodes.put(getNodeId(), new HazelcastFederationNode(node));
     }
 
     /**
