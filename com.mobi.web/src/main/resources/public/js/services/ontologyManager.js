@@ -1442,7 +1442,7 @@
              * @param {Object} entity The entity you want the name of.
              * @returns {string} The beautified IRI string.
              */
-            self.getEntityName = function(entity, type = 'ontology') {
+            self.getEntityName = function(entity) {
                 var result = utilService.getPropertyValue(entity, prefixes.rdfs + 'label')
                     || utilService.getDctermsValue(entity, 'title')
                     || utilService.getPropertyValue(entity, prefixes.dc + 'title')

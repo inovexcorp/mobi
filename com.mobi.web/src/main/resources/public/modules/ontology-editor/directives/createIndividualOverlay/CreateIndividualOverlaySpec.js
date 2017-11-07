@@ -160,38 +160,92 @@ describe('Create Individual Overlay directive', function() {
                 expect(this.controller.getItemOntologyIri({})).toBe(ontologyStateSvc.listItem.ontologyId);
             });
         });
-        it('should create an individual', function() {
-            var split = {begin: 'begin', then: 'then', end: 'end'};
-            ontologyStateSvc.listItem = {
-                ontologyRecord: {},
-                ontology: [{}],
-                individuals: { iris: [] },
-                classesWithIndividuals: [],
-                individualsParentPath: [],
-                classesAndIndividuals: {},
-                classes: {
-                    hierarchy: [],
-                    index: {}
-                }
-            };
-            ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
-            ontologyStateSvc.getPathsTo.and.returnValue([['ClassA']]);
-            splitIRIFilter.and.returnValue(split);
-            this.controller.individual = {'@id': 'id', '@type': ['ClassA']};
-            this.controller.create();
-            expect(ontologyStateSvc.listItem.individuals.iris).toContain({namespace: split.begin + split.then, localName: split.end});
-            expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA']);
-            expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA': ['id']});
-            expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['ClassA']);
-            expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith([],{},'ClassA');
-            expect(this.controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
-            expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.individual);
-            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.individual);
-            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.individual['@id'], false);
-            expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
-            expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-            expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
-            expect(ontologyStateSvc.listItem.individuals.flat).toEqual([{prop: 'individual'}]);
+        describe('should create an individual', function() {
+            beforeEach(function() {
+                this.split = {begin: 'begin', then: 'then', end: 'end'};
+                ontologyStateSvc.listItem = {
+                    ontologyRecord: {},
+                    ontology: [{}],
+                    individuals: { iris: [] },
+                    classesWithIndividuals: [],
+                    individualsParentPath: [],
+                    classesAndIndividuals: {},
+                    classes: {
+                        hierarchy: [],
+                        index: {}
+                    },
+                    concepts: {
+                        hierarchy: [],
+                        flat: []
+                    }
+                };
+                ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
+                ontologyStateSvc.getPathsTo.and.returnValue([['ClassA']]);
+                splitIRIFilter.and.returnValue(this.split);
+                this.controller.individual = {'@id': 'id', '@type': ['ClassA']};
+                ontologyStateSvc.flattenHierarchy.and.returnValue(['ClassA']);
+            });
+            it('if it is a derived concept', function() {
+                ontologyStateSvc.listItem.derivedConcepts = ['ClassA'];
+                this.controller.create();
+                expect(ontologyStateSvc.listItem.individuals.iris).toContain({namespace: this.split.begin + this.split.then, localName: this.split.end});
+                expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA']);
+                expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA': ['id']});
+                expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['ClassA']);
+                expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith([],{},'ClassA');
+                expect(this.controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
+                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.individual);
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.individual);
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.individual['@id'], false);
+                expect(ontologyStateSvc.listItem.concepts.hierarchy).toEqual([{entityIRI: 'id'}]);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+                expect(ontologyStateSvc.listItem.concepts.flat).toEqual(['ClassA']);
+                expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+                expect(ontologyStateSvc.listItem.individuals.flat).toEqual([{prop: 'individual'}]);
+            });
+            it('if it is a concept', function() {
+                this.controller.individual['@type'].push(prefixes.skos + 'Concept');
+                this.controller.create();
+                expect(ontologyStateSvc.listItem.individuals.iris).toContain({namespace: this.split.begin + this.split.then, localName: this.split.end});
+                expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA', prefixes.skos + 'Concept']);
+                var expectedClassesAndIndividuals = {ClassA: ['id']};
+                expectedClassesAndIndividuals[prefixes.skos + 'Concept'] = ['id']
+                expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual(expectedClassesAndIndividuals);
+                expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['ClassA']);
+                expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith([],{},'ClassA');
+                expect(this.controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
+                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.individual);
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.individual);
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.individual['@id'], false);
+                expect(ontologyStateSvc.listItem.concepts.hierarchy).toEqual([{entityIRI: 'id'}]);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+                expect(ontologyStateSvc.listItem.concepts.flat).toEqual(['ClassA']);
+                expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+                expect(ontologyStateSvc.listItem.individuals.flat).toEqual([{prop: 'individual'}]);
+            });
+            it('if it is not a derived concept or a concept', function() {
+                this.controller.create();
+                expect(ontologyStateSvc.listItem.individuals.iris).toContain({namespace: this.split.begin + this.split.then, localName: this.split.end});
+                expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA']);
+                expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA': ['id']});
+                expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['ClassA']);
+                expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith([],{},'ClassA');
+                expect(this.controller.individual['@type']).toContain(prefixes.owl + 'NamedIndividual');
+                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.individual);
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.individual);
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.individual['@id'], false);
+                expect(ontologyStateSvc.listItem.concepts.hierarchy).toEqual([]);
+                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.listItem.concepts.flat).toEqual([]);
+                expect(ontologyStateSvc.showCreateIndividualOverlay).toBe(false);
+                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+                expect(ontologyStateSvc.listItem.individuals.flat).toEqual([{prop: 'individual'}]);
+            });
         });
     });
     it('should call create when the button is clicked', function() {

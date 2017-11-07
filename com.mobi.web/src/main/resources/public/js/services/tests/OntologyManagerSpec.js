@@ -1493,65 +1493,77 @@ describe('Ontology Manager service', function() {
         });
     });
     describe('getEntityName should return', function() {
+        beforeEach(function () {
+            this.entity = {};
+        });
         it('returns the rdfs:label if present', function() {
             util.getPropertyValue.and.returnValue(title);
-            expect(ontologyManagerSvc.getEntityName({})).toEqual(title);
-            expect(util.getPropertyValue).toHaveBeenCalledWith({}, prefixes.rdfs + 'label');
+            expect(ontologyManagerSvc.getEntityName(this.entity)).toEqual(title);
+            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+            expect(util.getDctermsValue).not.toHaveBeenCalledWith(this.entity, 'title');
+            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
         });
         it('returns the dcterms:title if present and no rdfs:label', function() {
             util.getPropertyValue.and.returnValue('');
             util.getDctermsValue.and.returnValue(title);
-            var entity = {};
-            expect(ontologyManagerSvc.getEntityName(entity)).toEqual(title);
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).toHaveBeenCalledWith(entity, 'title');
+            expect(ontologyManagerSvc.getEntityName(this.entity)).toEqual(title);
+            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+            expect(util.getDctermsValue).toHaveBeenCalledWith(this.entity, 'title');
+            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
         });
         it('returns the dc:title if present and no rdfs:label or dcterms:title', function() {
             util.getPropertyValue.and.callFake(function(entity, property) {
                 return (property === prefixes.dc + 'title') ? title : '';
             });
             util.getDctermsValue.and.returnValue('');
-            var entity = {};
-            expect(ontologyManagerSvc.getEntityName(entity)).toEqual(title);
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).toHaveBeenCalledWith(entity, 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.dc + 'title');
+            expect(ontologyManagerSvc.getEntityName(this.entity)).toEqual(title);
+            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+            expect(util.getDctermsValue).toHaveBeenCalledWith(this.entity, 'title');
+            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
         });
-        it('returns the @id if present and no rdfs:label, dcterms:title, or dc:title', function() {
-            util.getPropertyValue.and.returnValue('');
-            util.getDctermsValue.and.returnValue('');
-            util.getBeautifulIRI.and.returnValue(ontologyId);
-            var entity = {'@id': ontologyId};
-            expect(ontologyManagerSvc.getEntityName(entity)).toEqual(ontologyId);
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).toHaveBeenCalledWith(entity, 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.dc + 'title');
-            expect(util.getBeautifulIRI).toHaveBeenCalledWith(ontologyId);
-        });
-        it('when type is vocabulary, returns skos:prefLabel if present', function() {
+        it('returns skos:prefLabel if present and no rdfs:label, dcterms:title, or dc:title', function() {
             util.getPropertyValue.and.callFake(function(entity, property) {
                 return (property === prefixes.skos + 'prefLabel') ? title : '';
             });
             util.getDctermsValue.and.returnValue('');
-            var entity = {};
-            ontologyManagerSvc.getEntityName(entity, 'vocabulary');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).toHaveBeenCalledWith(entity, 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.dc + 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.skos + 'prefLabel');
+            ontologyManagerSvc.getEntityName(this.entity);
+            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+            expect(util.getDctermsValue).toHaveBeenCalledWith(this.entity, 'title');
+            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+            expect(util.getPropertyValue).not.toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
         });
-        it('when type is vocabulary, returns skos:altLabel if present and no skos:prefLabel', function() {
+        it('returns skos:altLabel if present and no rdfs:label, dcterms:title, or dc:title, or skos:prefLabel', function() {
             util.getPropertyValue.and.callFake(function(entity, property) {
                 return (property === prefixes.skos + 'altLabel') ? title : '';
             });
             util.getDctermsValue.and.returnValue('');
-            var entity = {};
-            ontologyManagerSvc.getEntityName(entity, 'vocabulary');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.rdfs + 'label');
-            expect(util.getDctermsValue).toHaveBeenCalledWith(entity, 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.dc + 'title');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.skos + 'prefLabel');
-            expect(util.getPropertyValue).toHaveBeenCalledWith(entity, prefixes.skos + 'altLabel');
+            ontologyManagerSvc.getEntityName(this.entity);
+            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+            expect(util.getDctermsValue).toHaveBeenCalledWith(this.entity, 'title');
+            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
+            expect(util.getBeautifulIRI).not.toHaveBeenCalled();
+        });
+        it('returns the @id if present and nothing else', function() {
+            util.getPropertyValue.and.returnValue('');
+            util.getDctermsValue.and.returnValue('');
+            util.getBeautifulIRI.and.returnValue(ontologyId);
+            this.entity['@id'] = ontologyId;
+            expect(ontologyManagerSvc.getEntityName(this.entity)).toEqual(ontologyId);
+            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.rdfs + 'label');
+            expect(util.getDctermsValue).toHaveBeenCalledWith(this.entity, 'title');
+            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.dc + 'title');
+            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'prefLabel');
+            expect(util.getPropertyValue).toHaveBeenCalledWith(this.entity, prefixes.skos + 'altLabel');
+            expect(util.getBeautifulIRI).toHaveBeenCalledWith(ontologyId);
         });
     });
     describe('getEntityDescription should return', function() {

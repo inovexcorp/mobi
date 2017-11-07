@@ -62,13 +62,11 @@
                                 dvm.clazz[prefixes.dcterms + 'title'][0]['@value'], 'class');
                         }
                     }
-
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.clazz['@id'] = iriBegin + iriThen + iriEnd;
                         dvm.os.setCommonIriParts(iriBegin, iriThen);
                     }
-
                     dvm.create = function() {
                         if (_.isEqual(dvm.clazz[prefixes.dcterms + 'description'][0]['@value'], '')) {
                             _.unset(dvm.clazz, prefixes.dcterms + 'description');
@@ -82,6 +80,10 @@
                         dvm.os.addToClassIRIs(dvm.os.listItem, {namespace: split.begin + split.then, localName: split.end});
                         if (dvm.values.length) {
                             dvm.clazz[prefixes.rdfs + 'subClassOf'] = dvm.values;
+                            var superClassIds = _.map(dvm.values, '@id');
+                            if (_.intersection(superClassIds, _.concat(dvm.os.listItem.derivedConcepts, [prefixes.skos + 'Concept'])).length) {
+                                dvm.os.listItem.derivedConcepts.push(dvm.clazz['@id']);
+                            }
                             dvm.ontoUtils.setSuperClasses(dvm.clazz['@id'], _.map(dvm.values, '@id'));
                         } else {
                             var hierarchy = _.get(dvm.os.listItem, 'classes.hierarchy');

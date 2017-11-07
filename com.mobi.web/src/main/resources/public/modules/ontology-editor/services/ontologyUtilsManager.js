@@ -183,7 +183,7 @@
             }
 
             self.updateLabel = function() {
-                var newLabel = om.getEntityName(os.listItem.selected, os.listItem.ontologyRecord.type);
+                var newLabel = om.getEntityName(os.listItem.selected);
                 if (_.has(os.listItem.index, "['" + os.listItem.selected['@id'] + "'].label") && os.listItem.index[os.listItem.selected['@id']].label !== newLabel) {
                     os.listItem.index[os.listItem.selected['@id']].label = newLabel;
                     if (os.listItem.ontologyRecord.type === 'vocabulary') {
