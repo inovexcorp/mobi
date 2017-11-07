@@ -55,6 +55,7 @@ describe('Relationships Block directive', function() {
             'prop2': [{'@value': 'value2'}]
         };
         ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'flat'}]);
+        ontologyManagerSvc.isConceptScheme.and.returnValue(false);
         this.element = $compile(angular.element('<relationships-block relationship-list="relationshipList"></relationships-block>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('relationshipsBlock');
