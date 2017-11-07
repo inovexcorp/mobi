@@ -38,6 +38,7 @@
          * @name relationshipsBlock.directive:relationshipsBlock
          * @scope
          * @restrict E
+         * @requires ontologyManager.service:ontologyManagerService
          * @requires ontologyState.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          * @requires prefixes.service:prefixes
@@ -51,9 +52,9 @@
          */
         .directive('relationshipsBlock', relationshipsBlock);
 
-        relationshipsBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'prefixes', 'responseObj'];
+        relationshipsBlock.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'prefixes', 'responseObj'];
 
-        function relationshipsBlock(ontologyStateService, ontologyUtilsManagerService, prefixes, responseObj) {
+        function relationshipsBlock(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, prefixes, responseObj) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -83,6 +84,7 @@
                     var schemeToConcept = [
                         prefixes.skos + 'hasTopConcept'
                     ];
+                    dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.prefixes = prefixes;

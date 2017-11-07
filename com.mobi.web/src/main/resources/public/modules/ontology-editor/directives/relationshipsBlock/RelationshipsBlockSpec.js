@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Relationships Block directive', function() {
-    var $compile, scope, ontologyStateSvc, resObj, prefixes;
+    var $compile, scope, ontologyStateSvc, resObj, prefixes, ontologyManagerSvc;
     var broaderRelations = ['broader', 'broaderTransitive', 'broadMatch'];
     var narrowerRelations = ['narrower', 'narrowerTransitive', 'narrowMatch'];
     var conceptToScheme = ['inScheme', 'topConceptOf'];
@@ -36,13 +36,15 @@ describe('Relationships Block directive', function() {
         mockPrefixes();
         mockResponseObj();
         mockOntologyUtilsManager();
+        mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             resObj = _responseObj_;
             prefixes = _prefixes_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         scope.relationshipList = [];
@@ -64,6 +66,7 @@ describe('Relationships Block directive', function() {
         ontologyStateSvc = null;
         resObj = null;
         prefixes = null;
+        ontologyManagerSvc = null;
         this.element.remove();
     });
 
@@ -136,13 +139,13 @@ describe('Relationships Block directive', function() {
         });
         it('with a .relationship-header', function() {
             expect(this.element.querySelectorAll('.relationship-header').length).toBe(1);
-            ontologyStateSvc.getActiveKey.and.returnValue('schemes');
+            ontologyManagerSvc.isConceptScheme.and.returnValue(true);
             scope.$digest();
             expect(this.element.querySelectorAll('.relationship-header').length).toBe(0);
         });
         it('with a .top-concept-header', function() {
             expect(this.element.querySelectorAll('.top-concept-header').length).toBe(0);
-            ontologyStateSvc.getActiveKey.and.returnValue('schemes');
+            ontologyManagerSvc.isConceptScheme.and.returnValue(true);
             scope.$digest();
             expect(this.element.querySelectorAll('.top-concept-header').length).toBe(1);
         });
