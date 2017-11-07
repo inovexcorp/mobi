@@ -573,6 +573,8 @@ function mockOntologyState() {
                     type: ''
                 },
                 dataPropertyRange: [],
+                derivedConcepts: [],
+                derivedConceptSchemes: [],
                 classes: {
                     iris: [],
                     hierarchy: [],
