@@ -79,8 +79,7 @@ describe('Tabset directive', function() {
             it('true', function() {
                 this.controller.tabs = [{id: 'tab1', hideTab: true}];
                 scope.$digest();
-                var tabs = this.element.querySelectorAll('.heading');
-                expect(tabs.length).toEqual(0);
+                expect(this.element.querySelectorAll('.heading').length).toEqual(0);
             });
             it('false', function() {
                 this.controller.tabs = [{id: 'tab1', hideTab: false}];

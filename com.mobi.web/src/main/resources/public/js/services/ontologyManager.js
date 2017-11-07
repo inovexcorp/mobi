@@ -392,6 +392,7 @@
              * @param {string} recordId The id of the Record the Branch should be part of
              * @param {string} branchId The id of the Branch with the specified Commit
              * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @param {string} id The identifier for this request
              * @return {Promise} A Promise with an object containing keys "derivedConcepts", "derivedConceptSchemes",
              * "concepts.hierarchy", "concepts.index", "conceptSchemes.hierarchy", and "conceptSchemes.index".
              */
