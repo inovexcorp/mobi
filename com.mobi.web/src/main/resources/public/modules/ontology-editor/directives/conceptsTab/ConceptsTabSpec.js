@@ -21,30 +21,48 @@
  * #L%
  */
 describe('Concepts Tab directive', function() {
-    var $compile, scope;
+    var $compile, scope, ontologyStateSvc, resObj, prefixes;
 
     beforeEach(function() {
         module('templates');
         module('conceptsTab');
-        mockOntologyManager();
         mockOntologyState();
         mockResponseObj();
+        mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyStateSvc = _ontologyStateService_;
+            resObj = _responseObj_;
+            prefixes = _prefixes_;
         });
 
+        ontologyStateSvc.listItem.iriList = [prefixes.skos + 'topConceptOf'];
+        ontologyStateSvc.listItem.derivedSemanticRelations = [{ localName: 'end', namespace: 'begin/'}];
+        resObj.getItemIri.and.callFake(function(obj) {
+            return obj.namespace + obj.localName;
+        });
         this.element = $compile(angular.element('<concepts-tab></concepts-tab>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('conceptsTab');
     });
 
     afterEach(function() {
         $compile = null;
         scope = null;
+        ontologyStateSvc = null;
+        resObj = null;
+        prefixes = null;
         this.element.remove();
     });
 
+    it('initializes with the correct list of relationships', function() {
+        expect(this.controller.relationshipList).toEqual([
+            {localName: 'end', namespace: 'begin/', values: 'conceptList'},
+            {localName: 'topConceptOf', namespace: prefixes.skos, values: 'schemeList'}
+        ]);
+    });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');

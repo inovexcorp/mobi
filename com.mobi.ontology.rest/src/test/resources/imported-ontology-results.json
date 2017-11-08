@@ -88,6 +88,12 @@
       "http://www.w3.org/2004/02/skos/core#prefLabel": [{
         "@value": "Concept Sub-Class"
       }]
+    }, {
+      "@id": "https://mobi.com/vocabulary#SemanticRelationSubProperty",
+      "@type": ["http://www.w3.org/2002/07/owl#ObjectProperty"],
+      "http://www.w3.org/2000/01/rdf-schema#subPropertyOf": [{
+        "@id": "http://www.w3.org/2004/02/skos/core#semanticRelation"
+      }]
     }]
   }
 ]

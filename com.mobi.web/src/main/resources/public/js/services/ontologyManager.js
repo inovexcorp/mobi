@@ -112,14 +112,11 @@
              * entities.
              */
             var conceptListRelationships = _.map(['broaderTransitive', 'broader', 'broadMatch', 'narrowerTransitive',
-                'narrower', 'narrowMatch', 'related', 'relatedMatch', 'semanticRelation', 'mappingRelation',
-                'closeMatch', 'exactMatch'], item => {
-                    return {
-                        namespace: prefixes.skos,
-                        localName: item,
-                        values: 'conceptList'
-                    }
-                });
+                'narrower', 'narrowMatch', 'related', 'relatedMatch', 'mappingRelation', 'closeMatch', 'exactMatch'], item => ({
+                    namespace: prefixes.skos,
+                    localName: item,
+                    values: 'conceptList'
+                }));
             self.conceptRelationshipList = _.concat(
                 conceptListRelationships,
                 [{

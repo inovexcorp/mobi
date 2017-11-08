@@ -226,16 +226,20 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private Set<Annotation> annotations;
     private Set<AnnotationProperty> annotationProperties;
     private Set<OClass> classes;
+    private Set<OClass> importedClasses;
     private Set<Datatype> datatypes;
     private Set<ObjectProperty> objectProperties;
     private Set<DataProperty> dataProperties;
     private Set<Individual> individuals;
     private Set<IRI> derivedConcepts;
     private Set<IRI> derivedConceptSchemes;
+    private Set<IRI> derivedSemanticRelations;
     private Set<IRI> failedImports;
     private IRI derivedConceptIri;
     private IRI derivedConceptSchemeIri;
+    private IRI derivedSemanticRelationIri;
     private IRI classIRI;
+    private IRI importedClassIRI;
     private IRI datatypeIRI;
     private IRI objectPropertyIRI;
     private IRI dataPropertyIRI;
@@ -382,7 +386,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         annotations = Collections.singleton(new SimpleAnnotation(annotationProperty, vf.createLiteral("word"),
                 Collections.emptySet()));
         classIRI = vf.createIRI("http://mobi.com/ontology#Class1a");
+        importedClassIRI = vf.createIRI("https://mobi.com/vocabulary#ConceptSubClass");
         classes = Collections.singleton(new SimpleClass(classIRI));
+        importedClasses = Collections.singleton(new SimpleClass(importedClassIRI));
         datatypeIRI = vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#langString");
         datatypes = Collections.singleton(new SimpleDatatype(datatypeIRI));
         objectPropertyIRI = vf.createIRI("http://mobi.com/ontology#objectProperty1a");
@@ -395,6 +401,8 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         derivedConcepts = Collections.singleton(derivedConceptIri);
         derivedConceptSchemeIri = vf.createIRI("https://mobi.com/vocabulary#ConceptSchemeSubClass");
         derivedConceptSchemes = Collections.singleton(derivedConceptSchemeIri);
+        derivedSemanticRelationIri = vf.createIRI("https://mobi.com/vocabulary#SemanticRelationSubProperty");
+        derivedSemanticRelations = Collections.singleton(derivedSemanticRelationIri);
         importedOntologies = Stream.of(ontology, importedOntology).collect(Collectors.toSet());
         ontologyIRI = vf.createIRI("http://mobi.com/ontology-id");
         importedOntologyIRI = vf.createIRI("http://mobi.com/imported-ontology-id");
@@ -438,6 +446,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         final IRI skosConcept = vf.createIRI(SKOS.CONCEPT.stringValue());
         final IRI skosConceptScheme = vf.createIRI(SKOS.CONCEPT_SCHEME.stringValue());
+        final IRI skosSemanticRelation = vf.createIRI(SKOS.SEMANTIC_RELATION.stringValue());
 
         when(results.getPage()).thenReturn(Collections.emptyList());
         when(results.getPageNumber()).thenReturn(0);
@@ -471,7 +480,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(importedOntology.asModel(mf)).thenReturn(importedOntologyModel);
         when(importedOntology.getAllAnnotations()).thenReturn(annotations);
         when(importedOntology.getAllAnnotationProperties()).thenReturn(annotationProperties);
-        when(importedOntology.getAllClasses()).thenReturn(classes);
+        when(importedOntology.getAllClasses()).thenReturn(importedClasses);
         when(importedOntology.getAllDatatypes()).thenReturn(datatypes);
         when(importedOntology.getAllObjectProperties()).thenReturn(objectProperties);
         when(importedOntology.getAllDataProperties()).thenReturn(dataProperties);
@@ -512,11 +521,15 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(ontologyManager.getSubClassesFor(eq(ontology), eq(skosConcept))).thenReturn(conceptsOf);
         TupleQueryResult conceptSchemesOf = simpleOntologyManager.getSubClassesFor(ontology, skosConceptScheme);
         when(ontologyManager.getSubClassesFor(eq(ontology), eq(skosConceptScheme))).thenReturn(conceptSchemesOf);
+        TupleQueryResult semanticRelations = simpleOntologyManager.getSubPropertiesFor(ontology, skosSemanticRelation);
+        when(ontologyManager.getSubPropertiesFor(eq(ontology), eq(skosSemanticRelation))).thenReturn(semanticRelations);
 
         TupleQueryResult importedConceptsOf = simpleOntologyManager.getSubClassesFor(importedOntology, skosConcept);
         when(ontologyManager.getSubClassesFor(eq(importedOntology), eq(skosConcept))).thenReturn(importedConceptsOf);
         TupleQueryResult importedConceptSchemesOf = simpleOntologyManager.getSubClassesFor(ontology, skosConceptScheme);
         when(ontologyManager.getSubClassesFor(eq(importedOntology), eq(skosConceptScheme))).thenReturn(importedConceptSchemesOf);
+        TupleQueryResult importedSemanticRelations = simpleOntologyManager.getSubPropertiesFor(importedOntology, skosSemanticRelation);
+        when(ontologyManager.getSubPropertiesFor(eq(importedOntology), eq(skosSemanticRelation))).thenReturn(importedSemanticRelations);
 
         TupleQueryResult individualsOf = simpleOntologyManager.getClassesWithIndividuals(ontology);
         when(ontologyManager.getClassesWithIndividuals(ontology)).thenReturn(individualsOf);
@@ -667,6 +680,13 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertNotNull(jsonConceptSchemes);
         assertEquals(jsonConceptSchemes.size(), set.size());
         set.forEach(derivedConceptSchemeIri -> assertTrue(jsonConceptSchemes.contains(derivedConceptSchemeIri)));
+    }
+
+    private void assertDerivedSemanticRelations(JSONObject responseObject, Set<IRI> set) {
+        JSONArray jsonSemanticRelations = responseObject.optJSONArray("derivedSemanticRelations");
+        assertNotNull(jsonSemanticRelations);
+        assertEquals(jsonSemanticRelations.size(), set.size());
+        set.forEach(derivedSemanticRelationIri -> assertTrue(jsonSemanticRelations.contains(derivedSemanticRelationIri)));
     }
 
     private void assertAdditionsToInProgressCommit(boolean hasInProgressCommit) {
@@ -1148,6 +1168,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         JSONObject responseObject = getResponse(response);
         assertDerivedConcepts(responseObject, derivedConcepts);
         assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
+        assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
         assertEquals(responseObject.getJSONObject("concepts"), conceptHierarchyResult);
         assertEquals(responseObject.getJSONObject("conceptSchemes"), conceptSchemeHierarchyResult);
     }
@@ -1166,6 +1187,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         JSONObject responseObject = getResponse(response);
         assertDerivedConcepts(responseObject, derivedConcepts);
         assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
+        assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
         assertEquals(responseObject.getJSONObject("concepts"), conceptHierarchyResult);
         assertEquals(responseObject.getJSONObject("conceptSchemes"), conceptSchemeHierarchyResult);
     }
@@ -1190,6 +1212,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         JSONObject responseObject = getResponse(response);
         assertDerivedConcepts(responseObject, derivedConcepts);
         assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
+        assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
         assertEquals(responseObject.getJSONObject("concepts"), conceptHierarchyResult);
         assertEquals(responseObject.getJSONObject("conceptSchemes"), conceptSchemeHierarchyResult);
     }
@@ -1205,6 +1228,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         JSONObject responseObject = getResponse(response);
         assertDerivedConcepts(responseObject, derivedConcepts);
         assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
+        assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
         assertEquals(responseObject.getJSONObject("concepts"), conceptHierarchyResult);
         assertEquals(responseObject.getJSONObject("conceptSchemes"), conceptSchemeHierarchyResult);
     }
@@ -1241,6 +1265,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertIndividuals(responseObject, individuals);
         assertDerivedConcepts(responseObject, derivedConcepts);
         assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
+        assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
     }
 
     @Test
@@ -1263,6 +1288,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertIndividuals(responseObject, individuals);
         assertDerivedConcepts(responseObject, derivedConcepts);
         assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
+        assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
     }
 
     @Test
@@ -1290,6 +1316,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertIndividuals(responseObject, individuals);
         assertDerivedConcepts(responseObject, derivedConcepts);
         assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
+        assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
     }
 
     @Test
@@ -1308,6 +1335,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertIndividuals(responseObject, individuals);
         assertDerivedConcepts(responseObject, derivedConcepts);
         assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
+        assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
     }
 
     @Test
@@ -2611,13 +2639,14 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) -> {
             assertAnnotations(responseObject, annotationProperties, annotations);
-            assertClassIRIs(responseObject, classes);
+            assertClassIRIs(responseObject, importedClasses);
             assertDatatypes(responseObject, datatypes);
             assertObjectPropertyIRIs(responseObject, objectProperties);
             assertDataPropertyIRIs(responseObject, dataProperties);
             assertIndividuals(responseObject, individuals);
             assertDerivedConcepts(responseObject, derivedConcepts);
             assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
+            assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
         });
     }
 
@@ -2634,13 +2663,14 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertGetOntology(false);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) -> {
             assertAnnotations(responseObject, annotationProperties, annotations);
-            assertClassIRIs(responseObject, classes);
+            assertClassIRIs(responseObject, importedClasses);
             assertDatatypes(responseObject, datatypes);
             assertObjectPropertyIRIs(responseObject, objectProperties);
             assertDataPropertyIRIs(responseObject, dataProperties);
             assertIndividuals(responseObject, individuals);
             assertDerivedConcepts(responseObject, derivedConcepts);
             assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
+            assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
         });
     }
 
@@ -2662,13 +2692,14 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) -> {
             assertAnnotations(responseObject, annotationProperties, annotations);
-            assertClassIRIs(responseObject, classes);
+            assertClassIRIs(responseObject, importedClasses);
             assertDatatypes(responseObject, datatypes);
             assertObjectPropertyIRIs(responseObject, objectProperties);
             assertDataPropertyIRIs(responseObject, dataProperties);
             assertIndividuals(responseObject, individuals);
             assertDerivedConcepts(responseObject, derivedConcepts);
             assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
+            assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
         });
     }
 
@@ -2682,13 +2713,14 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) -> {
             assertAnnotations(responseObject, annotationProperties, annotations);
-            assertClassIRIs(responseObject, classes);
+            assertClassIRIs(responseObject, importedClasses);
             assertDatatypes(responseObject, datatypes);
             assertObjectPropertyIRIs(responseObject, objectProperties);
             assertDataPropertyIRIs(responseObject, dataProperties);
             assertIndividuals(responseObject, individuals);
             assertDerivedConcepts(responseObject, derivedConcepts);
             assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
+            assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
         });
     }
 
@@ -2893,7 +2925,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->
-                assertClassIRIs(responseObject, classes));
+                assertClassIRIs(responseObject, importedClasses));
     }
 
     @Test
@@ -2908,7 +2940,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->
-                assertClassIRIs(responseObject, classes));
+                assertClassIRIs(responseObject, importedClasses));
     }
 
     @Test
@@ -2928,7 +2960,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->
-                assertClassIRIs(responseObject, classes));
+                assertClassIRIs(responseObject, importedClasses));
     }
 
     @Test
@@ -2940,7 +2972,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->
-                assertClassIRIs(responseObject, classes));
+                assertClassIRIs(responseObject, importedClasses));
     }
 
     @Test

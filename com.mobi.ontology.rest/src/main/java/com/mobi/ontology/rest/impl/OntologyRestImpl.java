@@ -354,6 +354,7 @@ public class OntologyRestImpl implements OntologyRest {
     private JSONObject getVocabularyStuff(Ontology ontology) {
         JSONObject result = getDerivedConceptTypeArray(ontology);
         result.putAll(getDerivedConceptSchemeTypeArray(ontology));
+        result.putAll(getDerivedSemanticRelationArray(ontology));
         TupleQueryResult conceptRelationships = ontologyManager.getConceptRelationships(ontology);
         result.put("concepts", getHierarchy(conceptRelationships));
         TupleQueryResult conceptSchemeRelationships = ontologyManager.getConceptSchemeRelationships(ontology);
@@ -1077,9 +1078,11 @@ public class OntologyRestImpl implements OntologyRest {
      * @return a JSONObject of Class IRIs from the provided Ontology.
      */
     private JSONObject getClassIRIArray(Ontology ontology) {
+        Model model = ontology.asModel(modelFactory);
         List<IRI> iris = ontology.getAllClasses()
                 .stream()
                 .map(Entity::getIRI)
+                .filter(iri -> model.contains(iri, null, null))
                 .collect(Collectors.toList());
         return new JSONObject().element("classes", iriListToJsonArray(iris));
     }
@@ -1189,7 +1192,6 @@ public class OntologyRestImpl implements OntologyRest {
         ontologyManager.getSubClassesFor(ontology, sesameTransformer.mobiIRI(SKOS.CONCEPT))
                 .forEach(r -> iris.add(valueFactory.createIRI(Bindings.requiredResource(r, "s").stringValue())));
         return new JSONObject().element("derivedConcepts", iriListToJsonArray(iris));
-
     }
 
     private JSONObject getDerivedConceptSchemeTypeArray(Ontology ontology) {
@@ -1198,7 +1200,14 @@ public class OntologyRestImpl implements OntologyRest {
                 .forEach(r -> r.getBinding("s")
                         .ifPresent(b -> iris.add(valueFactory.createIRI(b.getValue().stringValue()))));
         return new JSONObject().element("derivedConceptSchemes", iriListToJsonArray(iris));
+    }
 
+    private JSONObject getDerivedSemanticRelationArray(Ontology ontology) {
+        List<IRI> iris = new ArrayList<>();
+        ontologyManager.getSubPropertiesFor(ontology, sesameTransformer.mobiIRI(SKOS.SEMANTIC_RELATION))
+                .forEach(r -> r.getBinding("s")
+                    .ifPresent(b -> iris.add(valueFactory.createIRI(b.getValue().stringValue()))));
+        return new JSONObject().element("derivedSemanticRelations", iriListToJsonArray(iris));
     }
 
     /**
@@ -1273,7 +1282,7 @@ public class OntologyRestImpl implements OntologyRest {
         return combineJsonObjects(getAnnotationArray(ontology), getClassIRIArray(ontology),
                 getDatatypeArray(ontology), getObjectPropertyIRIArray(ontology), getDataPropertyIRIArray(ontology),
                 getNamedIndividualArray(ontology), getDerivedConceptTypeArray(ontology),
-                getDerivedConceptSchemeTypeArray(ontology));
+                getDerivedConceptSchemeTypeArray(ontology), getDerivedSemanticRelationArray(ontology));
     }
 
     /**

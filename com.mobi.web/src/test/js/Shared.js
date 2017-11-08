@@ -575,6 +575,7 @@ function mockOntologyState() {
                 dataPropertyRange: [],
                 derivedConcepts: [],
                 derivedConceptSchemes: [],
+                derivedSemanticRelations: [],
                 classes: {
                     iris: [],
                     hierarchy: [],
@@ -715,6 +716,7 @@ function mockOntologyUtilsManager() {
     module(function($provide) {
         $provide.service('ontologyUtilsManagerService', function() {
             this.containsDerivedConcept = jasmine.createSpy('containsDerivedConcept');
+            this.containsDerivedSemanticRelation = jasmine.createSpy('containsDerivedSemanticRelation');
             this.containsDerivedConceptScheme = jasmine.createSpy('containsDerivedConceptScheme');
             this.addIndividual = jasmine.createSpy('addIndividual');
             this.addConcept = jasmine.createSpy('addConcept');
