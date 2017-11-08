@@ -146,6 +146,9 @@
                         if (dvm.values.length) {
                             dvm.property[prefixes.rdfs + 'subPropertyOf'] = dvm.values;
                             dvm.ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), key);
+                            if (dvm.ontoUtils.containsDerivedSemanticRelation(_.map(dvm.values, obj => ro.createItemFromIri(obj['@id'])))) {
+                                dvm.os.listItem.derivedSemanticRelations.push(ro.createItemFromIri(dvm.property['@id']));
+                            }
                         } else {
                             dvm.os.listItem[key].hierarchy.push({'entityIRI': dvm.property['@id']});
                             dvm.os.listItem[key].flat = dvm.os.flattenHierarchy(dvm.os.listItem[key].hierarchy, dvm.os.listItem.ontologyRecord.recordId);

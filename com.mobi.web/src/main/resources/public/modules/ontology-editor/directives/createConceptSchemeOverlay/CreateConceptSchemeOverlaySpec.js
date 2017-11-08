@@ -173,10 +173,8 @@ describe('Create Concept Scheme Overlay directive', function() {
             });
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.scheme);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.scheme, this.controller.language);
-            expect(ontologyStateSvc.listItem.conceptSchemes.hierarchy).toContain({entityIRI: this.controller.scheme['@id']});
-            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.scheme);
-            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
-            expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{prop: 'entity'}]);
+            expect(ontoUtils.addConceptScheme).toHaveBeenCalledWith(this.controller.scheme);
+            expect(ontoUtils.addIndividual).toHaveBeenCalledWith(this.controller.scheme);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.scheme['@id']);
             expect(ontologyStateSvc.showCreateConceptSchemeOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

@@ -54,6 +54,9 @@
                         var localName = _.get(axiom, 'localName');
                         if (localName === 'subPropertyOf' && values.length) {
                             dvm.ontoUtils.setSuperProperties(dvm.os.listItem.selected['@id'], _.map(values, value => dvm.ro.getItemIri(value)), 'objectProperties');
+                            if (dvm.ontoUtils.containsDerivedSemanticRelation(values)) {
+                                dvm.os.setVocabularyStuff();
+                            }
                         } else if (localName === 'domain' && values.length) {
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         }
@@ -63,6 +66,7 @@
                         if (prefixes.rdfs + 'subPropertyOf' === dvm.key && !om.isBlankNodeId(axiomObject['@id'])) {
                             dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.objectProperties.hierarchy, dvm.os.listItem.selected['@id'], axiomObject['@id'], dvm.os.listItem.objectProperties.index);
                             dvm.os.listItem.objectProperties.flat = dvm.os.flattenHierarchy(dvm.os.listItem.objectProperties.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                            dvm.os.setVocabularyStuff();
                         }
                     }
                 }

@@ -230,6 +230,8 @@ public interface OntologyManager {
      */
     TupleQueryResult getSubClassesFor(Ontology ontology, IRI iri);
 
+    TupleQueryResult getSubPropertiesFor(Ontology ontology, IRI iri);
+
     /**
      * Gets the subPropertyOf relationships for datatype properties in the provided Ontology.
      *

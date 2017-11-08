@@ -59,13 +59,11 @@
                                 dvm.concept[prefixes.skos + 'prefLabel'][0]['@value'], 'class');
                         }
                     }
-
                     dvm.onEdit = function(iriBegin, iriThen, iriEnd) {
                         dvm.iriHasChanged = true;
                         dvm.concept['@id'] = iriBegin + iriThen + iriEnd;
                         dvm.os.setCommonIriParts(iriBegin, iriThen);
                     }
-
                     dvm.create = function() {
                         if (dvm.schemes.length) {
                             _.forEach(dvm.schemes, scheme => {
@@ -84,10 +82,9 @@
                         // add the entity to the ontology
                         dvm.os.addEntity(dvm.os.listItem, dvm.concept);
                         // update relevant lists
-                        var hierarchy = _.get(dvm.os.listItem, 'concepts.hierarchy');
-                        hierarchy.push({'entityIRI': dvm.concept['@id']});
-                        dvm.os.listItem.concepts.flat = dvm.os.flattenHierarchy(hierarchy, dvm.os.listItem.ontologyRecord.recordId);
+                        dvm.ontoUtils.addConcept(dvm.concept);
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.concept);
+                        dvm.ontoUtils.addIndividual(dvm.concept);
                         // select the new class
                         dvm.os.selectItem(_.get(dvm.concept, '@id'));
                         // hide the overlay
