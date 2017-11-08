@@ -1082,7 +1082,8 @@ public class OntologyRestImpl implements OntologyRest {
         List<IRI> iris = ontology.getAllClasses()
                 .stream()
                 .map(Entity::getIRI)
-                .filter(iri -> model.contains(iri, null, null))
+                .filter(iri -> model.contains(iri, valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
+                        null))
                 .collect(Collectors.toList());
         return new JSONObject().element("classes", iriListToJsonArray(iris));
     }
@@ -1096,6 +1097,8 @@ public class OntologyRestImpl implements OntologyRest {
     private JSONArray getClassArray(Ontology ontology) {
         Model model = ontology.asModel(modelFactory);
         return ontology.getAllClasses().stream()
+                .filter(oClass -> model.contains(oClass.getIRI(),
+                        valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
                 .map(oClass -> model.filter(oClass.getIRI(), null, null))
                 .filter(m -> !m.isEmpty())
                 .map(m -> getObjectFromJsonld(modelToJsonld(m, sesameTransformer)))
