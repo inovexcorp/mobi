@@ -226,6 +226,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private Set<Annotation> annotations;
     private Set<AnnotationProperty> annotationProperties;
     private Set<OClass> classes;
+    private Set<OClass> importedClasses;
     private Set<Datatype> datatypes;
     private Set<ObjectProperty> objectProperties;
     private Set<DataProperty> dataProperties;
@@ -238,6 +239,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private IRI derivedConceptSchemeIri;
     private IRI derivedSemanticRelationIri;
     private IRI classIRI;
+    private IRI importedClassIRI;
     private IRI datatypeIRI;
     private IRI objectPropertyIRI;
     private IRI dataPropertyIRI;
@@ -384,7 +386,9 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         annotations = Collections.singleton(new SimpleAnnotation(annotationProperty, vf.createLiteral("word"),
                 Collections.emptySet()));
         classIRI = vf.createIRI("http://mobi.com/ontology#Class1a");
+        importedClassIRI = vf.createIRI("https://mobi.com/vocabulary#ConceptSubClass");
         classes = Collections.singleton(new SimpleClass(classIRI));
+        importedClasses = Collections.singleton(new SimpleClass(importedClassIRI));
         datatypeIRI = vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#langString");
         datatypes = Collections.singleton(new SimpleDatatype(datatypeIRI));
         objectPropertyIRI = vf.createIRI("http://mobi.com/ontology#objectProperty1a");
@@ -476,7 +480,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(importedOntology.asModel(mf)).thenReturn(importedOntologyModel);
         when(importedOntology.getAllAnnotations()).thenReturn(annotations);
         when(importedOntology.getAllAnnotationProperties()).thenReturn(annotationProperties);
-        when(importedOntology.getAllClasses()).thenReturn(classes);
+        when(importedOntology.getAllClasses()).thenReturn(importedClasses);
         when(importedOntology.getAllDatatypes()).thenReturn(datatypes);
         when(importedOntology.getAllObjectProperties()).thenReturn(objectProperties);
         when(importedOntology.getAllDataProperties()).thenReturn(dataProperties);
@@ -2635,7 +2639,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) -> {
             assertAnnotations(responseObject, annotationProperties, annotations);
-            assertClassIRIs(responseObject, classes);
+            assertClassIRIs(responseObject, importedClasses);
             assertDatatypes(responseObject, datatypes);
             assertObjectPropertyIRIs(responseObject, objectProperties);
             assertDataPropertyIRIs(responseObject, dataProperties);
@@ -2659,7 +2663,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertGetOntology(false);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) -> {
             assertAnnotations(responseObject, annotationProperties, annotations);
-            assertClassIRIs(responseObject, classes);
+            assertClassIRIs(responseObject, importedClasses);
             assertDatatypes(responseObject, datatypes);
             assertObjectPropertyIRIs(responseObject, objectProperties);
             assertDataPropertyIRIs(responseObject, dataProperties);
@@ -2688,7 +2692,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) -> {
             assertAnnotations(responseObject, annotationProperties, annotations);
-            assertClassIRIs(responseObject, classes);
+            assertClassIRIs(responseObject, importedClasses);
             assertDatatypes(responseObject, datatypes);
             assertObjectPropertyIRIs(responseObject, objectProperties);
             assertDataPropertyIRIs(responseObject, dataProperties);
@@ -2709,7 +2713,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) -> {
             assertAnnotations(responseObject, annotationProperties, annotations);
-            assertClassIRIs(responseObject, classes);
+            assertClassIRIs(responseObject, importedClasses);
             assertDatatypes(responseObject, datatypes);
             assertObjectPropertyIRIs(responseObject, objectProperties);
             assertDataPropertyIRIs(responseObject, dataProperties);
@@ -2921,7 +2925,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->
-                assertClassIRIs(responseObject, classes));
+                assertClassIRIs(responseObject, importedClasses));
     }
 
     @Test
@@ -2936,7 +2940,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->
-                assertClassIRIs(responseObject, classes));
+                assertClassIRIs(responseObject, importedClasses));
     }
 
     @Test
@@ -2956,7 +2960,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->
-                assertClassIRIs(responseObject, classes));
+                assertClassIRIs(responseObject, importedClasses));
     }
 
     @Test
@@ -2968,7 +2972,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->
-                assertClassIRIs(responseObject, classes));
+                assertClassIRIs(responseObject, importedClasses));
     }
 
     @Test

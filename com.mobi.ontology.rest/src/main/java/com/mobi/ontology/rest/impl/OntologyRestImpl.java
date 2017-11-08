@@ -1078,9 +1078,11 @@ public class OntologyRestImpl implements OntologyRest {
      * @return a JSONObject of Class IRIs from the provided Ontology.
      */
     private JSONObject getClassIRIArray(Ontology ontology) {
+        Model model = ontology.asModel(modelFactory);
         List<IRI> iris = ontology.getAllClasses()
                 .stream()
                 .map(Entity::getIRI)
+                .filter(iri -> model.contains(iri, null, null))
                 .collect(Collectors.toList());
         return new JSONObject().element("classes", iriListToJsonArray(iris));
     }
