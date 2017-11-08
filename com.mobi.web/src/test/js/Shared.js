@@ -632,7 +632,8 @@ function mockOntologyState() {
                     }
                 }],
                 individualsParentPath: [],
-                classesAndIndividuals: [],
+                classesAndIndividuals: {},
+                classesWithIndividuals: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
                 iriList: [],
@@ -718,6 +719,8 @@ function mockOntologyUtilsManager() {
     module(function($provide) {
         $provide.service('ontologyUtilsManagerService', function() {
             this.containsDerivedConcept = jasmine.createSpy('containsDerivedConcept');
+            this.addIndividual = jasmine.createSpy('addIndividual');
+            this.addConcept = jasmine.createSpy('addConcept');
             this.commonDelete = jasmine.createSpy('commonDelete');
             this.deleteClass = jasmine.createSpy('deleteClass');
             this.deleteObjectProperty = jasmine.createSpy('deleteObjectProperty');

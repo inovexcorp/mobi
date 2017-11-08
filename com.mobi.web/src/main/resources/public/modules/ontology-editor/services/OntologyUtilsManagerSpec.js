@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology Utils Manager service', function() {
-    var ontologyUtilsManagerSvc, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRIFilter, util, updateRefs, scope, $q, responseObj;
+    var ontologyUtilsManagerSvc, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRI, util, updateRefs, scope, $q, responseObj;
 
     beforeEach(function() {
         module('ontologyUtilsManager');
@@ -38,7 +38,7 @@ describe('Ontology Utils Manager service', function() {
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
-            splitIRIFilter = _splitIRIFilter_;
+            splitIRI = _splitIRIFilter_;
             util = _utilService_;
             updateRefs = _updateRefsService_;
             scope = _$rootScope_;
@@ -54,7 +54,7 @@ describe('Ontology Utils Manager service', function() {
         ontologyManagerSvc = null;
         ontologyStateSvc = null;
         prefixes = null;
-        splitIRIFilter = null;
+        splitIRI = null;
         util = null;
         updateRefs = null;
         scope = null;
@@ -77,6 +77,27 @@ describe('Ontology Utils Manager service', function() {
         it('false if array does not contain a derived Concept or skos:Concept', function() {
             expect(ontologyUtilsManagerSvc.containsDerivedConcept(['test'])).toEqual(false);
         });
+    });
+    it('addConcept should update relevant lists when a concept is added', function() {
+        var concept = {'@id': 'concept'};
+        ontologyUtilsManagerSvc.addConcept(concept);
+        expect(ontologyStateSvc.listItem.concepts.hierarchy).toContain({entityIRI: concept['@id']});
+        expect(ontologyStateSvc.listItem.concepts.flat).toEqual([{entityIRI: 'iri'}]);
+    });
+    it('addIndividual should update relevant lists when an individual is added', function() {
+        var individual = {'@id': 'individual', '@type': ['ClassA']};
+        var split = {begin: 'begin', then: 'then', end: 'end'};
+        ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
+        ontologyStateSvc.getPathsTo.and.returnValue([['ClassA']]);
+        splitIRI.and.returnValue(split);
+        ontologyUtilsManagerSvc.addIndividual(individual);
+        expect(ontologyStateSvc.listItem.individuals.iris).toContain({namespace: split.begin + split.then, localName: split.end});
+        expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA']);
+        expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA': ['individual']});
+        expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['ClassA']);
+        expect(ontologyStateSvc.getPathsTo).toHaveBeenCalledWith([], {},'ClassA');
+        expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+        expect(ontologyStateSvc.listItem.individuals.flat).toEqual([{prop: 'individual'}]);
     });
     describe('commonDelete calls the proper methods', function() {
         describe('when getEntityUsages resolves', function() {
@@ -143,7 +164,7 @@ describe('Ontology Utils Manager service', function() {
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('ClassB');
         ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
         spyOn(ontologyUtilsManagerSvc, 'commonDelete').and.returnValue($q.when());
-        splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
+        splitIRI.and.returnValue({begin: 'begin', then: '/', end: 'end'});
         ontologyUtilsManagerSvc.deleteClass();
         scope.$apply();
         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
@@ -161,7 +182,7 @@ describe('Ontology Utils Manager service', function() {
     it('deleteObjectProperty should call the proper methods', function() {
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
-        splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
+        splitIRI.and.returnValue({begin: 'begin', then: '/', end: 'end'});
         ontologyStateSvc.listItem.objectProperties.iris = [{namespace: 'begin/', localName: 'end'}];
         ontologyStateSvc.getOntologiesArray.and.returnValue([{prop: 'ontology'}]);
         ontologyUtilsManagerSvc.deleteObjectProperty();
@@ -175,7 +196,7 @@ describe('Ontology Utils Manager service', function() {
     it('deleteDataTypeProperty should call the proper methods', function() {
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
-        splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
+        splitIRI.and.returnValue({begin: 'begin', then: '/', end: 'end'});
         ontologyStateSvc.listItem.dataProperties.iris = [{namespace: 'begin/', localName: 'end'}];
         ontologyUtilsManagerSvc.deleteDataTypeProperty();
         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
@@ -188,7 +209,7 @@ describe('Ontology Utils Manager service', function() {
     it('deleteAnnotationProperty should call the proper methods', function() {
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
-        splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
+        splitIRI.and.returnValue({begin: 'begin', then: '/', end: 'end'});
         ontologyStateSvc.listItem.annotations.iris = [{namespace: 'begin/', localName: 'end'}];
         ontologyUtilsManagerSvc.deleteAnnotationProperty();
         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
@@ -198,45 +219,113 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyStateSvc.listItem.annotations.flat).toEqual([{entityIRI: 'iri'}]);
         expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
     });
-    it('deleteIndividual should call the proper methods', function() {
-        ontologyStateSvc.getIndividualsParentPath.and.returnValue(['ClassA', 'ClassB']);
-        ontologyStateSvc.listItem.classesWithIndividuals = ['ClassA', 'ClassB'];
-        ontologyStateSvc.listItem.classesAndIndividuals = {
-            'ClassA': ['IndivA1', 'IndivA2'],
-            'ClassB': ['IndivB1']
-        };
-        ontologyStateSvc.listItem.selected['@type'] = ['ClassB'];
-        ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
-        spyOn(ontologyUtilsManagerSvc, 'commonDelete').and.returnValue($q.when());
-        ontologyStateSvc.getActiveEntityIRI.and.returnValue('IndivB1');
-        splitIRIFilter.and.returnValue({begin: 'begin', then: '/', end: 'end'});
-        ontologyStateSvc.listItem.individuals.iris = [{namespace: 'begin/', localName: 'end'}];
-        ontologyUtilsManagerSvc.deleteIndividual();
-        scope.$apply();
-        expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('IndivB1');
-        expect(ontologyStateSvc.listItem.individuals.iris.length).toEqual(0);
-        expect(ontologyStateSvc.getIndividualsParentPath).toHaveBeenCalledWith(ontologyStateSvc.listItem);
-        expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['ClassA', 'ClassB']);
-        expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA']);
-        expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA': ['IndivA1', 'IndivA2']});
-        expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
-        expect(ontologyStateSvc.listItem.individuals.flat).toEqual([{prop: 'individual'}]);
-        expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
+    describe('deleteIndividual should call the proper methods', function() {
+        beforeEach(function() {
+            this.entityIRI = 'IndivB1';
+            ontologyStateSvc.getIndividualsParentPath.and.returnValue(['ClassA', 'ClassB']);
+            ontologyStateSvc.listItem.classesWithIndividuals = ['ClassA', 'ClassB'];
+            ontologyStateSvc.listItem.classesAndIndividuals = {
+                'ClassA': ['IndivA1', 'IndivA2'],
+                'ClassB': [this.entityIRI]
+            };
+            ontologyStateSvc.listItem.selected['@type'] = ['ClassB'];
+            ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
+            spyOn(ontologyUtilsManagerSvc, 'commonDelete');
+            ontologyStateSvc.getActiveEntityIRI.and.returnValue(this.entityIRI);
+            splitIRI.and.returnValue({begin: 'begin', then: '/', end: 'end'});
+            ontologyStateSvc.listItem.individuals.iris = [{namespace: 'begin/', localName: 'end'}];
+        });
+        it('if is is a derived concept', function() {
+            spyOn(ontologyUtilsManagerSvc, 'containsDerivedConcept').and.returnValue(true);
+            ontologyUtilsManagerSvc.deleteIndividual();
+            expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+            expect(ontologyStateSvc.listItem.individuals.iris.length).toEqual(0);
+            expect(ontologyStateSvc.getIndividualsParentPath).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+            expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['ClassA', 'ClassB']);
+            expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA']);
+            expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA': ['IndivA1', 'IndivA2']});
+            expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+            expect(ontologyStateSvc.listItem.individuals.flat).toEqual([{prop: 'individual'}]);
+            expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, this.entityIRI, ontologyStateSvc.listItem.concepts.index);
+            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+            expect(ontologyStateSvc.listItem.concepts.flat).toEqual([{entityIRI: 'iri'}]);
+            expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.entityIRI, ontologyStateSvc.listItem.conceptSchemes.index);
+            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+            expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{entityIRI: 'iri'}]);
+            expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith(this.entityIRI);
+        });
+        it('if it is not a derived concept', function() {
+            spyOn(ontologyUtilsManagerSvc, 'containsDerivedConcept').and.returnValue(false);
+            ontologyUtilsManagerSvc.deleteIndividual();
+            expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+            expect(ontologyStateSvc.listItem.individuals.iris.length).toEqual(0);
+            expect(ontologyStateSvc.getIndividualsParentPath).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+            expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['ClassA', 'ClassB']);
+            expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA']);
+            expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA': ['IndivA1', 'IndivA2']});
+            expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+            expect(ontologyStateSvc.listItem.individuals.flat).toEqual([{prop: 'individual'}]);
+            expect(ontologyStateSvc.deleteEntityFromHierarchy).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.listItem.concepts.flat).toEqual([]);
+            expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
+            expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('IndivB1');
+        });
     });
-    it('deleteConcept should call the proper methods', function() {
-        spyOn(ontologyUtilsManagerSvc, 'commonDelete');
-        ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
-        ontologyUtilsManagerSvc.deleteConcept();
-        expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
-        expect(ontologyStateSvc.listItem.classes.iris.length).toBe(0);
-        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, 'begin/end', ontologyStateSvc.listItem.concepts.index);
-        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
-        expect(ontologyStateSvc.listItem.concepts.flat).toEqual([{entityIRI: 'iri'}]);
-        expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, 'begin/end', ontologyStateSvc.listItem.conceptSchemes.index);
-        expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
-        expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{entityIRI: 'iri'}]);
-        expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end');
+    describe('deleteConcept should call the proper methods', function() {
+        beforeEach(function() {
+            this.entityIRI = 'begin/end';
+            spyOn(ontologyUtilsManagerSvc, 'commonDelete');
+            ontologyStateSvc.getActiveEntityIRI.and.returnValue(this.entityIRI);
+        });
+        it('if current listItem is an ontology', function() {
+            ontologyStateSvc.getIndividualsParentPath.and.returnValue(['ClassA', 'ClassB']);
+            ontologyStateSvc.listItem.classesWithIndividuals = ['ClassA', 'ClassB'];
+            ontologyStateSvc.listItem.classesAndIndividuals = {
+                'ClassA': ['IndivA1', 'IndivA2'],
+                'ClassB': [this.entityIRI]
+            };
+            ontologyStateSvc.listItem.selected['@type'] = ['ClassB'];
+            ontologyStateSvc.createFlatIndividualTree.and.returnValue([{prop: 'individual'}]);
+            splitIRI.and.returnValue({begin: 'begin', then: '/', end: 'end'});
+            ontologyStateSvc.listItem.individuals.iris = [{namespace: 'begin/', localName: 'end'}];
+            ontologyStateSvc.listItem.ontologyRecord.type = 'ontology';
+            ontologyUtilsManagerSvc.deleteConcept();
+            expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+            expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, this.entityIRI, ontologyStateSvc.listItem.concepts.index);
+            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+            expect(ontologyStateSvc.listItem.concepts.flat).toEqual([{entityIRI: 'iri'}]);
+            expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.entityIRI, ontologyStateSvc.listItem.conceptSchemes.index);
+            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+            expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{entityIRI: 'iri'}]);
+            expect(ontologyStateSvc.listItem.individuals.iris.length).toEqual(0);
+            expect(ontologyStateSvc.getIndividualsParentPath).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+            expect(ontologyStateSvc.listItem.individualsParentPath).toEqual(['ClassA', 'ClassB']);
+            expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual(['ClassA']);
+            expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({'ClassA': ['IndivA1', 'IndivA2']});
+            expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(ontologyStateSvc.listItem);
+            expect(ontologyStateSvc.listItem.individuals.flat).toEqual([{prop: 'individual'}]);
+            expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith(this.entityIRI);
+        });
+        it('if current listItem is a vocabulary', function() {
+            ontologyStateSvc.listItem.ontologyRecord.type = 'vocabulary';
+            ontologyUtilsManagerSvc.deleteConcept();
+            expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
+            expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, this.entityIRI, ontologyStateSvc.listItem.concepts.index);
+            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+            expect(ontologyStateSvc.listItem.concepts.flat).toEqual([{entityIRI: 'iri'}]);
+            expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, this.entityIRI, ontologyStateSvc.listItem.conceptSchemes.index);
+            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+            expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{entityIRI: 'iri'}]);
+            expect(ontologyStateSvc.listItem.individuals.iris.length).toEqual(0);
+            expect(ontologyStateSvc.getIndividualsParentPath).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.listItem.individualsParentPath).toEqual([]);
+            expect(ontologyStateSvc.listItem.classesWithIndividuals).toEqual([]);
+            expect(ontologyStateSvc.listItem.classesAndIndividuals).toEqual({});
+            expect(ontologyStateSvc.createFlatIndividualTree).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.listItem.individuals.flat).toEqual([]);
+            expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith(this.entityIRI);
+        });
     });
     it('deleteConceptScheme should call the proper method', function() {
         ontologyStateSvc.listItem.conceptSchemes.hierarchy = [{entityIRI: 'begin/end', subEntities: [{}]}, {entityIRI: 'iri'}];

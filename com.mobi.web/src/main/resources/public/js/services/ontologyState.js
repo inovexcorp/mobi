@@ -1316,6 +1316,8 @@
                     } else if (om.isAnnotation(entity)) {
                         self.setAnnotationPropertiesOpened(self.listItem.ontologyRecord.recordId, true);
                         commonGoTo('properties', iri, self.listItem.annotations.flat);
+                    } else if (om.isConcept(entity, self.listItem.derivedConcepts)) {
+                        commonGoTo('concepts', iri, self.listItem.concepts.flat);
                     } else if (om.isIndividual(entity)) {
                         commonGoTo('individuals', iri, self.listItem.individuals.flat);
                     }

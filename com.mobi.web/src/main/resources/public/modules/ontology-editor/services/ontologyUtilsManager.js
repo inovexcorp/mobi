@@ -52,6 +52,38 @@
                 return !!_.intersection(arr, _.concat(os.listItem.derivedConcepts, [prefixes.skos + 'Concept'])).length;
             }
 
+            self.addConcept = function(concept) {
+                var hierarchy = _.get(os.listItem, 'concepts.hierarchy');
+                hierarchy.push({'entityIRI': concept['@id']});
+                os.listItem.concepts.flat = os.flattenHierarchy(hierarchy, os.listItem.ontologyRecord.recordId);
+            }
+
+            self.addIndividual = function(individual) {
+                // update relevant lists
+                var split = $filter('splitIRI')(individual['@id']);
+                _.get(os.listItem, 'individuals.iris').push({namespace: split.begin + split.then, localName: split.end});
+                var classesWithIndividuals = _.get(os.listItem, 'classesWithIndividuals', []);
+                var individualsParentPath = _.get(os.listItem, 'individualsParentPath', []);
+                var paths = [];
+                var individuals = [];
+
+                _.forEach(individual['@type'], (type) => {
+                    var indivArr = [];
+                    var existingInds = _.get(os.listItem.classesAndIndividuals, type);
+                    var path = os.getPathsTo(_.get(os.listItem, 'classes.hierarchy'), _.get(os.listItem, 'classes.index'), type);
+
+                    indivArr.push(individual['@id']);
+                    os.listItem.classesAndIndividuals[type] = existingInds ? _.concat(indivArr, existingInds) : indivArr;
+                    individuals.push(type);
+                    paths.push(path);
+                });
+
+                var uniqueUris =  _.uniq(_.flattenDeep(paths));
+                _.set(os.listItem, 'classesWithIndividuals', _.concat(classesWithIndividuals, individuals));
+                _.set(os.listItem, 'individualsParentPath', _.concat(individualsParentPath, uniqueUris));
+                os.listItem.individuals.flat = os.createFlatIndividualTree(os.listItem);
+            }
+
             self.commonDelete = function(entityIRI, updateEverythingTree = false) {
                 return om.getEntityUsages(os.listItem.ontologyRecord.recordId, os.listItem.ontologyRecord.branchId, os.listItem.ontologyRecord.commitId, entityIRI, 'construct')
                     .then(statements => {
@@ -116,38 +148,19 @@
 
             self.deleteIndividual = function() {
                 var entityIRI = os.getActiveEntityIRI();
-                var split = $filter('splitIRI')(entityIRI);
-                _.remove(_.get(os.listItem, 'individuals.iris'), {namespace: split.begin + split.then, localName: split.end});
-                var indivTypes = os.listItem.selected['@type'];
-                var indivAndClasses = _.get(os.listItem, 'classesAndIndividuals');
-
-                _.forEach(indivTypes, type => {
-                    if (type !== prefixes.owl + 'NamedIndividual') {
-                        var parentAndIndivs = indivAndClasses[type];
-                        if (parentAndIndivs.length) {
-                            _.remove(parentAndIndivs, item => item === entityIRI);
-                            if (!parentAndIndivs.length) {
-                                delete os.listItem.classesAndIndividuals[type];
-                            }
-                        }
-                    }
-                });
-
-                os.listItem.classesWithIndividuals = _.keys(os.listItem.classesAndIndividuals);
-                os.listItem.individualsParentPath = os.getIndividualsParentPath(os.listItem);
-                os.listItem.individuals.flat = os.createFlatIndividualTree(os.listItem);
-                self.commonDelete(entityIRI)
-                    .then(() => {
-                        os.setVocabularyStuff();
-                    });
+                removeIndividual(entityIRI);
+                if (self.containsDerivedConcept(os.listItem.selected['@type'])) {
+                    removeConcept(entityIRI);
+                }
+                self.commonDelete(entityIRI);
             }
 
             self.deleteConcept = function() {
                 var entityIRI = os.getActiveEntityIRI();
-                os.deleteEntityFromHierarchy(os.listItem.concepts.hierarchy, entityIRI, os.listItem.concepts.index);
-                os.listItem.concepts.flat = os.flattenHierarchy(os.listItem.concepts.hierarchy, os.listItem.ontologyRecord.recordId);
-                os.deleteEntityFromHierarchy(os.listItem.conceptSchemes.hierarchy, entityIRI, os.listItem.conceptSchemes.index);
-                os.listItem.conceptSchemes.flat = os.flattenHierarchy(os.listItem.conceptSchemes.hierarchy, os.listItem.ontologyRecord.recordId);
+                removeConcept(entityIRI);
+                if (os.listItem.ontologyRecord.type === 'ontology') {
+                    removeIndividual(entityIRI);
+                }
                 self.commonDelete(entityIRI);
             }
 
@@ -265,6 +278,35 @@
                     os.addEntityToHierarchy(os.listItem[key].hierarchy, iri, os.listItem[key].index, propertyIRI);
                 });
                 os.listItem[key].flat = os.flattenHierarchy(os.listItem[key].hierarchy, os.listItem.ontologyRecord.recordId);
+            }
+
+            function removeConcept(entityIRI) {
+                os.deleteEntityFromHierarchy(os.listItem.concepts.hierarchy, entityIRI, os.listItem.concepts.index);
+                os.listItem.concepts.flat = os.flattenHierarchy(os.listItem.concepts.hierarchy, os.listItem.ontologyRecord.recordId);
+                os.deleteEntityFromHierarchy(os.listItem.conceptSchemes.hierarchy, entityIRI, os.listItem.conceptSchemes.index);
+                os.listItem.conceptSchemes.flat = os.flattenHierarchy(os.listItem.conceptSchemes.hierarchy, os.listItem.ontologyRecord.recordId);
+            }
+            function removeIndividual(entityIRI) {
+                var split = $filter('splitIRI')(entityIRI);
+                _.remove(_.get(os.listItem, 'individuals.iris'), {namespace: split.begin + split.then, localName: split.end});
+                var indivTypes = os.listItem.selected['@type'];
+                var indivAndClasses = _.get(os.listItem, 'classesAndIndividuals');
+
+                _.forEach(indivTypes, type => {
+                    if (type !== prefixes.owl + 'NamedIndividual') {
+                        var parentAndIndivs = indivAndClasses[type];
+                        if (parentAndIndivs.length) {
+                            _.remove(parentAndIndivs, item => item === entityIRI);
+                            if (!parentAndIndivs.length) {
+                                delete os.listItem.classesAndIndividuals[type];
+                            }
+                        }
+                    }
+                });
+
+                os.listItem.classesWithIndividuals = _.keys(os.listItem.classesAndIndividuals);
+                os.listItem.individualsParentPath = os.getIndividualsParentPath(os.listItem);
+                os.listItem.individuals.flat = os.createFlatIndividualTree(os.listItem);
             }
         }
 })();
