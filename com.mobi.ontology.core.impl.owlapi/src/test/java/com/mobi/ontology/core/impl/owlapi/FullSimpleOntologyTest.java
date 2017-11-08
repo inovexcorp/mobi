@@ -42,10 +42,6 @@ import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
 import com.mobi.ontology.core.impl.owlapi.classexpression.SimpleClass;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleDataProperty;
 import com.mobi.ontology.core.impl.owlapi.propertyExpression.SimpleObjectProperty;
-import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.persistence.utils.impl.SimpleBNodeService;
@@ -57,6 +53,10 @@ import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
 import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
 import com.mobi.rdf.core.utils.Values;
 import com.mobi.vocabularies.xsd.XSD;
+import org.apache.commons.io.IOUtils;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -205,16 +205,6 @@ public class FullSimpleOntologyTest {
 
         Set<Ontology> ontologies = ont.getImportsClosure();
         assertEquals(5, ontologies.size());
-    }
-
-    @Test
-    public void getImportsClosureFromFileImports() throws Exception {
-        // Setup:
-        InputStream stream = this.getClass().getResourceAsStream("/test-file-imports-C.ttl");
-        Ontology ont = new SimpleOntology(stream, ontologyManager, transformer, bNodeService);
-
-        Set<Ontology> ontologies = ont.getImportsClosure();
-        assertEquals(3, ontologies.size());
     }
 
     @Test
