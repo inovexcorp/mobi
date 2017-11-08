@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Relationships Block directive', function() {
-    var $compile, scope, ontologyStateSvc, resObj, prefixes;
+    var $compile, scope, ontologyStateSvc, resObj, prefixes, ontologyManagerSvc;
     var broaderRelations = ['broader', 'broaderTransitive', 'broadMatch'];
     var narrowerRelations = ['narrower', 'narrowerTransitive', 'narrowMatch'];
     var conceptToScheme = ['inScheme', 'topConceptOf'];
@@ -36,13 +36,15 @@ describe('Relationships Block directive', function() {
         mockPrefixes();
         mockResponseObj();
         mockOntologyUtilsManager();
+        mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             resObj = _responseObj_;
             prefixes = _prefixes_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         scope.relationshipList = [];
@@ -53,6 +55,7 @@ describe('Relationships Block directive', function() {
             'prop2': [{'@value': 'value2'}]
         };
         ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'flat'}]);
+        ontologyManagerSvc.isConceptScheme.and.returnValue(false);
         this.element = $compile(angular.element('<relationships-block relationship-list="relationshipList"></relationships-block>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('relationshipsBlock');
@@ -64,6 +67,7 @@ describe('Relationships Block directive', function() {
         ontologyStateSvc = null;
         resObj = null;
         prefixes = null;
+        ontologyManagerSvc = null;
         this.element.remove();
     });
 
@@ -134,6 +138,24 @@ describe('Relationships Block directive', function() {
             scope.$digest();
             expect(this.element.querySelectorAll('block-header a').length).toBe(0);
         });
+        it('with a .relationship-header', function() {
+            expect(this.element.querySelectorAll('.relationship-header').length).toBe(1);
+            ontologyManagerSvc.isConceptScheme.and.returnValue(true);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.relationship-header').length).toBe(0);
+        });
+        it('with a .top-concept-header', function() {
+            expect(this.element.querySelectorAll('.top-concept-header').length).toBe(0);
+            ontologyManagerSvc.isConceptScheme.and.returnValue(true);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.top-concept-header').length).toBe(1);
+        });
+        it('with a top-concept-overlay', function() {
+            expect(this.element.find('top-concept-overlay').length).toBe(0);
+            this.controller.showTopConceptOverlay = true;
+            scope.$digest();
+            expect(this.element.find('top-concept-overlay').length).toBe(1);
+        });
     });
     describe('controller methods', function() {
         it('openRemoveOverlay sets the correct variables', function() {
@@ -173,6 +195,18 @@ describe('Relationships Block directive', function() {
             });
             describe('is', function() {
                 removeHierarchyTest(schemeToConcept, conceptToScheme, 'conceptSchemes', 'value1');
+            });
+        });
+        describe('hasTopConceptProperty should call and return the correct value when getEntityByRecordId is', function() {
+            it('present', function() {
+                ontologyStateSvc.getEntityByRecordId.and.returnValue({'@id': 'id'});
+                expect(this.controller.hasTopConceptProperty()).toBe(true);
+                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, prefixes.skos + 'hasTopConcept', ontologyStateSvc.listItem);
+            });
+            it('undefined', function() {
+                ontologyStateSvc.getEntityByRecordId.and.returnValue(undefined);
+                expect(this.controller.hasTopConceptProperty()).toBe(false);
+                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, prefixes.skos + 'hasTopConcept', ontologyStateSvc.listItem);
             });
         });
     });

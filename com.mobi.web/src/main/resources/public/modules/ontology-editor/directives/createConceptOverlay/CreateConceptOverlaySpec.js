@@ -160,35 +160,34 @@ describe('Create Concept Overlay directive', function() {
         });
         it('should create a concept', function() {
             ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
-            var schemes = {
-                'scheme1': {'@id': 'scheme1', mobi: {}},
-                'scheme2': {'@id': 'scheme2', mobi: {}}
+            this.schemes = {
+                scheme1: {'@id': 'scheme1', mobi: {}},
+                scheme2: {'@id': 'scheme2', mobi: {}}
             };
-            schemes.scheme1[prefixes.skos + 'hasTopConcept'] = [{'@id': 'test'}];
-            this.controller.schemes = _.values(schemes);
+            this.schemes.scheme1[prefixes.skos + 'hasTopConcept'] = [{'@id': 'test'}];
+            this.controller.schemes = _.values(this.schemes);
+            var self = this;
             ontologyStateSvc.getEntityByRecordId.and.callFake(function(recordId, schemeId) {
-                return _.get(schemes, schemeId);
+                return _.get(self.schemes, schemeId);
             });
             this.controller.concept = {'@id': 'concept'};
             var json = {};
             json[prefixes.skos + 'hasTopConcept'] = [{'@id': 'concept'}];
-
             this.controller.create();
-            expect(schemes.scheme1[prefixes.skos + 'hasTopConcept'].length).toBe(2);
-            expect(schemes.scheme2[prefixes.skos + 'hasTopConcept'].length).toBe(1);
-            _.forEach(this.controller.schemes, function(scheme) {
+            expect(this.schemes.scheme1[prefixes.skos + 'hasTopConcept'].length).toBe(2);
+            expect(this.schemes.scheme2[prefixes.skos + 'hasTopConcept'].length).toBe(1);
+            this.controller.schemes.forEach(function(scheme) {
                 expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, 'concept', ontologyStateSvc.listItem.conceptSchemes.index, scheme['@id']);
                 json['@id'] = scheme['@id'];
                 expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, json);
-            });
+            }, this);
             expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
             expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{prop: 'entity'}]);
             expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.concept, this.controller.language);
             expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.concept);
-            expect(ontologyStateSvc.listItem.concepts.hierarchy).toContain({entityIRI: this.controller.concept['@id']});
-            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
-            expect(ontologyStateSvc.listItem.concepts.flat).toEqual([{prop: 'entity'}]);
+            expect(ontoUtils.addConcept).toHaveBeenCalledWith(this.controller.concept);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.concept);
+            expect(ontoUtils.addIndividual).toHaveBeenCalledWith(this.controller.concept);
             expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.concept['@id']);
             expect(ontologyStateSvc.showCreateConceptOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();

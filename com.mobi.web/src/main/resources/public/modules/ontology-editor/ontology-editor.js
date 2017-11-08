@@ -94,6 +94,7 @@
             'serializationSelect',
             'superClassSelect',
             'superPropertySelect',
+            'topConceptOverlay',
             'treeItem',
             'uploadChangesOverlay',
             'uploadOntologyTab',

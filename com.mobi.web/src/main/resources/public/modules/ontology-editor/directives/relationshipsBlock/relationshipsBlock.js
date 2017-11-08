@@ -38,6 +38,7 @@
          * @name relationshipsBlock.directive:relationshipsBlock
          * @scope
          * @restrict E
+         * @requires ontologyManager.service:ontologyManagerService
          * @requires ontologyState.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          * @requires prefixes.service:prefixes
@@ -51,9 +52,9 @@
          */
         .directive('relationshipsBlock', relationshipsBlock);
 
-        relationshipsBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'prefixes', 'responseObj'];
+        relationshipsBlock.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'prefixes', 'responseObj'];
 
-        function relationshipsBlock(ontologyStateService, ontologyUtilsManagerService, prefixes, responseObj) {
+        function relationshipsBlock(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, prefixes, responseObj) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -83,8 +84,11 @@
                     var schemeToConcept = [
                         prefixes.skos + 'hasTopConcept'
                     ];
+                    dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
+                    dvm.prefixes = prefixes;
+                    dvm.showTopConceptOverlay = false;
 
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
@@ -115,6 +119,10 @@
                         } else if (shouldDelete(axiomObject, schemeToConcept, conceptToScheme)) {
                             deleteFromSchemeHierarchy(axiomObject['@id']);
                         }
+                    }
+
+                    dvm.hasTopConceptProperty = function() {
+                        return !_.isEmpty(dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, prefixes.skos + 'hasTopConcept', dvm.os.listItem));
                     }
 
                     function containsProperty(entity, properties, value) {

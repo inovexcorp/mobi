@@ -81,7 +81,7 @@
                         if (dvm.values.length) {
                             dvm.clazz[prefixes.rdfs + 'subClassOf'] = dvm.values;
                             var superClassIds = _.map(dvm.values, '@id');
-                            if (_.intersection(superClassIds, _.concat(dvm.os.listItem.derivedConcepts, [prefixes.skos + 'Concept'])).length) {
+                            if (dvm.ontoUtils.containsDerivedConcept(superClassIds)) {
                                 dvm.os.listItem.derivedConcepts.push(dvm.clazz['@id']);
                             }
                             dvm.ontoUtils.setSuperClasses(dvm.clazz['@id'], _.map(dvm.values, '@id'));
