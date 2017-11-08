@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Open Ontology Tab directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, prefixes, util, mapperStateSvc;
+    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, prefixes, utilSvc, mapperStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -43,7 +43,7 @@ describe('Open Ontology Tab directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
             stateManagerSvc = _stateManagerService_;
             prefixes = _prefixes_;
-            util = _utilService_;
+            utilSvc = _utilService_;
             mapperStateSvc = _mapperStateService_;
         });
 
@@ -51,7 +51,7 @@ describe('Open Ontology Tab directive', function() {
         this.records[0][prefixes.dcterms + 'identifier'] = [{'@value': 'A'}];
         this.records[1][prefixes.dcterms + 'identifier'] = [{'@value': 'B'}];
         ontologyManagerSvc.getAllOntologyRecords.and.returnValue($q.when(this.records));
-        util.getDctermsValue.and.returnValue('A');
+        utilSvc.getDctermsValue.and.returnValue('A');
         this.element = $compile(angular.element('<open-ontology-tab></open-ontology-tab>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('openOntologyTab');
@@ -92,18 +92,10 @@ describe('Open Ontology Tab directive', function() {
             expect(['Upload Ontology', 'New Ontology'].indexOf(angular.element(buttons[1]).text().trim()) >= 0).toBe(true);
         });
         it('depending on whether an ontology is being deleted', function() {
-            expect(this.element.querySelectorAll('confirmation-overlay[header-text="\'Delete Ontology\'"]').length).toBe(0);
-
+            expect(this.element.querySelectorAll('confirmation-overlay').length).toBe(0);
             this.controller.showDeleteConfirmation = true;
             scope.$digest();
-            expect(this.element.querySelectorAll('confirmation-overlay[header-text="\'Delete Ontology\'"]').length).toBe(1);
-        });
-        it('depending on whether an ontology is being opened', function() {
-            expect(this.element.querySelectorAll('confirmation-overlay[header-text="\'Open\'"]').length).toBe(0);
-
-            this.controller.showOpenOverlay = true;
-            scope.$digest();
-            expect(this.element.querySelectorAll('confirmation-overlay[header-text="\'Open\'"]').length).toBe(1);
+            expect(this.element.querySelectorAll('confirmation-overlay').length).toBe(1);
         });
         it('depending on whether there is an error deleting an ontology', function() {
             this.controller.showDeleteConfirmation = true;
@@ -112,19 +104,6 @@ describe('Open Ontology Tab directive', function() {
             this.controller.errorMessage = 'Error';
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
-        });
-        it('depending on what type of ontology is being opened', function() {
-            this.controller.showOpenOverlay = true;
-            this.controller.type = 'ontology';
-            scope.$digest();
-            var typeBtns = this.element.querySelectorAll('confirmation-overlay .type');
-            expect(angular.element(typeBtns[0]).hasClass('active')).toBe(true);
-            expect(angular.element(typeBtns[1]).hasClass('active')).toBe(false);
-
-            this.controller.type = 'vocabulary';
-            scope.$digest();
-            expect(angular.element(typeBtns[0]).hasClass('active')).toBe(false);
-            expect(angular.element(typeBtns[1]).hasClass('active')).toBe(true);
         });
         it('depending on how many unopened ontologies there are, the limit, and the offset', function() {
             this.controller.filteredList = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}];
@@ -150,20 +129,25 @@ describe('Open Ontology Tab directive', function() {
     });
     describe('controller methods', function() {
         describe('should open an ontology', function() {
-            it('unless an error occurs', function() {
-                ontologyStateSvc.openOntology.and.returnValue($q.reject('Error message'));
-                this.controller.open();
-                scope.$apply();
-                expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith(this.controller.recordId, this.controller.recordTitle, this.controller.type);
-                expect(this.controller.errorMessage).toBe('Error message');
+            beforeEach(function() {
+                utilSvc.getDctermsValue.and.returnValue('title');
             });
             it('successfully', function() {
                 var ontologyId = 'ontologyId';
                 ontologyStateSvc.openOntology.and.returnValue($q.resolve(ontologyId));
-                this.controller.open();
+                this.controller.open({'@id': 'id'});
                 scope.$apply();
-                expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith(this.controller.recordId, this.controller.recordTitle, this.controller.type);
-                expect(this.controller.errorMessage).toBeUndefined();
+                expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({'@id': 'id'}, 'title');
+                expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith('id', 'title');
+                expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
+            });
+            it('unless an error occurs', function() {
+                ontologyStateSvc.openOntology.and.returnValue($q.reject('Error message'));
+                this.controller.open({'@id': 'id'});
+                scope.$apply();
+                expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({'@id': 'id'}, 'title');
+                expect(ontologyStateSvc.openOntology).toHaveBeenCalledWith('id', 'title');
+                expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
             });
         });
         it('should get a page of results', function() {
@@ -177,7 +161,7 @@ describe('Open Ontology Tab directive', function() {
         });
         describe('should show the delete confirmation overlay', function() {
             beforeEach(function() {
-                util.getDctermsValue.and.returnValue('title');
+                utilSvc.getDctermsValue.and.returnValue('title');
             });
             it('and ask the user for confirmation', function() {
                 this.controller.showDeleteConfirmationOverlay({'@id': 'record'});
@@ -237,7 +221,7 @@ describe('Open Ontology Tab directive', function() {
         });
     });
     it('should filter the ontology list when the filter text changes', function() {
-        util.getDctermsValue.and.callFake(function(obj, filter) {
+        utilSvc.getDctermsValue.and.callFake(function(obj, filter) {
             return obj['@id'] === 'recordA' ? 'test' : '';
         });
         this.controller.filterText = 'test';
@@ -254,26 +238,10 @@ describe('Open Ontology Tab directive', function() {
         button.triggerHandler('click');
         expect(ontologyStateSvc.showUploadTab).toBe(true);
     });
-    it('should set the correct state when an ontology is clicked', function() {
-        var ontology = angular.element(this.element.querySelectorAll('.ontologies .ontology')[0]);
-        ontology.triggerHandler('click');
-        expect(this.controller.recordId).toBe('recordA');
-        expect(this.controller.recordTitle).toBe('A');
-        expect(this.controller.showOpenOverlay).toBe(true);
-    });
     it('should call showDeleteConfirmationOverlay when a delete link is clicked', function() {
         spyOn(this.controller, 'showDeleteConfirmationOverlay');
         var link = angular.element(this.element.querySelectorAll('.ontologies .ontology .action-container a')[0]);
         link.triggerHandler('click');
         expect(this.controller.showDeleteConfirmationOverlay).toHaveBeenCalledWith(this.controller.filteredList[0]);
-    });
-    it('should set the correct state when a ontology type button is clicked', function() {
-        this.controller.showOpenOverlay = true;
-        scope.$digest();
-        var typeBtns = this.element.querySelectorAll('confirmation-overlay .type');
-        angular.element(typeBtns[0]).triggerHandler('click');
-        expect(this.controller.type).toBe('ontology');
-        angular.element(typeBtns[1]).triggerHandler('click');
-        expect(this.controller.type).toBe('vocabulary');
     });
 });

@@ -48,7 +48,6 @@
                     dvm.prefixes = prefixes;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.os = ontologyStateService;
-                    dvm.type = 'ontology';
                     dvm.ontology = {
                         '@id': prefix,
                         '@type': [prefixes.owl + 'Ontology']
@@ -67,19 +66,8 @@
                             util.setDctermsValue(dvm.ontology, 'description', dvm.description);
                         }
                         ontoUtils.addLanguageToNewEntity(dvm.ontology, dvm.language);
-                        if (dvm.type === 'vocabulary') {
-                            dvm.ontology[prefixes.owl + 'imports'] = [{
-                                '@id': angular.copy(prefixes.skos).slice(0, -1)
-                            }];
-                        }
-                        dvm.os.createOntology(dvm.ontology, dvm.title, dvm.description, _.join(_.map(dvm.keywords, _.trim), ','), dvm.type)
+                        dvm.os.createOntology(dvm.ontology, dvm.title, dvm.description, _.join(_.map(dvm.keywords, _.trim), ','))
                             .then(response => sm.createOntologyState(response.recordId, response.branchId, response.commitId), $q.reject)
-                            .then(() => {
-                                if (dvm.type === 'vocabulary') {
-                                    return dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, 'vocabulary', true, dvm.os.listItem.inProgressCommit, true);
-                                }
-                                return $q.resolve();
-                            }, $q.reject)
                             .then(() => dvm.os.showNewTab = false, onError);
                     }
 

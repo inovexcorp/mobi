@@ -55,7 +55,6 @@
             'datatypePropertyBlock',
             'datatypePropertyOverlay',
             'editBranchOverlay',
-            'editorRadioButtons',
             'everythingTree',
             'hierarchyTree',
             'importsBlock',
@@ -100,7 +99,6 @@
             'uploadChangesOverlay',
             'uploadOntologyTab',
             'usagesBlock',
-            'vocabularyTab',
 
             /* Services */
             'ontologyUtilsManager'
