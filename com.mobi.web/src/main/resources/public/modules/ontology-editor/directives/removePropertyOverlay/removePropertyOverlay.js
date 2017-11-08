@@ -55,27 +55,30 @@
                             || _.get(dvm.os.listItem.selected[dvm.key], '[' + dvm.index + ']["@id"]');
                     }
                     dvm.removeProperty = function() {
-                        if (dvm.onSubmit) {
-                            dvm.onSubmit({axiomObject: dvm.os.listItem.selected[dvm.key][dvm.index]});
-                        }
+                        var axiomObject = dvm.os.listItem.selected[dvm.key][dvm.index];
                         var json = {
                             '@id': dvm.os.listItem.selected['@id'],
-                            [dvm.key]: [angular.copy(dvm.os.listItem.selected[dvm.key][dvm.index])]
+                            [dvm.key]: [angular.copy(axiomObject)]
                         };
                         dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, json);
-                        if (om.isBlankNodeId(dvm.os.listItem.selected[dvm.key][dvm.index]['@id'])) {
-                            var removed = dvm.os.removeEntity(dvm.os.listItem, dvm.os.listItem.selected[dvm.key][dvm.index]['@id']);
+                        if (om.isBlankNodeId(axiomObject['@id'])) {
+                            var removed = dvm.os.removeEntity(dvm.os.listItem, axiomObject['@id']);
                             _.forEach(removed, entity => dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, entity));
                         }
                         dvm.pm.remove(dvm.os.listItem.selected, dvm.key, dvm.index);
-                        if (prefixes.rdfs + 'domain' === dvm.key && !om.isBlankNodeId(dvm.os.listItem.selected[dvm.key][dvm.index]['@id'])) {
+                        if (prefixes.rdfs + 'domain' === dvm.key && !om.isBlankNodeId(axiomObject['@id'])) {
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         } else if (prefixes.rdfs + 'range' === dvm.key) {
                             dvm.os.updatePropertyIcon(dvm.os.listItem.selected);
                         }
                         dvm.overlayFlag = false;
-                        ontoUtils.saveCurrentChanges();
-                        ontoUtils.updateLabel();
+                        ontoUtils.saveCurrentChanges()
+                            .then(() => {
+                                if (dvm.onSubmit) {
+                                    dvm.onSubmit({axiomObject});
+                                }
+                                ontoUtils.updateLabel();
+                            });
                     }
                 }
             }

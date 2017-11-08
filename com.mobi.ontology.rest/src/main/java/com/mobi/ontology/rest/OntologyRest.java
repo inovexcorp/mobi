@@ -238,6 +238,33 @@ public interface OntologyRest {
                                    @FormDataParam("file") InputStream fileInputStream);
 
     /**
+     * Returns a JSON object with keys for the list of IRIs of derived skos:Concepts, the list of IRIs of derived
+     * skos:ConceptSchemes, an object with the concept hierarchy and index, and an object with the concept scheme
+     * hierarchy and index.
+     *
+     * @param context the context of the request.
+     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @return JSON object with keys "derivedConcepts", "derivedConceptSchemes", "concepts.hierarchy", "concepts.index",
+     *      "conceptSchemes.hierarchy", and "conceptSchemes.index".
+     */
+    @GET
+    @Path("{recordId}/vocabulary-stuff")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    Response getVocabularyStuff(@Context ContainerRequestContext context,
+                                @PathParam("recordId") String recordIdStr,
+                                @QueryParam("branchId") String branchIdStr,
+                                @QueryParam("commitId") String commitIdStr);
+
+    /**
      * Returns IRIs in the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.

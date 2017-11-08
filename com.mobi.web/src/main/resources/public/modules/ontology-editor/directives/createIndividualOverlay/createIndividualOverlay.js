@@ -65,38 +65,19 @@
                     }
                     dvm.create = function() {
                         // update relevant lists
-                        var split = $filter('splitIRI')(dvm.individual['@id']);
-                        _.get(dvm.os.listItem, 'individuals.iris').push({namespace:split.begin + split.then, localName: split.end});
-                        var classesWithIndividuals = _.get(dvm.os.listItem, 'classesWithIndividuals');
-                        var classesAndIndividuals = _.get(dvm.os.listItem, 'classesAndIndividuals');
-                        var individualsParentPath = _.get(dvm.os.listItem, 'individualsParentPath');
-                        var paths = [];
-                        var individuals = [];
-
-                        _.forEach(dvm.individual['@type'], (type) => {
-                            var individual = [];
-                            var existingInds = _.get(dvm.os.listItem.classesAndIndividuals, type);
-                            var path = dvm.os.getPathsTo(_.get(dvm.os.listItem, 'classes.hierarchy'), _.get(dvm.os.listItem, 'classes.index'), type);
-
-                            individual.push(dvm.individual['@id']);
-                            dvm.os.listItem.classesAndIndividuals[type] = existingInds ? _.concat(individual, existingInds) : individual;
-                            individuals.push(type);
-                            paths.push(path);
-                        });
-
-                        var uniqueUris =  _.uniq(_.flattenDeep(paths));
-                        _.set(dvm.os.listItem, 'classesWithIndividuals', _.concat(classesWithIndividuals, individuals));
-                        _.set(dvm.os.listItem, 'individualsParentPath', _.concat(individualsParentPath, uniqueUris));
-
+                        dvm.ontoUtils.addIndividual(dvm.individual);
                         // add the entity to the ontology
                         dvm.individual['@type'].push(prefixes.owl + 'NamedIndividual');
                         dvm.os.addEntity(dvm.os.listItem, dvm.individual);
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.individual);
-                        dvm.os.listItem.individuals.flat = dvm.os.createFlatIndividualTree(dvm.os.listItem);
-
                         // select the new individual
                         dvm.os.selectItem(dvm.individual['@id'], false);
-
+                        // add to concept hierarchy if an instance of a derived concept
+                        if (dvm.ontoUtils.containsDerivedConcept(dvm.individual['@type'])) {
+                            dvm.ontoUtils.addConcept(dvm.individual);
+                        } else if (dvm.ontoUtils.containsDerivedConceptScheme(dvm.individual['@type'])) {
+                            dvm.ontoUtils.addConceptScheme(dvm.individual);
+                        }
                         // hide the overlay
                         dvm.os.showCreateIndividualOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
