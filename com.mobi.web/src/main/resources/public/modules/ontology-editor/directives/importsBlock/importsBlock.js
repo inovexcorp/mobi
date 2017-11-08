@@ -57,7 +57,7 @@
                         pm.remove(dvm.os.listItem.selected, importsIRI, _.findIndex(dvm.os.listItem.selected[importsIRI], {'@id': dvm.url}));
                         dvm.os.saveChanges(dvm.os.listItem.ontologyRecord.recordId, {additions: dvm.os.listItem.additions, deletions: dvm.os.listItem.deletions})
                             .then(() => dvm.os.afterSave(), $q.reject)
-                            .then(() => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyRecord.type, dvm.os.listItem.upToDate, dvm.os.listItem.inProgressCommit), $q.reject)
+                            .then(() => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.upToDate, dvm.os.listItem.inProgressCommit), $q.reject)
                             .then(() => {
                                 dvm.os.listItem.isSaved = dvm.os.isCommittable(dvm.os.listItem.ontologyRecord.recordId);
                                 dvm.setIndirectImports();
@@ -74,7 +74,7 @@
                     }
 
                     dvm.refresh = function() {
-                        dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyRecord.type, dvm.os.listItem.upToDate, dvm.os.listItem.inProgressCommit, true)
+                        dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.upToDate, dvm.os.listItem.inProgressCommit, true)
                             .then(response => {
                                 dvm.setIndirectImports();
                                 util.createSuccessToast('');

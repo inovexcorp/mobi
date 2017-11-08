@@ -30,7 +30,7 @@
          *
          * @description
          * The `relationshipOverlay` module only provides the `relationshipOverlay` directive which creates
-         * the relationship overlay within the vocabulary editor.
+         * the relationship overlay within the ontology editor.
          */
         .module('relationshipOverlay', [])
         /**

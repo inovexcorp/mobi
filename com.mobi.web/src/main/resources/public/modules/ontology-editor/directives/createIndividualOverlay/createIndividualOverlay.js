@@ -75,6 +75,8 @@
                         // add to concept hierarchy if an instance of a derived concept
                         if (dvm.ontoUtils.containsDerivedConcept(dvm.individual['@type'])) {
                             dvm.ontoUtils.addConcept(dvm.individual);
+                        } else if (dvm.ontoUtils.containsDerivedConceptScheme(dvm.individual['@type'])) {
+                            dvm.ontoUtils.addConceptScheme(dvm.individual);
                         }
                         // hide the overlay
                         dvm.os.showCreateIndividualOverlay = false;

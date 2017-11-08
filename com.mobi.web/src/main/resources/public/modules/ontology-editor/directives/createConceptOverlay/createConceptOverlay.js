@@ -84,10 +84,7 @@
                         // update relevant lists
                         dvm.ontoUtils.addConcept(dvm.concept);
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.concept);
-                        // Add to individuals tab if in ontology editor
-                        if (dvm.os.listItem.ontologyRecord.type === 'ontology') {
-                            dvm.ontoUtils.addIndividual(dvm.concept);
-                        }
+                        dvm.ontoUtils.addIndividual(dvm.concept);
                         // select the new class
                         dvm.os.selectItem(_.get(dvm.concept, '@id'));
                         // hide the overlay

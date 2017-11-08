@@ -158,67 +158,39 @@ describe('Create Concept Overlay directive', function() {
             expect(this.controller.iriHasChanged).toBe(true);
             expect(ontologyStateSvc.setCommonIriParts).toHaveBeenCalledWith('begin', 'then');
         });
-        describe('should create a concept', function() {
-            beforeEach(function() {
-                ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
-                this.schemes = {
-                    scheme1: {'@id': 'scheme1', mobi: {}},
-                    scheme2: {'@id': 'scheme2', mobi: {}}
-                };
-                this.schemes.scheme1[prefixes.skos + 'hasTopConcept'] = [{'@id': 'test'}];
-                this.controller.schemes = _.values(this.schemes);
-                var self = this;
-                ontologyStateSvc.getEntityByRecordId.and.callFake(function(recordId, schemeId) {
-                    return _.get(self.schemes, schemeId);
-                });
-                this.controller.concept = {'@id': 'concept'};
-                this.json = {};
-                this.json[prefixes.skos + 'hasTopConcept'] = [{'@id': 'concept'}];
+        it('should create a concept', function() {
+            ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'entity'}]);
+            this.schemes = {
+                scheme1: {'@id': 'scheme1', mobi: {}},
+                scheme2: {'@id': 'scheme2', mobi: {}}
+            };
+            this.schemes.scheme1[prefixes.skos + 'hasTopConcept'] = [{'@id': 'test'}];
+            this.controller.schemes = _.values(this.schemes);
+            var self = this;
+            ontologyStateSvc.getEntityByRecordId.and.callFake(function(recordId, schemeId) {
+                return _.get(self.schemes, schemeId);
             });
-            it('if in the ontology editor', function() {
-                ontologyStateSvc.listItem.ontologyRecord.type = 'ontology';
-                this.controller.create();
-                expect(this.schemes.scheme1[prefixes.skos + 'hasTopConcept'].length).toBe(2);
-                expect(this.schemes.scheme2[prefixes.skos + 'hasTopConcept'].length).toBe(1);
-                this.controller.schemes.forEach(function(scheme) {
-                    expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, 'concept', ontologyStateSvc.listItem.conceptSchemes.index, scheme['@id']);
-                    this.json['@id'] = scheme['@id'];
-                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.json);
-                }, this);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
-                expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{prop: 'entity'}]);
-                expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.concept, this.controller.language);
-                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.concept);
-                expect(ontoUtils.addConcept).toHaveBeenCalledWith(this.controller.concept);
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.concept);
-                expect(ontoUtils.addIndividual).toHaveBeenCalledWith(this.controller.concept);
-                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.concept['@id']);
-                expect(ontologyStateSvc.showCreateConceptOverlay).toBe(false);
-                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-            });
-            it('if in the vocabulary editor', function() {
-                this.controller.create();
-                expect(this.schemes.scheme1[prefixes.skos + 'hasTopConcept'].length).toBe(2);
-                expect(this.schemes.scheme2[prefixes.skos + 'hasTopConcept'].length).toBe(1);
-                this.controller.schemes.forEach(function(scheme) {
-                    expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, 'concept', ontologyStateSvc.listItem.conceptSchemes.index, scheme['@id']);
-                    this.json['@id'] = scheme['@id'];
-                    expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.json);
-                }, this);
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
-                expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{prop: 'entity'}]);
-                expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.concept, this.controller.language);
-                expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.concept);
-                expect(ontoUtils.addConcept).toHaveBeenCalledWith(this.controller.concept);
-                /*expect(ontologyStateSvc.listItem.concepts.hierarchy).toContain({entityIRI: this.controller.concept['@id']});
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
-                expect(ontologyStateSvc.listItem.concepts.flat).toEqual([{prop: 'entity'}]);*/
-                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.concept);
-                expect(ontoUtils.addIndividual).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.concept['@id']);
-                expect(ontologyStateSvc.showCreateConceptOverlay).toBe(false);
-                expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
-            });
+            this.controller.concept = {'@id': 'concept'};
+            var json = {};
+            json[prefixes.skos + 'hasTopConcept'] = [{'@id': 'concept'}];
+            this.controller.create();
+            expect(this.schemes.scheme1[prefixes.skos + 'hasTopConcept'].length).toBe(2);
+            expect(this.schemes.scheme2[prefixes.skos + 'hasTopConcept'].length).toBe(1);
+            this.controller.schemes.forEach(function(scheme) {
+                expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, 'concept', ontologyStateSvc.listItem.conceptSchemes.index, scheme['@id']);
+                json['@id'] = scheme['@id'];
+                expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, json);
+            }, this);
+            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
+            expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{prop: 'entity'}]);
+            expect(ontoUtils.addLanguageToNewEntity).toHaveBeenCalledWith(this.controller.concept, this.controller.language);
+            expect(ontologyStateSvc.addEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, this.controller.concept);
+            expect(ontoUtils.addConcept).toHaveBeenCalledWith(this.controller.concept);
+            expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.controller.concept);
+            expect(ontoUtils.addIndividual).toHaveBeenCalledWith(this.controller.concept);
+            expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith(this.controller.concept['@id']);
+            expect(ontologyStateSvc.showCreateConceptOverlay).toBe(false);
+            expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });
     });
     it('should call create when the button is clicked', function() {

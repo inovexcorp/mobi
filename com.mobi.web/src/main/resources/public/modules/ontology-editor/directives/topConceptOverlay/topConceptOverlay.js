@@ -30,7 +30,7 @@
          *
          * @description
          * The `topConceptOverlay` module only provides the `topConceptOverlay` directive which creates
-         * the top concept overlay within the vocabulary editor.
+         * the top concept overlay within the ontology editor.
          */
         .module('topConceptOverlay', [])
         /**

@@ -6,8 +6,12 @@
     flex-direction: column;
     height: 100%;
 
-    .actions .form-inline {
-        padding: 9px;
+    .actions {
+        height: 48px;
+
+        .form-inline {
+            padding: 7px;
+        }
     }
 
     .list {
