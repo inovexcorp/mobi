@@ -156,11 +156,11 @@ describe('Relationships Block directive', function() {
             scope.$digest();
             expect(this.element.find('top-concept-overlay').length).toBe(1);
         });
-        /*it('depending on whether there is a top concept property', function() {
-            ontologyManagerSvc.isConceptScheme.and.returnValue(false);
+        it('depending on whether there is a top concept property', function() {
+            ontologyManagerSvc.isConceptScheme.and.returnValue(true);
             spyOn(this.controller, 'hasTopConceptProperty').and.returnValue(true);
             scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('.top-concept-header button')[0]);
+            var button = angular.element(this.element.querySelectorAll('block-header button')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
             this.controller.hasTopConceptProperty.and.returnValue(false);
@@ -168,15 +168,15 @@ describe('Relationships Block directive', function() {
             expect(button.attr('disabled')).toBeTruthy();
         });
         it('depending on whether there are relationships', function() {
-            ontologyManagerSvc.isConceptScheme.and.returnValue(true);
+            ontologyManagerSvc.isConceptScheme.and.returnValue(false);
             scope.$digest();
-            var link = angular.element(this.element.querySelectorAll('.relationship-header button')[0]);
+            var link = angular.element(this.element.querySelectorAll('block-header button')[0]);
             expect(link.attr('disabled')).toBeTruthy();
 
             this.controller.relationshipList = [{}];
             scope.$digest();
             expect(link.attr('disabled')).toBeFalsy();
-        });*/
+        });
     });
     describe('controller methods', function() {
         it('openRemoveOverlay sets the correct variables', function() {
