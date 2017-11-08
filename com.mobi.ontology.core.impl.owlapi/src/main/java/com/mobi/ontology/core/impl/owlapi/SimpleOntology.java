@@ -24,10 +24,6 @@ package com.mobi.ontology.core.impl.owlapi;
  */
 
 import com.mobi.ontology.core.api.Annotation;
-import com.mobi.ontology.core.api.propertyexpression.DataProperty;
-import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
-import com.mobi.ontology.core.utils.MobiStringUtils;
-import org.apache.commons.io.IOUtils;
 import com.mobi.ontology.core.api.Individual;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
@@ -37,17 +33,21 @@ import com.mobi.ontology.core.api.classexpression.CardinalityRestriction;
 import com.mobi.ontology.core.api.classexpression.OClass;
 import com.mobi.ontology.core.api.datarange.Datatype;
 import com.mobi.ontology.core.api.propertyexpression.AnnotationProperty;
+import com.mobi.ontology.core.api.propertyexpression.DataProperty;
+import com.mobi.ontology.core.api.propertyexpression.ObjectProperty;
 import com.mobi.ontology.core.api.propertyexpression.PropertyExpression;
 import com.mobi.ontology.core.api.types.ClassExpressionType;
 import com.mobi.ontology.core.impl.owlapi.classexpression.SimpleCardinalityRestriction;
 import com.mobi.ontology.core.impl.owlapi.classexpression.SimpleClass;
 import com.mobi.ontology.core.utils.MobiOntologyException;
+import com.mobi.ontology.core.utils.MobiStringUtils;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.persistence.utils.api.SesameTransformer;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
+import org.apache.commons.io.IOUtils;
 import org.openrdf.model.util.Models;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
@@ -155,21 +155,7 @@ public class SimpleOntology implements Ontology {
     // Instance initialization block sets MissingImportListener for handling missing imports for an ontology.
     private final OWLOntologyLoaderConfiguration config = new OWLOntologyLoaderConfiguration()
             .setMissingImportHandlingStrategy(MissingImportHandlingStrategy.SILENT);
-    private final OWLOntologyWriterConfiguration writerConfig = new OWLOntologyWriterConfiguration()
-            .withRemapAllAnonymousIndividualsIds(false).withSaveIdsForAllAnonymousIndividuals(true);
-    private final OWLOntologyManager owlManager = OWLManager.createOWLOntologyManager();
-
-    {
-        owlManager.addMissingImportListener((MissingImportListener) arg0 -> {
-            missingImports.add(SimpleOntologyValues.mobiIRI(arg0.getImportedOntologyURI()));
-            LOG.warn("Missing import {} ", arg0.getImportedOntologyURI());
-        });
-        owlManager.setOntologyLoaderConfiguration(config);
-        owlManager.setOntologyWriterConfiguration(writerConfig);
-        owlManager.setOntologyConfigurator(owlManager.getOntologyConfigurator()
-                .withRemapAllAnonymousIndividualsIds(false)
-                .withSaveIdsForAllAnonymousIndividuals(true));
-    }
+    private OWLOntologyManager owlManager;
 
     /**
      * Creates a brand new SimpleOntology using an OntologyId.
@@ -182,11 +168,8 @@ public class SimpleOntology implements Ontology {
      */
     public SimpleOntology(OntologyId ontologyId, OntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService) throws MobiOntologyException {
-        this.ontologyManager = ontologyManager;
         this.ontologyId = ontologyId;
-        this.transformer = transformer;
-        this.bNodeService = bNodeService;
-        setUpOwlManager(ontologyManager, transformer);
+        initialize(ontologyManager, transformer, bNodeService);
 
         try {
             Optional<org.semanticweb.owlapi.model.IRI> owlOntIRI = Optional.empty();
@@ -220,10 +203,7 @@ public class SimpleOntology implements Ontology {
      */
     public SimpleOntology(InputStream inputStream, OntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService) throws MobiOntologyException {
-        this.ontologyManager = ontologyManager;
-        this.transformer = transformer;
-        this.bNodeService = bNodeService;
-        setUpOwlManager(ontologyManager, transformer);
+        initialize(ontologyManager, transformer, bNodeService);
 
         try {
             owlOntology = owlManager.loadOntologyFromOntologyDocument(inputStream);
@@ -263,10 +243,7 @@ public class SimpleOntology implements Ontology {
      */
     public SimpleOntology(Model model, OntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService) throws MobiOntologyException {
-        this.ontologyManager = ontologyManager;
-        this.transformer = transformer;
-        this.bNodeService = bNodeService;
-        setUpOwlManager(ontologyManager, transformer);
+        initialize(ontologyManager, transformer, bNodeService);
 
         try {
             owlOntology = owlManager.createOntology();
@@ -291,10 +268,7 @@ public class SimpleOntology implements Ontology {
      */
     public SimpleOntology(IRI iri, SimpleOntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService) throws MobiOntologyException {
-        this.ontologyManager = ontologyManager;
-        this.transformer = transformer;
-        this.bNodeService = bNodeService;
-        setUpOwlManager(ontologyManager, transformer);
+        initialize(ontologyManager, transformer, bNodeService);
 
         try {
             OWLOntologyDocumentSource documentSource = new IRIDocumentSource(SimpleOntologyValues.owlapiIRI(iri));
@@ -317,10 +291,7 @@ public class SimpleOntology implements Ontology {
      */
     public SimpleOntology(String json, OntologyManager ontologyManager, SesameTransformer transformer,
                           BNodeService bNodeService) throws MobiOntologyException {
-        this.ontologyManager = ontologyManager;
-        this.transformer = transformer;
-        this.bNodeService = bNodeService;
-        setUpOwlManager(ontologyManager, transformer);
+        initialize(ontologyManager, transformer, bNodeService);
 
         OWLParserFactory factory = new RioJsonLDParserFactory();
         OWLParser parser = factory.createParser();
@@ -340,10 +311,7 @@ public class SimpleOntology implements Ontology {
 
     protected SimpleOntology(OWLOntology ontology, Resource resource, OntologyManager ontologyManager,
                              SesameTransformer transformer, BNodeService bNodeService) {
-        this.ontologyManager = ontologyManager;
-        this.transformer = transformer;
-        this.bNodeService = bNodeService;
-        setUpOwlManager(ontologyManager, transformer);
+        initialize(ontologyManager, transformer, bNodeService);
 
         try {
             owlOntology = owlManager.copyOntology(ontology, OntologyCopy.DEEP);
@@ -353,6 +321,56 @@ public class SimpleOntology implements Ontology {
                 this.owlManager.makeLoadImportRequest(declaration, config);
                 this.owlManager.applyChange(new AddImport(this.owlOntology, declaration));
             });
+        } catch (OWLOntologyCreationException e) {
+            throw new MobiOntologyException("Error in ontology creation", e);
+        }
+
+        createOntologyId(resource);
+        owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
+    }
+
+    private void initialize(OntologyManager ontologyManager, SesameTransformer transformer, BNodeService bNodeService) {
+        this.ontologyManager = ontologyManager;
+        this.transformer = transformer;
+        this.bNodeService = bNodeService;
+        this.owlManager = OWLManager.createOWLOntologyManager();
+        owlManager.addMissingImportListener((MissingImportListener) arg0 -> {
+            missingImports.add(SimpleOntologyValues.mobiIRI(arg0.getImportedOntologyURI()));
+            LOG.warn("Missing import {} ", arg0.getImportedOntologyURI());
+        });
+        owlManager.setOntologyLoaderConfiguration(config);
+        OWLOntologyWriterConfiguration writerConfig = new OWLOntologyWriterConfiguration()
+                .withRemapAllAnonymousIndividualsIds(false)
+                .withSaveIdsForAllAnonymousIndividuals(true);
+        owlManager.setOntologyWriterConfiguration(writerConfig);
+        owlManager.setOntologyConfigurator(owlManager.getOntologyConfigurator()
+                .withRemapAllAnonymousIndividualsIds(false)
+                .withSaveIdsForAllAnonymousIndividuals(true));
+        owlManager.getIRIMappers().add(new MobiOntologyIRIMapper(ontologyManager));
+        OWLOntologyFactory originalFactory = owlManager.getOntologyFactories().iterator().next();
+        owlManager.getOntologyFactories().add(new MobiOntologyFactory(ontologyManager, originalFactory,
+                transformer));
+    }
+
+    /**
+     * Creates a new SimpleOntology object using the provided OWLOntology and OWLOntologyManager. If the provided
+     * OWLOntologyManager does not contain the provided OWLOntology, the provided OWLOntology is copied into the
+     * OWLOntologyManager. Otherwise, the provided OWLOntology is used.
+     */
+    protected SimpleOntology(OWLOntology ontology, OWLOntologyManager owlManager, Resource resource,
+                             OntologyManager ontologyManager, SesameTransformer transformer, BNodeService bNodeService)
+    {
+        this.ontologyManager = ontologyManager;
+        this.transformer = transformer;
+        this.bNodeService = bNodeService;
+        this.owlManager = owlManager;
+
+        try {
+            if (!owlManager.contains(ontology)) {
+                owlOntology = owlManager.copyOntology(ontology, OntologyCopy.DEEP);
+            } else {
+                owlOntology = ontology;
+            }
         } catch (OWLOntologyCreationException e) {
             throw new MobiOntologyException("Error in ontology creation", e);
         }
@@ -403,14 +421,17 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<Ontology> getImportsClosure() {
-        return owlOntology.importsClosure()
+        LOG.trace("Enter getImportsClosure()");
+        Set<Ontology> ontologies = owlOntology.importsClosure()
                 .map(ontology -> {
                     if (ontology.equals(owlOntology)) {
                         return this;
                     }
-                    return SimpleOntologyValues.mobiOntology(ontology);
+                    return new SimpleOntology(ontology, owlManager, null, ontologyManager, transformer, bNodeService);
                 })
                 .collect(Collectors.toSet());
+        LOG.trace("Exit getImportsClosure()");
+        return ontologies;
     }
 
     @Override
@@ -864,12 +885,5 @@ public class SimpleOntology implements Ontology {
 
     private <T extends OWLPropertyDomainAxiom<?>> boolean hasNoDomain(Stream<T> stream) {
         return stream.map(HasDomain::getDomain).count() == 0;
-    }
-
-    private void setUpOwlManager(OntologyManager ontologyManager, SesameTransformer sesameTransformer) {
-        owlManager.getIRIMappers().add(new MobiOntologyIRIMapper(ontologyManager));
-        OWLOntologyFactory originalFactory = owlManager.getOntologyFactories().iterator().next();
-        owlManager.getOntologyFactories().add(new MobiOntologyFactory(ontologyManager, originalFactory,
-                sesameTransformer));
     }
 }
