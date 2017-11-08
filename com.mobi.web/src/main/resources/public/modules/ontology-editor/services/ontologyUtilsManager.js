@@ -51,6 +51,20 @@
             self.containsDerivedConcept = function(arr) {
                 return !!_.intersection(arr, _.concat(os.listItem.derivedConcepts, [prefixes.skos + 'Concept'])).length;
             }
+            /**
+             * @ngdoc method
+             * @name containsDerivedSemanticRelation
+             * @methodOf ontologyUtilsManager.service:ontologyUtilsManagerService
+             *
+             * @description
+             * Determines whether the provided array of IRI objects contains a derived skos:semanticRelation or skos:semanticRelation.
+             *
+             * @param {string[]} arr An array of IRI objects
+             * @return {boolean} True if the array contains a dervied skos:semanticRelation or skos:semanticRelation
+             */
+            self.containsDerivedSemanticRelation = function(arr) {
+                return !!_.intersectionBy(arr, _.concat(os.listItem.derivedSemanticRelations, [{namespace: prefixes.skos, localName: 'semanticRelation'}]), ro.getItemIri).length;
+            }
 
             self.addConcept = function(concept) {
                 var hierarchy = _.get(os.listItem, 'concepts.hierarchy');
@@ -121,11 +135,15 @@
 
             self.deleteObjectProperty = function() {
                 var entityIRI = os.getActiveEntityIRI();
+                var types = os.listItem.selected['@type'];
                 var split = $filter('splitIRI')(entityIRI);
                 _.remove(os.listItem.objectProperties.iris, {namespace: split.begin + split.then, localName: split.end});
                 os.deleteEntityFromHierarchy(os.listItem.objectProperties.hierarchy, entityIRI, os.listItem.objectProperties.index);
                 os.listItem.objectProperties.flat = os.flattenHierarchy(os.listItem.objectProperties.hierarchy, os.listItem.ontologyRecord.recordId);
-                self.commonDelete(entityIRI, true);
+                self.commonDelete(entityIRI, true)
+                    .then(() => {
+                        os.setVocabularyStuff();
+                    });
             }
 
             self.deleteDataTypeProperty = function() {

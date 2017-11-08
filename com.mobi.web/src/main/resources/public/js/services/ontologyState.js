@@ -137,6 +137,7 @@
                 dataPropertyRange: om.defaultDatatypes,
                 derivedConcepts: [],
                 derivedConceptSchemes: [],
+                derivedSemanticRelations: [],
                 classes: {
                     iris: [],
                     hierarchy: [],
@@ -208,6 +209,7 @@
                 importedOntologyIds: [],
                 derivedConcepts: [],
                 derivedConceptSchemes: [],
+                derivedSemanticRelations: [],
                 annotations: {
                     iris: angular.copy(_.union(propertyManagerService.defaultAnnotations, propertyManagerService.skosAnnotations, propertyManagerService.owlAnnotations))
                 },
@@ -552,6 +554,7 @@
                     listItem.individuals.iris = _.get(response[0], 'namedIndividuals');
                     listItem.derivedConcepts = _.map(_.get(response[0], 'derivedConcepts', []), ro.getItemIri);
                     listItem.derivedConceptSchemes = _.map(_.get(response[0], 'derivedConceptSchemes', []), ro.getItemIri);
+                    listItem.derivedSemanticRelations = _.map(_.get(response[0], 'derivedSemanticRelations', []));
                     listItem.dataPropertyRange = _.unionWith(
                         _.get(response[0], 'datatypes'),
                         om.defaultDatatypes,
@@ -652,6 +655,7 @@
                     listItem.objectProperties.iris = _.get(response[0], 'objectProperties');
                     listItem.derivedConcepts = _.map(_.get(response[0], 'derivedConcepts', []), ro.getItemIri);
                     listItem.derivedConceptSchemes = _.map(_.get(response[0], 'derivedConceptSchemes', []), ro.getItemIri);
+                    listItem.derivedSemanticRelations = _.map(_.get(response[0], 'derivedSemanticRelations', []));
                     listItem.annotations.iris = _.unionWith(
                         _.get(response[0], 'annotationProperties'),
                         propertyManagerService.defaultAnnotations,
@@ -710,6 +714,7 @@
                     .then(response => {
                         listItem.derivedConcepts = _.map(_.get(response, 'derivedConcepts', []), ro.getItemIri);
                         listItem.derivedConceptSchemes = _.map(_.get(response, 'derivedConceptSchemes', []), ro.getItemIri);
+                        listItem.derivedSemanticRelations = _.map(_.get(response, 'derivedSemanticRelations', []));
                         listItem.concepts.hierarchy = _.get(response, 'concepts.hierarchy', []);
                         listItem.concepts.index = _.get(response, 'concepts.index', {});
                         listItem.concepts.flat = self.flattenHierarchy(listItem.concepts.hierarchy, listItem.ontologyRecord.recordId, listItem);

@@ -78,6 +78,25 @@ describe('Ontology Utils Manager service', function() {
             expect(ontologyUtilsManagerSvc.containsDerivedConcept(['test'])).toEqual(false);
         });
     });
+    describe('containsDerivedSemanticRelation returns', function() {
+        beforeEach(function () {
+            ontologyStateSvc.listItem.derivedSemanticRelations = [{localName: 'derived', namespace: ''}];
+            responseObj.getItemIri.and.callFake(function(obj) {
+                return obj.namespace + obj.localName;
+            });
+        });
+        describe('true if array contains', function() {
+            it('a derived semanticRelation', function() {
+                expect(ontologyUtilsManagerSvc.containsDerivedSemanticRelation([{localName: 'derived', namespace: ''}])).toEqual(true);
+            });
+            it('skos:semanticRelation', function() {
+                expect(ontologyUtilsManagerSvc.containsDerivedSemanticRelation([{localName: 'semanticRelation', namespace: prefixes.skos}])).toEqual(true);
+            });
+        });
+        it('false if array does not contain a derived semanticRelation or skos:semanticRelation', function() {
+            expect(ontologyUtilsManagerSvc.containsDerivedSemanticRelation([{localName: 'test', namespace: ''}])).toEqual(false);
+        });
+    });
     it('addConcept should update relevant lists when a concept is added', function() {
         var concept = {'@id': 'concept'};
         ontologyUtilsManagerSvc.addConcept(concept);
@@ -180,18 +199,20 @@ describe('Ontology Utils Manager service', function() {
         expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
     });
     it('deleteObjectProperty should call the proper methods', function() {
-        spyOn(ontologyUtilsManagerSvc, 'commonDelete');
+        spyOn(ontologyUtilsManagerSvc, 'commonDelete').and.returnValue($q.when());
         ontologyStateSvc.getActiveEntityIRI.and.returnValue('begin/end');
         splitIRI.and.returnValue({begin: 'begin', then: '/', end: 'end'});
         ontologyStateSvc.listItem.objectProperties.iris = [{namespace: 'begin/', localName: 'end'}];
         ontologyStateSvc.getOntologiesArray.and.returnValue([{prop: 'ontology'}]);
         ontologyUtilsManagerSvc.deleteObjectProperty();
+        scope.$apply();
         expect(ontologyStateSvc.getActiveEntityIRI).toHaveBeenCalled();
         expect(ontologyStateSvc.listItem.objectProperties.iris.length).toBe(0);
         expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectProperties.hierarchy, 'begin/end', ontologyStateSvc.listItem.objectProperties.index);
         expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectProperties.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
         expect(ontologyStateSvc.listItem.objectProperties.flat).toEqual([{entityIRI: 'iri'}]);
         expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith('begin/end', true);
+        expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
     });
     it('deleteDataTypeProperty should call the proper methods', function() {
         spyOn(ontologyUtilsManagerSvc, 'commonDelete');

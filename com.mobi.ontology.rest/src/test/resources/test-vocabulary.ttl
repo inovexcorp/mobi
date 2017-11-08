@@ -54,3 +54,10 @@
 :ConceptScheme3 rdf:type owl:NamedIndividual , skos:ConceptScheme .
 
 
+#################################################################
+#    Individuals
+#################################################################
+
+###  https://mobi.com/vocabulary#SemanticRelationSubProperty
+:SemanticRelationSubProperty rdf:type owl:ObjectProperty ;
+    rdfs:subPropertyOf skos:semanticRelation .

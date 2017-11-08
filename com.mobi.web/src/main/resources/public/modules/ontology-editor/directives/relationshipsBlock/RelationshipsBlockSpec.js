@@ -132,11 +132,11 @@ describe('Relationships Block directive', function() {
             scope.$apply();
             expect(this.element.find('property-values').length).toBe(0);
         });
-        it('with a block-header a', function() {
-            expect(this.element.querySelectorAll('block-header a').length).toBe(1);
+        it('with a block-header button', function() {
+            expect(this.element.querySelectorAll('block-header button').length).toBe(1);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(this.element.querySelectorAll('block-header a').length).toBe(0);
+            expect(this.element.querySelectorAll('block-header button').length).toBe(0);
         });
         it('with a .relationship-header', function() {
             expect(this.element.querySelectorAll('.relationship-header').length).toBe(1);
@@ -156,6 +156,27 @@ describe('Relationships Block directive', function() {
             scope.$digest();
             expect(this.element.find('top-concept-overlay').length).toBe(1);
         });
+        /*it('depending on whether there is a top concept property', function() {
+            ontologyManagerSvc.isConceptScheme.and.returnValue(false);
+            spyOn(this.controller, 'hasTopConceptProperty').and.returnValue(true);
+            scope.$digest();
+            var button = angular.element(this.element.querySelectorAll('.top-concept-header button')[0]);
+            expect(button.attr('disabled')).toBeFalsy();
+
+            this.controller.hasTopConceptProperty.and.returnValue(false);
+            scope.$digest();
+            expect(button.attr('disabled')).toBeTruthy();
+        });
+        it('depending on whether there are relationships', function() {
+            ontologyManagerSvc.isConceptScheme.and.returnValue(true);
+            scope.$digest();
+            var link = angular.element(this.element.querySelectorAll('.relationship-header button')[0]);
+            expect(link.attr('disabled')).toBeTruthy();
+
+            this.controller.relationshipList = [{}];
+            scope.$digest();
+            expect(link.attr('disabled')).toBeFalsy();
+        });*/
     });
     describe('controller methods', function() {
         it('openRemoveOverlay sets the correct variables', function() {
@@ -210,9 +231,9 @@ describe('Relationships Block directive', function() {
             });
         });
     });
-    it('should set the correct state when the add relationship link is clicked', function() {
-        var link = angular.element(this.element.querySelectorAll('block-header a')[0]);
-        link.triggerHandler('click');
+    it('should set the correct state when the add relationship button is clicked', function() {
+        var button = angular.element(this.element.querySelectorAll('block-header button')[0]);
+        button.triggerHandler('click');
         expect(ontologyStateSvc.showRelationshipOverlay).toBe(true);
     });
 

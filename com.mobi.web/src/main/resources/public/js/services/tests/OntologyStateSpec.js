@@ -23,7 +23,7 @@
 describe('Ontology State Service', function() {
     var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc, $document, responseObj, $state;
 
-    var error, format, title, description, keywords, inProgressCommit, emptyInProgressCommit, recordId, recordTitle, branchId, commitId, ontologyId, catalogId, anonymous, branch, commitObj, ontologyType, vocabularyType, jsonFilter, differenceObj, index, importedOntologies, importedOntologyIds, classId, classId2, objectPropertyId, objectPropertyId2, datatypeId, datatypeId2, annotationId, annotationId2, dataPropertyId, dataPropertyId2, individualId, individualId2, conceptId, conceptSchemeId, irisResponse, importedIrisResponse, classHierarchiesResponse, conceptHierarchiesResponse, conceptSchemeHierarchiesResponse, classesWithIndividualsResponse, dataPropertyHierarchiesResponse, objectPropertyHierarchiesResponse, annotationPropertyHierarchiesResponse, branches, path;
+    var error, format, title, description, keywords, inProgressCommit, emptyInProgressCommit, recordId, recordTitle, branchId, commitId, ontologyId, catalogId, anonymous, branch, commitObj, ontologyType, vocabularyType, jsonFilter, differenceObj, index, importedOntologies, importedOntologyIds, classId, classId2, objectPropertyId, objectPropertyId2, datatypeId, datatypeId2, annotationId, annotationId2, dataPropertyId, dataPropertyId2, individualId, individualId2, conceptId, conceptSchemeId, semanticRelationId, irisResponse, importedIrisResponse, classHierarchiesResponse, conceptHierarchiesResponse, conceptSchemeHierarchiesResponse, classesWithIndividualsResponse, dataPropertyHierarchiesResponse, objectPropertyHierarchiesResponse, annotationPropertyHierarchiesResponse, branches, path;
 
     beforeEach(function() {
         module('ontologyState');
@@ -142,6 +142,7 @@ describe('Ontology State Service', function() {
         individualId2 = 'individualId2';
         conceptId = 'conceptId';
         conceptSchemeId = 'conceptSchemeId';
+        semanticRelationId = 'semanticRelationId';
         irisResponse = {
             annotationProperties: [{localName: annotationId, namespace: annotationId}],
             classes: [{localName: classId, namespace: classId}],
@@ -150,7 +151,8 @@ describe('Ontology State Service', function() {
             namedIndividuals: [{localName: individualId, namespace: individualId}],
             datatypes: [{localName: datatypeId, namespace: datatypeId}],
             derivedConcepts: [{localName: conceptId, namespace: conceptId}],
-            derivedConceptSchemes: [{localName: conceptSchemeId, namespace: conceptSchemeId}]
+            derivedConceptSchemes: [{localName: conceptSchemeId, namespace: conceptSchemeId}],
+            derivedSemanticRelations: [{localName: semanticRelationId, namespace: semanticRelationId}]
         };
         importedIrisResponse = [{
             id: ontologyId,
@@ -392,6 +394,7 @@ describe('Ontology State Service', function() {
         individualId2 = null;
         conceptId = null;
         conceptSchemeId = null;
+        semanticRelationId = null;
         irisResponse = null;
         importedIrisResponse = null;
         classHierarchiesResponse = null;
@@ -1307,6 +1310,7 @@ describe('Ontology State Service', function() {
             this.response = {
                 derivedConcepts: [{localName: 'derivedConcept'}],
                 derivedConceptSchemes: [{localName: 'derivedConceptScheme'}],
+                derivedSemanticRelations: [{localName: 'derivedSemanticRelation'}],
                 concepts: {
                     index: {0: 'derivedConcept'},
                     hierarchy: ['derivedConcept']
@@ -1327,6 +1331,7 @@ describe('Ontology State Service', function() {
             beforeEach(function() {
                 ontologyStateSvc.listItem.derivedConcepts = [];
                 ontologyStateSvc.listItem.derivedConceptSchemes = [];
+                ontologyStateSvc.listItem.derivedSemanticRelations = [];
                 ontologyStateSvc.listItem.concepts = {hierarchy: [], index: {}, flat: []};
                 ontologyStateSvc.listItem.conceptSchemes = {hierarchy: [], index: {}, flat: []};
                 ontologyStateSvc.listItem.editorTabStates.concepts = {entityIRI: 'iri', usages: []};
@@ -1339,6 +1344,7 @@ describe('Ontology State Service', function() {
                 expect(ontologyManagerSvc.getVocabularyStuff).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.vocabularySpinnerId);
                 expect(ontologyStateSvc.listItem.derivedConcepts).toEqual(['derivedConcept']);
                 expect(ontologyStateSvc.listItem.derivedConceptSchemes).toEqual(['derivedConceptScheme']);
+                expect(ontologyStateSvc.listItem.derivedSemanticRelations).toEqual([{localName: 'derivedSemanticRelation'}]);
                 expect(ontologyStateSvc.listItem.concepts.hierarchy).toEqual(this.response.concepts.hierarchy);
                 expect(ontologyStateSvc.listItem.concepts.index).toEqual(this.response.concepts.index);
                 expect(ontologyStateSvc.listItem.concepts.flat).toEqual(this.response.concepts.hierarchy);
@@ -1358,6 +1364,7 @@ describe('Ontology State Service', function() {
                 expect(ontologyManagerSvc.getVocabularyStuff).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.vocabularySpinnerId);
                 expect(ontologyStateSvc.listItem.derivedConcepts).toEqual([]);
                 expect(ontologyStateSvc.listItem.derivedConceptSchemes).toEqual([]);
+                expect(ontologyStateSvc.listItem.derivedSemanticRelations).toEqual([]);
                 expect(ontologyStateSvc.listItem.concepts.hierarchy).toEqual([]);
                 expect(ontologyStateSvc.listItem.concepts.index).toEqual({});
                 expect(ontologyStateSvc.listItem.concepts.flat).toEqual([]);
@@ -1711,6 +1718,7 @@ describe('Ontology State Service', function() {
                     }], ontologyManagerSvc.defaultDatatypes));
                     expect(_.get(response, 'derivedConcepts')).toEqual([conceptId]);
                     expect(_.get(response, 'derivedConceptSchemes')).toEqual([conceptSchemeId]);
+                    expect(_.get(response, 'derivedSemanticRelations')).toEqual([{localName: semanticRelationId, namespace: semanticRelationId}]);
                     expect(_.get(response, 'classes.hierarchy')).toEqual(classHierarchiesResponse.hierarchy);
                     expect(_.get(response, 'classes.index')).toEqual(classHierarchiesResponse.index);
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.classes.hierarchy, recordId, response);
@@ -1740,7 +1748,7 @@ describe('Ontology State Service', function() {
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes.hierarchy, recordId, response);
                     expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'upToDate')).toBe(false);
-                    expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, conceptId, conceptSchemeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
+                    expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, conceptId, conceptSchemeId, semanticRelationId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([ontology, [{
                         '@id': 'ontologyId',
                         mobi: {
@@ -1866,7 +1874,7 @@ describe('Ontology State Service', function() {
                     expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'branches')).toEqual(branches);
                     expect(_.get(response, 'upToDate')).toBe(false);
-                    expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, conceptId, conceptSchemeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
+                    expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, conceptId, conceptSchemeId, semanticRelationId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
                     expect(_.get(response, 'failedImports')).toEqual(['failedId']);
                 }, function() {
                     fail('Promise should have resolved');
