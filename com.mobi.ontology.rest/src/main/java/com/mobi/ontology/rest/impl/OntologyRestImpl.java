@@ -1082,7 +1082,8 @@ public class OntologyRestImpl implements OntologyRest {
         List<IRI> iris = ontology.getAllClasses()
                 .stream()
                 .map(Entity::getIRI)
-                .filter(iri -> model.contains(iri, null, null))
+                .filter(iri -> model.contains(iri, valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
+                        null))
                 .collect(Collectors.toList());
         return new JSONObject().element("classes", iriListToJsonArray(iris));
     }
