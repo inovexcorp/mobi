@@ -4,7 +4,7 @@ The web integration tests are written using Selenium and are run through the `We
 These integration tests are controlled by the `skipSelenium` and `skipITs` system properties and are disabled by default. To run the web itests as part of the build, set the properties to false:
 
 ```
-mvn clean install -DskipSelenium=false - DskipITs=false
+mvn clean install -DskipSelenium=false -DskipITs=false
 ```
 
 In order for the tests to run completely, you must have the following browsers installed:
