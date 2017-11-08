@@ -103,14 +103,14 @@
                         dvm.os.addEntity(dvm.os.listItem, dvm.property);
                         // update relevant lists
                         if (dvm.om.isObjectProperty(dvm.property)) {
-                            commonUpdate('subObjectProperties', 'objectPropertyHierarchy', 'flatObjectPropertyHierarchy', 'objectPropertyIndex', dvm.os.setObjectPropertiesOpened);
+                            commonUpdate('objectProperties', dvm.os.setObjectPropertiesOpened);
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         } else if (dvm.om.isDataTypeProperty(dvm.property)) {
-                            commonUpdate('subDataProperties', 'dataPropertyHierarchy', 'flatDataPropertyHierarchy', 'dataPropertyIndex', dvm.os.setDataPropertiesOpened);
+                            commonUpdate('dataProperties', dvm.os.setDataPropertiesOpened);
                             dvm.os.listItem.flatEverythingTree = dvm.os.createFlatEverythingTree(dvm.os.getOntologiesArray(), dvm.os.listItem);
                         } else if (dvm.om.isAnnotation(dvm.property)) {
                             dvm.values = [];
-                            commonUpdate('annotations', 'annotationPropertyHierarchy', 'flatAnnotationPropertyHierarchy', 'annotationPropertyIndex', dvm.os.setAnnotationPropertiesOpened);
+                            commonUpdate('annotations', dvm.os.setAnnotationPropertiesOpened);
                         }
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.property);
                         // select the new property
@@ -121,9 +121,9 @@
                     }
                     dvm.getKey = function() {
                         if (dvm.om.isDataTypeProperty(dvm.property)) {
-                            return 'subDataProperties'
+                            return 'dataProperties'
                         }
-                        return 'subObjectProperties';
+                        return 'objectProperties';
                     }
                     dvm.typeChange = function() {
                         dvm.values = [];
@@ -141,14 +141,14 @@
                         return !obj.objectOnly || dvm.om.isObjectProperty(dvm.property);
                     }
 
-                    function commonUpdate(listKey, hierarchyKey, flatHierarchyKey, indexKey, setThisOpened) {
-                        dvm.os.listItem[listKey].push(ro.createItemFromIri(dvm.property['@id']));
+                    function commonUpdate(key, setThisOpened) {
+                        dvm.os.listItem[key].iris.push(ro.createItemFromIri(dvm.property['@id']));
                         if (dvm.values.length) {
                             dvm.property[prefixes.rdfs + 'subPropertyOf'] = dvm.values;
-                            dvm.ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), hierarchyKey, indexKey, flatHierarchyKey);
+                            dvm.ontoUtils.setSuperProperties(dvm.property['@id'], _.map(dvm.values, '@id'), key);
                         } else {
-                            dvm.os.listItem[hierarchyKey].push({'entityIRI': dvm.property['@id']});
-                            dvm.os.listItem[flatHierarchyKey] = dvm.os.flattenHierarchy(dvm.os.listItem[hierarchyKey], dvm.os.listItem.ontologyRecord.recordId);
+                            dvm.os.listItem[key].hierarchy.push({'entityIRI': dvm.property['@id']});
+                            dvm.os.listItem[key].flat = dvm.os.flattenHierarchy(dvm.os.listItem[key].hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                         }
                         setThisOpened(dvm.os.listItem.ontologyRecord.recordId, true);
                     }

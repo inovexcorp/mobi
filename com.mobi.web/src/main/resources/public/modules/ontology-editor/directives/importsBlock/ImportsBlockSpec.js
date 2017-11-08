@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Imports Block directive', function() {
-    var $compile, scope, element, ontologyStateSvc, prefixes, controller, propertyManagerSvc, $q;
+    var $compile, scope, ontologyStateSvc, prefixes, propertyManagerSvc, $q;
 
     beforeEach(function() {
         module('templates');
@@ -42,217 +42,221 @@ describe('Imports Block directive', function() {
         });
 
         ontologyStateSvc.listItem.selected[prefixes.owl + 'imports'] = [{}];
-        element = $compile(angular.element('<imports-block></imports-block>'))(scope);
+        this.element = $compile(angular.element('<imports-block></imports-block>'))(scope);
         scope.$digest();
-        controller = element.controller('importsBlock');
+        this.controller = this.element.controller('importsBlock');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        prefixes = null;
+        propertyManagerSvc = null;
+        $q = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('imports-block')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('imports-block')).toBe(true);
         });
         it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
+            expect(this.element.find('block').length).toBe(1);
         });
         it('with a block-header', function() {
-            expect(element.find('block-header').length).toBe(1);
+            expect(this.element.find('block-header').length).toBe(1);
         });
         it('with a block-header a', function() {
-            expect(element.querySelectorAll('block-header a.pull-right').length).toBe(2);
+            expect(this.element.querySelectorAll('block-header a.pull-right').length).toBe(2);
         });
         it('with a block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('with a p a.import-iri', function() {
-            expect(element.querySelectorAll('p a.import-iri').length).toBe(1);
-            spyOn(controller, 'failed').and.returnValue(true);
+            expect(this.element.querySelectorAll('p a.import-iri').length).toBe(1);
+            spyOn(this.controller, 'failed').and.returnValue(true);
             scope.$apply();
-            expect(element.querySelectorAll('p a.import-iri').length).toBe(0);
+            expect(this.element.querySelectorAll('p a.import-iri').length).toBe(0);
         });
         it('with a .error-display', function() {
-            expect(element.querySelectorAll('.error-display').length).toBe(0);
-            spyOn(controller, 'failed').and.returnValue(true);
+            expect(this.element.querySelectorAll('.error-display').length).toBe(0);
+            spyOn(this.controller, 'failed').and.returnValue(true);
             scope.$apply();
-            expect(element.querySelectorAll('.error-display').length).toBe(1);
+            expect(this.element.querySelectorAll('.error-display').length).toBe(1);
         });
         it('with a p a.pull-right', function() {
-            expect(element.querySelectorAll('p a.pull-right').length).toBe(1);
+            expect(this.element.querySelectorAll('p a.pull-right').length).toBe(1);
         });
         it('with a imports-overlay', function() {
-            expect(element.find('imports-overlay').length).toBe(0);
-            controller.showNewOverlay = true;
+            expect(this.element.find('imports-overlay').length).toBe(0);
+            this.controller.showNewOverlay = true;
             scope.$apply();
-            expect(element.find('imports-overlay').length).toBe(1);
+            expect(this.element.find('imports-overlay').length).toBe(1);
         });
         it('with a confirmation-overlay', function() {
-            expect(element.find('confirmation-overlay').length).toBe(0);
-            controller.showRemoveOverlay = true;
+            expect(this.element.find('confirmation-overlay').length).toBe(0);
+            this.controller.showRemoveOverlay = true;
             scope.$apply();
-            expect(element.find('confirmation-overlay').length).toBe(1);
+            expect(this.element.find('confirmation-overlay').length).toBe(1);
         });
         it('with a error-display', function() {
-            expect(element.find('error-display').length).toBe(0);
-            controller.showRemoveOverlay = true;
-            controller.error = 'error';
+            expect(this.element.find('error-display').length).toBe(0);
+            this.controller.showRemoveOverlay = true;
+            this.controller.error = 'error';
             scope.$apply();
-            expect(element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toBe(1);
         });
         it('with a confirmation-overlay div', function() {
-            expect(element.querySelectorAll('confirmation-overlay div').length).toBe(0);
-            controller.showRemoveOverlay = true;
+            expect(this.element.querySelectorAll('confirmation-overlay div').length).toBe(0);
+            this.controller.showRemoveOverlay = true;
             ontologyStateSvc.hasChanges.and.returnValue(true);
             scope.$apply();
-            expect(element.querySelectorAll('confirmation-overlay div').length).toBe(1);
+            expect(this.element.querySelectorAll('confirmation-overlay div').length).toBe(1);
         });
         it('with a confirmation-overlay p', function() {
-            expect(element.querySelectorAll('confirmation-overlay p').length).toBe(0);
-            controller.showRemoveOverlay = true;
+            expect(this.element.querySelectorAll('confirmation-overlay p').length).toBe(0);
+            this.controller.showRemoveOverlay = true;
             ontologyStateSvc.hasChanges.and.returnValue(false);
             scope.$apply();
-            expect(element.querySelectorAll('confirmation-overlay p').length).toBe(1);
+            expect(this.element.querySelectorAll('confirmation-overlay p').length).toBe(1);
         });
         it('depending on whether confirmation is open', function() {
-            expect(element.find('confirmation-overlay').length).toBe(0);
-            controller.showRemoveOverlay = true;
+            expect(this.element.find('confirmation-overlay').length).toBe(0);
+            this.controller.showRemoveOverlay = true;
             scope.$apply();
-            expect(element.find('confirmation-overlay').length).toBe(1);
+            expect(this.element.find('confirmation-overlay').length).toBe(1);
         });
         it('depending on the length of the selected ontology imports', function() {
-            expect(element.find('info-message').length).toBe(0);
-            expect(element.querySelectorAll('.import').length).toBe(1);
+            expect(this.element.find('info-message').length).toBe(0);
+            expect(this.element.querySelectorAll('.import').length).toBe(1);
             ontologyStateSvc.listItem.selected[prefixes.owl + 'imports'] = [];
             scope.$digest();
-            expect(element.find('info-message').length).toBe(1);
-            expect(element.querySelectorAll('.import').length).toBe(0);
+            expect(this.element.find('info-message').length).toBe(1);
+            expect(this.element.querySelectorAll('.import').length).toBe(0);
         });
         it('with an .indirect-import-container', function() {
-            expect(element.querySelectorAll('.indirect-import-container').length).toBe(0);
-            controller.indirectImports = ['iri'];
+            expect(this.element.querySelectorAll('.indirect-import-container').length).toBe(0);
+            this.controller.indirectImports = ['iri'];
             scope.$digest();
-            expect(element.querySelectorAll('.indirect-import-container').length).toBe(1);
+            expect(this.element.querySelectorAll('.indirect-import-container').length).toBe(1);
         });
         it('with an .indirect.import', function() {
-            expect(element.querySelectorAll('.indirect.import').length).toBe(0);
-            controller.indirectImports = ['iri'];
+            expect(this.element.querySelectorAll('.indirect.import').length).toBe(0);
+            this.controller.indirectImports = ['iri'];
             scope.$digest();
-            expect(element.querySelectorAll('.indirect.import').length).toBe(1);
+            expect(this.element.querySelectorAll('.indirect.import').length).toBe(1);
         });
         it('with an .indirect-header', function() {
-            expect(element.querySelectorAll('.indirect-header').length).toBe(0);
-            controller.indirectImports = ['iri'];
+            expect(this.element.querySelectorAll('.indirect-header').length).toBe(0);
+            this.controller.indirectImports = ['iri'];
             scope.$digest();
-            expect(element.querySelectorAll('.indirect-header').length).toBe(1);
+            expect(this.element.querySelectorAll('.indirect-header').length).toBe(1);
         });
     });
     describe('controller methods', function() {
         it('setupRemove should set the correct variables', function() {
-            controller.setupRemove('url');
-            expect(controller.url).toBe('url');
-            expect(controller.showRemoveOverlay).toBe(true);
+            this.controller.setupRemove('url');
+            expect(this.controller.url).toBe('url');
+            expect(this.controller.showRemoveOverlay).toBe(true);
         });
         describe('remove calls the proper functions', function() {
-            var saveDeferred;
             beforeEach(function() {
-                controller.url = 'url';
+                this.controller.url = 'url';
                 ontologyStateSvc.listItem.selected[prefixes.owl + 'imports'] = [{'@id': 'url'}];
-                saveDeferred = $q.defer();
-                ontologyStateSvc.saveChanges.and.returnValue(saveDeferred.promise);
-                controller.remove();
             });
             describe('when save changes resolves', function() {
-                var afterDeferred;
                 beforeEach(function() {
-                    saveDeferred.resolve();
-                    afterDeferred = $q.defer();
-                    ontologyStateSvc.afterSave.and.returnValue(afterDeferred.promise);
+                    ontologyStateSvc.saveChanges.and.returnValue($q.when());
                 });
                 describe('when after save resolves', function() {
-                    var updateDeferred;
                     beforeEach(function() {
-                        afterDeferred.resolve();
-                        updateDeferred = $q.defer();
-                        ontologyStateSvc.updateOntology.and.returnValue(updateDeferred.promise);
+                        ontologyStateSvc.afterSave.and.returnValue($q.when());
                     });
                     it('when update ontology resolves', function() {
-                        spyOn(controller, 'setIndirectImports');
+                        ontologyStateSvc.updateOntology.and.returnValue($q.when());
+                        spyOn(this.controller, 'setIndirectImports');
                         ontologyStateSvc.isCommittable.and.returnValue(true);
-                        updateDeferred.resolve();
+                        this.controller.remove();
                         scope.$apply();
-                        expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
+                        expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': this.controller.url});
                         expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', 0);
                         expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit);
+                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
                         expect(ontologyStateSvc.isCommittable).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                         expect(ontologyStateSvc.listItem.isSaved).toBe(true);
-                        expect(controller.setIndirectImports).toHaveBeenCalled();
-                        expect(controller.showRemoveOverlay).toBe(false);
+                        expect(this.controller.setIndirectImports).toHaveBeenCalled();
+                        expect(this.controller.showRemoveOverlay).toBe(false);
                     });
                     it('when update ontology rejects', function() {
-                        updateDeferred.reject('error');
+                        ontologyStateSvc.updateOntology.and.returnValue($q.reject('error'));
+                        this.controller.remove();
                         scope.$apply();
-                        expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
+                        expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': this.controller.url});
                         expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', 0);
                         expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                         expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit);
-                        expect(controller.error).toBe('error');
+                        expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit);
+                        expect(this.controller.error).toBe('error');
                     });
                 });
                 it('when after save rejects', function() {
-                    afterDeferred.reject('error');
+                    ontologyStateSvc.afterSave.and.returnValue($q.reject('error'));
+                    this.controller.remove();
                     scope.$apply();
-                    expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
+                    expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': this.controller.url});
                     expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                     expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', 0);
                     expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
                     expect(ontologyStateSvc.afterSave).toHaveBeenCalled();
-                    expect(controller.error).toBe('error');
+                    expect(this.controller.error).toBe('error');
                 });
             });
             it('when save changes rejects', function() {
-                saveDeferred.reject('error');
+                ontologyStateSvc.saveChanges.and.returnValue($q.reject('error'));
+                this.controller.remove();
                 scope.$apply();
-                expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': controller.url});
+                expect(util.createJson).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@id'], prefixes.owl + 'imports', {'@id': this.controller.url});
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                 expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, prefixes.owl + 'imports', 0);
                 expect(ontologyStateSvc.saveChanges).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {additions: ontologyStateSvc.listItem.additions, deletions: ontologyStateSvc.listItem.deletions});
-                expect(controller.error).toBe('error');
+                expect(this.controller.error).toBe('error');
             });
         });
         it('get should return the correct variable', function() {
-            expect(controller.get({'@id': 'id'})).toBe('id');
-            expect(controller.get()).toBeUndefined();
+            expect(this.controller.get({'@id': 'id'})).toBe('id');
+            expect(this.controller.get()).toBeUndefined();
         });
         describe('failed should return the correct value when failedImports', function() {
             beforeEach(function() {
                 ontologyStateSvc.listItem.failedImports = ['failedId'];
             });
             it('includes the iri', function() {
-                expect(controller.failed('failedId')).toBe(true);
+                expect(this.controller.failed('failedId')).toBe(true);
             });
             it('does not include the iri', function() {
-                expect(controller.failed('missingId')).toBe(false);
+                expect(this.controller.failed('missingId')).toBe(false);
             });
         });
         describe('refresh should call the correct function when updateOntology is', function() {
             it('resolved', function() {
-                spyOn(controller, 'setIndirectImports');
+                spyOn(this.controller, 'setIndirectImports');
                 ontologyStateSvc.updateOntology.and.returnValue($q.resolve());
-                controller.refresh();
+                this.controller.refresh();
                 scope.$apply();
-                expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit, true);
+                expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit, true);
                 expect(util.createSuccessToast).toHaveBeenCalledWith('');
-                expect(controller.setIndirectImports).toHaveBeenCalled();
+                expect(this.controller.setIndirectImports).toHaveBeenCalled();
             });
             it('rejected', function() {
                 ontologyStateSvc.updateOntology.and.returnValue($q.reject('error'));
-                controller.refresh();
+                this.controller.refresh();
                 scope.$apply();
-                expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.ontologyState.upToDate, ontologyStateSvc.listItem.inProgressCommit, true);
+                expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.listItem.ontologyRecord.type, ontologyStateSvc.listItem.upToDate, ontologyStateSvc.listItem.inProgressCommit, true);
                 expect(util.createErrorToast).toHaveBeenCalledWith('error');
             });
         });
@@ -268,8 +272,8 @@ describe('Imports Block directive', function() {
                 id: 'indirect-a',
                 ontologyId: 'indirect-a'
             }];
-            controller.setIndirectImports();
-            expect(controller.indirectImports).toEqual(['indirect-a', 'indirect-b']);
+            this.controller.setIndirectImports();
+            expect(this.controller.indirectImports).toEqual(['indirect-a', 'indirect-b']);
         });
     });
 });

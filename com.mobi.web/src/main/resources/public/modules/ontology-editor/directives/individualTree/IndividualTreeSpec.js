@@ -42,7 +42,7 @@ describe('Individual Tree directive', function() {
             util = _utilService_;
         });
 
-        ontologyStateSvc.listItem.flatIndividualsHierarchy = [{
+        ontologyStateSvc.listItem.individuals.flat = [{
             entityIRI: 'Class A',
             hasChildren: false,
             path: ['recordId', 'Class A'],

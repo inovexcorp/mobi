@@ -53,53 +53,50 @@
                         }
                         dvm.showDeleteConfirmation = false;
                     }
-                    
                     dvm.isShown = function(node) {
                         return !_.has(node, 'entityIRI') || (dvm.os.areParentsOpen(node) && node.get(dvm.os.listItem.ontologyRecord.recordId));
                     }
-                    
                     dvm.flatPropertyTree = constructFlatPropertyTree();
-                    
+
                     function addGetToArrayItems(array, get) {
                         return _.map(array, item => _.merge(item, {get}));
                     }
-                    
                     function constructFlatPropertyTree() {
                         var result = [];
-                        if (dvm.os.listItem.flatDataPropertyHierarchy.length) {
+                        if (dvm.os.listItem.dataProperties.flat.length) {
                             result.push({
                                 title: 'Data Properties',
                                 get: dvm.os.getDataPropertiesOpened,
                                 set: dvm.os.setDataPropertiesOpened
                             });
-                            result = _.concat(result, addGetToArrayItems(dvm.os.listItem.flatDataPropertyHierarchy, dvm.os.getDataPropertiesOpened));
+                            result = _.concat(result, addGetToArrayItems(dvm.os.listItem.dataProperties.flat, dvm.os.getDataPropertiesOpened));
                         }
-                        if (dvm.os.listItem.flatObjectPropertyHierarchy.length) {
+                        if (dvm.os.listItem.objectProperties.flat.length) {
                             result.push({
                                 title: 'Object Properties',
                                 get: dvm.os.getObjectPropertiesOpened,
                                 set: dvm.os.setObjectPropertiesOpened
                             });
-                            result = _.concat(result, addGetToArrayItems(dvm.os.listItem.flatObjectPropertyHierarchy, dvm.os.getObjectPropertiesOpened));
+                            result = _.concat(result, addGetToArrayItems(dvm.os.listItem.objectProperties.flat, dvm.os.getObjectPropertiesOpened));
                         }
-                        if (dvm.os.listItem.flatAnnotationPropertyHierarchy.length) {
+                        if (dvm.os.listItem.annotations.flat.length) {
                             result.push({
                                 title: 'Annotation Properties',
                                 get: dvm.os.getAnnotationPropertiesOpened,
                                 set: dvm.os.setAnnotationPropertiesOpened
                             });
-                            result = _.concat(result, addGetToArrayItems(dvm.os.listItem.flatAnnotationPropertyHierarchy, dvm.os.getAnnotationPropertiesOpened));
+                            result = _.concat(result, addGetToArrayItems(dvm.os.listItem.annotations.flat, dvm.os.getAnnotationPropertiesOpened));
                         }
                         return result;
                     }
-                    
-                    $scope.$watch('dvm.os.listItem.flatDataPropertyHierarchy', () => {
+
+                    $scope.$watch('dvm.os.listItem.dataProperties.flat', () => {
                         dvm.flatPropertyTree = constructFlatPropertyTree();
                     });
-                    $scope.$watch('dvm.os.listItem.flatObjectPropertyHierarchy', () => {
+                    $scope.$watch('dvm.os.listItem.objectProperties.flat', () => {
                         dvm.flatPropertyTree = constructFlatPropertyTree();
                     });
-                    $scope.$watch('dvm.os.listItem.flatAnnotationPropertyHierarchy', () => {
+                    $scope.$watch('dvm.os.listItem.annotations.flat', () => {
                         dvm.flatPropertyTree = constructFlatPropertyTree();
                     });
                 }]

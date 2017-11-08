@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Super Class Select directive', function() {
-    var $compile, scope, element, controller;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -40,84 +40,90 @@ describe('Super Class Select directive', function() {
         });
 
         scope.values = [];
-        element = $compile(angular.element('<super-class-select values="values"></super-class-select>'))(scope);
+        this.element = $compile(angular.element('<super-class-select values="values"></super-class-select>'))(scope);
         scope.$digest();
-        controller = element.controller('superClassSelect');
+        this.controller = this.element.controller('superClassSelect');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('controller bound variable', function() {
         it('values should be two way bound', function() {
-            controller.values = ['different'];
+            this.controller.values = ['different'];
             scope.$apply();
             expect(scope.values).toEqual(['different']);
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('super-class-select')).toBe(true);
-            expect(element.hasClass('advanced-language-select')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('super-class-select')).toBe(true);
+            expect(this.element.hasClass('advanced-language-select')).toBe(true);
         });
         it('for correct links', function() {
-            expect(element.querySelectorAll('.btn-link .fa-plus').length).toBe(1);
-            expect(element.querySelectorAll('.btn-link .fa-times').length).toBe(0);
-            controller.isShown = true;
+            expect(this.element.querySelectorAll('.btn-link .fa-plus').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn-link .fa-times').length).toBe(0);
+            this.controller.isShown = true;
             scope.$apply();
-            expect(element.querySelectorAll('.btn-link .fa-plus').length).toBe(0);
-            expect(element.querySelectorAll('.btn-link .fa-times').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn-link .fa-plus').length).toBe(0);
+            expect(this.element.querySelectorAll('.btn-link .fa-times').length).toBe(1);
         });
         it('with a .form-group', function() {
-            expect(element.querySelectorAll('.form-group').length).toBe(0);
-            controller.isShown = true;
+            expect(this.element.querySelectorAll('.form-group').length).toBe(0);
+            this.controller.isShown = true;
             scope.$apply();
-            expect(element.querySelectorAll('.form-group').length).toBe(1);
+            expect(this.element.querySelectorAll('.form-group').length).toBe(1);
         });
         it('with a custom-label', function() {
-            expect(element.find('custom-label').length).toBe(0);
-            controller.isShown = true;
+            expect(this.element.find('custom-label').length).toBe(0);
+            this.controller.isShown = true;
             scope.$apply();
-            expect(element.find('custom-label').length).toBe(1);
+            expect(this.element.find('custom-label').length).toBe(1);
         });
         it('with a ui-select', function() {
-            expect(element.find('ui-select').length).toBe(0);
-            controller.isShown = true;
+            expect(this.element.find('ui-select').length).toBe(0);
+            this.controller.isShown = true;
             scope.$apply();
-            expect(element.find('ui-select').length).toBe(1);
+            expect(this.element.find('ui-select').length).toBe(1);
         });
         it('with a ui-select-match', function() {
-            expect(element.find('ui-select-match').length).toBe(0);
-            controller.isShown = true;
+            expect(this.element.find('ui-select-match').length).toBe(0);
+            this.controller.isShown = true;
             scope.$apply();
-            expect(element.find('ui-select-match').length).toBe(1);
+            expect(this.element.find('ui-select-match').length).toBe(1);
         });
         it('with a span[title]', function() {
-            expect(element.querySelectorAll('span[title]').length).toBe(0);
-            controller.isShown = true;
+            expect(this.element.querySelectorAll('span[title]').length).toBe(0);
+            this.controller.isShown = true;
             scope.$apply();
-            expect(element.querySelectorAll('span[title]').length).toBe(1);
+            expect(this.element.querySelectorAll('span[title]').length).toBe(1);
         });
         it('with a ui-select-choices', function() {
-            expect(element.find('ui-select-choices').length).toBe(0);
-            controller.isShown = true;
+            expect(this.element.find('ui-select-choices').length).toBe(0);
+            this.controller.isShown = true;
             scope.$apply();
-            expect(element.find('ui-select-choices').length).toBe(1);
+            expect(this.element.find('ui-select-choices').length).toBe(1);
         });
         it('with a div[title]', function() {
-            expect(element.querySelectorAll('div[title]').length).toBe(0);
-            controller.isShown = true;
+            expect(this.element.querySelectorAll('div[title]').length).toBe(0);
+            this.controller.isShown = true;
             scope.$apply();
-            expect(element.querySelectorAll('div[title]').length).toBe(1);
+            expect(this.element.querySelectorAll('div[title]').length).toBe(1);
         });
     });
     describe('controller methods', function() {
         it('show sets the proper variables', function() {
-            controller.show();
-            expect(controller.isShown).toBe(true);
+            this.controller.show();
+            expect(this.controller.isShown).toBe(true);
         });
         it('hide sets the proper variables', function() {
-            controller.hide();
-            expect(controller.isShown).toBe(false);
-            expect(controller.values).toEqual([]);
+            this.controller.hide();
+            expect(this.controller.isShown).toBe(false);
+            expect(this.controller.values).toEqual([]);
         });
     });
 });

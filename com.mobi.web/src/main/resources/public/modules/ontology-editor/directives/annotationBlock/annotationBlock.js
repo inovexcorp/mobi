@@ -51,13 +51,11 @@
                         dvm.os.annotationLanguage = 'en';
                         dvm.os.showAnnotationOverlay = true;
                     }
-
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
                         dvm.index = index;
                         dvm.showRemoveOverlay = true;
                     }
-
                     dvm.editClicked = function(annotation, index) {
                         var annotationObj = dvm.os.listItem.selected[dvm.ro.getItemIri(annotation)][index];
                         dvm.os.editingAnnotation = true;

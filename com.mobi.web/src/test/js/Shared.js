@@ -529,10 +529,9 @@ function mockOntologyState() {
                 selected: {
                     '@id': 'id'
                 },
-                ontologyState: {
-                    active: true,
-                    upToDate: true
-                },
+                active: true,
+                upToDate: true,
+                isVocabulary: false,
                 editorTabStates: {
                    project: {
                        active: true,
@@ -570,16 +569,46 @@ function mockOntologyState() {
                     commitId: '',
                     type: ''
                 },
-                annotations: [],
                 dataPropertyRange: [],
-                classHierarchy: [],
-                subClasses: [],
-                objectPropertyHierarchy: [],
-                subObjectProperties: [],
-                dataPropertyHierarchy: [],
-                subDataProperties: [],
+                classes: {
+                    iris: [],
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                objectProperties: {
+                    iris: [],
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                dataProperties: {
+                    iris: [],
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                annotations: {
+                    iris: [],
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                individuals: {
+                    iris: [],
+                    flat: []
+                },
+                concepts: {
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                conceptSchemes: {
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
                 blankNodes: {},
-                individuals: [],
                 index: {},
                 ontologyId: 'ontologyId',
                 additions: [],
@@ -598,19 +627,8 @@ function mockOntologyState() {
                 }],
                 individualsParentPath: [],
                 classesAndIndividuals: [],
-                flatClassHierarchy: [],
-                flatDataPropertyHierarchy: [],
-                flatObjectPropertyHierarchy: [],
-                annotationPropertyHierarchy: [],
-                annotationPropertyIndex: {},
-                flatAnnotationPropertyHierarchy: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
-                conceptHierarchy: [],
-                flatConceptHierarchy: [],
-                conceptSchemeHierarchy: [],
-                conceptSchemeIndex: {},
-                flatConceptSchemeHierarchy: [],
                 iriList: [],
                 failedImports: []
             };
@@ -683,6 +701,8 @@ function mockOntologyState() {
             this.isDerivedConceptScheme = jasmine.createSpy('isDerivedConceptScheme');
             this.hasInProgressCommit = jasmine.createSpy('hasInProgressCommit').and.returnValue(false);
             this.setPageTitle = jasmine.createSpy('setPageTitle');
+            this.addToClassIRIs = jasmine.createSpy('addToClassIRIs');
+            this.removeFromClassIRIs = jasmine.createSpy('removeFromClassIRIs');
         });
     });
 }

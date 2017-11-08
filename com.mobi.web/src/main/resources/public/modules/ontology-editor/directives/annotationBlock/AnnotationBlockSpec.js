@@ -21,12 +21,7 @@
  * #L%
  */
 describe('Annotation Block directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyStateSvc,
-        ontologyManagerSvc;
+    var $compile, scope, ontologyStateSvc, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -51,37 +46,43 @@ describe('Annotation Block directive', function() {
             'prop2': [{'@value': 'value2'}]
         };
         ontologyManagerSvc.getAnnotationIRIs.and.returnValue(['prop1', 'prop2']);
-        element = $compile(angular.element('<annotation-block></annotation-block>'))(scope);
+        this.element = $compile(angular.element('<annotation-block></annotation-block>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('annotationBlock');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        ontologyManagerSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('annotation-block')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('annotation-block')).toBe(true);
         });
         it('based on annotation button', function() {
-            var icon = element.querySelectorAll('.fa-plus');
+            var icon = this.element.querySelectorAll('.fa-plus');
             expect(icon.length).toBe(1);
         });
         it('depending on how many annotations there are', function() {
-            expect(element.find('property-values').length).toBe(2);
+            expect(this.element.find('property-values').length).toBe(2);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(element.find('property-values').length).toBe(0);
+            expect(this.element.find('property-values').length).toBe(0);
         });
         it('depending on whether an annotation is being deleted', function() {
-            element.controller('annotationBlock').showRemoveOverlay = true;
+            this.controller.showRemoveOverlay = true;
             scope.$digest();
-            expect(element.find('remove-property-overlay').length).toBe(1);
+            expect(this.element.find('remove-property-overlay').length).toBe(1);
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('annotationBlock');
-        });
         it('should set the correct manager values when opening the Add Annotation Overlay', function() {
-            controller.openAddOverlay();
+            this.controller.openAddOverlay();
             expect(ontologyStateSvc.editingAnnotation).toBe(false);
             expect(ontologyStateSvc.annotationSelect).toEqual(undefined);
             expect(ontologyStateSvc.annotationValue).toBe('');
@@ -90,10 +91,10 @@ describe('Annotation Block directive', function() {
             expect(ontologyStateSvc.showAnnotationOverlay).toBe(true);
         });
         it('should set the correct manager values when opening the Remove Annotation Overlay', function() {
-            controller.openRemoveOverlay('key', 1);
-            expect(controller.key).toBe('key');
-            expect(controller.index).toBe(1);
-            expect(controller.showRemoveOverlay).toBe(true);
+            this.controller.openRemoveOverlay('key', 1);
+            expect(this.controller.key).toBe('key');
+            expect(this.controller.index).toBe(1);
+            expect(this.controller.showRemoveOverlay).toBe(true);
         });
         it('should set the correct manager values when editing an annotation', function() {
             var annotationIRI = 'prop1';
@@ -101,7 +102,7 @@ describe('Annotation Block directive', function() {
                 'prop1': [{'@value': 'value', '@type': 'type', '@language': 'language'}]
             };
             ontologyStateSvc.listItem.dataPropertyRange = ['type'];
-            controller.editClicked(annotationIRI, 0);
+            this.controller.editClicked(annotationIRI, 0);
             expect(ontologyStateSvc.editingAnnotation).toBe(true);
             expect(ontologyStateSvc.annotationSelect).toEqual(annotationIRI);
             expect(ontologyStateSvc.annotationValue).toBe('value');
