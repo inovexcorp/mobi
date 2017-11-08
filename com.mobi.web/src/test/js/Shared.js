@@ -219,6 +219,7 @@ function mockOntologyManager() {
             this.uploadFile = jasmine.createSpy('uploadFile').and.returnValue($q.when({}));
             this.uploadJson = jasmine.createSpy('uploadJson').and.returnValue($q.when({}));
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
+            this.getVocabularyStuff = jasmine.createSpy('getVocabularyStuff').and.returnValue($q.when({}));
             this.getIris = jasmine.createSpy('getIris').and.returnValue($q.when({}));
             this.getImportedIris = jasmine.createSpy('getImportedIris').and.returnValue($q.when([]));
             this.getClassHierarchies = jasmine.createSpy('getClassHierarchies').and.returnValue($q.when({}));
@@ -549,6 +550,9 @@ function mockOntologyState() {
                    individuals: {
                        active: false
                    },
+                   concept: {
+                       active: false
+                   },
                    search: {
                        active: false
                    },
@@ -570,6 +574,8 @@ function mockOntologyState() {
                     type: ''
                 },
                 dataPropertyRange: [],
+                derivedConcepts: [],
+                derivedConceptSchemes: [],
                 classes: {
                     iris: [],
                     hierarchy: [],
@@ -626,7 +632,8 @@ function mockOntologyState() {
                     }
                 }],
                 individualsParentPath: [],
-                classesAndIndividuals: [],
+                classesAndIndividuals: {},
+                classesWithIndividuals: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
                 iriList: [],
@@ -691,6 +698,7 @@ function mockOntologyState() {
             this.getDefaultPrefix = jasmine.createSpy('getDefaultPrefix');
             this.retrieveClassesWithIndividuals = jasmine.createSpy('retrieveClassesWithIndividuals');
             this.getIndividualsParentPath = jasmine.createSpy('getIndividualsParentPath');
+            this.setVocabularyStuff = jasmine.createSpy('setVocabularyStuff');
             this.flattenHierarchy = jasmine.createSpy('flattenHierarchy');
             this.areParentsOpen = jasmine.createSpy('areParentsOpen');
             this.createFlatEverythingTree = jasmine.createSpy('createFlatEverythingTree');
@@ -710,6 +718,9 @@ function mockOntologyState() {
 function mockOntologyUtilsManager() {
     module(function($provide) {
         $provide.service('ontologyUtilsManagerService', function() {
+            this.containsDerivedConcept = jasmine.createSpy('containsDerivedConcept');
+            this.addIndividual = jasmine.createSpy('addIndividual');
+            this.addConcept = jasmine.createSpy('addConcept');
             this.commonDelete = jasmine.createSpy('commonDelete');
             this.deleteClass = jasmine.createSpy('deleteClass');
             this.deleteObjectProperty = jasmine.createSpy('deleteObjectProperty');

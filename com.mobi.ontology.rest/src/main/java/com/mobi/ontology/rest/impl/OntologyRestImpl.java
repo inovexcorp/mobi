@@ -340,6 +340,28 @@ public class OntologyRestImpl implements OntologyRest {
     }
 
     @Override
+    public Response getVocabularyStuff(ContainerRequestContext context, String recordIdStr, String branchIdStr,
+                                       String commitIdStr) {
+        try {
+            JSONObject result = doWithOntology(context, recordIdStr, branchIdStr, commitIdStr,
+                    this::getVocabularyStuff);
+            return Response.ok(result).build();
+        } catch (MobiException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private JSONObject getVocabularyStuff(Ontology ontology) {
+        JSONObject result = getDerivedConceptTypeArray(ontology);
+        result.putAll(getDerivedConceptSchemeTypeArray(ontology));
+        TupleQueryResult conceptRelationships = ontologyManager.getConceptRelationships(ontology);
+        result.put("concepts", getHierarchy(conceptRelationships));
+        TupleQueryResult conceptSchemeRelationships = ontologyManager.getConceptSchemeRelationships(ontology);
+        result.put("conceptSchemes", getHierarchy(conceptSchemeRelationships));
+        return result;
+    }
+
+    @Override
     public Response getIRIsInOntology(ContainerRequestContext context, String recordIdStr, String branchIdStr,
                                       String commitIdStr) {
         try {

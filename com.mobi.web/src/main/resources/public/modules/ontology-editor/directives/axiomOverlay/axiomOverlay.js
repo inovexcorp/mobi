@@ -35,7 +35,9 @@
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/axiomOverlay/axiomOverlay.html',
                 scope: {
-                    axiomList: '<',
+                    axiomList: '<'
+                },
+                bindToController: {
                     onSubmit: '&?'
                 },
                 controllerAs: 'dvm',
@@ -100,7 +102,12 @@
                         }
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [axiom]: values});
                         dvm.os.showAxiomOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.saveCurrentChanges()
+                            .then(() => {
+                                if (dvm.onSubmit) {
+                                    dvm.onSubmit({axiom: dvm.axiom, values: dvm.values})
+                                }
+                            });
                     }
                     function createLocalNameMap() {
                         var map = {};

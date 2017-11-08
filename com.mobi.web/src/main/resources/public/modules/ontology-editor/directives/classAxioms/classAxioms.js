@@ -54,6 +54,7 @@
                             var classIRIs = _.map(values, value => dvm.ro.getItemIri(value));
                             dvm.ontoUtils.setSuperClasses(dvm.os.listItem.selected['@id'], classIRIs);
                             dvm.ontoUtils.updateflatIndividualsHierarchy(classIRIs);
+                            dvm.os.setVocabularyStuff();
                         }
                     }
                     dvm.removeFromHierarchy = function(axiomObject) {
@@ -62,6 +63,7 @@
                             dvm.os.listItem.classes.flat = dvm.os.flattenHierarchy(dvm.os.listItem.classes.hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                             dvm.os.listItem.individualsParentPath = dvm.os.getIndividualsParentPath(dvm.os.listItem);
                             dvm.os.listItem.individuals.flat = dvm.os.createFlatIndividualTree(dvm.os.listItem);
+                            dvm.os.setVocabularyStuff();
                         }
                     }
                 }

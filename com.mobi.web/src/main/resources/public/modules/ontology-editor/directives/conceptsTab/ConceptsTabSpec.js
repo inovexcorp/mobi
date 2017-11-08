@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Concepts Tab directive', function() {
-    var $compile, scope, element, controller, ontologyManagerSvc, ontologyStateSvc;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -30,40 +30,44 @@ describe('Concepts Tab directive', function() {
         mockOntologyState();
         mockResponseObj();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_) {
             $compile = _$compile_;
             scope = _$rootScope_;
-            ontologyManagerSvc = _ontologyManagerService_;
-            ontologyStateSvc = _ontologyStateService_;
         });
 
-        element = $compile(angular.element('<concepts-tab></concepts-tab>'))(scope);
+        this.element = $compile(angular.element('<concepts-tab></concepts-tab>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('concepts-tab')).toBe(true);
-            expect(element.hasClass('row')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('concepts-tab')).toBe(true);
+            expect(this.element.hasClass('row')).toBe(true);
         });
         it('with a concept-hierarchy-block', function() {
-            expect(element.find('concept-hierarchy-block').length).toBe(1);
+            expect(this.element.find('concept-hierarchy-block').length).toBe(1);
         });
         it('with a .editor', function() {
-            expect(element.querySelectorAll('.editor').length).toBe(1);
+            expect(this.element.querySelectorAll('.editor').length).toBe(1);
         });
         it('with a selected-details', function() {
-            expect(element.find('selected-details').length).toBe(1);
+            expect(this.element.find('selected-details').length).toBe(1);
         });
         it('with a annotation-block', function() {
-            expect(element.find('annotation-block').length).toBe(1);
+            expect(this.element.find('annotation-block').length).toBe(1);
         });
         it('with a relationships-block', function() {
-            expect(element.find('relationships-block').length).toBe(1);
+            expect(this.element.find('relationships-block').length).toBe(1);
         });
         it('with a usages-block', function() {
-            expect(element.find('usages-block').length).toBe(1);
+            expect(this.element.find('usages-block').length).toBe(1);
         });
     });
 });

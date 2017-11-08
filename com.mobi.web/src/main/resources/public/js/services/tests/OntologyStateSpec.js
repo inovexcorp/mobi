@@ -23,7 +23,7 @@
 describe('Ontology State Service', function() {
     var ontologyStateSvc, $q, scope, util, stateManagerSvc, ontologyManagerSvc, updateRefsSvc, prefixes, catalogManagerSvc, hierarchy, indexObject, expectedPaths, ontologyState, defaultDatatypes, ontologyObj, classObj, dataPropertyObj, individualObj, ontology, getResponse, httpSvc, $document, responseObj, $state;
 
-    var error, format, title, description, keywords, inProgressCommit, emptyInProgressCommit, recordId, recordTitle, branchId, commitId, ontologyId, catalogId, anonymous, branch, commitObj, ontologyType, vocabularyType, jsonFilter, differenceObj, index, importedOntologies, importedOntologyIds, classId, classId2, objectPropertyId, objectPropertyId2, datatypeId, datatypeId2, annotationId, annotationId2, dataPropertyId, dataPropertyId2, individualId, individualId2, irisResponse, importedIrisResponse, classHierarchiesResponse, conceptHierarchiesResponse, conceptSchemeHierarchiesResponse, classesWithIndividualsResponse, dataPropertyHierarchiesResponse, objectPropertyHierarchiesResponse, annotationPropertyHierarchiesResponse, branches, path;
+    var error, format, title, description, keywords, inProgressCommit, emptyInProgressCommit, recordId, recordTitle, branchId, commitId, ontologyId, catalogId, anonymous, branch, commitObj, ontologyType, vocabularyType, jsonFilter, differenceObj, index, importedOntologies, importedOntologyIds, classId, classId2, objectPropertyId, objectPropertyId2, datatypeId, datatypeId2, annotationId, annotationId2, dataPropertyId, dataPropertyId2, individualId, individualId2, conceptId, conceptSchemeId, irisResponse, importedIrisResponse, classHierarchiesResponse, conceptHierarchiesResponse, conceptSchemeHierarchiesResponse, classesWithIndividualsResponse, dataPropertyHierarchiesResponse, objectPropertyHierarchiesResponse, annotationPropertyHierarchiesResponse, branches, path;
 
     beforeEach(function() {
         module('ontologyState');
@@ -140,13 +140,17 @@ describe('Ontology State Service', function() {
         dataPropertyId2 = 'dataPropertyId2';
         individualId = 'individualId';
         individualId2 = 'individualId2';
+        conceptId = 'conceptId';
+        conceptSchemeId = 'conceptSchemeId';
         irisResponse = {
             annotationProperties: [{localName: annotationId, namespace: annotationId}],
             classes: [{localName: classId, namespace: classId}],
             dataProperties: [{localName: dataPropertyId, namespace: dataPropertyId}],
             objectProperties: [{localName: objectPropertyId, namespace: objectPropertyId}],
             namedIndividuals: [{localName: individualId, namespace: individualId}],
-            datatypes: [{localName: datatypeId, namespace: datatypeId}]
+            datatypes: [{localName: datatypeId, namespace: datatypeId}],
+            derivedConcepts: [{localName: conceptId, namespace: conceptId}],
+            derivedConceptSchemes: [{localName: conceptSchemeId, namespace: conceptSchemeId}]
         };
         importedIrisResponse = [{
             id: ontologyId,
@@ -386,6 +390,8 @@ describe('Ontology State Service', function() {
         dataPropertyId2 = null;
         individualId = null;
         individualId2 = null;
+        conceptId = null;
+        conceptSchemeId = null;
         irisResponse = null;
         importedIrisResponse = null;
         classHierarchiesResponse = null;
@@ -1296,6 +1302,140 @@ describe('Ontology State Service', function() {
             expect(listItem.iriList).not.toContain(classId);
         });
     });
+    describe('setVocabularyStuff sets the appropriate state variables on', function() {
+        beforeEach(function() {
+            this.response = {
+                derivedConcepts: [{localName: 'derivedConcept'}],
+                derivedConceptSchemes: [{localName: 'derivedConceptScheme'}],
+                concepts: {
+                    index: {0: 'derivedConcept'},
+                    hierarchy: ['derivedConcept']
+                },
+                conceptSchemes: {
+                    index: {0: 'derivedConceptScheme'},
+                    hierarchy: ['derivedConceptScheme']
+                }
+            };
+            spyOn(ontologyStateSvc, 'flattenHierarchy').and.callFake(function(arr) {
+                return arr;
+            });
+            responseObj.getItemIri.and.callFake(function(obj) {
+                return obj.localName;
+            });
+        });
+        describe('the current listItem when getVocabularyStuff', function() {
+            beforeEach(function() {
+                ontologyStateSvc.listItem.derivedConcepts = [];
+                ontologyStateSvc.listItem.derivedConceptSchemes = [];
+                ontologyStateSvc.listItem.concepts = {hierarchy: [], index: {}, flat: []};
+                ontologyStateSvc.listItem.conceptSchemes = {hierarchy: [], index: {}, flat: []};
+                ontologyStateSvc.listItem.editorTabStates.concepts = {entityIRI: 'iri', usages: []};
+            });
+            it('resolves', function() {
+                ontologyManagerSvc.getVocabularyStuff.and.returnValue($q.when(this.response));
+                ontologyStateSvc.setVocabularyStuff();
+                scope.$apply();
+                expect(httpSvc.cancel).toHaveBeenCalledWith(ontologyStateSvc.vocabularySpinnerId);
+                expect(ontologyManagerSvc.getVocabularyStuff).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.vocabularySpinnerId);
+                expect(ontologyStateSvc.listItem.derivedConcepts).toEqual(['derivedConcept']);
+                expect(ontologyStateSvc.listItem.derivedConceptSchemes).toEqual(['derivedConceptScheme']);
+                expect(ontologyStateSvc.listItem.concepts.hierarchy).toEqual(this.response.concepts.hierarchy);
+                expect(ontologyStateSvc.listItem.concepts.index).toEqual(this.response.concepts.index);
+                expect(ontologyStateSvc.listItem.concepts.flat).toEqual(this.response.concepts.hierarchy);
+                expect(ontologyStateSvc.listItem.conceptSchemes.hierarchy).toEqual(this.response.conceptSchemes.hierarchy);
+                expect(ontologyStateSvc.listItem.conceptSchemes.index).toEqual(this.response.conceptSchemes.index);
+                expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual(this.response.conceptSchemes.hierarchy);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(this.response.concepts.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(this.response.conceptSchemes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem);
+                expect(ontologyStateSvc.listItem.editorTabStates.concepts).toEqual({});
+                expect(util.createErrorToast).not.toHaveBeenCalled();
+            });
+            it('rejects', function() {
+                ontologyManagerSvc.getVocabularyStuff.and.returnValue($q.reject(error));
+                ontologyStateSvc.setVocabularyStuff();
+                scope.$apply();
+                expect(httpSvc.cancel).toHaveBeenCalledWith(ontologyStateSvc.vocabularySpinnerId);
+                expect(ontologyManagerSvc.getVocabularyStuff).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, ontologyStateSvc.vocabularySpinnerId);
+                expect(ontologyStateSvc.listItem.derivedConcepts).toEqual([]);
+                expect(ontologyStateSvc.listItem.derivedConceptSchemes).toEqual([]);
+                expect(ontologyStateSvc.listItem.concepts.hierarchy).toEqual([]);
+                expect(ontologyStateSvc.listItem.concepts.index).toEqual({});
+                expect(ontologyStateSvc.listItem.concepts.flat).toEqual([]);
+                expect(ontologyStateSvc.listItem.conceptSchemes.hierarchy).toEqual([]);
+                expect(ontologyStateSvc.listItem.conceptSchemes.index).toEqual({});
+                expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([]);
+                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.listItem.editorTabStates.concepts).toEqual({entityIRI: 'iri', usages: []});
+                expect(util.createErrorToast).toHaveBeenCalledWith(error);
+            });
+        });
+        describe('the provided listItem when getVocabularyStuff', function() {
+            beforeEach(function() {
+                this.listItem = {
+                    editorTabStates: {
+                        concepts: {
+                            entityIRI: 'iri',
+                            usages: []
+                        }
+                    },
+                    ontologyRecord: {
+                        recordId: 'recordId',
+                        branchId: 'branchId',
+                        commitId: 'commitId'
+                    },
+                    derivedConcepts: [],
+                    derivedConceptSchemes: [],
+                    concepts: {
+                        index: {},
+                        hierarchy: [],
+                        flat: []
+                    },
+                    conceptSchemes: {
+                        index: {},
+                        hierarchy: [],
+                        flat: []
+                    }
+                };
+            });
+            it('resolves', function() {
+                ontologyManagerSvc.getVocabularyStuff.and.returnValue($q.when(this.response));
+                ontologyStateSvc.setVocabularyStuff(this.listItem);
+                scope.$apply();
+                expect(httpSvc.cancel).toHaveBeenCalledWith(ontologyStateSvc.vocabularySpinnerId);
+                expect(ontologyManagerSvc.getVocabularyStuff).toHaveBeenCalledWith(this.listItem.ontologyRecord.recordId, this.listItem.ontologyRecord.branchId, this.listItem.ontologyRecord.commitId, ontologyStateSvc.vocabularySpinnerId);
+                expect(this.listItem.derivedConcepts).toEqual(['derivedConcept']);
+                expect(this.listItem.derivedConceptSchemes).toEqual(['derivedConceptScheme']);
+                expect(this.listItem.concepts.hierarchy).toEqual(this.response.concepts.hierarchy);
+                expect(this.listItem.concepts.index).toEqual(this.response.concepts.index);
+                expect(this.listItem.concepts.flat).toEqual(this.response.concepts.hierarchy);
+                expect(this.listItem.conceptSchemes.hierarchy).toEqual(this.response.conceptSchemes.hierarchy);
+                expect(this.listItem.conceptSchemes.index).toEqual(this.response.conceptSchemes.index);
+                expect(this.listItem.conceptSchemes.flat).toEqual(this.response.conceptSchemes.hierarchy);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(this.response.concepts.hierarchy, this.listItem.ontologyRecord.recordId, this.listItem);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(this.response.conceptSchemes.hierarchy, this.listItem.ontologyRecord.recordId, this.listItem);
+                expect(this.listItem.editorTabStates.concepts).toEqual({});
+                expect(util.createErrorToast).not.toHaveBeenCalled();
+            });
+            it('rejects', function() {
+                ontologyManagerSvc.getVocabularyStuff.and.returnValue($q.reject(error));
+                ontologyStateSvc.setVocabularyStuff(this.listItem);
+                scope.$apply();
+                expect(httpSvc.cancel).toHaveBeenCalledWith(ontologyStateSvc.vocabularySpinnerId);
+                expect(ontologyManagerSvc.getVocabularyStuff).toHaveBeenCalledWith(this.listItem.ontologyRecord.recordId, this.listItem.ontologyRecord.branchId, this.listItem.ontologyRecord.commitId, ontologyStateSvc.vocabularySpinnerId);
+                expect(this.listItem.derivedConcepts).toEqual([]);
+                expect(this.listItem.derivedConceptSchemes).toEqual([]);
+                expect(this.listItem.concepts.hierarchy).toEqual([]);
+                expect(this.listItem.concepts.index).toEqual({});
+                expect(this.listItem.concepts.flat).toEqual([]);
+                expect(this.listItem.conceptSchemes.hierarchy).toEqual([]);
+                expect(this.listItem.conceptSchemes.index).toEqual({});
+                expect(this.listItem.conceptSchemes.flat).toEqual([]);
+                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                expect(this.listItem.editorTabStates.concepts).toEqual({entityIRI: 'iri', usages: []});
+                expect(util.createErrorToast).toHaveBeenCalledWith(error);
+            });
+        });
+    });
     it('flattenHierarchy properly flattens the provided hierarchy', function() {
         spyOn(ontologyStateSvc, 'getEntityNameByIndex').and.callFake(_.identity);
         expect(ontologyStateSvc.flattenHierarchy([{
@@ -1430,7 +1570,7 @@ describe('Ontology State Service', function() {
         expect(ontology[3]).toEqual(individualObj);
         expect(_.has(listItem.index, individualId)).toBe(true);
         expect(listItem.index[individualId].position).toEqual(3);
-        expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(individualObj, listItem.ontologyRecord.type);
+        expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(individualObj);
         expect(listItem.index[individualId].label).toBe('name');
         expect(listItem.index[individualId].ontologyIri).toBe('ontologyId');
     });
@@ -1525,6 +1665,8 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.getDataPropertyHierarchies.and.returnValue($q.when(dataPropertyHierarchiesResponse));
             ontologyManagerSvc.getObjectPropertyHierarchies.and.returnValue($q.when(objectPropertyHierarchiesResponse));
             ontologyManagerSvc.getAnnotationPropertyHierarchies.and.returnValue($q.when(annotationPropertyHierarchiesResponse));
+            ontologyManagerSvc.getConceptHierarchies.and.returnValue($q.when(conceptHierarchiesResponse));
+            ontologyManagerSvc.getConceptSchemeHierarchies.and.returnValue($q.when(conceptSchemeHierarchiesResponse));
             ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([{id: 'imported-ontology', ontologyId: 'ontologyId', ontology: [{'@id': 'ontologyId'}]}]));
             catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: branches}));
             spyOn(ontologyStateSvc, 'flattenHierarchy').and.returnValue([{prop: 'flatten'}]);
@@ -1567,6 +1709,8 @@ describe('Ontology State Service', function() {
                     }, {
                         localName: datatypeId, namespace: datatypeId
                     }], ontologyManagerSvc.defaultDatatypes));
+                    expect(_.get(response, 'derivedConcepts')).toEqual([conceptId]);
+                    expect(_.get(response, 'derivedConceptSchemes')).toEqual([conceptSchemeId]);
                     expect(_.get(response, 'classes.hierarchy')).toEqual(classHierarchiesResponse.hierarchy);
                     expect(_.get(response, 'classes.index')).toEqual(classHierarchiesResponse.index);
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.classes.hierarchy, recordId, response);
@@ -1587,8 +1731,16 @@ describe('Ontology State Service', function() {
                     expect(_.get(response, 'annotations.index')).toEqual(annotationPropertyHierarchiesResponse.index);
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotations.hierarchy, recordId, response);
                     expect(_.get(response, 'annotations.flat')).toEqual([{prop: 'flatten'}]);
+                    expect(_.get(response, 'concepts.hierarchy')).toEqual(conceptHierarchiesResponse.hierarchy);
+                    expect(_.get(response, 'concepts.index')).toEqual(conceptHierarchiesResponse.index);
+                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.concepts.hierarchy, recordId, response);
+                    expect(_.get(response, 'concepts.flat')).toEqual([{prop: 'flatten'}]);
+                    expect(_.get(response, 'conceptSchemes.hierarchy')).toEqual(conceptSchemeHierarchiesResponse.hierarchy);
+                    expect(_.get(response, 'conceptSchemes.index')).toEqual(conceptSchemeHierarchiesResponse.index);
+                    expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes.hierarchy, recordId, response);
+                    expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'upToDate')).toBe(false);
-                    expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
+                    expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, conceptId, conceptSchemeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
                     expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([ontology, [{
                         '@id': 'ontologyId',
                         mobi: {
@@ -1613,6 +1765,8 @@ describe('Ontology State Service', function() {
             expect(ontologyManagerSvc.getObjectPropertyHierarchies).toHaveBeenCalledWith(recordId, branchId, commitId);
             expect(ontologyManagerSvc.getAnnotationPropertyHierarchies).toHaveBeenCalledWith(recordId, branchId, commitId);
             expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId);
+            expect(ontologyManagerSvc.getConceptHierarchies).toHaveBeenCalledWith(recordId, branchId, commitId);
+            expect(ontologyManagerSvc.getConceptSchemeHierarchies).toHaveBeenCalledWith(recordId, branchId, commitId);
         });
         it('when one call fails', function() {
             ontologyManagerSvc.getIris.and.returnValue($q.reject(error));
@@ -1690,6 +1844,8 @@ describe('Ontology State Service', function() {
             ontologyManagerSvc.getImportedIris.and.returnValue($q.when(importedIrisResponse));
             ontologyStateSvc.createVocabularyListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, false)
                 .then(function(response) {
+                    expect(_.get(response, 'derivedConcepts')).toEqual([conceptId]);
+                    expect(_.get(response, 'derivedConceptSchemes')).toEqual([conceptSchemeId]);
                     expect(_.get(response, 'dataProperties.iris')).toEqual([{
                         localName: dataPropertyId2, namespace: dataPropertyId2, ontologyId: ontologyId
                     }, {
@@ -1710,7 +1866,7 @@ describe('Ontology State Service', function() {
                     expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'branches')).toEqual(branches);
                     expect(_.get(response, 'upToDate')).toBe(false);
-                    expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
+                    expect(_.get(response, 'iriList')).toEqual([ontologyId, annotationId, classId, dataPropertyId, objectPropertyId, individualId, datatypeId, conceptId, conceptSchemeId, annotationId2, classId2, dataPropertyId2, objectPropertyId2, individualId2, datatypeId2]);
                     expect(_.get(response, 'failedImports')).toEqual(['failedId']);
                 }, function() {
                     fail('Promise should have resolved');
@@ -2863,11 +3019,24 @@ describe('Ontology State Service', function() {
                 expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.annotations.flat, 'iri');
                 expect(ontologyStateSvc.setAnnotationPropertiesOpened).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, true);
             });
+            it('a concept', function() {
+                ontologyManagerSvc.isOntology.and.returnValue(false);
+                ontologyManagerSvc.isClass.and.returnValue(false);
+                ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
+                ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+                ontologyManagerSvc.isConcept.and.returnValue(true);
+                ontologyStateSvc.goTo('iri');
+                expect(ontologyManagerSvc.isConcept).toHaveBeenCalledWith(this.entity, ontologyStateSvc.listItem.derivedConcepts);
+                expect(ontologyStateSvc.setActivePage).toHaveBeenCalledWith('concepts');
+                expect(ontologyStateSvc.selectItem).toHaveBeenCalledWith('iri');
+                expect(ontologyStateSvc.openAt).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.flat, 'iri');
+            });
             it('an individual', function() {
                 ontologyManagerSvc.isOntology.and.returnValue(false);
                 ontologyManagerSvc.isClass.and.returnValue(false);
                 ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
                 ontologyManagerSvc.isObjectProperty.and.returnValue(false);
+                ontologyManagerSvc.isConcept.and.returnValue(false);
                 ontologyManagerSvc.isIndividual.and.returnValue(true);
                 ontologyStateSvc.goTo('iri');
                 expect(ontologyManagerSvc.isIndividual).toHaveBeenCalledWith(this.entity);
