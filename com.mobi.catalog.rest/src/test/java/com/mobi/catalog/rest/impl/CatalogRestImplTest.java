@@ -116,6 +116,7 @@ import com.mobi.rest.util.UsernameTestFilter;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.model.vocabulary.DCTERMS;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -406,8 +407,6 @@ public class CatalogRestImplTest extends MobiRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(catalogManager, versioningManager, engineManager, transformer, conflict, difference, results, bNodeService, provUtils);
-
         when(transformer.sesameModel(any(Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
         when(transformer.sesameStatement(any(Statement.class)))
@@ -507,6 +506,11 @@ public class CatalogRestImplTest extends MobiRestTestNg {
 
         when(provUtils.startCreateActivity(any(User.class))).thenReturn(createActivity);
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
+    }
+
+    @AfterMethod
+    public void resetMocks() {
+        reset(catalogManager, versioningManager, engineManager, transformer, conflict, difference, results, bNodeService, provUtils);
     }
 
     // GET catalogs

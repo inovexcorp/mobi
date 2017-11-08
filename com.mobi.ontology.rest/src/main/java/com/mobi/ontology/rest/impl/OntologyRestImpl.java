@@ -117,7 +117,7 @@ public class OntologyRestImpl implements OntologyRest {
     private VersioningManager versioningManager;
     private CatalogProvUtils provUtils;
 
-    private final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(OntologyRestImpl.class);
 
     @Reference
     void setModelFactory(ModelFactory modelFactory) {
@@ -918,6 +918,7 @@ public class OntologyRestImpl implements OntologyRest {
                 log.trace("cache hit");
                 optionalOntology = Optional.of(cache.get().get(key));
             } else {
+                log.trace("cache miss");
                 Resource recordId = valueFactory.createIRI(recordIdStr);
 
                 if (StringUtils.isNotBlank(commitIdStr)) {
