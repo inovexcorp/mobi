@@ -39,7 +39,7 @@
 
             /**
              * @ngdoc method
-             * @name containsDerivedConcept
+             * @name containsDerivedConcepts
              * @methodOf ontologyUtilsManager.service:ontologyUtilsManagerService
              *
              * @description
@@ -52,10 +52,20 @@
                 return !!_.intersection(arr, _.concat(os.listItem.derivedConcepts, [prefixes.skos + 'Concept'])).length;
             }
 
+            self.containsDerivedConceptScheme = function(arr) {
+                return !!_.intersection(arr, _.concat(os.listItem.derivedConceptSchemes, [prefixes.skos + 'ConceptScheme'])).length;
+            }
+
             self.addConcept = function(concept) {
                 var hierarchy = _.get(os.listItem, 'concepts.hierarchy');
                 hierarchy.push({'entityIRI': concept['@id']});
                 os.listItem.concepts.flat = os.flattenHierarchy(hierarchy, os.listItem.ontologyRecord.recordId);
+            }
+
+            self.addConceptScheme = function(scheme) {
+                var hierarchy = _.get(os.listItem, 'conceptSchemes.hierarchy');
+                hierarchy.push({'entityIRI': scheme['@id']});
+                os.listItem.conceptSchemes.flat = os.flattenHierarchy(hierarchy, os.listItem.ontologyRecord.recordId);
             }
 
             self.addIndividual = function(individual) {
@@ -151,6 +161,8 @@
                 removeIndividual(entityIRI);
                 if (self.containsDerivedConcept(os.listItem.selected['@type'])) {
                     removeConcept(entityIRI);
+                } else if (self.containsDerivedConceptScheme(os.listItem.selected['@type'])) {
+                    removeConceptScheme(entityIRI);
                 }
                 self.commonDelete(entityIRI);
             }
@@ -164,9 +176,8 @@
 
             self.deleteConceptScheme = function() {
                 var entityIRI = os.getActiveEntityIRI();
-                _.remove(os.listItem.conceptSchemes.hierarchy, {entityIRI});
-                ur.remove(os.listItem.conceptSchemes.index, entityIRI);
-                os.listItem.conceptSchemes.flat = os.flattenHierarchy(os.listItem.conceptSchemes.hierarchy, os.listItem.ontologyRecord.recordId);
+                removeConceptScheme(entityIRI);
+                removeIndividual(entityIRI);
                 self.commonDelete(entityIRI);
             }
 
@@ -283,6 +294,9 @@
             function removeConcept(entityIRI) {
                 os.deleteEntityFromHierarchy(os.listItem.concepts.hierarchy, entityIRI, os.listItem.concepts.index);
                 os.listItem.concepts.flat = os.flattenHierarchy(os.listItem.concepts.hierarchy, os.listItem.ontologyRecord.recordId);
+                removeConceptScheme(entityIRI);
+            }
+            function removeConceptScheme(entityIRI) {
                 os.deleteEntityFromHierarchy(os.listItem.conceptSchemes.hierarchy, entityIRI, os.listItem.conceptSchemes.index);
                 os.listItem.conceptSchemes.flat = os.flattenHierarchy(os.listItem.conceptSchemes.hierarchy, os.listItem.ontologyRecord.recordId);
             }
