@@ -54,14 +54,10 @@ describe('Class Mapping Overlay directive', function() {
         it('should add a class mapping', function() {
             var classMapping = {'@id': 'classMapping'};
             this.controller.selectedClass = {ontologyId: '', classObj: {'@id': ''}};
-            mapperStateSvc.availableClasses = [this.controller.selectedClass];
-            mapperStateSvc.sourceOntologies = [{id: this.controller.selectedClass.ontologyId, entities: []}];
-            mappingManagerSvc.addClass.and.returnValue(classMapping);
+            mapperStateSvc.addClassMapping.and.returnValue(classMapping);
             this.controller.addClass();
-            expect(mappingManagerSvc.addClass).toHaveBeenCalledWith(mapperStateSvc.mapping.jsonld, jasmine.any(Array), this.controller.selectedClass.classObj['@id']);
+            expect(mapperStateSvc.addClassMapping).toHaveBeenCalledWith(this.controller.selectedClass);
             expect(mapperStateSvc.setAvailableProps).toHaveBeenCalledWith(classMapping['@id']);
-            expect(mapperStateSvc.availableClasses).toContain(this.controller.selectedClass);
-            expect(mapperStateSvc.mapping.difference.additions).toContain(classMapping);
             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
             expect(mapperStateSvc.selectedClassMappingId).toBe(classMapping['@id']);
             expect(mapperStateSvc.displayClassMappingOverlay).toBe(false);

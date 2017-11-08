@@ -264,63 +264,14 @@ describe('Mapping Manager service', function() {
             expect(result).toBeUndefined();
             expect(this.mapping).not.toContain(result);
         });
-        describe('if the class exists in the passed ontology', function() {
-            it('and the class has not been mapped before', function() {
-                var result = mappingManagerSvc.addClass(this.mapping, {}, 'classid');
-                expect(this.mapping).toContain(result);
-                expect(uuidSvc.v4).toHaveBeenCalled();
-                expect(result['@type']).toContain(prefixes.delim + 'ClassMapping');
-                expect(_.has(result, prefixes.delim + 'hasPrefix')).toBe(true);
-                expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(result, 'title', 'Class');
-                expect(result[prefixes.delim + 'localName']).toEqual([{'@value': '${UUID}'}]);
-                expect(result[prefixes.delim + 'mapsTo']).toEqual([{'@id': 'classid'}]);
-            });
-            describe('and the class has been mapped before', function() {
-                beforeEach(function() {
-                    spyOn(mappingManagerSvc, 'getClassMappingsByClassId').and.returnValue([{}, {}]);
-                    this.titles = [];
-                    this.idx = 0;
-                    var self = this;
-                    utilSvc.getDctermsValue.and.callFake(function() {
-                        var title = self.titles[self.idx];
-                        self.idx++;
-                        return title;
-                    });
-                });
-                it('with missing the no number title', function() {
-                    this.titles = ['Class (1)', 'Class (2)'];
-                    var result = mappingManagerSvc.addClass(this.mapping, {}, 'classid');
-                    expect(this.mapping).toContain(result);
-                    expect(uuidSvc.v4).toHaveBeenCalled();
-                    expect(result['@type']).toContain(prefixes.delim + 'ClassMapping');
-                    expect(_.has(result, prefixes.delim + 'hasPrefix')).toBe(true);
-                    expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(result, 'title', 'Class');
-                    expect(result[prefixes.delim + 'localName']).toEqual([{'@value': '${UUID}'}]);
-                    expect(result[prefixes.delim + 'mapsTo']).toEqual([{'@id': 'classid'}]);
-                });
-                it('with a missing number', function() {
-                    this.titles = ['Class', 'Class (2)'];
-                    var result = mappingManagerSvc.addClass(this.mapping, {}, 'classid');
-                    expect(this.mapping).toContain(result);
-                    expect(uuidSvc.v4).toHaveBeenCalled();
-                    expect(result['@type']).toContain(prefixes.delim + 'ClassMapping');
-                    expect(_.has(result, prefixes.delim + 'hasPrefix')).toBe(true);
-                    expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(result, 'title', 'Class (1)');
-                    expect(result[prefixes.delim + 'localName']).toEqual([{'@value': '${UUID}'}]);
-                    expect(result[prefixes.delim + 'mapsTo']).toEqual([{'@id': 'classid'}]);
-                });
-                it('with no missing numbers', function() {
-                    this.titles = ['Class', 'Class (1)'];
-                    var result = mappingManagerSvc.addClass(this.mapping, {}, 'classid');
-                    expect(this.mapping).toContain(result);
-                    expect(uuidSvc.v4).toHaveBeenCalled();
-                    expect(result['@type']).toContain(prefixes.delim + 'ClassMapping');
-                    expect(_.has(result, prefixes.delim + 'hasPrefix')).toBe(true);
-                    expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(result, 'title', 'Class (2)');
-                    expect(result[prefixes.delim + 'localName']).toEqual([{'@value': '${UUID}'}]);
-                    expect(result[prefixes.delim + 'mapsTo']).toEqual([{'@id': 'classid'}]);
-                });
-            });
+        it('if the class exists in the passed ontology', function() {
+            var result = mappingManagerSvc.addClass(this.mapping, {}, 'classid');
+            expect(this.mapping).toContain(result);
+            expect(uuidSvc.v4).toHaveBeenCalled();
+            expect(result['@type']).toContain(prefixes.delim + 'ClassMapping');
+            expect(_.has(result, prefixes.delim + 'hasPrefix')).toBe(true);
+            expect(result[prefixes.delim + 'localName']).toEqual([{'@value': '${UUID}'}]);
+            expect(result[prefixes.delim + 'mapsTo']).toEqual([{'@id': 'classid'}]);
         });
     });
     describe('should set the IRI template of a class mapping', function() {
@@ -372,8 +323,6 @@ describe('Mapping Manager service', function() {
             expect(this.mapping).toContain(result);
             expect(uuidSvc.v4).toHaveBeenCalled();
             expect(result['@type']).toContain(prefixes.delim + 'DataMapping');
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(this.propObj);
-            expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(result, 'title', 'Property');
             expect(result[prefixes.delim + 'columnIndex']).toEqual([{'@value': '0'}]);
             expect(result[prefixes.delim + 'hasProperty']).toEqual([{'@id': 'propId'}]);
             expect(_.isArray(this.classMapping[prefixes.delim + 'dataProperty'])).toBe(true);
@@ -387,8 +336,6 @@ describe('Mapping Manager service', function() {
             expect(this.mapping).toContain(result);
             expect(uuidSvc.v4).toHaveBeenCalled();
             expect(result['@type']).toContain(prefixes.delim + 'DataMapping');
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({'@id': 'propId'});
-            expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(result, 'title', 'Property');
             expect(result[prefixes.delim + 'columnIndex']).toEqual([{'@value': '0'}]);
             expect(result[prefixes.delim + 'hasProperty']).toEqual([{'@id': 'propId'}]);
             expect(_.isArray(this.classMapping[prefixes.delim + 'dataProperty'])).toBe(true);
@@ -443,8 +390,6 @@ describe('Mapping Manager service', function() {
             expect(uuidSvc.v4).toHaveBeenCalled();
             expect(_.isArray(this.parentClassMapping.objectProperty)).toBe(true);
             expect(this.parentClassMapping.objectProperty).toContain({'@id': result['@id']});
-            expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith(this.propObj);
-            expect(utilSvc.setDctermsValue).toHaveBeenCalledWith(result, 'title', 'Property');
             expect(result[prefixes.delim + 'classMapping']).toEqual([{'@id': this.rangeClassMapping['@id']}]);
             expect(result[prefixes.delim + 'hasProperty']).toEqual([{'@id': 'propId'}]);
         });

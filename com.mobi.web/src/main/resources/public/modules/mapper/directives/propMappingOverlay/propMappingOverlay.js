@@ -110,8 +110,6 @@
                     }
                     dvm.set = function() {
                         if (dvm.state.newProp) {
-                            var propId = dvm.selectedProp.propObj['@id'];
-                            var ontology = _.find(dvm.state.sourceOntologies, {id: dvm.selectedProp.ontologyId});
                             var additionsObj = _.find(dvm.state.mapping.difference.additions, {'@id': dvm.state.selectedClassMappingId});
                             var propMap;
                             var prop;
@@ -120,17 +118,15 @@
                                 var classMappingId = getRangeClassMappingId();
 
                                 // Add ObjectMapping pointing to new range class mapping
-                                propMap = mm.addObjectProp(dvm.state.mapping.jsonld, _.get(ontology, 'entities', []), dvm.state.selectedClassMappingId, propId, classMappingId);
+                                propMap = dvm.state.addObjectMapping(dvm.selectedProp, dvm.state.selectedClassMappingId, classMappingId);
                                 prop = prefixes.delim + 'objectProperty';
                                 dvm.state.setAvailableProps(classMappingId);
                             } else {
                                 // Add the DataMapping pointing to the selectedColumn
-                                propMap = mm.addDataProp(dvm.state.mapping.jsonld, _.get(ontology, 'entities', []), dvm.state.selectedClassMappingId, propId, dvm.selectedColumn);
+                                propMap = dvm.state.addDataMapping(dvm.selectedProp, dvm.state.selectedClassMappingId, dvm.selectedColumn);
                                 prop = prefixes.delim + 'dataProperty';
                             }
 
-                            // Add new PropertyMapping to the additions
-                            dvm.state.mapping.difference.additions.push(angular.copy(propMap));
                             if (additionsObj) {
                                 // If the additionsObj for the parent ClassMapping exists, add the triple for the new PropertyMapping
                                 if (!_.has(additionsObj, "['" + prop + "']")) {
@@ -171,10 +167,7 @@
                         var classMappingId = dvm.rangeClassMappingId;
                         if (dvm.rangeClassMappingId === newClassMappingIdentifier) {
                             // Add a new ClassMapping for the range if that is what was selected
-                            var rangeOntology = _.find(dvm.state.sourceOntologies, {id: dvm.rangeClass.ontologyId});
-                            var classMapping = mm.addClass(dvm.state.mapping.jsonld, rangeOntology.entities, dvm.rangeClass.classObj['@id']);
-                            classMappingId = classMapping['@id'];
-                            dvm.state.mapping.difference.additions.push(angular.copy(classMapping));
+                            classMappingId = dvm.state.addClassMapping(dvm.rangeClass)['@id'];
                         }
                         return classMappingId;
                     }

@@ -429,6 +429,9 @@ function mockMapperState() {
             this.getClasses = jasmine.createSpy('getClasses').and.returnValue([]);
             this.getMappedColumns = jasmine.createSpy('getMappedColumns').and.returnValue([]);
             this.changeProp = jasmine.createSpy('changeProp');
+            this.addClassMapping = jasmine.createSpy('addClassMapping').and.returnValue({});
+            this.addDataMapping = jasmine.createSpy('addDataMapping').and.returnValue({});
+            this.addObjectMapping = jasmine.createSpy('addObjectMapping').and.returnValue({});
             this.deleteEntity = jasmine.createSpy('deleteEntity');
             this.deleteClass = jasmine.createSpy('deleteClass');
             this.deleteProp = jasmine.createSpy('deleteProp');

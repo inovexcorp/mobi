@@ -65,9 +65,7 @@
                     dvm.selectedClass = undefined;
 
                     dvm.addClass = function() {
-                        var ontology = _.find(dvm.state.sourceOntologies, {id: dvm.selectedClass.ontologyId});
-                        var classMapping = mm.addClass(dvm.state.mapping.jsonld, ontology.entities, dvm.selectedClass.classObj['@id']);
-                        dvm.state.mapping.difference.additions.push(angular.copy(classMapping));
+                        var classMapping = dvm.state.addClassMapping(dvm.selectedClass);
                         dvm.state.setAvailableProps(classMapping['@id']);
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = classMapping['@id'];

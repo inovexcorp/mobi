@@ -696,6 +696,40 @@
                     }
                 }
             }
+            self.addClassMapping = function(classIdObj) {
+                var ontology = _.find(self.sourceOntologies, {id: classIdObj.ontologyId});
+                var originalClassMappings = mm.getClassMappingsByClassId(self.mapping.jsonld, classIdObj.classObj['@id']);
+                var classMapping = mm.addClass(self.mapping.jsonld, ontology.entities, classIdObj.classObj['@id']);
+                var className = om.getEntityName(classIdObj.classObj);
+                if (!originalClassMappings.length) {
+                    util.setDctermsValue(classMapping, 'title', className);
+                } else {
+                    _.forEach(originalClassMappings, classMapping => {
+                        if (util.getDctermsValue(classMapping, 'title') === className) {
+                            classMapping[prefixes.dcterms + 'title'][0]['@value'] = className + ' (1)';
+                            self.changeProp(classMapping['@id'], prefixes.dcterms + 'title', className + ' (1)', className);
+                            return false;
+                        }
+                    });
+                    setNewTitle(classMapping, className, originalClassMappings);
+                }
+                self.mapping.difference.additions.push(angular.copy(classMapping));
+                return classMapping;
+            }
+            self.addDataMapping = function(propIdObj, classMappingId, columnIndex) {
+                var ontology = _.find(self.sourceOntologies, {id: propIdObj.ontologyId});
+                var propMapping = mm.addDataProp(self.mapping.jsonld, _.get(ontology, 'entities', []), classMappingId, propIdObj.propObj['@id'], columnIndex);
+                util.setDctermsValue(propMapping, 'title', om.getEntityName(propIdObj.propObj));
+                self.mapping.difference.additions.push(angular.copy(propMapping));
+                return propMapping;
+            }
+            self.addObjectMapping = function(propIdObj, classMappingId, rangeClassMappingId) {
+                var ontology = _.find(self.sourceOntologies, {id: propIdObj.ontologyId});
+                var propMapping = mm.addObjectProp(self.mapping.jsonld, _.get(ontology, 'entities', []), classMappingId, propIdObj.propObj['@id'], rangeClassMappingId);
+                util.setDctermsValue(propMapping, 'title', om.getEntityName(propIdObj.propObj));
+                self.mapping.difference.additions.push(angular.copy(propMapping));
+                return propMapping;
+            }
             /**
              * @ngdoc method
              * @name deleteEntity
@@ -747,6 +781,14 @@
                 });
                 _.forEach(propsLinkingToClass, obj => cleanUpDeletedProp(obj.propMapping, obj.classMappingId));
                 self.removeAvailableProps(classMappingId);
+                var classMappings = mm.getClassMappingsByClassId(self.mapping.jsonld, mm.getClassIdByMapping(deletedClass));
+                if (classMappings.length === 1) {
+                    var lastClassMapping = classMappings[0];
+                    var originalTitle = util.getDctermsValue(lastClassMapping, 'title');
+                    var newTitle = originalTitle.replace(/ \((\d+)\)$/, '');
+                    lastClassMapping[prefixes.dcterms + 'title'][0]['@value'] = newTitle;
+                    self.changeProp(lastClassMapping['@id'], prefixes.dcterms + 'title', newTitle, originalTitle);
+                }
             }
             /**
              * @ngdoc method
@@ -799,13 +841,32 @@
             }
             function getChangedEntityName(diffObj) {
                 var entity = _.find(self.mapping.jsonld, {'@id': diffObj['@id']}) || diffObj;
-                if (mm.isClassMapping(entity)) {
-                    return util.getBeautifulIRI(mm.getClassIdByMapping(entity));
-                } else if (mm.isPropertyMapping(entity)) {
-                    return util.getBeautifulIRI(mm.getPropIdByMapping(entity));
-                } else {
-                    return util.getBeautifulIRI(diffObj['@id']);
+                return util.getDctermsValue(entity, 'title') || util.getBeautifulIRI(diffObj['@id']);
+            }
+            function setNewTitle(classMapping, className, existingClassMappings) {
+                var regex = / \((\d+)\)$/;
+                var sortedNums = _.map(
+                    // Collect all titles that start with the name of the passed entity
+                    _.filter(
+                        _.map(existingClassMappings, obj => util.getDctermsValue(obj, 'title')),
+                        title => _.startsWith(title, className)),
+                    // Collect the index number based on the set string format
+                    title => parseInt(_.nth(regex.exec(title), 1), 10)
+                ).sort((a, b) => a - b);
+                var newIdx;
+                for (var i = 1; i < sortedNums.length; i++) {
+                    // If there is a missing number between this index and the index of the previous title,
+                    // newIdx is one more than previous
+                    if (sortedNums[i] - sortedNums[i - 1] != 1) {
+                        newIdx = ` (${sortedNums[i - 1] + 1})`;
+                        break;
+                    }
                 }
+                // If a newIdx was not found, newIdx is the next number
+                if (!newIdx) {
+                    newIdx = ` (${_.last(sortedNums) + 1})`;
+                }
+                util.setDctermsValue(classMapping, 'title', className + newIdx);
             }
         }
 })();
