@@ -41,7 +41,6 @@
                         <text-area ng-model="dvm.description" input-name="description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
                         <advanced-language-select ng-model="dvm.language"></advanced-language-select>
                         <keyword-select ng-model="dvm.keywords"></keyword-select>
-                        <editor-radio-buttons ng-model="dvm.type"></editor-radio-buttons>
                         <div class="btn-container clearfix">
                             <button type="button" class="btn btn-primary pull-right" ng-click="dvm.create()" ng-disabled="dvm.form.$invalid">Create</button>
                             <button type="button" class="btn btn-default pull-right" ng-click="dvm.os.showNewTab = false">Cancel</button>

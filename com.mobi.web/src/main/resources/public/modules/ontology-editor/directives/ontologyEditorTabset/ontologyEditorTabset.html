@@ -26,8 +26,7 @@
              heading="item.ontologyRecord.title"
              on-close="dvm.onClose(item.ontologyRecord.recordId)" active="item.active"
              on-click="dvm.onClick(item.ontologyRecord.recordId)">
-            <ontology-tab ng-if="item.ontologyRecord.type === 'ontology'"></ontology-tab>
-            <vocabulary-tab ng-if="item.ontologyRecord.type === 'vocabulary'"></vocabulary-tab>
+            <ontology-tab></ontology-tab>
         </tab>
         <tab active="dvm.newTabActive" on-click="dvm.onClick()" is-last="true">
             <ontology-default-tab></ontology-default-tab>
