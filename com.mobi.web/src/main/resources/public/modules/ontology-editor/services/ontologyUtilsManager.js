@@ -39,7 +39,7 @@
 
             /**
              * @ngdoc method
-             * @name containsDerivedConcepts
+             * @name containsDerivedConcept
              * @methodOf ontologyUtilsManager.service:ontologyUtilsManagerService
              *
              * @description

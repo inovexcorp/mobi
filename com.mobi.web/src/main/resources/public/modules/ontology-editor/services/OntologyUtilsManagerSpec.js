@@ -276,7 +276,7 @@ describe('Ontology Utils Manager service', function() {
             expect(ontologyStateSvc.listItem.conceptSchemes.flat).toEqual([{entityIRI: 'iri'}]);
             expect(ontologyUtilsManagerSvc.commonDelete).toHaveBeenCalledWith(this.entityIRI);
         });
-        it('if is is a derived conceptScheme', function() {
+        it('if it is a derived conceptScheme', function() {
             spyOn(ontologyUtilsManagerSvc, 'containsDerivedConcept').and.returnValue(false);
             spyOn(ontologyUtilsManagerSvc, 'containsDerivedConceptScheme').and.returnValue(true);
             ontologyUtilsManagerSvc.deleteIndividual();
