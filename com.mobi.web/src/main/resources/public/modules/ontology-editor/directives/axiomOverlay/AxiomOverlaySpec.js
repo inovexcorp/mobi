@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Axiom Overlay directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, propertyManagerSvc, ontologyManagerSvc, ontoUtils, prefixes, manchesterSvc, ontologyManagerSvc, splitIRI;
-    var localNameMap = {
-        'ClassA': 'http://test.com/ClassA',
-        'PropA': 'http://test.com/PropA'
-    };
+    var $compile, scope, $q, ontologyStateSvc, propertyManagerSvc, ontologyManagerSvc, ontoUtils, prefixes, manchesterSvc, ontologyManagerSvc, splitIRI, removeIriFromArray;
 
     beforeEach(function() {
         module('templates');
@@ -40,10 +36,12 @@ describe('Axiom Overlay directive', function() {
         injectHighlightFilter();
         injectTrustedFilter();
         injectSplitIRIFilter();
+        injectRemoveIriFromArrayFilter();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyUtilsManagerService_, _prefixes_, _manchesterConverterService_, _ontologyManagerService_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _responseObj_, _ontologyUtilsManagerService_, _prefixes_, _manchesterConverterService_, _ontologyManagerService_, _splitIRIFilter_, _removeIriFromArrayFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
             resObj = _responseObj_;
             ontoUtils = _ontologyUtilsManagerService_;
@@ -51,296 +49,355 @@ describe('Axiom Overlay directive', function() {
             manchesterSvc = _manchesterConverterService_;
             ontologyManagerSvc = _ontologyManagerService_;
             splitIRI = _splitIRIFilter_;
+            removeIriFromArray = _removeIriFromArrayFilter_;
         });
 
-        invertedMap = _.invert(localNameMap);
-        ontologyStateSvc.listItem.iriList = _.values(localNameMap);
+        this.localNameMap = {
+            'ClassA': 'http://test.com/ClassA',
+            'PropA': 'http://test.com/PropA'
+        };
+        var invertedMap = _.invert(this.localNameMap);
+        ontologyStateSvc.listItem.iriList = _.values(this.localNameMap);
         splitIRI.and.callFake(function(iri) {
             return {end: invertedMap[iri]};
         });
         scope.axiomList = [];
         scope.onSubmit = jasmine.createSpy('onSubmit');
-        element = $compile(angular.element('<axiom-overlay axiom-list="axiomList" on-submit="onSubmit()"></axiom-overlay>'))(scope);
+        this.element = $compile(angular.element('<axiom-overlay axiom-list="axiomList" on-submit="onSubmit(axiom, values)"></axiom-overlay>'))(scope);
         scope.$digest();
-        controller = element.controller('axiomOverlay');
+        this.controller = this.element.controller('axiomOverlay');
+        this.isolatedScope = this.element.isolateScope();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        ontologyStateSvc = null;
+        propertyManagerSvc = null;
+        ontologyManagerSvc = null;
+        ontoUtils = null;
+        prefixes = null;
+        manchesterSvc = null;
+        ontologyManagerSvc = null;
+        splitIRI = null;
+        removeIriFromArray = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            this.isolatedScope = element.isolateScope();
-        });
         it('axiomList is one way bound', function() {
             this.isolatedScope.axiomList = [{}];
             scope.$digest();
             expect(scope.axiomList).toEqual([]);
         });
-        it('onSubmit to be called in parent scope', function() {
-            this.isolatedScope.onSubmit();
+    });
+    describe('controller bound variable', function() {
+        it('onSubmit is called in the parent scope', function() {
+            this.controller.onSubmit();
             expect(scope.onSubmit).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('axiom-overlay')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('axiom-overlay')).toBe(true);
         });
         it('with a form', function() {
-            expect(element.find('form').length).toBe(1);
+            expect(this.element.find('form').length).toBe(1);
         });
         it('with .form-groups', function() {
-            expect(element.querySelectorAll('.form-group').length).toBe(2);
+            expect(this.element.querySelectorAll('.form-group').length).toBe(2);
         });
         it('with custom-labels', function() {
-            expect(element.find('custom-label').length).toBe(3);
+            expect(this.element.find('custom-label').length).toBe(3);
         });
         it('with a tabset', function() {
-            expect(element.find('tabset').length).toBe(1);
+            expect(this.element.find('tabset').length).toBe(1);
         });
         it('with tabs', function() {
-            expect(element.find('tab').length).toBe(2);
+            expect(this.element.find('tab').length).toBe(2);
         });
         it('with ui-selects', function() {
-            expect(element.find('ui-select').length).toBe(2);
+            expect(this.element.find('ui-select').length).toBe(2);
         });
         it('with a ui-codemirror', function() {
-            expect(element.find('ui-codemirror').length).toBe(1);
+            expect(this.element.find('ui-codemirror').length).toBe(1);
         });
         it('with a .btn-container', function() {
-            expect(element.querySelectorAll('.btn-container').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
         });
         it('with buttons to add and cancel', function() {
-            var buttons = element.querySelectorAll('.btn-container button');
+            var buttons = this.element.querySelectorAll('.btn-container button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Add']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Add']).toContain(angular.element(buttons[1]).text().trim());
         });
         it('depending on whether the form is invalid', function() {
-            controller.axiom = {};
-            controller.values = [{}];
+            this.controller.axiom = {};
+            this.controller.values = [{}];
             scope.$digest();
-            var button = angular.element(element.querySelectorAll('.btn-container .btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.btn-container .btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
-            controller.form.$setValidity('test', false);
+            this.controller.form.$setValidity('test', false);
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
         it('depending on whether an axiom is selected', function() {
-            controller.values = [{}];
+            this.controller.values = [{}];
             scope.$digest();
-            var button = angular.element(element.querySelectorAll('.btn-container .btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.btn-container .btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
-            controller.axiom = {};
+            this.controller.axiom = {};
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
         it('depending on whether values have been selected', function() {
-            controller.axiom = {};
+            this.controller.axiom = {};
             scope.$digest();
-            var button = angular.element(element.querySelectorAll('.btn-container .btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.btn-container .btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
-            controller.values = [{}];
+            this.controller.values = [{}];
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
         it('depending on whether an expression has been entered', function() {
-            controller.axiom = {};
-            controller.tabs.list = false;
-            controller.tabs.editor = true;
+            this.controller.axiom = {};
+            this.controller.tabs.list = false;
+            this.controller.tabs.editor = true;
             scope.$digest();
-            var button = angular.element(element.querySelectorAll('.btn-container .btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.btn-container .btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
-            controller.expression = 'test';
+            this.controller.expression = 'test';
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
         it('depending on whether the expression editor is readOnly', function() {
-            var codemirrorWrapper = angular.element(element.querySelectorAll('.codemirror-wrapper')[0]);
+            var codemirrorWrapper = angular.element(this.element.querySelectorAll('.codemirror-wrapper')[0]);
             expect(codemirrorWrapper.hasClass('readOnly')).toEqual(true);
 
-            controller.editorOptions.readOnly = false;
+            this.controller.editorOptions.readOnly = false;
             scope.$digest();
             expect(codemirrorWrapper.hasClass('readOnly')).toEqual(false);
         });
     });
     describe('controller methods', function() {
         describe('should add an axiom', function() {
-            var axiom;
             beforeEach(function() {
-                axiom = 'axiom';
-                controller.values = [{}];
-                controller.axiom = {};
-                controller.expression = 'PropA some ClassA';
+                this.axiom = 'axiom';
+                this.controller.values = [{}];
+                this.controller.axiom = {};
+                this.controller.expression = 'PropA some ClassA';
+                var self = this;
                 resObj.getItemIri.and.callFake(function(obj) {
-                    return obj === controller.axiom ? axiom : 'value';
+                    return obj === self.controller.axiom ? self.axiom : 'value';
                 });
                 ontologyStateSvc.showAxiomOverlay = true;
+                ontoUtils.saveCurrentChanges.and.returnValue($q.when());
             });
             describe('if adding a list', function() {
                 beforeEach(function() {
-                    controller.tabs.list = true;
-                    controller.tabs.editor = false;
+                    this.controller.tabs.list = true;
+                    this.controller.tabs.editor = false;
                 });
                 describe('and the selected entity already has the axiom', function() {
-                    var previousValue = {'@id': 'prev'};
+                    beforeEach(function() {
+                        this.previousValue = {'@id': 'prev'};
+                    });
                     it('and the axiom is rdfs:range', function() {
-                        axiom = prefixes.rdfs + 'range';
-                        ontologyStateSvc.listItem.selected = _.set({}, axiom, [previousValue]);
-                        controller.addAxiom();
-                        expect(ontologyStateSvc.listItem.selected[axiom].length).toBe(controller.values.length + 1);
-                        expect(ontologyStateSvc.listItem.selected[axiom]).toContain(previousValue);
+                        this.axiom = prefixes.rdfs + 'range';
+                        ontologyStateSvc.listItem.selected = _.set({}, this.axiom, [this.previousValue]);
+                        this.controller.addAxiom();
+                        scope.$apply();
+                        expect(ontologyStateSvc.listItem.selected[this.axiom].length).toBe(this.controller.values.length + 1);
+                        expect(ontologyStateSvc.listItem.selected[this.axiom]).toContain(this.previousValue);
                         expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                         expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                        expect(scope.onSubmit).toHaveBeenCalledWith(this.controller.axiom, this.controller.values);
                     });
                     it('and the axiom is not rdfs:range', function() {
-                        ontologyStateSvc.listItem.selected = _.set({}, axiom, [previousValue]);
-                        controller.addAxiom();
-                        expect(ontologyStateSvc.listItem.selected[axiom].length).toBe(controller.values.length + 1);
-                        expect(ontologyStateSvc.listItem.selected[axiom]).toContain(previousValue);
+                        ontologyStateSvc.listItem.selected = _.set({}, this.axiom, [this.previousValue]);
+                        this.controller.addAxiom();
+                        scope.$apply();
+                        expect(ontologyStateSvc.listItem.selected[this.axiom].length).toBe(this.controller.values.length + 1);
+                        expect(ontologyStateSvc.listItem.selected[this.axiom]).toContain(this.previousValue);
                         expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                         expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                        expect(scope.onSubmit).toHaveBeenCalledWith(this.controller.axiom, this.controller.values);
                     });
                 });
                 describe('if the selected entity does not have the axiom', function() {
                     it('and the axiom is rdfs:range', function() {
-                        axiom = prefixes.rdfs + 'range';
-                        controller.addAxiom();
-                        expect(ontologyStateSvc.listItem.selected[axiom].length).toBe(controller.values.length);
+                        this.axiom = prefixes.rdfs + 'range';
+                        this.controller.addAxiom();
+                        scope.$apply();
+                        expect(ontologyStateSvc.listItem.selected[this.axiom].length).toBe(this.controller.values.length);
                         expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                         expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                        expect(scope.onSubmit).toHaveBeenCalledWith(this.controller.axiom, this.controller.values);
                     });
                     it('and the axiom is not rdfs:range', function() {
-                        controller.addAxiom();
-                        expect(ontologyStateSvc.listItem.selected[axiom].length).toBe(controller.values.length);
+                        this.controller.addAxiom();
+                        scope.$apply();
+                        expect(ontologyStateSvc.listItem.selected[this.axiom].length).toBe(this.controller.values.length);
                         expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
                         expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                         expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                        expect(scope.onSubmit).toHaveBeenCalledWith(this.controller.axiom, this.controller.values);
                     });
                 });
             });
             describe('if adding an expression', function() {
-                var manchesterResult;
                 beforeEach(function() {
-                    manchesterResult = {
+                    this.manchesterResult = {
                         errorMessage: '',
                         jsonld: []
                     };
-                    controller.tabs.list = false;
-                    controller.tabs.editor = true;
-                    manchesterSvc.manchesterToJsonld.and.returnValue(manchesterResult);
+                    this.controller.tabs.list = false;
+                    this.controller.tabs.editor = true;
+                    manchesterSvc.manchesterToJsonld.and.returnValue(this.manchesterResult);
                     ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
                 });
                 it('unless the expression is invalid', function() {
-                    manchesterResult.errorMessage = 'This is an error';
-                    controller.addAxiom();
-                    expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(controller.expression, localNameMap, false);
+                    this.manchesterResult.errorMessage = 'This is an error';
+                    this.controller.addAxiom();
+                    expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(this.controller.expression, this.localNameMap, false);
                     expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.showAxiomOverlay).toBe(true);
                     expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
-                    expect(controller.errorMessage).toEqual('This is an error');
+                    expect(this.controller.errorMessage).toEqual('This is an error');
+                    expect(scope.onSubmit).not.toHaveBeenCalled();
                 });
                 it('unless no blank nodes could be created', function() {
-                    controller.addAxiom();
-                    expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(controller.expression, localNameMap, false);
+                    this.controller.addAxiom();
+                    expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(this.controller.expression, this.localNameMap, false);
                     expect(ontologyStateSvc.addToAdditions).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                     expect(ontologyStateSvc.showAxiomOverlay).toBe(true);
                     expect(ontoUtils.saveCurrentChanges).not.toHaveBeenCalled();
-                    expect(controller.errorMessage).toBeTruthy();
+                    expect(this.controller.errorMessage).toBeTruthy();
+                    expect(scope.onSubmit).not.toHaveBeenCalled();
                 });
                 describe('and the selected entity already has the axiom', function() {
-                    var previousValue = {'@id': 'prev'};
-                    var blankNodes = [{'@id': 'bnode1'}, {'@id': 'bnode2'}];
                     beforeEach(function() {
-                        manchesterResult.jsonld = blankNodes;
+                        this.previousValue = {'@id': 'prev'};
+                        this.blankNodes = [{'@id': 'bnode1'}, {'@id': 'bnode2'}];
+                        this.manchesterResult.jsonld = this.blankNodes;
                     });
                     it('and the axiom is rdfs:range', function() {
-                        axiom = prefixes.rdfs + 'range';
-                        ontologyStateSvc.listItem.selected = _.set({}, axiom, [previousValue]);
-                        controller.addAxiom();
-                        expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(controller.expression, localNameMap, false);
-                        expect(ontologyStateSvc.listItem.selected[axiom].length).toBe(2);
-                        expect(ontologyStateSvc.listItem.selected[axiom]).toContain(previousValue);
-                        expect(ontologyStateSvc.listItem.selected[axiom]).toContain({'@id': blankNodes[0]['@id']});
-                        _.forEach(blankNodes, function(node) {
+                        this.axiom = prefixes.rdfs + 'range';
+                        ontologyStateSvc.listItem.selected = _.set({}, this.axiom, [this.previousValue]);
+                        this.controller.addAxiom();
+                        scope.$apply();
+                        expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(this.controller.expression, this.localNameMap, false);
+                        expect(ontologyStateSvc.listItem.selected[this.axiom].length).toBe(2);
+                        expect(ontologyStateSvc.listItem.selected[this.axiom]).toContain(this.previousValue);
+                        expect(ontologyStateSvc.listItem.selected[this.axiom]).toContain({'@id': this.blankNodes[0]['@id']});
+                        _.forEach(this.blankNodes, function(node) {
                             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': node['@id']});
                         });
                         expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                         expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                        expect(scope.onSubmit).toHaveBeenCalledWith(this.controller.axiom, this.controller.values);
                     });
                     it('and the axiom is not rdfs:range', function() {
-                        ontologyStateSvc.listItem.selected = _.set({}, axiom, [previousValue]);
-                        controller.addAxiom();
-                        expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(controller.expression, localNameMap, false);
-                        expect(ontologyStateSvc.listItem.selected[axiom].length).toBe(2);
-                        expect(ontologyStateSvc.listItem.selected[axiom]).toContain(previousValue);
-                        expect(ontologyStateSvc.listItem.selected[axiom]).toContain({'@id': blankNodes[0]['@id']});
-                        _.forEach(blankNodes, function(node) {
+                        ontologyStateSvc.listItem.selected = _.set({}, this.axiom, [this.previousValue]);
+                        this.controller.addAxiom();
+                        scope.$apply();
+                        expect(manchesterSvc.manchesterToJsonld).toHaveBeenCalledWith(this.controller.expression, this.localNameMap, false);
+                        expect(ontologyStateSvc.listItem.selected[this.axiom].length).toBe(2);
+                        expect(ontologyStateSvc.listItem.selected[this.axiom]).toContain(this.previousValue);
+                        expect(ontologyStateSvc.listItem.selected[this.axiom]).toContain({'@id': this.blankNodes[0]['@id']});
+                        _.forEach(this.blankNodes, function(node) {
                             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': node['@id']});
                         });
                         expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                         expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                        expect(scope.onSubmit).toHaveBeenCalledWith(this.controller.axiom, this.controller.values);
                     });
                 });
                 describe('and the selected entity does not have the axiom', function() {
-                    var blankNodes = [{'@id': 'bnode1'}, {'@id': 'bnode2'}];
                     beforeEach(function() {
-                        manchesterResult.jsonld = blankNodes;
+                        this.blankNodes = [{'@id': 'bnode1'}, {'@id': 'bnode2'}];
+                        this.manchesterResult.jsonld = this.blankNodes;
                     });
                     it('and the axiom is rdfs:range', function() {
-                        axiom = prefixes.rdfs + 'range';
-                        controller.addAxiom();
-                        expect(ontologyStateSvc.listItem.selected[axiom].length).toBe(1);
-                        expect(ontologyStateSvc.listItem.selected[axiom]).toContain({'@id': blankNodes[0]['@id']});
-                        _.forEach(blankNodes, function(node) {
+                        this.axiom = prefixes.rdfs + 'range';
+                        this.controller.addAxiom();
+                        scope.$apply();
+                        expect(ontologyStateSvc.listItem.selected[this.axiom].length).toBe(1);
+                        expect(ontologyStateSvc.listItem.selected[this.axiom]).toContain({'@id': this.blankNodes[0]['@id']});
+                        _.forEach(this.blankNodes, function(node) {
                             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': node['@id']});
                         });
                         expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                         expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                        expect(scope.onSubmit).toHaveBeenCalledWith(this.controller.axiom, this.controller.values);
                     });
                     it('and the axiom is not rdfs:range', function() {
-                        controller.addAxiom();
-                        expect(ontologyStateSvc.listItem.selected[axiom].length).toBe(1);
-                        expect(ontologyStateSvc.listItem.selected[axiom]).toContain({'@id': blankNodes[0]['@id']});
-                        _.forEach(blankNodes, function(node) {
+                        this.controller.addAxiom();
+                        scope.$apply();
+                        expect(ontologyStateSvc.listItem.selected[this.axiom].length).toBe(1);
+                        expect(ontologyStateSvc.listItem.selected[this.axiom]).toContain({'@id': this.blankNodes[0]['@id']});
+                        _.forEach(this.blankNodes, function(node) {
                             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': node['@id']});
                         });
                         expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
                         expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
                         expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
+                        expect(scope.onSubmit).toHaveBeenCalledWith(this.controller.axiom, this.controller.values);
                     });
                 });
             });
         });
+        describe('getValues should return the correct values when controller.axiom', function() {
+            beforeEach(function() {
+                this.controller.array = ['initial'];
+            });
+            it('has valuesKey', function() {
+                ontoUtils.getSelectList.and.returnValue(['item']);
+                ontologyStateSvc.listItem.selected = {'@id': 'id'};
+                ontologyStateSvc.listItem.list = { iris: ['first', 'second'] };
+                this.controller.axiom = { valuesKey: 'list' };
+                this.controller.getValues('I');
+                expect(removeIriFromArray).toHaveBeenCalledWith(['first', 'second'], 'id');
+                expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['first', 'second'], 'I', ontoUtils.getDropDownText);
+                expect(this.controller.array).toEqual(['item']);
+            });
+            it('does not have valuesKey', function() {
+                this.controller.axiom = {};
+                this.controller.getValues('stuff');
+                expect(this.controller.array).toEqual([]);
+            });
+        });
     });
     it('should call the correct methods when the Add button is clicked', function() {
-        controller = element.controller('axiomOverlay');
-        controller.axiom = {};
-        controller.values = [{}];
-        spyOn(controller, 'addAxiom');
+        this.controller.axiom = {};
+        this.controller.values = [{}];
+        spyOn(this.controller, 'addAxiom');
         scope.$digest();
 
-        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
         button.triggerHandler('click');
-        expect(controller.addAxiom).toHaveBeenCalled();
-        expect(scope.onSubmit).toHaveBeenCalled();
+        expect(this.controller.addAxiom).toHaveBeenCalled();
     });
     it('should set the correct state when the Cancel button is clicked', function() {
-        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
         button.triggerHandler('click');
         expect(ontologyStateSvc.showAxiomOverlay).toBe(false);
     });

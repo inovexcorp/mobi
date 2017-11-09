@@ -46,7 +46,7 @@
          *
          * @description
          * HTML contents in the super property select which provides a link to show a dropdown select of
-         * all available properties idetified by the provided key.
+         * all available properties IRIs in the subobject idetified by the provided key.
          */
         .directive('superPropertySelect', superPropertySelect);
 
@@ -56,10 +56,9 @@
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/superPropertySelect/superPropertySelect.html',
-                scope: {
-                    key: '<'
-                },
+                scope: {},
                 bindToController: {
+                    key: '<',
                     values: '='
                 },
                 controllerAs: 'dvm',
@@ -70,6 +69,7 @@
                      dvm.os = ontologyStateService;
                      dvm.util = utilService;
                      dvm.isShown = false;
+                     dvm.array = [];
 
                     dvm.show = function() {
                         dvm.isShown = true;
@@ -78,6 +78,10 @@
                     dvm.hide = function() {
                         dvm.isShown = false;
                         dvm.values = [];
+                    }
+
+                    dvm.getValues = function(searchText) {
+                        dvm.array =  dvm.ontoUtils.getSelectList(dvm.os.listItem[dvm.key].iris, searchText, dvm.ontoUtils.getDropDownText);
                     }
                 }
             }

@@ -54,9 +54,6 @@
                     dvm.onClick = function(recordId) {
                         if (recordId) {
                             dvm.os.listItem = dvm.os.getListItemByRecordId(recordId);
-                            dvm.os.setPageTitle(dvm.os.listItem.ontologyRecord.type);
-                        } else {
-                            dvm.os.setPageTitle();
                         }
                     }
 

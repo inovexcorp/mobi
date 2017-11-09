@@ -42,7 +42,7 @@
                     dvm.os = ontologyStateService;
                     dvm.om = ontologyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
-                    dvm.properties = _.union(dvm.om.ontologyProperties, dvm.os.listItem.annotations);
+                    dvm.properties = _.union(dvm.om.ontologyProperties, dvm.os.listItem.annotations.iris);
 
                     dvm.openAddOverlay = function() {
                         dvm.os.editingOntologyProperty = false;
@@ -53,13 +53,11 @@
                         dvm.os.ontologyPropertyLanguage = 'en';
                         dvm.os.showOntologyPropertyOverlay = true;
                     }
-
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
                         dvm.index = index;
                         dvm.showRemoveOverlay = true;
                     }
-
                     dvm.editClicked = function(property, index) {
                         var propertyObj = dvm.os.listItem.selected[dvm.ro.getItemIri(property)][index];
                         dvm.os.editingOntologyProperty = true;
@@ -71,9 +69,9 @@
                         dvm.os.ontologyPropertyLanguage = _.get(propertyObj, '@language');
                         dvm.os.showOntologyPropertyOverlay = true;
                     }
-                    
+
                     $scope.$watch('dvm.os.listItem.selected', () => {
-                        dvm.properties = _.union(dvm.om.ontologyProperties, dvm.os.listItem.annotations);
+                        dvm.properties = _.union(dvm.om.ontologyProperties, dvm.os.listItem.annotations.iris);
                     });
                 }]
             }

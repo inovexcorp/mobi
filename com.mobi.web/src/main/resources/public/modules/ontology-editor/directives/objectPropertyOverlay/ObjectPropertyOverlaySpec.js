@@ -43,7 +43,7 @@ describe('Object Property Overlay directive', function() {
             ontoUtils = _ontologyUtilsManagerService_;
         });
 
-        ontologyStateSvc.listItem = {ontologyRecord: {recordId: 'recordId'}, individuals: [{}]};
+        ontologyStateSvc.listItem = {ontologyRecord: {recordId: 'recordId'}, individuals: {iris: [{}]}};
         ontologyStateSvc.propertyValue = 'indiv';
         responseObj.getItemIri.and.returnValue('indiv');
         this.element = $compile(angular.element('<object-property-overlay></object-property-overlay>'))(scope);
@@ -165,6 +165,13 @@ describe('Object Property Overlay directive', function() {
                 expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
+        });
+        it('getValues should call the correct method', function() {
+            ontologyStateSvc.listItem = { objectProperties: { iris: [] } };
+            ontoUtils.getSelectList.and.returnValue(['list']);
+            this.controller.getValues('text');
+            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectProperties.iris, 'text', ontoUtils.getDropDownText);
+            expect(this.controller.values).toEqual(['list']);
         });
     });
     it('should call editProperty when the button is clicked', function() {

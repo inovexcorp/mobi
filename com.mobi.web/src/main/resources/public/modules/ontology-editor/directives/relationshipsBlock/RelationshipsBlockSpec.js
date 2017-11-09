@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Relationships Block directive', function() {
-    var $compile, scope, element, ontologyStateSvc, controller, resObj, prefixes;
+    var $compile, scope, ontologyStateSvc, resObj, prefixes, ontologyManagerSvc;
     var broaderRelations = ['broader', 'broaderTransitive', 'broadMatch'];
     var narrowerRelations = ['narrower', 'narrowerTransitive', 'narrowMatch'];
     var conceptToScheme = ['inScheme', 'topConceptOf'];
@@ -36,13 +36,15 @@ describe('Relationships Block directive', function() {
         mockPrefixes();
         mockResponseObj();
         mockOntologyUtilsManager();
+        mockOntologyManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _prefixes_, _ontologyManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             resObj = _responseObj_;
             prefixes = _prefixes_;
+            ontologyManagerSvc = _ontologyManagerService_;
         });
 
         scope.relationshipList = [];
@@ -53,80 +55,135 @@ describe('Relationships Block directive', function() {
             'prop2': [{'@value': 'value2'}]
         };
         ontologyStateSvc.flattenHierarchy.and.returnValue([{prop: 'flat'}]);
-        element = $compile(angular.element('<relationships-block relationship-list="relationshipList"></relationships-block>'))(scope);
+        ontologyManagerSvc.isConceptScheme.and.returnValue(false);
+        this.element = $compile(angular.element('<relationships-block relationship-list="relationshipList"></relationships-block>'))(scope);
         scope.$digest();
-        controller = element.controller('relationshipsBlock');
+        this.controller = this.element.controller('relationshipsBlock');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        resObj = null;
+        prefixes = null;
+        ontologyManagerSvc = null;
+        this.element.remove();
+    });
+
+    afterAll(function() {
+        broaderRelations = null;
+        narrowerRelations = null;
+        conceptToScheme = null;
+        schemeToConcept = null;
+        values = null;
     });
 
     describe('controller bound variable', function() {
-        beforeEach(function() {
-            controller = element.controller('relationshipsBlock');
-        });
         it('relationshipList is two way bound', function() {
-            controller.relationshipList = [{}];
+            this.controller.relationshipList = [{}];
             scope.$digest();
             expect(scope.relationshipList).toEqual([{}]);
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('relationships-block')).toBe(true);
-            expect(element.hasClass('axiom-block')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('relationships-block')).toBe(true);
+            expect(this.element.hasClass('axiom-block')).toBe(true);
         });
         it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
+            expect(this.element.find('block').length).toBe(1);
         });
         it('with a block-header', function() {
-            expect(element.find('block-header').length).toBe(1);
+            expect(this.element.find('block-header').length).toBe(1);
         });
         it('depending on how many annotations there are', function() {
-            expect(element.find('property-values').length).toBe(2);
+            expect(this.element.find('property-values').length).toBe(2);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(element.find('property-values').length).toBe(0);
+            expect(this.element.find('property-values').length).toBe(0);
         });
         it('with a block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('with a remove-property-overlay', function() {
-            expect(element.find('remove-property-overlay').length).toBe(0);
+            expect(this.element.find('remove-property-overlay').length).toBe(0);
 
-            controller.showRemoveOverlay = true;
+            this.controller.showRemoveOverlay = true;
             scope.$apply();
-            
-            expect(element.find('remove-property-overlay').length).toBe(1);
+
+            expect(this.element.find('remove-property-overlay').length).toBe(1);
         });
         it('with a relationship-overlay', function() {
-            expect(element.find('relationship-overlay').length).toBe(0);
+            expect(this.element.find('relationship-overlay').length).toBe(0);
 
             ontologyStateSvc.showRelationshipOverlay = true;
             scope.$apply();
-            
-            expect(element.find('relationship-overlay').length).toBe(1);
+
+            expect(this.element.find('relationship-overlay').length).toBe(1);
         });
         it('with a .fa-plus', function() {
-            expect(element.querySelectorAll('.fa-plus').length).toBe(1);
+            expect(this.element.querySelectorAll('.fa-plus').length).toBe(1);
         });
         it('with property-values', function() {
-            expect(element.find('property-values').length).toBe(2);
+            expect(this.element.find('property-values').length).toBe(2);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$apply();
-            expect(element.find('property-values').length).toBe(0);
+            expect(this.element.find('property-values').length).toBe(0);
         });
-        it('with a block-header a', function() {
-            expect(element.querySelectorAll('block-header a').length).toBe(1);
+        it('with a block-header button', function() {
+            expect(this.element.querySelectorAll('block-header button').length).toBe(1);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(element.querySelectorAll('block-header a').length).toBe(0);
+            expect(this.element.querySelectorAll('block-header button').length).toBe(0);
+        });
+        it('with a .relationship-header', function() {
+            expect(this.element.querySelectorAll('.relationship-header').length).toBe(1);
+            ontologyManagerSvc.isConceptScheme.and.returnValue(true);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.relationship-header').length).toBe(0);
+        });
+        it('with a .top-concept-header', function() {
+            expect(this.element.querySelectorAll('.top-concept-header').length).toBe(0);
+            ontologyManagerSvc.isConceptScheme.and.returnValue(true);
+            scope.$digest();
+            expect(this.element.querySelectorAll('.top-concept-header').length).toBe(1);
+        });
+        it('with a top-concept-overlay', function() {
+            expect(this.element.find('top-concept-overlay').length).toBe(0);
+            this.controller.showTopConceptOverlay = true;
+            scope.$digest();
+            expect(this.element.find('top-concept-overlay').length).toBe(1);
+        });
+        it('depending on whether there is a top concept property', function() {
+            ontologyManagerSvc.isConceptScheme.and.returnValue(true);
+            spyOn(this.controller, 'hasTopConceptProperty').and.returnValue(true);
+            scope.$digest();
+            var button = angular.element(this.element.querySelectorAll('block-header button')[0]);
+            expect(button.attr('disabled')).toBeFalsy();
+
+            this.controller.hasTopConceptProperty.and.returnValue(false);
+            scope.$digest();
+            expect(button.attr('disabled')).toBeTruthy();
+        });
+        it('depending on whether there are relationships', function() {
+            ontologyManagerSvc.isConceptScheme.and.returnValue(false);
+            scope.$digest();
+            var link = angular.element(this.element.querySelectorAll('block-header button')[0]);
+            expect(link.attr('disabled')).toBeTruthy();
+
+            this.controller.relationshipList = [{}];
+            scope.$digest();
+            expect(link.attr('disabled')).toBeFalsy();
         });
     });
     describe('controller methods', function() {
         it('openRemoveOverlay sets the correct variables', function() {
-            controller.openRemoveOverlay('key', 1);
-            expect(controller.key).toBe('key');
-            expect(controller.index).toBe(1);
-            expect(controller.showRemoveOverlay).toBe(true);
+            this.controller.openRemoveOverlay('key', 1);
+            expect(this.controller.key).toBe('key');
+            expect(this.controller.index).toBe(1);
+            expect(this.controller.showRemoveOverlay).toBe(true);
         });
         describe('updateHierarchy should call proper methods when the relationship', function() {
             beforeEach(function() {
@@ -135,36 +192,48 @@ describe('Relationships Block directive', function() {
                 });
             });
             describe('is', function() {
-                updateHierarchyTest(broaderRelations, narrowerRelations, 'conceptHierarchy', 'conceptIndex', 'flatConceptHierarchy', 'selectedId');
+                updateHierarchyTest(broaderRelations, narrowerRelations, 'concepts', 'selectedId');
             });
             describe('is', function() {
-                updateHierarchyTest(narrowerRelations, broaderRelations, 'conceptHierarchy', 'conceptIndex', 'flatConceptHierarchy', undefined, 'selectedId');
+                updateHierarchyTest(narrowerRelations, broaderRelations, 'concepts', undefined, 'selectedId');
             });
             describe('is', function() {
-                updateHierarchyTest(conceptToScheme, schemeToConcept, 'conceptSchemeHierarchy', 'conceptSchemeIndex', 'flatConceptSchemeHierarchy', 'selectedId');
+                updateHierarchyTest(conceptToScheme, schemeToConcept, 'conceptSchemes', 'selectedId');
             });
             describe('is', function() {
-                updateHierarchyTest(schemeToConcept, conceptToScheme, 'conceptSchemeHierarchy', 'conceptSchemeIndex', 'flatConceptSchemeHierarchy', undefined, 'selectedId');
+                updateHierarchyTest(schemeToConcept, conceptToScheme, 'conceptSchemes', undefined, 'selectedId');
             });
         });
         describe('removeFromHierarchy should call the proper methods when the relationship', function() {
             describe('is', function() {
-                removeHierarchyTest(broaderRelations, narrowerRelations, 'conceptHierarchy', 'flatConceptHierarchy', 'selectedId', 'value1');
+                removeHierarchyTest(broaderRelations, narrowerRelations, 'concepts', 'selectedId', 'value1');
             });
             describe('is', function() {
-                removeHierarchyTest(narrowerRelations, broaderRelations, 'conceptHierarchy', 'flatConceptHierarchy', 'value1', 'selectedId');
+                removeHierarchyTest(narrowerRelations, broaderRelations, 'concepts', 'value1', 'selectedId');
             });
             describe('is', function() {
-                removeHierarchyTest(conceptToScheme, schemeToConcept, 'conceptSchemeHierarchy', 'flatConceptSchemeHierarchy', 'selectedId');
+                removeHierarchyTest(conceptToScheme, schemeToConcept, 'conceptSchemes', 'selectedId');
             });
             describe('is', function() {
-                removeHierarchyTest(schemeToConcept, conceptToScheme, 'conceptSchemeHierarchy', 'flatConceptSchemeHierarchy', 'value1');
+                removeHierarchyTest(schemeToConcept, conceptToScheme, 'conceptSchemes', 'value1');
+            });
+        });
+        describe('hasTopConceptProperty should call and return the correct value when getEntityByRecordId is', function() {
+            it('present', function() {
+                ontologyStateSvc.getEntityByRecordId.and.returnValue({'@id': 'id'});
+                expect(this.controller.hasTopConceptProperty()).toBe(true);
+                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, prefixes.skos + 'hasTopConcept', ontologyStateSvc.listItem);
+            });
+            it('undefined', function() {
+                ontologyStateSvc.getEntityByRecordId.and.returnValue(undefined);
+                expect(this.controller.hasTopConceptProperty()).toBe(false);
+                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, prefixes.skos + 'hasTopConcept', ontologyStateSvc.listItem);
             });
         });
     });
-    it('should set the correct state when the add relationship link is clicked', function() {
-        var link = angular.element(element.querySelectorAll('block-header a')[0]);
-        link.triggerHandler('click');
+    it('should set the correct state when the add relationship button is clicked', function() {
+        var button = angular.element(this.element.querySelectorAll('block-header button')[0]);
+        button.triggerHandler('click');
         expect(ontologyStateSvc.showRelationshipOverlay).toBe(true);
     });
 
@@ -174,22 +243,22 @@ describe('Relationships Block directive', function() {
         return entity;
     }
 
-    function updateHierarchyTest(targetArray, otherArray, hierarchyName, indexName, flatHierarchyName, entityIRI, parentIRI) {
+    function updateHierarchyTest(targetArray, otherArray, key, entityIRI, parentIRI) {
         _.forEach(targetArray, function(relationship) {
             it(relationship + ' and should be updated', function() {
-                controller.updateHierarchy(relationship, values);
+                this.controller.updateHierarchy(relationship, values);
                 _.forEach(values, function(value) {
                     expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', value['@id'], ontologyStateSvc.listItem);
-                    expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem[hierarchyName], entityIRI || value['@id'], ontologyStateSvc.listItem[indexName], parentIRI || value['@id']);
+                    expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem[key].hierarchy, entityIRI || value['@id'], ontologyStateSvc.listItem[key].index, parentIRI || value['@id']);
                 });
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem[hierarchyName], 'recordId');
-                expect(ontologyStateSvc.listItem[flatHierarchyName]).toEqual([{prop: 'flat'}]);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem[key].hierarchy, 'recordId');
+                expect(ontologyStateSvc.listItem[key].flat).toEqual([{prop: 'flat'}]);
             });
             describe(relationship + ' and should not be updated when target entity has relationship', function() {
                 _.forEach(otherArray, function(otherRelationship) {
                     it(otherRelationship, function() {
                         ontologyStateSvc.getEntityByRecordId.and.returnValue(createDummyEntity(otherRelationship));
-                        controller.updateHierarchy(relationship, values);
+                        this.controller.updateHierarchy(relationship, values);
                         _.forEach(values, function(value) {
                             expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', value['@id'], ontologyStateSvc.listItem);
                         });
@@ -201,30 +270,30 @@ describe('Relationships Block directive', function() {
         });
     }
 
-    function removeHierarchyTest(targetArray, otherArray, hierarchyName, flatHierarchyName, entityIRI, parentIRI) {
+    function removeHierarchyTest(targetArray, otherArray, key, entityIRI, parentIRI) {
         _.forEach(targetArray, function(relationship) {
             beforeEach(function() {
-                controller.key = prefixes.skos + relationship;
+                this.controller.key = prefixes.skos + relationship;
                 _.set(ontologyStateSvc.listItem, 'editorTabStates.schemes.entityIRI', entityIRI);
             });
             it(relationship + ' and should be updated', function() {
-                controller.removeFromHierarchy({'@id': 'value1'});
+                this.controller.removeFromHierarchy({'@id': 'value1'});
                 expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', 'value1', ontologyStateSvc.listItem);
                 if (parentIRI) {
-                    expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptHierarchy, entityIRI, parentIRI, ontologyStateSvc.listItem.conceptIndex);
+                    expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, entityIRI, parentIRI, ontologyStateSvc.listItem.concepts.index);
                 } else {
-                    expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemeHierarchy, entityIRI, ontologyStateSvc.listItem.conceptSchemeIndex);
+                    expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, entityIRI, ontologyStateSvc.listItem.conceptSchemes.index);
                     expect(ontologyStateSvc.listItem.editorTabStates.schemes.entityIRI).toBeUndefined();
                 }
-                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem[hierarchyName], 'recordId');
-                expect(ontologyStateSvc.listItem[flatHierarchyName]).toEqual([{prop: 'flat'}]);
+                expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem[key].hierarchy, 'recordId');
+                expect(ontologyStateSvc.listItem[key].flat).toEqual([{prop: 'flat'}]);
                 expect(ontologyStateSvc.goTo).toHaveBeenCalledWith('selectedId');
             });
             describe(relationship + ' and should not be updated when target entity has relationship', function() {
                 _.forEach(otherArray, function(otherRelationship) {
                     it(otherRelationship, function() {
                         ontologyStateSvc.getEntityByRecordId.and.returnValue(createDummyEntity(otherRelationship, [{'@id': 'selectedId'}]));
-                        controller.removeFromHierarchy({'@id': 'value1'});
+                        this.controller.removeFromHierarchy({'@id': 'value1'});
                         expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', 'value1', ontologyStateSvc.listItem);
                         if (parentIRI) {
                             expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();

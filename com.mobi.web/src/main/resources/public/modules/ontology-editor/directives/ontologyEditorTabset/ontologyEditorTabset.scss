@@ -4,6 +4,15 @@
 .ontology-editor-tabset {
     height: 100%;
 
+    .tabset.centered > .tabset-headings {
+        height: 48px;
+
+        .heading {
+            font-size: 14px;
+            line-height: 18px;
+        }
+    }
+
     .up-to-date .heading .fa.fa-exclamation-triangle {
         display: none;
     }

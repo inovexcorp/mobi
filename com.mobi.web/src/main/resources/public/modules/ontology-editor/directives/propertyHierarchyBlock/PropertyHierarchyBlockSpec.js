@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Property Hierarchy Block directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, ontologyManagerSvc, ontologyUtilsManagerSvc;
+    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, ontologyUtilsManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -39,46 +39,54 @@ describe('Property Hierarchy Block directive', function() {
             ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
         });
 
-        element = $compile(angular.element('<property-hierarchy-block></property-hierarchy-block>'))(scope);
+        this.element = $compile(angular.element('<property-hierarchy-block></property-hierarchy-block>'))(scope);
         scope.$digest();
-        controller = element.controller('propertyHierarchyBlock');
+        this.controller = this.element.controller('propertyHierarchyBlock');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        ontologyManagerSvc = null;
+        ontologyUtilsManagerSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
-            spyOn(controller, 'isShown').and.returnValue(true);
+            spyOn(this.controller, 'isShown').and.returnValue(true);
         });
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('property-hierarchy-block')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('property-hierarchy-block')).toBe(true);
         });
         it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
+            expect(this.element.find('block').length).toBe(1);
         });
         it('with a block-header', function() {
-            expect(element.find('block-header').length).toBe(1);
+            expect(this.element.find('block-header').length).toBe(1);
         });
         it('with a block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('with a block-footer', function() {
-            expect(element.find('block-footer').length).toBe(1);
+            expect(this.element.find('block-footer').length).toBe(1);
         });
         it('with a button to delete a property', function() {
-            var button = element.querySelectorAll('block-footer button');
+            var button = this.element.querySelectorAll('block-footer button');
             expect(button.length).toBe(1);
             expect(angular.element(button[0]).text()).toContain('Delete Property');
         });
         it('depending on whether a delete should be confirmed', function() {
-            expect(element.find('confirmation-overlay').length).toBe(0);
+            expect(this.element.find('confirmation-overlay').length).toBe(0);
 
-            controller = element.controller('propertyHierarchyBlock');
-            controller.showDeleteConfirmation = true;
+            this.controller.showDeleteConfirmation = true;
             scope.$digest();
-            expect(element.find('confirmation-overlay').length).toBe(1);
+            expect(this.element.find('confirmation-overlay').length).toBe(1);
         });
         it('based on whether something is selected', function() {
-            var button = angular.element(element.querySelectorAll('block-footer button')[0]);
+            var button = angular.element(this.element.querySelectorAll('block-footer button')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
             ontologyStateSvc.listItem.selected = undefined;
@@ -86,74 +94,73 @@ describe('Property Hierarchy Block directive', function() {
             expect(button.attr('disabled')).toBeTruthy();
         });
         it('depending on whether there is a flat data property hierarchy', function() {
-            expect(element.querySelectorAll('.tree-item').length).toBe(0);
-            expect(element.find('tree-item').length).toBe(0);
-            
-            ontologyStateSvc.listItem.flatDataPropertyHierarchy = [{entityIRI: 'iri'}];
+            expect(this.element.querySelectorAll('.tree-item').length).toBe(0);
+            expect(this.element.find('tree-item').length).toBe(0);
+
+            ontologyStateSvc.listItem.dataProperties.flat = [{entityIRI: 'iri'}];
             scope.$digest();
-            expect(element.querySelectorAll('.tree-item').length).toBe(1);
-            expect(element.find('tree-item').length).toBe(1);
+            expect(this.element.querySelectorAll('.tree-item').length).toBe(1);
+            expect(this.element.find('tree-item').length).toBe(1);
         });
         it('depending on whether there is a flat object property hierarchy', function() {
-            expect(element.querySelectorAll('.tree-item').length).toBe(0);
-            expect(element.find('tree-item').length).toBe(0);
-            
-            ontologyStateSvc.listItem.flatObjectPropertyHierarchy = [{entityIRI: 'iri'}];
+            expect(this.element.querySelectorAll('.tree-item').length).toBe(0);
+            expect(this.element.find('tree-item').length).toBe(0);
+
+            ontologyStateSvc.listItem.objectProperties.flat = [{entityIRI: 'iri'}];
             scope.$digest();
-            expect(element.querySelectorAll('.tree-item').length).toBe(1);
-            expect(element.find('tree-item').length).toBe(1);
+            expect(this.element.querySelectorAll('.tree-item').length).toBe(1);
+            expect(this.element.find('tree-item').length).toBe(1);
         });
         it('depending on whether there is an annotation in the ontology', function() {
-            expect(element.querySelectorAll('.tree-item').length).toBe(0);
-            expect(element.find('tree-item').length).toBe(0);
-            
-            ontologyStateSvc.listItem.flatAnnotationPropertyHierarchy = [{entityIRI: 'iri'}];
+            expect(this.element.querySelectorAll('.tree-item').length).toBe(0);
+            expect(this.element.find('tree-item').length).toBe(0);
+
+            ontologyStateSvc.listItem.annotations.flat = [{entityIRI: 'iri'}];
             scope.$digest();
-            expect(element.querySelectorAll('.tree-item').length).toBe(1);
-            expect(element.find('tree-item').length).toBe(1);
+            expect(this.element.querySelectorAll('.tree-item').length).toBe(1);
+            expect(this.element.find('tree-item').length).toBe(1);
         });
     });
     describe('controller methods', function() {
         describe('should delete', function() {
             it('an object property', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
-                controller.deleteProperty();
+                this.controller.deleteProperty();
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).not.toHaveBeenCalled();
-                expect(controller.showDeleteConfirmation).toBe(false);
+                expect(this.controller.showDeleteConfirmation).toBe(false);
             });
             it('a datatype property', function() {
                 ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
-                controller.deleteProperty();
+                this.controller.deleteProperty();
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).not.toHaveBeenCalled();
-                expect(controller.showDeleteConfirmation).toBe(false);
+                expect(this.controller.showDeleteConfirmation).toBe(false);
             });
             it('an annotation property', function() {
                 ontologyManagerSvc.isAnnotation.and.returnValue(true);
-                controller.deleteProperty();
+                this.controller.deleteProperty();
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontologyManagerSvc.isAnnotation).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteAnnotationProperty).toHaveBeenCalled();
-                expect(controller.showDeleteConfirmation).toBe(false);
+                expect(this.controller.showDeleteConfirmation).toBe(false);
             });
         });
         describe('isShown returns', function() {
-            var get, node;
             beforeEach(function() {
-                get = jasmine.createSpy('get').and.returnValue(true);
-                node = {
+                this.get = jasmine.createSpy('get').and.returnValue(true);
+                this.node = {
                     indent: 1,
                     path: ['recordId', 'otherIRI', 'andAnotherIRI', 'iri'],
-                    get: get
+                    get: this.get
                 };
             });
             describe('true when', function() {
@@ -161,36 +168,36 @@ describe('Property Hierarchy Block directive', function() {
                     ontologyStateSvc.areParentsOpen.and.returnValue(true);
                 });
                 it('node does not have an entityIRI property', function() {
-                    expect(controller.isShown(node)).toBe(true);
+                    expect(this.controller.isShown(this.node)).toBe(true);
                 });
                 it('node does have an entityIRI property and areParentsOpen is true and node.get is true', function() {
-                    node.entityIRI = 'iri';
-                    expect(controller.isShown(node)).toBe(true);
-                    expect(get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                    this.node.entityIRI = 'iri';
+                    expect(this.controller.isShown(this.node)).toBe(true);
+                    expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                 });
             });
             describe('false when node does have an entityIRI and', function() {
                 beforeEach(function() {
-                    node.entityIRI = 'iri';
+                    this.node.entityIRI = 'iri';
                 });
                 it('areParentsOpen is false', function() {
                     ontologyStateSvc.areParentsOpen.and.returnValue(false);
-                    expect(controller.isShown(node)).toBe(false);
+                    expect(this.controller.isShown(this.node)).toBe(false);
                 });
                 it('node.get is false', function() {
                     ontologyStateSvc.areParentsOpen.and.returnValue(true);
-                    get.and.returnValue(false);
-                    expect(controller.isShown(node)).toBe(false);
-                    expect(get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
+                    this.get.and.returnValue(false);
+                    expect(this.controller.isShown(this.node)).toBe(false);
+                    expect(this.get).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId);
                 });
             });
             it('make sure flatPropertyTree is populated correctly and $watch is working correctly', function() {
-                expect(controller.flatPropertyTree).toEqual([]);
-                ontologyStateSvc.listItem.flatDataPropertyHierarchy = [{prop: 'data'}];
-                ontologyStateSvc.listItem.flatObjectPropertyHierarchy = [{prop: 'object'}];
-                ontologyStateSvc.listItem.flatAnnotationPropertyHierarchy = [{prop: 'annotation'}];
+                expect(this.controller.flatPropertyTree).toEqual([]);
+                ontologyStateSvc.listItem.dataProperties.flat = [{prop: 'data'}];
+                ontologyStateSvc.listItem.objectProperties.flat = [{prop: 'object'}];
+                ontologyStateSvc.listItem.annotations.flat = [{prop: 'annotation'}];
                 scope.$digest();
-                var copy = angular.copy(controller.flatPropertyTree);
+                var copy = angular.copy(this.controller.flatPropertyTree);
                 expect(copy).toContain({title: 'Data Properties', get: ontologyStateSvc.getDataPropertiesOpened, set: ontologyStateSvc.setDataPropertiesOpened});
                 expect(copy).toContain({title: 'Object Properties', get: ontologyStateSvc.getObjectPropertiesOpened, set: ontologyStateSvc.setObjectPropertiesOpened});
                 expect(copy).toContain({title: 'Annotation Properties', get: ontologyStateSvc.getAnnotationPropertiesOpened, set: ontologyStateSvc.setAnnotationPropertiesOpened});
@@ -201,14 +208,13 @@ describe('Property Hierarchy Block directive', function() {
         });
     });
     it('should set the correct state when the create property link is clicked', function() {
-        var link = angular.element(element.querySelectorAll('block-header a')[0]);
+        var link = angular.element(this.element.querySelectorAll('block-header a')[0]);
         link.triggerHandler('click');
         expect(ontologyStateSvc.showCreatePropertyOverlay).toBe(true);
     });
     it('should set the correct state when the delete property button is clicked', function() {
-        controller = element.controller('propertyHierarchyBlock');
-        var button = angular.element(element.querySelectorAll('block-footer button')[0]);
+        var button = angular.element(this.element.querySelectorAll('block-footer button')[0]);
         button.triggerHandler('click');
-        expect(controller.showDeleteConfirmation).toBe(true);
+        expect(this.controller.showDeleteConfirmation).toBe(true);
     });
 });
