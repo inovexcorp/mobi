@@ -53,6 +53,7 @@ import com.mobi.rdf.api.ValueFactory;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +67,7 @@ import java.text.ParseException;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -120,6 +122,7 @@ public class HazelcastFederationService implements FederationService {
     private FederationNodeFactory federationNodeFactory;
     private UserUtils userUtils;
     private Engine rdfEngine;
+    private ConfigurationAdmin configurationAdmin;
 
     /**
      * {@link HazelcastOSGiService} instance.
@@ -189,6 +192,11 @@ public class HazelcastFederationService implements FederationService {
     @Reference(target = "(engineName=RdfEngine)")
     void setRdfEngine(Engine engine) {
         this.rdfEngine = engine;
+    }
+
+    @Reference
+    void setConfigurationAdmin(ConfigurationAdmin configurationAdmin) {
+        this.configurationAdmin = configurationAdmin;
     }
 
     /**
@@ -344,8 +352,7 @@ public class HazelcastFederationService implements FederationService {
 
     @Override
     public String getNodeRESTEndpoint(UUID nodeId) {
-        HazelcastFederationNode node = this.federationNodes.get(nodeId);
-        return String.format(NODE_REST_ENDPOINT, node.getHost());
+        return this.federationNodes.get(nodeId).getEndpoint();
     }
 
     @Override
@@ -393,6 +400,28 @@ public class HazelcastFederationService implements FederationService {
         return TokenUtils.verifyToken(tokenString, res, this.tokenKey);
     }
 
+    private Dictionary<String, Object> getConfig(String configId) throws IOException {
+        return configurationAdmin.getConfiguration(configId).getProperties();
+    }
+
+    private String getObjString(Object obj, String fallback) {
+        return obj == null ? fallback : obj.toString();
+    }
+
+    private String createRestEndpoint(String host) {
+        try {
+            Dictionary<String, Object> webProps = getConfig("org.ops4j.pax.web");
+            boolean enabled = new Boolean(getObjString(webProps.get("org.osgi.service.http.secure.enabled"), "false"));
+            String protocol = enabled ? "https" : "http";
+            String port = enabled ? getObjString(webProps.get("org.osgi.service.http.port.secure"), "8443")
+                    : getObjString(webProps.get("org.osgi.service.http.port"), "8080");
+            String root = getObjString(getConfig("com.eclipsesource.jaxrs.connector").get("root"), "/mobirest");
+            return String.format(NODE_REST_ENDPOINT, protocol, host, port, root);
+        } catch (IOException ex) {
+            throw new MobiException(ex.getMessage(), ex);
+        }
+    }
+
     /**
      * Simple method that will register this node as it comes alive with the federation registry.
      */
@@ -403,7 +432,10 @@ public class HazelcastFederationService implements FederationService {
         node.setNodeId(getNodeId().toString());
         node.setNodeActive(Boolean.TRUE);
         node.setNodeLastUpdated(OffsetDateTime.now());
-        getHostAddress().ifPresent(node::setHost);
+        getHostAddress().ifPresent(host -> {
+            node.setHost(host);
+            node.setEndpoint(createRestEndpoint(host));
+        });
 
         //TODO - add remaining metadata about this node.
         this.federationNodes.put(getNodeId(), new HazelcastFederationNode(node));

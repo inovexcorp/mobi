@@ -77,6 +77,12 @@
   rdfs:label "Gateway"@en ;
   rdfs:comment "The ID of the federation to which this node acts as a gateway."@en .
 
+:endpoint a rdf:Property , owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:domain :FederationNode ;
+  rdfs:range xsd:string ;
+  rdfs:label "Node Endpoint"@en ;
+  rdfs:comment "The endpoint to access provided REST."@en .
+
 
 :FederationMembership owl:EquivalentClass [
   a owl:Class ;

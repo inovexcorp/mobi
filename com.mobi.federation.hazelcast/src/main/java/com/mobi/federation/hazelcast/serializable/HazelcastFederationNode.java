@@ -45,21 +45,25 @@ public class HazelcastFederationNode implements Serializable {
     private final String fedNodeId;
     private final String host;
     private final Set<String> gateway = new TreeSet<>();
+    private final String endpoint;
 
     private boolean nodeActive;
     private OffsetDateTime nodeLastUpdated;
 
-    public HazelcastFederationNode(String podNodeIri, String podNodeId, String host, Set<String> gateway) {
+    public HazelcastFederationNode(String podNodeIri, String podNodeId, String host, Set<String> gateway,
+                                   String endpoint) {
         this.fedNodeIri = podNodeIri;
         this.fedNodeId = podNodeId;
         this.host = host;
         this.gateway.addAll(gateway);
+        this.endpoint = endpoint;
     }
 
     public HazelcastFederationNode(FederationNode node) {
         fedNodeIri = node.getResource().stringValue();
         fedNodeId = node.getNodeId().orElse("");
         host = node.getHost().orElse("");
+        endpoint = node.getEndpoint().orElse("");
 
         if (node.getGateway() != null && !node.getGateway().isEmpty()) {
             gateway.addAll(node.getGateway());
@@ -82,6 +86,10 @@ public class HazelcastFederationNode implements Serializable {
 
     public Set<String> getGateway() {
         return gateway;
+    }
+
+    public String getEndpoint() {
+        return endpoint;
     }
 
     public boolean isNodeActive() {

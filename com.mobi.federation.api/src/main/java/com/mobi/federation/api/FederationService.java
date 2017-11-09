@@ -43,7 +43,7 @@ import javax.servlet.http.HttpServletResponse;
  * This service represents a way to navigate the local topology of nodes on the local network.
  */
 public interface FederationService {
-    String NODE_REST_ENDPOINT = "https://%s:8443/mobirest"; // XXX: read this from configuration
+    String NODE_REST_ENDPOINT = "%s://%s:%s%s";
     String FEDERATION_SCOPE = "self federation";
 
     /**

@@ -27,6 +27,7 @@ import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
 import com.hazelcast.core.HazelcastInstance;
@@ -61,6 +62,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,6 +72,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -102,6 +106,12 @@ public class HazelcastFederationServiceTest {
     @Mock
     private Engine engine;
 
+    @Mock
+    private ConfigurationAdmin configurationAdmin;
+
+    @Mock
+    private Configuration configuration;
+
     private final ValueFactory vf = SimpleValueFactory.getInstance();
     private final ModelFactory mf = LinkedHashModelFactory.getInstance();
     private final ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
@@ -133,6 +143,8 @@ public class HazelcastFederationServiceTest {
         when(mobi2.getServerIdentifier()).thenReturn(u2);
         when(mobi3.getServerIdentifier()).thenReturn(u3);
         when(engine.getUsers()).thenReturn(new HashSet<>());
+        when(configurationAdmin.getConfiguration(anyString())).thenReturn(configuration);
+        when(configuration.getProperties()).thenReturn(new Hashtable<>());
     }
 
     @Test
@@ -249,6 +261,7 @@ public class HazelcastFederationServiceTest {
         service.setHazelcastOSGiService(hazelcastOSGiService);
         service.setRdfEngine(engine);
         service.setUserUtils(userUtils);
+        service.setConfigurationAdmin(configurationAdmin);
         return service;
     }
 
