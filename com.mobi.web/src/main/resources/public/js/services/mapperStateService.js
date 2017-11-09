@@ -696,6 +696,20 @@
                     }
                 }
             }
+            /**
+             * @ngdoc method
+             * @name addClassMapping
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Adds a ClassMapping for the class identified by the passed class ID object and updates the additions
+             * and ClassMapping titles appropriately.
+             *
+             * @param {Object} classIdObj An ID object for a class in an ontology
+             * @param {string} classIdObj.ontologyId The ID of the ontology this class is from
+             * @param {Object} classIdObj.classObj The JSON-LD of the class
+             * @return {Object} The ClassMapping JSON-LD that was added
+             */
             self.addClassMapping = function(classIdObj) {
                 var ontology = _.find(self.sourceOntologies, {id: classIdObj.ontologyId});
                 var originalClassMappings = mm.getClassMappingsByClassId(self.mapping.jsonld, classIdObj.classObj['@id']);
@@ -716,19 +730,43 @@
                 self.mapping.difference.additions.push(angular.copy(classMapping));
                 return classMapping;
             }
+            /**
+             * @ngdoc method
+             * @name addDataMapping
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Adds a DataMapping for the data property identified by the passed property ID object and updates the
+             * additions and adds a title appropriately.
+             *
+             * @param {Object} propIdObj An ID object for a property in an ontology
+             * @param {string} propIdObj.ontologyId The ID of the ontology this property is from
+             * @param {Object} propIdObj.propObj The JSON-LD of the data property
+             * @param {string} classMappingId The ID of the ClassMapping the DataMapping should be added to
+             * @param {string} columnIndex The column index the DataMapping should point to
+             * @return {Object} The DataMapping JSON-LD that was added
+             */
             self.addDataMapping = function(propIdObj, classMappingId, columnIndex) {
-                var ontology = _.find(self.sourceOntologies, {id: propIdObj.ontologyId});
-                var propMapping = mm.addDataProp(self.mapping.jsonld, _.get(ontology, 'entities', []), classMappingId, propIdObj.propObj['@id'], columnIndex);
-                util.setDctermsValue(propMapping, 'title', om.getEntityName(propIdObj.propObj));
-                self.mapping.difference.additions.push(angular.copy(propMapping));
-                return propMapping;
+                return addPropMapping(propIdObj, classMappingId, columnIndex, mm.addDataProp);
             }
+            /**
+             * @ngdoc method
+             * @name addObjectMapping
+             * @methodOf mapperState.service:mapperStateService
+             *
+             * @description
+             * Adds a ObjectMapping for the data property identified by the passed property ID object and updates the
+             * additions and adds a title appropriately.
+             *
+             * @param {Object} propIdObj An ID object for a property in an ontology
+             * @param {string} propIdObj.ontologyId The ID of the ontology this property is from
+             * @param {Object} propIdObj.propObj The JSON-LD of the object property
+             * @param {string} classMappingId The ID of the ClassMapping the ObjectMapping should be added to
+             * @param {string} rangeClassMappingId The ID of the ClassMapping the ObjectMapping should point to
+             * @return {Object} The ObjectMapping JSON-LD that was added
+             */
             self.addObjectMapping = function(propIdObj, classMappingId, rangeClassMappingId) {
-                var ontology = _.find(self.sourceOntologies, {id: propIdObj.ontologyId});
-                var propMapping = mm.addObjectProp(self.mapping.jsonld, _.get(ontology, 'entities', []), classMappingId, propIdObj.propObj['@id'], rangeClassMappingId);
-                util.setDctermsValue(propMapping, 'title', om.getEntityName(propIdObj.propObj));
-                self.mapping.difference.additions.push(angular.copy(propMapping));
-                return propMapping;
+                return addPropMapping(propIdObj, classMappingId, rangeClassMappingId, mm.addObjectProp);
             }
             /**
              * @ngdoc method
@@ -853,7 +891,9 @@
                     // Collect the index number based on the set string format
                     title => parseInt(_.nth(regex.exec(title), 1), 10)
                 ).sort((a, b) => a - b);
-                var newIdx;
+
+                // If there are no missing numbers, newIdx is the next number
+                var newIdx = ` (${_.last(sortedNums) + 1})`;
                 for (var i = 1; i < sortedNums.length; i++) {
                     // If there is a missing number between this index and the index of the previous title,
                     // newIdx is one more than previous
@@ -862,11 +902,14 @@
                         break;
                     }
                 }
-                // If a newIdx was not found, newIdx is the next number
-                if (!newIdx) {
-                    newIdx = ` (${_.last(sortedNums) + 1})`;
-                }
                 util.setDctermsValue(classMapping, 'title', className + newIdx);
+            }
+            function addPropMapping(propIdObj, classMappingId, valueStr, func) {
+                var ontology = _.find(self.sourceOntologies, {id: propIdObj.ontologyId});
+                var propMapping = func(self.mapping.jsonld, _.get(ontology, 'entities', []), classMappingId, propIdObj.propObj['@id'], valueStr);
+                util.setDctermsValue(propMapping, 'title', om.getEntityName(propIdObj.propObj));
+                self.mapping.difference.additions.push(angular.copy(propMapping));
+                return propMapping;
             }
         }
 })();

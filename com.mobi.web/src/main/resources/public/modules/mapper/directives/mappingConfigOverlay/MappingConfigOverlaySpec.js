@@ -47,12 +47,6 @@ describe('Mapping Config Overlay directive', function() {
             $q = _$q_;
         });
 
-        this.compile = function() {
-            this.element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
-            scope.$digest();
-            this.controller = this.element.controller('mappingConfigOverlay');
-        }
-
         this.originalOntology = {id: 'original', entities: [{}]};
         this.importedOntology = {id: 'imported', ontology: []};
         this.originalClassObj = {'@id': 'original'};
@@ -64,6 +58,14 @@ describe('Mapping Config Overlay directive', function() {
         catalogManagerSvc.localCatalog = {'@id': ''};
         catalogManagerSvc.getRecords.and.returnValue($q.when(this.response));
         mapperStateSvc.mapping = {jsonld: [], difference: {additions: [], deletions: []}};
+    });
+
+    beforeEach(function compile() {
+        this.compile = function() {
+            this.element = $compile(angular.element('<mapping-config-overlay></mapping-config-overlay>'))(scope);
+            scope.$digest();
+            this.controller = this.element.controller('mappingConfigOverlay');
+        }
     });
 
     afterEach(function() {
