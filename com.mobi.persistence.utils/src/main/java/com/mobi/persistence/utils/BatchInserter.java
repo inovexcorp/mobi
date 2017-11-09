@@ -114,6 +114,7 @@ public class BatchInserter extends AbstractRDFHandler {
                 if (printToSystem) {
                     System.out.println(batchSize + " statements imported");
                 }
+                conn.begin();
             } catch (RepositoryException e) {
                 throw new RDFHandlerException(e);
             }
