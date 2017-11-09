@@ -816,4 +816,18 @@ describe('Ontology Utils Manager service', function() {
             expect(ontologyUtilsManagerSvc.checkIri('id')).toBe(false);
         });
     });
+    describe('getSelectList should return the correct value when getName is', function() {
+        it('not provided', function() {
+            spyOn(ontologyUtilsManagerSvc, 'getLabelForIRI').and.callFake(_.identity);
+            expect(ontologyUtilsManagerSvc.getSelectList(['first', 'second'], 'I')).toEqual(['first']);;
+            expect(ontologyUtilsManagerSvc.getLabelForIRI).toHaveBeenCalledWith('first');
+            expect(ontologyUtilsManagerSvc.getLabelForIRI).toHaveBeenCalledWith('second');
+        });
+        it('provided', function() {
+            var getName = jasmine.createSpy('getName').and.callFake(_.identity);
+            expect(ontologyUtilsManagerSvc.getSelectList(['first', 'second'], 'I', getName)).toEqual(['first']);
+            expect(getName).toHaveBeenCalledWith('first');
+            expect(getName).toHaveBeenCalledWith('second');
+        });
+    });
 });

@@ -69,6 +69,10 @@
                         dvm.os.showObjectPropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
                     }
+
+                    dvm.getValues = function(searchText) {
+                        dvm.values =  dvm.ontoUtils.getSelectList(dvm.os.listItem.objectProperties.iris, searchText, dvm.ontoUtils.getDropDownText);
+                    }
                 }
             }
         }

@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Super Class Select directive', function() {
-    var $compile, scope;
+    var $compile, scope, ontologyStateSvc, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -34,9 +34,11 @@ describe('Super Class Select directive', function() {
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyStateSvc = _ontologyStateService_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
 
         scope.values = [];
@@ -48,6 +50,8 @@ describe('Super Class Select directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        ontologyStateSvc = null;
+        ontoUtils = null;
         this.element.remove();
     });
 
@@ -124,6 +128,13 @@ describe('Super Class Select directive', function() {
             this.controller.hide();
             expect(this.controller.isShown).toBe(false);
             expect(this.controller.values).toEqual([]);
+        });
+        it('getValues should call the correct method', function() {
+            ontologyStateSvc.listItem = { classes: { iris: [] } };
+            ontoUtils.getSelectList.and.returnValue(['list']);
+            this.controller.getValues('text');
+            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.iris, 'text', ontoUtils.getDropDownText);
+            expect(this.controller.array).toEqual(['list']);
         });
     });
 });

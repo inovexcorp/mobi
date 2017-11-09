@@ -36,7 +36,6 @@
                 templateUrl: 'modules/ontology-editor/directives/objectSelect/objectSelect.html',
                 scope: {
                     displayText: '<',
-                    selectList: '<',
                     mutedText: '<',
                     isDisabledWhen: '<',
                     isRequiredWhen: '<',
@@ -44,7 +43,8 @@
                     onChange: '&'
                 },
                 bindToController: {
-                    bindModel: '=ngModel'
+                    bindModel: '=ngModel',
+                    selectList: '<'
                 },
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
@@ -56,6 +56,7 @@
                     dvm.om = ontologyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.tooltipDisplay = settingsManagerService.getTooltipDisplay();
+                    dvm.values = [];
 
                     dvm.getItemOntologyIri = function(item) {
                         return _.get(item, 'ontologyId', os.listItem.ontologyId);
@@ -77,6 +78,9 @@
                             }
                         }
                         return result;
+                    }
+                    dvm.getValues = function(searchText) {
+                        dvm.values = dvm.ontoUtils.getSelectList(dvm.selectList, searchText, dvm.ontoUtils.getDropDownText);
                     }
                 }]
             }

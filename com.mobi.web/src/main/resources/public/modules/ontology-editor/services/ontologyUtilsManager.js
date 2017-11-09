@@ -309,6 +309,23 @@
                 os.listItem[key].flat = os.flattenHierarchy(os.listItem[key].hierarchy, os.listItem.ontologyRecord.recordId);
             }
 
+            self.getSelectList = function(list, searchText, getName = self.getLabelForIRI) {
+                var array = [];
+                var mapped = _.map(list, item => ({
+                    item,
+                    name: getName(item)
+                }));
+                var sorted = _.sortBy(mapped, item => _.trim(item.name.toUpperCase()));
+                _.forEach(sorted, item => {
+                    if (array.length == 100) {
+                        return;
+                    } else if (_.includes(item.name.toUpperCase(), searchText.toUpperCase())) {
+                        array.push(item.item);
+                    }
+                });
+                return array;
+            }
+
             function removeConcept(entityIRI) {
                 os.deleteEntityFromHierarchy(os.listItem.concepts.hierarchy, entityIRI, os.listItem.concepts.index);
                 os.listItem.concepts.flat = os.flattenHierarchy(os.listItem.concepts.hierarchy, os.listItem.ontologyRecord.recordId);

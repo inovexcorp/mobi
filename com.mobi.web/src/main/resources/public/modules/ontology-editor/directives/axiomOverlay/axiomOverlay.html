@@ -41,7 +41,7 @@
                         <ui-select-match placeholder="Select values">
                             <span title="{{dvm.ro.getItemIri($item)}}">{{dvm.ontoUtils.getDropDownText($item)}}</span>
                         </ui-select-match>
-                        <ui-select-choices group-by="dvm.util.getItemNamespace" repeat="value in dvm.os.listItem[dvm.axiom.valuesKey].iris | removeIriFromArray:dvm.os.listItem.selected['@id'] | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
+                        <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.util.getItemNamespace" repeat="value in dvm.array">
                             <div title="{{dvm.ro.getItemIri(value)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(value) | highlight: $select.search | trusted"></div>
                         </ui-select-choices>
                     </ui-select>
