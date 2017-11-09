@@ -28,7 +28,7 @@
     <parent>
         <artifactId>mobi-itests</artifactId>
         <groupId>com.mobi</groupId>
-        <version>1.10.17-SNAPSHOT</version>
+        <version>1.10.18-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -72,31 +72,47 @@
         </dependency>
     </dependencies>
 
+    <profiles>
+        <profile>
+            <id>run-selenium</id>
+            <activation>
+                <property>
+                    <name>skipSelenium</name>
+                    <value>false</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.lazerycode.selenium</groupId>
+                        <artifactId>driver-binary-downloader-maven-plugin</artifactId>
+                        <version>1.0.14</version>
+                        <configuration>
+                            <rootStandaloneServerDirectory>${project.basedir}/target/webdrivers/binaries</rootStandaloneServerDirectory>
+                            <downloadedZipFileDirectory>${project.basedir}/target/webdrivers/zips</downloadedZipFileDirectory>
+                            <customRepositoryMap>${project.basedir}/src/test/resources/RepositoryMap.xml</customRepositoryMap>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>selenium</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
     <build>
         <plugins>
-            <plugin>
-                <groupId>com.lazerycode.selenium</groupId>
-                <artifactId>driver-binary-downloader-maven-plugin</artifactId>
-                <version>1.0.14</version>
-                <configuration>
-                    <rootStandaloneServerDirectory>${project.basedir}/target/webdrivers/binaries</rootStandaloneServerDirectory>
-                    <downloadedZipFileDirectory>${project.basedir}/target/webdrivers/zips</downloadedZipFileDirectory>
-                    <customRepositoryMap>${project.basedir}/src/test/resources/RepositoryMap.xml</customRepositoryMap>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>selenium</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>2.18.1</version>
                 <configuration>
-                    <skipTests>${skipITs}</skipTests>
+                    <skipTests>${skipSelenium}</skipTests>
                     <systemPropertyVariables>
                         <webdriver.gecko.driver>${webdriver.gecko.driver}</webdriver.gecko.driver>
                         <webdriver.chrome.driver>${webdriver.chrome.driver}</webdriver.chrome.driver>
