@@ -24,11 +24,11 @@
     <h3>Mapped Classes and Properties</h3>
     <div class="class-list">
         <ul class="list">
-            <li ng-repeat="classMapping in dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld) track by classMapping['@id']">
-                {{dvm.util.getDctermsValue(classMapping, 'title')}} <small class="text-muted">{{dvm.getIriTemplate(classMapping)}}</small>
+            <li ng-repeat="classMapping in dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld) | orderBy:dvm.getTitle track by classMapping['@id']">
+                {{dvm.getTitle(classMapping)}} <small class="text-muted">{{dvm.getIriTemplate(classMapping)}}</small>
                 <ul class="props">
-                    <li ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, classMapping['@id']) track by propMapping['@id']" ng-class="{'error-display': dvm.isInvalid(propMapping['@id'])}">
-                        {{dvm.util.getDctermsValue(propMapping, 'title')}} - {{dvm.getPropValue(propMapping)}}
+                    <li ng-repeat="propMapping in dvm.mm.getPropMappingsByClass(dvm.state.mapping.jsonld, classMapping['@id']) | orderBy:dvm.getTitle track by propMapping['@id']" ng-class="{'error-display': dvm.isInvalid(propMapping['@id'])}">
+                        {{dvm.getTitle(propMapping)}} - {{dvm.getPropValue(propMapping)}}
                     </li>
                 </ul>
             </li>

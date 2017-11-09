@@ -40,7 +40,6 @@
          * @restrict E
          * @requires mappingManager.service:mappingManagerService
          * @requires mapperState.service:mapperStateService
-         * @requires prefixes.service:prefixes
          *
          * @description
          * `createMappingOverlay` is a directive that creates an overlay with three inputs for metadata about a
@@ -50,9 +49,9 @@
          */
         .directive('createMappingOverlay', createMappingOverlay);
 
-        createMappingOverlay.$inject = ['mappingManagerService', 'mapperStateService', 'prefixes']
+        createMappingOverlay.$inject = ['mappingManagerService', 'mapperStateService']
 
-        function createMappingOverlay(mappingManagerService, mapperStateService, prefixes) {
+        function createMappingOverlay(mappingManagerService, mapperStateService) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -60,37 +59,37 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
-                    dvm.state = mapperStateService;
-                    dvm.mm = mappingManagerService;
+                    var state = mapperStateService;
+                    var mm = mappingManagerService;
+
                     dvm.errorMessage = '';
-                    dvm.newMapping = dvm.state.createMapping();
-                    if (dvm.state.mapping) {
-                        dvm.newMapping.record = angular.copy(dvm.state.mapping.record);
-                        dvm.newMapping.jsonld = angular.copy(dvm.state.mapping.jsonld);
-                        dvm.newMapping.ontology = angular.copy(dvm.state.mapping.ontology);
+                    dvm.newMapping = state.createMapping();
+                    if (state.mapping) {
+                        dvm.newMapping.record = angular.copy(state.mapping.record);
+                        dvm.newMapping.jsonld = angular.copy(state.mapping.jsonld);
+                        dvm.newMapping.ontology = angular.copy(state.mapping.ontology);
                     }
 
                     dvm.cancel = function() {
-                        dvm.state.editMapping = false;
-                        dvm.state.newMapping = false;
-                        dvm.state.displayCreateMappingOverlay = false;
+                        state.editMapping = false;
+                        state.newMapping = false;
+                        state.displayCreateMappingOverlay = false;
                     }
                     dvm.continue = function() {
-                        var newId = dvm.mm.getMappingId(dvm.newMapping.record.title);
+                        var newId = mm.getMappingId(dvm.newMapping.record.title);
                         if (dvm.newMapping.jsonld.length === 0) {
-                            dvm.newMapping.jsonld = dvm.mm.createNewMapping(newId);
+                            dvm.newMapping.jsonld = mm.createNewMapping(newId);
                             dvm.sourceOntologies = [];
                             dvm.availableClasses = [];
                             nextStep();
                         } else {
-                            dvm.newMapping.jsonld = dvm.mm.copyMapping(dvm.newMapping.jsonld, newId);
-                            var sourceOntologyInfo = dvm.mm.getSourceOntologyInfo(dvm.newMapping.jsonld);
-                            dvm.mm.getSourceOntologies(sourceOntologyInfo)
+                            dvm.newMapping.jsonld = mm.copyMapping(dvm.newMapping.jsonld, newId);
+                            var sourceOntologyInfo = mm.getSourceOntologyInfo(dvm.newMapping.jsonld);
+                            mm.getSourceOntologies(sourceOntologyInfo)
                                 .then(ontologies => {
-                                    if (dvm.mm.areCompatible(dvm.newMapping.jsonld, ontologies)) {
-                                        dvm.state.sourceOntologies = ontologies;
-                                        var usedClassIds = _.map(dvm.mm.getAllClassMappings(dvm.newMapping.jsonld), dvm.mm.getClassIdByMapping);
-                                        dvm.state.availableClasses = _.filter(dvm.state.getClasses(ontologies), clazz => !_.includes(usedClassIds, clazz.classObj['@id']));
+                                    if (mm.areCompatible(dvm.newMapping.jsonld, ontologies)) {
+                                        state.sourceOntologies = ontologies;
+                                        state.availableClasses = state.getClasses(ontologies);
                                         nextStep();
                                     } else {
                                         onError('The selected mapping is incompatible with its source ontologies');
@@ -100,12 +99,12 @@
                     }
 
                     function nextStep() {
-                        dvm.state.mapping = dvm.newMapping;
+                        state.mapping = dvm.newMapping;
                         dvm.errorMessage = '';
-                        dvm.state.mapping.difference.additions = angular.copy(dvm.state.mapping.jsonld);
-                        dvm.state.mappingSearchString = '';
-                        dvm.state.step = dvm.state.fileUploadStep;
-                        dvm.state.displayCreateMappingOverlay = false;
+                        state.mapping.difference.additions = angular.copy(state.mapping.jsonld);
+                        state.mappingSearchString = '';
+                        state.step = state.fileUploadStep;
+                        state.displayCreateMappingOverlay = false;
                     }
                     function onError(message) {
                         dvm.errorMessage = message;

@@ -21,8 +21,7 @@
  * #L%
  */
 describe('Run Mapping Overlay directive', function() {
-    var $compile, scope, $q, element, controller, mapperStateSvc, delimitedManagerSvc, datasetManagerSvc, camelCase, prefixes;
-    var datasetRecord;
+    var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc, datasetManagerSvc, camelCase, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -47,22 +46,33 @@ describe('Run Mapping Overlay directive', function() {
             prefixes = _prefixes_;
         });
 
-        datasetRecord = {'@type': [prefixes.dataset + 'DatasetRecord']};
-        datasetManagerSvc.getDatasetRecords.and.returnValue($q.when({data: [[datasetRecord]]}));
+        this.datasetRecord = {'@type': [prefixes.dataset + 'DatasetRecord']};
+        datasetManagerSvc.getDatasetRecords.and.returnValue($q.when({data: [[this.datasetRecord]]}));
         camelCase.and.callFake(_.identity);
         mapperStateSvc.mapping = {record: {title: 'record'}, jsonld: []};
-        element = $compile(angular.element('<run-mapping-overlay></run-mapping-overlay>'))(scope);
+        this.element = $compile(angular.element('<run-mapping-overlay></run-mapping-overlay>'))(scope);
         scope.$digest();
-        controller = element.controller('runMappingOverlay');
+        this.controller = this.element.controller('runMappingOverlay');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        mapperStateSvc = null;
+        delimitedManagerSvc = null;
+        datasetManagerSvc = null;
+        camelCase = null;
+        prefixes = null;
     });
 
     describe('should initialize with the correct values for', function() {
         it('fileName', function() {
-            expect(controller.fileName).toBe(mapperStateSvc.mapping.record.title);
+            expect(this.controller.fileName).toBe(mapperStateSvc.mapping.record.title);
         });
         it('datasetRecords', function() {
             scope.$apply();
-            expect(controller.datasetRecords).toEqual([datasetRecord]);
+            expect(this.controller.datasetRecords).toEqual([this.datasetRecord]);
         });
     });
     describe('controller methods', function() {
@@ -79,7 +89,7 @@ describe('Run Mapping Overlay directive', function() {
                     });
                     it('unless an error occurs', function() {
                         mapperStateSvc.saveMapping.and.returnValue($q.reject('Error message'));
-                        controller.run();
+                        this.controller.run();
                         scope.$apply();
                         expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
                         expect(delimitedManagerSvc.mapAndDownload).not.toHaveBeenCalled();
@@ -89,7 +99,7 @@ describe('Run Mapping Overlay directive', function() {
                         expect(mapperStateSvc.resetEdit).not.toHaveBeenCalled();
                         expect(delimitedManagerSvc.reset).not.toHaveBeenCalled();
                         expect(mapperStateSvc.displayRunMappingOverlay).toBe(true);
-                        expect(controller.errorMessage).toEqual('Error message');
+                        expect(this.controller.errorMessage).toEqual('Error message');
                     });
                     describe('successfully', function() {
                         beforeEach(function() {
@@ -97,33 +107,33 @@ describe('Run Mapping Overlay directive', function() {
                             mapperStateSvc.saveMapping.and.returnValue($q.when(this.newId));
                         });
                         it('downloading the data', function() {
-                            controller.run();
+                            this.controller.run();
                             scope.$apply();
                             expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
                             expect(mapperStateSvc.mapping.record.id).toEqual(this.newId);
-                            expect(delimitedManagerSvc.mapAndDownload).toHaveBeenCalledWith(this.newId, controller.format, controller.fileName);
+                            expect(delimitedManagerSvc.mapAndDownload).toHaveBeenCalledWith(this.newId, this.controller.format, this.controller.fileName);
                             expect(delimitedManagerSvc.mapAndUpload).not.toHaveBeenCalled();
                             expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                             expect(mapperStateSvc.initialize).toHaveBeenCalled();
                             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                             expect(delimitedManagerSvc.reset).toHaveBeenCalled();
                             expect(mapperStateSvc.displayRunMappingOverlay).toBe(false);
-                            expect(controller.errorMessage).toEqual('');
+                            expect(this.controller.errorMessage).toEqual('');
                         });
                         it('uploading the data', function() {
-                            controller.runMethod = 'upload';
-                            controller.run();
+                            this.controller.runMethod = 'upload';
+                            this.controller.run();
                             scope.$apply();
                             expect(mapperStateSvc.saveMapping).toHaveBeenCalled();
                             expect(mapperStateSvc.mapping.record.id).toEqual(this.newId);
                             expect(delimitedManagerSvc.mapAndDownload).not.toHaveBeenCalled();
-                            expect(delimitedManagerSvc.mapAndUpload).toHaveBeenCalledWith(this.newId, controller.datasetRecordIRI);
+                            expect(delimitedManagerSvc.mapAndUpload).toHaveBeenCalledWith(this.newId, this.controller.datasetRecordIRI);
                             expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                             expect(mapperStateSvc.initialize).toHaveBeenCalled();
                             expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
                             expect(delimitedManagerSvc.reset).toHaveBeenCalled();
                             expect(mapperStateSvc.displayRunMappingOverlay).toBe(false);
-                            expect(controller.errorMessage).toEqual('');
+                            expect(this.controller.errorMessage).toEqual('');
                         });
                     });
                 });
@@ -132,9 +142,9 @@ describe('Run Mapping Overlay directive', function() {
                         mapperStateSvc.isMappingChanged.and.returnValue(false);
                     });
                     it('and downloads the data', function() {
-                        controller.run();
+                        this.controller.run();
                         expect(mapperStateSvc.saveMapping).not.toHaveBeenCalled();
-                        expect(delimitedManagerSvc.mapAndDownload).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, controller.format, controller.fileName);
+                        expect(delimitedManagerSvc.mapAndDownload).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.controller.format, this.controller.fileName);
                         expect(delimitedManagerSvc.mapAndUpload).not.toHaveBeenCalled();
                         expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                         expect(mapperStateSvc.initialize).toHaveBeenCalled();
@@ -143,12 +153,12 @@ describe('Run Mapping Overlay directive', function() {
                         expect(mapperStateSvc.displayRunMappingOverlay).toBe(false);
                     });
                     it('and uploads the data', function() {
-                        controller.runMethod = 'upload';
-                        controller.run();
+                        this.controller.runMethod = 'upload';
+                        this.controller.run();
                         scope.$apply();
                         expect(mapperStateSvc.saveMapping).not.toHaveBeenCalled();
                         expect(delimitedManagerSvc.mapAndDownload).not.toHaveBeenCalled();
-                        expect(delimitedManagerSvc.mapAndUpload).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, controller.datasetRecordIRI);
+                        expect(delimitedManagerSvc.mapAndUpload).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.controller.datasetRecordIRI);
                         expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                         expect(mapperStateSvc.initialize).toHaveBeenCalled();
                         expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -162,9 +172,9 @@ describe('Run Mapping Overlay directive', function() {
                     mapperStateSvc.editMapping = false;
                 });
                 it('and downloads the data', function() {
-                    controller.run();
+                    this.controller.run();
                     expect(mapperStateSvc.saveMapping).not.toHaveBeenCalled();
-                    expect(delimitedManagerSvc.mapAndDownload).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, controller.format, controller.fileName);
+                    expect(delimitedManagerSvc.mapAndDownload).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.controller.format, this.controller.fileName);
                     expect(delimitedManagerSvc.mapAndUpload).not.toHaveBeenCalled();
                     expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                     expect(mapperStateSvc.initialize).toHaveBeenCalled();
@@ -173,12 +183,12 @@ describe('Run Mapping Overlay directive', function() {
                     expect(mapperStateSvc.displayRunMappingOverlay).toBe(false);
                 });
                 it('and uploads the data', function() {
-                    controller.runMethod = 'upload';
-                    controller.run();
+                    this.controller.runMethod = 'upload';
+                    this.controller.run();
                     scope.$apply();
                     expect(mapperStateSvc.saveMapping).not.toHaveBeenCalled();
                     expect(delimitedManagerSvc.mapAndDownload).not.toHaveBeenCalled();
-                    expect(delimitedManagerSvc.mapAndUpload).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, controller.datasetRecordIRI);
+                    expect(delimitedManagerSvc.mapAndUpload).toHaveBeenCalledWith(mapperStateSvc.mapping.record.id, this.controller.datasetRecordIRI);
                     expect(mapperStateSvc.step).toBe(mapperStateSvc.selectMappingStep);
                     expect(mapperStateSvc.initialize).toHaveBeenCalled();
                     expect(mapperStateSvc.resetEdit).toHaveBeenCalled();
@@ -188,53 +198,53 @@ describe('Run Mapping Overlay directive', function() {
             });
         });
         it('should set the correct state for canceling', function() {
-            controller.cancel();
+            this.controller.cancel();
             expect(mapperStateSvc.displayRunMappingOverlay).toBe(false);
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.hasClass('run-mapping-overlay')).toBe(true);
-            expect(element.querySelectorAll('form.content').length).toBe(1);
+            expect(this.element.hasClass('run-mapping-overlay')).toBe(true);
+            expect(this.element.querySelectorAll('form.content').length).toBe(1);
         });
         it('with a radio-buttons', function() {
-            expect(element.find('radio-button').length).toBe(2);
+            expect(this.element.find('radio-button').length).toBe(2);
         });
         it('with a ui-select', function() {
-            expect(element.find('ui-select').length).toBe(1);
+            expect(this.element.find('ui-select').length).toBe(1);
         });
         it('with a text-input', function() {
-            expect(element.find('text-input').length).toBe(1);
+            expect(this.element.find('text-input').length).toBe(1);
         });
         it('with a mapper-serialization-select', function() {
-            expect(element.find('mapper-serialization-select').length).toBe(1);
+            expect(this.element.find('mapper-serialization-select').length).toBe(1);
         });
         it('with buttons for cancel and set', function() {
-            var buttons = element.find('button');
+            var buttons = this.element.find('button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Run'].indexOf(angular.element(buttons[0]).text()) >= 0).toBe(true);
             expect(['Cancel', 'Run'].indexOf(angular.element(buttons[1]).text()) >= 0).toBe(true);
         });
         it('depending on the validity of the form', function() {
-            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
-            controller.form.$setValidity('required', false);
-            controller.fileName = 'test';
+            this.controller.form.$setValidity('required', false);
+            this.controller.fileName = 'test';
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
     });
     it('should call cancel when the cancel button is clicked', function() {
-        spyOn(controller, 'cancel');
-        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        spyOn(this.controller, 'cancel');
+        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
         button.triggerHandler('click');
-        expect(controller.cancel).toHaveBeenCalled();
+        expect(this.controller.cancel).toHaveBeenCalled();
     });
     it('should call run when the run button is clicked', function() {
-        spyOn(controller, 'run');
-        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        spyOn(this.controller, 'run');
+        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
         button.triggerHandler('click');
-        expect(controller.run).toHaveBeenCalled();
+        expect(this.controller.run).toHaveBeenCalled();
     });
 });

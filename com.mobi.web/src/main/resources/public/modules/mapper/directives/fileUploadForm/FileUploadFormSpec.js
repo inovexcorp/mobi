@@ -21,12 +21,7 @@
  * #L%
  */
 describe('File Upload Form directive', function() {
-    var $compile,
-        scope,
-        mapperStateSvc,
-        delimitedManagerSvc,
-        $q,
-        controller;
+    var $compile, scope, $q, mapperStateSvc, delimitedManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -44,53 +39,60 @@ describe('File Upload Form directive', function() {
 
         this.element = $compile(angular.element('<file-upload-form></file-upload-form>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('fileUploadForm');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        mapperStateSvc = null;
+        delimitedManagerSvc = null;
+        this.element.remove();
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = this.element.controller('fileUploadForm');
-        });
         it('should correctly test whether the file is an Excel file', function() {
-            var result = controller.isExcel();
+            var result = this.controller.isExcel();
             expect(result).toBe(false);
 
-            controller.fileObj = {name: 'test.xls'};
+            this.controller.fileObj = {name: 'test.xls'};
             scope.$digest();
-            result = controller.isExcel();
+            result = this.controller.isExcel();
             expect(result).toBe(true);
 
-            controller.fileObj = {name: 'test.xlsx'};
+            this.controller.fileObj = {name: 'test.xlsx'};
             scope.$digest();
-            result = controller.isExcel();
+            result = this.controller.isExcel();
             expect(result).toBe(true);
         });
         describe('should upload a file', function() {
             it('unless a file has not been selected', function() {
-                controller.upload();
+                this.controller.upload();
                 expect(delimitedManagerSvc.upload).not.toHaveBeenCalled();
             });
             describe('if a file has been selected', function() {
                 beforeEach(function() {
-                    controller.fileObj = {};
+                    this.controller.fileObj = {};
                 });
                 it('unless an error occurs', function() {
                     delimitedManagerSvc.upload.and.returnValue($q.reject('Error message'));
-                    controller.upload();
+                    this.controller.upload();
                     scope.$apply();
-                    expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(controller.fileObj);
+                    expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(this.controller.fileObj);
                     expect(delimitedManagerSvc.previewFile).not.toHaveBeenCalled();
                     expect(mapperStateSvc.setInvalidProps).not.toHaveBeenCalled();
-                    expect(controller.errorMessage).toBe('Error message');
+                    expect(this.controller.errorMessage).toBe('Error message');
                     expect(delimitedManagerSvc.dataRows).toBeUndefined();
                     expect(mapperStateSvc.invalidProps).toEqual([]);
                 });
                 it('successfully', function() {
                     delimitedManagerSvc.upload.and.returnValue($q.when('File Name'));
-                    controller.upload();
+                    this.controller.upload();
                     scope.$apply();
-                    expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(controller.fileObj);
+                    expect(delimitedManagerSvc.upload).toHaveBeenCalledWith(this.controller.fileObj);
                     expect(delimitedManagerSvc.fileName).not.toBe('');
-                    expect(controller.errorMessage).toBe('');
+                    expect(this.controller.errorMessage).toBe('');
                     expect(delimitedManagerSvc.previewFile).toHaveBeenCalledWith(50);
                     expect(mapperStateSvc.setInvalidProps).toHaveBeenCalled();
                 });
@@ -105,20 +107,18 @@ describe('File Upload Form directive', function() {
             expect(this.element.find('file-input').length).toBe(1);
         });
         it('depending on the type of file', function() {
-            controller = this.element.controller('fileUploadForm');
-            controller.fileObj = {name: 'test.csv'};
+            this.controller.fileObj = {name: 'test.csv'};
             scope.$digest();
             expect(this.element.find('radio-button').length).toBe(3);
 
-            controller.fileObj = {name: 'test.xls'};
+            this.controller.fileObj = {name: 'test.xls'};
             scope.$digest();
             expect(this.element.find('radio-button').length).toBe(0);
         });
         it('depending on whether an error occurred', function() {
-            controller = this.element.controller('fileUploadForm');
             expect(this.element.find('error-display').length).toBe(0);
 
-            controller.errorMessage = 'test';
+            this.controller.errorMessage = 'test';
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
         });

@@ -27,5 +27,5 @@
         <span class="field-name">Description:</span>
         <p>{{dvm.om.getEntityDescription(dvm.propObj) || "(None Specified)"}}</p>
     </div>
-    <p><span class="field-name">Range:</span> {{dvm.getPropRangeName()}}</p>
+    <p><span class="field-name">Range:</span> {{dvm.getPropRangeName()}} <span class="deprecated text-muted" ng-if="dvm.om.isDeprecated(dvm.rangeClass)">(Deprecated)</span></p>
 </div>

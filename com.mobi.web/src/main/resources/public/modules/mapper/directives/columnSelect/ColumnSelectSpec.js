@@ -21,12 +21,7 @@
  * #L%
  */
 describe('Column Select directive', function() {
-    var $compile,
-        scope,
-        element,
-        isolatedScope,
-        controller,
-        delimitedManagerSvc;
+    var $compile, scope, delimitedManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -44,45 +39,51 @@ describe('Column Select directive', function() {
         scope.columns = [];
         scope.selectedColumn = '';
         delimitedManagerSvc.dataRows = [[]];
-        element = $compile(angular.element('<column-select columns="columns" selected-column="selectedColumn"></column-select>'))(scope);
+        this.element = $compile(angular.element('<column-select columns="columns" selected-column="selectedColumn"></column-select>'))(scope);
         scope.$digest();
-        isolatedScope = element.isolateScope();
-        controller = element.controller('columnSelect');
+        this.controller = this.element.controller('columnSelect');
+    });
+
+    afterEach(function () {
+        $compile = null;
+        scope = null;
+        delimitedManagerSvc = null;
+        this.element.remove();
     });
 
     describe('controller bound variable', function() {
         it('selectedColumn should be two way bound', function() {
-            controller.selectedColumn = '0';
+            this.controller.selectedColumn = '0';
             scope.$digest();
             expect(scope.selectedColumn).toEqual('0');
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.hasClass('column-select')).toBe(true);
+            expect(this.element.hasClass('column-select')).toBe(true);
         });
         it('with a column select', function() {
-            expect(element.find('ui-select').length).toBe(1);
+            expect(this.element.find('ui-select').length).toBe(1);
         });
         it('with a .help-block', function() {
-            expect(element.querySelectorAll('.help-block').length).toBe(1);
+            expect(this.element.querySelectorAll('.help-block').length).toBe(1);
         });
     });
     describe('controller methods', function() {
         it('should test whether the header for a column index matches', function() {
             delimitedManagerSvc.getHeader.and.returnValue('a');
-            var tests = [{expected: 'a', result: true}, {expected: 'A', result: true}, {expected: 'b', result: false}];
-            _.forEach(tests, function(test) {
-                expect(controller.compare('0', test.expected)).toBe(test.result);
-                expect(delimitedManagerSvc.getHeader).toHaveBeenCalledWith('0');
-            });
+            [{expected: 'a', result: true}, {expected: 'A', result: true}, {expected: 'b', result: false}]
+                .forEach(function(test) {
+                    expect(this.controller.compare('0', test.expected)).toBe(test.result);
+                    expect(delimitedManagerSvc.getHeader).toHaveBeenCalledWith('0');
+                }, this);
         });
         it('should get a preview of a column value', function() {
             delimitedManagerSvc.dataRows = [['first'], ['second']];
-            controller.selectedColumn = '0';
-            expect(controller.getValuePreview()).toBe('second');
+            this.controller.selectedColumn = '0';
+            expect(this.controller.getValuePreview()).toBe('second');
             delimitedManagerSvc.containsHeaders = false;
-            expect(controller.getValuePreview()).toBe('first');
+            expect(this.controller.getValuePreview()).toBe('first');
         });
     });
 });
