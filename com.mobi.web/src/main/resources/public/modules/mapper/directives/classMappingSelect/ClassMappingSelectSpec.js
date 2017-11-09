@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Class Mapping Select directive', function() {
-    var $compile, scope;
+    var $compile, scope, utilSvc;
 
     beforeEach(function() {
         module('templates');
@@ -32,9 +32,10 @@ describe('Class Mapping Select directive', function() {
         mockMapperState();
         mockUtil();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            utilSvc = _utilService_;
         });
 
         scope.bindModel = '';
@@ -48,6 +49,7 @@ describe('Class Mapping Select directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        utilSvc = null;
         this.element.remove();
     });
 
@@ -62,6 +64,13 @@ describe('Class Mapping Select directive', function() {
             this.controller.bindModel = 'test';
             scope.$digest();
             expect(scope.bindModel).toEqual('test');
+        });
+    });
+    describe('controller methods', function() {
+        it('should get the title of a class mapping', function() {
+            utilSvc.getDctermsValue.and.returnValue('Title');
+            expect(this.controller.getTitle({})).toEqual('Title');
+            expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({}, 'title');
         });
     });
     describe('replaces the element with the correct html', function() {

@@ -60,16 +60,13 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
+                    var mm = mappingManagerService;
                     dvm.state = mapperStateService;
-                    dvm.mm = mappingManagerService;
                     dvm.selectedClass = undefined;
 
                     dvm.addClass = function() {
-                        var ontology = _.find(dvm.state.sourceOntologies, {id: dvm.selectedClass.ontologyId});
-                        var classMapping = dvm.mm.addClass(dvm.state.mapping.jsonld, ontology.entities, dvm.selectedClass.classObj['@id']);
-                        dvm.state.mapping.difference.additions.push(angular.copy(classMapping));
+                        var classMapping = dvm.state.addClassMapping(dvm.selectedClass);
                         dvm.state.setAvailableProps(classMapping['@id']);
-                        _.remove(dvm.state.availableClasses, dvm.selectedClass);
                         dvm.state.resetEdit();
                         dvm.state.selectedClassMappingId = classMapping['@id'];
                         dvm.state.displayClassMappingOverlay = false;

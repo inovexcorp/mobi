@@ -64,6 +64,9 @@
                     dvm.mm = mappingManagerService;
                     dvm.util = utilService;
 
+                    dvm.getTitle = function(mappingEntity) {
+                        return dvm.util.getDctermsValue(mappingEntity, 'title');
+                    }
                     dvm.getIriTemplate = function(classMapping) {
                         var prefix = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'hasPrefix');
                         var localName = dvm.util.getPropertyValue(classMapping, prefixes.delim + 'localName');
@@ -74,7 +77,7 @@
                             return dvm.util.getPropertyValue(propMapping, prefixes.delim + 'columnIndex')
                         } else {
                             var classMapping = _.find(dvm.state.mapping.jsonld, {'@id': dvm.util.getPropertyId(propMapping, prefixes.delim + 'classMapping')});
-                            return dvm.util.getDctermsValue(classMapping, 'title');
+                            return dvm.getTitle(classMapping);
                         }
                     }
                     dvm.isInvalid = function(propMappingId) {

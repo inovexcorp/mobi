@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Mapping Title directive', function() {
-    var $compile, scope, element, mapperStateSvc;
+    var $compile, scope, mapperStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -35,13 +35,20 @@ describe('Mapping Title directive', function() {
         });
 
         mapperStateSvc.mapping = {record: {title: ''}};
-        element = $compile(angular.element('<mapping-title></mapping-title>'))(scope);
+        this.element = $compile(angular.element('<mapping-title></mapping-title>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        mapperStateSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.hasClass('mapping-title')).toBe(true);
+            expect(this.element.hasClass('mapping-title')).toBe(true);
         });
     });
 });

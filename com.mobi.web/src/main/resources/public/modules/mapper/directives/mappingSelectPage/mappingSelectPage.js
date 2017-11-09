@@ -41,6 +41,7 @@
          * @restrict E
          * @requires mapperState.service:mapperStateService
          * @requires mappingManager.service:mappingManagerService
+         * @requires util.service:utilService
          *
          * @description
          * `mappingSelectPage` is a directive that creates a Bootstrap `row` div with two columns for selecting
@@ -64,8 +65,8 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
+                    var mm = mappingManagerService;
                     dvm.state = mapperStateService;
-                    dvm.mm = mappingManagerService;
                     dvm.util = utilService;
 
                     dvm.run = function() {
@@ -85,11 +86,10 @@
                         dvm.state.displayCreateMappingOverlay = true;
                     }
                     dvm.loadOntologyAndContinue = function() {
-                        dvm.mm.getSourceOntologies(dvm.mm.getSourceOntologyInfo(dvm.state.mapping.jsonld)).then(ontologies => {
-                            if (dvm.mm.areCompatible(dvm.state.mapping, ontologies)) {
+                        mm.getSourceOntologies(mm.getSourceOntologyInfo(dvm.state.mapping.jsonld)).then(ontologies => {
+                            if (mm.areCompatible(dvm.state.mapping, ontologies)) {
                                 dvm.state.sourceOntologies = ontologies;
-                                var usedClassIds = _.map(dvm.mm.getAllClassMappings(dvm.state.mapping.jsonld), dvm.mm.getClassIdByMapping);
-                                dvm.state.availableClasses = _.filter(dvm.state.getClasses(ontologies), clazz => !_.includes(usedClassIds, clazz.classObj['@id']));
+                                dvm.state.availableClasses = dvm.state.getClasses(ontologies);
                                 dvm.state.mappingSearchString = '';
                                 dvm.state.step = dvm.state.fileUploadStep;
                             } else {

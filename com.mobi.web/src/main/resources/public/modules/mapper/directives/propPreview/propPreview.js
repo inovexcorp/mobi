@@ -41,7 +41,6 @@
          * @requires $filter
          * @requires ontologyManager.service:ontologyManagerService
          * @requires mapperState.service:mapperStateService
-         * @requires mappingManager.service:mappingManagerService
          * @requires util.service:utilService
          * @requires prefixes.service:prefixes
          *
@@ -56,9 +55,9 @@
          */
         .directive('propPreview', propPreview);
 
-        propPreview.$inject = ['$filter', 'ontologyManagerService', 'mapperStateService', 'mappingManagerService', 'utilService', 'prefixes'];
+        propPreview.$inject = ['$filter', 'ontologyManagerService', 'mapperStateService', 'utilService', 'prefixes'];
 
-        function propPreview($filter, ontologyManagerService, mapperStateService, mappingManagerService, utilService, prefixes) {
+        function propPreview($filter, ontologyManagerService, mapperStateService, utilService, prefixes) {
             return {
                 restrict: 'E',
                 controllerAs: 'dvm',
@@ -71,9 +70,8 @@
                 controller: ['$scope', function($scope) {
                     var dvm = this;
                     var util = utilService;
-                    dvm.state = mapperStateService;
+                    var state = mapperStateService;
                     dvm.om = ontologyManagerService;
-                    dvm.mm = mappingManagerService;
                     dvm.rangeClass = undefined;
 
                     dvm.getPropRangeName = function() {
@@ -88,8 +86,8 @@
                         if (dvm.om.isObjectProperty(newValue)) {
                             var rangeClassId = util.getPropertyId(newValue, prefixes.rdfs + 'range');
                             if (rangeClassId !== _.get(dvm.rangeClass, '@id')) {
-                                var availableClass = _.find(dvm.state.availableClasses, {classObj: {'@id': rangeClassId}});
-                                dvm.rangeClass = availableClass ? availableClass.classObj : dvm.om.getEntity([dvm.mm.findSourceOntologyWithClass(rangeClassId, dvm.ontologies).entities], rangeClassId);
+                                var availableClass = _.find(state.availableClasses, {classObj: {'@id': rangeClassId}});
+                                dvm.rangeClass = availableClass.classObj;
                             }
                         } else {
                             dvm.rangeClass = undefined;
