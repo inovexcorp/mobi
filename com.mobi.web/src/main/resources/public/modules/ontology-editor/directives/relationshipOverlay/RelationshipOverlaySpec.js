@@ -153,9 +153,7 @@ describe('Relationship Overlay directive', function() {
         });
     });
     it('should call addRelationship when the button is clicked', function() {
-        this.controller = this.element.controller('relationshipOverlay');
         spyOn(this.controller, 'addRelationship');
-
         var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
         button.triggerHandler('click');
         expect(this.controller.addRelationship).toHaveBeenCalled();

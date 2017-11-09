@@ -53,9 +53,9 @@
          */
         .directive('relationshipOverlay', relationshipOverlay);
 
-        relationshipOverlay.$inject = ['$q', '$timeout', 'responseObj', 'ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
+        relationshipOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
 
-        function relationshipOverlay($q, $timeout, responseObj, ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService) {
+        function relationshipOverlay(responseObj, ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
