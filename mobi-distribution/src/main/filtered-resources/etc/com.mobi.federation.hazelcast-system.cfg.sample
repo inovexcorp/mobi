@@ -1,7 +1,7 @@
 id = system.federation.hazelcast
 title = Hazelcast System Federation Service
 description = Federation service implemented via Hazelcast
-sharedKey = nMrOxKwZPateA7SqMkzH+5TJyD6ZH4Xs
+sharedKey = In8W6vB64CQXzZTtlXeQi3/8aiPMQ1Ej
 password = FEDERATION_PASSWORD
 listeningPort = 5701
 joinMechanism = MULTICAST
