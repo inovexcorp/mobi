@@ -68,6 +68,7 @@
                      dvm.os = ontologyStateService;
                      dvm.util = utilService;
                      dvm.isShown = false;
+                     dvm.array = [];
 
                     dvm.show = function() {
                         dvm.isShown = true;
@@ -76,6 +77,10 @@
                     dvm.hide = function() {
                         dvm.isShown = false;
                         dvm.values = [];
+                    }
+
+                    dvm.getValues = function(searchText) {
+                        dvm.array =  dvm.ontoUtils.getSelectList(dvm.os.listItem.classes.iris, searchText, dvm.ontoUtils.getDropDownText);
                     }
                 }
             }

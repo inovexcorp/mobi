@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Axiom Overlay directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, propertyManagerSvc, ontologyManagerSvc, ontoUtils, prefixes, manchesterSvc, ontologyManagerSvc, splitIRI;
+    var $compile, scope, $q, ontologyStateSvc, propertyManagerSvc, ontologyManagerSvc, ontoUtils, prefixes, manchesterSvc, ontologyManagerSvc, splitIRI, removeIriFromArray;
 
     beforeEach(function() {
         module('templates');
@@ -36,8 +36,9 @@ describe('Axiom Overlay directive', function() {
         injectHighlightFilter();
         injectTrustedFilter();
         injectSplitIRIFilter();
+        injectRemoveIriFromArrayFilter();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _responseObj_, _ontologyUtilsManagerService_, _prefixes_, _manchesterConverterService_, _ontologyManagerService_, _splitIRIFilter_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _responseObj_, _ontologyUtilsManagerService_, _prefixes_, _manchesterConverterService_, _ontologyManagerService_, _splitIRIFilter_, _removeIriFromArrayFilter_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
@@ -48,6 +49,7 @@ describe('Axiom Overlay directive', function() {
             manchesterSvc = _manchesterConverterService_;
             ontologyManagerSvc = _ontologyManagerService_;
             splitIRI = _splitIRIFilter_;
+            removeIriFromArray = _removeIriFromArrayFilter_;
         });
 
         this.localNameMap = {
@@ -79,6 +81,7 @@ describe('Axiom Overlay directive', function() {
         manchesterSvc = null;
         ontologyManagerSvc = null;
         splitIRI = null;
+        removeIriFromArray = null;
         this.element.remove();
     });
 
@@ -360,6 +363,26 @@ describe('Axiom Overlay directive', function() {
                         expect(scope.onSubmit).toHaveBeenCalledWith(this.controller.axiom, this.controller.values);
                     });
                 });
+            });
+        });
+        describe('getValues should return the correct values when controller.axiom', function() {
+            beforeEach(function() {
+                this.controller.array = ['initial'];
+            });
+            it('has valuesKey', function() {
+                ontoUtils.getSelectList.and.returnValue(['item']);
+                ontologyStateSvc.listItem.selected = {'@id': 'id'};
+                ontologyStateSvc.listItem.list = { iris: ['first', 'second'] };
+                this.controller.axiom = { valuesKey: 'list' };
+                this.controller.getValues('I');
+                expect(removeIriFromArray).toHaveBeenCalledWith(['first', 'second'], 'id');
+                expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['first', 'second'], 'I', ontoUtils.getDropDownText);
+                expect(this.controller.array).toEqual(['item']);
+            });
+            it('does not have valuesKey', function() {
+                this.controller.axiom = {};
+                this.controller.getValues('stuff');
+                expect(this.controller.array).toEqual([]);
             });
         });
     });
