@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Relationship Overlay directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, ontologyManagerSvc, resObj, splitIRIFilter, ontoUtils;
+    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, resObj, splitIRIFilter, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -46,14 +46,25 @@ describe('Relationship Overlay directive', function() {
         });
 
         scope.relationshipList = [];
-        element = $compile(angular.element('<relationship-overlay relationship-list="relationshipList"></relationship-overlay>'))(scope);
+        this.element = $compile(angular.element('<relationship-overlay relationship-list="relationshipList"></relationship-overlay>'))(scope);
         scope.$digest();
-        controller = element.controller('relationshipOverlay');
+        this.controller = this.element.controller('relationshipOverlay');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        ontologyManagerSvc = null;
+        resObj = null;
+        splitIRIFilter = null;
+        ontoUtils = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            this.isolatedScope = element.isolateScope();
+            this.isolatedScope = this.element.isolateScope();
         });
         it('relationshipList should be one way bound', function() {
             this.isolatedScope.relationshipList = [{}];
@@ -63,79 +74,94 @@ describe('Relationship Overlay directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('relationship-overlay')).toBe(true);
-            expect(element.find('form').length).toBe(1);
-            expect(element.querySelectorAll('.content').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('relationship-overlay')).toBe(true);
+            expect(this.element.find('form').length).toBe(1);
+            expect(this.element.querySelectorAll('.content').length).toBe(1);
         });
         it('with a h6', function() {
-            expect(element.find('h6').length).toBe(1);
+            expect(this.element.find('h6').length).toBe(1);
         });
         it('with .form-groups', function() {
-            expect(element.querySelectorAll('.form-group').length).toBe(2);
+            expect(this.element.querySelectorAll('.form-group').length).toBe(2);
         });
         it('with custom-labels', function() {
-            expect(element.find('custom-label').length).toBe(2);
+            expect(this.element.find('custom-label').length).toBe(2);
         });
         it('with ui-selects', function() {
-            expect(element.find('ui-select').length).toBe(2);
+            expect(this.element.find('ui-select').length).toBe(2);
         });
         it('with a .btn-container', function() {
-            expect(element.querySelectorAll('.btn-container').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
         });
         it('with buttons to add and cancel', function() {
-            var buttons = element.querySelectorAll('.btn-container button');
+            var buttons = this.element.querySelectorAll('.btn-container button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Add']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Add']).toContain(angular.element(buttons[1]).text().trim());
         });
         it('depending on whether a relationship is selected', function() {
-            controller.values = [{}];
+            this.controller.values = [{}];
             scope.$digest();
-            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
-            controller.relationship = {};
+            this.controller.relationship = {};
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
         it('depending on whether values are selected', function() {
-            controller.relationship = {};
+            this.controller.relationship = {};
             scope.$digest();
-            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
-            controller.values = [{}];
+            this.controller.values = [{}];
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('relationshipOverlay');
-        });
         it('should add a relationship', function() {
-            controller.relationship = {};
-            controller.values = [{}];
+            this.controller.relationship = {};
+            this.controller.values = [{}];
             resObj.getItemIri.and.returnValue('axiom');
-            controller.addRelationship();
-            expect(resObj.getItemIri).toHaveBeenCalledWith(controller.relationship);
-            expect(ontologyStateSvc.listItem.selected.axiom).toEqual(controller.values);
+            this.controller.addRelationship();
+            expect(resObj.getItemIri).toHaveBeenCalledWith(this.controller.relationship);
+            expect(ontologyStateSvc.listItem.selected.axiom).toEqual(this.controller.values);
             expect(ontologyStateSvc.addToAdditions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
             expect(ontologyStateSvc.showRelationshipOverlay).toBe(false);
             expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
         });
+        describe('getValues should return the correct values when controller.relationship', function() {
+            beforeEach(function() {
+                this.controller.array = ['initial'];
+            });
+            it('has values', function() {
+                ontoUtils.getSelectList.and.returnValue(['item']);
+                this.controller.conceptList = ['first', 'second'];
+                this.controller.relationship = { values: 'conceptList' };
+                this.controller.getValues('I');
+                expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['first', 'second'], 'I');
+                expect(this.controller.array).toEqual(['item']);
+            });
+            it('does not have values', function() {
+                this.controller.relationship = {};
+                this.controller.getValues('stuff');
+                expect(this.controller.array).toEqual([]);
+            });
+        });
     });
     it('should call addRelationship when the button is clicked', function() {
-        controller = element.controller('relationshipOverlay');
-        spyOn(controller, 'addRelationship');
+        this.controller = this.element.controller('relationshipOverlay');
+        spyOn(this.controller, 'addRelationship');
 
-        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
         button.triggerHandler('click');
-        expect(controller.addRelationship).toHaveBeenCalled();
+        expect(this.controller.addRelationship).toHaveBeenCalled();
     });
     it('should set the correct state when the Cancel button is clicked', function() {
-        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
         button.triggerHandler('click');
         expect(ontologyStateSvc.showRelationshipOverlay).toBe(false);
     });

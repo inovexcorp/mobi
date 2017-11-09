@@ -166,6 +166,13 @@ describe('Object Property Overlay directive', function() {
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
             });
         });
+        it('getValues should call the correct method', function() {
+            ontologyStateSvc.listItem = { objectProperties: { iris: [] } };
+            ontoUtils.getSelectList.and.returnValue(['list']);
+            this.controller.getValues('text');
+            expect(ontoUtils.getSelectList).toHaveBeenCalledWith(ontologyStateSvc.listItem.objectProperties.iris, 'text', ontoUtils.getDropDownText);
+            expect(this.controller.values).toEqual(['list']);
+        });
     });
     it('should call editProperty when the button is clicked', function() {
         spyOn(this.controller, 'editProperty');

@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Object Select directive', function() {
-    var $compile, scope, prefixes, ontologyStateSvc, ontologyManagerSvc, responseObj;
+    var $compile, scope, prefixes, ontologyStateSvc, ontologyManagerSvc, responseObj, ontoUtilsSvc;
 
     beforeEach(function() {
         module('templates');
@@ -36,7 +36,7 @@ describe('Object Select directive', function() {
         mockPrefixes();
         mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _settingsManagerService_, _responseObj_, _ontologyStateService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _settingsManagerService_, _responseObj_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
@@ -44,6 +44,7 @@ describe('Object Select directive', function() {
             responseObj = _responseObj_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
+            ontoUtilsSvc = _ontologyUtilsManagerService_;
         });
 
         scope.displayText = 'test';
@@ -68,6 +69,7 @@ describe('Object Select directive', function() {
         ontologyStateSvc = null;
         ontologyManagerSvc = null;
         responseObj = null;
+        ontoUtilsSvc = null;
         this.element.remove();
     });
 
@@ -207,6 +209,12 @@ describe('Object Select directive', function() {
                     expect(result).toEqual('new'); // The value of getItemIri
                 });
             });
+        });
+        it('getValues should set the correct value', function() {
+            ontoUtilsSvc.getSelectList.and.returnValue(['item']);
+            this.controller.getValues('text');
+            expect(ontoUtilsSvc.getSelectList).toHaveBeenCalledWith(this.controller.selectList, 'text', ontoUtilsSvc.getDropDownText);
+            expect(this.controller.values).toEqual(['item']);
         });
     });
 });

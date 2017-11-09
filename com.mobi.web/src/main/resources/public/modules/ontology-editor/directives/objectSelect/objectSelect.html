@@ -27,7 +27,7 @@
         <ui-select-match placeholder="{{'Select ' + displayText}}" ui-lock-choice="dvm.ontoUtils.isBlankNodeString(dvm.getItemIri($item))">
             <span title="{{dvm.getTooltipDisplay($item)}}">{{dvm.ontoUtils.getBlankNodeValue(dvm.getItemIri($item)) || dvm.ontoUtils.getDropDownText($item)}}</span>
         </ui-select-match>
-        <ui-select-choices group-by="dvm.getItemOntologyIri" repeat="{'@id': dvm.getItemIri(item)} as item in selectList | removeIriFromArray:bindModel | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
+        <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.getItemOntologyIri" repeat="{'@id': dvm.getItemIri(item)} as item in dvm.values">
             <div title="{{dvm.getTooltipDisplay(item)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(item) | highlight:$select.search | trusted"></div>
         </ui-select-choices>
     </ui-select>
@@ -36,7 +36,7 @@
         <ui-select-match placeholder="{{'Select ' + displayText}}" ui-lock-choice="dvm.ontoUtils.isBlankNodeString(dvm.getItemIri($select.selected))">
             <span title="{{dvm.getTooltipDisplay($select.selected)}}">{{dvm.ontoUtils.getBlankNodeValue(dvm.getItemIri($select.selected)) || dvm.ontoUtils.getDropDownText($select.selected)}}</span>
         </ui-select-match>
-        <ui-select-choices group-by="dvm.getItemOntologyIri" repeat="{'@id': dvm.getItemIri(item)} as item in selectList | filter:$select.search | orderBy:dvm.ontoUtils.getDropDownText">
+        <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.getItemOntologyIri" repeat="{'@id': dvm.getItemIri(item)} as item in dvm.values">
             <div title="{{dvm.getTooltipDisplay(item)}}" ng-bind-html="dvm.ontoUtils.getDropDownText(item) | highlight:$select.search | trusted"></div>
         </ui-select-choices>
     </ui-select>

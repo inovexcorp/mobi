@@ -109,6 +109,16 @@
                                 }
                             });
                     }
+
+                    dvm.getValues = function(searchText) {
+                        if (!_.has(dvm.axiom, 'valuesKey')) {
+                            dvm.array = [];
+                            return;
+                        }
+                        var filtered = $filter('removeIriFromArray')(dvm.os.listItem[dvm.axiom.valuesKey].iris, dvm.os.listItem.selected['@id']);
+                        dvm.array = dvm.ontoUtils.getSelectList(filtered, searchText, dvm.ontoUtils.getDropDownText);
+                    }
+
                     function createLocalNameMap() {
                         var map = {};
                         _.forEach(dvm.os.listItem.iriList, iri => {
