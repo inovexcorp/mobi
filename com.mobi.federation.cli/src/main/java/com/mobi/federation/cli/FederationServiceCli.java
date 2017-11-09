@@ -165,6 +165,6 @@ public class FederationServiceCli implements Action {
         if (isBlank(password)) {
             throw new IllegalArgumentException("Password is required for encryption.");
         }
-        System.out.print(FederationService.getEncryptor(password).encrypt(input));
+        System.out.print("Encrypted input: " + FederationService.getEncryptor(password).encrypt(input) + "\n");
     }
 }

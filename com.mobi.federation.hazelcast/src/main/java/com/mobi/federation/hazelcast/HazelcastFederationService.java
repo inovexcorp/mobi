@@ -246,9 +246,9 @@ public class HazelcastFederationService implements FederationService {
                 this.listener = new FederationServiceLifecycleListener();
                 this.hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
                 this.hazelcastInstance.getCluster().addMembershipListener(listener);
+                registerWithFederationNodes(hazelcastInstance);
                 StandardPBEStringEncryptor encryptor = FederationService.getEncryptor(serviceConfig.password());
                 this.tokenKey = encryptor.decrypt(serviceConfig.sharedKey()).getBytes(StandardCharsets.UTF_8);
-                registerWithFederationNodes(hazelcastInstance);
             } catch (Exception ex) {
                 LOGGER.error(ex.getMessage(), ex);
             } finally {
