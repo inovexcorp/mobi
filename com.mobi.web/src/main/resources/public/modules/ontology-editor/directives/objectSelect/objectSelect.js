@@ -36,7 +36,6 @@
                 templateUrl: 'modules/ontology-editor/directives/objectSelect/objectSelect.html',
                 scope: {
                     displayText: '<',
-                    selectList: '<',
                     mutedText: '<',
                     isDisabledWhen: '<',
                     isRequiredWhen: '<',
@@ -44,7 +43,8 @@
                     onChange: '&'
                 },
                 bindToController: {
-                    bindModel: '=ngModel'
+                    bindModel: '=ngModel',
+                    selectList: '<'
                 },
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
@@ -56,15 +56,14 @@
                     dvm.om = ontologyManagerService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
                     dvm.tooltipDisplay = settingsManagerService.getTooltipDisplay();
+                    dvm.values = [];
 
                     dvm.getItemOntologyIri = function(item) {
                         return _.get(item, 'ontologyId', os.listItem.ontologyId);
                     }
-
                     dvm.getItemIri = function(item) {
                         return _.get(item, '@id', ro.getItemIri(item));
                     }
-
                     dvm.getTooltipDisplay = function(item) {
                         var itemIri = dvm.getItemIri(item);
                         var result = itemIri;
@@ -73,12 +72,15 @@
                             if (dvm.tooltipDisplay === 'comment') {
                                 result = dvm.om.getEntityDescription(selectedObject) || itemIri;
                             } else if (dvm.tooltipDisplay === 'label') {
-                                result = dvm.om.getEntityName(selectedObject, os.listItem.ontologyRecord.type) || itemIri;
+                                result = dvm.om.getEntityName(selectedObject) || itemIri;
                             } else if (_.has(selectedObject, '@id')) {
                                 result = selectedObject['@id'];
                             }
                         }
                         return result;
+                    }
+                    dvm.getValues = function(searchText) {
+                        dvm.values = dvm.ontoUtils.getSelectList(dvm.selectList, searchText, dvm.ontoUtils.getDropDownText);
                     }
                 }]
             }

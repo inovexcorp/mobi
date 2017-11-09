@@ -35,7 +35,9 @@
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/axiomOverlay/axiomOverlay.html',
                 scope: {
-                    axiomList: '<',
+                    axiomList: '<'
+                },
+                bindToController: {
                     onSubmit: '&?'
                 },
                 controllerAs: 'dvm',
@@ -100,8 +102,23 @@
                         }
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [axiom]: values});
                         dvm.os.showAxiomOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges();
+                        dvm.ontoUtils.saveCurrentChanges()
+                            .then(() => {
+                                if (dvm.onSubmit) {
+                                    dvm.onSubmit({axiom: dvm.axiom, values: dvm.values})
+                                }
+                            });
                     }
+
+                    dvm.getValues = function(searchText) {
+                        if (!_.has(dvm.axiom, 'valuesKey')) {
+                            dvm.array = [];
+                            return;
+                        }
+                        var filtered = $filter('removeIriFromArray')(dvm.os.listItem[dvm.axiom.valuesKey].iris, dvm.os.listItem.selected['@id']);
+                        dvm.array = dvm.ontoUtils.getSelectList(filtered, searchText, dvm.ontoUtils.getDropDownText);
+                    }
+
                     function createLocalNameMap() {
                         var map = {};
                         _.forEach(dvm.os.listItem.iriList, iri => {

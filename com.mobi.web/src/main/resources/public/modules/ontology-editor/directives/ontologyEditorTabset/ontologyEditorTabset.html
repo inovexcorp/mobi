@@ -22,12 +22,11 @@
   -->
 <div class="ontology-editor-tabset">
     <tabset>
-        <tab ng-repeat="item in dvm.os.list track by item.ontologyId" ng-class="{'up-to-date': item.ontologyState.upToDate}"
+        <tab ng-repeat="item in dvm.os.list track by item.ontologyId" ng-class="{'up-to-date': item.upToDate}"
              heading="item.ontologyRecord.title"
-             on-close="dvm.onClose(item.ontologyRecord.recordId)" active="item.ontologyState.active"
+             on-close="dvm.onClose(item.ontologyRecord.recordId)" active="item.active"
              on-click="dvm.onClick(item.ontologyRecord.recordId)">
-            <ontology-tab ng-if="item.ontologyRecord.type === 'ontology'"></ontology-tab>
-            <vocabulary-tab ng-if="item.ontologyRecord.type === 'vocabulary'"></vocabulary-tab>
+            <ontology-tab></ontology-tab>
         </tab>
         <tab active="dvm.newTabActive" on-click="dvm.onClick()" is-last="true">
             <ontology-default-tab></ontology-default-tab>

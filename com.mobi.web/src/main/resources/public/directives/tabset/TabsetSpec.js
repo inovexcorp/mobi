@@ -75,6 +75,20 @@ describe('Tabset directive', function() {
                 expect(this.element.querySelectorAll('.marked').length).toBe(0);
             });
         });
+        describe('if tab.hideTab is', function() {
+            it('true', function() {
+                this.controller.tabs = [{id: 'tab1', hideTab: true}];
+                scope.$digest();
+                expect(this.element.querySelectorAll('.heading').length).toEqual(0);
+            });
+            it('false', function() {
+                this.controller.tabs = [{id: 'tab1', hideTab: false}];
+                scope.$digest();
+                var tabs = this.element.querySelectorAll('.heading');
+                expect(tabs.length).toEqual(1);
+                expect(angular.element(tabs[0]).hasClass('hide')).toEqual(false);
+            });
+        });
     });
     describe('controller methods', function() {
         it('addTab adds an element to the array', function() {

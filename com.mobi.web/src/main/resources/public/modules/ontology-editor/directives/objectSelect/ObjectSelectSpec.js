@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Object Select directive', function() {
-    var $compile, scope, element, isolatedScope, controller, prefixes, ontologyStateSvc, ontologyManagerSvc, responseObj;
+    var $compile, scope, prefixes, ontologyStateSvc, ontologyManagerSvc, responseObj, ontoUtilsSvc;
 
     beforeEach(function() {
         module('templates');
@@ -36,7 +36,7 @@ describe('Object Select directive', function() {
         mockPrefixes();
         mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _settingsManagerService_, _responseObj_, _ontologyStateService_, _prefixes_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyManagerService_, _settingsManagerService_, _responseObj_, _ontologyStateService_, _prefixes_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyManagerSvc = _ontologyManagerService_;
@@ -44,6 +44,7 @@ describe('Object Select directive', function() {
             responseObj = _responseObj_;
             ontologyStateSvc = _ontologyStateService_;
             prefixes = _prefixes_;
+            ontoUtilsSvc = _ontologyUtilsManagerService_;
         });
 
         scope.displayText = 'test';
@@ -55,76 +56,83 @@ describe('Object Select directive', function() {
         scope.onChange = jasmine.createSpy('onChange');
         scope.bindModel = [];
 
-        element = $compile(angular.element('<object-select multi-select="multiSelect" on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen" multi-select="multiSelect"></object-select>'))(scope);
+        this.element = $compile(angular.element('<object-select multi-select="multiSelect" on-change="onChange()" display-text="displayText" select-list="selectList" muted-text="mutedText" ng-model="bindModel" is-disabled-when="isDisabledWhen" multi-select="multiSelect"></object-select>'))(scope);
         scope.$digest();
+        this.isolatedScope = this.element.isolateScope();
+        this.controller = this.element.controller('objectSelect');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        prefixes = null;
+        ontologyStateSvc = null;
+        ontologyManagerSvc = null;
+        responseObj = null;
+        ontoUtilsSvc = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            isolatedScope = element.isolateScope();
-        });
         it('displayText should be one way bound', function() {
-            isolatedScope.displayText = 'new';
+            this.isolatedScope.displayText = 'new';
             scope.$digest();
             expect(scope.displayText).toEqual('test');
         });
         it('selectList should be one way bound', function() {
-            isolatedScope.selectList = ['new'];
+            this.isolatedScope.selectList = ['new'];
             scope.$digest();
             expect(scope.selectList).toEqual([]);
         });
         it('isDisabledWhen should be one way bound', function() {
-            isolatedScope.isDisabledWhen = true;
+            this.isolatedScope.isDisabledWhen = true;
             scope.$digest();
             expect(scope.isDisabledWhen).toEqual(false);
         });
         it('isRequiredWhen should be one way bound', function() {
-            isolatedScope.isRequiredWhen = true;
+            this.isolatedScope.isRequiredWhen = true;
             scope.$digest();
             expect(scope.isRequiredWhen).toEqual(false);
         });
         it('multiSelect should be one way bound', function() {
-            isolatedScope.multiSelect = true;
+            this.isolatedScope.multiSelect = true;
             scope.$digest();
             expect(scope.multiSelect).toEqual(false);
         });
         it('mutedText should be one way bound', function() {
-            isolatedScope.mutedText = 'new';
+            this.isolatedScope.mutedText = 'new';
             scope.$digest();
             expect(scope.mutedText).toEqual('test');
         });
         it('onChange should be called in parent scope', function() {
-            isolatedScope.onChange();
+            this.isolatedScope.onChange();
             expect(scope.onChange).toHaveBeenCalled();
         });
     });
     describe('controller bound variable', function() {
-        beforeEach(function() {
-            controller = element.controller('objectSelect');
-        });
         it('bindModel should be two way bound', function() {
-            controller.bindModel = ['new'];
+            this.controller.bindModel = ['new'];
             scope.$digest();
             expect(scope.bindModel).toEqual(['new']);
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('object-select')).toBe(true);
-            expect(element.hasClass('form-group')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('object-select')).toBe(true);
+            expect(this.element.hasClass('form-group')).toBe(true);
         });
         it('with custom-labels', function() {
-            expect(element.querySelectorAll('custom-label').length).toBe(1);
+            expect(this.element.querySelectorAll('custom-label').length).toBe(1);
         });
         it('depending on whether it is a multi select', function() {
-            var selects = element.querySelectorAll('ui-select');
+            var selects = this.element.querySelectorAll('ui-select');
             expect(selects.length).toBe(1);
             expect(angular.element(selects[0]).attr('multiple')).toBeUndefined();
 
             scope.multiSelect = true;
             scope.$digest();
-            selects = element.querySelectorAll('ui-select');
+            selects = this.element.querySelectorAll('ui-select');
             expect(selects.length).toBe(1);
             expect(angular.element(selects[0]).attr('multiple')).toBeDefined();
         });
@@ -132,76 +140,81 @@ describe('Object Select directive', function() {
     describe('controller methods', function() {
         beforeEach(function() {
             ontologyStateSvc.listItem.ontologyId = 'ontologyId';
-            controller = element.controller('objectSelect');
         });
         describe('getItemOntologyIri', function() {
             it('should return ontologyId if nothing is passed in', function() {
-                expect(controller.getItemOntologyIri()).toEqual('ontologyId');
+                expect(this.controller.getItemOntologyIri()).toEqual('ontologyId');
             });
             it('should return item.ontologyIri if provided', function() {
-                expect(controller.getItemOntologyIri({ontologyId: 'new'})).toEqual('new');
+                expect(this.controller.getItemOntologyIri({ontologyId: 'new'})).toEqual('new');
             });
             it('should return ontologyId if object does not have ontologyIri property.', function() {
-                expect(controller.getItemOntologyIri({prop: 'new'})).toEqual('ontologyId');
+                expect(this.controller.getItemOntologyIri({prop: 'new'})).toEqual('ontologyId');
             });
         });
         describe('getItemIri', function() {
             it('should call responseObj.getItemIri if nothing is passed in', function() {
-                var result = controller.getItemIri();
+                var result = this.controller.getItemIri();
                 expect(responseObj.getItemIri).toHaveBeenCalled();
             });
             it('should return item["@id"] if it has that property', function() {
-                expect(controller.getItemIri({'@id': 'new'})).toEqual('new');
+                expect(this.controller.getItemIri({'@id': 'new'})).toEqual('new');
             });
             it('should call responseObj.getItemIri if object does not have @id property.', function() {
-                var result = controller.getItemIri({prop: 'new'});
+                var result = this.controller.getItemIri({prop: 'new'});
                 expect(responseObj.getItemIri).toHaveBeenCalled();
             });
         });
         describe('getTooltipDisplay', function() {
             beforeEach(function() {
                 ontologyStateSvc.getEntityByRecordId.and.returnValue({});
-                spyOn(controller, 'getItemIri').and.returnValue('test');
+                spyOn(this.controller, 'getItemIri').and.returnValue('test');
             });
             it('should return @id when tooltipDisplay is empty', function() {
                 ontologyStateSvc.getEntityByRecordId.and.returnValue({'@id': 'id'});
-                var result = controller.getTooltipDisplay();
+                var result = this.controller.getTooltipDisplay();
                 expect(result).toBe('id');
             });
             describe('for comment', function() {
                 beforeEach(function() {
-                    controller.tooltipDisplay = 'comment';
+                    this.controller.tooltipDisplay = 'comment';
                 });
                 it('when getEntityDescription is undefined', function() {
                     ontologyManagerSvc.getEntityDescription.and.returnValue(undefined);
-                    var result = controller.getTooltipDisplay();
+                    var result = this.controller.getTooltipDisplay();
                     expect(ontologyManagerSvc.getEntityDescription).toHaveBeenCalledWith({}); // The value of getEntity
                     expect(result).toEqual('test'); // The value of getItemIri
                 });
                 it('when getEntityDescription is defined', function() {
                     ontologyManagerSvc.getEntityDescription.and.returnValue('new');
-                    var result = controller.getTooltipDisplay();
+                    var result = this.controller.getTooltipDisplay();
                     expect(ontologyManagerSvc.getEntityDescription).toHaveBeenCalledWith({}); // The value of getEntity
                     expect(result).toEqual('new'); // The value of getItemIri
                 });
             });
             describe('for label', function() {
                 beforeEach(function() {
-                    controller.tooltipDisplay = 'label';
+                    this.controller.tooltipDisplay = 'label';
                 });
                 it('when getEntityName is undefined', function() {
                     ontologyManagerSvc.getEntityName.and.returnValue(undefined);
-                    var result = controller.getTooltipDisplay();
-                    expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({}, ontologyStateSvc.listItem.ontologyRecord.type); // The value of getEntity
+                    var result = this.controller.getTooltipDisplay();
+                    expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({}); // The value of getEntity
                     expect(result).toEqual('test'); // The value of getItemIri
                 });
                 it('when getEntityName is defined', function() {
                     ontologyManagerSvc.getEntityName.and.returnValue('new');
-                    var result = controller.getTooltipDisplay();
-                    expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({}, ontologyStateSvc.listItem.ontologyRecord.type); // The value of getEntity
+                    var result = this.controller.getTooltipDisplay();
+                    expect(ontologyManagerSvc.getEntityName).toHaveBeenCalledWith({}); // The value of getEntity
                     expect(result).toEqual('new'); // The value of getItemIri
                 });
             });
+        });
+        it('getValues should set the correct value', function() {
+            ontoUtilsSvc.getSelectList.and.returnValue(['item']);
+            this.controller.getValues('text');
+            expect(ontoUtilsSvc.getSelectList).toHaveBeenCalledWith(this.controller.selectList, 'text', ontoUtilsSvc.getDropDownText);
+            expect(this.controller.values).toEqual(['item']);
         });
     });
 });

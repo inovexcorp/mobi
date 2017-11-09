@@ -30,7 +30,7 @@
          *
          * @description
          * The `relationshipsBlock` module only provides the `relationshipsBlock` directive which creates
-         * the relationships block within the vocabulary editor.
+         * the relationships block within the ontology editor.
          */
         .module('relationshipsBlock', [])
         /**
@@ -38,22 +38,23 @@
          * @name relationshipsBlock.directive:relationshipsBlock
          * @scope
          * @restrict E
+         * @requires ontologyManager.service:ontologyManagerService
          * @requires ontologyState.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          * @requires prefixes.service:prefixes
          * @requires responseObj.service:responseObj
          *
          * @description
-         * HTML contents in the relationships block with provides the users with a display of SKOS vocabulary relationships
+         * HTML contents in the relationships block with provides the users with a display of SKOS relationships
          * for the selected entity. A link to add additional relationships is also provided.
          *
          * @param {Object[]} relationshipList the list of relationships to display
          */
         .directive('relationshipsBlock', relationshipsBlock);
 
-        relationshipsBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'prefixes', 'responseObj'];
+        relationshipsBlock.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'prefixes', 'responseObj'];
 
-        function relationshipsBlock(ontologyStateService, ontologyUtilsManagerService, prefixes, responseObj) {
+        function relationshipsBlock(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, prefixes, responseObj) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -83,8 +84,11 @@
                     var schemeToConcept = [
                         prefixes.skos + 'hasTopConcept'
                     ];
+                    dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
+                    dvm.prefixes = prefixes;
+                    dvm.showTopConceptOverlay = false;
 
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
@@ -95,13 +99,13 @@
                     dvm.updateHierarchy = function(relationship, values) {
                         var relationshipIRI = ro.getItemIri(relationship);
                         if (shouldAdd(relationshipIRI, broaderRelations)) {
-                            commonAdd(relationshipIRI, values, dvm.os.listItem.selected['@id'], undefined, broaderRelations, narrowerRelations, 'conceptHierarchy', 'conceptIndex', 'flatConceptHierarchy');
+                            commonAdd(relationshipIRI, values, dvm.os.listItem.selected['@id'], undefined, broaderRelations, narrowerRelations, 'concepts');
                         } else if (shouldAdd(relationshipIRI, narrowerRelations)) {
-                            commonAdd(relationshipIRI, values, undefined, dvm.os.listItem.selected['@id'], narrowerRelations, broaderRelations, 'conceptHierarchy', 'conceptIndex', 'flatConceptHierarchy');
+                            commonAdd(relationshipIRI, values, undefined, dvm.os.listItem.selected['@id'], narrowerRelations, broaderRelations, 'concepts');
                         } else if (shouldAdd(relationshipIRI, conceptToScheme)) {
-                            commonAdd(relationshipIRI, values, dvm.os.listItem.selected['@id'], undefined, conceptToScheme, schemeToConcept, 'conceptSchemeHierarchy', 'conceptSchemeIndex', 'flatConceptSchemeHierarchy')
+                            commonAdd(relationshipIRI, values, dvm.os.listItem.selected['@id'], undefined, conceptToScheme, schemeToConcept, 'conceptSchemes')
                         } else if (shouldAdd(relationshipIRI, schemeToConcept)) {
-                            commonAdd(relationshipIRI, values, undefined, dvm.os.listItem.selected['@id'], schemeToConcept, conceptToScheme, 'conceptSchemeHierarchy', 'conceptSchemeIndex', 'flatConceptSchemeHierarchy')
+                            commonAdd(relationshipIRI, values, undefined, dvm.os.listItem.selected['@id'], schemeToConcept, conceptToScheme, 'conceptSchemes')
                         }
                     }
 
@@ -117,46 +121,44 @@
                         }
                     }
 
+                    dvm.hasTopConceptProperty = function() {
+                        return !_.isEmpty(dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, prefixes.skos + 'hasTopConcept', dvm.os.listItem));
+                    }
+
                     function containsProperty(entity, properties, value) {
                         return _.some(properties, property => _.some(_.get(entity, property), {'@id': value}));
                     }
-
                     function shouldAdd(relationshipIRI, array) {
                         return _.includes(array, relationshipIRI);
                     }
-
-                    function commonAdd(relationshipIRI, values, entityIRI, parentIRI, targetArray, otherArray, hierarchyName, indexName, flatHierarchyName) {
+                    function commonAdd(relationshipIRI, values, entityIRI, parentIRI, targetArray, otherArray, key) {
                         var update = false;
                         _.forEach(values, value => {
                             if (!containsProperty(dvm.os.listItem.selected, _.without(targetArray, relationshipIRI), value['@id']) && !containsProperty(dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, value['@id'], dvm.os.listItem), otherArray, value['@id'])) {
-                                dvm.os.addEntityToHierarchy(dvm.os.listItem[hierarchyName], entityIRI || value['@id'], dvm.os.listItem[indexName], parentIRI || value['@id']);
+                                dvm.os.addEntityToHierarchy(dvm.os.listItem[key].hierarchy, entityIRI || value['@id'], dvm.os.listItem[key].index, parentIRI || value['@id']);
                                 update = true;
                             }
                         });
                         if (update) {
-                            dvm.os.listItem[flatHierarchyName] = dvm.os.flattenHierarchy(dvm.os.listItem[hierarchyName], dvm.os.listItem.ontologyRecord.recordId);
+                            dvm.os.listItem[key].flat = dvm.os.flattenHierarchy(dvm.os.listItem[key].hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                         }
                     }
-
                     function shouldDelete(axiomObject, targetArray, otherArray) {
                         return _.includes(targetArray, dvm.key) && !containsProperty(dvm.os.listItem.selected, _.without(targetArray, dvm.key), axiomObject['@id']) && !containsProperty(dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, axiomObject['@id'], dvm.os.listItem), otherArray, dvm.os.listItem.selected['@id']);
                     }
-
                     function deleteFromConceptHierarchy(entityIRI, parentIRI) {
-                        dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.conceptHierarchy, entityIRI, parentIRI, dvm.os.listItem.conceptIndex);
-                        commonDelete('conceptHierarchy', 'conceptIndex', 'flatConceptHierarchy');
+                        dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.concepts.hierarchy, entityIRI, parentIRI, dvm.os.listItem.concepts.index);
+                        commonDelete('concepts');
                     }
-
                     function deleteFromSchemeHierarchy(entityIRI) {
-                        dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.conceptSchemeHierarchy, entityIRI, dvm.os.listItem.conceptSchemeIndex);
+                        dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.conceptSchemes.hierarchy, entityIRI, dvm.os.listItem.conceptSchemes.index);
                         if (_.get(dvm.os.listItem, 'editorTabStates.schemes.entityIRI') === entityIRI) {
                             _.unset(dvm.os.listItem, 'editorTabStates.schemes.entityIRI');
                         }
-                        commonDelete('conceptSchemeHierarchy', 'conceptSchemeIndex', 'flatConceptSchemeHierarchy');
+                        commonDelete('conceptSchemes');
                     }
-
-                    function commonDelete(hierarchyName, indexName, flatHierarchyName) {
-                        dvm.os.listItem[flatHierarchyName] = dvm.os.flattenHierarchy(dvm.os.listItem[hierarchyName], dvm.os.listItem.ontologyRecord.recordId);
+                    function commonDelete(key) {
+                        dvm.os.listItem[key].flat = dvm.os.flattenHierarchy(dvm.os.listItem[key].hierarchy, dvm.os.listItem.ontologyRecord.recordId);
                         dvm.os.goTo(dvm.os.listItem.selected['@id']);
                     }
                 }

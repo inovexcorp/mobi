@@ -112,14 +112,11 @@
              * entities.
              */
             var conceptListRelationships = _.map(['broaderTransitive', 'broader', 'broadMatch', 'narrowerTransitive',
-                'narrower', 'narrowMatch', 'related', 'relatedMatch', 'semanticRelation', 'mappingRelation',
-                'closeMatch', 'exactMatch'], item => {
-                    return {
-                        namespace: prefixes.skos,
-                        localName: item,
-                        values: 'conceptList'
-                    }
-                });
+                'narrower', 'narrowMatch', 'related', 'relatedMatch', 'mappingRelation', 'closeMatch', 'exactMatch'], item => ({
+                    namespace: prefixes.skos,
+                    localName: item,
+                    values: 'conceptList'
+                }));
             self.conceptRelationshipList = _.concat(
                 conceptListRelationships,
                 [{
@@ -381,6 +378,29 @@
             }
             /**
              * @ngdoc method
+             * @name getVocabularyStuff
+             * @methodOf ontologyManager.service:ontologyManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/ontologies/{recordId}/vocabulary-stuff endpoint and retrieves an object with keys
+             * for the lists of derived skos:Concept and skos:ConceptScheme, concept hierarchy, and concept scheme
+             * hierarchy.
+             *
+             * @param {string} recordId The id of the Record the Branch should be part of
+             * @param {string} branchId The id of the Branch with the specified Commit
+             * @param {string} commitId The id of the Commit to retrieve the ontology from
+             * @param {string} id The identifier for this request
+             * @return {Promise} A Promise with an object containing keys "derivedConcepts", "derivedConceptSchemes",
+             * "concepts.hierarchy", "concepts.index", "conceptSchemes.hierarchy", and "conceptSchemes.index".
+             */
+            self.getVocabularyStuff = function(recordId, branchId, commitId, id = '') {
+                var config = { params: { branchId, commitId } };
+                var url = prefix + '/' + encodeURIComponent(recordId) + '/vocabulary-stuff';
+                var promise = id ? httpService.get(url, config, id) : $http.get(url, config);
+                return promise.then(response => response.data, util.rejectError);
+            }
+            /**
+             * @ngdoc method
              * @name getIris
              * @methodOf ontologyManager.service:ontologyManagerService
              *
@@ -395,11 +415,9 @@
              * of arrays of IRI strings
              */
             self.getIris = function(recordId, branchId, commitId) {
-                var deferred = $q.defer();
                 var config = { params: { branchId, commitId } };
-                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/iris', config)
-                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/iris', config)
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -417,11 +435,9 @@
              * ontology and values of arrays of IRI strings
              */
             self.getImportedIris = function(recordId, branchId, commitId) {
-                var deferred = $q.defer();
                 var config = { params: { branchId, commitId } };
-                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-iris', config)
-                    .then(response => deferred.resolve(_.get(response, 'status') === 200 ? response.data : []), response => util.onError(response, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/imported-iris', config)
+                    .then(response => _.get(response, 'status') === 200 ? response.data : [], util.rejectError);
             }
             /**
              * @ngdoc method
@@ -439,11 +455,9 @@
              * @return {Promise} A promise with an object containing the class hierarchy and an index of IRIs to parent IRIs
              */
             self.getClassHierarchies = function(recordId, branchId, commitId) {
-                var deferred = $q.defer();
                 var config = { params: { branchId, commitId } };
-                $http.get(prefix + '/' + encodeURIComponent(recordId) + '/class-hierarchies', config)
-                    .then(response => deferred.resolve(response.data), response => util.onError(response, deferred));
-                return deferred.promise;
+                return $http.get(prefix + '/' + encodeURIComponent(recordId) + '/class-hierarchies', config)
+                    .then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method
@@ -1442,7 +1456,7 @@
              * @param {Object} entity The entity you want the name of.
              * @returns {string} The beautified IRI string.
              */
-            self.getEntityName = function(entity, type = 'ontology') {
+            self.getEntityName = function(entity) {
                 var result = utilService.getPropertyValue(entity, prefixes.rdfs + 'label')
                     || utilService.getDctermsValue(entity, 'title')
                     || utilService.getPropertyValue(entity, prefixes.dc + 'title')

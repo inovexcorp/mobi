@@ -54,14 +54,11 @@
                     dvm.onClick = function(recordId) {
                         if (recordId) {
                             dvm.os.listItem = dvm.os.getListItemByRecordId(recordId);
-                            dvm.os.setPageTitle(dvm.os.listItem.ontologyRecord.type);
-                        } else {
-                            dvm.os.setPageTitle();
                         }
                     }
 
                     $scope.$watch('dvm.os.listItem', () => {
-                        dvm.newTabActive = !_.get(dvm.os.listItem, 'ontologyState.active', false);
+                        dvm.newTabActive = !_.get(dvm.os.listItem, 'active', false);
                     });
                 }]
             }

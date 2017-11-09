@@ -30,7 +30,7 @@
          *
          * @description
          * The `relationshipOverlay` module only provides the `relationshipOverlay` directive which creates
-         * the relationship overlay within the vocabulary editor.
+         * the relationship overlay within the ontology editor.
          */
         .module('relationshipOverlay', [])
         /**
@@ -38,7 +38,6 @@
          * @name relationshipOverlay.directive:relationshipOverlay
          * @scope
          * @restrict E
-         * @requires $filter
          * @requires responseObj.service:responseObj
          * @requires ontologyManager.service:ontologyManagerService
          * @requires ontologyState.service:ontologyStateService
@@ -54,9 +53,9 @@
          */
         .directive('relationshipOverlay', relationshipOverlay);
 
-        relationshipOverlay.$inject = ['$filter', 'responseObj', 'ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
+        relationshipOverlay.$inject = ['responseObj', 'ontologyManagerService', 'ontologyStateService', 'utilService', 'ontologyUtilsManagerService'];
 
-        function relationshipOverlay($filter, responseObj, ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService) {
+        function relationshipOverlay(responseObj, ontologyManagerService, ontologyStateService, utilService, ontologyUtilsManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -73,17 +72,25 @@
                     dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
-                    dvm.concepts = [];
+                    dvm.array = [];
                     dvm.conceptList = dvm.om.getConceptIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConcepts);
                     dvm.schemeList = dvm.om.getConceptSchemeIRIs(dvm.os.getOntologiesArray(), dvm.os.listItem.derivedConceptSchemes);
+                    dvm.values = [];
 
                     dvm.addRelationship = function() {
                         var axiom = dvm.ro.getItemIri(dvm.relationship);
                         dvm.os.listItem.selected[axiom] = _.union(_.get(dvm.os.listItem.selected, axiom, []), dvm.values);
-                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'],
-                            [axiom]: dvm.values});
+                        dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, {'@id': dvm.os.listItem.selected['@id'], [axiom]: dvm.values});
                         dvm.os.showRelationshipOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
+                    }
+
+                    dvm.getValues = function(searchText) {
+                        if (!_.has(dvm.relationship, 'values')) {
+                            dvm.array = [];
+                            return;
+                        }
+                        dvm.array = dvm.ontoUtils.getSelectList(dvm[dvm.relationship.values], searchText);
                     }
                 }
             }

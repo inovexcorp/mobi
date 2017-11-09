@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Ontology Properties Block directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyStateSvc,
-        ontologyManagerSvc,
-        resObj;
+    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, resObj;
 
     beforeEach(function() {
         module('templates');
@@ -51,48 +45,55 @@ describe('Ontology Properties Block directive', function() {
             'prop2': [{'@value': 'value2'}]
         };
         ontologyManagerSvc.getAnnotationIRIs.and.returnValue(['prop1', 'prop2']);
-        element = $compile(angular.element('<ontology-properties-block></ontology-properties-block>'))(scope);
+        this.element = $compile(angular.element('<ontology-properties-block></ontology-properties-block>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('ontologyPropertiesBlock');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        ontologyManagerSvc = null;
+        resObj = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('ontology-properties-block')).toBe(true);
-            expect(element.hasClass('annotation-block')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('ontology-properties-block')).toBe(true);
+            expect(this.element.hasClass('annotation-block')).toBe(true);
         });
         it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
+            expect(this.element.find('block').length).toBe(1);
         });
         it('with a block-header', function() {
-            expect(element.find('block-header').length).toBe(1);
+            expect(this.element.find('block-header').length).toBe(1);
         });
         it('with a block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('depending on how many ontology properties there are', function() {
-            expect(element.find('property-values').length).toBe(2);
+            expect(this.element.find('property-values').length).toBe(2);
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(element.find('property-values').length).toBe(0);
+            expect(this.element.find('property-values').length).toBe(0);
         });
         it('depending on whether an ontology property is being deleted', function() {
-            element.controller('ontologyPropertiesBlock').showRemoveOverlay = true;
+            this.controller.showRemoveOverlay = true;
             scope.$digest();
-            expect(element.find('remove-property-overlay').length).toBe(1);
+            expect(this.element.find('remove-property-overlay').length).toBe(1);
         });
         it('depending on whether an ontology property is being shown', function() {
             ontologyStateSvc.showOntologyPropertyOverlay = true;
             scope.$digest();
-            expect(element.find('ontology-property-overlay').length).toBe(1);
+            expect(this.element.find('ontology-property-overlay').length).toBe(1);
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('ontologyPropertiesBlock');
-        });
         it('should set the correct manager values when opening the Add Overlay', function() {
-            controller.openAddOverlay();
+            this.controller.openAddOverlay();
             expect(ontologyStateSvc.editingOntologyProperty).toBe(false);
             expect(ontologyStateSvc.ontologyProperty).toBeUndefined();
             expect(ontologyStateSvc.ontologyPropertyValue).toBe('');
@@ -101,10 +102,10 @@ describe('Ontology Properties Block directive', function() {
             expect(ontologyStateSvc.showOntologyPropertyOverlay).toBe(true);
         });
         it('should set the correct manager values when opening the Remove Ontology Property Overlay', function() {
-            controller.openRemoveOverlay('key', 1);
-            expect(controller.key).toBe('key');
-            expect(controller.index).toBe(1);
-            expect(controller.showRemoveOverlay).toBe(true);
+            this.controller.openRemoveOverlay('key', 1);
+            expect(this.controller.key).toBe('key');
+            expect(this.controller.index).toBe(1);
+            expect(this.controller.showRemoveOverlay).toBe(true);
         });
         it('should set the correct manager values when editing an ontology property', function() {
             var propertyIRI = 'prop1';
@@ -112,7 +113,7 @@ describe('Ontology Properties Block directive', function() {
                 'prop1': [{'@value': 'value', '@type': 'type', '@id': 'id', '@language': 'lang'}]
             };
             ontologyStateSvc.listItem.dataPropertyRange = ['type'];
-            controller.editClicked(propertyIRI, 0);
+            this.controller.editClicked(propertyIRI, 0);
             expect(ontologyStateSvc.editingOntologyProperty).toBe(true);
             expect(ontologyStateSvc.ontologyProperty).toEqual(propertyIRI);
             expect(ontologyStateSvc.ontologyPropertyValue).toBe('value');
@@ -123,10 +124,9 @@ describe('Ontology Properties Block directive', function() {
         });
     });
     it('should call openAddOverlay when the link is clicked', function() {
-        controller = element.controller('ontologyPropertiesBlock');
-        spyOn(controller, 'openAddOverlay');
-        var link = angular.element(element.querySelectorAll('block-header a')[0]);
+        spyOn(this.controller, 'openAddOverlay');
+        var link = angular.element(this.element.querySelectorAll('block-header a')[0]);
         link.triggerHandler('click');
-        expect(controller.openAddOverlay).toHaveBeenCalled();
+        expect(this.controller.openAddOverlay).toHaveBeenCalled();
     });
 });

@@ -42,7 +42,7 @@
                     dvm.ro = responseObj;
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
-                    dvm.individuals = $filter('removeIriFromArray')(dvm.os.listItem.individuals, dvm.os.getActiveEntityIRI());
+                    dvm.individuals = $filter('removeIriFromArray')(dvm.os.listItem.individuals.iris, dvm.os.getActiveEntityIRI());
                     dvm.valueSelect = _.find(dvm.individuals, individual => dvm.ro.getItemIri(individual) === dvm.os.propertyValue);
 
                     dvm.addProperty = function(select, value) {
@@ -68,6 +68,10 @@
                         }
                         dvm.os.showObjectPropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
+                    }
+
+                    dvm.getValues = function(searchText) {
+                        dvm.values =  dvm.ontoUtils.getSelectList(dvm.os.listItem.objectProperties.iris, searchText, dvm.ontoUtils.getDropDownText);
                     }
                 }
             }

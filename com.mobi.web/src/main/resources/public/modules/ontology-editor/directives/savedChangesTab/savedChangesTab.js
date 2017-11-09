@@ -60,14 +60,14 @@
                         cm.getBranchHeadCommit(dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                             .then(headCommit => {
                                 var commitId = _.get(headCommit, "commit['@id']", '');
-                                return dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, commitId, dvm.os.listItem.ontologyRecord.type);
+                                return dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, commitId);
                             }, $q.reject)
                             .then(() => dvm.util.createSuccessToast('Your ontology has been updated.'), dvm.util.createErrorToast);
                     }
 
                     dvm.removeChanges = function() {
                         cm.deleteInProgressCommit(dvm.os.listItem.ontologyRecord.recordId, catalogId)
-                            .then(() => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyRecord.type, dvm.os.listItem.ontologyState.upToDate), $q.reject)
+                            .then(() => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.commitId, dvm.os.listItem.upToDate), $q.reject)
                             .then(() => dvm.os.clearInProgressCommit(), errorMessage => dvm.error = errorMessage);
                     }
 
@@ -131,7 +131,7 @@
                         });
                         dvm.os.saveChanges(dvm.os.listItem.ontologyRecord.recordId, differenceObj)
                             .then(() => dvm.os.afterSave(), $q.reject)
-                            .then(() => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyRecord.type, dvm.os.listItem.ontologyStatus.upToDate, dvm.os.listItem.inProgressCommit), $q.reject)
+                            .then(() => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.ontologyRecord.branchId, dvm.os.listItem.ontologyRecord.listItem.ontologyRecord.commitId, dvm.os.listItem.ontologyStatus.upToDate, dvm.os.listItem.inProgressCommit), $q.reject)
                             .then(() => dvm.util.createSuccessToast('Checked changes removed'), dvm.util.createErrorToast);
                     }
 

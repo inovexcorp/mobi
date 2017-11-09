@@ -26,7 +26,7 @@
             <span>Class Hierarchy</span><a class="pull-right" ng-click="dvm.os.unSelectItem(); dvm.os.showCreateClassOverlay = true"><i class="fa fa-plus"></i><span>Create Class</span></a>
         </block-header>
         <block-content>
-            <hierarchy-tree hierarchy="dvm.os.listItem.flatClassHierarchy"></hierarchy-tree>
+            <hierarchy-tree hierarchy="dvm.os.listItem.classes.flat"></hierarchy-tree>
         </block-content>
         <block-footer class="centered">
             <button class="btn btn-link" ng-disabled="!dvm.os.listItem.selected || dvm.os.listItem.selected.mobi.imported" ng-click="dvm.showDeleteConfirmation = true"><i class="fa fa-trash-o"></i><span>Delete Class</span></button>

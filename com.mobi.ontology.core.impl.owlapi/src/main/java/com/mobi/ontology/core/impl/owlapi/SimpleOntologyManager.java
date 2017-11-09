@@ -83,6 +83,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     private static final String GET_SUB_CLASSES_OF;
     private static final String GET_CLASSES_FOR;
+    private static final String GET_PROPERTIES_FOR;
     private static final String GET_SUB_DATATYPE_PROPERTIES_OF;
     private static final String GET_SUB_OBJECT_PROPERTIES_OF;
     private static final String GET_CLASSES_WITH_INDIVIDUALS;
@@ -107,6 +108,10 @@ public class SimpleOntologyManager implements OntologyManager {
             );
             GET_CLASSES_FOR = IOUtils.toString(
                     SimpleOntologyManager.class.getResourceAsStream("/get-sub-classes-for.rq"),
+                    "UTF-8"
+            );
+            GET_PROPERTIES_FOR = IOUtils.toString(
+                    SimpleOntologyManager.class.getResourceAsStream("/get-sub-properties-for.rq"),
                     "UTF-8"
             );
             GET_SUB_DATATYPE_PROPERTIES_OF = IOUtils.toString(
@@ -365,6 +370,12 @@ public class SimpleOntologyManager implements OntologyManager {
     public TupleQueryResult getSubClassesFor(Ontology ontology, IRI iri) {
         return runQueryOnOntology(ontology, String.format(GET_CLASSES_FOR, iri.stringValue()), null,
                 "getSubClassesFor(ontology, iri)");
+    }
+
+    @Override
+    public TupleQueryResult getSubPropertiesFor(Ontology ontology, IRI iri) {
+        return runQueryOnOntology(ontology, String.format(GET_PROPERTIES_FOR, iri.stringValue()), null,
+                "getSubPropertiesFor(ontology, iri)");
     }
 
     @Override

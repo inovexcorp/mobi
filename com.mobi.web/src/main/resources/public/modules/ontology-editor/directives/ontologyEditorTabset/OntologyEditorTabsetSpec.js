@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology Editor Tabset directive', function() {
-    var $compile, scope, element, ontologyManagerSvc, ontologyStateSvc;
+    var $compile, scope, ontologyManagerSvc, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -36,43 +36,48 @@ describe('Ontology Editor Tabset directive', function() {
             ontologyStateSvc = _ontologyStateService_;
         });
 
-        listItemA = { ontologyId: 'A', ontologyRecord: { recordId: 'A', recordTitle: 'A', type: 'ontology'}, ontologyState: { active: false, upToDate: false }};
-        listItemB = { ontologyId: 'B', ontologyRecord: { recordId: 'B', recordTitle: 'B', type: 'vocabulary'}, ontologyState: { active: false, upToDate: true }};
-        ontologyStateSvc.list = [listItemA, listItemB];
-        element = $compile(angular.element('<ontology-editor-tabset></ontology-editor-tabset>'))(scope);
+        this.listItemA = { ontologyId: 'A', ontologyRecord: { recordId: 'A', recordTitle: 'A'}, active: false, upToDate: false };
+        this.listItemB = { ontologyId: 'B', ontologyRecord: { recordId: 'B', recordTitle: 'B'}, active: false, upToDate: true };
+        ontologyStateSvc.list = [this.listItemA, this.listItemB];
+        this.element = $compile(angular.element('<ontology-editor-tabset></ontology-editor-tabset>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('ontologyEditorTabset');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyManagerSvc = null;
+        ontologyStateSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.hasClass('ontology-editor-tabset')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('ontology-editor-tabset')).toBe(true);
         });
         it('with a tabset', function() {
-            expect(element.find('tabset').length).toBe(1);
+            expect(this.element.find('tabset').length).toBe(1);
         });
         it('with a ontology-default-tab', function() {
-            expect(element.querySelectorAll('tab ontology-default-tab').length).toBe(1);
+            expect(this.element.find('ontology-default-tab').length).toBe(1);
         });
-        it('depending on how many ontologies are open', function() {
-            expect(element.find('tab').length).toBe(ontologyStateSvc.list.length + 1);
+        it('with tabs', function() {
+            expect(this.element.find('tab').length).toBe(3);
+        });
+        it('with ontology-tabs', function() {
+            expect(this.element.find('ontology-tab').length).toBe(2);
         });
         it('depending on whether a ontology is up to date', function() {
-            var tabs = element.find('tab');
+            var tabs = this.element.find('tab');
             expect(angular.element(tabs[0]).hasClass('up-to-date')).toBe(false);
             expect(angular.element(tabs[1]).hasClass('up-to-date')).toBe(true);
-        });
-        it('depending on whether a tab is for an ontology or a vocabulary', function() {
-            var tabs = element.find('tab');
-            expect(angular.element(tabs[0]).find('ontology-tab').length).toBe(1);
-            expect(angular.element(tabs[0]).find('vocabulary-tab').length).toBe(0);
-            expect(angular.element(tabs[1]).find('ontology-tab').length).toBe(0);
-            expect(angular.element(tabs[1]).find('vocabulary-tab').length).toBe(1);
         });
     });
     describe('controller methods', function() {
         beforeEach(function() {
-            controller = element.controller('ontologyEditorTabset');
-            ontologyStateSvc.listItem = listItemA;
+            ontologyStateSvc.listItem = this.listItemA;
         });
         describe('should close a tab', function() {
             beforeEach(function() {
@@ -80,15 +85,15 @@ describe('Ontology Editor Tabset directive', function() {
                 ontologyStateSvc.showCloseOverlay = false;
             });
             it('if it has changes', function() {
-                controller.onClose('A');
+                this.controller.onClose('A');
                 expect(ontologyStateSvc.recordIdToClose).toBe('A');
                 expect(ontologyStateSvc.showCloseOverlay).toBe(true);
                 expect(ontologyStateSvc.closeOntology).not.toHaveBeenCalled();
             });
             it('if it has no changes', function() {
-                ontologyStateSvc.listItem = listItemB;
+                ontologyStateSvc.listItem = this.listItemB;
                 ontologyStateSvc.hasChanges.and.returnValue(false);
-                controller.onClose('B');
+                this.controller.onClose('B');
                 expect(ontologyStateSvc.recordIdToClose).toBe('');
                 expect(ontologyStateSvc.showCloseOverlay).toBe(false);
                 expect(ontologyStateSvc.closeOntology).toHaveBeenCalledWith('B');
@@ -97,15 +102,13 @@ describe('Ontology Editor Tabset directive', function() {
         describe('onClick should set the listItem and page title correctly if recordId is', function() {
             it('defined', function() {
                 ontologyStateSvc.getListItemByRecordId.and.returnValue({ontologyRecord: {type: 'type'}});
-                controller.onClick('recordId');
+                this.controller.onClick('recordId');
                 expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith('recordId');
                 expect(ontologyStateSvc.listItem).toEqual({ontologyRecord: {type: 'type'}});
-                expect(ontologyStateSvc.setPageTitle).toHaveBeenCalledWith('type');
             });
             it('undefined', function() {
-                controller.onClick(undefined);
+                this.controller.onClick(undefined);
                 expect(ontologyStateSvc.getListItemByRecordId).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.setPageTitle).toHaveBeenCalled();
             });
         });
     });

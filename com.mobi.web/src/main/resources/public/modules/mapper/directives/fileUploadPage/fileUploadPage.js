@@ -72,9 +72,9 @@
                     dvm.util = utilService;
 
                     dvm.getDataMappingName = function(dataMappingId) {
-                        var propId = dvm.mm.getPropIdByMappingId(dvm.state.mapping.jsonld, dataMappingId);
-                        var classId = dvm.mm.getClassIdByMapping(dvm.mm.findClassWithDataMapping(dvm.state.mapping.jsonld, dataMappingId));
-                        return dvm.mm.getPropMappingTitle(dvm.util.getBeautifulIRI(classId), dvm.util.getBeautifulIRI(propId));
+                        var propMapping = _.find(dvm.state.mapping.jsonld, {'@id': dataMappingId});
+                        var classMapping = dvm.mm.findClassWithDataMapping(dvm.state.mapping.jsonld, dataMappingId)
+                        return dvm.mm.getPropMappingTitle(dvm.util.getDctermsValue(classMapping, 'title'), dvm.util.getDctermsValue(propMapping, 'title'));
                     }
                     dvm.cancel = function() {
                     	dvm.state.initialize();

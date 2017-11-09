@@ -219,6 +219,7 @@ function mockOntologyManager() {
             this.uploadFile = jasmine.createSpy('uploadFile').and.returnValue($q.when({}));
             this.uploadJson = jasmine.createSpy('uploadJson').and.returnValue($q.when({}));
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
+            this.getVocabularyStuff = jasmine.createSpy('getVocabularyStuff').and.returnValue($q.when({}));
             this.getIris = jasmine.createSpy('getIris').and.returnValue($q.when({}));
             this.getImportedIris = jasmine.createSpy('getImportedIris').and.returnValue($q.when([]));
             this.getClassHierarchies = jasmine.createSpy('getClassHierarchies').and.returnValue($q.when({}));
@@ -529,10 +530,9 @@ function mockOntologyState() {
                 selected: {
                     '@id': 'id'
                 },
-                ontologyState: {
-                    active: true,
-                    upToDate: true
-                },
+                active: true,
+                upToDate: true,
+                isVocabulary: false,
                 editorTabStates: {
                    project: {
                        active: true,
@@ -548,6 +548,9 @@ function mockOntologyState() {
                        active: false
                    },
                    individuals: {
+                       active: false
+                   },
+                   concept: {
                        active: false
                    },
                    search: {
@@ -567,19 +570,51 @@ function mockOntologyState() {
                     title: '',
                     recordId: '',
                     branchId: '',
-                    commitId: '',
-                    type: ''
+                    commitId: ''
                 },
-                annotations: [],
                 dataPropertyRange: [],
-                classHierarchy: [],
-                subClasses: [],
-                objectPropertyHierarchy: [],
-                subObjectProperties: [],
-                dataPropertyHierarchy: [],
-                subDataProperties: [],
+                derivedConcepts: [],
+                derivedConceptSchemes: [],
+                derivedSemanticRelations: [],
+                classes: {
+                    iris: [],
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                objectProperties: {
+                    iris: [],
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                dataProperties: {
+                    iris: [],
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                annotations: {
+                    iris: [],
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                individuals: {
+                    iris: [],
+                    flat: []
+                },
+                concepts: {
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
+                conceptSchemes: {
+                    hierarchy: [],
+                    index: {},
+                    flat: []
+                },
                 blankNodes: {},
-                individuals: [],
                 index: {},
                 ontologyId: 'ontologyId',
                 additions: [],
@@ -597,20 +632,10 @@ function mockOntologyState() {
                     }
                 }],
                 individualsParentPath: [],
-                classesAndIndividuals: [],
-                flatClassHierarchy: [],
-                flatDataPropertyHierarchy: [],
-                flatObjectPropertyHierarchy: [],
-                annotationPropertyHierarchy: [],
-                annotationPropertyIndex: {},
-                flatAnnotationPropertyHierarchy: [],
+                classesAndIndividuals: {},
+                classesWithIndividuals: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
-                conceptHierarchy: [],
-                flatConceptHierarchy: [],
-                conceptSchemeHierarchy: [],
-                conceptSchemeIndex: {},
-                flatConceptSchemeHierarchy: [],
                 iriList: [],
                 failedImports: []
             };
@@ -624,9 +649,7 @@ function mockOntologyState() {
             this.uploadChanges = jasmine.createSpy('uploadChanges').and.returnValue($q.resolve(''));
             this.updateOntology = jasmine.createSpy('updateOntology');
             this.addOntologyToList = jasmine.createSpy('addOntologyToList').and.returnValue($q.when([]));
-            this.addVocabularyToList = jasmine.createSpy('addVocabularyToList').and.returnValue($q.when([]));
             this.createOntologyListItem = jasmine.createSpy('createOntologyListItem').and.returnValue($q.when([]));
-            this.createVocabularyListItem = jasmine.createSpy('createVocabularyListItem').and.returnValue($q.when([]));
             this.addEntity = jasmine.createSpy('addEntity');
             this.removeEntity = jasmine.createSpy('removeEntity');
             this.getListItemByRecordId = jasmine.createSpy('getListItemByRecordId').and.returnValue({});
@@ -673,6 +696,7 @@ function mockOntologyState() {
             this.getDefaultPrefix = jasmine.createSpy('getDefaultPrefix');
             this.retrieveClassesWithIndividuals = jasmine.createSpy('retrieveClassesWithIndividuals');
             this.getIndividualsParentPath = jasmine.createSpy('getIndividualsParentPath');
+            this.setVocabularyStuff = jasmine.createSpy('setVocabularyStuff');
             this.flattenHierarchy = jasmine.createSpy('flattenHierarchy');
             this.areParentsOpen = jasmine.createSpy('areParentsOpen');
             this.createFlatEverythingTree = jasmine.createSpy('createFlatEverythingTree');
@@ -682,7 +706,8 @@ function mockOntologyState() {
             this.isDerivedConcept = jasmine.createSpy('isDerivedConcept');
             this.isDerivedConceptScheme = jasmine.createSpy('isDerivedConceptScheme');
             this.hasInProgressCommit = jasmine.createSpy('hasInProgressCommit').and.returnValue(false);
-            this.setPageTitle = jasmine.createSpy('setPageTitle');
+            this.addToClassIRIs = jasmine.createSpy('addToClassIRIs');
+            this.removeFromClassIRIs = jasmine.createSpy('removeFromClassIRIs');
         });
     });
 }
@@ -690,6 +715,12 @@ function mockOntologyState() {
 function mockOntologyUtilsManager() {
     module(function($provide) {
         $provide.service('ontologyUtilsManagerService', function() {
+            this.containsDerivedConcept = jasmine.createSpy('containsDerivedConcept');
+            this.containsDerivedSemanticRelation = jasmine.createSpy('containsDerivedSemanticRelation');
+            this.containsDerivedConceptScheme = jasmine.createSpy('containsDerivedConceptScheme');
+            this.addIndividual = jasmine.createSpy('addIndividual');
+            this.addConcept = jasmine.createSpy('addConcept');
+            this.addConceptScheme = jasmine.createSpy('addConceptScheme');
             this.commonDelete = jasmine.createSpy('commonDelete');
             this.deleteClass = jasmine.createSpy('deleteClass');
             this.deleteObjectProperty = jasmine.createSpy('deleteObjectProperty');
@@ -710,6 +741,7 @@ function mockOntologyUtilsManager() {
             this.setSuperProperties = jasmine.createSpy('setSuperProperties');
             this.updateflatIndividualsHierarchy = jasmine.createSpy('updateflatIndividualsHierarchy');
             this.checkIri = jasmine.createSpy('checkIri');
+            this.getSelectList = jasmine.createSpy('getSelectList');
         });
     });
 }
@@ -1087,6 +1119,7 @@ function mockExplore() {
             this.createInstance = jasmine.createSpy('createInstance').and.returnValue($q.when(''));
             this.getInstance = jasmine.createSpy('getInstance').and.returnValue($q.when({}));
             this.updateInstance = jasmine.createSpy('updateInstance').and.returnValue($q.when({}));
+            this.deleteInstance = jasmine.createSpy('deleteInstance').and.returnValue($q.when());
             this.createPagedResultsObject = jasmine.createSpy('createPagedResultsObject').and.returnValue({});
         });
     });

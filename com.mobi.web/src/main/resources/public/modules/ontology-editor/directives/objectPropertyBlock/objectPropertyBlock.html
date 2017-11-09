@@ -26,7 +26,7 @@
             <span>Object Properties</span><a ng-if="dvm.os.listItem.selected && !dvm.os.listItem.selected.mobi.imported" ng-click="dvm.openAddObjectPropOverlay()" class="pull-right"><i class="fa fa-fw fa-plus"></i>Add Object Property</a>
         </block-header>
         <block-content>
-            <property-values ng-repeat="property in dvm.os.listItem.selected | showProperties:dvm.os.listItem.subObjectProperties | orderBy:dvm.ontoUtils.getLabelForIRI"
+            <property-values ng-repeat="property in dvm.os.listItem.selected | showProperties:dvm.os.listItem.objectProperties.iris | orderBy:dvm.ontoUtils.getLabelForIRI"
                              property="property" entity="dvm.os.listItem.selected" edit="dvm.editObjectProp(property, index)"
                              remove="dvm.showRemovePropertyOverlay(iri, index)"></property-values>
         </block-content>
