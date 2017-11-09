@@ -30,7 +30,7 @@
          *
          * @description
          * The `relationshipsBlock` module only provides the `relationshipsBlock` directive which creates
-         * the relationships block within the vocabulary editor.
+         * the relationships block within the ontology editor.
          */
         .module('relationshipsBlock', [])
         /**
@@ -38,22 +38,23 @@
          * @name relationshipsBlock.directive:relationshipsBlock
          * @scope
          * @restrict E
+         * @requires ontologyManager.service:ontologyManagerService
          * @requires ontologyState.service:ontologyStateService
          * @requires ontologyUtilsManager.service:ontologyUtilsManagerService
          * @requires prefixes.service:prefixes
          * @requires responseObj.service:responseObj
          *
          * @description
-         * HTML contents in the relationships block with provides the users with a display of SKOS vocabulary relationships
+         * HTML contents in the relationships block with provides the users with a display of SKOS relationships
          * for the selected entity. A link to add additional relationships is also provided.
          *
          * @param {Object[]} relationshipList the list of relationships to display
          */
         .directive('relationshipsBlock', relationshipsBlock);
 
-        relationshipsBlock.$inject = ['ontologyStateService', 'ontologyUtilsManagerService', 'prefixes', 'responseObj'];
+        relationshipsBlock.$inject = ['ontologyManagerService', 'ontologyStateService', 'ontologyUtilsManagerService', 'prefixes', 'responseObj'];
 
-        function relationshipsBlock(ontologyStateService, ontologyUtilsManagerService, prefixes, responseObj) {
+        function relationshipsBlock(ontologyManagerService, ontologyStateService, ontologyUtilsManagerService, prefixes, responseObj) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -83,8 +84,11 @@
                     var schemeToConcept = [
                         prefixes.skos + 'hasTopConcept'
                     ];
+                    dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
+                    dvm.prefixes = prefixes;
+                    dvm.showTopConceptOverlay = false;
 
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
@@ -115,6 +119,10 @@
                         } else if (shouldDelete(axiomObject, schemeToConcept, conceptToScheme)) {
                             deleteFromSchemeHierarchy(axiomObject['@id']);
                         }
+                    }
+
+                    dvm.hasTopConceptProperty = function() {
+                        return !_.isEmpty(dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, prefixes.skos + 'hasTopConcept', dvm.os.listItem));
                     }
 
                     function containsProperty(entity, properties, value) {

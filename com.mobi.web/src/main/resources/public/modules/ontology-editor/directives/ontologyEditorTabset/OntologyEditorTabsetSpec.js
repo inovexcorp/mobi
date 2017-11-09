@@ -36,8 +36,8 @@ describe('Ontology Editor Tabset directive', function() {
             ontologyStateSvc = _ontologyStateService_;
         });
 
-        this.listItemA = { ontologyId: 'A', ontologyRecord: { recordId: 'A', recordTitle: 'A', type: 'ontology'}, active: false, upToDate: false };
-        this.listItemB = { ontologyId: 'B', ontologyRecord: { recordId: 'B', recordTitle: 'B', type: 'vocabulary'}, active: false, upToDate: true };
+        this.listItemA = { ontologyId: 'A', ontologyRecord: { recordId: 'A', recordTitle: 'A'}, active: false, upToDate: false };
+        this.listItemB = { ontologyId: 'B', ontologyRecord: { recordId: 'B', recordTitle: 'B'}, active: false, upToDate: true };
         ontologyStateSvc.list = [this.listItemA, this.listItemB];
         this.element = $compile(angular.element('<ontology-editor-tabset></ontology-editor-tabset>'))(scope);
         scope.$digest();
@@ -54,28 +54,25 @@ describe('Ontology Editor Tabset directive', function() {
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
+            expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('ontology-editor-tabset')).toBe(true);
         });
         it('with a tabset', function() {
             expect(this.element.find('tabset').length).toBe(1);
         });
         it('with a ontology-default-tab', function() {
-            expect(this.element.querySelectorAll('tab ontology-default-tab').length).toBe(1);
+            expect(this.element.find('ontology-default-tab').length).toBe(1);
         });
-        it('depending on how many ontologies are open', function() {
-            expect(this.element.find('tab').length).toBe(ontologyStateSvc.list.length + 1);
+        it('with tabs', function() {
+            expect(this.element.find('tab').length).toBe(3);
+        });
+        it('with ontology-tabs', function() {
+            expect(this.element.find('ontology-tab').length).toBe(2);
         });
         it('depending on whether a ontology is up to date', function() {
             var tabs = this.element.find('tab');
             expect(angular.element(tabs[0]).hasClass('up-to-date')).toBe(false);
             expect(angular.element(tabs[1]).hasClass('up-to-date')).toBe(true);
-        });
-        it('depending on whether a tab is for an ontology or a vocabulary', function() {
-            var tabs = this.element.find('tab');
-            expect(angular.element(tabs[0]).find('ontology-tab').length).toBe(1);
-            expect(angular.element(tabs[0]).find('vocabulary-tab').length).toBe(0);
-            expect(angular.element(tabs[1]).find('ontology-tab').length).toBe(0);
-            expect(angular.element(tabs[1]).find('vocabulary-tab').length).toBe(1);
         });
     });
     describe('controller methods', function() {
@@ -108,12 +105,10 @@ describe('Ontology Editor Tabset directive', function() {
                 this.controller.onClick('recordId');
                 expect(ontologyStateSvc.getListItemByRecordId).toHaveBeenCalledWith('recordId');
                 expect(ontologyStateSvc.listItem).toEqual({ontologyRecord: {type: 'type'}});
-                expect(ontologyStateSvc.setPageTitle).toHaveBeenCalledWith('type');
             });
             it('undefined', function() {
                 this.controller.onClick(undefined);
                 expect(ontologyStateSvc.getListItemByRecordId).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.setPageTitle).toHaveBeenCalled();
             });
         });
     });

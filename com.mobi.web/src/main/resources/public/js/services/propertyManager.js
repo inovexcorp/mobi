@@ -60,17 +60,17 @@
                 {
                     namespace: prefixes.rdfs,
                     localName: 'subClassOf',
-                    valuesKey: 'subClasses'
+                    valuesKey: 'classes'
                 },
                 {
                     namespace: prefixes.owl,
                     localName: 'disjointWith',
-                    valuesKey: 'subClasses'
+                    valuesKey: 'classes'
                 },
                 {
                     namespace: prefixes.owl,
                     localName: 'equivalentClass',
-                    valuesKey: 'subClasses'
+                    valuesKey: 'classes'
                 }
             ];
 
@@ -78,7 +78,7 @@
                 {
                     namespace: prefixes.rdfs,
                     localName: 'domain',
-                    valuesKey: 'subClasses'
+                    valuesKey: 'classes'
                 },
                 {
                     namespace: prefixes.rdfs,
@@ -88,17 +88,17 @@
                 {
                     namespace: prefixes.owl,
                     localName: 'equivalentProperty',
-                    valuesKey: 'subDataProperties'
+                    valuesKey: 'dataProperties'
                 },
                 {
                     namespace: prefixes.rdfs,
                     localName: 'subPropertyOf',
-                    valuesKey: 'subDataProperties'
+                    valuesKey: 'dataProperties'
                 },
                 {
                     namespace: prefixes.owl,
                     localName: 'disjointWith',
-                    valuesKey: 'subDataProperties'
+                    valuesKey: 'dataProperties'
                 }
             ];
 
@@ -106,32 +106,32 @@
                 {
                     namespace: prefixes.rdfs,
                     localName: 'domain',
-                    valuesKey: 'subClasses'
+                    valuesKey: 'classes'
                 },
                 {
                     namespace: prefixes.rdfs,
                     localName: 'range',
-                    valuesKey: 'subClasses'
+                    valuesKey: 'classes'
                 },
                 {
                     namespace: prefixes.owl,
                     localName: 'equivalentProperty',
-                    valuesKey: 'subObjectProperties'
+                    valuesKey: 'objectProperties'
                 },
                 {
                     namespace: prefixes.rdfs,
                     localName: 'subPropertyOf',
-                    valuesKey: 'subObjectProperties'
+                    valuesKey: 'objectProperties'
                 },
                 {
                     namespace: prefixes.owl,
                     localName: 'inverseOf',
-                    valuesKey: 'subObjectProperties'
+                    valuesKey: 'objectProperties'
                 },
                 {
                     namespace: prefixes.owl,
                     localName: 'disjointWith',
-                    valuesKey: 'subObjectProperties'
+                    valuesKey: 'objectProperties'
                 }
             ];
 

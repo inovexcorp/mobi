@@ -55,7 +55,6 @@
             'datatypePropertyBlock',
             'datatypePropertyOverlay',
             'editBranchOverlay',
-            'editorRadioButtons',
             'everythingTree',
             'hierarchyTree',
             'importsBlock',
@@ -95,11 +94,11 @@
             'serializationSelect',
             'superClassSelect',
             'superPropertySelect',
+            'topConceptOverlay',
             'treeItem',
             'uploadChangesOverlay',
             'uploadOntologyTab',
             'usagesBlock',
-            'vocabularyTab',
 
             /* Services */
             'ontologyUtilsManager'

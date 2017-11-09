@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Remove Property Overlay directive', function() {
-    var $compile, scope, $q, element, controller, ontologyStateSvc, propertyManagerSvc, ontoUtils, prefixes, ontologyManagerSvc;
+    var $compile, scope, $q, ontologyStateSvc, propertyManagerSvc, ontoUtils, prefixes, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -47,81 +47,96 @@ describe('Remove Property Overlay directive', function() {
         scope.key = 'key';
         scope.onSubmit = jasmine.createSpy('onSubmit');
         scope.overlayFlag = true;
-        _.set(ontologyStateSvc.listItem.selected, scope.key + '[' + scope.index + ']', 'value');
-        element = $compile(angular.element('<remove-property-overlay index="index" key="key" on-submit="onSubmit()" overlay-flag="overlayFlag"></remove-property-overlay>'))(scope);
+        _.set(ontologyStateSvc.listItem.selected, scope.key + '[' + scope.index + ']', {'@id': 'id'});
+        this.element = $compile(angular.element('<remove-property-overlay index="index" key="key" on-submit="onSubmit(axiomObject)" overlay-flag="overlayFlag"></remove-property-overlay>'))(scope);
         scope.$digest();
-        controller = element.controller('removePropertyOverlay');
+        this.controller = this.element.controller('removePropertyOverlay');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        ontologyStateSvc = null;
+        propertyManagerSvc = null;
+        ontoUtils = null;
+        prefixes = null;
+        ontologyManagerSvc = null;
+        this.element.remove();
     });
 
     describe('controller bound variable', function() {
         it('index should be one way bound', function() {
-            controller.index = 1;
+            this.controller.index = 1;
             scope.$digest();
             expect(scope.index).toEqual(0);
         });
         it('key should be one way bound', function() {
-            controller.key = 'newKey';
+            this.controller.key = 'newKey';
             scope.$digest();
             expect(scope.key).toEqual('key');
         });
         it('overlayFlag should be two way bound', function() {
-            controller.overlayFlag = false;
+            this.controller.overlayFlag = false;
             scope.$digest();
             expect(scope.overlayFlag).toEqual(false);
         });
         it('onSubmit should be triggered on the scope', function() {
-            controller.onSubmit();
+            this.controller.onSubmit();
             scope.$digest();
             expect(scope.onSubmit).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('remove-property-overlay')).toBe(true);
-            expect(element.hasClass('overlay')).toBe(true);
-            expect(element.find('form').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('remove-property-overlay')).toBe(true);
+            expect(this.element.hasClass('overlay')).toBe(true);
+            expect(this.element.find('form').length).toBe(1);
         });
         it('with a h6', function() {
-            expect(element.find('h6').length).toBe(1);
+            expect(this.element.find('h6').length).toBe(1);
         });
-        _.forEach(['main', 'btn-container', 'btn-primary', 'btn-default'], function(item) {
+        ['main', 'btn-container', 'btn-primary', 'btn-default'].forEach(function(item) {
             it('with a .' + item, function() {
-                expect(element.querySelectorAll('.' + item).length).toBe(1);
+                expect(this.element.querySelectorAll('.' + item).length).toBe(1);
             });
-        });
+        }, this);
     });
     describe('controller methods', function() {
         describe('getValueDisplay should return', function() {
             it('the property @value', function() {
                 ontologyStateSvc.listItem.selected[scope.key][scope.index] = {'@value': 'value'};
-                expect(controller.getValueDisplay()).toEqual('value');
+                expect(this.controller.getValueDisplay()).toEqual('value');
             });
             it('the property blank node value', function() {
                 ontologyStateSvc.listItem.selected[scope.key][scope.index] = {'@id': 'id'};
                 ontoUtils.getBlankNodeValue.and.returnValue('bnode');
-                expect(controller.getValueDisplay()).toEqual('bnode');
+                expect(this.controller.getValueDisplay()).toEqual('bnode');
                 expect(ontoUtils.getBlankNodeValue).toHaveBeenCalledWith('id');
             });
             it('the property @id', function() {
                 ontologyStateSvc.listItem.selected[scope.key][scope.index] = {'@id': 'id'};
-                expect(controller.getValueDisplay()).toEqual('id');
+                expect(this.controller.getValueDisplay()).toEqual('id');
                 expect(ontoUtils.getBlankNodeValue).toHaveBeenCalledWith('id');
             });
         });
         describe('removeProperty calls the correct methods', function() {
             beforeEach(function() {
                 ontologyStateSvc.listItem.flatEverythingTree = [];
+                ontoUtils.saveCurrentChanges.and.returnValue($q.when());
             });
             it('if the selected key is rdfs:range', function() {
-                controller.key = prefixes.rdfs + 'range';
-                _.set(ontologyStateSvc.listItem.selected, controller.key + '[0]', 'value');
+                this.controller.key = prefixes.rdfs + 'range';
+                _.set(ontologyStateSvc.listItem.selected, this.controller.key + '[0]', {'@id': 'id'});
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
                 ontologyStateSvc.getOntologiesArray.and.returnValue([]);
-                controller.removeProperty();
+                this.controller.removeProperty();
+                scope.$apply();
+                expect(scope.onSubmit).toHaveBeenCalledWith({'@id': 'id'});
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, controller.key, controller.index);
-                expect(controller.overlayFlag).toBe(false);
+                expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.key, this.controller.index);
+                expect(this.controller.overlayFlag).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontoUtils.updateLabel).toHaveBeenCalled();
                 expect(ontologyStateSvc.updatePropertyIcon).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
@@ -130,14 +145,16 @@ describe('Remove Property Overlay directive', function() {
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([]);
             });
             it('if the selected key is rdfs:domain', function() {
-                controller.key = prefixes.rdfs + 'domain';
-                _.set(ontologyStateSvc.listItem.selected, controller.key + '[0]', 'value');
+                this.controller.key = prefixes.rdfs + 'domain';
+                _.set(ontologyStateSvc.listItem.selected, this.controller.key + '[0]', {'@id': 'id'});
                 ontologyStateSvc.createFlatEverythingTree.and.returnValue([{prop: 'everything'}]);
                 ontologyStateSvc.getOntologiesArray.and.returnValue([]);
-                controller.removeProperty();
+                this.controller.removeProperty();
+                scope.$apply();
+                expect(scope.onSubmit).toHaveBeenCalledWith({'@id': 'id'});
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, controller.key, controller.index);
-                expect(controller.overlayFlag).toBe(false);
+                expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.key, this.controller.index);
+                expect(this.controller.overlayFlag).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontoUtils.updateLabel).toHaveBeenCalled();
                 expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
@@ -146,11 +163,12 @@ describe('Remove Property Overlay directive', function() {
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([{prop: 'everything'}]);
             });
             it('if the selected key is neither rdfs:domain or rdfs:range', function() {
-                controller.removeProperty();
-                expect(scope.onSubmit).toHaveBeenCalled();
+                this.controller.removeProperty();
+                scope.$apply();
+                expect(scope.onSubmit).toHaveBeenCalledWith({'@id': 'id'});
                 expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, jasmine.any(Object));
-                expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, controller.key, controller.index);
-                expect(controller.overlayFlag).toBe(false);
+                expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.key, this.controller.index);
+                expect(this.controller.overlayFlag).toBe(false);
                 expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                 expect(ontoUtils.updateLabel).toHaveBeenCalled();
                 expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
@@ -159,24 +177,24 @@ describe('Remove Property Overlay directive', function() {
                 expect(ontologyStateSvc.listItem.flatEverythingTree).toEqual([]);
             });
             describe('if the selected value is a blank node', function() {
-                var expected;
                 beforeEach(function() {
                     ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
                     ontologyStateSvc.removeEntity.and.returnValue([{'@id': 'id'}]);
-                    expected = {'@id': ontologyStateSvc.listItem.selected['@id']};
+                    this.expected = {'@id': ontologyStateSvc.listItem.selected['@id']};
                 });
                 it('and the selected key is rdfs:domain', function() {
-                    controller.key = prefixes.rdfs + 'domain';
-                    _.set(ontologyStateSvc.listItem.selected, controller.key + '[0]', {'@id': 'id'});
-                    expected[controller.key] = [{'@id': 'id'}];
-                    controller.removeProperty();
-                    expect(scope.onSubmit).toHaveBeenCalled();
-                    expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, expected);
+                    this.controller.key = prefixes.rdfs + 'domain';
+                    _.set(ontologyStateSvc.listItem.selected, this.controller.key + '[0]', {'@id': 'id'});
+                    this.expected[this.controller.key] = [{'@id': 'id'}];
+                    this.controller.removeProperty();
+                    scope.$apply();
+                    expect(scope.onSubmit).toHaveBeenCalledWith({'@id': 'id'});
+                    expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.expected);
                     expect(ontologyManagerSvc.isBlankNodeId).toHaveBeenCalledWith('id');
                     expect(ontologyStateSvc.removeEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, 'id');
                     expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': 'id'});
-                    expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, controller.key, controller.index);
-                    expect(controller.overlayFlag).toBe(false);
+                    expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.key, this.controller.index);
+                    expect(this.controller.overlayFlag).toBe(false);
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(ontoUtils.updateLabel).toHaveBeenCalled();
                     expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
@@ -186,15 +204,16 @@ describe('Remove Property Overlay directive', function() {
                 });
                 it('and the selected key is not rdf:domain', function() {
                     ontologyStateSvc.listItem.selected[scope.key][scope.index] = {'@id': 'id'};
-                    expected[scope.key] = [{'@id': 'id'}];
-                    controller.removeProperty();
-                    expect(scope.onSubmit).toHaveBeenCalled();
-                    expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, expected);
+                    this.expected[scope.key] = [{'@id': 'id'}];
+                    this.controller.removeProperty();
+                    scope.$apply();
+                    expect(scope.onSubmit).toHaveBeenCalledWith({'@id': 'id'});
+                    expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.expected);
                     expect(ontologyManagerSvc.isBlankNodeId).toHaveBeenCalledWith('id');
                     expect(ontologyStateSvc.removeEntity).toHaveBeenCalledWith(ontologyStateSvc.listItem, 'id');
                     expect(ontologyStateSvc.addToDeletions).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, {'@id': 'id'});
-                    expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, controller.key, controller.index);
-                    expect(controller.overlayFlag).toBe(false);
+                    expect(propertyManagerSvc.remove).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected, this.controller.key, this.controller.index);
+                    expect(this.controller.overlayFlag).toBe(false);
                     expect(ontoUtils.saveCurrentChanges).toHaveBeenCalled();
                     expect(ontoUtils.updateLabel).toHaveBeenCalled();
                     expect(ontologyStateSvc.updatePropertyIcon).not.toHaveBeenCalled();
@@ -206,14 +225,14 @@ describe('Remove Property Overlay directive', function() {
         });
     });
     it('calls removeProperty when the button is clicked', function() {
-        spyOn(controller, 'removeProperty');
-        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        spyOn(this.controller, 'removeProperty');
+        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
         button.triggerHandler('click');
-        expect(controller.removeProperty).toHaveBeenCalled();
+        expect(this.controller.removeProperty).toHaveBeenCalled();
     });
     it('sets the correct state when the cancel button is clicked', function() {
-        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
         button.triggerHandler('click');
-        expect(controller.overlayFlag).toBe(false);
+        expect(this.controller.overlayFlag).toBe(false);
     });
 });

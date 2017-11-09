@@ -121,6 +121,7 @@ describe('Class Axioms directive', function() {
                 this.values = [];
                 expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
                 expect(resObj.getItemIri).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.setVocabularyStuff).not.toHaveBeenCalled();
             });
             it('if the axiom is subClassOf', function() {
                 this.axiom.localName = 'subClassOf';
@@ -131,6 +132,7 @@ describe('Class Axioms directive', function() {
                 });
                 expect(ontoUtils.setSuperClasses).toHaveBeenCalledWith('classId', ['iri']);
                 expect(ontoUtils.updateflatIndividualsHierarchy).toHaveBeenCalledWith(['iri']);
+                expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
             });
         });
         describe('should remove a class from the hierarchy', function() {
@@ -141,12 +143,14 @@ describe('Class Axioms directive', function() {
                 this.controller.removeFromHierarchy(this.axiomObject);
                 expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.setVocabularyStuff).not.toHaveBeenCalled();
 
                 this.controller.key = prefixes.rdfs + 'subClassOf';
                 ontologyManagerSvc.isBlankNodeId.and.returnValue(true);
                 this.controller.removeFromHierarchy(this.axiomObject);
                 expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.setVocabularyStuff).not.toHaveBeenCalled();
             });
             it('if the selected key is subClassOf and the value is not a blank node', function() {
                 this.controller.key = prefixes.rdfs + 'subClassOf';
@@ -155,6 +159,7 @@ describe('Class Axioms directive', function() {
                 expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.hierarchy, ontologyStateSvc.listItem.selected['@id'], this.axiomObject['@id'], ontologyStateSvc.listItem.classes.index);
                 expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.classes.hierarchy, ontologyStateSvc.listItem.ontologyRecord.recordId);
                 expect(ontologyStateSvc.listItem.classes.flat).toEqual([{entityIRI: 'new'}]);
+                expect(ontologyStateSvc.setVocabularyStuff).toHaveBeenCalled();
             });
         });
     });

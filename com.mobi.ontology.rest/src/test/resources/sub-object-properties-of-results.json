@@ -23,6 +23,8 @@
 {
   "hierarchy": [
     {
+      "entityIRI": "https://mobi.com/vocabulary#SemanticRelationSubProperty"
+    }, {
       "entityIRI": "http://mobi.com/ontology#objectProperty1a",
       "subEntities": [
         {

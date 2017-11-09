@@ -21,39 +21,44 @@
  * #L%
  */
 describe('Ontology Tab directive', function() {
-    var $compile,
-        scope,
-        element;
+    var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('ontologyTab');
         mockOntologyState();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyStateSvc = _ontologyStateService_;
         });
 
-        element = $compile(angular.element('<ontology-tab></ontology-tab>'))(scope);
+        this.element = $compile(angular.element('<ontology-tab></ontology-tab>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('ontology-tab')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('ontology-tab')).toBe(true);
         });
         it('with a tabset', function() {
-            expect(element.find('tabset').length).toBe(1);
+            expect(this.element.find('tabset').length).toBe(1);
         });
         it('with tabs', function() {
-            expect(element.find('tab').length).toBe(9);
+            expect(this.element.find('tab').length).toBe(11);
         });
-        _.forEach(['branch-select', 'ontology-button-stack', 'project-tab', 'overview-tab', 'classes-tab', 'properties-tab', 'individuals-tab', 'search-tab', 'saved-changes-tab', 'merge-tab', 'commits-tab'], function(tag) {
+        ['branch-select', 'ontology-button-stack', 'project-tab', 'overview-tab', 'classes-tab', 'properties-tab', 'individuals-tab', 'concepts-tab', 'concept-schemes-tab', 'search-tab', 'saved-changes-tab', 'merge-tab', 'commits-tab'].forEach(function(tag) {
             it('with a ' + tag, function() {
-                expect(element.find(tag).length).toBe(1);
+                expect(this.element.find(tag).length).toBe(1);
             });
-        });
+        }, this);
     });
 });

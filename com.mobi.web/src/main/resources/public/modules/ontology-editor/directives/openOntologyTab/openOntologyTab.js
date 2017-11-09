@@ -53,19 +53,10 @@
                     dvm.begin = 0;
                     dvm.limit = 10;
                     dvm.filteredList = [];
-                    dvm.type = 'ontology';
 
-                    dvm.openSelected = function(record) {
-                        dvm.recordId = record['@id'];
-                        dvm.recordTitle = dvm.util.getDctermsValue(record, 'title');
-                        dvm.showOpenOverlay = true
-                    }
-
-                    dvm.open = function() {
-                        dvm.os.openOntology(dvm.recordId, dvm.recordTitle, dvm.type)
-                            .then(ontologyId => {
-                                dvm.showOpenOverlay = false;
-                            }, errorMessage => dvm.errorMessage = errorMessage);
+                    dvm.open = function(record) {
+                        dvm.os.openOntology(record['@id'], dvm.util.getDctermsValue(record, 'title'))
+                            .then(_.noop, dvm.util.createErrorToast);
                     }
 
                     dvm.getPage = function(direction) {
