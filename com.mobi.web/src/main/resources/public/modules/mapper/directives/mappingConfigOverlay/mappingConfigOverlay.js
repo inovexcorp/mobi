@@ -42,8 +42,8 @@
          * @requires $q
          * @requires util.service:utilService
          * @requires ontologyManager.service:ontologyManagerService
-         * @requires mappingManager.service:mappingManagerService
          * @requires mapperState.service:mapperStateService
+         * @requires mappingManager.service:mappingManagerService
          * @requires catalogManager.service:catalogManagerService
          * @requires prefixes.service:prefixes
          *
@@ -67,11 +67,11 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
+                    var cm = catalogManagerService;
+                    var mm = mappingManagerService;
                     dvm.util = utilService;
                     dvm.state = mapperStateService;
                     dvm.om = ontologyManagerService;
-                    var cm = catalogManagerService;
-                    var mm = mappingManagerService;
 
                     dvm.errorMessage = '';
                     dvm.ontologyStates = [];
@@ -251,7 +251,7 @@
                             dvm.state.resetEdit();
                             var classMappings = mm.getAllClassMappings(dvm.state.mapping.jsonld);
                             _.forEach(classMappings, classMapping => dvm.state.setAvailableProps(classMapping['@id']));
-                            dvm.state.availableClasses = _.filter(dvm.classes, clazz => !_.find(classMappings, classMapping => mm.getClassIdByMapping(classMapping) === clazz.classObj['@id']));
+                            dvm.state.availableClasses = dvm.classes;
                         }
 
                         dvm.state.displayMappingConfigOverlay = false;

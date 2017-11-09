@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Class Select directive', function() {
-    var $compile, scope, element, isolatedScope, controller, ontologyManagerSvc, splitIRI;
+    var $compile, scope, ontologyManagerSvc, splitIRI;
 
     beforeEach(function() {
         module('templates');
@@ -42,50 +42,61 @@ describe('Class Select directive', function() {
         scope.selectedClass = undefined;
         scope.isDisabledWhen = false;
         scope.onChange = jasmine.createSpy('onChange');
-        element = $compile(angular.element('<class-select classes="classes" selected-class="selectedClass" on-change="onChange()" is-disabled-when="isDisabledWhen"></class-select>'))(scope);
+        this.element = $compile(angular.element('<class-select classes="classes" selected-class="selectedClass" on-change="onChange()" is-disabled-when="isDisabledWhen"></class-select>'))(scope);
         scope.$digest();
-        controller = element.controller('classSelect');
-        isolatedScope = element.isolateScope();
+        this.controller = this.element.controller('classSelect');
     });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyManagerSvc = null;
+        splitIRI = null;
+        this.element.remove();
+    });
+
     describe('in isolated scope', function() {
+        beforeEach(function () {
+            this.isolatedScope = this.element.isolateScope();
+        });
         it('classes should be one way bound', function() {
-            isolatedScope.classes = [{}];
+            this.isolatedScope.classes = [{}];
             scope.$digest();
             expect(scope.classes).not.toEqual([{}]);
         });
         it('isDisabledWhen should be one way bound', function() {
-            isolatedScope.isDisabledWhen = true;
+            this.isolatedScope.isDisabledWhen = true;
             scope.$digest();
             expect(scope.isDisabledWhen).toBe(false);
         });
         it('onChange should be called in the parent scope', function() {
-            isolatedScope.onChange();
+            this.isolatedScope.onChange();
             expect(scope.onChange).toHaveBeenCalled();
         });
     });
     describe('controller bound variable', function() {
         it('selectedClass should be two way bound', function() {
-            controller.selectedClass = {};
+            this.controller.selectedClass = {};
             scope.$digest();
             expect(scope.selectedClass).toEqual({});
         });
     });
     describe('controller methods', function() {
         it('should get the ontology id of a prop', function() {
-            expect(controller.getOntologyId({ontologyId: 'test'})).toBe('test');
+            expect(this.controller.getOntologyId({ontologyId: 'test'})).toBe('test');
             expect(splitIRI).not.toHaveBeenCalled();
 
             splitIRI.and.returnValue({begin: 'test'});
-            expect(controller.getOntologyId({classObj: {'@id': ''}})).toBe('test');
+            expect(this.controller.getOntologyId({classObj: {'@id': ''}})).toBe('test');
             expect(splitIRI).toHaveBeenCalledWith('');
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.hasClass('class-select')).toBe(true);
+            expect(this.element.hasClass('class-select')).toBe(true);
         });
         it('with a ui-select', function() {
-            expect(element.find('ui-select').length).toBe(1);
+            expect(this.element.find('ui-select').length).toBe(1);
         });
     });
 });

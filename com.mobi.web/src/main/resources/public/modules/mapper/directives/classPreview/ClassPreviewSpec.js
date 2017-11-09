@@ -21,12 +21,7 @@
  * #L%
  */
 describe('Class Preview directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        ontologyManagerSvc,
-        mapperStateSvc;
+    var $compile, scope, ontologyManagerSvc, mapperStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -43,19 +38,27 @@ describe('Class Preview directive', function() {
 
         scope.classObj = {};
         scope.ontologies = [];
-        element = $compile(angular.element('<class-preview class-obj="classObj" ontologies="ontologies"></class-preview>'))(scope);
+        this.element = $compile(angular.element('<class-preview class-obj="classObj" ontologies="ontologies"></class-preview>'))(scope);
         scope.$digest();
-        controller = element.controller('classPreview');
+        this.controller = this.element.controller('classPreview');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyManagerSvc = null;
+        mapperStateSvc = null;
+        this.element.remove();
     });
 
     describe('controller bound variable', function() {
         it('classObj should be one way bound', function() {
-            controller.classObj = {'@id': ''};
+            this.controller.classObj = {'@id': ''};
             scope.$digest();
             expect(scope.classObj).toEqual({});
         });
         it('ontologies should be one way bound', function() {
-            controller.ontologies = [{}];
+            this.controller.ontologies = [{}];
             scope.$digest();
             expect(scope.ontologies).toEqual([]);
         });
@@ -65,43 +68,43 @@ describe('Class Preview directive', function() {
         mapperStateSvc.getClassProps.and.returnValue(props);
         scope.classObj = {'@id': ''};
         scope.$digest();
-        expect(mapperStateSvc.getClassProps).toHaveBeenCalledWith(controller.ontologies, controller.classObj['@id']);
-        expect(controller.props).toEqual(props);
+        expect(mapperStateSvc.getClassProps).toHaveBeenCalledWith(this.controller.ontologies, this.controller.classObj['@id']);
+        expect(this.controller.props).toEqual(props);
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.hasClass('class-preview')).toBe(true);
+            expect(this.element.hasClass('class-preview')).toBe(true);
         });
         it('depending on whether classObj has any properties', function() {
-            var propList = angular.element(element.querySelectorAll('ul')[0]);
+            var propList = angular.element(this.element.querySelectorAll('ul')[0]);
             expect(propList.html()).toContain('None');
 
-            controller.props = [{}];
+            this.controller.props = [{}];
             scope.$digest();
             expect(propList.html()).not.toContain('None');
         });
         it('depending on whether classObj has more than 10 properties', function() {
-            controller.props = [{}];
+            this.controller.props = [{}];
             scope.$digest();
-            var items = element.querySelectorAll('ul li');
+            var items = this.element.querySelectorAll('ul li');
             var lastItem = angular.element(_.last(items));
-            expect(items.length).toBe(controller.props.length);
+            expect(items.length).toBe(this.controller.props.length);
             expect(lastItem.hasClass('last')).toBe(true);
             expect(lastItem.hasClass('limited')).toBe(false);
 
-            controller.props = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}];
+            this.controller.props = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}];
             scope.$digest();
-            items = element.querySelectorAll('ul li');
+            items = this.element.querySelectorAll('ul li');
             lastItem = angular.element(_.last(items));
             expect(items.length).toBe(10);
             expect(lastItem.hasClass('last')).toBe(true);
             expect(lastItem.hasClass('limited')).toBe(true);
         });
         it('depending on whether a property is deprecated', function() {
-            controller.props = [{}];
+            this.controller.props = [{}];
             ontologyManagerSvc.isDeprecated.and.returnValue(true);
             scope.$digest();
-            expect(element.querySelectorAll('ul li span.deprecated').length).toBe(1);
+            expect(this.element.querySelectorAll('ul li span.deprecated').length).toBe(1);
         });
     });
 });
