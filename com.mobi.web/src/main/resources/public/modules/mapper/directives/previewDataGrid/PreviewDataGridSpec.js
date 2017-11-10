@@ -21,12 +21,7 @@
  * #L%
  */
 describe('Preview Data Grid directive', function() {
-    var $compile,
-        scope,
-        delimitedManagerSvc,
-        mapperStateSvc,
-        controller,
-        hotTable;
+    var $compile, scope, delimitedManagerSvc, mapperStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -46,7 +41,8 @@ describe('Preview Data Grid directive', function() {
             mapperStateSvc = _mapperStateService_;
             delimitedManagerSvc = _delimitedManagerService_;
         });
-        hotTable = {
+
+        this.hotTable = {
             selectCell: jasmine.createSpy('selectCell'),
             countRows: jasmine.createSpy('countRows').and.returnValue(0),
             render: jasmine.createSpy('render'),
@@ -54,23 +50,31 @@ describe('Preview Data Grid directive', function() {
         };
         this.element = $compile(angular.element('<preview-data-grid></preview-data-grid>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('previewDataGrid');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        delimitedManagerSvc = null;
+        mapperStateSvc = null;
+        this.element.remove();
     });
 
     describe('should update when', function() {
         beforeEach(function() {
-            controller = this.element.controller('previewDataGrid');
-            controller.hotTable = hotTable;
+            this.controller.hotTable = this.hotTable;
         });
         it('the highlight indexes change', function() {
             mapperStateSvc.highlightIndexes = ['0'];
             scope.$digest();
-            expect(controller.hotTable.render).toHaveBeenCalled();
+            expect(this.controller.hotTable.render).toHaveBeenCalled();
         });
         it('whether the data has headers or not changes', function() {
             delimitedManagerSvc.dataRows = [];
             delimitedManagerSvc.containsHeaders = false;
             scope.$digest();
-            expect(controller.hotTable.render).toHaveBeenCalled();
+            expect(this.controller.hotTable.render).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
