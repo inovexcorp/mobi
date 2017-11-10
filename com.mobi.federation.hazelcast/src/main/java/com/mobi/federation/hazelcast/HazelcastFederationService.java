@@ -415,7 +415,7 @@ public class HazelcastFederationService implements FederationService {
             String protocol = enabled ? "https" : "http";
             String port = enabled ? getObjString(webProps.get("org.osgi.service.http.port.secure"), "8443")
                     : getObjString(webProps.get("org.osgi.service.http.port"), "8080");
-            String root = getObjString(getConfig("com.eclipsesource.jaxrs.connector").get("root"), "/mobirest");
+            String root = getObjString(getConfig("com.eclipsesource.jaxrs.connector").get("root"), "");
             return String.format(NODE_REST_ENDPOINT, protocol, host, port, root);
         } catch (IOException ex) {
             throw new MobiException(ex.getMessage(), ex);
