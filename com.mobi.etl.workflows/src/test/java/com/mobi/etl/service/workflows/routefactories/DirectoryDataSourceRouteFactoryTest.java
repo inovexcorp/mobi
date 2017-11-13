@@ -60,7 +60,7 @@ public class DirectoryDataSourceRouteFactoryTest {
     private DirectoryDataSource dataSource;
 
     @Mock
-    CamelContext context;
+    private CamelContext context;
 
     @Before
     public void setUp() throws Exception {
@@ -84,7 +84,6 @@ public class DirectoryDataSourceRouteFactoryTest {
         MockitoAnnotations.initMocks(this);
 
         factory = new DirectoryDataSourceRouteFactory();
-        factory.setContext(context);
         factory.setVf(vf);
     }
 
@@ -100,7 +99,7 @@ public class DirectoryDataSourceRouteFactoryTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void getEndpointWithMissingFilePathTest() {
-        factory.getEndpoint(dataSource);
+        factory.getEndpoint(context, dataSource);
     }
 
     @Test
@@ -108,7 +107,7 @@ public class DirectoryDataSourceRouteFactoryTest {
         // Setup:
         dataSource.setFilePath("this/is/a/path");
 
-        Endpoint endpoint = factory.getEndpoint(dataSource);
+        Endpoint endpoint = factory.getEndpoint(context, dataSource);
         assertEquals(context, endpoint.getCamelContext());
         assertEquals("file:this/is/a/path", endpoint.getEndpointUri());
     }

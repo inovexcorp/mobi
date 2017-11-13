@@ -41,12 +41,6 @@ public class SimpleDestinationRouteFactory implements DestinationRouteFactory<De
 
     private static final Logger LOG = LoggerFactory.getLogger(SimpleDestinationRouteFactory.class);
     private ValueFactory vf;
-    private CamelContext context;
-
-    @Reference
-    void setContext(CamelContext context) {
-        this.context = context;
-    }
 
     @Reference
     void setVf(ValueFactory vf) {
@@ -64,7 +58,7 @@ public class SimpleDestinationRouteFactory implements DestinationRouteFactory<De
     }
 
     @Override
-    public Endpoint getEndpoint(Destination destination) {
+    public Endpoint getEndpoint(CamelContext context, Destination dataSource) {
         LogComponent comp = new LogComponent();
         LogEndpoint endpoint = new LogEndpoint("log:com.mobi.etl.service.workflows.routefactories", comp,
                 exchange -> LOG.info("Destination received message"));

@@ -28,8 +28,6 @@ import aQute.bnd.annotation.component.Reference;
 import com.mobi.etl.api.ontologies.etl.DataSource;
 import com.mobi.etl.api.ontologies.etl.Destination;
 import com.mobi.etl.api.ontologies.etl.Processor;
-import com.mobi.etl.api.ontologies.etl.SubRoute;
-import com.mobi.etl.api.ontologies.etl.SubRouteFactory;
 import com.mobi.etl.api.ontologies.etl.Workflow;
 import com.mobi.etl.api.workflows.DataSourceRouteFactory;
 import com.mobi.etl.api.workflows.DestinationRouteFactory;
@@ -39,11 +37,11 @@ import com.mobi.ontologies.rdfs.ListFactory;
 import com.mobi.persistence.utils.Statements;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Resource;
-import com.mobi.rdf.api.Value;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
+import org.apache.camel.CamelContext;
 import org.apache.camel.Endpoint;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.RouteDefinition;
@@ -65,15 +63,11 @@ public class WorkflowConverterImpl implements WorkflowConverter {
     private OrmFactoryRegistry factoryRegistry;
     private ValueFactory vf;
     private ListFactory listFactory;
-    private SubRouteFactory subRouteFactory;
     private Map<Resource, DataSourceRouteFactory<DataSource>> dataSourceFactories = new HashMap<>();
     private Map<Resource, ProcessorRouteFactory<Processor>> processorFactories = new HashMap<>();
     private Map<Resource, DestinationRouteFactory<Destination>> destinationFactories = new HashMap<>();
 
     private static final String NIL = "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil";
-    private static final String SUB_ROUTE = "http://mobi.com/ontologies/etl#subRoute";
-
-    private static final String SUB_ROUTE_NAMESPACE = "http://mobi.com/sub-routes#";
 
     @Reference
     void setFactoryRegistry(OrmFactoryRegistry factoryRegistry) {
@@ -88,11 +82,6 @@ public class WorkflowConverterImpl implements WorkflowConverter {
     @Reference
     void setListFactory(ListFactory listFactory) {
         this.listFactory = listFactory;
-    }
-
-    @Reference
-    void setSubRouteFactory(SubRouteFactory subRouteFactory) {
-        this.subRouteFactory = subRouteFactory;
     }
 
     @Reference(type = '*', dynamic = true)
@@ -123,7 +112,7 @@ public class WorkflowConverterImpl implements WorkflowConverter {
     }
 
     @Override
-    public RouteBuilder convert(Workflow workflow) {
+    public RouteBuilder convert(Workflow workflow, CamelContext context) {
         Set<com.mobi.ontologies.rdfs.List> routes = workflow.getRoute_resource().stream()
                 .map(resource -> listFactory.getExisting(resource, workflow.getModel())
                         .orElseThrow(() -> new IllegalArgumentException("Route is not defined as a rdf:List")))
@@ -138,11 +127,11 @@ public class WorkflowConverterImpl implements WorkflowConverter {
         Map<Resource, Endpoint> destinations = new HashMap<>();
 
         collectStuff(DataSource.class, workflow.getDataSource(), dataSources, (dataSource, iri) ->
-                getRouteFactory(iri, dataSourceFactories).getEndpoint(dataSource));
+                getRouteFactory(iri, dataSourceFactories).getEndpoint(context, dataSource));
         collectStuff(Processor.class, workflow.getProcessor(), processors, (processor, iri) ->
                 getRouteFactory(iri, processorFactories).getProcessor(processor));
         collectStuff(Destination.class, workflow.getDestination(), destinations, (destination, iri) ->
-                getRouteFactory(iri, destinationFactories).getEndpoint(destination));
+                getRouteFactory(iri, destinationFactories).getEndpoint(context, destination));
 
         return new RouteBuilder() {
             @Override
@@ -156,7 +145,7 @@ public class WorkflowConverterImpl implements WorkflowConverter {
                     List<Pair<com.mobi.ontologies.rdfs.List, RouteDefinition>> toProcess = new ArrayList<>();
 
                     RouteDefinition start = from(getDataSourceEndpoint(dataSources, dataSourceIRI))
-                            .routeId(getRouteId(workflow, route).stringValue());
+                            .routeId(UUID.randomUUID().toString());
                     processRest(workflow, route, toProcess, start, this);
 
                     while (toProcess.size() > 0) {
@@ -243,26 +232,13 @@ public class WorkflowConverterImpl implements WorkflowConverter {
             for (Resource restId : restSet) {
                 com.mobi.ontologies.rdfs.List subList = listFactory.getExisting(restId, workflow.getModel())
                         .orElseThrow(() -> new IllegalArgumentException("List rest property value must be a rdf:List"));
-                IRI routeId = getRouteId(workflow, subList);
-                String directId = "direct:" + routeId.getLocalName();
-                RouteDefinition subDef = builder.from(directId).routeId(routeId.stringValue());
+                String routeId = UUID.randomUUID().toString();
+                String directId = "direct:" + routeId;
+                RouteDefinition subDef = builder.from(directId).routeId(routeId);
                 toProcess.add(Pair.of(subList, subDef));
                 ids.add(directId);
             }
             def.multicast().to(ids.toArray(new String[ids.size()]));
-        }
-    }
-
-    private IRI getRouteId(Workflow workflow, com.mobi.ontologies.rdfs.List list) {
-        Optional<Value> optSubRouteIRI = list.getProperty(vf.createIRI(SUB_ROUTE));
-        if (optSubRouteIRI.isPresent()) {
-            return vf.createIRI(optSubRouteIRI.get().stringValue());
-        } else {
-            IRI iri = vf.createIRI(SUB_ROUTE_NAMESPACE + UUID.randomUUID().toString());
-            SubRoute subRoute = subRouteFactory.createNew(iri, workflow.getModel());
-            subRoute.setWorkflow(workflow);
-            list.addProperty(iri, vf.createIRI(SUB_ROUTE));
-            return iri;
         }
     }
 

@@ -40,16 +40,10 @@ import java.io.File;
 public class DirectoryDataSourceRouteFactory implements DataSourceRouteFactory<DirectoryDataSource> {
 
     private ValueFactory vf;
-    private CamelContext context;
 
     @Reference
     void setVf(ValueFactory vf) {
         this.vf = vf;
-    }
-
-    @Reference
-    void setContext(CamelContext context) {
-        this.context = context;
     }
 
     @Override
@@ -63,7 +57,7 @@ public class DirectoryDataSourceRouteFactory implements DataSourceRouteFactory<D
     }
 
     @Override
-    public Endpoint getEndpoint(DirectoryDataSource dataSource) {
+    public Endpoint getEndpoint(CamelContext context, DirectoryDataSource dataSource) {
         String filePath = dataSource.getFilePath().orElseThrow(() ->
                 new IllegalArgumentException("DataSource must have a file path"));
         FileComponent component = new FileComponent();

@@ -26,29 +26,23 @@ package com.mobi.etl.service.workflows.routefactories;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import org.apache.camel.CamelContext;
-import org.apache.camel.Endpoint;
-import org.apache.camel.component.timer.TimerComponent;
-import org.apache.camel.component.timer.TimerEndpoint;
 import com.mobi.etl.api.ontologies.etl.DataSource;
 import com.mobi.etl.api.workflows.DataSourceRouteFactory;
 import com.mobi.rdf.api.Resource;
 import com.mobi.rdf.api.ValueFactory;
+import org.apache.camel.CamelContext;
+import org.apache.camel.Endpoint;
+import org.apache.camel.component.timer.TimerComponent;
+import org.apache.camel.component.timer.TimerEndpoint;
 
 @Component(immediate = true)
 public class SimpleDataSourceRouteFactory implements DataSourceRouteFactory<DataSource> {
 
     private ValueFactory vf;
-    private CamelContext context;
 
     @Reference
     void setVf(ValueFactory vf) {
         this.vf = vf;
-    }
-
-    @Reference
-    void setContext(CamelContext context) {
-        this.context = context;
     }
 
     @Override
@@ -61,8 +55,9 @@ public class SimpleDataSourceRouteFactory implements DataSourceRouteFactory<Data
         return vf.createIRI(DataSource.TYPE);
     }
 
+
     @Override
-    public Endpoint getEndpoint(DataSource dataSource) {
+    public Endpoint getEndpoint(CamelContext context, DataSource dataSource) {
         TimerComponent comp = new TimerComponent();
         TimerEndpoint endpoint = new TimerEndpoint("timer://foo?period=60s", comp, "foo");
         endpoint.setCamelContext(context);
