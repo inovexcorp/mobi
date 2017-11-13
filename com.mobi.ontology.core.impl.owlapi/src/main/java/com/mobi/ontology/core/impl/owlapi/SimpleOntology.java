@@ -48,6 +48,7 @@ import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.Resource;
 import org.apache.commons.io.IOUtils;
+import org.openrdf.model.impl.LinkedHashModel;
 import org.openrdf.model.util.Models;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFHandler;
@@ -55,9 +56,11 @@ import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.RDFParseException;
 import org.openrdf.rio.Rio;
 import org.openrdf.rio.WriterConfig;
+import org.openrdf.rio.helpers.BufferedGroupingRDFHandler;
 import org.openrdf.rio.helpers.StatementCollector;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.formats.OWLXMLDocumentFormat;
+import org.semanticweb.owlapi.formats.PrefixDocumentFormat;
 import org.semanticweb.owlapi.formats.PrefixDocumentFormatImpl;
 import org.semanticweb.owlapi.formats.RioRDFXMLDocumentFormatFactory;
 import org.semanticweb.owlapi.io.IRIDocumentSource;
@@ -113,6 +116,7 @@ import org.semanticweb.owlapi.rio.RioParserImpl;
 import org.semanticweb.owlapi.rio.RioRenderer;
 import org.semanticweb.owlapi.util.OWLOntologyWalker;
 import org.semanticweb.owlapi.util.OWLOntologyWalkerVisitor;
+import org.semanticweb.owlapi.vocab.PrefixOWLOntologyFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.manchester.cs.owl.owlapi.OWLClassImpl;
@@ -128,6 +132,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -247,10 +252,26 @@ public class SimpleOntology implements Ontology {
 
         try {
             owlOntology = owlManager.createOntology();
-            sesameModel = this.transformer.sesameModel(model);
+            sesameModel = new LinkedHashModel();
+            RDFHandler handler = new BufferedGroupingRDFHandler(new StatementCollector(sesameModel));
+            Rio.write(this.transformer.sesameModel(model), handler);
             RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
             parser.parse(new RioMemoryTripleSource(sesameModel), owlOntology, config);
             createOntologyId(null);
+            PrefixDocumentFormat pf = owlManager.getOntologyFormat(owlOntology).asPrefixOWLDocumentFormat();
+            if (pf != null) {
+                Map<String, String> prefixes = pf.getPrefixName2PrefixMap();
+                if (pf.getDefaultPrefix() == null && !owlOntology.isAnonymous()) {
+                    owlOntology.getOntologyID().getOntologyIRI().ifPresent(iri -> {
+                        String defaultPrefix = iri.getIRIString();
+                        if (!iri.getIRIString().endsWith("/")) {
+                            defaultPrefix = iri.getIRIString() + '#';
+                        }
+                        pf.setDefaultPrefix(defaultPrefix);
+                    });
+                }
+                prefixes.forEach((prefix, namespace) -> sesameModel.setNamespace(prefix.replace(":", ""), namespace));
+            }
             owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
         } catch (OWLOntologyCreationException e) {
             throw new MobiOntologyException("Error in ontology creation", e);
