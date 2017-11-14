@@ -66,12 +66,6 @@ public class FederationServiceCli implements Action {
             + " operation against.")
     private String federation = null;
 
-    @Option(name = "-i", aliases = "--input", description = "The message to be encrypted.")
-    private String input = null;
-
-    @Option(name = "-p", aliases = "--password", description = "Specify the password to use in encryption.")
-    private String password = null;
-
     void setFederationServices(List<FederationService> federationServices) {
         this.federationServices = federationServices;
     }
