@@ -23,6 +23,7 @@ package com.mobi.federation.utils.api.jaas.token;
  * #L%
  */
 
+import com.mobi.federation.api.FederationService;
 import com.mobi.federation.utils.api.UserUtils;
 import com.mobi.federation.utils.api.jaas.token.config.FederationConfiguration;
 import com.mobi.jaas.api.modules.token.TokenLoginModule;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.Optional;
 import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
+import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 
 public class FederationTokenLoginModule extends TokenLoginModule<FederationTokenCallback> {
@@ -57,7 +59,15 @@ public class FederationTokenLoginModule extends TokenLoginModule<FederationToken
 
     @Override
     protected void verifyUser(String user, FederationTokenCallback callback) throws LoginException {
-        userUtils.verifyUser(callback.getService(), user, callback.getNodeId());
+        FederationService service = callback.getService();
+        try {
+            if (!userUtils.userExists(service, user, callback.getNodeId())) {
+                throw new FailedLoginException("User " + user + " not found in federation "
+                        + service.getFederationId());
+            }
+        } catch (IllegalStateException ex) {
+            throw new LoginException(ex.getMessage());
+        }
     }
 
     @Override

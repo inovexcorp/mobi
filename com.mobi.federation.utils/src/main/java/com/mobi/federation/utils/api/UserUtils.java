@@ -26,6 +26,7 @@ package com.mobi.federation.utils.api;
 import com.mobi.federation.api.FederationService;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 
+import java.util.Optional;
 import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
 
@@ -75,7 +76,7 @@ public interface UserUtils {
      * @param username The username of the {@link User} to get.
      * @param nodeId   The node ID.
      */
-    User getUser(FederationService service, String username, String nodeId);
+    Optional<User> getUser(FederationService service, String username, String nodeId);
 
     /**
      * Validates that the user exists in the identified federation.
@@ -84,7 +85,7 @@ public interface UserUtils {
      * @param username The username to validate.
      * @throws FailedLoginException Thrown if the user does not exist.
      */
-    void verifyUser(FederationService service, String username) throws FailedLoginException;
+    boolean userExists(FederationService service, String username) throws FailedLoginException;
 
     /**
      * Validates that the user exists on the identified node in the identified federation.
@@ -94,5 +95,5 @@ public interface UserUtils {
      * @param nodeId   The node ID.
      * @throws FailedLoginException Thrown if the user does not exist.
      */
-    void verifyUser(FederationService service, String username, String nodeId) throws LoginException;
+    boolean userExists(FederationService service, String username, String nodeId) throws LoginException;
 }

@@ -24,6 +24,7 @@ package com.mobi.federation.utils.impl;
  */
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,6 +56,7 @@ import org.mockito.Mock;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -238,7 +240,7 @@ public class SimpleUserUtilsTest {
         utils.updateUser(service, badUser);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testUpdateUserWithNoIRIMatch() {
         // Setup:
         User newUser = userFactory.createNew(vf.createIRI("https://mobi.com/users#new"));
@@ -252,63 +254,66 @@ public class SimpleUserUtilsTest {
 
     @Test
     public void testGetUser() {
-        User result = utils.getUser(service, username, populated.toString());
+        Optional<User> result = utils.getUser(service, username, populated.toString());
         verify(service).getDistributedMap(SimpleUserUtils.FEDERATION_USERS_KEY);
         verify(service).getFederationId();
-        assertEquals(userId, result.getResource().stringValue());
-        assertEquals(username, result.getUsername().get().stringValue());
+        assertTrue(result.isPresent());
+        User user = result.get();
+        assertEquals(userId, user.getResource().stringValue());
+        assertEquals(username, user.getUsername().get().stringValue());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
+    public void testGetUserMissingUsername() {
+        Optional<User> result = utils.getUser(service, "missing", populated.toString());
+        verify(service).getDistributedMap(SimpleUserUtils.FEDERATION_USERS_KEY);
+        verify(service).getFederationId();
+        assertFalse(result.isPresent());
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testGetUserWithBadNodeId() {
         utils.getUser(service, username, nodeId.toString());
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testGetUserMissingUsername() {
-        utils.getUser(service, "missing", populated.toString());
-        verify(service).getDistributedMap(SimpleUserUtils.FEDERATION_USERS_KEY);
-        verify(service).getFederationId();
-    }
-
     @Test
     public void testVerifyUser() throws Exception {
-        utils.verifyUser(service, username);
+        assertTrue(utils.userExists(service, username));
         verify(service).getDistributedMap(SimpleUserUtils.FEDERATION_USERS_KEY);
         verify(service).getFederationNodeIds();
     }
 
-    @Test(expected = FailedLoginException.class)
+    @Test
     public void testVerifyUserMissingUsername() throws Exception {
-        utils.verifyUser(service, "missing");
+        assertFalse(utils.userExists(service, "missing"));
         verify(service).getDistributedMap(SimpleUserUtils.FEDERATION_USERS_KEY);
         verify(service).getFederationNodeIds();
     }
 
     @Test
     public void testVerifyUserByNodeId() throws Exception {
-        utils.verifyUser(service, username, populated.toString());
+        assertTrue(utils.userExists(service, username, populated.toString()));
         verify(service).getFederationNodeIds();
         verify(service).getDistributedMap(SimpleUserUtils.FEDERATION_USERS_KEY);
     }
 
-    @Test(expected = FailedLoginException.class)
+    @Test
     public void testVerifyUserByNodeIdMissingUsername() throws Exception {
-        utils.verifyUser(service, "missing", nodeId.toString());
+        assertFalse(utils.userExists(service, "missing", nodeId.toString()));
         verify(service).getFederationNodeIds();
         verify(service).getDistributedMap(SimpleUserUtils.FEDERATION_USERS_KEY);
     }
 
-    @Test(expected = FailedLoginException.class)
+    @Test
     public void testVerifyUserByNodeIdUsernameInOtherNode() throws Exception {
-        utils.verifyUser(service, username, nodeId.toString());
+        assertFalse(utils.userExists(service, username, nodeId.toString()));
         verify(service).getFederationNodeIds();
         verify(service).getDistributedMap(SimpleUserUtils.FEDERATION_USERS_KEY);
     }
 
-    @Test(expected = LoginException.class)
+    @Test(expected = IllegalStateException.class)
     public void testVerifyUserByNodeIdMissingNodeId() throws Exception {
-        utils.verifyUser(service, username, UUID.randomUUID().toString());
+        utils.userExists(service, username, UUID.randomUUID().toString());
         verify(service).getFederationNodeIds();
     }
 }

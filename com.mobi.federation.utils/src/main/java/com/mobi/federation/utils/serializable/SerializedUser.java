@@ -30,7 +30,7 @@ import com.mobi.rdf.api.ValueFactory;
 import java.io.Serializable;
 
 public class SerializedUser implements Serializable, Comparable<SerializedUser> {
-    private static final long serialVersionUID = 0l;
+    private static final long serialVersionUID = -3946720548062730139L;
 
     private final String userIRI;
     private final String username;

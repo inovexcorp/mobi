@@ -139,42 +139,31 @@ public class SimpleUserUtils implements UserUtils {
     }
 
     @Override
-    public User getUser(FederationService service, String username, String nodeId) {
+    public Optional<User> getUser(FederationService service, String username, String nodeId) {
         Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
         String federationId = service.getFederationId();
         Set<SerializedUser> users = getNodeUsers(userMap, UUID.fromString(nodeId), federationId);
 
-        Optional<SerializedUser> optional = users.stream()
+        return users.stream()
                 .filter(user -> user.getUsername().equals(username))
-                .findFirst();
-
-        if (optional.isPresent()) {
-            return getAsUser(optional.get(), userFactory, vf);
-        }
-        throw new IllegalArgumentException("User " + username + " does not exist on node " + nodeId
-                + " in federation " + federationId);
+                .findFirst()
+                .map(serializedUser -> getAsUser(serializedUser, userFactory, vf));
     }
 
     @Override
-    public void verifyUser(FederationService service, String username) throws FailedLoginException {
+    public boolean userExists(FederationService service, String username) {
         Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
-        if (service.getFederationNodeIds().stream().noneMatch(nodeId -> validateUser(userMap, username, nodeId))) {
-            throw new FailedLoginException("User " + username + " not found in federation "
-                    + service.getFederationId());
-        }
+        return service.getFederationNodeIds().stream().anyMatch(nodeId -> validateUser(userMap, username, nodeId));
     }
 
     @Override
-    public void verifyUser(FederationService service, String username, String nodeId) throws LoginException {
+    public boolean userExists(FederationService service, String username, String nodeId) {
         UUID nodeUUID = UUID.fromString(nodeId);
         if (!service.getFederationNodeIds().contains(nodeUUID)) {
-            throw new LoginException("Node " + nodeId + " is not in federation " + service.getFederationId());
+            throw new IllegalStateException("Node " + nodeId + " is not in federation " + service.getFederationId());
         }
         Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
-        if (!validateUser(userMap, username, nodeUUID)) {
-            throw new FailedLoginException("User " + username + " not found in node " + nodeId + " in federation "
-                    + service.getFederationId());
-        }
+        return validateUser(userMap, username, nodeUUID);
     }
 
     /**
@@ -212,7 +201,7 @@ public class SimpleUserUtils implements UserUtils {
         if (userMap.containsKey(nodeId)) {
             return userMap.get(nodeId);
         }
-        throw new IllegalArgumentException("User map entry for node " + nodeId.toString()
+        throw new IllegalStateException("User map entry for node " + nodeId.toString()
                 + " could not be found in federation " + federationId);
     }
 }
