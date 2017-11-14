@@ -179,7 +179,8 @@
             self.setPagination = function(response) {
                 self.results = _.map(response.data, arr => {
                     var record = _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord'));
-                    var identifiers = _.without(arr, record);
+                    var identifiers = _.map(record[prefixes.dataset + 'ontology'], obj => _.find(arr, {'@id': obj['@id']}));
+                    // var identifiers = _.without(arr, record);
                     return { record, identifiers };
                 });
                 var headers = response.headers();

@@ -50,9 +50,9 @@
          */
         .directive('sparqlEditor', sparqlEditor);
 
-        sparqlEditor.$inject = ['sparqlManagerService', 'prefixes', 'datasetManagerService', 'utilService'];
+        sparqlEditor.$inject = ['sparqlManagerService', 'prefixes'];
 
-        function sparqlEditor(sparqlManagerService, prefixes, datasetManagerService, utilService) {
+        function sparqlEditor(sparqlManagerService, prefixes) {
             return {
                 restrict: 'E',
                 templateUrl: 'modules/discover/sub-modules/query/directives/sparqlEditor/sparqlEditor.html',
@@ -61,8 +61,6 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    var dam = datasetManagerService;
-                    dvm.util = utilService;
                     dvm.sparql = sparqlManagerService;
                     dvm.prefixList = _.sortBy(_.map(prefixes, (value, key) => key + ': <' + value + '>'));
                     dvm.editorOptions = {

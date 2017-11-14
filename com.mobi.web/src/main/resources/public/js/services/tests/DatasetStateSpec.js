@@ -117,22 +117,26 @@ describe('Dataset State service', function() {
             };
             this.ontologyRecordId1 = 'ontology1';
             this.ontologyRecordId2 = 'ontology2';
-            var recordBase = {'@type': [prefixes.dataset + 'DatasetRecord']};
-            var identifier1 = _.set({}, "['" + prefixes.dataset + "linksToRecord'][0]['@id']", this.ontologyRecordId1);
-            var identifier2 = _.set({}, "['" + prefixes.dataset + "linksToRecord'][0]['@id']", this.ontologyRecordId2);
+            var record1 = _.set({'@type': [prefixes.dataset + 'DatasetRecord']}, '@id', 'record1');
+            record1[prefixes.dataset + 'ontology'] = [{'@id': 'id1'}, {'@id': 'id2'}];
+            var record2 = _.set({'@type': [prefixes.dataset + 'DatasetRecord']}, '@id', 'record2');
+            record2[prefixes.dataset + 'ontology'] = [{'@id': 'id2'}];
+            var identifier1 = _.set({'@id': 'id1'}, "['" + prefixes.dataset + "linksToRecord'][0]['@id']", this.ontologyRecordId1);
+            var extraIdentifier = {'@id': 'extra'};
+            var identifier2 = _.set({'@id': 'id2'}, "['" + prefixes.dataset + "linksToRecord'][0]['@id']", this.ontologyRecordId2);
             this.records = [
                 {
-                    record: _.set(angular.copy(recordBase), '@id', 'record1'),
+                    record: record1,
                     identifiers: [identifier1, identifier2]
                 },
                 {
-                    record: _.set(angular.copy(recordBase), '@id', 'record2'),
+                    record: record2,
                     identifiers: [identifier2]
                 }
             ];
             this.response = {
                 data: _.map(this.records, function(obj) {
-                    return _.concat(obj.record, obj.identifiers);
+                    return _.concat(obj.record, obj.identifiers, [extraIdentifier]);
                 }),
                 headers: jasmine.createSpy('headers').and.returnValue(this.headers)
             };

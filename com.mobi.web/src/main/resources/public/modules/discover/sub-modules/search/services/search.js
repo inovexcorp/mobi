@@ -80,7 +80,7 @@
                     return true;
                 }
             });
-            var ontologyArray = _.reject(datasetArray, item => _.has(item, '@type'));
+            var ontologyArray = _.map(dataset[prefixes.dataset + 'ontology'], obj => _.find(datasetArray, {'@id': obj['@id']}));
             return $q.all(_.flatten(_.map(ontologyArray, identifier => {
                 var recordId = util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord');
                 var branchId = util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch');

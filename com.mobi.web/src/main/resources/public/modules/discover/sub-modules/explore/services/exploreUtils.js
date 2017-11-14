@@ -234,11 +234,14 @@
             if (!datasetArr) {
                 return $q.reject('Dataset could not be found');
             }
-            var ontologies = _.map(_.filter(datasetArr, obj => !_.has(obj, '@type')), identifier => ({
-                recordId: util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'),
-                branchId: util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch'),
-                commitId: util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit'),
-            }));
+            var ontologies = _.map(_.find(datasetArr, {'@id': datasetId})[prefixes.dataset + 'ontology'], obj => {
+                var identifier = _.find(datasetArr, {'@id': obj['@id']});
+                return {
+                    recordId: util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'),
+                    branchId: util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch'),
+                    commitId: util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit')
+                }
+            });
             return $q.all(_.map(ontologies, ontology => om.getOntologyClasses(ontology.recordId, ontology.branchId, ontology.commitId)))
                 .then(response => {
                     var allClasses = _.flattenDeep(response);

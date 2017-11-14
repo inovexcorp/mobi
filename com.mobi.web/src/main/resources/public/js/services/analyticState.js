@@ -647,15 +647,18 @@
              * Gets a simplified ontologies list from the provided dataset.
              *
              * @param {Object[]} dataset The dataset's JSON-LD which contains a DatasetRecord and OntologyIdentifiers.
-             * @param {Object} record The record within the dataset's JSON-LD to be excluded from the operation.
+             * @param {Object} record The record within the dataset's JSON-LD.
              * @return {Object[]} An Array of ontologies with recordId, branchId, and commitId properties
              */
             self.getOntologies = function(dataset, record) {
-                return _.map(_.without(dataset, record), identifier => ({
-                    recordId: util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'),
-                    branchId: util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch'),
-                    commitId: util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit')
-                }));
+                return _.map(record[prefixes.dataset + 'ontology'], obj => {
+                    var identifier = _.find(dataset, {'@id': obj['@id']});
+                    return {
+                        recordId: util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'),
+                        branchId: util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch'),
+                        commitId: util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit')
+                    };
+                });
             }
 
             /**

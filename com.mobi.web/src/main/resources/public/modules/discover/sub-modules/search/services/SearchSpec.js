@@ -71,43 +71,43 @@ describe('Search Service', function() {
 
     describe('getPropertiesForDataset should return the correct list when getDataProperties and getObjectProperties', function() {
         beforeEach(function() {
-            datasetManagerSvc.datasetRecords = [[
-                {'@id': 'id', '@type': []},
-                {prop: 'other'}
-            ]];
+            this.identifier = {'@id': 'ontology'};
+            this.record = {'@id': 'id', '@type': []};
+            this.record[prefixes.dataset + 'ontology'] = [angular.copy(this.identifier)];
+            datasetManagerSvc.datasetRecords = [[ this.record, this.identifier, {'@id': 'extra'} ]];
             util.getPropertyId.and.returnValue('value');
         });
         it('resolves', function() {
             ontologyManagerSvc.getDataProperties.and.returnValue($q.when([{prop: 'data1'}]));
             ontologyManagerSvc.getObjProperties.and.returnValue($q.when([{prop: 'object1'}]));
-            searchSvc.getPropertiesForDataset('id')
+            searchSvc.getPropertiesForDataset(this.record['@id'])
                 .then(function(response) {
-                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToRecord');
-                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToBranch');
-                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToCommit');
-                    expect(ontologyManagerSvc.getDataProperties).toHaveBeenCalledWith('value', 'value', 'value');
-                    expect(ontologyManagerSvc.getObjProperties).toHaveBeenCalledWith('value', 'value', 'value');
                     expect(response).toEqual([{prop: 'data1'}, {prop: 'object1'}]);
                 }, function() {
                     fail('Promise should have resolved');
                 });
             scope.$apply();
+            expect(util.getPropertyId).toHaveBeenCalledWith(this.identifier, prefixes.dataset + 'linksToRecord');
+            expect(util.getPropertyId).toHaveBeenCalledWith(this.identifier, prefixes.dataset + 'linksToBranch');
+            expect(util.getPropertyId).toHaveBeenCalledWith(this.identifier, prefixes.dataset + 'linksToCommit');
+            expect(ontologyManagerSvc.getDataProperties).toHaveBeenCalledWith('value', 'value', 'value');
+            expect(ontologyManagerSvc.getObjProperties).toHaveBeenCalledWith('value', 'value', 'value');
         });
         it('rejects', function() {
             ontologyManagerSvc.getDataProperties.and.returnValue($q.reject('dataError'));
             ontologyManagerSvc.getObjProperties.and.returnValue($q.reject('objectError'));
-            searchSvc.getPropertiesForDataset('id')
+            searchSvc.getPropertiesForDataset(this.record['@id'])
                 .then(function() {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToRecord');
-                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToBranch');
-                    expect(util.getPropertyId).toHaveBeenCalledWith({prop: 'other'}, prefixes.dataset + 'linksToCommit');
-                    expect(ontologyManagerSvc.getDataProperties).toHaveBeenCalledWith('value', 'value', 'value');
-                    expect(ontologyManagerSvc.getObjProperties).toHaveBeenCalledWith('value', 'value', 'value');
                     expect(response).toBe('dataError');
                 });
             scope.$apply();
+            expect(util.getPropertyId).toHaveBeenCalledWith(this.identifier, prefixes.dataset + 'linksToRecord');
+            expect(util.getPropertyId).toHaveBeenCalledWith(this.identifier, prefixes.dataset + 'linksToBranch');
+            expect(util.getPropertyId).toHaveBeenCalledWith(this.identifier, prefixes.dataset + 'linksToCommit');
+            expect(ontologyManagerSvc.getDataProperties).toHaveBeenCalledWith('value', 'value', 'value');
+            expect(ontologyManagerSvc.getObjProperties).toHaveBeenCalledWith('value', 'value', 'value');
         });
     });
     describe('should submit a search query', function() {
@@ -116,27 +116,29 @@ describe('Search Service', function() {
         });
         it('unless an error occurs', function() {
             sparqlManagerSvc.query.and.returnValue($q.reject('Error Message'));
-            searchSvc.submitSearch('', {}).then(function() {
-                fail('Promise should have rejected');
-            }, function(response) {
-                expect(response).toEqual('Error Message');
-                expect(searchSvc.createQueryString).toHaveBeenCalledWith({});
-                expect(sparqlManagerSvc.query).toHaveBeenCalledWith('query', '', discoverStateSvc.search.targetedId);
-                expect(httpSvc.cancel).toHaveBeenCalledWith(discoverStateSvc.search.targetedId);
-            });
+            searchSvc.submitSearch('', {})
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toEqual('Error Message');
+                });
             scope.$apply();
+            expect(searchSvc.createQueryString).toHaveBeenCalledWith({});
+            expect(sparqlManagerSvc.query).toHaveBeenCalledWith('query', '', discoverStateSvc.search.targetedId);
+            expect(httpSvc.cancel).toHaveBeenCalledWith(discoverStateSvc.search.targetedId);
         });
         it('successfully', function() {
             sparqlManagerSvc.query.and.returnValue($q.when({}));
-            searchSvc.submitSearch('', {}).then(function(response) {
-                expect(response).toEqual({});
-                expect(searchSvc.createQueryString).toHaveBeenCalledWith({});
-                expect(sparqlManagerSvc.query).toHaveBeenCalledWith('query', '', discoverStateSvc.search.targetedId);
-                expect(httpSvc.cancel).toHaveBeenCalledWith(discoverStateSvc.search.targetedId);
-            }, function() {
-                fail('Promise should have rejected');
-            });
+            searchSvc.submitSearch('', {})
+                .then(function(response) {
+                    expect(response).toEqual({});
+                }, function() {
+                    fail('Promise should have rejected');
+                });
             scope.$apply();
+            expect(searchSvc.createQueryString).toHaveBeenCalledWith({});
+            expect(sparqlManagerSvc.query).toHaveBeenCalledWith('query', '', discoverStateSvc.search.targetedId);
+            expect(httpSvc.cancel).toHaveBeenCalledWith(discoverStateSvc.search.targetedId);
         });
     });
     describe('should create a keyword query', function() {

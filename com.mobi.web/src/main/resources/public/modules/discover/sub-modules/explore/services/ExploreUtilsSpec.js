@@ -155,7 +155,9 @@ describe('Explore Utils Service', function() {
     describe('getClasses should retrieve all classes from ontologies in a dataset', function() {
         beforeEach(function() {
             this.datasetId = 'dataset';
-            datasetManagerSvc.datasetRecords = [[{'@id': this.datasetId, '@type': []}, {'id': 'ontology1'}]];
+            var record = {'@id': this.datasetId, '@type': []};
+            record[prefixes.dataset + 'ontology'] = [{'@id': 'ontology1'}];
+            datasetManagerSvc.datasetRecords = [[record, {'id': 'ontology1'}]];
             utilSvc.getPropertyId.and.callFake(function(obj, propId) {
                 if (propId === prefixes.dataset + 'linksToRecord') {
                     return 'recordId';
@@ -214,7 +216,7 @@ describe('Explore Utils Service', function() {
         });
     });
     describe('getNewProperties should return a list of properties that are not set on the entity', function() {
-        beforeEach(function () {
+        beforeEach(function() {
             this.entity = {
                 '@id': 'id',
                 '@type': ['type'],
