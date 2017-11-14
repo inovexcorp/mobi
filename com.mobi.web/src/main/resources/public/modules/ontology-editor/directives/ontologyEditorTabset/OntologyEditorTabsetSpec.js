@@ -100,6 +100,9 @@ describe('Ontology Editor Tabset directive', function() {
             });
         });
         describe('onClick should set the listItem and page title correctly if recordId is', function() {
+            beforeEach(function () {
+                ontologyStateSvc.listItem = {id: 'id'};
+            });
             it('defined', function() {
                 ontologyStateSvc.getListItemByRecordId.and.returnValue({ontologyRecord: {type: 'type'}});
                 this.controller.onClick('recordId');
@@ -109,7 +112,23 @@ describe('Ontology Editor Tabset directive', function() {
             it('undefined', function() {
                 this.controller.onClick(undefined);
                 expect(ontologyStateSvc.getListItemByRecordId).not.toHaveBeenCalled();
+                expect(ontologyStateSvc.listItem).toEqual({});
             });
+        });
+    });
+    describe('should correctly set newTabActive when listItem changes to', function() {
+        beforeEach(function() {
+            this.controller.newTabActive = true;
+        });
+        it('an empty object', function() {
+            ontologyStateSvc.listItem = {};
+            scope.$digest();
+            expect(this.controller.newTabActive).toEqual(true);
+        });
+        it('another listItem', function() {
+            ontologyStateSvc.listItem = {ontologyId: 'something'};
+            scope.$digest();
+            expect(this.controller.newTabActive).toEqual(false);
         });
     });
 });

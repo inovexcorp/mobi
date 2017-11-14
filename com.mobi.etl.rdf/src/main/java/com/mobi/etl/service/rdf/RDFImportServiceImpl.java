@@ -157,7 +157,6 @@ public class RDFImportServiceImpl implements RDFImportService {
         }
         parser.setRDFHandler(inserter);
         parser.parse(new FileInputStream(file), "");
+
     }
-
-
 }
