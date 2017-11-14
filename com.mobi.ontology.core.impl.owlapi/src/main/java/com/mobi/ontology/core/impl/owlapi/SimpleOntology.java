@@ -258,7 +258,7 @@ public class SimpleOntology implements Ontology {
             RioParserImpl parser = new RioParserImpl(new RioRDFXMLDocumentFormatFactory());
             parser.parse(new RioMemoryTripleSource(sesameModel), owlOntology, config);
             createOntologyId(null);
-            PrefixDocumentFormat pf = owlManager.getOntologyFormat(owlOntology).asPrefixOWLDocumentFormat();
+            /*PrefixDocumentFormat pf = owlManager.getOntologyFormat(owlOntology).asPrefixOWLDocumentFormat();
             if (pf != null) {
                 Map<String, String> prefixes = pf.getPrefixName2PrefixMap();
                 if (pf.getDefaultPrefix() == null && !owlOntology.isAnonymous()) {
@@ -271,7 +271,7 @@ public class SimpleOntology implements Ontology {
                     });
                 }
                 prefixes.forEach((prefix, namespace) -> sesameModel.setNamespace(prefix.replace(":", ""), namespace));
-            }
+            }*/
             owlReasoner = owlReasonerFactory.createReasoner(owlOntology);
         } catch (OWLOntologyCreationException e) {
             throw new MobiOntologyException("Error in ontology creation", e);
