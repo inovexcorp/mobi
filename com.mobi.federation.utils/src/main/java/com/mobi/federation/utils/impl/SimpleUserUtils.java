@@ -34,10 +34,10 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.rdf.api.ValueFactory;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.UUID;
 import javax.security.auth.login.FailedLoginException;
 import javax.security.auth.login.LoginException;
@@ -64,7 +64,7 @@ public class SimpleUserUtils implements UserUtils {
         Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
         UUID nodeId = service.getNodeId();
         if (!userMap.containsKey(nodeId)) {
-            userMap.put(nodeId, new TreeSet<>());
+            userMap.put(nodeId, new HashSet<>());
         }
     }
 
