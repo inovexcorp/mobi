@@ -260,14 +260,9 @@ public class HazelcastFederationService implements FederationService {
             } finally {
                 this.semaphore.release();
             }
+            registerUsers();
         });
         LOGGER.info("Successfully spawned initialization thread.");
-        try {
-            this.initializationTask.get();
-            registerUsers();
-        } catch (InterruptedException | ExecutionException ex) {
-            LOGGER.error(ex.getMessage(), ex);
-        }
     }
 
     @Override
