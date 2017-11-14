@@ -118,12 +118,12 @@ describe('Dataset State service', function() {
             this.ontologyRecordId1 = 'ontology1';
             this.ontologyRecordId2 = 'ontology2';
             var record1 = _.set({'@type': [prefixes.dataset + 'DatasetRecord']}, '@id', 'record1');
-            record1[prefixes.dataset + 'ontology'] = [{'@id': 'id1'}, {'@id': 'id2'}];
             var record2 = _.set({'@type': [prefixes.dataset + 'DatasetRecord']}, '@id', 'record2');
-            record2[prefixes.dataset + 'ontology'] = [{'@id': 'id2'}];
             var identifier1 = _.set({'@id': 'id1'}, "['" + prefixes.dataset + "linksToRecord'][0]['@id']", this.ontologyRecordId1);
-            var extraIdentifier = {'@id': 'extra'};
             var identifier2 = _.set({'@id': 'id2'}, "['" + prefixes.dataset + "linksToRecord'][0]['@id']", this.ontologyRecordId2);
+            datasetManagerSvc.getOntologyIdentifiers.and.callFake(function(arr, record) {
+                return record['@id'] === record1['@id'] ? [identifier1, identifier2] : [identifier2];
+            });
             this.records = [
                 {
                     record: record1,
@@ -136,7 +136,7 @@ describe('Dataset State service', function() {
             ];
             this.response = {
                 data: _.map(this.records, function(obj) {
-                    return _.concat(obj.record, obj.identifiers, [extraIdentifier]);
+                    return _.concat(obj.record, obj.identifiers);
                 }),
                 headers: jasmine.createSpy('headers').and.returnValue(this.headers)
             };
@@ -147,6 +147,9 @@ describe('Dataset State service', function() {
             this.headers.link = '<' + nextLink + '>; rel=\"next\", <' + prevLink + '>; rel=\"prev\"';
             utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
             datasetStateSvc.setPagination(this.response);
+            this.records.forEach(function(obj) {
+                expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith(_.concat(obj.record, obj.identifiers), obj.record);
+            });
             expect(datasetStateSvc.results.length).toEqual(this.response.data.length);
             datasetStateSvc.results.forEach(function(result, idx) {
                 expect(result.record).toEqual(this.records[idx].record);
@@ -158,6 +161,9 @@ describe('Dataset State service', function() {
         });
         it('if it does not have links', function() {
             datasetStateSvc.setPagination(this.response);
+            this.records.forEach(function(obj) {
+                expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith(_.concat(obj.record, obj.identifiers), obj.record);
+            });
             expect(datasetStateSvc.results.length).toEqual(this.response.data.length);
             datasetStateSvc.results.forEach(function(result, idx) {
                 expect(result.record).toEqual(this.records[idx].record);

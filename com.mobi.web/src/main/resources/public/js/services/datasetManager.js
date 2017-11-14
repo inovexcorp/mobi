@@ -259,6 +259,22 @@
                     }, util.createErrorToast);
             }
 
+            /**
+             * @ngdoc method
+             * @name getOntologyIdentifiers
+             * @methodOf datasetManager.service:datasetManagerService
+             *
+             * @description
+             * Gets the list of ontology identifiers for the provided record in the provided JSON-LD array
+             *
+             * @param {Object[]} arr A JSON-LD array (typically contains a DatasetRecord and OntologyIdentifiers)
+             * @param {Object} record A DatasetRecord JSON-LD object
+             * @return {Object[]} A JSON-LD array of OntologyIdentifier blank nodes
+             */
+            self.getOntologyIdentifiers = function(arr, record) {
+                return _.map(_.get(record, `['${prefixes.dataset}ontology']`), obj => _.find(arr, {'@id': obj['@id']}));
+            }
+
             function removeDataset(datasetRecordIRI) {
                 _.remove(self.datasetRecords, array => _.find(array, {'@id': datasetRecordIRI}));
             }

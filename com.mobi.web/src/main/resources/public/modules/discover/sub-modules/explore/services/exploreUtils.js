@@ -230,18 +230,19 @@
          * @return {Promise} A Promise with the classes within all the linked ontologies of a DatasetRecord
          */
         self.getClasses = function(datasetId) {
-            var datasetArr = _.find(dm.datasetRecords, arr => _.find(arr, {'@id': datasetId}));
+            var dataset;
+            var datasetArr = _.find(dm.datasetRecords, arr => {
+                dataset = _.find(arr, {'@id': datasetId});
+                return !!dataset;
+            });
             if (!datasetArr) {
                 return $q.reject('Dataset could not be found');
             }
-            var ontologies = _.map(_.find(datasetArr, {'@id': datasetId})[prefixes.dataset + 'ontology'], obj => {
-                var identifier = _.find(datasetArr, {'@id': obj['@id']});
-                return {
-                    recordId: util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'),
-                    branchId: util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch'),
-                    commitId: util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit')
-                }
-            });
+            var ontologies = _.map(dm.getOntologyIdentifiers(datasetArr, dataset), identifier => ({
+                recordId: util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'),
+                branchId: util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch'),
+                commitId: util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit')
+            }));
             return $q.all(_.map(ontologies, ontology => om.getOntologyClasses(ontology.recordId, ontology.branchId, ontology.commitId)))
                 .then(response => {
                     var allClasses = _.flattenDeep(response);

@@ -651,14 +651,11 @@
              * @return {Object[]} An Array of ontologies with recordId, branchId, and commitId properties
              */
             self.getOntologies = function(dataset, record) {
-                return _.map(record[prefixes.dataset + 'ontology'], obj => {
-                    var identifier = _.find(dataset, {'@id': obj['@id']});
-                    return {
-                        recordId: util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'),
-                        branchId: util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch'),
-                        commitId: util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit')
-                    };
-                });
+                return _.map(dm.getOntologyIdentifiers(dataset, record), identifier => ({
+                    recordId: util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'),
+                    branchId: util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch'),
+                    commitId: util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit')
+                }));
             }
 
             /**

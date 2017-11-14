@@ -73,15 +73,12 @@
          * @return {Promise} A Promise that resolves with the list of data properties or rejects with an error message.
          */
         self.getPropertiesForDataset = function(datasetRecordIRI) {
-            var dataset = {};
+            var dataset;
             var datasetArray = _.find(dm.datasetRecords, arr => {
-                if (_.some(arr, {'@id': datasetRecordIRI})) {
-                    dataset = _.find(arr, {'@id': datasetRecordIRI});
-                    return true;
-                }
+                dataset = _.find(arr, {'@id': datasetRecordIRI});
+                return !!dataset;
             });
-            var ontologyArray = _.map(dataset[prefixes.dataset + 'ontology'], obj => _.find(datasetArray, {'@id': obj['@id']}));
-            return $q.all(_.flatten(_.map(ontologyArray, identifier => {
+            return $q.all(_.flatten(_.map(dm.getOntologyIdentifiers(datasetArray, dataset), identifier => {
                 var recordId = util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord');
                 var branchId = util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch');
                 var commitId = util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit');

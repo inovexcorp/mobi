@@ -344,4 +344,10 @@ describe('Dataset Manager service', function() {
             expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
         });
     });
+    it('should retrieve the ontology identifiers for a dataset', function() {
+        var identifier = {'@id': 'id'};
+        var extra = {'@id': 'extra'};
+        var record = _.set({}, "['" + prefixes.dataset + "ontology'][0]", identifier);
+        expect(datasetManagerSvc.getOntologyIdentifiers([identifier, extra, record], record)).toEqual([identifier]);
+    });
 });

@@ -73,8 +73,8 @@ describe('Search Service', function() {
         beforeEach(function() {
             this.identifier = {'@id': 'ontology'};
             this.record = {'@id': 'id', '@type': []};
-            this.record[prefixes.dataset + 'ontology'] = [angular.copy(this.identifier)];
-            datasetManagerSvc.datasetRecords = [[ this.record, this.identifier, {'@id': 'extra'} ]];
+            datasetManagerSvc.datasetRecords = [[ this.record, this.identifier ]];
+            datasetManagerSvc.getOntologyIdentifiers.and.returnValue([this.identifier]);
             util.getPropertyId.and.returnValue('value');
         });
         it('resolves', function() {

@@ -602,10 +602,9 @@ describe('Analytic State Service', function() {
     });
     it('getOntologies should return the correct array of ontologies', function() {
         utilSvc.getPropertyId.and.returnValue('id');
-        var record = {'@id': 'recprd', '@type': 'type'};
-        record[prefixes.dataset + 'ontology'] = [{'@id': 'id'}]
-        var dataset = [record, {'@id': 'id'}, {'@id': 'extra'}];
-        expect(analyticStateSvc.getOntologies(dataset, record)).toEqual([{recordId: 'id', branchId: 'id', commitId: 'id'}]);
+        datasetManagerSvc.getOntologyIdentifiers.and.returnValue([{'@id': 'id'}]);
+        expect(analyticStateSvc.getOntologies([], {})).toEqual([{recordId: 'id', branchId: 'id', commitId: 'id'}]);
+        expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith([], {});
         expect(utilSvc.getPropertyId).toHaveBeenCalledWith({'@id': 'id'}, prefixes.dataset + 'linksToRecord');
         expect(utilSvc.getPropertyId).toHaveBeenCalledWith({'@id': 'id'}, prefixes.dataset + 'linksToBranch');
         expect(utilSvc.getPropertyId).toHaveBeenCalledWith({'@id': 'id'}, prefixes.dataset + 'linksToCommit');
