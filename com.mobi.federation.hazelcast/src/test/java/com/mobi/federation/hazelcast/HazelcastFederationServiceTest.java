@@ -280,8 +280,7 @@ public class HazelcastFederationServiceTest {
             map.put("listeningPort", Integer.toString(port));
             map.put("joinMechanism", "TCPIP");
             map.put("tcpIpMembers", StringUtils.join(members, ", "));
-            map.put("password", "password");
-            map.put("sharedKey", FederationService.getEncryptor("password").encrypt("key"));
+            map.put("sharedKey", "key");
             map.put("maxNoHeartbeatSeconds", 10);
             service.activate(map);
             try {

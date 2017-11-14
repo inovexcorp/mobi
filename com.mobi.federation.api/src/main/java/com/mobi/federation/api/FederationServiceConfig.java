@@ -49,14 +49,8 @@ public interface FederationServiceConfig {
     String description();
 
     /**
-     * An encrypted key used to generate and verify the federation token.
+     * A key used to generate and verify the federation token.
      */
     @Meta.AD
     String sharedKey();
-
-    /**
-     * A password string to generate the encryptor to create and verify tokens.
-     */
-    @Meta.AD
-    String password();
 }

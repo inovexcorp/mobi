@@ -147,18 +147,4 @@ public interface FederationService {
      * @throws IOException Thrown if an input or output exception occurs.
      */
     Optional<SignedJWT> verifyToken(String tokenString, HttpServletResponse res) throws IOException;
-
-    /**
-     * Gets the encryptor to decrypt the shared key to verify and generate federation tokens.
-     *
-     * @return The {@link StandardPBEStringEncryptor} needed for decryption.
-     */
-    static StandardPBEStringEncryptor getEncryptor(String password) {
-        StandardPBEStringEncryptor enc = new StandardPBEStringEncryptor();
-        EnvironmentStringPBEConfig env = new EnvironmentStringPBEConfig();
-        env.setAlgorithm("PBEWithMD5AndDES");
-        env.setPassword(password);
-        enc.setConfig(env);
-        return enc;
-    }
 }

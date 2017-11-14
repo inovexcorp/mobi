@@ -52,7 +52,6 @@ import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ValueFactory;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
-import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.osgi.service.cm.ConfigurationAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -255,8 +254,7 @@ public class HazelcastFederationService implements FederationService {
                 this.hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
                 this.hazelcastInstance.getCluster().addMembershipListener(listener);
                 registerWithFederationNodes(hazelcastInstance);
-                StandardPBEStringEncryptor encryptor = FederationService.getEncryptor(serviceConfig.password());
-                this.tokenKey = encryptor.decrypt(serviceConfig.sharedKey()).getBytes(StandardCharsets.UTF_8);
+                this.tokenKey = serviceConfig.sharedKey().getBytes(StandardCharsets.UTF_8);
             } catch (Exception ex) {
                 LOGGER.error(ex.getMessage(), ex);
             } finally {
