@@ -271,8 +271,51 @@
              * @param {Object} record A DatasetRecord JSON-LD object
              * @return {Object[]} A JSON-LD array of OntologyIdentifier blank nodes
              */
-            self.getOntologyIdentifiers = function(arr, record) {
+            self.getOntologyIdentifiers = function(arr, record = self.getRecordFromArray(arr)) {
                 return _.map(_.get(record, `['${prefixes.dataset}ontology']`), obj => _.find(arr, {'@id': obj['@id']}));
+            }
+
+            /**
+             * @ngdoc method
+             * @name getOntologyIdentifiers
+             * @methodOf datasetManager.service:datasetManagerService
+             *
+             * @description
+             * Retrieves the DatasetRecord from the provided JSON-LD array based on whether or not the object has
+             * the correct type.
+             *
+             * @param {Object[]} arr A JSON-LD array (typically a result from the REST endpoint)
+             * @return {Object} The JSON-LD object for a DatasetRecord; undefined otherwise
+             */
+            self.getRecordFromArray = function(arr) {
+                return _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord'));
+            }
+
+            /**
+             * @ngdoc method
+             * @name getOntologyIdentifiers
+             * @methodOf datasetManager.service:datasetManagerService
+             *
+             * @description
+             * Splits the JSON-LD array into an object with a key for the DatasetRecord and a key for the
+             * OntologyIdentifiers. The object structure looks like the following:
+             * ```
+             * {
+             *     record: {},
+             *     identifiers: []
+             * }
+             * ```
+             *
+             * @param {Object[]} arr A JSON-LD array (typically a result ofrom the REST endpoint)
+             * @return {Object} An object with key `record` for the DatasetRecord and key `identifiers` for the
+             * OntologyIdentifiers
+             */
+            self.splitDatasetArray = function(arr) {
+                var record = self.getRecordFromArray(arr);
+                return {
+                    record,
+                    identifiers: self.getOntologyIdentifiers(arr, record)
+                };
             }
 
             function removeDataset(datasetRecordIRI) {

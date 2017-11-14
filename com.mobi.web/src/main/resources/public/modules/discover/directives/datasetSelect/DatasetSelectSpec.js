@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Dataset Select directive', function() {
-    var $compile, scope;
+    var $compile, scope, datasetManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -32,16 +32,19 @@ describe('Dataset Select directive', function() {
         mockDatasetManager();
         mockPrefixes();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _datasetManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            datasetManagerSvc = _datasetManagerService_;
         });
 
+        datasetManagerSvc.datasetRecords = [[]];
+        datasetManagerSvc.splitDatasetArray.and.returnValue({});
         scope.bindModel = '';
         scope.onSelect = jasmine.createSpy('onSelect');
-
         this.element = $compile(angular.element('<dataset-select ng-model="bindModel" on-select="onSelect()"></dataset-select>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('datasetSelect');
     });
 
     afterEach(function() {
@@ -50,6 +53,9 @@ describe('Dataset Select directive', function() {
         this.element.remove();
     });
 
+    it('initializes with the correct value for datasetRecords', function() {
+        expect(this.controller.datasetRecords).toEqual([{}]);
+    });
     describe('in isolated scope', function() {
         it('onChange should be called in parent scope', function() {
             this.element.isolateScope().onSelect();

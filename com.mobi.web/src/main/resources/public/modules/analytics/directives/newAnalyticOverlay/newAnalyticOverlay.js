@@ -22,7 +22,7 @@
  */
 (function() {
     'use strict';
-    
+
     angular
         /**
          * @ngdoc overview
@@ -67,7 +67,7 @@
                     var dm = datasetManagerService;
                     var util = utilService;
                     dvm.datasets = _.map(dm.datasetRecords, arr => {
-                        var record = _.find(arr, '@type');
+                        var record = dm.getRecordFromArray(arr);
                         var ontologies = state.getOntologies(arr, record);
                         return {
                             id: record['@id'],

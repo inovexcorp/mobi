@@ -41,7 +41,9 @@ describe('Class And Property Block directive', function() {
             utilSvc = _utilService_;
         });
 
-        datasetManagerSvc.datasetRecords = [[{'@id': 'id', '@type': 'type'}, {}]];
+        this.record = {'@id': 'id'};
+        datasetManagerSvc.datasetRecords = [[this.record, {}]];
+        datasetManagerSvc.getRecordFromArray.and.returnValue(this.record);
         analyticStateSvc.getOntologies.and.returnValue([{}]);
         utilSvc.getPropertyId.and.returnValue('utilId');
         utilSvc.getDctermsValue.and.returnValue('title');
@@ -70,9 +72,9 @@ describe('Class And Property Block directive', function() {
             title: 'title',
             ontologies: [{}]
         }]);
-        expect(analyticStateSvc.getOntologies).toHaveBeenCalledWith([{'@id': 'id', '@type': 'type'}, {}], {'@id': 'id', '@type': 'type'});
-        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({'@id': 'id', '@type': 'type'}, prefixes.dataset + 'dataset');
-        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith({'@id': 'id', '@type': 'type'}, 'title');
+        expect(analyticStateSvc.getOntologies).toHaveBeenCalledWith([this.record, {}], this.record);
+        expect(utilSvc.getPropertyId).toHaveBeenCalledWith(this.record, prefixes.dataset + 'dataset');
+        expect(utilSvc.getDctermsValue).toHaveBeenCalledWith(this.record, 'title');
     });
     describe('controller bound variables', function() {
         it('onCancel to be called in parent scope', function() {

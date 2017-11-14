@@ -1007,6 +1007,8 @@ function mockDatasetManager() {
             this.updateDatasetRecord = jasmine.createSpy('updateDatasetRecord').and.returnValue($q.when());
             this.initialize = jasmine.createSpy('initialize');
             this.getOntologyIdentifiers = jasmine.createSpy('getOntologyIdentifiers').and.returnValue([]);
+            this.getRecordFromArray = jasmine.createSpy('getRecordFromArray').and.returnValue({});
+            this.splitDatasetArray = jasmine.createSpy('splitDatasetArray').and.returnValue({});
         });
     });
 }
