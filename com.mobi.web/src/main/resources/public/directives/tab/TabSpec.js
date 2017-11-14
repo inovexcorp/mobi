@@ -49,7 +49,7 @@ describe('Tab directive', function() {
         this.element = $compile(this.element)(scope);
         scope.$digest();
         this.elementSansWrapper = angular.element(this.element.children()[0]);
-        this.isolatedScope = this.elementSansWrapper.scope();
+        this.isolatedScope = this.elementSansWrapper.isolateScope();
     });
 
     afterEach(function() {
@@ -59,11 +59,11 @@ describe('Tab directive', function() {
     });
 
     describe('in isolated scope', function() {
-        /*it('active should be two way bound', function() {
-            isolatedScope.active = false;
+        it('active should be two way bound', function() {
+            this.isolatedScope.active = false;
             scope.$digest();
             expect(scope.active).toEqual(false);
-        });*/
+        });
         it('heading should be one way bound', function() {
             this.isolatedScope.heading = 'new';
             scope.$digest();
@@ -93,10 +93,12 @@ describe('Tab directive', function() {
             expect(scope.onClose).toHaveBeenCalled();
         });
     });
-    describe('replaces the element with the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(this.elementSansWrapper.prop('tagName')).toBe('DIV');
-            expect(this.elementSansWrapper.hasClass('tab')).toBe(true);
+            expect(this.elementSansWrapper.prop('tagName')).toBe('TAB');
+            var divs = this.elementSansWrapper.querySelectorAll('div');
+            expect(divs.length).toEqual(1);
+            expect(angular.element(divs[0]).hasClass('tab')).toBe(true);
         });
     });
 });
