@@ -30,7 +30,6 @@
         function tab() {
             return {
                 restrict: 'E',
-                replace: true,
                 require: '^^tabset',
                 transclude: true,
                 scope: {
