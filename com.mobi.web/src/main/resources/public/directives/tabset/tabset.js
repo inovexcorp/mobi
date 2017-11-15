@@ -60,9 +60,9 @@
                                 tab.active = false;
                             }
                         });
-                        selectedTab.active = true;
                         $timeout(function() {
                             selectedTab.onClick();
+                            selectedTab.active = true;
                         });
                     }
                 }

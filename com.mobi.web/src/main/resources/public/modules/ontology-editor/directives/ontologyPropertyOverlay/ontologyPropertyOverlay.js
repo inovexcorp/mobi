@@ -44,7 +44,7 @@
                     dvm.os = ontologyStateService;
                     dvm.iriPattern = REGEX.IRI;
                     dvm.pm = propertyManagerService;
-                    dvm.properties = _.union(dvm.om.ontologyProperties, dvm.os.listItem.annotations);
+                    dvm.properties = _.union(dvm.om.ontologyProperties, dvm.os.listItem.annotations.iris);
                     dvm.util = utilService;
 
                     function getValue() {
@@ -76,7 +76,7 @@
                     }
 
                     dvm.isAnnotationProperty = function() {
-                        return !!dvm.os.ontologyProperty && _.some(dvm.os.listItem.annotations, property =>
+                        return !!dvm.os.ontologyProperty && _.some(dvm.os.listItem.annotations.iris, property =>
                             dvm.ro.getItemIri(dvm.os.ontologyProperty) === dvm.ro.getItemIri(property));
                     }
 
