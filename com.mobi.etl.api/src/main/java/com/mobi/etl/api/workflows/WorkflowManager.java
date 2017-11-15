@@ -32,11 +32,18 @@ import java.util.Set;
 public interface WorkflowManager {
 
     /**
-     * Returns a Set of Workflow that have been deployed.
+     * Returns a Set of saved Workflows that have been deployed.
      *
      * @return A Set of deployed Workflows
      */
     Set<Workflow> getWorkflows();
+
+    /**
+     * Returns the Set of saved Workflows that failed to deploy.
+     *
+     * @return A Set of Workflows that are not deployed
+     */
+    Set<Workflow> getFailedWorkflows();
 
     /**
      * Creates Routes based on the configuration in the Workflow RDF. Should include all referenced DataSources,
