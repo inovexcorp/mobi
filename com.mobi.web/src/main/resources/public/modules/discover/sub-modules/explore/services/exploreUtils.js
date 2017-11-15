@@ -230,15 +230,11 @@
          * @return {Promise} A Promise with the classes within all the linked ontologies of a DatasetRecord
          */
         self.getClasses = function(datasetId) {
-            var dataset;
-            var datasetArr = _.find(dm.datasetRecords, arr => {
-                dataset = _.find(arr, {'@id': datasetId});
-                return !!dataset;
-            });
+            var datasetArr = _.find(dm.datasetRecords, arr => !!_.find(arr, {'@id': datasetId}));
             if (!datasetArr) {
                 return $q.reject('Dataset could not be found');
             }
-            var ontologies = _.map(dm.getOntologyIdentifiers(datasetArr, dataset), identifier => ({
+            var ontologies = _.map(dm.getOntologyIdentifiers(datasetArr), identifier => ({
                 recordId: util.getPropertyId(identifier, prefixes.dataset + 'linksToRecord'),
                 branchId: util.getPropertyId(identifier, prefixes.dataset + 'linksToBranch'),
                 commitId: util.getPropertyId(identifier, prefixes.dataset + 'linksToCommit')

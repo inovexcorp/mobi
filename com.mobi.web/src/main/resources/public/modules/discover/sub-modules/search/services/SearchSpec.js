@@ -87,6 +87,7 @@ describe('Search Service', function() {
                     fail('Promise should have resolved');
                 });
             scope.$apply();
+            expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith([this.record, this.identifier]);
             expect(util.getPropertyId).toHaveBeenCalledWith(this.identifier, prefixes.dataset + 'linksToRecord');
             expect(util.getPropertyId).toHaveBeenCalledWith(this.identifier, prefixes.dataset + 'linksToBranch');
             expect(util.getPropertyId).toHaveBeenCalledWith(this.identifier, prefixes.dataset + 'linksToCommit');
@@ -103,6 +104,7 @@ describe('Search Service', function() {
                     expect(response).toBe('dataError');
                 });
             scope.$apply();
+            expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith([this.record, this.identifier]);
             expect(util.getPropertyId).toHaveBeenCalledWith(this.identifier, prefixes.dataset + 'linksToRecord');
             expect(util.getPropertyId).toHaveBeenCalledWith(this.identifier, prefixes.dataset + 'linksToBranch');
             expect(util.getPropertyId).toHaveBeenCalledWith(this.identifier, prefixes.dataset + 'linksToCommit');

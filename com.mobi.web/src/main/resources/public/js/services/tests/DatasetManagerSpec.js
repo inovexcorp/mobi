@@ -348,8 +348,7 @@ describe('Dataset Manager service', function() {
         beforeEach(function () {
             this.identifier = {'@id': 'id'};
             this.record = _.set({}, "['" + prefixes.dataset + "ontology'][0]", this.identifier);
-            var extra = {'@id': 'extra'};
-            this.arr = [this.identifier, extra, this.record];
+            this.arr = [this.identifier, {'@id': 'extra'}, this.record];
         });
         it('if passed the record', function() {
             spyOn(datasetManagerSvc, 'getRecordFromArray').and.returnValue(this.record);

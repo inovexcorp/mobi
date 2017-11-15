@@ -113,36 +113,13 @@ describe('Dataset State service', function() {
     describe('should set the pagination variables based on a response', function() {
         beforeEach(function() {
             this.headers = {
-                'x-total-count': 2
+                'x-total-count': 1
             };
-            this.ontologyRecordId1 = 'ontology1';
-            this.ontologyRecordId2 = 'ontology2';
-            var record1 = {'@id': 'record1'};
-            var record2 = {'@id': 'record2'};
-            var identifier1 = {'@id': 'id1'};
-            var identifier2 = {'@id': 'id2'};
-            this.records = [
-                {
-                    record: record1,
-                    identifiers: [identifier1, identifier2]
-                },
-                {
-                    record: record2,
-                    identifiers: [identifier2]
-                }
-            ];
             this.response = {
-                data: _.map(this.records, function(obj) {
-                    return _.concat(obj.record, obj.identifiers);
-                }),
+                data: [[]],
                 headers: jasmine.createSpy('headers').and.returnValue(this.headers)
             };
-            var idx = 0;
-            datasetManagerSvc.splitDatasetArray.and.callFake(function(arr) {
-                var result = this.records[idx];
-                idx++;
-                return result;
-            }.bind(this));
+            datasetManagerSvc.splitDatasetArray.and.returnValue({record: {}, identifiers: []});
         });
         it('if it has links', function() {
             var nextLink = 'http://example.com/next';
@@ -150,22 +127,16 @@ describe('Dataset State service', function() {
             this.headers.link = '<' + nextLink + '>; rel=\"next\", <' + prevLink + '>; rel=\"prev\"';
             utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
             datasetStateSvc.setPagination(this.response);
-            this.response.data.forEach(function(arr) {
-                expect(datasetManagerSvc.splitDatasetArray).toHaveBeenCalledWith(arr);
-            });
-            expect(datasetStateSvc.results.length).toEqual(this.response.data.length);
-            expect(datasetStateSvc.results).toEqual(this.records);
+            expect(datasetManagerSvc.splitDatasetArray).toHaveBeenCalledWith([]);
+            expect(datasetStateSvc.results).toEqual([{record: {}, identifiers: []}]);
             expect(datasetStateSvc.totalSize).toEqual(this.headers['x-total-count']);
             expect(datasetStateSvc.links.next).toBe(nextLink);
             expect(datasetStateSvc.links.prev).toBe(prevLink);
         });
         it('if it does not have links', function() {
             datasetStateSvc.setPagination(this.response);
-            this.response.data.forEach(function(arr) {
-                expect(datasetManagerSvc.splitDatasetArray).toHaveBeenCalledWith(arr);
-            });
-            expect(datasetStateSvc.results.length).toEqual(this.response.data.length);
-            expect(datasetStateSvc.results).toEqual(this.records);
+            expect(datasetManagerSvc.splitDatasetArray).toHaveBeenCalledWith([]);
+            expect(datasetStateSvc.results).toEqual([{record: {}, identifiers: []}]);
             expect(datasetStateSvc.totalSize).toEqual(this.headers['x-total-count']);
             expect(datasetStateSvc.links.next).toBe('');
             expect(datasetStateSvc.links.prev).toBe('');

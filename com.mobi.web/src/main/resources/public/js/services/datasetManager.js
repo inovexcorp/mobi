@@ -277,7 +277,7 @@
 
             /**
              * @ngdoc method
-             * @name getOntologyIdentifiers
+             * @name getRecordFromArray
              * @methodOf datasetManager.service:datasetManagerService
              *
              * @description
@@ -293,7 +293,7 @@
 
             /**
              * @ngdoc method
-             * @name getOntologyIdentifiers
+             * @name splitDatasetArray
              * @methodOf datasetManager.service:datasetManagerService
              *
              * @description

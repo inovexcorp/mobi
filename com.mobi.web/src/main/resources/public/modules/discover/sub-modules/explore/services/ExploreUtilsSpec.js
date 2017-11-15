@@ -189,7 +189,7 @@ describe('Explore Utils Service', function() {
                     expect(response).toEqual('The Dataset ontologies could not be found');
                 });
             scope.$apply();
-            expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith(datasetManagerSvc.datasetRecords[0], this.record);
+            expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith(datasetManagerSvc.datasetRecords[0]);
             expect(ontologyManagerSvc.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
         });
         it('unless no classes are retrieved', function() {
@@ -201,7 +201,7 @@ describe('Explore Utils Service', function() {
                     expect(response).toEqual('The Dataset classes could not be retrieved');
                 });
             scope.$apply();
-            expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith(datasetManagerSvc.datasetRecords[0], this.record);
+            expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith(datasetManagerSvc.datasetRecords[0]);
             expect(ontologyManagerSvc.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
         });
         it('successfully', function() {
@@ -215,7 +215,7 @@ describe('Explore Utils Service', function() {
                     fail('Promise should have resolved');
                 });
             scope.$apply();
-            expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith(datasetManagerSvc.datasetRecords[0], this.record);
+            expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith(datasetManagerSvc.datasetRecords[0]);
             expect(ontologyManagerSvc.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
         });
     });
