@@ -230,7 +230,7 @@
          * @return {Promise} A Promise with the classes within all the linked ontologies of a DatasetRecord
          */
         self.getClasses = function(datasetId) {
-            var datasetArr = _.find(dm.datasetRecords, arr => !!_.find(arr, {'@id': datasetId}));
+            var datasetArr = _.find(dm.datasetRecords, arr => _.some(arr, {'@id': datasetId}));
             if (!datasetArr) {
                 return $q.reject('Dataset could not be found');
             }
