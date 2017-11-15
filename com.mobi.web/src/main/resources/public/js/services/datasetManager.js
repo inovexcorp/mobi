@@ -63,7 +63,7 @@
              * @name datasetRecords
              * @propertyOf datasetManager.service:datasetManagerService
              * @type {Object[]}
-             * 
+             *
              * @description
              * 'datasetRecords' holds an array of dataset record objects which contain properties for the metadata
              * associated with that record.
@@ -214,27 +214,28 @@
                         ds.cleanUpOnDatasetClear(datasetRecordIRI);
                     }, util.rejectError);
             }
-            
+
             /**
              * @ngdoc method
              * @name updateDatasetRecord
              * @methodOf datasetManager.service:datasetManagerService
              *
              * @description
-             * Calls the updateRecord method of the CatalogManager to update the dataset record provided in the JSON-LD. 
+             * Calls the updateRecord method of the CatalogManager to update the dataset record provided in the JSON-LD.
              * If successful: it then updates the appropriate dataset record in datasetRecords. Returns a Promise
              * indicating the success of the request.
-             * 
+             *
              * @param {string} datasetRecordIRI The IRI of the DatasetRecord whose Dataset named graphs should be updated.
              * @param {string} catalogIRI The IRI of the catalog to which the DatasetRecord belongs.
              * @param {Object[]} jsonld An array containing the JSON-LD DatasetRecord with it's associated Ontology information.
              * @return {Promise} A Promise that resolves if the update was successful; rejects with an error message otherwise
              */
             self.updateDatasetRecord = function(datasetRecordIRI, catalogIRI, jsonld) {
-                return cm.updateRecord(datasetRecordIRI, catalogIRI, jsonld).then(() => {
-                    removeDataset(datasetRecordIRI);
-                    self.datasetRecords.push(jsonld);
-                }, $q.reject);
+                return cm.updateRecord(datasetRecordIRI, catalogIRI, jsonld)
+                    .then(() => {
+                        removeDataset(datasetRecordIRI);
+                        self.datasetRecords.push(jsonld);
+                    }, $q.reject);
             }
 
             /**
@@ -256,6 +257,65 @@
                     .then(response => {
                         self.datasetRecords = response.data;
                     }, util.createErrorToast);
+            }
+
+            /**
+             * @ngdoc method
+             * @name getOntologyIdentifiers
+             * @methodOf datasetManager.service:datasetManagerService
+             *
+             * @description
+             * Gets the list of ontology identifiers for the provided record in the provided JSON-LD array
+             *
+             * @param {Object[]} arr A JSON-LD array (typically contains a DatasetRecord and OntologyIdentifiers)
+             * @param {Object} record A DatasetRecord JSON-LD object
+             * @return {Object[]} A JSON-LD array of OntologyIdentifier blank nodes
+             */
+            self.getOntologyIdentifiers = function(arr, record = self.getRecordFromArray(arr)) {
+                return _.map(_.get(record, `['${prefixes.dataset}ontology']`), obj => _.find(arr, {'@id': obj['@id']}));
+            }
+
+            /**
+             * @ngdoc method
+             * @name getRecordFromArray
+             * @methodOf datasetManager.service:datasetManagerService
+             *
+             * @description
+             * Retrieves the DatasetRecord from the provided JSON-LD array based on whether or not the object has
+             * the correct type.
+             *
+             * @param {Object[]} arr A JSON-LD array (typically a result from the REST endpoint)
+             * @return {Object} The JSON-LD object for a DatasetRecord; undefined otherwise
+             */
+            self.getRecordFromArray = function(arr) {
+                return _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord'));
+            }
+
+            /**
+             * @ngdoc method
+             * @name splitDatasetArray
+             * @methodOf datasetManager.service:datasetManagerService
+             *
+             * @description
+             * Splits the JSON-LD array into an object with a key for the DatasetRecord and a key for the
+             * OntologyIdentifiers. The object structure looks like the following:
+             * ```
+             * {
+             *     record: {},
+             *     identifiers: []
+             * }
+             * ```
+             *
+             * @param {Object[]} arr A JSON-LD array (typically a result ofrom the REST endpoint)
+             * @return {Object} An object with key `record` for the DatasetRecord and key `identifiers` for the
+             * OntologyIdentifiers
+             */
+            self.splitDatasetArray = function(arr) {
+                var record = self.getRecordFromArray(arr);
+                return {
+                    record,
+                    identifiers: self.getOntologyIdentifiers(arr, record)
+                };
             }
 
             function removeDataset(datasetRecordIRI) {
