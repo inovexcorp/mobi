@@ -426,27 +426,13 @@
                 var deferred = $q.defer();
                 var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title);
                 $q.all([
-                    om.getIris(recordId, branchId, commitId),
-                    om.getImportedIris(recordId, branchId, commitId),
-                    om.getClassHierarchies(recordId, branchId, commitId),
-                    om.getClassesWithIndividuals(recordId, branchId, commitId),
-                    om.getDataPropertyHierarchies(recordId, branchId, commitId),
-                    om.getObjectPropertyHierarchies(recordId, branchId, commitId),
-                    om.getAnnotationPropertyHierarchies(recordId, branchId, commitId),
-                    om.getConceptHierarchies(recordId, branchId, commitId),
-                    om.getConceptSchemeHierarchies(recordId, branchId, commitId),
-                    cm.getRecordBranches(recordId, catalogId),
-                    om.getImportedOntologies(recordId, branchId, commitId),
-                    om.getFailedImports(recordId, branchId, commitId),
+                    om.getOntologyStuff(recordId, branchId, commitId),
+                    cm.getRecordBranches(recordId, catalogId)
                 ]).then(response => {
+                    _.merge(listItem, response);
                     listItem.iriList.push(listItem.ontologyId);
-                    listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri))
-                    listItem.annotations.iris = _.unionWith(
-                        _.get(response[0], 'annotationProperties'),
-                        propertyManagerService.defaultAnnotations,
-                        propertyManagerService.owlAnnotations,
-                        _.isMatch
-                    );
+                    listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri));
+                    listItem.annotations.iris = _.unionWith(_.get(response[0], 'annotationProperties'), propertyManagerService.defaultAnnotations, propertyManagerService.owlAnnotations, _.isMatch);
                     listItem.classes.iris = [];
                     _.forEach(_.get(response[0], 'classes', []), iriObj => self.addToClassIRIs(listItem, iriObj));
                     listItem.dataProperties.iris = _.get(response[0], 'dataProperties');
@@ -455,77 +441,40 @@
                     listItem.derivedConcepts = _.map(_.get(response[0], 'derivedConcepts', []), ro.getItemIri);
                     listItem.derivedConceptSchemes = _.map(_.get(response[0], 'derivedConceptSchemes', []), ro.getItemIri);
                     listItem.derivedSemanticRelations = _.map(_.get(response[0], 'derivedSemanticRelations', []));
-                    listItem.dataPropertyRange = _.unionWith(
-                        _.get(response[0], 'datatypes'),
-                        om.defaultDatatypes,
-                        _.isMatch
-                    );
-                    _.forEach(response[1], iriList => {
-                        listItem.annotations.iris = _.unionWith(
-                            addOntologyIdToArray(iriList.annotationProperties, iriList.id),
-                            listItem.annotations.iris,
-                            compareIriObjs
-                        );
-                        _.forEach(addOntologyIdToArray(iriList.classes, iriList.id), iriObj => {
-                            self.addToClassIRIs(listItem, iriObj);
-                        });
-                        listItem.dataProperties.iris = _.unionWith(
-                            addOntologyIdToArray(iriList.dataProperties, iriList.id),
-                            listItem.dataProperties.iris,
-                            compareIriObjs
-                        );
-                        listItem.objectProperties.iris = _.unionWith(
-                            addOntologyIdToArray(iriList.objectProperties, iriList.id),
-                            listItem.objectProperties.iris,
-                            compareIriObjs
-                        );
-                        listItem.individuals.iris = _.unionWith(
-                            addOntologyIdToArray(iriList.namedIndividuals, iriList.id),
-                            listItem.individuals.iris,
-                            compareIriObjs
-                        );
-                        listItem.dataPropertyRange = _.unionWith(
-                            addOntologyIdToArray(iriList.datatypes, iriList.id),
-                            listItem.dataPropertyRange,
-                            compareIriObjs
-                        );
+                    listItem.dataPropertyRange = _.unionWith(_.get(response[0], 'datatypes'), om.defaultDatatypes, _.isMatch);
+                    _.forEach(_.get(response[0], 'importedIRIs'), iriList => {
+                        listItem.annotations.iris = _.unionWith(addOntologyIdToArray(iriList.annotationProperties, iriList.id), listItem.annotations.iris, compareIriObjs);
+                        _.forEach(addOntologyIdToArray(iriList.classes, iriList.id), iriObj => self.addToClassIRIs(listItem, iriObj));
+                        listItem.dataProperties.iris = _.unionWith(addOntologyIdToArray(iriList.dataProperties, iriList.id), listItem.dataProperties.iris, compareIriObjs);
+                        listItem.objectProperties.iris = _.unionWith(addOntologyIdToArray(iriList.objectProperties, iriList.id), listItem.objectProperties.iris, compareIriObjs);
+                        listItem.individuals.iris = _.unionWith(addOntologyIdToArray(iriList.namedIndividuals, iriList.id), listItem.individuals.iris, compareIriObjs);
+                        listItem.dataPropertyRange = _.unionWith(addOntologyIdToArray(iriList.datatypes, iriList.id), listItem.dataPropertyRange, compareIriObjs);
                         listItem.iriList.push(iriList['id'])
                         listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(iriList)), ro.getItemIri))
                     });
-
-                    listItem.classes.hierarchy = response[2].hierarchy;
-                    listItem.classes.index = response[2].index;
+                    listItem.classes = _.get(response[0], 'classes');
                     listItem.classes.flat = self.flattenHierarchy(listItem.classes.hierarchy, recordId, listItem);
-                    listItem.dataProperties.hierarchy = response[4].hierarchy;
-                    listItem.dataProperties.index = response[4].index;
+                    listItem.dataProperties = _.get(response[0], 'dataProperties');
                     listItem.dataProperties.flat = self.flattenHierarchy(listItem.dataProperties.hierarchy, recordId, listItem);
-                    listItem.objectProperties.hierarchy = response[5].hierarchy;
-                    listItem.objectProperties.index = response[5].index;
+                    listItem.objectProperties = _.get(response[0], 'objectProperties');
                     listItem.objectProperties.flat = self.flattenHierarchy(listItem.objectProperties.hierarchy, recordId, listItem);
-                    listItem.annotations.hierarchy = response[6].hierarchy;
-                    listItem.annotations.index = response[6].index;
+                    listItem.annotations = _.get(response[0], 'annotations');
                     listItem.annotations.flat = self.flattenHierarchy(listItem.annotations.hierarchy, recordId, listItem);
-                    listItem.concepts.hierarchy = response[7].hierarchy;
-                    listItem.concepts.index = response[7].index;
+                    listItem.concepts = _.get(response[0], 'concepts');
                     listItem.concepts.flat = self.flattenHierarchy(listItem.concepts.hierarchy, recordId, listItem);
-                    listItem.conceptSchemes.hierarchy = response[8].hierarchy;
-                    listItem.conceptSchemes.index = response[8].index;
+                    listItem.conceptSchemes = _.get(response[0], 'conceptSchemes');
                     listItem.conceptSchemes.flat = self.flattenHierarchy(listItem.conceptSchemes.hierarchy, recordId, listItem);
-                    listItem.branches = response[9].data;
-                    _.forEach(response[10], importedOntObj => {
+                    _.forEach(_.get(response[0], 'importedOntologies'), importedOntObj => {
                         addImportedOntologyToListItem(listItem, importedOntObj);
                     });
-                    listItem.classesAndIndividuals = response[3].individuals;
-                    listItem.classesWithIndividuals = _.keys(response[3].individuals);
+                    listItem.classesAndIndividuals = response[0].individuals;
+                    listItem.classesWithIndividuals = _.keys(response[0].individuals);
                     listItem.individualsParentPath = self.getIndividualsParentPath(listItem);
                     listItem.individuals.flat = self.createFlatIndividualTree(listItem);
                     listItem.flatEverythingTree = self.createFlatEverythingTree(getOntologiesArrayByListItem(listItem), listItem);
-                    _.pullAllWith(
-                        listItem.annotations.iris,
-                        _.concat(om.ontologyProperties, listItem.dataProperties.iris, listItem.objectProperties.iris, angular.copy(om.conceptRelationshipList), angular.copy(om.schemeRelationshipList)),
-                        compareIriObjs
-                    );
-                    listItem.failedImports = response[11];
+                    _.pullAllWith(listItem.annotations.iris, _.concat(om.ontologyProperties, listItem.dataProperties.iris, listItem.objectProperties.iris, angular.copy(om.conceptRelationshipList), angular.copy(om.schemeRelationshipList)), compareIriObjs);
+                    listItem.failedImports = _.get(response[0], 'failedImports');
+                    listItem.branches = response[1].data;
                     deferred.resolve(listItem);
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
                 return deferred.promise;

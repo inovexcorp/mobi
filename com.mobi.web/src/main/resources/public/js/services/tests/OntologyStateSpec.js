@@ -1416,24 +1416,24 @@ describe('Ontology State Service', function() {
             this.annotationPropertyHierarchiesResponse = { hierarchy: [], index: {} };
             this.conceptHierarchiesResponse = { hierarchy: [], index: {} };
             this.conceptSchemeHierarchiesResponse = { hierarchy: [], index: {} };
-            ontologyManagerSvc.getClassHierarchies.and.returnValue($q.when(this.classHierarchiesResponse));
-            ontologyManagerSvc.getClassesWithIndividuals.and.returnValue($q.when(this.classesWithIndividualsResponse));
-            ontologyManagerSvc.getDataPropertyHierarchies.and.returnValue($q.when(this.dataPropertyHierarchiesResponse));
-            ontologyManagerSvc.getObjectPropertyHierarchies.and.returnValue($q.when(this.objectPropertyHierarchiesResponse));
-            ontologyManagerSvc.getAnnotationPropertyHierarchies.and.returnValue($q.when(this.annotationPropertyHierarchiesResponse));
-            ontologyManagerSvc.getConceptHierarchies.and.returnValue($q.when(this.conceptHierarchiesResponse));
-            ontologyManagerSvc.getConceptSchemeHierarchies.and.returnValue($q.when(this.conceptSchemeHierarchiesResponse));
+            ontologyManagerSvc.getOntologyStuff.and.returnValue($q.when(_.merge({},
+                this.irisResponse,
+                this.importedIrisResponse,
+                { classes: this.classHierarchiesResponse },
+                { individuals: this.classesWithIndividualsResponse },
+                { dataProperties: this.dataPropertyHierarchiesResponse },
+                { annotations: this.annotationPropertyHierarchiesResponse },
+                { concepts: this.conceptHierarchiesResponse },
+                { conceptSchemes: this.conceptSchemeHierarchiesResponse },
+                { failedImports: ['failedId'] }
+            )));
             this.branches = [this.branch];
-            ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([{id: 'imported-ontology', ontologyId: this.ontologyId, ontology: [{'@id': this.ontologyId}]}]));
             catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: this.branches}));
             spyOn(ontologyStateSvc, 'flattenHierarchy').and.returnValue([{prop: 'flatten'}]);
             spyOn(ontologyStateSvc, 'createFlatEverythingTree').and.returnValue([{prop: 'everything'}]);
             spyOn(ontologyStateSvc, 'createFlatIndividualTree').and.returnValue([{prop: 'individual'}]);
-            ontologyManagerSvc.getFailedImports.and.returnValue(['failedId']);
         });
         it('when all promises resolve', function() {
-            ontologyManagerSvc.getIris.and.returnValue($q.when(this.irisResponse));
-            ontologyManagerSvc.getImportedIris.and.returnValue($q.when(this.importedIrisResponse));
             ontologyStateSvc.createOntologyListItem(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.inProgressCommit, false)
                 .then(function(response) {
                     expect(_.get(response, 'annotations.iris')).toEqual([{
@@ -1527,8 +1527,7 @@ describe('Ontology State Service', function() {
             expect(ontologyManagerSvc.getConceptSchemeHierarchies).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
         });
         it('when one call fails', function() {
-            ontologyManagerSvc.getIris.and.returnValue($q.reject(this.error));
-            ontologyManagerSvc.getImportedIris.and.returnValue($q.when(this.importedIrisResponse));
+            catalogManagerSvc.getRecordBranches.and.returnValue($q.reject(this.error));
             ontologyStateSvc.createOntologyListItem(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.inProgressCommit, true)
                 .then(function() {
                     fail('Promise should have rejected');
@@ -1538,8 +1537,8 @@ describe('Ontology State Service', function() {
             scope.$apply();
         });
         it('when more than one call fails', function() {
-            ontologyManagerSvc.getIris.and.returnValue($q.reject(this.error));
-            ontologyManagerSvc.getImportedIris.and.returnValue($q.reject(this.error));
+            ontologyManagerSvc.getOntologyStuff.and.returnValue($q.reject(this.error));
+            catalogManagerSvc.getRecordBranches.and.returnValue($q.reject(this.error));
             ontologyStateSvc.createOntologyListItem(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.inProgressCommit, true)
                 .then(function() {
                     fail('Promise should have rejected');
