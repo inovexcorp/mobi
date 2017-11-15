@@ -46,7 +46,7 @@
          * HTML contents in the dataset select which provides a dropdown select of all datasets.
          */
         .directive('datasetSelect', datasetSelect);
-        
+
         datasetSelect.$inject = ['utilService', 'datasetManagerService', 'prefixes'];
 
         function datasetSelect(utilService, datasetManagerService, prefixes) {
@@ -65,7 +65,7 @@
                     var dvm = this;
                     dvm.dm = datasetManagerService;
                     dvm.util = utilService;
-                    dvm.datasetRecords = _.map(dvm.dm.datasetRecords, arr => _.find(arr, '@type'));
+                    dvm.datasetRecords = _.map(dvm.dm.datasetRecords, dvm.dm.getRecordFromArray);
 
                     if (!_.some(dvm.datasetRecords, {'@id': dvm.bindModel})) {
                         dvm.bindModel = '';

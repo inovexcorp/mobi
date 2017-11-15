@@ -46,8 +46,9 @@ describe('Run Mapping Overlay directive', function() {
             prefixes = _prefixes_;
         });
 
-        this.datasetRecord = {'@type': [prefixes.dataset + 'DatasetRecord']};
+        this.datasetRecord = {'@id': 'dataset'};
         datasetManagerSvc.getDatasetRecords.and.returnValue($q.when({data: [[this.datasetRecord]]}));
+        datasetManagerSvc.getRecordFromArray.and.returnValue(this.datasetRecord);
         camelCase.and.callFake(_.identity);
         mapperStateSvc.mapping = {record: {title: 'record'}, jsonld: []};
         this.element = $compile(angular.element('<run-mapping-overlay></run-mapping-overlay>'))(scope);
@@ -73,6 +74,8 @@ describe('Run Mapping Overlay directive', function() {
         it('datasetRecords', function() {
             scope.$apply();
             expect(this.controller.datasetRecords).toEqual([this.datasetRecord]);
+            expect(datasetManagerSvc.getDatasetRecords).toHaveBeenCalled();
+            expect(datasetManagerSvc.getRecordFromArray).toHaveBeenCalledWith([this.datasetRecord]);
         });
     });
     describe('controller methods', function() {

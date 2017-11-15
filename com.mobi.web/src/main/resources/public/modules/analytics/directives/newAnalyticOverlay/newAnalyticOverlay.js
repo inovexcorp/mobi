@@ -22,7 +22,7 @@
  */
 (function() {
     'use strict';
-    
+
     angular
         /**
          * @ngdoc overview
@@ -48,9 +48,9 @@
          * used to create an analytic.
          */
         .directive('newAnalyticOverlay', newAnalyticOverlay);
-        
+
         newAnalyticOverlay.$inject = ['analyticStateService', 'datasetManagerService', 'prefixes', 'utilService'];
-        
+
         function newAnalyticOverlay(analyticStateService, datasetManagerService, prefixes, utilService) {
             return {
                 restrict: 'E',
@@ -67,7 +67,7 @@
                     var dm = datasetManagerService;
                     var util = utilService;
                     dvm.datasets = _.map(dm.datasetRecords, arr => {
-                        var record = _.find(arr, '@type');
+                        var record = dm.getRecordFromArray(arr);
                         var ontologies = state.getOntologies(arr, record);
                         return {
                             id: record['@id'],
@@ -77,7 +77,7 @@
                             ontologies
                         };
                     });
-                    
+
                     dvm.submit = function() {
                         state.datasets = _.map(_.filter(dvm.datasets, 'selected'), dataset => ({
                             id: dataset.id,
@@ -86,7 +86,6 @@
                         state.showEditor();
                         dvm.onCancel();
                     }
-                    
                     dvm.change = function(changed) {
                         _.forEach(dvm.datasets, dataset => {
                             if (dataset.id !== changed.id) {
@@ -94,7 +93,6 @@
                             }
                         });
                     }
-                    
                     dvm.isSubmittable = function() {
                         return _.some(dvm.datasets, 'selected');
                     }
