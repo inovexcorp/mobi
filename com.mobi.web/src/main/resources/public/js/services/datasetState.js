@@ -177,11 +177,7 @@
              * @param {Object} response A response from a paginated HTTP call
              */
             self.setPagination = function(response) {
-                self.results = _.map(response.data, arr => {
-                    var record = _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord'));
-                    var identifiers = _.without(arr, record);
-                    return { record, identifiers };
-                });
+                self.results = _.map(response.data, arr => dm.splitDatasetArray(arr));
                 var headers = response.headers();
                 self.totalSize = _.get(headers, 'x-total-count', 0);
                 var links = util.parseLinks(_.get(headers, 'link', ''));

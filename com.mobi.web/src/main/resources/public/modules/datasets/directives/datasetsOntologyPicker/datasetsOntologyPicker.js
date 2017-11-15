@@ -93,17 +93,11 @@
                         });
                     }
                     dvm.getRecordPage = function(direction) {
-                        if (direction === 'prev') {
-                            dvm.util.getResultsPage(dvm.links.prev).then(response => {
-                                dvm.ontologySearchConfig.pageIndex -= 1;
+                        dvm.util.getResultsPage(dvm.links[direction])
+                            .then(response => {
+                                dvm.ontologySearchConfig.pageIndex = dvm.ontologySearchConfig.pageIndex + (direction === 'prev' ? -1 : 1);
                                 parseOntologyResults(response);
                             }, onError);
-                        } else {
-                            dvm.util.getResultsPage(dvm.links.next).then(response => {
-                                dvm.ontologySearchConfig.pageIndex += 1;
-                                parseOntologyResults(response);
-                            }, onError);
-                        }
                     }
                     dvm.isSelected = function(ontologyId) {
                         return _.some(dvm.selectedOntologies, {'@id': ontologyId});
