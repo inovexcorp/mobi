@@ -62,13 +62,11 @@ public class FederationSecurityHelper implements SecurityHelper {
 
     @Reference(type = '*', dynamic = true)
     void addFederationService(FederationService federationService) {
-        String federationId = federationService.getFederationId();
-        serviceMap.put(federationId, federationService);
+        serviceMap.put(federationService.getFederationId(), federationService);
     }
 
     void removeFederationService(FederationService federationService) {
-        String federationId = federationService.getFederationId();
-        serviceMap.remove(federationId);
+        serviceMap.remove(federationService.getFederationId());
     }
 
     @Override

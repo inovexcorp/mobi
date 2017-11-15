@@ -67,8 +67,7 @@ public class RestSecurityHandler implements AuthenticationHandler, Authorization
         boolean authenticated = false;
         String className = "";
 
-        for (Map.Entry<String, SecurityHelper> entry : helpers.entrySet()) {
-            SecurityHelper helper = entry.getValue();
+        for (SecurityHelper helper : helpers.values()) {
             if (helper.authenticate(containerRequestContext, subject)) {
                 className = helper.getClass().getSimpleName();
                 LOG.debug("Authenticated using " + className);
