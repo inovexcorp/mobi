@@ -100,10 +100,10 @@ public class RDFImportServiceImpl implements RDFImportService {
 
     @Override
     public void importInputStream(ImportServiceConfig config, InputStream stream) throws IOException {
+        if (config.getFormat() == null) {
+            throw new IllegalArgumentException("Config must contain a format if importing an InputStream");
+        }
         try (RepositoryConnection conn = getConnection(config)) {
-            if (config.getFormat() == null) {
-                throw new IllegalArgumentException("Config must contain a format if importing an InputStream");
-            }
             importInputStream(conn, config, stream, config.getFormat());
         }
     }
