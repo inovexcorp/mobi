@@ -41,8 +41,8 @@ public class MobiCamelContext extends OsgiDefaultCamelContext {
     public MobiCamelContext(BundleContext bundleContext, Workflow workflow) throws Exception {
         super(bundleContext, new OsgiServiceRegistry(bundleContext));
         this.workflow = workflow;
-        this.setName(RestUtils.encode(workflow.getResource().stringValue()));
-        registration = bundleContext.registerService(new String[] {MobiCamelContext.class.getName(), CamelContext.class.getName()}, this, new Hashtable<>());
+        registration = bundleContext.registerService(new String[] {MobiCamelContext.class.getName(),
+                CamelContext.class.getName()}, this, new Hashtable<>());
         this.start();
     }
 

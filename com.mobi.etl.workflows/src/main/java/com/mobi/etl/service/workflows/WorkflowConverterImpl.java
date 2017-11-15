@@ -144,8 +144,7 @@ public class WorkflowConverterImpl implements WorkflowConverter {
                     }
                     List<Pair<com.mobi.ontologies.rdfs.List, RouteDefinition>> toProcess = new ArrayList<>();
 
-                    RouteDefinition start = from(getDataSourceEndpoint(dataSources, dataSourceIRI))
-                            .routeId(UUID.randomUUID().toString());
+                    RouteDefinition start = from(getDataSourceEndpoint(dataSources, dataSourceIRI));
                     processRest(workflow, route, toProcess, start, this);
 
                     while (toProcess.size() > 0) {
@@ -232,9 +231,8 @@ public class WorkflowConverterImpl implements WorkflowConverter {
             for (Resource restId : restSet) {
                 com.mobi.ontologies.rdfs.List subList = listFactory.getExisting(restId, workflow.getModel())
                         .orElseThrow(() -> new IllegalArgumentException("List rest property value must be a rdf:List"));
-                String routeId = UUID.randomUUID().toString();
-                String directId = "direct:" + routeId;
-                RouteDefinition subDef = builder.from(directId).routeId(routeId);
+                String directId = "direct:" + UUID.randomUUID().toString();
+                RouteDefinition subDef = builder.from(directId);
                 toProcess.add(Pair.of(subList, subDef));
                 ids.add(directId);
             }
