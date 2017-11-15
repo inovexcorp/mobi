@@ -430,14 +430,14 @@
                     cm.getRecordBranches(recordId, catalogId)
                 ]).then(response => {
                     listItem.iriList.push(listItem.ontologyId);
-                    var responseIriList = _.get(response[0], 'iriList');
+                    var responseIriList = _.get(response[0], 'iriList', {});
                     listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(responseIriList)), ro.getItemIri));
                     listItem.annotations.iris = _.unionWith(_.get(responseIriList, 'annotationProperties'), propertyManagerService.defaultAnnotations, propertyManagerService.owlAnnotations, _.isMatch);
                     listItem.classes.iris = [];
                     _.forEach(_.get(responseIriList, 'classes', []), iriObj => self.addToClassIRIs(listItem, iriObj));
-                    listItem.dataProperties.iris = _.get(responseIriList, 'dataProperties');
-                    listItem.objectProperties.iris = _.get(responseIriList, 'objectProperties');
-                    listItem.individuals.iris = _.get(responseIriList, 'namedIndividuals');
+                    listItem.dataProperties.iris = _.get(responseIriList, 'dataProperties', []);
+                    listItem.objectProperties.iris = _.get(responseIriList, 'objectProperties', []);
+                    listItem.individuals.iris = _.get(responseIriList, 'namedIndividuals', []);
                     listItem.derivedConcepts = _.map(_.get(responseIriList, 'derivedConcepts', []), ro.getItemIri);
                     listItem.derivedConceptSchemes = _.map(_.get(responseIriList, 'derivedConceptSchemes', []), ro.getItemIri);
                     listItem.derivedSemanticRelations = _.map(_.get(responseIriList, 'derivedSemanticRelations', []));
@@ -473,7 +473,7 @@
                     listItem.individuals.flat = self.createFlatIndividualTree(listItem);
                     listItem.flatEverythingTree = self.createFlatEverythingTree(getOntologiesArrayByListItem(listItem), listItem);
                     _.pullAllWith(listItem.annotations.iris, _.concat(om.ontologyProperties, listItem.dataProperties.iris, listItem.objectProperties.iris, angular.copy(om.conceptRelationshipList), angular.copy(om.schemeRelationshipList)), compareIriObjs);
-                    listItem.failedImports = _.get(response[0], 'failedImports');
+                    listItem.failedImports = _.get(response[0], 'failedImports', []);
                     listItem.branches = response[1].data;
                     deferred.resolve(listItem);
                 }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
@@ -1388,7 +1388,7 @@
             return result;
         }
         function setHierarchyInfo(obj, response, key) {
-            var hierarchyInfo = _.get(response, key);
+            var hierarchyInfo = _.get(response, key, {hierarchy: [], index: {}});
             obj.hierarchy = hierarchyInfo.hierarchy;
             obj.index = hierarchyInfo.index;
         }

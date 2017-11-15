@@ -683,6 +683,48 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         return new JSONObject().element("@type", JSONArray.fromObject(Collections.singleton(type)));
     }
 
+    private void assertGetOntologyStuff(Response response) {
+        JSONObject responseObject = getResponse(response);
+        JSONObject iriList = responseObject.getJSONObject("iriList");
+
+        assertAnnotations(iriList, annotationProperties, annotations);
+        assertClassIRIs(iriList, classes);
+        assertDatatypes(iriList, datatypes);
+        assertObjectPropertyIRIs(iriList, objectProperties);
+        assertDataPropertyIRIs(iriList, dataProperties);
+        assertIndividuals(iriList, individuals);
+        assertDerivedConcepts(iriList, derivedConcepts);
+        assertDerivedConceptSchemes(iriList, derivedConceptSchemes);
+        assertDerivedSemanticRelations(iriList, derivedSemanticRelations);
+
+        assertImportedOntologies(responseObject.getJSONArray("importedIRIs"), (importedObject) -> {
+            assertAnnotations(importedObject, annotationProperties, annotations);
+            assertClassIRIs(importedObject, importedClasses);
+            assertDatatypes(importedObject, datatypes);
+            assertObjectPropertyIRIs(importedObject, objectProperties);
+            assertDataPropertyIRIs(importedObject, dataProperties);
+            assertIndividuals(importedObject, individuals);
+            assertDerivedConcepts(importedObject, derivedConcepts);
+            assertDerivedConceptSchemes(importedObject, derivedConceptSchemes);
+            assertDerivedSemanticRelations(importedObject, derivedSemanticRelations);
+        });
+
+        assertEquals(responseObject.get("importedOntologies"), importedOntologyResults);
+        assertFailedImports(responseObject.getJSONArray("failedImports"));
+        assertEquals(responseObject.getJSONObject("classHierarchy"), basicHierarchyResults);
+        assertEquals(responseObject.getJSONObject("individuals"), individualsOfResult.getJSONObject("individuals"));
+        assertEquals(responseObject.getJSONObject("dataPropertyHierarchy"), basicHierarchyResults);
+        assertEquals(responseObject.getJSONObject("objectPropertyHierarchy"), basicHierarchyResults);
+        assertEquals(responseObject.getJSONObject("annotationHierarchy"), basicHierarchyResults);
+        assertEquals(responseObject.getJSONObject("conceptHierarchy"), basicHierarchyResults);
+        assertEquals(responseObject.getJSONObject("conceptSchemeHierarchy"), basicHierarchyResults);
+    }
+
+    private void assertFailedImports(JSONArray failedImports) {
+        assertEquals(failedImports.size(), 1);
+        assertEquals(failedImports.get(0), importedOntologyIRI.stringValue());
+    }
+
     // Test upload file
 
     @Test
@@ -1212,7 +1254,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
-        verifyGetOntologyStuff(response);
+        assertGetOntologyStuff(response);
     }
 
     @Test
@@ -1226,7 +1268,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
-        verifyGetOntologyStuff(response);
+        assertGetOntologyStuff(response);
     }
 
     @Test
@@ -1246,7 +1288,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
-        verifyGetOntologyStuff(response);
+        assertGetOntologyStuff(response);
     }
 
     @Test
@@ -1257,7 +1299,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
-        verifyGetOntologyStuff(response);
+        assertGetOntologyStuff(response);
     }
 
     @Test
@@ -1270,45 +1312,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .get();
 
         assertEquals(response.getStatus(), 400);
-    }
-
-    private void verifyGetOntologyStuff(Response response) {
-        JSONObject responseObject = getResponse(response);
-        JSONObject iriList = responseObject.getJSONObject("iriList");
-
-        assertAnnotations(iriList, annotationProperties, annotations);
-        assertClassIRIs(iriList, classes);
-        assertDatatypes(iriList, datatypes);
-        assertObjectPropertyIRIs(iriList, objectProperties);
-        assertDataPropertyIRIs(iriList, dataProperties);
-        assertIndividuals(iriList, individuals);
-        assertDerivedConcepts(iriList, derivedConcepts);
-        assertDerivedConceptSchemes(iriList, derivedConceptSchemes);
-        assertDerivedSemanticRelations(iriList, derivedSemanticRelations);
-
-        assertImportedOntologies(responseObject.getJSONArray("importedIRIs"), (importedObject) -> {
-            assertAnnotations(importedObject, annotationProperties, annotations);
-            assertClassIRIs(importedObject, importedClasses);
-            assertDatatypes(importedObject, datatypes);
-            assertObjectPropertyIRIs(importedObject, objectProperties);
-            assertDataPropertyIRIs(importedObject, dataProperties);
-            assertIndividuals(importedObject, individuals);
-            assertDerivedConcepts(importedObject, derivedConcepts);
-            assertDerivedConceptSchemes(importedObject, derivedConceptSchemes);
-            assertDerivedSemanticRelations(importedObject, derivedSemanticRelations);
-        });
-
-        assertEquals(responseObject.get("importedOntologies"), importedOntologyResults);
-        JSONArray failedImports = responseObject.getJSONArray("failedImports");
-        assertEquals(failedImports.size(), 1);
-        assertEquals(failedImports.get(0), importedOntologyIRI.stringValue());
-        assertEquals(responseObject.getJSONObject("classHierarchy"), basicHierarchyResults);
-        assertEquals(responseObject.getJSONObject("individuals"), individualsOfResult.getJSONObject("individuals"));
-        assertEquals(responseObject.getJSONObject("dataPropertyHierarchy"), basicHierarchyResults);
-        assertEquals(responseObject.getJSONObject("objectPropertyHierarchy"), basicHierarchyResults);
-        assertEquals(responseObject.getJSONObject("annotationHierarchy"), basicHierarchyResults);
-        assertEquals(responseObject.getJSONObject("conceptHierarchy"), basicHierarchyResults);
-        assertEquals(responseObject.getJSONObject("conceptSchemeHierarchy"), basicHierarchyResults);
     }
 
     // Test get IRIs in ontology
@@ -4311,9 +4314,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .request().get();
 
         assertEquals(response.getStatus(), 200);
-        JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
-        assertEquals(array.size(), 1);
-        assertEquals(array.get(0), importedOntologyIRI.stringValue());
+        assertFailedImports(JSONArray.fromObject(response.readEntity(String.class)));
         assertGetOntology(true);
     }
 
@@ -4326,9 +4327,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .request().get();
 
         assertEquals(response.getStatus(), 200);
-        JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
-        assertEquals(array.size(), 1);
-        assertEquals(array.get(0), importedOntologyIRI.stringValue());
+        assertFailedImports(JSONArray.fromObject(response.readEntity(String.class)));
         assertGetOntology(false);
     }
 
@@ -4346,9 +4345,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
         assertEquals(response.getStatus(), 200);
-        JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
-        assertEquals(array.size(), 1);
-        assertEquals(array.get(0), importedOntologyIRI.stringValue());
+        assertFailedImports(JSONArray.fromObject(response.readEntity(String.class)));
         assertGetOntology(true);
     }
 
@@ -4358,9 +4355,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
                 .request().get();
 
         assertEquals(response.getStatus(), 200);
-        JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
-        assertEquals(array.size(), 1);
-        assertEquals(array.get(0), importedOntologyIRI.stringValue());
+        assertFailedImports(JSONArray.fromObject(response.readEntity(String.class)));
         assertGetOntology(true);
     }
 

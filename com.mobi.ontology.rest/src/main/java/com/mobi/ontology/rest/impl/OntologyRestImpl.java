@@ -416,8 +416,7 @@ public class OntologyRestImpl implements OntologyRest {
                     .collect(JSONArray::new, JSONArray::add, JSONArray::add));
             result.put("failedImports", getUnloadableImportIRIs(ontology));
             result.put("classHierarchy", getHierarchy(ontologyManager.getSubClassesOf(conn)));
-            TupleQueryResult classIndividuals = ontologyManager.getClassesWithIndividuals(conn);
-            result.put("individuals", getClassIndividuals(classIndividuals));
+            result.put("individuals", getClassIndividuals(ontologyManager.getClassesWithIndividuals(conn)));
             result.put("dataPropertyHierarchy", getHierarchy(ontologyManager.getSubDatatypePropertiesOf(conn)));
             result.put("objectPropertyHierarchy", getHierarchy(ontologyManager.getSubObjectPropertiesOf(conn)));
             result.put("annotationHierarchy", getHierarchy(ontologyManager.getSubAnnotationPropertiesOf(conn)));
