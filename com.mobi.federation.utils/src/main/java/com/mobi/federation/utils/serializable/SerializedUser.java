@@ -54,6 +54,11 @@ public class SerializedUser implements Serializable, Comparable<SerializedUser> 
     }
 
     @Override
+    public boolean equals(Object obj) {
+        return obj instanceof SerializedUser && this.userIRI.equals(((SerializedUser) obj).userIRI);
+    }
+
+    @Override
     public int compareTo(SerializedUser other) {
         return this.userIRI.compareTo(other.userIRI);
     }

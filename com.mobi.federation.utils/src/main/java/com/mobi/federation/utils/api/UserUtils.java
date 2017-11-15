@@ -75,25 +75,27 @@ public interface UserUtils {
      * @param service  The {@link FederationService} to add the user to.
      * @param username The username of the {@link User} to get.
      * @param nodeId   The node ID.
+     * @return An Optional containing the {@link User} if it exists.
      */
     Optional<User> getUser(FederationService service, String username, String nodeId);
 
     /**
-     * Validates that the user exists in the identified federation.
+     * Verifies that the user exists in the identified federation.
      *
      * @param service  The {@link FederationService} to search.
      * @param username The username to validate.
-     * @throws FailedLoginException Thrown if the user does not exist.
+     * @return True if the user exists in the federation; otherwise, false.
      */
     boolean userExists(FederationService service, String username) throws FailedLoginException;
 
     /**
-     * Validates that the user exists on the identified node in the identified federation.
+     * Verifies that the user exists on the identified node in the identified federation.
      *
      * @param service  The {@link FederationService} to search.
      * @param username The username to validate.
      * @param nodeId   The node ID.
-     * @throws FailedLoginException Thrown if the user does not exist.
+     * @return True if the user exists on the identified node; otherwise, false.
+     * @throws IllegalStateException Thrown if the provided node ID is not in the federation.
      */
     boolean userExists(FederationService service, String username, String nodeId) throws LoginException;
 }

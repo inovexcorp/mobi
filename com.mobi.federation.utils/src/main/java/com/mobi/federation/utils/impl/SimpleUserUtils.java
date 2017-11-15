@@ -39,8 +39,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import javax.security.auth.login.FailedLoginException;
-import javax.security.auth.login.LoginException;
 
 @Component
 public class SimpleUserUtils implements UserUtils {
