@@ -1,6 +1,8 @@
 /* Core variables */
 @import "./src/main/resources/public/css/variables";
 
-.datasets-ontology-picker label:first-of-type {
-    display: none;
+.new-dataset-ontologies-overlay {
+    .datasets-ontology-picker label {
+        display: none;
+    }
 }
