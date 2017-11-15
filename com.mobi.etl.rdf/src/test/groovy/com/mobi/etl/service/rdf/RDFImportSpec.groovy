@@ -95,6 +95,28 @@ class RDFImportSpec extends Specification {
         (1.._) * conn.add(*_)
     }
 
+    def "Imports InputStream to repository with format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).format(RDFFormat.TRIG).build()
+
+        when:
+        service.importInputStream(config, new FileInputStream(file))
+
+        then:
+        (1.._) * conn.add(*_)
+    }
+
+    def "Throws exception if no format when importing InputStream"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(true).repository(repoId).build()
+
+        when:
+        service.importInputStream(config, new FileInputStream(file))
+
+        then:
+        thrown IllegalArgumentException
+    }
+
     def "Throws exception if repository ID does not exist"() {
         setup:
         def config = new ImportServiceConfig.Builder().continueOnError(true).repository("missing").build()
@@ -147,6 +169,28 @@ class RDFImportSpec extends Specification {
 
         when:
         service.importFile(config, file)
+
+        then:
+        (1.._) * datasetConn.add(*_)
+    }
+
+    def "Imports Model to dataset"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(true).dataset(datasetId).build()
+
+        when:
+        service.importModel(config, model)
+
+        then:
+        (1.._) * datasetConn.add(*_)
+    }
+
+    def "Imports InputStream to dataset with format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(true).dataset(datasetId).format(RDFFormat.TRIG).build()
+
+        when:
+        service.importInputStream(config, new FileInputStream(file))
 
         then:
         (1.._) * datasetConn.add(*_)

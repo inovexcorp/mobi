@@ -33,6 +33,8 @@ import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.dataset.rest.DatasetRest;
+import com.mobi.etl.api.config.rdf.ImportServiceConfig;
+import com.mobi.etl.api.rdf.RDFImportService;
 import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
@@ -58,7 +60,15 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.jaxb.Links;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFParseException;
+import org.openrdf.rio.Rio;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -77,6 +87,7 @@ public class DatasetRestImpl implements DatasetRest {
     private ValueFactory vf;
     private ModelFactory mf;
     private CatalogProvUtils provUtils;
+    private RDFImportService importService;
 
     @Reference
     void setManager(DatasetManager manager) {
@@ -116,6 +127,11 @@ public class DatasetRestImpl implements DatasetRest {
     @Reference
     void setProvUtils(CatalogProvUtils provUtils) {
         this.provUtils = provUtils;
+    }
+
+    @Reference
+    void setImportService(RDFImportService importService) {
+        this.importService = importService;
     }
 
     @Override
@@ -179,7 +195,7 @@ public class DatasetRestImpl implements DatasetRest {
             }
             if (ontologies != null) {
                 ontologies.forEach(formDataBodyPart -> builder.ontology(
-                        getOntologyIdentifer(vf.createIRI(formDataBodyPart.getValue()))));
+                        getOntologyIdentifier(vf.createIRI(formDataBodyPart.getValue()))));
             }
             DatasetRecord record = manager.createDataset(builder.build());
             provUtils.endCreateActivity(createActivity, record.getResource());
@@ -253,7 +269,30 @@ public class DatasetRestImpl implements DatasetRest {
         return Response.ok().build();
     }
 
-    private OntologyIdentifier getOntologyIdentifer(Resource recordId) {
+    @Override
+    public Response uploadData(String datasetRecordId, InputStream fileInputStream,
+                               FormDataContentDisposition fileDetail) {
+        if (fileInputStream == null) {
+            throw ErrorUtils.sendError("Must provide a file", Response.Status.BAD_REQUEST);
+        }
+        RDFFormat format = Rio.getParserFormatForFileName(fileDetail.getFileName()).orElseThrow(() ->
+                ErrorUtils.sendError("File is not in a valid RDF format", Response.Status.BAD_REQUEST));
+
+        ImportServiceConfig.Builder builder = new ImportServiceConfig.Builder()
+                .dataset(vf.createIRI(datasetRecordId))
+                .format(format)
+                .logOutput(true);
+        try {
+            importService.importInputStream(builder.build(), fileInputStream);
+            return Response.ok().build();
+        } catch (IllegalArgumentException | RDFParseException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (Exception ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private OntologyIdentifier getOntologyIdentifier(Resource recordId) {
         Branch masterBranch = catalogManager.getMasterBranch(catalogManager.getLocalCatalogIRI(), recordId);
         Resource commitId = masterBranch.getHead_resource().orElseThrow(() ->
                 ErrorUtils.sendError("Branch " + masterBranch.getResource() + " has no head Commit set.",
