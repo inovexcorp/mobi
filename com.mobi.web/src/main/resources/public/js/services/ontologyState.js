@@ -429,19 +429,19 @@
                     om.getOntologyStuff(recordId, branchId, commitId),
                     cm.getRecordBranches(recordId, catalogId)
                 ]).then(response => {
-                    _.merge(listItem, response);
                     listItem.iriList.push(listItem.ontologyId);
-                    listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(response[0])), ro.getItemIri));
-                    listItem.annotations.iris = _.unionWith(_.get(response[0], 'annotationProperties'), propertyManagerService.defaultAnnotations, propertyManagerService.owlAnnotations, _.isMatch);
+                    var responseIriList = _.get(response[0], 'iriList');
+                    listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(responseIriList)), ro.getItemIri));
+                    listItem.annotations.iris = _.unionWith(_.get(responseIriList, 'annotationProperties'), propertyManagerService.defaultAnnotations, propertyManagerService.owlAnnotations, _.isMatch);
                     listItem.classes.iris = [];
-                    _.forEach(_.get(response[0], 'classes', []), iriObj => self.addToClassIRIs(listItem, iriObj));
-                    listItem.dataProperties.iris = _.get(response[0], 'dataProperties');
-                    listItem.objectProperties.iris = _.get(response[0], 'objectProperties');
-                    listItem.individuals.iris = _.get(response[0], 'namedIndividuals');
-                    listItem.derivedConcepts = _.map(_.get(response[0], 'derivedConcepts', []), ro.getItemIri);
-                    listItem.derivedConceptSchemes = _.map(_.get(response[0], 'derivedConceptSchemes', []), ro.getItemIri);
-                    listItem.derivedSemanticRelations = _.map(_.get(response[0], 'derivedSemanticRelations', []));
-                    listItem.dataPropertyRange = _.unionWith(_.get(response[0], 'datatypes'), om.defaultDatatypes, _.isMatch);
+                    _.forEach(_.get(responseIriList, 'classes', []), iriObj => self.addToClassIRIs(listItem, iriObj));
+                    listItem.dataProperties.iris = _.get(responseIriList, 'dataProperties');
+                    listItem.objectProperties.iris = _.get(responseIriList, 'objectProperties');
+                    listItem.individuals.iris = _.get(responseIriList, 'namedIndividuals');
+                    listItem.derivedConcepts = _.map(_.get(responseIriList, 'derivedConcepts', []), ro.getItemIri);
+                    listItem.derivedConceptSchemes = _.map(_.get(responseIriList, 'derivedConceptSchemes', []), ro.getItemIri);
+                    listItem.derivedSemanticRelations = _.map(_.get(responseIriList, 'derivedSemanticRelations', []));
+                    listItem.dataPropertyRange = _.unionWith(_.get(responseIriList, 'datatypes'), om.defaultDatatypes, _.isMatch);
                     _.forEach(_.get(response[0], 'importedIRIs'), iriList => {
                         listItem.annotations.iris = _.unionWith(addOntologyIdToArray(iriList.annotationProperties, iriList.id), listItem.annotations.iris, compareIriObjs);
                         _.forEach(addOntologyIdToArray(iriList.classes, iriList.id), iriObj => self.addToClassIRIs(listItem, iriObj));
@@ -452,23 +452,23 @@
                         listItem.iriList.push(iriList['id'])
                         listItem.iriList = _.union(listItem.iriList, _.map(_.flatten(_.values(iriList)), ro.getItemIri))
                     });
-                    listItem.classes = _.get(response[0], 'classes');
+                    setHierarchyInfo(listItem.classes, response[0], 'classHierarchy');
                     listItem.classes.flat = self.flattenHierarchy(listItem.classes.hierarchy, recordId, listItem);
-                    listItem.dataProperties = _.get(response[0], 'dataProperties');
+                    setHierarchyInfo(listItem.dataProperties, response[0], 'dataPropertyHierarchy');
                     listItem.dataProperties.flat = self.flattenHierarchy(listItem.dataProperties.hierarchy, recordId, listItem);
-                    listItem.objectProperties = _.get(response[0], 'objectProperties');
+                    setHierarchyInfo(listItem.objectProperties, response[0], 'objectPropertyHierarchy');
                     listItem.objectProperties.flat = self.flattenHierarchy(listItem.objectProperties.hierarchy, recordId, listItem);
-                    listItem.annotations = _.get(response[0], 'annotations');
+                    setHierarchyInfo(listItem.annotations, response[0], 'annotationHierarchy');
                     listItem.annotations.flat = self.flattenHierarchy(listItem.annotations.hierarchy, recordId, listItem);
-                    listItem.concepts = _.get(response[0], 'concepts');
+                    setHierarchyInfo(listItem.concepts, response[0], 'conceptHierarchy');
                     listItem.concepts.flat = self.flattenHierarchy(listItem.concepts.hierarchy, recordId, listItem);
-                    listItem.conceptSchemes = _.get(response[0], 'conceptSchemes');
+                    setHierarchyInfo(listItem.conceptSchemes, response[0], 'conceptSchemeHierarchy');
                     listItem.conceptSchemes.flat = self.flattenHierarchy(listItem.conceptSchemes.hierarchy, recordId, listItem);
                     _.forEach(_.get(response[0], 'importedOntologies'), importedOntObj => {
                         addImportedOntologyToListItem(listItem, importedOntObj);
                     });
                     listItem.classesAndIndividuals = response[0].individuals;
-                    listItem.classesWithIndividuals = _.keys(response[0].individuals);
+                    listItem.classesWithIndividuals = _.keys(listItem.classesAndIndividuals);
                     listItem.individualsParentPath = self.getIndividualsParentPath(listItem);
                     listItem.individuals.flat = self.createFlatIndividualTree(listItem);
                     listItem.flatEverythingTree = self.createFlatEverythingTree(getOntologiesArrayByListItem(listItem), listItem);
@@ -1386,5 +1386,10 @@
                 });
             }
             return result;
+        }
+        function setHierarchyInfo(obj, response, key) {
+            var hierarchyInfo = _.get(response, key);
+            obj.hierarchy = hierarchyInfo.hierarchy;
+            obj.index = hierarchyInfo.index;
         }
 })();

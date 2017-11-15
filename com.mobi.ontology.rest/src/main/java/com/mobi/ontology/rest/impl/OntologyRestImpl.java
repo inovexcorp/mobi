@@ -408,7 +408,8 @@ public class OntologyRestImpl implements OntologyRest {
             conn.commit();
             // Get stuff
             Set<Ontology> onlyImports = getImportedOntologies(importedOntologies, ontology.getOntologyId());
-            JSONObject result = getAllIRIs(ontology, conn);
+            JSONObject result = new JSONObject();
+            result.put("iriList", getAllIRIs(ontology, conn));
             result.put("importedIRIs", doWithOntologies(onlyImports, ont -> getAllIRIs(ont, conn)));
             result.put("importedOntologies", onlyImports.stream()
                     .map(ont -> getOntologyAsJsonObject(ont, "jsonld"))

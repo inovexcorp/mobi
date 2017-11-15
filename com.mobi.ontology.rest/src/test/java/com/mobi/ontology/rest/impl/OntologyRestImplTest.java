@@ -1274,16 +1274,17 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     private void verifyGetOntologyStuff(Response response) {
         JSONObject responseObject = getResponse(response);
+        JSONObject iriList = responseObject.getJSONObject("iriList");
 
-        assertAnnotations(responseObject, annotationProperties, annotations);
-        assertClassIRIs(responseObject, classes);
-        assertDatatypes(responseObject, datatypes);
-        assertObjectPropertyIRIs(responseObject, objectProperties);
-        assertDataPropertyIRIs(responseObject, dataProperties);
-        assertIndividuals(responseObject, individuals);
-        assertDerivedConcepts(responseObject, derivedConcepts);
-        assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
-        assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
+        assertAnnotations(iriList, annotationProperties, annotations);
+        assertClassIRIs(iriList, classes);
+        assertDatatypes(iriList, datatypes);
+        assertObjectPropertyIRIs(iriList, objectProperties);
+        assertDataPropertyIRIs(iriList, dataProperties);
+        assertIndividuals(iriList, individuals);
+        assertDerivedConcepts(iriList, derivedConcepts);
+        assertDerivedConceptSchemes(iriList, derivedConceptSchemes);
+        assertDerivedSemanticRelations(iriList, derivedSemanticRelations);
 
         assertImportedOntologies(responseObject.getJSONArray("importedIRIs"), (importedObject) -> {
             assertAnnotations(importedObject, annotationProperties, annotations);
