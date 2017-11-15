@@ -1384,56 +1384,45 @@ describe('Ontology State Service', function() {
             this.datatypeId2 = 'datatypeId2';
             this.annotationId2 = 'annotationId2';
             this.individualId2 = 'individualId2';
-            this.irisResponse = {
-                annotationProperties: [{localName: this.annotationId, namespace: this.annotationId}],
-                classes: [{localName: this.classId, namespace: this.classId}],
-                dataProperties: [{localName: this.dataPropertyId, namespace: this.dataPropertyId}],
-                objectProperties: [{localName: this.objectPropertyId, namespace: this.objectPropertyId}],
-                namedIndividuals: [{localName: this.individualId, namespace: this.individualId}],
-                datatypes: [{localName: this.datatypeId, namespace: this.datatypeId}],
-                derivedConcepts: [{localName: this.conceptId, namespace: this.conceptId}],
-                derivedConceptSchemes: [{localName: this.conceptSchemeId, namespace: this.conceptSchemeId}],
-                derivedSemanticRelations: [{localName: this.semanticRelationId, namespace: this.semanticRelationId}]
-            };
-            this.importedIrisResponse = [{
-                id: this.ontologyId,
-                annotationProperties: [{localName: this.annotationId2, namespace: this.annotationId2}],
-                classes: [{localName: this.classId2, namespace: this.classId2}],
-                dataProperties: [{localName: this.dataPropertyId2, namespace: this.dataPropertyId2}],
-                objectProperties: [{localName: this.objectPropertyId2, namespace: this.objectPropertyId2}],
-                namedIndividuals: [{localName: this.individualId2, namespace: this.individualId2}],
-                datatypes: [{localName: this.datatypeId2, namespace: this.datatypeId2}]
-            }];
-            this.classHierarchiesResponse = { hierarchy: [], index: {} };
-            this.classesWithIndividualsResponse = {
-                individuals: {
-                    'ClassA': ['IndivA1', 'IndivA2']
+            ontologyManagerSvc.getOntologyStuff.and.returnValue($q.when({
+                iriList: {
+                    annotationProperties: [{localName: this.annotationId, namespace: this.annotationId}],
+                    classes: [{localName: this.classId, namespace: this.classId}],
+                    datatypes: [{localName: this.datatypeId, namespace: this.datatypeId}],
+                    objectProperties: [{localName: this.objectPropertyId, namespace: this.objectPropertyId}],
+                    dataProperties: [{localName: this.dataPropertyId, namespace: this.dataPropertyId}],
+                    namedIndividuals: [{localName: this.individualId, namespace: this.individualId}],
+                    derivedConcepts: [{localName: this.conceptId, namespace: this.conceptId}],
+                    derivedConceptSchemes: [{localName: this.conceptSchemeId, namespace: this.conceptSchemeId}],
+                    derivedSemanticRelations: [{localName: this.semanticRelationId, namespace: this.semanticRelationId}]
                 },
-                individualsParentPath: ['ClassA']
-            };
-            this.dataPropertyHierarchiesResponse = { hierarchy: [], index: {} };
-            this.objectPropertyHierarchiesResponse = { hierarchy: [], index: {} };
-            this.annotationPropertyHierarchiesResponse = { hierarchy: [], index: {} };
-            this.conceptHierarchiesResponse = { hierarchy: [], index: {} };
-            this.conceptSchemeHierarchiesResponse = { hierarchy: [], index: {} };
-            ontologyManagerSvc.getClassHierarchies.and.returnValue($q.when(this.classHierarchiesResponse));
-            ontologyManagerSvc.getClassesWithIndividuals.and.returnValue($q.when(this.classesWithIndividualsResponse));
-            ontologyManagerSvc.getDataPropertyHierarchies.and.returnValue($q.when(this.dataPropertyHierarchiesResponse));
-            ontologyManagerSvc.getObjectPropertyHierarchies.and.returnValue($q.when(this.objectPropertyHierarchiesResponse));
-            ontologyManagerSvc.getAnnotationPropertyHierarchies.and.returnValue($q.when(this.annotationPropertyHierarchiesResponse));
-            ontologyManagerSvc.getConceptHierarchies.and.returnValue($q.when(this.conceptHierarchiesResponse));
-            ontologyManagerSvc.getConceptSchemeHierarchies.and.returnValue($q.when(this.conceptSchemeHierarchiesResponse));
+                importedIRIs: [{
+                    id: this.ontologyId,
+                    annotationProperties: [{localName: this.annotationId2, namespace: this.annotationId2}],
+                    classes: [{localName: this.classId2, namespace: this.classId2}],
+                    dataProperties: [{localName: this.dataPropertyId2, namespace: this.dataPropertyId2}],
+                    objectProperties: [{localName: this.objectPropertyId2, namespace: this.objectPropertyId2}],
+                    namedIndividuals: [{localName: this.individualId2, namespace: this.individualId2}],
+                    datatypes: [{localName: this.datatypeId2, namespace: this.datatypeId2}]
+                }],
+                importedOntologies: [{ontology: [], ontologyId: 'importId', id: 'id'}],
+                classHierarchy: {hierarchy: [], index: {}},
+                individuals: {ClassA: ['IndivA1', 'IndivA2']},
+                dataPropertyHierarchy: {hierarchy: [], index: {}},
+                objectPropertyHierarchy: {hierarchy: [], index: {}},
+                annotationHierarchy: {hierarchy: [], index: {}},
+                conceptHierarchy: {hierarchy: [], index: {}},
+                conceptSchemeHierarchy: {hierarchy: [], index: {}},
+                failedImports: ['failedId']
+            }));
             this.branches = [this.branch];
-            ontologyManagerSvc.getImportedOntologies.and.returnValue($q.when([{id: 'imported-ontology', ontologyId: this.ontologyId, ontology: [{'@id': this.ontologyId}]}]));
             catalogManagerSvc.getRecordBranches.and.returnValue($q.when({data: this.branches}));
             spyOn(ontologyStateSvc, 'flattenHierarchy').and.returnValue([{prop: 'flatten'}]);
             spyOn(ontologyStateSvc, 'createFlatEverythingTree').and.returnValue([{prop: 'everything'}]);
             spyOn(ontologyStateSvc, 'createFlatIndividualTree').and.returnValue([{prop: 'individual'}]);
-            ontologyManagerSvc.getFailedImports.and.returnValue(['failedId']);
+            spyOn(ontologyStateSvc, 'getIndividualsParentPath').and.returnValue(['ClassA']);
         });
         it('when all promises resolve', function() {
-            ontologyManagerSvc.getIris.and.returnValue($q.when(this.irisResponse));
-            ontologyManagerSvc.getImportedIris.and.returnValue($q.when(this.importedIrisResponse));
             ontologyStateSvc.createOntologyListItem(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.inProgressCommit, false)
                 .then(function(response) {
                     expect(_.get(response, 'annotations.iris')).toEqual([{
@@ -1469,66 +1458,59 @@ describe('Ontology State Service', function() {
                     expect(_.get(response, 'derivedConcepts')).toEqual([this.conceptId]);
                     expect(_.get(response, 'derivedConceptSchemes')).toEqual([this.conceptSchemeId]);
                     expect(_.get(response, 'derivedSemanticRelations')).toEqual([{localName: this.semanticRelationId, namespace: this.semanticRelationId}]);
-                    expect(_.get(response, 'classes.hierarchy')).toEqual(this.classHierarchiesResponse.hierarchy);
-                    expect(_.get(response, 'classes.index')).toEqual(this.classHierarchiesResponse.index);
+                    expect(_.get(response, 'classes.hierarchy')).toEqual([]);
+                    expect(_.get(response, 'classes.index')).toEqual({});
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.classes.hierarchy, this.recordId, response);
                     expect(_.get(response, 'classes.flat')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'classesWithIndividuals')).toEqual(['ClassA']);
-                    expect(_.get(response, 'classesAndIndividuals')).toEqual(this.classesWithIndividualsResponse.individuals);
-                    expect(_.get(response, 'individualsParentPath')).toEqual(this.classesWithIndividualsResponse.individualsParentPath);
-                    expect(_.get(response, 'dataProperties.hierarchy')).toEqual(this.dataPropertyHierarchiesResponse.hierarchy);
-                    expect(_.get(response, 'dataProperties.index')).toEqual(this.dataPropertyHierarchiesResponse.index);
+                    expect(_.get(response, 'classesAndIndividuals')).toEqual({ClassA: ['IndivA1', 'IndivA2']});
+                    expect(ontologyStateSvc.getIndividualsParentPath).toHaveBeenCalled();
+                    expect(_.get(response, 'individualsParentPath')).toEqual(['ClassA']);
+                    expect(_.get(response, 'dataProperties.hierarchy')).toEqual([]);
+                    expect(_.get(response, 'dataProperties.index')).toEqual({});
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.dataProperties.hierarchy, this.recordId, response);
                     expect(_.get(response, 'dataProperties.flat')).toEqual([{prop: 'flatten'}]);
-                    expect(_.get(response, 'objectProperties.hierarchy')).toEqual(this.objectPropertyHierarchiesResponse.hierarchy);
-                    expect(_.get(response, 'objectProperties.index')).toEqual(this.objectPropertyHierarchiesResponse.index);
+                    expect(_.get(response, 'objectProperties.hierarchy')).toEqual([]);
+                    expect(_.get(response, 'objectProperties.index')).toEqual({});
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.objectProperties.hierarchy, this.recordId, response);
                     expect(_.get(response, 'objectProperties.flat')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'branches')).toEqual(this.branches);
-                    expect(_.get(response, 'annotations.hierarchy')).toEqual(this.annotationPropertyHierarchiesResponse.hierarchy);
-                    expect(_.get(response, 'annotations.index')).toEqual(this.annotationPropertyHierarchiesResponse.index);
+                    expect(_.get(response, 'annotations.hierarchy')).toEqual([]);
+                    expect(_.get(response, 'annotations.index')).toEqual({});
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.annotations.hierarchy, this.recordId, response);
                     expect(_.get(response, 'annotations.flat')).toEqual([{prop: 'flatten'}]);
-                    expect(_.get(response, 'concepts.hierarchy')).toEqual(this.conceptHierarchiesResponse.hierarchy);
-                    expect(_.get(response, 'concepts.index')).toEqual(this.conceptHierarchiesResponse.index);
+                    expect(_.get(response, 'concepts.hierarchy')).toEqual([]);
+                    expect(_.get(response, 'concepts.index')).toEqual({});
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.concepts.hierarchy, this.recordId, response);
                     expect(_.get(response, 'concepts.flat')).toEqual([{prop: 'flatten'}]);
-                    expect(_.get(response, 'conceptSchemes.hierarchy')).toEqual(this.conceptSchemeHierarchiesResponse.hierarchy);
-                    expect(_.get(response, 'conceptSchemes.index')).toEqual(this.conceptSchemeHierarchiesResponse.index);
+                    expect(_.get(response, 'conceptSchemes.hierarchy')).toEqual([]);
+                    expect(_.get(response, 'conceptSchemes.index')).toEqual({});
                     expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(response.conceptSchemes.hierarchy, this.recordId, response);
                     expect(_.get(response, 'conceptSchemes.flat')).toEqual([{prop: 'flatten'}]);
                     expect(_.get(response, 'upToDate')).toBe(false);
-                    expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.dataPropertyId, this.objectPropertyId, this.individualId, this.datatypeId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2]);
-                    expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([this.ontology, [{
-                        '@id': this.ontologyId,
-                        mobi: {
-                            icon: 'fa-square-o',
-                            imported: true,
-                            importedIRI: this.ontologyId
-                        }
-                    }]], response);
+                    expect(_.get(response, 'iriList')).toEqual([this.ontologyId, this.annotationId, this.classId, this.datatypeId, this.objectPropertyId, this.dataPropertyId, this.individualId, this.conceptId, this.conceptSchemeId, this.semanticRelationId, this.annotationId2, this.classId2, this.dataPropertyId2, this.objectPropertyId2, this.individualId2, this.datatypeId2]);
+                    expect(ontologyStateSvc.createFlatEverythingTree).toHaveBeenCalledWith([this.ontology, []], response);
                     expect(_.get(response, 'flatEverythingTree')).toEqual([{prop: 'everything'}]);
                     expect(ontologyStateSvc.createFlatIndividualTree).toHaveBeenCalledWith(response);
                     expect(_.get(response, 'individuals.flat')).toEqual([{prop: 'individual'}]);
                     expect(_.get(response, 'failedImports')).toEqual(['failedId']);
+                    expect(_.get(response, 'importedOntologyIds')).toEqual(['id']);
+                    expect(_.get(response, 'importedOntologies')).toEqual([{
+                        id: 'id',
+                        ontologyId: 'importId',
+                        ontology: [],
+                        index: {},
+                        blankNodes: {}
+                    }]);
                 }.bind(this), function() {
                     fail('Promise should have resolved');
                 });
             scope.$apply();
-            expect(ontologyManagerSvc.getIris).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
-            expect(ontologyManagerSvc.getImportedIris).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
-            expect(ontologyManagerSvc.getClassHierarchies).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
-            expect(ontologyManagerSvc.getClassesWithIndividuals).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
-            expect(ontologyManagerSvc.getDataPropertyHierarchies).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
-            expect(ontologyManagerSvc.getObjectPropertyHierarchies).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
-            expect(ontologyManagerSvc.getAnnotationPropertyHierarchies).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
+            expect(ontologyManagerSvc.getOntologyStuff).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
             expect(catalogManagerSvc.getRecordBranches).toHaveBeenCalledWith(this.recordId, this.catalogId);
-            expect(ontologyManagerSvc.getConceptHierarchies).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
-            expect(ontologyManagerSvc.getConceptSchemeHierarchies).toHaveBeenCalledWith(this.recordId, this.branchId, this.commitId);
         });
         it('when one call fails', function() {
-            ontologyManagerSvc.getIris.and.returnValue($q.reject(this.error));
-            ontologyManagerSvc.getImportedIris.and.returnValue($q.when(this.importedIrisResponse));
+            catalogManagerSvc.getRecordBranches.and.returnValue($q.reject(this.error));
             ontologyStateSvc.createOntologyListItem(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.inProgressCommit, true)
                 .then(function() {
                     fail('Promise should have rejected');
@@ -1538,8 +1520,8 @@ describe('Ontology State Service', function() {
             scope.$apply();
         });
         it('when more than one call fails', function() {
-            ontologyManagerSvc.getIris.and.returnValue($q.reject(this.error));
-            ontologyManagerSvc.getImportedIris.and.returnValue($q.reject(this.error));
+            ontologyManagerSvc.getOntologyStuff.and.returnValue($q.reject(this.error));
+            catalogManagerSvc.getRecordBranches.and.returnValue($q.reject(this.error));
             ontologyStateSvc.createOntologyListItem(this.ontologyId, this.recordId, this.branchId, this.commitId, this.ontology, this.inProgressCommit, true)
                 .then(function() {
                     fail('Promise should have rejected');
