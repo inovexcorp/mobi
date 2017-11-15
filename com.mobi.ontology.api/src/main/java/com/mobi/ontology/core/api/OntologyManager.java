@@ -222,7 +222,7 @@ public interface OntologyManager {
     TupleQueryResult getSubClassesOf(Ontology ontology);
 
     /**
-     * Gets the subClassOf relationships for classes in the provided Ontology.
+     * Gets the subClassOf relationships for classes using the populated {@link RepositoryConnection}.
      *
      * @param conn     the {@link RepositoryConnection} to run the query on.
      * @return a Set with the query results.
@@ -240,8 +240,8 @@ public interface OntologyManager {
     TupleQueryResult getSubClassesFor(Ontology ontology, IRI iri);
 
     /**
-     * Gets the subClassOf relationships for a particular {@link IRI} in the provided {@link Ontology}. It will provide
-     * <em>all</em> classes that can be traced back to the provided class IRI, even if nested.
+     * Gets the subClassOf relationships for a particular {@link IRI} using the populated {@link RepositoryConnection}.
+     * It will provide <em>all</em> classes that can be traced back to the provided class IRI, even if nested.
      *
      * @param iri      The {@link IRI} of the class for which you want the list of subclasses.
      * @param conn     the {@link RepositoryConnection} to run the query on.
@@ -250,9 +250,8 @@ public interface OntologyManager {
     TupleQueryResult getSubClassesFor(IRI iri, RepositoryConnection conn);
 
     /**
-     * Gets the subPropertyOf relationships for a particular {@link IRI} using the populated
-     * {@link RepositoryConnection}. It will provide <em>all</em> properties that can be traced back to the provided
-     * property IRI, even if nested.
+     * Gets the subPropertyOf relationships for a particular {@link IRI} in the provided {@link Ontology}. It will
+     * provide <em>all</em> properties that can be traced back to the provided property IRI, even if nested.
      *
      * @param ontology The {@link Ontology} you wish to query.
      * @param iri      The {@link IRI} of the property for which you want the list of subproperties.

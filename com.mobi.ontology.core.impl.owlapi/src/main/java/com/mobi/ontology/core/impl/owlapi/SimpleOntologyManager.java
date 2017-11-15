@@ -368,7 +368,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public TupleQueryResult getSubClassesOf(RepositoryConnection conn) {
-        return runQueryOnOntology(GET_SUB_CLASSES_OF, null, "getSubClassesOf(ontology)", conn);
+        return runQueryOnOntology(GET_SUB_CLASSES_OF, null, "getSubClassesOf(conn)", conn);
     }
 
     @Override
@@ -380,7 +380,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public TupleQueryResult getSubClassesFor(IRI iri, RepositoryConnection conn) {
         return runQueryOnOntology(String.format(GET_CLASSES_FOR, iri.stringValue()), null,
-                "getSubClassesFor(ontology, iri)", conn);
+                "getSubClassesFor(iri, conn)", conn);
     }
 
     @Override
@@ -392,7 +392,7 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public TupleQueryResult getSubPropertiesFor(IRI iri, RepositoryConnection conn) {
         return runQueryOnOntology(String.format(GET_PROPERTIES_FOR, iri.stringValue()), null,
-                "getSubPropertiesFor(ontology, iri)", conn);
+                "getSubPropertiesFor(iri, conn)", conn);
     }
 
     @Override
@@ -403,7 +403,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public TupleQueryResult getSubDatatypePropertiesOf(RepositoryConnection conn) {
-        return runQueryOnOntology(GET_SUB_DATATYPE_PROPERTIES_OF, null, "getSubDatatypePropertiesOf(ontology)", conn);
+        return runQueryOnOntology(GET_SUB_DATATYPE_PROPERTIES_OF, null, "getSubDatatypePropertiesOf(conn)", conn);
     }
 
     @Override
@@ -414,8 +414,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public TupleQueryResult getSubAnnotationPropertiesOf(RepositoryConnection conn) {
-        return runQueryOnOntology(GET_SUB_ANNOTATION_PROPERTIES_OF, null, "getSubAnnotationPropertiesOf(ontology)",
-                conn);
+        return runQueryOnOntology(GET_SUB_ANNOTATION_PROPERTIES_OF, null, "getSubAnnotationPropertiesOf(conn)", conn);
     }
 
     @Override
@@ -425,7 +424,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public TupleQueryResult getSubObjectPropertiesOf(RepositoryConnection conn) {
-        return runQueryOnOntology(GET_SUB_OBJECT_PROPERTIES_OF, null, "getSubObjectPropertiesOf(ontology)", conn);
+        return runQueryOnOntology(GET_SUB_OBJECT_PROPERTIES_OF, null, "getSubObjectPropertiesOf(conn)", conn);
     }
 
     @Override
@@ -435,8 +434,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public TupleQueryResult getClassesWithIndividuals(RepositoryConnection conn) {
-        return runQueryOnOntology(GET_CLASSES_WITH_INDIVIDUALS, null, "getClassesWithIndividuals(ontology)",
-                conn);
+        return runQueryOnOntology(GET_CLASSES_WITH_INDIVIDUALS, null, "getClassesWithIndividuals(conn)", conn);
     }
 
     @Override
@@ -452,7 +450,7 @@ public class SimpleOntologyManager implements OntologyManager {
         return runQueryOnOntology(SELECT_ENTITY_USAGES, tupleQuery -> {
             tupleQuery.setBinding(ENTITY_BINDING, entity);
             return tupleQuery;
-        }, "getEntityUsages(ontology, entity)", conn);
+        }, "getEntityUsages(entity, conn)", conn);
     }
 
     @Override
@@ -477,7 +475,7 @@ public class SimpleOntologyManager implements OntologyManager {
             query.setBinding(ENTITY_BINDING, entity);
             return QueryResults.asModel(query.evaluate(), modelFactory);
         } finally {
-            logTrace("constructEntityUsages(ontology, entity)", start);
+            logTrace("constructEntityUsages(entity, conn)", start);
         }
     }
 
@@ -559,7 +557,7 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     /**
-     * Executes the provided query on the provided Ontology.
+     * Executes the provided query on the provided RepositoryConnection.
      *
      * @param ontology    the ontology to query on.
      * @param queryString the query string that you wish to run.
@@ -584,7 +582,7 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     /**
-     * Executes the provided query on the provided Ontology.
+     * Executes the provided query on the provided RepositoryConnection.
      *
      * @param queryString the query string that you wish to run.
      * @param addBinding  the binding to add to the query, if needed.
