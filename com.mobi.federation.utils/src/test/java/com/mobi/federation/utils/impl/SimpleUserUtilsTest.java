@@ -61,8 +61,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import javax.security.auth.login.FailedLoginException;
-import javax.security.auth.login.LoginException;
 
 public class SimpleUserUtilsTest {
     private SimpleUserUtils utils = new SimpleUserUtils();
@@ -76,10 +74,8 @@ public class SimpleUserUtilsTest {
     private final Map<UUID, Set<SerializedUser>> userMap = new HashMap<>();
     private final UUID nodeId = UUID.randomUUID();
     private final UUID populated = UUID.randomUUID();
-    private final String federationId = "federationId";
     private final String username = "username";
     private final String userId = "https://mobi.com/users#good";
-    private final String badUserId = "https://mobi.com/users#bad";
 
     @Mock
     private FederationService service;
@@ -107,13 +103,13 @@ public class SimpleUserUtilsTest {
         user = userFactory.createNew(vf.createIRI(userId));
         user.setUsername(vf.createLiteral(username));
         userMap.put(populated, Stream.of(new SerializedUser(user)).collect(Collectors.toSet()));
-        badUser = userFactory.createNew(vf.createIRI(badUserId));
+        badUser = userFactory.createNew(vf.createIRI("https://mobi.com/users#bad"));
 
         initMocks(this);
         when(service.<UUID, Set<SerializedUser>>getDistributedMap(SimpleUserUtils.FEDERATION_USERS_KEY))
                 .thenReturn(userMap);
         when(service.getNodeId()).thenReturn(nodeId);
-        when(service.getFederationId()).thenReturn(federationId);
+        when(service.getFederationId()).thenReturn("federationId");
         when(service.getFederationNodeIds()).thenReturn(Stream.of(nodeId, populated).collect(Collectors.toSet()));
     }
 
@@ -271,9 +267,9 @@ public class SimpleUserUtilsTest {
         assertFalse(result.isPresent());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testGetUserWithBadNodeId() {
-        utils.getUser(service, username, nodeId.toString());
+        utils.getUser(service, username, UUID.randomUUID().toString());
     }
 
     @Test
@@ -311,7 +307,7 @@ public class SimpleUserUtilsTest {
         verify(service).getDistributedMap(SimpleUserUtils.FEDERATION_USERS_KEY);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testVerifyUserByNodeIdMissingNodeId() throws Exception {
         utils.userExists(service, username, UUID.randomUUID().toString());
         verify(service).getFederationNodeIds();

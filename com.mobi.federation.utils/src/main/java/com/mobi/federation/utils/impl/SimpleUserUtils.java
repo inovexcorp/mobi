@@ -138,9 +138,11 @@ public class SimpleUserUtils implements UserUtils {
 
     @Override
     public Optional<User> getUser(FederationService service, String username, String nodeId) {
+        UUID nodeUUID = UUID.fromString(nodeId);
+        verifyNode(service, nodeUUID);
         Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
         String federationId = service.getFederationId();
-        Set<SerializedUser> users = getNodeUsers(userMap, UUID.fromString(nodeId), federationId);
+        Set<SerializedUser> users = getNodeUsers(userMap, nodeUUID, federationId);
 
         return users.stream()
                 .filter(user -> user.getUsername().equals(username))
@@ -157,11 +159,23 @@ public class SimpleUserUtils implements UserUtils {
     @Override
     public boolean userExists(FederationService service, String username, String nodeId) {
         UUID nodeUUID = UUID.fromString(nodeId);
-        if (!service.getFederationNodeIds().contains(nodeUUID)) {
-            throw new IllegalStateException("Node " + nodeId + " is not in federation " + service.getFederationId());
-        }
+        verifyNode(service, nodeUUID);
         Map<UUID, Set<SerializedUser>> userMap = service.getDistributedMap(FEDERATION_USERS_KEY);
         return validateUser(userMap, username, nodeUUID);
+    }
+
+    /**
+     * Verifies that the provided node ID exists in the Federation.
+     *
+     * @param service  The {@link FederationService} to search.
+     * @param nodeUUID The node ID.
+     * @throws IllegalArgumentException Thrown if the node ID does not exist in the Federation.
+     */
+    private void verifyNode(FederationService service, UUID nodeUUID) {
+        if (!service.getFederationNodeIds().contains(nodeUUID)) {
+            throw new IllegalArgumentException("Node " + nodeUUID.toString() + " is not in federation "
+                    + service.getFederationId());
+        }
     }
 
     /**

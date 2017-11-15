@@ -86,7 +86,7 @@ public interface UserUtils {
      * @param username The username to validate.
      * @return True if the user exists in the federation; otherwise, false.
      */
-    boolean userExists(FederationService service, String username) throws FailedLoginException;
+    boolean userExists(FederationService service, String username);
 
     /**
      * Verifies that the user exists on the identified node in the identified federation.
@@ -97,5 +97,5 @@ public interface UserUtils {
      * @return True if the user exists on the identified node; otherwise, false.
      * @throws IllegalStateException Thrown if the provided node ID is not in the federation.
      */
-    boolean userExists(FederationService service, String username, String nodeId) throws LoginException;
+    boolean userExists(FederationService service, String username, String nodeId);
 }

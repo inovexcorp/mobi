@@ -26,6 +26,9 @@ package com.mobi.federation.utils.serializable;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.rdf.api.ValueFactory;
+import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import java.io.Serializable;
 
@@ -55,12 +58,37 @@ public class SerializedUser implements Serializable, Comparable<SerializedUser> 
 
     @Override
     public boolean equals(Object obj) {
-        return obj instanceof SerializedUser && this.userIRI.equals(((SerializedUser) obj).userIRI);
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        if (obj.getClass() != getClass()) {
+            return false;
+        }
+        SerializedUser other = (SerializedUser) obj;
+        return new EqualsBuilder()
+                .appendSuper(super.equals(obj))
+                .append(userIRI, other.userIRI)
+                .append(username, other.username)
+                .isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(userIRI)
+                .append(username)
+                .toHashCode();
     }
 
     @Override
     public int compareTo(SerializedUser other) {
-        return this.userIRI.compareTo(other.userIRI);
+        return new CompareToBuilder()
+                .append(this.userIRI, other.userIRI)
+                .append(this.username, other.username)
+                .toComparison();
     }
 
     public static User getAsUser(SerializedUser serializedUser, UserFactory factory, ValueFactory vf) {
