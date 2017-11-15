@@ -155,7 +155,10 @@ describe('Explore Utils Service', function() {
     describe('getClasses should retrieve all classes from ontologies in a dataset', function() {
         beforeEach(function() {
             this.datasetId = 'dataset';
-            datasetManagerSvc.datasetRecords = [[{'@id': this.datasetId, '@type': []}, {'id': 'ontology1'}]];
+            var identifier = {'id': 'id'};
+            this.record = {'@id': this.datasetId};
+            datasetManagerSvc.datasetRecords = [[this.record, identifier]];
+            datasetManagerSvc.getOntologyIdentifiers.and.returnValue([identifier]);
             utilSvc.getPropertyId.and.callFake(function(obj, propId) {
                 if (propId === prefixes.dataset + 'linksToRecord') {
                     return 'recordId';
@@ -186,6 +189,7 @@ describe('Explore Utils Service', function() {
                     expect(response).toEqual('The Dataset ontologies could not be found');
                 });
             scope.$apply();
+            expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith(datasetManagerSvc.datasetRecords[0]);
             expect(ontologyManagerSvc.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
         });
         it('unless no classes are retrieved', function() {
@@ -197,6 +201,7 @@ describe('Explore Utils Service', function() {
                     expect(response).toEqual('The Dataset classes could not be retrieved');
                 });
             scope.$apply();
+            expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith(datasetManagerSvc.datasetRecords[0]);
             expect(ontologyManagerSvc.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
         });
         it('successfully', function() {
@@ -210,11 +215,12 @@ describe('Explore Utils Service', function() {
                     fail('Promise should have resolved');
                 });
             scope.$apply();
+            expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith(datasetManagerSvc.datasetRecords[0]);
             expect(ontologyManagerSvc.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId');
         });
     });
     describe('getNewProperties should return a list of properties that are not set on the entity', function() {
-        beforeEach(function () {
+        beforeEach(function() {
             this.entity = {
                 '@id': 'id',
                 '@type': ['type'],

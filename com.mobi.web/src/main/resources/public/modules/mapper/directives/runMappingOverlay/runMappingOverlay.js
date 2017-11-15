@@ -65,49 +65,49 @@
                 scope: {},
                 controller: function() {
                     var dvm = this;
-                    dvm.state = mapperStateService;
-                    dvm.dm = delimitedManagerService;
-                    dvm.dam = datasetManagerService;
+                    var dam = datasetManagerService;
+                    var state = mapperStateService;
+                    var dm = delimitedManagerService;
                     dvm.util = utilService;
-                    dvm.fileName = $filter('camelCase')(dvm.state.mapping.record.title, 'class');
+                    dvm.fileName = $filter('camelCase')(state.mapping.record.title, 'class');
                     dvm.format = 'turtle';
                     dvm.errorMessage = '';
                     dvm.runMethod = 'download';
                     dvm.datasetRecords = [];
 
-                    dvm.dam.getDatasetRecords().then(response => {
-                        dvm.datasetRecords =_.map(response.data, arr => _.find(arr, obj => _.includes(obj['@type'], prefixes.dataset + 'DatasetRecord')));
+                    dam.getDatasetRecords().then(response => {
+                        dvm.datasetRecords = _.map(response.data, arr => dam.getRecordFromArray(arr));
                     }, onError);
 
                     dvm.run = function() {
-                        if (dvm.state.editMapping && dvm.state.isMappingChanged()) {
-                            dvm.state.saveMapping().then(runMapping, onError);
+                        if (state.editMapping && state.isMappingChanged()) {
+                            state.saveMapping().then(runMapping, onError);
                         } else {
-                            runMapping(dvm.state.mapping.record.id);
+                            runMapping(state.mapping.record.id);
                         }
                     }
                     dvm.cancel = function() {
-                        dvm.state.displayRunMappingOverlay = false;
+                        state.displayRunMappingOverlay = false;
                     }
 
                     function onError(errorMessage) {
                         dvm.errorMessage = errorMessage;
                     }
                     function runMapping(id) {
-                        dvm.state.mapping.record.id = id;
+                        state.mapping.record.id = id;
                         if (dvm.runMethod === 'download') {
-                            dvm.dm.mapAndDownload(id, dvm.format, dvm.fileName);
+                            dm.mapAndDownload(id, dvm.format, dvm.fileName);
                             reset();
                         } else {
-                            dvm.dm.mapAndUpload(id, dvm.datasetRecordIRI).then(reset, onError);
+                            dm.mapAndUpload(id, dvm.datasetRecordIRI).then(reset, onError);
                         }
                     }
                     function reset() {
-                        dvm.state.step = dvm.state.selectMappingStep;
-                        dvm.state.initialize();
-                        dvm.state.resetEdit();
-                        dvm.dm.reset();
-                        dvm.state.displayRunMappingOverlay = false;
+                        state.step = state.selectMappingStep;
+                        state.initialize();
+                        state.resetEdit();
+                        dm.reset();
+                        state.displayRunMappingOverlay = false;
                     }
                 },
                 templateUrl: 'modules/mapper/directives/runMappingOverlay/runMappingOverlay.html'
