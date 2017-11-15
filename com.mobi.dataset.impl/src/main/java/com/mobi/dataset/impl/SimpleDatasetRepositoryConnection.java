@@ -25,10 +25,6 @@ package com.mobi.dataset.impl;
 
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.ontology.dataset.Dataset;
-import org.antlr.v4.runtime.TokenStreamRewriter;
-import org.antlr.v4.runtime.tree.ParseTreeWalker;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.NotImplementedException;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.Statements;
@@ -51,6 +47,10 @@ import com.mobi.repository.exception.RepositoryException;
 import com.mobi.sparql.utils.Query;
 import com.mobi.sparql.utils.Sparql11BaseListener;
 import com.mobi.sparql.utils.Sparql11Parser;
+import org.antlr.v4.runtime.TokenStreamRewriter;
+import org.antlr.v4.runtime.tree.ParseTreeWalker;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +65,8 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     private Resource dataset;
     private String repositoryId;
     private ValueFactory valueFactory;
+
+    private Resource systemDefaultNG;
 
     private static final String GET_GRAPHS_QUERY;
     private static final String GET_NAMED_GRAPHS_QUERY;
@@ -97,11 +99,13 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         }
     }
 
-    public SimpleDatasetRepositoryConnection(RepositoryConnection delegate, Resource dataset, String repositoryId, ValueFactory valueFactory) {
+    public SimpleDatasetRepositoryConnection(RepositoryConnection delegate, Resource dataset, String repositoryId,
+                                             ValueFactory valueFactory) {
         setDelegate(delegate);
         this.dataset = dataset;
         this.repositoryId = repositoryId;
         this.valueFactory = valueFactory;
+        this.systemDefaultNG = getSystemDefaultNG();
     }
 
     @Override
@@ -130,7 +134,8 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     }
 
     @Override
-    public void addDefault(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
+    public void addDefault(Resource subject, IRI predicate, Value object, Resource... contexts)
+            throws RepositoryException {
         addDefault(valueFactory.createStatement(subject, predicate, object), contexts);
     }
 
@@ -140,7 +145,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         boolean startedTransaction = startTransaction();
 
         Set<Resource> graphs = new HashSet<>();
-        graphs.add(getSystemDefaultNG());
+        graphs.add(systemDefaultNG);
         getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
         getGraphs(graphs, Dataset.namedGraph_IRI);
 
@@ -163,7 +168,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         boolean startedTransaction = startTransaction();
 
         Set<Resource> graphs = new HashSet<>();
-        graphs.add(getSystemDefaultNG());
+        graphs.add(systemDefaultNG);
         getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
         getGraphs(graphs, Dataset.namedGraph_IRI);
 
@@ -185,7 +190,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         boolean startedTransaction = startTransaction();
 
         Set<Resource> graphs = new HashSet<>();
-        graphs.add(getSystemDefaultNG());
+        graphs.add(systemDefaultNG);
         getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
         getGraphs(graphs, Dataset.namedGraph_IRI);
 
@@ -222,7 +227,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         // TODO: Would this be more efficient with a sparql query? I probably wouldn't need a value factory.
         // TODO: Trivial Implementation
         Set<Resource> graphs = new HashSet<>();
-        graphs.add(getSystemDefaultNG());
+        graphs.add(systemDefaultNG);
         getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
         getGraphs(graphs, Dataset.namedGraph_IRI);
 
@@ -256,7 +261,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public Resource getSystemDefaultNamedGraph() {
-        return getSystemDefaultNG();
+        return systemDefaultNG;
     }
 
     @Override
@@ -280,7 +285,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         // TODO: Trivial Implementation
         // Maybe I can wrap a query result like in the getContextIDs impl
         Set<Resource> graphs = new HashSet<>();
-        graphs.add(getSystemDefaultNG());
+        graphs.add(systemDefaultNG);
         getGraphs(graphs, Dataset.defaultNamedGraph_IRI);
         getGraphs(graphs, Dataset.namedGraph_IRI);
 
@@ -466,7 +471,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
             getDelegate().add(statement);
             addGraphStatements(predicate, statement.getContext().get());
         } else {
-            getDelegate().add(statement, getSystemDefaultNG());
+            getDelegate().add(statement, systemDefaultNG);
         }
     }
 
@@ -481,7 +486,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
         if (statement.getContext().isPresent() && accessibleGraphs.contains(statement.getContext().get())) {
             getDelegate().remove(statement);
         } else {
-            getDelegate().remove(statement, getSystemDefaultNG());
+            getDelegate().remove(statement, systemDefaultNG);
         }
     }
 

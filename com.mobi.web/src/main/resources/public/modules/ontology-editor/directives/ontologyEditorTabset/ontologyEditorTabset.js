@@ -40,7 +40,7 @@
                     var dvm = this;
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
-                    dvm.newTabActive = true;
+                    dvm.newTabActive = _.isEmpty(dvm.os.listItem);
 
                     dvm.onClose = function(recordId) {
                         if (dvm.os.hasChanges(recordId)) {
@@ -50,15 +50,16 @@
                             dvm.os.closeOntology(recordId);
                         }
                     }
-
                     dvm.onClick = function(recordId) {
                         if (recordId) {
                             dvm.os.listItem = dvm.os.getListItemByRecordId(recordId);
+                        } else {
+                            dvm.os.listItem = {};
                         }
                     }
 
                     $scope.$watch('dvm.os.listItem', () => {
-                        dvm.newTabActive = !_.get(dvm.os.listItem, 'active', false);
+                        dvm.newTabActive = _.isEmpty(dvm.os.listItem);
                     });
                 }]
             }

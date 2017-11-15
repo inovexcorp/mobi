@@ -105,9 +105,9 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
     def "Constructor correctly sets the dataset IRI"() {
         setup:
-        def datasetIRI = vf.createIRI("http://test.com/dataset/1")
+        def datasetIRI = datasetsInFile[1]
         def repo = "system"
-        def conn = new SimpleDatasetRepositoryConnection(connMock, datasetIRI, repo, vf)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetIRI, repo, vf)
 
         expect:
         conn.getDataset() == datasetIRI
@@ -115,9 +115,9 @@ class SimpleDatasetRepositoryConnectionSpec extends Specification {
 
     def "Constructor correctly sets the repo"() {
         setup:
-        def datasetIRI = vf.createIRI("http://test.com/dataset/1")
+        def datasetIRI = datasetsInFile[1]
         def repo = "system"
-        def conn = new SimpleDatasetRepositoryConnection(connMock, datasetIRI, repo, vf)
+        def conn = new SimpleDatasetRepositoryConnection(systemConn, datasetIRI, repo, vf)
 
         expect:
         conn.getRepositoryId() == repo
