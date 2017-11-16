@@ -39,17 +39,6 @@ import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
-import com.mobi.query.api.BindingSet;
-import com.mobi.query.exception.QueryEvaluationException;
-import com.mobi.repository.api.RepositoryConnection;
-import com.mobi.repository.impl.sesame.query.SesameBindingSet;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.apache.commons.io.IOUtils;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.PaginatedSearchParams;
@@ -96,6 +85,8 @@ import com.mobi.prov.api.ontologies.mobiprov.CreateActivityFactory;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivity;
 import com.mobi.prov.api.ontologies.mobiprov.DeleteActivityFactory;
 import com.mobi.query.TupleQueryResult;
+import com.mobi.query.api.BindingSet;
+import com.mobi.query.exception.QueryEvaluationException;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
@@ -117,10 +108,19 @@ import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
 import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.core.SimpleRepositoryManager;
+import com.mobi.repository.impl.sesame.query.SesameBindingSet;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import org.apache.commons.io.IOUtils;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.server.ResourceConfig;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -133,6 +133,7 @@ import org.openrdf.rio.Rio;
 import org.openrdf.rio.WriterConfig;
 import org.openrdf.rio.helpers.JSONLDMode;
 import org.openrdf.rio.helpers.JSONLDSettings;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -406,9 +407,6 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(engineManager, versioningManager, ontologyId, ontology, importedOntologyId, importedOntology, catalogManager,
-                ontologyManager, sesameTransformer, results, mockCache, ontologyCache, provUtils);
-
         final IRI skosSemanticRelation = vf.createIRI(SKOS.SEMANTIC_RELATION.stringValue());
 
         when(results.getPage()).thenReturn(Collections.emptyList());
@@ -525,6 +523,12 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
         when(provUtils.startCreateActivity(any(User.class))).thenReturn(createActivity);
         when(provUtils.startDeleteActivity(any(User.class), any(IRI.class))).thenReturn(deleteActivity);
+    }
+
+    @AfterMethod
+    public void resetMocks() {
+        reset(engineManager, versioningManager, ontologyId, ontology, importedOntologyId, importedOntology,
+                catalogManager, ontologyManager, sesameTransformer, results, mockCache, ontologyCache, provUtils);
     }
 
     private JSONObject getResource(String path) throws Exception {
