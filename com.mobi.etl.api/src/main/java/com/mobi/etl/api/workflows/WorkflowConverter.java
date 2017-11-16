@@ -24,16 +24,19 @@ package com.mobi.etl.api.workflows;
  */
 
 import com.mobi.etl.api.ontologies.etl.Workflow;
+import org.apache.camel.CamelContext;
 import org.apache.camel.builder.RouteBuilder;
 
 public interface WorkflowConverter {
+
     /**
-     * Converts the Workflow RDF configuration into Routes within a RouteBuilder for the purpose of adding them to a
-     * CamelContext. Should include all referenced DataSources, Processors, and Destinations along with rdf:Lists
-     * describing the Routes to be created.
+     * Converts the Workflow RDF configuration into Routes within a RouteBuilder for the purpose of adding them to the
+     * provided CamelContext. Should include all referenced DataSources, Processors, and Destinations along with
+     * rdf:Lists describing the Routes to be created.
      *
      * @param workflow a Workflow containing route definitions of DataSources, Processors, and Destinations
+     * @param context a CamelContext to deploy the Workflow to
      * @return A RouteBuilder containing Routes configured by the Workflow RDF
      */
-    RouteBuilder convert(Workflow workflow);
+    RouteBuilder convert(Workflow workflow, CamelContext context);
 }

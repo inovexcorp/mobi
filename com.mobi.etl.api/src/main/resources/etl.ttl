@@ -10,11 +10,11 @@
 @base <http://mobi.com/ontologies/etl> .
 
 <http://mobi.com/ontologies/etl> a owl:Ontology ;
-    owl:versionIRI <http://mobi.com/ontologies/etl#1.0> ;
+    owl:versionIRI <http://mobi.com/ontologies/etl#2.0> ;
     dct:title "The Mobi ETL Ontology"@en ;
     dct:creator [foaf:name "Megan Mercer"] ;
-    foaf:maker [foaf:name "Mobi"; foaf:homepage <http://mobi.com>] ;
-    dct:modified "2017-10-06"^^xsd:date .
+    foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>] ;
+    dct:modified "2017-10-23"^^xsd:date .
 
 # Workflow
 
@@ -46,24 +46,6 @@
     rdfs:domain :Workflow ;
     rdfs:range :Destination .
 
-# SubRoute
-
-:SubRoute a owl:Class ;
-    dct:title "SubRoute"@en ;
-    dct:description "A SubRoute is a representative of an Apache Camel route. A Workflow Route generates one or more SubRoutes."@en .
-
-:workflow a owl:ObjectProperty, owl:FunctionalProperty ;
-    dct:title "workflow"@en ;
-    dct:description "The Workflow that the described SubRoute belongs to."@en ;
-    rdfs:domain :SubRoute ;
-    rdfs:range :Workflow .
-
-:subRoute a owl:ObjectProperty, owl:FunctionalProperty ;
-    dct:title "sub route"@en ;
-    dct:description "The SubRoute that the described route list element points to."@en ;
-    rdfs:domain rdf:List ;
-    rdfs:range :SubRoute .
-
 # DataSource
 
 :DataSource a owl:Class ;
@@ -72,15 +54,15 @@
 
 :FileDataSource a owl:Class ;
     rdfs:subClassOf :DataSource ;
-    :outputType :FileMessage ;
+    :outputType :File ;
     dct:title "File Data Source"@en ;
-    dct:description "A FileDataSource provides configurations for retrieving a single file from a file system. Returns a FileMessage pointing to the specified file."@en .
+    dct:description "A FileDataSource provides configurations for retrieving a single file from a file system. Returns a pointer to the specified File."@en .
 
 :DirectoryDataSource a owl:Class ;
     rdfs:subClassOf :DataSource ;
-    :outputType :FileMessage ;
+    :outputType :File ;
     dct:title "Directory Data Source"@en ;
-    dct:description "A DirectoryDataSource provides configurations for retrieving a directory of files from a file system. Returns FileMessages for each file found in the specified directory."@en .
+    dct:description "A DirectoryDataSource provides configurations for retrieving a directory of files from a file system. Returns pointers for each File found in the specified directory."@en .
 
 :filter a owl:DatatypeProperty, owl:FunctionalProperty ;
     dct:title "filter"@en ;
@@ -108,10 +90,10 @@
 
 :MappingProcessor a owl:Class ;
     rdfs:subClassOf :Processor ;
-    :inputType :FileMessage ;
-    :outputType :RDFMessage ;
+    :inputType :File ;
+    :outputType :RDF ;
     dct:title "Mapping Processor"@en ;
-    dct:description "A MappingProcessor provides configurations for running a Mobi Mapping against a set of data. Expects FileMessages pointing to SV or Excel files with tabular data. Outputs RDFMessages."@en .
+    dct:description "A MappingProcessor provides configurations for running a Mobi Mapping against a set of data. Expects pointers to SV or Excel Files with tabular data. Outputs a pointer to an RDF file."@en .
 
 :mappingRecord a owl:ObjectProperty, owl:FunctionalProperty ;
     dct:title "mapping record"@en ;
@@ -133,27 +115,27 @@
 
 :TikaProcessor a owl:Class ;
     rdfs:subClassOf :Processor ;
-    :inputType :FileMessage ;
-    :outputType :FileMessage ;
+    :inputType :File ;
+    :outputType :Tika ;
     dct:title "Tika Processor"@en ;
-    dct:description "A TikaProcessor provides configurations for retrieving metadata about and the string contents of a file. Expects FileMessages. Returns TikaMessages pointing to the created RDF and the string contents."@en .
+    dct:description "A TikaProcessor provides configurations for retrieving metadata about and the string contents of a file. Expects Files. Returns pointers to the created RDF file and string contents file."@en .
 
 :UnstructuredProcessor a owl:Class ;
     rdfs:subClassOf :Processor ;
-    :inputType :FileMessage ;
-    :outputType :RDFMessage ;
+    :inputType :File ;
+    :outputType :RDF ;
     dct:title "Unstructured Processor"@en ;
-    dct:description "A UnstructuredProcessor provides configurations for running a file through the Mobi Unstructured Service to link referenced entities in a dataset to a document. Expects FileMessages. Returns RDFMessages."@en .
+    dct:description "A UnstructuredProcessor provides configurations for running a file through the Mobi Unstructured Service to link referenced entities in a dataset to a document. Expects a pointer to a File. Returns a pointer to an RDF file."@en .
 
 :lookupType a owl:ObjectProperty, owl:FunctionalProperty ;
     dct:title "lookup type"@en ;
-    dct:description "The class whose instances will be searched for in the FileMessgae passed to the described UnstructuredProcessor."@en ;
+    dct:description "The class whose instances will be searched for in the File passed to the described UnstructuredProcessor."@en ;
     rdfs:domain :UnstructuredProcessor ;
     rdfs:range owl:Class .
 
 :lookupProperty a owl:ObjectProperty ;
     dct:title "lookup property"@en ;
-    dct:description "The property whose values on instances will be searched for in the FileMessage passed to the described UnstructuredProcessor."@en ;
+    dct:description "The property whose values on instances will be searched for in the File passed to the described UnstructuredProcessor."@en ;
     rdfs:domain :UnstructuredProcessor ;
     rdfs:range rdf:Property .
 
@@ -165,15 +147,15 @@
 
 :FileDestination a owl:Class ;
     rdfs:subClassOf :Destination ;
-    :inputType :SerializableMessage ;
+    :inputType :Serializable ;
     dct:title "File Destination"@en ;
-    dct:description "A FileDestination provides configurations for outputing data into a file on a file system."@en .
+    dct:description "A FileDestination provides configurations for outputing data into a file on a file system. Expects a pointer to something Serializable."@en .
 
 :DirectoryDestination a owl:Class ;
     rdfs:subClassOf :Destination ;
-    :inputType :SerializableMessage ;
+    :inputType :Serializable ;
     dct:title "Directory Destination"@en ;
-    dct:description "A DirectoryDestination provides configurations for outputing data into multiple files in a directory on a file system."@en .
+    dct:description "A DirectoryDestination provides configurations for outputing data into multiple files in a directory on a file system. Expects a pointer to something Serializable."@en .
 
 :fileName a owl:DatatypeProperty, owl:FunctionalProperty ;
     dct:title "file name"@en ;
@@ -183,104 +165,93 @@
 
 :DatasetDestination a owl:Class ;
     rdfs:subClassOf :Destination ;
-    :inputType :RDFMessage ;
+    :inputType :RDF ;
     dct:title "Dataset Destination"@en ;
-    dct:description "A DatasetDestination provides configurations for ingesting RDF data into a Mobi Dataset"@en .
+    dct:description "A DatasetDestination provides configurations for ingesting RDF data into a Mobi Dataset. Expects a pointer to an RDF file."@en .
 
-# Message
+# Type
 
-:Message a owl:Class ;
-    dct:title "Message"@en ;
-    dct:description "A Message indicates the format of the data flowing through a Workflow at a particular moment."@en .
+:Type a owl:Class ;
+    dct:title "Type"@en ;
+    dct:description "A type of data that flows through a Workflow."@en .
 
-:previousMessage a owl:ObjectProperty, owl:FunctionalProperty ;
-    dct:title "previous message"@en ;
-    dct:description "The Message that immediately preceeded the described Message."@en ;
-    rdfs:domain :Message ;
-    rdfs:range :Message .
+:Serializable a owl:Class ;
+    rdfs:subClassOf :Type ;
+    dct:title "Serializable"@en ;
+    dct:description "Data that can be serialized and saved into a file."@en .
 
-:SerializableMessage a owl:Class ;
-    rdfs:subClassOf :Message ;
-    dct:title "Serializable Message"@en ;
-    dct:description "A Message whose contents can be serialized and saved into a file."@en .
+:RDF a owl:Class ;
+    rdfs:subClassOf :Serializable ;
+    dct:title "RDF"@en ;
+    dct:description "A pointer to a file with RDF data."@en .
 
-:RDFMessage a owl:Class ;
-    rdfs:subClassOf :SerializableMessage ;
-    dct:title "RDF Message"@en ;
-    dct:description "An RDFMessage points to RDF data passing through a Workflow at a particular moment."@en .
+:File a owl:Class ;
+    rdfs:subClassOf :Type ;
+    dct:title "File"@en ;
+    dct:description "A pointer to a file."@en .
 
-:FileMessage a owl:Class ;
-    rdfs:subClassOf :Message ;
-    dct:title "File Message"@en ;
-    dct:description "A FileMessage points to a file passing through a Workflow at a particular moment."@en .
-
-:fileURI a owl:DatatypeProperty ;
-    dct:title "file URI"@en ;
-    dct:description "The URI of where to retrieve the file represented by the described FileMessage."@en ;
-    rdfs:domain :FileMessage ;
-    rdfs:range xsd:string .
-
-:fileName a owl:DatatypeProperty ;
-    dct:title "file name"@en ;
-    dct:description "The name of the file represented by the described FileMessage."@en ;
-    rdfs:domain :FileMessage ;
-    rdfs:range xsd:string .
-
-:TikaMessage a owl:Class ;
-    rdfs:subClassOf :RDFMessage, :FileMessage ;
-    dct:title "A TikaMessage points to RDF of Tika generated metadata about a file and the string contents of the file."@en .
+:Tika a owl:Class ;
+    rdfs:subClassOf :RDF, :File ;
+    dct:title "Tika generated metadata about a file and the string contents of the file."@en .
 
 # Misc.
 
 :inputType a owl:AnnotationProperty, owl:FunctionalProperty ;
     dct:title "input type"@en ;
-    dct:description "The type of Message that the described Destination or Processor expects to receive. The inputType of a Processor or Destination must match the outputType of the parent DataSource or Processor."@en .
+    dct:description "The type of data that the described Destination or Processor expects to receive. The inputType of a Processor or Destination must match the outputType of the parent DataSource or Processor."@en .
 
 :outputType a owl:AnnotationProperty, owl:FunctionalProperty ;
     dct:title "output type"@en ;
-    dct:description "The type of Message that the described DataSource or Processor outputs. The outputType of a Processor or DataSource must match the inputType of the parent Processor or Destination."@en .
+    dct:description "The type of data that the described DataSource or Processor outputs. The outputType of a Processor or DataSource must match the inputType of the parent Processor or Destination."@en .
 
 :filePath a owl:DatatypeProperty, owl:FunctionalProperty ;
     dct:title "file path"@en ;
     dct:description "The string file path to the file of a FileDataSource or FileDestination or the directory of a DirectoryDataSource or DirectoryDestination."@en ;
-    rdfs:domain [
-        a owl:Class ;
-        owl:unionOf ( :FileDataSource :DirectoryDataSource :FileDestination :DirectoryDestination )
-    ] ;
+    rdfs:domain :FileDataSource, :DirectoryDataSource, :FileDestination, :DirectoryDestination ;
+    # Bug with blank node axiom values in ORM
+    # rdfs:domain [
+    #     a owl:Class ;
+    #     owl:unionOf ( :FileDataSource :DirectoryDataSource :FileDestination :DirectoryDestination )
+    # ] ;
     rdfs:range xsd:string .
 
 :datasetRecord a owl:ObjectProperty, owl:FunctionalProperty ;
     dct:title "dataset record"@en ;
     dct:description "The DatasetRecord that the described DatasetDestination uses to ingest data or the described UnstructuredProcessor pulls entity information from."@en ;
-    rdfs:domain [
-        a owl:Class ;
-        owl:unionOf ( :UnstructuredProcessor :DatasetDestination )
-        ] ;
+    rdfs:domain :UnstructuredProcessor, :DatasetDestination ;
+    # rdfs:domain [
+    #     a owl:Class ;
+    #     owl:unionOf ( :UnstructuredProcessor :DatasetDestination )
+    #     ] ;
     rdfs:range dataset:DatasetRecord .
 
 :append a owl:DatatypeProperty, owl:FunctionalProperty ;
     dct:title "append"@en ;
-    dct:description "Whether or not the described FileDestination or DirectoryDestination should append incoming message to a file instead of overwriting it. Default is false."@en ;
-    rdfs:domain [
-        a owl:Class ;
-        owl:unionOf ( :FileDestination :DirectoryDestination )
-    ] ;
+    dct:description "Whether or not the described FileDestination or DirectoryDestination should append incoming data to a file instead of overwriting it. Default is false."@en ;
+    rdfs:domain :FileDestination, :DirectoryDestination ;
+    # rdfs:domain [
+    #     a owl:Class ;
+    #     owl:unionOf ( :FileDestination :DirectoryDestination )
+    # ] ;
     rdfs:range xsd:boolean .
 
 :mimeType a owl:DatatypeProperty, owl:FunctionalProperty ;
     dct:title "MIME type"@en ;
-    dct:description "A string representing a MIME type. For FileDestinations and DirectoryDestinations, this is the type file will be stored as. For FileMessages, this is the type of the referenced file."@en ;
-    rdfs:domain [
-        a owl:Class ;
-        owl:unionOf ( :FileDestination :DirectoryDestination :FileMessage )
-    ] ;
+    dct:description "A string representing a MIME type. For FileDestinations and DirectoryDestinations, this is the type file will be stored as."@en ;
+    rdfs:domain :FileDestination, :DirectoryDestination ;
+    # Bug with blank node axiom values in ORM
+    # rdfs:domain [
+    #     a owl:Class ;
+    #     owl:unionOf ( :FileDestination :DirectoryDestination )
+    # ] ;
     rdfs:range xsd:string .
 
 :batchSize a owl:DatatypeProperty, owl:FunctionalProperty ;
     dct:title "batch size"@en ;
     dct:description "The number of rows per batch to be processed by the described MappingProcessor or statements per batch to be processed by the described DatasetDestination. Default value is 0 for rows, which means they will be processed one at a time. Default value is 10,000 for statements."@en ;
-    rdfs:domain [
-        a owl:Class ;
-        owl:unionOf ( :MappingProcessor :DatasetDestination )
-    ] ;
+    rdfs:domain :MappingProcessor, :DatasetDestination ;
+    # rdfs:domain [
+    #     a owl:Class ;
+    #     owl:unionOf ( :MappingProcessor :DatasetDestination )
+    # ] ;
     rdfs:range xsd:integer .

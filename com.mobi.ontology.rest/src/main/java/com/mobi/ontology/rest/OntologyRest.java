@@ -265,6 +265,31 @@ public interface OntologyRest {
                                 @QueryParam("commitId") String commitIdStr);
 
     /**
+     * Returns a JSON object with all of the lists and objects needed by the UI to properly display and work with
+     * ontologies.
+     *
+     * @param context the context of the request.
+     * @param recordIdStr the String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr the String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr the String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @return JSON object with keys .
+     */
+    @GET
+    @Path("{recordId}/ontology-stuff")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    Response getOntologyStuff(@Context ContainerRequestContext context,
+                              @PathParam("recordId") String recordIdStr,
+                              @QueryParam("branchId") String branchIdStr,
+                              @QueryParam("commitId") String commitIdStr);
+
+    /**
      * Returns IRIs in the ontology identified by the provided IDs.
      *
      * @param context     the context of the request.

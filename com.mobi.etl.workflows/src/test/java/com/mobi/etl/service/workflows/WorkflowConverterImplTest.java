@@ -24,7 +24,6 @@ package com.mobi.etl.service.workflows;
  */
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
@@ -40,8 +39,6 @@ import com.mobi.etl.api.ontologies.etl.MappingProcessor;
 import com.mobi.etl.api.ontologies.etl.MappingProcessorFactory;
 import com.mobi.etl.api.ontologies.etl.Processor;
 import com.mobi.etl.api.ontologies.etl.ProcessorFactory;
-import com.mobi.etl.api.ontologies.etl.SubRoute;
-import com.mobi.etl.api.ontologies.etl.SubRouteFactory;
 import com.mobi.etl.api.ontologies.etl.Workflow;
 import com.mobi.etl.api.ontologies.etl.WorkflowFactory;
 import com.mobi.etl.api.workflows.DataSourceRouteFactory;
@@ -99,7 +96,6 @@ public class WorkflowConverterImplTest {
     private MappingProcessorFactory mappingProcessorFactory = new MappingProcessorFactory();
     private DestinationFactory destinationFactory = new DestinationFactory();
     private FileDestinationFactory fileDestinationFactory = new FileDestinationFactory();
-    private SubRouteFactory subRouteFactory = new SubRouteFactory();
     private ListFactory listFactory = new ListFactory();
 
     private CamelContext context = new DefaultCamelContext();
@@ -113,7 +109,6 @@ public class WorkflowConverterImplTest {
     private final IRI FIRST_IRI = vf.createIRI(List.first_IRI);
     private final IRI REST_IRI = vf.createIRI(List.rest_IRI);
     private final IRI NIL = vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#nil");
-    private final IRI SUB_ROUTE = vf.createIRI("http://mobi.com/ontologies/etl#subRoute");
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -174,11 +169,6 @@ public class WorkflowConverterImplTest {
         fileDestinationFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(fileDestinationFactory);
 
-        subRouteFactory.setModelFactory(mf);
-        subRouteFactory.setValueFactory(vf);
-        subRouteFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(subRouteFactory);
-
         listFactory.setModelFactory(mf);
         listFactory.setValueFactory(vf);
         listFactory.setValueConverterRegistry(vcr);
@@ -198,17 +188,16 @@ public class WorkflowConverterImplTest {
         when(factoryRegistry.getSortedFactoriesOfType(DataSource.class)).thenReturn(Stream.of(fileDataSourceFactory, dataSourceFactory).collect(Collectors.toList()));
         when(factoryRegistry.getSortedFactoriesOfType(Processor.class)).thenReturn(Stream.of(mappingProcessorFactory, processorFactory).collect(Collectors.toList()));
         when(factoryRegistry.getSortedFactoriesOfType(Destination.class)).thenReturn(Stream.of(fileDestinationFactory, destinationFactory).collect(Collectors.toList()));
-        when(dataSourceRouteFactory.getEndpoint(any(DataSource.class))).thenReturn(endpoint);
+        when(dataSourceRouteFactory.getEndpoint(any(CamelContext.class), any(DataSource.class))).thenReturn(endpoint);
         when(dataSourceRouteFactory.getTypeIRI()).thenReturn(vf.createIRI(DataSource.TYPE));
         when(processorRouteFactory.getProcessor(any(Processor.class))).thenReturn(camelProcessor);
         when(processorRouteFactory.getTypeIRI()).thenReturn(vf.createIRI(Processor.TYPE));
-        when(destinationRouteFactory.getEndpoint(any(Destination.class))).thenReturn(endpoint);
+        when(destinationRouteFactory.getEndpoint(any(CamelContext.class), any(Destination.class))).thenReturn(endpoint);
         when(destinationRouteFactory.getTypeIRI()).thenReturn(vf.createIRI(Destination.TYPE));
 
         converter.setVf(vf);
         converter.setFactoryRegistry(factoryRegistry);
         converter.setListFactory(listFactory);
-        converter.setSubRouteFactory(subRouteFactory);
         converter.addDataSourceRouteFactory(dataSourceRouteFactory);
         converter.addProcessorRouteFactory(processorRouteFactory);
         converter.addDestinationRouteFactory(destinationRouteFactory);
@@ -223,7 +212,7 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Route is not defined as a rdf:List");
 
-        converter.convert(workflow);
+        converter.convert(workflow, context);
     }
 
     @Test
@@ -232,7 +221,7 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Workflow must have at least one Route");
 
-        converter.convert(workflow);
+        converter.convert(workflow, context);
     }
 
     @Test
@@ -245,7 +234,7 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(FileDataSource.TYPE + " type is not supported");
 
-        converter.convert(workflow);
+        converter.convert(workflow, context);
     }
 
     @Test
@@ -258,7 +247,7 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(MappingProcessor.TYPE + " type is not supported");
 
-        converter.convert(workflow);
+        converter.convert(workflow, context);
     }
 
     @Test
@@ -271,7 +260,7 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(FileDestination.TYPE + " type is not supported");
 
-        converter.convert(workflow);
+        converter.convert(workflow, context);
     }
 
     @Test
@@ -282,7 +271,7 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("List must have one first property value");
 
-        RouteBuilder result = converter.convert(workflow);
+        RouteBuilder result = converter.convert(workflow, context);
         result.addRoutesToCamelContext(context);
     }
 
@@ -296,7 +285,7 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("List must have one first property value");
 
-        RouteBuilder result = converter.convert(workflow);
+        RouteBuilder result = converter.convert(workflow, context);
         result.addRoutesToCamelContext(context);
     }
 
@@ -309,7 +298,7 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("List must have at least one rest property value");
 
-        RouteBuilder result = converter.convert(workflow);
+        RouteBuilder result = converter.convert(workflow, context);
         result.addRoutesToCamelContext(context);
     }
 
@@ -323,7 +312,7 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Route must start with a DataSource");
 
-        RouteBuilder result = converter.convert(workflow);
+        RouteBuilder result = converter.convert(workflow, context);
         result.addRoutesToCamelContext(context);
     }
 
@@ -338,7 +327,7 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("DataSource was not set on Workflow");
 
-        RouteBuilder result = converter.convert(workflow);
+        RouteBuilder result = converter.convert(workflow, context);
         result.addRoutesToCamelContext(context);
     }
 
@@ -354,7 +343,7 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Route must end with a Destination");
 
-        RouteBuilder result = converter.convert(workflow);
+        RouteBuilder result = converter.convert(workflow, context);
         result.addRoutesToCamelContext(context);
     }
 
@@ -370,7 +359,7 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("List rest property value must be a rdf:List");
 
-        RouteBuilder result = converter.convert(workflow);
+        RouteBuilder result = converter.convert(workflow, context);
         result.addRoutesToCamelContext(context);
     }
 
@@ -388,7 +377,7 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("List rest property value must be a rdf:List");
 
-        RouteBuilder result = converter.convert(workflow);
+        RouteBuilder result = converter.convert(workflow, context);
         result.addRoutesToCamelContext(context);
     }
 
@@ -407,7 +396,7 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Route must use Processors and Destinations after initial DataSource");
 
-        RouteBuilder result = converter.convert(workflow);
+        RouteBuilder result = converter.convert(workflow, context);
         result.addRoutesToCamelContext(context);
     }
 
@@ -427,7 +416,7 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Processor was not set on Workflow");
 
-        RouteBuilder result = converter.convert(workflow);
+        RouteBuilder result = converter.convert(workflow, context);
         result.addRoutesToCamelContext(context);
     }
 
@@ -447,7 +436,7 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Destination was not set on Workflow");
 
-        RouteBuilder result = converter.convert(workflow);
+        RouteBuilder result = converter.convert(workflow, context);
         result.addRoutesToCamelContext(context);
     }
 
@@ -468,33 +457,8 @@ public class WorkflowConverterImplTest {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Route must end with a Destination");
 
-        RouteBuilder result = converter.convert(workflow);
+        RouteBuilder result = converter.convert(workflow, context);
         result.addRoutesToCamelContext(context);
-    }
-
-    @Test
-    public void convertWithExistingSubRouteTest() throws Exception {
-        // Setup:
-        List route = listFactory.createNew(vf.createBNode(), workflow.getModel());
-        List second = listFactory.createNew(vf.createBNode(), workflow.getModel());
-        DataSource dataSource = dataSourceFactory.createNew(DATASOURCE_ID, workflow.getModel());
-        Destination destination = destinationFactory.createNew(DESTINATION_ID, workflow.getModel());
-        SubRoute subRoute = subRouteFactory.createNew(vf.createIRI("http://test.org/subRoute"), workflow.getModel());
-        subRoute.setWorkflow(workflow);
-        route.addProperty(subRoute.getResource(), SUB_ROUTE);
-        workflow.addRoute(route);
-        workflow.addDataSource(dataSource);
-        workflow.addDestination(destination);
-        route.addProperty(DATASOURCE_ID, FIRST_IRI);
-        route.addProperty(second.getResource(), REST_IRI);
-        second.addProperty(destination.getResource(), FIRST_IRI);
-        second.addProperty(NIL, REST_IRI);
-
-        RouteBuilder result = converter.convert(workflow);
-        result.addRoutesToCamelContext(context);
-        assertTrue(workflow.getModel().contains(subRoute.getResource(), TYPE_IRI, vf.createIRI(SubRoute.TYPE)));
-        assertEquals(1, workflow.getModel().filter(null, TYPE_IRI, vf.createIRI(SubRoute.TYPE)).size());
-        assertEquals(1, result.getRouteCollection().getRoutes().size());
     }
 
     @Test
@@ -532,16 +496,14 @@ public class WorkflowConverterImplTest {
         runUseCaseTest("/use-case-7.ttl", 3);
     }
 
-    private void runUseCaseTest(String fileName, int expectedSubRoutes) throws Exception {
+    private void runUseCaseTest(String fileName, int expectedRouteNum) throws Exception {
         // Setup:
         InputStream input = getClass().getResourceAsStream(fileName);
         Model model = Values.mobiModel(Rio.parse(input, "", RDFFormat.TURTLE));
         workflow = workflowFactory.getExisting(WORKFLOW_ID, model).get();
 
-        RouteBuilder result = converter.convert(workflow);
+        RouteBuilder result = converter.convert(workflow, context);
         result.addRoutesToCamelContext(context);
-        assertTrue(workflow.getModel().contains(null, TYPE_IRI, vf.createIRI(SubRoute.TYPE)));
-        assertEquals(expectedSubRoutes, workflow.getModel().filter(null, TYPE_IRI, vf.createIRI(SubRoute.TYPE)).size());
-        assertEquals(expectedSubRoutes, result.getRouteCollection().getRoutes().size());
+        assertEquals(expectedRouteNum, result.getRouteCollection().getRoutes().size());
     }
 }

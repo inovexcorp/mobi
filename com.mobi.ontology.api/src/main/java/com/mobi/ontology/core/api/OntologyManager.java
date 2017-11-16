@@ -30,6 +30,7 @@ import com.mobi.query.TupleQueryResult;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.Resource;
+import com.mobi.repository.api.RepositoryConnection;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -221,6 +222,14 @@ public interface OntologyManager {
     TupleQueryResult getSubClassesOf(Ontology ontology);
 
     /**
+     * Gets the subClassOf relationships for classes using the populated {@link RepositoryConnection}.
+     *
+     * @param conn     the {@link RepositoryConnection} to run the query on.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getSubClassesOf(RepositoryConnection conn);
+
+    /**
      * Gets the subClassOf relationships for a particular {@link IRI} in the provided {@link Ontology}. It will provide
      * <em>all</em> classes that can be traced back to the provided class IRI, even if nested.
      *
@@ -230,7 +239,37 @@ public interface OntologyManager {
      */
     TupleQueryResult getSubClassesFor(Ontology ontology, IRI iri);
 
+    /**
+     * Gets the subClassOf relationships for a particular {@link IRI} using the populated {@link RepositoryConnection}.
+     * It will provide <em>all</em> classes that can be traced back to the provided class IRI, even if nested.
+     *
+     * @param iri      The {@link IRI} of the class for which you want the list of subclasses.
+     * @param conn     the {@link RepositoryConnection} to run the query on.
+     * @return a {@link TupleQueryResult} with the query results.
+     */
+    TupleQueryResult getSubClassesFor(IRI iri, RepositoryConnection conn);
+
+    /**
+     * Gets the subPropertyOf relationships for a particular {@link IRI} in the provided {@link Ontology}. It will
+     * provide <em>all</em> properties that can be traced back to the provided property IRI, even if nested.
+     *
+     * @param ontology The {@link Ontology} you wish to query.
+     * @param iri      The {@link IRI} of the property for which you want the list of subproperties.
+     * @return a {@link TupleQueryResult} with the query results.
+     */
     TupleQueryResult getSubPropertiesFor(Ontology ontology, IRI iri);
+
+    /**
+     * Gets the subPropertyOf relationships for a particular {@link IRI} using the populated
+     * {@link RepositoryConnection}. It will provide <em>all</em> properties that can be traced back to the provided
+     * property IRI, even if nested.
+     *
+     * @param ontology The {@link Ontology} you wish to query.
+     * @param iri      The {@link IRI} of the property for which you want the list of subproperties.
+     * @param conn     the {@link RepositoryConnection} to run the query on.
+     * @return a {@link TupleQueryResult} with the query results.
+     */
+    TupleQueryResult getSubPropertiesFor(IRI iri, RepositoryConnection conn);
 
     /**
      * Gets the subPropertyOf relationships for datatype properties in the provided Ontology.
@@ -241,12 +280,28 @@ public interface OntologyManager {
     TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology);
 
     /**
+     * Gets the subPropertyOf relationships for datatype properties using the populated {@link RepositoryConnection}.
+     *
+     * @param conn the {@link RepositoryConnection} to run the query on.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getSubDatatypePropertiesOf(RepositoryConnection conn);
+
+    /**
      * Gets the subPropertyOf relationships for annotation properties in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
      * @return a Set with the query results.
      */
     TupleQueryResult getSubAnnotationPropertiesOf(Ontology ontology);
+
+    /**
+     * Gets the subPropertyOf relationships for annotation properties using the populated {@link RepositoryConnection}.
+     *
+     * @param conn the {@link RepositoryConnection} to run the query on.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getSubAnnotationPropertiesOf(RepositoryConnection conn);
 
     /**
      * Gets the subPropertyOf relationships for object properties in the provided Ontology.
@@ -257,12 +312,28 @@ public interface OntologyManager {
     TupleQueryResult getSubObjectPropertiesOf(Ontology ontology);
 
     /**
+     * Gets the subPropertyOf relationships for object properties using the populated {@link RepositoryConnection}.
+     *
+     * @param conn the {@link RepositoryConnection} to run the query on.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getSubObjectPropertiesOf(RepositoryConnection conn);
+
+    /**
      * Gets the classes with individuals in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
      * @return a Set with the query results.
      */
     TupleQueryResult getClassesWithIndividuals(Ontology ontology);
+
+    /**
+     * Gets the classes with individuals using the populated {@link RepositoryConnection}.
+     *
+     * @param conn the {@link RepositoryConnection} to run the query on.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getClassesWithIndividuals(RepositoryConnection conn);
 
     /**
      * Gets the entity usages for the provided Resource in the provided Ontology.
@@ -274,6 +345,15 @@ public interface OntologyManager {
     TupleQueryResult getEntityUsages(Ontology ontology, Resource entity);
 
     /**
+     * Gets the entity usages for the provided Resource using the populated {@link RepositoryConnection}.
+     *
+     * @param entity the Resource for the entity you want to get the usages of.
+     * @param conn   the {@link RepositoryConnection} to run the query on.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getEntityUsages(Resource entity, RepositoryConnection conn);
+
+    /**
      * Constructs the entity usages for the provided Resource in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
@@ -281,6 +361,15 @@ public interface OntologyManager {
      * @return a Model with the constructed statements.
      */
     Model constructEntityUsages(Ontology ontology, Resource entity);
+
+    /**
+     * Constructs the entity usages for the provided Resource using the populated {@link RepositoryConnection}.
+     *
+     * @param entity the Resource for the entity you want to get the usages of.
+     * @param conn   the {@link RepositoryConnection} to run the query on.
+     * @return a Model with the constructed statements.
+     */
+    Model constructEntityUsages(Resource entity, RepositoryConnection conn);
 
     /**
      * Gets the concept relationships in the provided Ontology.
@@ -291,12 +380,28 @@ public interface OntologyManager {
     TupleQueryResult getConceptRelationships(Ontology ontology);
 
     /**
+     * Gets the concept relationships using the populated {@link RepositoryConnection}.
+     *
+     * @param conn the {@link RepositoryConnection} to run the query on.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getConceptRelationships(RepositoryConnection conn);
+
+    /**
      * Gets the concept scheme relationships in the provided Ontology.
      *
      * @param ontology the Ontology you wish to query.
      * @return a Set with the query results.
      */
     TupleQueryResult getConceptSchemeRelationships(Ontology ontology);
+
+    /**
+     * Gets the concept scheme relationships using the populated {@link RepositoryConnection}.
+     *
+     * @param conn the {@link RepositoryConnection} to run the query on.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getConceptSchemeRelationships(RepositoryConnection conn);
 
     /**
      * Searches the provided Ontology using the provided searchText.
@@ -306,6 +411,15 @@ public interface OntologyManager {
      * @return a Set with the query results.
      */
     TupleQueryResult getSearchResults(Ontology ontology, String searchText);
+
+    /**
+     * Searches the populated {@link RepositoryConnection} using the provided searchText.
+     *
+     * @param searchText the String for the text you want to search for in the populated {@link RepositoryConnection}.
+     * @param conn       the {@link RepositoryConnection} to run the query on.
+     * @return a Set with the query results.
+     */
+    TupleQueryResult getSearchResults(String searchText, RepositoryConnection conn);
 
     /**
      * Gets the compiled resource of the head Commit on the master Branch for the OntologyRecord specified by the
