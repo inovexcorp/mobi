@@ -225,7 +225,7 @@ public interface Ontology {
     /**
      * Retrieves a {@link Set} of all NamedIndividuals.
      *
-     * @return a {@link Set} of all {@link Individual}s in the {@link Ontology}
+     * @return a {@link Set} of all {@link NamedIndividual}s in the {@link Ontology}
      */
     Set<NamedIndividual> getAllNamedIndividuals();
 
