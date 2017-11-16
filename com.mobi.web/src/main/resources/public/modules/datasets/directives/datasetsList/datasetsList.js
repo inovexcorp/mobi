@@ -98,13 +98,8 @@
                         }
                     }
                     dvm.getPage = function(direction) {
-                        if (direction === 'prev') {
-                            dvm.state.paginationConfig.pageIndex -= 1;
-                            dvm.state.setResults(dvm.state.links.prev);
-                        } else {
-                            dvm.state.paginationConfig.pageIndex += 1;
-                            dvm.state.setResults(dvm.state.links.next);
-                        }
+                        dvm.state.paginationConfig.pageIndex = dvm.state.paginationConfig.pageIndex + (direction === 'prev' ? -1 : 1);
+                        dvm.state.setResults(dvm.state.links[direction]);
                     }
                     dvm.delete = function() {
                         dm.deleteDatasetRecord(dvm.state.selectedDataset.record['@id'])

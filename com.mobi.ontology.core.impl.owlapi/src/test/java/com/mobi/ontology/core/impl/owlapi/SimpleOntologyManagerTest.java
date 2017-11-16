@@ -151,6 +151,7 @@ public class SimpleOntologyManagerTest {
     private org.semanticweb.owlapi.model.IRI owlVersionIRI;
     private RepositoryManager repoManager = new SimpleRepositoryManager();
     private Repository repo;
+    private Repository vocabRepo;
 
     @Before
     public void setUp() throws Exception {
@@ -233,8 +234,16 @@ public class SimpleOntologyManagerTest {
         repo = repoManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
+            conn.begin();
             InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
             conn.add(Values.mobiModel(Rio.parse(testData, "", RDFFormat.TRIG)));
+            conn.add(ontology.asModel(mf));
+            conn.commit();
+        }
+        vocabRepo = repoManager.createMemoryRepository();
+        vocabRepo.initialize();
+        try (RepositoryConnection conn = vocabRepo.getConnection()) {
+            conn.add(vocabulary.asModel(mf));
         }
         when(mockRepoManager.createMemoryRepository()).thenReturn(repoManager.createMemoryRepository());
         when(mockRepoManager.getRepository("system")).thenReturn(Optional.of(repo));
@@ -254,6 +263,7 @@ public class SimpleOntologyManagerTest {
     @After
     public void tearDown() throws Exception {
         repo.shutDown();
+        vocabRepo.shutDown();
     }
 
     @Test
@@ -597,6 +607,17 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testGetSubClassesOf() throws Exception {
+        verifyGetSubClassesOf(manager.getSubClassesOf(ontology));
+    }
+
+    @Test
+    public void testGetSubClassesOfWithConnection() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            verifyGetSubClassesOf(manager.getSubClassesOf(conn));
+        }
+    }
+
+    private void verifyGetSubClassesOf(TupleQueryResult result) {
         Set<String> parents = Stream.of("http://mobi.com/ontology#Class2a", "http://mobi.com/ontology#Class2b",
                 "http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c",
                 "http://mobi.com/ontology#Class1a").collect(Collectors.toSet());
@@ -604,8 +625,6 @@ public class SimpleOntologyManagerTest {
         children.put("http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c");
         children.put("http://mobi.com/ontology#Class1a", "http://mobi.com/ontology#Class1b");
         children.put("http://mobi.com/ontology#Class2a", "http://mobi.com/ontology#Class2b");
-
-        TupleQueryResult result = manager.getSubClassesOf(ontology);
 
         assertTrue(result.hasNext());
         result.forEach(b -> {
@@ -624,12 +643,21 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testGetSubDatatypePropertiesOf() throws Exception {
+        verifySubDatatypePropertiesOf(manager.getSubDatatypePropertiesOf(ontology));
+    }
+
+    @Test
+    public void testGetSubDatatypePropertiesOfWithConnection() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            verifySubDatatypePropertiesOf(manager.getSubDatatypePropertiesOf(conn));
+        }
+    }
+
+    private void verifySubDatatypePropertiesOf(TupleQueryResult result) {
         Set<String> parents = Stream.of("http://mobi.com/ontology#dataProperty1b",
                 "http://mobi.com/ontology#dataProperty1a").collect(Collectors.toSet());
         Map<String, String> children = new HashMap<>();
         children.put("http://mobi.com/ontology#dataProperty1a", "http://mobi.com/ontology#dataProperty1b");
-
-        TupleQueryResult result = manager.getSubDatatypePropertiesOf(ontology);
 
         assertTrue(result.hasNext());
         result.forEach(b -> {
@@ -648,14 +676,23 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testGetSubAnnotationPropertiesOf() throws Exception {
+        verifyGetSubAnnotationPropertiesOf(manager.getSubAnnotationPropertiesOf(ontology));
+    }
+
+    @Test
+    public void testGetSubAnnotationPropertiesOfWithConnection() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            verifyGetSubAnnotationPropertiesOf(manager.getSubAnnotationPropertiesOf(conn));
+        }
+    }
+
+    private void verifyGetSubAnnotationPropertiesOf(TupleQueryResult result) {
         Set<String> parents = Stream.of("http://mobi.com/ontology#annotationProperty1b",
                 "http://mobi.com/ontology#annotationProperty1a", "http://purl.org/dc/terms/title")
                 .collect(Collectors.toSet());
         Map<String, String> children = new HashMap<>();
         children.put("http://mobi.com/ontology#annotationProperty1a",
                 "http://mobi.com/ontology#annotationProperty1b");
-
-        TupleQueryResult result = manager.getSubAnnotationPropertiesOf(ontology);
 
         assertTrue(result.hasNext());
         result.forEach(b -> {
@@ -670,16 +707,26 @@ public class SimpleOntologyManagerTest {
         });
         assertEquals(0, parents.size());
         assertEquals(0, children.size());
+
     }
 
     @Test
     public void testGetSubObjectPropertiesOf() throws Exception {
+        verifyGetSubObjectPropertiesOf(manager.getSubObjectPropertiesOf(ontology));
+    }
+
+    @Test
+    public void testGetSubObjectPropertiesOfWithConnection() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            verifyGetSubObjectPropertiesOf(manager.getSubObjectPropertiesOf(conn));
+        }
+    }
+
+    private void verifyGetSubObjectPropertiesOf(TupleQueryResult result) {
         Set<String> parents = Stream.of("http://mobi.com/ontology#objectProperty1b",
                 "http://mobi.com/ontology#objectProperty1a").collect(Collectors.toSet());
         Map<String, String> children = new HashMap<>();
         children.put("http://mobi.com/ontology#objectProperty1a", "http://mobi.com/ontology#objectProperty1b");
-
-        TupleQueryResult result = manager.getSubObjectPropertiesOf(ontology);
 
         assertTrue(result.hasNext());
         result.forEach(b -> {
@@ -698,6 +745,17 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testGetClassesWithIndividuals() throws Exception {
+        verifyGetClassesWithIndividuals(manager.getClassesWithIndividuals(ontology));
+    }
+
+    @Test
+    public void testGetClassesWithIndividualsWithConnection() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            verifyGetClassesWithIndividuals(manager.getClassesWithIndividuals(conn));
+        }
+    }
+
+    private void verifyGetClassesWithIndividuals(TupleQueryResult result) {
         Set<String> parents = Stream.of("http://mobi.com/ontology#Class2a", "http://mobi.com/ontology#Class2b",
                 "http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c",
                 "http://mobi.com/ontology#Class1a").collect(Collectors.toSet());
@@ -707,7 +765,6 @@ public class SimpleOntologyManagerTest {
         children.put("http://mobi.com/ontology#Class1c", "http://mobi.com/ontology#Individual1c");
         children.put("http://mobi.com/ontology#Class2a", "http://mobi.com/ontology#Individual2a");
         children.put("http://mobi.com/ontology#Class2b", "http://mobi.com/ontology#Individual2b");
-        TupleQueryResult result = manager.getClassesWithIndividuals(ontology);
 
         assertTrue(result.hasNext());
         result.forEach(b -> {
@@ -718,8 +775,8 @@ public class SimpleOntologyManagerTest {
             if (child.isPresent()) {
                 String lclChild = children.get(parent);
                 String individual = child.get().getValue().stringValue();
-                  assertEquals(lclChild, individual);
-                  children.remove(parent);
+                assertEquals(lclChild, individual);
+                children.remove(parent);
             }
         });
         assertEquals(0, parents.size());
@@ -728,13 +785,21 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testGetEntityUsages() throws Exception {
+        verifyGetEntityUsages(manager.getEntityUsages(ontology, vf.createIRI("http://mobi.com/ontology#Class1a")));
+    }
+
+    @Test
+    public void testGetEntityUsagesWithConnection() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            verifyGetEntityUsages(manager.getEntityUsages(vf.createIRI("http://mobi.com/ontology#Class1a"), conn));
+        }
+    }
+
+    private void verifyGetEntityUsages(TupleQueryResult result) {
         Set<String> subjects = Stream.of("http://mobi.com/ontology#Class1b",
                 "http://mobi.com/ontology#Individual1a").collect(Collectors.toSet());
         Set<String> predicates = Stream.of("http://www.w3.org/2000/01/rdf-schema#subClassOf",
                 "http://www.w3.org/1999/02/22-rdf-syntax-ns#type").collect(Collectors.toSet());
-
-        TupleQueryResult result = manager.getEntityUsages(ontology, vf
-                .createIRI("http://mobi.com/ontology#Class1a"));
 
         assertTrue(result.hasNext());
         result.forEach(b -> {
@@ -757,29 +822,48 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testConstructEntityUsages() throws Exception {
+        Resource class1a = vf.createIRI("http://mobi.com/ontology#Class1a");
+        verifyConstructEntityUsages(manager.constructEntityUsages(ontology, class1a), class1a);
+    }
+
+    @Test
+    public void testConstructEntityUsagesWithConnection() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Resource class1a = vf.createIRI("http://mobi.com/ontology#Class1a");
+            verifyConstructEntityUsages(manager.constructEntityUsages(class1a, conn), class1a);
+        }
+    }
+
+    private void verifyConstructEntityUsages(Model result, Resource class1a) throws Exception {
         Resource class1b = vf.createIRI("http://mobi.com/ontology#Class1b");
         IRI subClassOf = vf.createIRI("http://www.w3.org/2000/01/rdf-schema#subClassOf");
-        Resource class1a = vf.createIRI("http://mobi.com/ontology#Class1a");
         Resource individual1a = vf.createIRI("http://mobi.com/ontology#Individual1a");
         IRI type = vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type");
         Model expected = mf.createModel(Stream.of(vf.createStatement(class1b, subClassOf,
                 class1a), vf.createStatement(individual1a, type, class1a)).collect(Collectors.toSet()));
-
-        Model result = manager.constructEntityUsages(ontology, class1a);
 
         assertTrue(result.equals(expected));
     }
 
     @Test
     public void testGetConceptRelationships() throws Exception {
+        verifyGetConceptRelationships(manager.getConceptRelationships(vocabulary));
+    }
+
+    @Test
+    public void testGetConceptRelationshipsWithConnection() throws Exception {
+        try (RepositoryConnection conn = vocabRepo.getConnection()) {
+            verifyGetConceptRelationships(manager.getConceptRelationships(conn));
+        }
+    }
+
+    private void verifyGetConceptRelationships(TupleQueryResult result) {
         Set<String> parents = Stream.of("https://mobi.com/vocabulary#Concept1",
                 "https://mobi.com/vocabulary#Concept2","https://mobi.com/vocabulary#Concept3",
                 "https://mobi.com/vocabulary#Concept4")
                 .collect(Collectors.toSet());
         Map<String, String> children = new HashMap<>();
         children.put("https://mobi.com/vocabulary#Concept1", "https://mobi.com/vocabulary#Concept2");
-
-        TupleQueryResult result = manager.getConceptRelationships(vocabulary);
 
         assertTrue(result.hasNext());
         result.forEach(b -> {
@@ -798,6 +882,17 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testGetConceptSchemeRelationships() throws Exception {
+        verifyGetConceptSchemeRelationships(manager.getConceptSchemeRelationships(vocabulary));
+    }
+
+    @Test
+    public void testGetConceptSchemeRelationshipsWithConnection() throws Exception {
+        try (RepositoryConnection conn = vocabRepo.getConnection()) {
+            verifyGetConceptSchemeRelationships(manager.getConceptSchemeRelationships(conn));
+        }
+    }
+
+    private void verifyGetConceptSchemeRelationships(TupleQueryResult result) {
         Set<String> parents = Stream.of("https://mobi.com/vocabulary#ConceptScheme1",
                 "https://mobi.com/vocabulary#ConceptScheme2","https://mobi.com/vocabulary#ConceptScheme3")
                 .collect(Collectors.toSet());
@@ -805,8 +900,6 @@ public class SimpleOntologyManagerTest {
         children.put("https://mobi.com/vocabulary#ConceptScheme1", "https://mobi.com/vocabulary#Concept1");
         children.put("https://mobi.com/vocabulary#ConceptScheme2", "https://mobi.com/vocabulary#Concept2");
         children.put("https://mobi.com/vocabulary#ConceptScheme3", "https://mobi.com/vocabulary#Concept3");
-
-        TupleQueryResult result = manager.getConceptSchemeRelationships(vocabulary);
 
         assertTrue(result.hasNext());
         result.forEach(b -> {
@@ -825,11 +918,20 @@ public class SimpleOntologyManagerTest {
 
     @Test
     public void testGetSearchResults() throws Exception {
+        verifyGetSearchResults(manager.getSearchResults(ontology, "class"));
+    }
+
+    @Test
+    public void testGetSearchResultsWithConnection() throws Exception {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            verifyGetSearchResults(manager.getSearchResults("class", conn));
+        }
+    }
+
+    private void verifyGetSearchResults(TupleQueryResult result) throws Exception {
         Set<String> entities = Stream.of("http://mobi.com/ontology#Class2a", "http://mobi.com/ontology#Class2b",
                 "http://mobi.com/ontology#Class1b", "http://mobi.com/ontology#Class1c",
                 "http://mobi.com/ontology#Class1a").collect(Collectors.toSet());
-
-        TupleQueryResult result = manager.getSearchResults(ontology, "class");
 
         assertTrue(result.hasNext());
         result.forEach(b -> {

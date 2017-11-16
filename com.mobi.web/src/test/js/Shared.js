@@ -220,6 +220,7 @@ function mockOntologyManager() {
             this.uploadJson = jasmine.createSpy('uploadJson').and.returnValue($q.when({}));
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue($q.when({}));
             this.getVocabularyStuff = jasmine.createSpy('getVocabularyStuff').and.returnValue($q.when({}));
+            this.getOntologyStuff = jasmine.createSpy('getOntologyStuff').and.returnValue($q.when({}));
             this.getIris = jasmine.createSpy('getIris').and.returnValue($q.when({}));
             this.getImportedIris = jasmine.createSpy('getImportedIris').and.returnValue($q.when([]));
             this.getClassHierarchies = jasmine.createSpy('getClassHierarchies').and.returnValue($q.when({}));
@@ -1006,6 +1007,9 @@ function mockDatasetManager() {
             this.clearDatasetRecord = jasmine.createSpy('clearDatasetRecord').and.returnValue($q.when());
             this.updateDatasetRecord = jasmine.createSpy('updateDatasetRecord').and.returnValue($q.when());
             this.initialize = jasmine.createSpy('initialize');
+            this.getOntologyIdentifiers = jasmine.createSpy('getOntologyIdentifiers').and.returnValue([]);
+            this.getRecordFromArray = jasmine.createSpy('getRecordFromArray').and.returnValue({});
+            this.splitDatasetArray = jasmine.createSpy('splitDatasetArray').and.returnValue({});
         });
     });
 }

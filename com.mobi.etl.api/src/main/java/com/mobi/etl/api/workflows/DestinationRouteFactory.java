@@ -23,6 +23,7 @@ package com.mobi.etl.api.workflows;
  * #L%
  */
 
+import org.apache.camel.CamelContext;
 import org.apache.camel.Endpoint;
 import com.mobi.etl.api.ontologies.etl.Destination;
 import com.mobi.rdf.api.Resource;
@@ -44,11 +45,12 @@ public interface DestinationRouteFactory<T extends Destination> {
     Class<T> getType();
 
     /**
-     * A Camel Endpoint that represents the configuration within the provided Destination RDF. Endpoint will need
-     * the CamelContext and Component set. Endpoint should receive MobiMessages with RDF.
+     * Returns a Camel Endpoint that represents the configuration within the provided Destination RDF. Endpoint will be
+     * added to the provided CamelContext and will need a Component set.
      *
+     * @param context A CamelContext to add the Destination Endpoint to
      * @param destination An ORM Destination with configurations
      * @return A Camel Endpoint configured by the provided Destination
      */
-    Endpoint getEndpoint(T destination);
+    Endpoint getEndpoint(CamelContext context, T destination);
 }

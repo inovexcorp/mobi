@@ -28,7 +28,7 @@
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
-        <version>1.10.24-SNAPSHOT</version>
+        <version>1.10.26-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -51,6 +51,11 @@
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>rdf.orm</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>rest.util</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

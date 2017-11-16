@@ -602,12 +602,12 @@ describe('Analytic State Service', function() {
     });
     it('getOntologies should return the correct array of ontologies', function() {
         utilSvc.getPropertyId.and.returnValue('id');
-        var record = {'@id': 'id', '@type': 'type'};
-        var dataset = [record, {}];
-        expect(analyticStateSvc.getOntologies(dataset, record)).toEqual([{recordId: 'id', branchId: 'id', commitId: 'id'}]);
-        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.dataset + 'linksToRecord');
-        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.dataset + 'linksToBranch');
-        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({}, prefixes.dataset + 'linksToCommit');
+        datasetManagerSvc.getOntologyIdentifiers.and.returnValue([{'@id': 'id'}]);
+        expect(analyticStateSvc.getOntologies([], {})).toEqual([{recordId: 'id', branchId: 'id', commitId: 'id'}]);
+        expect(datasetManagerSvc.getOntologyIdentifiers).toHaveBeenCalledWith([], {});
+        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({'@id': 'id'}, prefixes.dataset + 'linksToRecord');
+        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({'@id': 'id'}, prefixes.dataset + 'linksToBranch');
+        expect(utilSvc.getPropertyId).toHaveBeenCalledWith({'@id': 'id'}, prefixes.dataset + 'linksToCommit');
     });
     describe('createTableConfigurationConfig should return the correct object when selectedConfigurationId is', function() {
         beforeEach(function() {
