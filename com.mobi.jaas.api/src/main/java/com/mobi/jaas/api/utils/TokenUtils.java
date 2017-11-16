@@ -207,7 +207,15 @@ public class TokenUtils {
     private static SignedJWT createJWT(String username, String scope, byte[] key, Map<String, Object> customClaims)
             throws JOSEException {
         // Create HMAC signer
-        JWSSigner signer = new MACSigner(key);
+        JWSSigner signer;
+
+        if (key.length < 32) {
+            byte[] padded = new byte[32];
+            System.arraycopy(key, 0, padded, 32 - key.length, key.length);
+            signer = new MACSigner(padded);
+        } else {
+            signer = new MACSigner(key);
+        }
 
         Date now = new Date();
         Date expirationDate = new Date(now.getTime() + TOKEN_DURATION);
