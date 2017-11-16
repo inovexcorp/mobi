@@ -24,13 +24,9 @@ package com.mobi.federation.hazelcast;
  */
 
 import static java.lang.Thread.sleep;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.hazelcast.core.HazelcastInstance;
@@ -38,7 +34,6 @@ import com.hazelcast.instance.HazelcastInstanceImpl;
 import com.hazelcast.instance.HazelcastInstanceProxy;
 import com.hazelcast.instance.Node;
 import com.mobi.platform.config.api.server.Mobi;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -123,31 +118,31 @@ public class HazelcastFederationServiceTest {
         waitForEquals(3, s1::getMemberCount, WAIT_TIME);
         waitForEquals(3, s2::getMemberCount, WAIT_TIME);
         waitForEquals(3, s3::getMemberCount, WAIT_TIME);
-        assertTrue(CollectionUtils.isEqualCollection(s1.getFederationNodeIds(), s2.getFederationNodeIds()));
-        assertTrue(CollectionUtils.isEqualCollection(s1.getFederationNodeIds(), s3.getFederationNodeIds()));
-        assertTrue(s1.getFederationNodeIds().contains(u1));
-        assertTrue(s1.getFederationNodeIds().contains(u2));
-        assertTrue(s1.getFederationNodeIds().contains(u3));
+        waitForEquals(s1::getFederationNodeIds, s2::getFederationNodeIds, WAIT_TIME);
+        waitForEquals(s1::getFederationNodeIds, s3::getFederationNodeIds, WAIT_TIME);
+        waitForEquals(true, () -> s1.getFederationNodeIds().contains(u1), WAIT_TIME);
+        waitForEquals(true, () -> s1.getFederationNodeIds().contains(u2), WAIT_TIME);
+        waitForEquals(true, () -> s1.getFederationNodeIds().contains(u3), WAIT_TIME);
 
         // Test deactivation of one node results in two members
         s1.deactivate();
         waitForEquals(2, s2::getMemberCount, WAIT_TIME);
         waitForEquals(2, s3::getMemberCount, WAIT_TIME);
-        assertTrue(s3.getFederationNodeIds().contains(u2));
-        assertTrue(s3.getFederationNodeIds().contains(u3));
+        waitForEquals(true, () -> s3.getFederationNodeIds().contains(u2), WAIT_TIME);
+        waitForEquals(true, () -> s3.getFederationNodeIds().contains(u3), WAIT_TIME);
 
         // Test deactivation of another node results in 1 member
         s2.deactivate();
         waitForEquals(1, s3::getMemberCount, WAIT_TIME);
-        assertTrue(s3.getFederationNodeIds().contains(u3));
+        waitForEquals(true, () -> s3.getFederationNodeIds().contains(u3), WAIT_TIME);
 
         // Test reactivation of a node results in two members again
         ForkJoinTask<?> task22 = createNode(pool, s2, 5234, new HashSet<>(Collections.singletonList("127.0.0.1:5345")));
         task22.get();
         waitForEquals(2, s2::getMemberCount, WAIT_TIME);
         waitForEquals(2, s3::getMemberCount, WAIT_TIME);
-        assertTrue(s3.getFederationNodeIds().contains(u2));
-        assertTrue(s3.getFederationNodeIds().contains(u3));
+        waitForEquals(true, () -> s3.getFederationNodeIds().contains(u2), WAIT_TIME);
+        waitForEquals(true, () -> s3.getFederationNodeIds().contains(u3), WAIT_TIME);
 
         // Deactivate remaining nodes
         s2.deactivate();
@@ -176,11 +171,11 @@ public class HazelcastFederationServiceTest {
         assertTrue(s2.getHazelcastInstance().isPresent());
         waitForEquals(2, s1::getMemberCount, WAIT_TIME);
         waitForEquals(2, s2::getMemberCount, WAIT_TIME);
-        assertTrue(CollectionUtils.isEqualCollection(s1.getFederationNodeIds(), s2.getFederationNodeIds()));
-        assertTrue(s1.getFederationNodeIds().contains(u1));
-        assertTrue(s1.getFederationNodeIds().contains(u2));
-        assertTrue(s2.getFederationNodeIds().contains(u1));
-        assertTrue(s2.getFederationNodeIds().contains(u2));
+        waitForEquals(s1::getFederationNodeIds, s2::getFederationNodeIds, WAIT_TIME);
+        waitForEquals(true, () -> s1.getFederationNodeIds().contains(u1), WAIT_TIME);
+        waitForEquals(true, () -> s1.getFederationNodeIds().contains(u2), WAIT_TIME);
+        waitForEquals(true, () -> s2.getFederationNodeIds().contains(u1), WAIT_TIME);
+        waitForEquals(true, () -> s2.getFederationNodeIds().contains(u2), WAIT_TIME);
 
         HazelcastInstance h1 = s1.getHazelcastInstance().get();
         HazelcastInstance h2 = s2.getHazelcastInstance().get();
@@ -189,19 +184,19 @@ public class HazelcastFederationServiceTest {
         closeConnectionBetween(h1, h2);
         waitForEquals(1, s1::getMemberCount, WAIT_TIME);
         waitForEquals(1, s2::getMemberCount, WAIT_TIME);
-        assertTrue(s1.getFederationNodeIds().contains(u1));
-        assertTrue(s1.getFederationNodeIds().contains(u2));
-        assertTrue(s2.getFederationNodeIds().contains(u1));
-        assertTrue(s2.getFederationNodeIds().contains(u2));
+        waitForEquals(true, () -> s1.getFederationNodeIds().contains(u1), WAIT_TIME);
+        waitForEquals(true, () -> s1.getFederationNodeIds().contains(u2), WAIT_TIME);
+        waitForEquals(true, () -> s2.getFederationNodeIds().contains(u1), WAIT_TIME);
+        waitForEquals(true, () -> s2.getFederationNodeIds().contains(u2), WAIT_TIME);
 
         // Test reconnected
         reconnect(h1, h2);
         waitForEquals(2, s1::getMemberCount, WAIT_TIME);
         waitForEquals(2, s2::getMemberCount, WAIT_TIME);
-        assertTrue(s1.getFederationNodeIds().contains(u1));
-        assertTrue(s1.getFederationNodeIds().contains(u2));
-        assertTrue(s2.getFederationNodeIds().contains(u1));
-        assertTrue(s2.getFederationNodeIds().contains(u2));
+        waitForEquals(true, () -> s1.getFederationNodeIds().contains(u1), WAIT_TIME);
+        waitForEquals(true, () -> s1.getFederationNodeIds().contains(u2), WAIT_TIME);
+        waitForEquals(true, () -> s2.getFederationNodeIds().contains(u1), WAIT_TIME);
+        waitForEquals(true, () -> s2.getFederationNodeIds().contains(u2), WAIT_TIME);
 
         // Deactivate remaining nodes
         s1.deactivate();
@@ -264,6 +259,20 @@ public class HazelcastFederationServiceTest {
         Node n1 = getNode(h1);
         Node n2 = getNode(h2);
         n1.clusterService.merge(n2.address);
+    }
+
+    private void waitForEquals(Supplier<Object> expected, Supplier<Object> actual, int timeoutSeconds) throws InterruptedException {
+        while (timeoutSeconds > 0) {
+            if (!expected.get().equals(actual.get())) {
+                LOGGER.info("Waiting for condition...");
+                sleep(1000);
+            } else {
+                LOGGER.info("Condition passed.");
+                return;
+            }
+            timeoutSeconds--;
+        }
+        fail("Timeout while waiting for condition.");
     }
 
     private void waitForEquals(Object expected, Supplier<Object> actual, int timeoutSeconds) throws InterruptedException {
