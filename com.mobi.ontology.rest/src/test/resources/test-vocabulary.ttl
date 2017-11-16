@@ -53,9 +53,12 @@
 ###  https://mobi.com/vocabulary#ConceptScheme3
 :ConceptScheme3 rdf:type owl:NamedIndividual , skos:ConceptScheme .
 
+###  http://mobi.com/ontology#Individual1a
+<http://mobi.com/ontology#Individual1a> rdf:type owl:NamedIndividual .
+
 
 #################################################################
-#    Individuals
+#    Object Properties
 #################################################################
 
 ###  https://mobi.com/vocabulary#SemanticRelationSubProperty

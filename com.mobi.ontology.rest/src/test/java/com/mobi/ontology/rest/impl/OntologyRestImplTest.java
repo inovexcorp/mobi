@@ -69,7 +69,6 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.ontology.core.api.Annotation;
-import com.mobi.ontology.core.api.Individual;
 import com.mobi.ontology.core.api.NamedIndividual;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
@@ -141,7 +140,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -224,7 +222,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
     private Set<Datatype> datatypes;
     private Set<ObjectProperty> objectProperties;
     private Set<DataProperty> dataProperties;
-    private Set<Individual> individuals;
+    private Set<NamedIndividual> namedIndividuals;
     private Set<IRI> derivedConcepts;
     private Set<IRI> derivedConceptSchemes;
     private Set<IRI> derivedSemanticRelations;
@@ -371,7 +369,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         dataPropertyIRI = vf.createIRI("http://mobi.com/ontology#dataProperty1a");
         dataProperties = Collections.singleton(new SimpleDataProperty(dataPropertyIRI));
         individualIRI = vf.createIRI("http://mobi.com/ontology#Individual1a");
-        individuals = Collections.singleton(new SimpleNamedIndividual(individualIRI));
+        namedIndividuals = Collections.singleton(new SimpleNamedIndividual(individualIRI));
         derivedConcepts = Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#ConceptSubClass"));
         derivedConceptSchemes = Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#ConceptSchemeSubClass"));
         derivedSemanticRelations = Collections.singleton(vf.createIRI("https://mobi.com/vocabulary#SemanticRelationSubProperty"));
@@ -433,7 +431,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(ontology.getAllDatatypes()).thenReturn(datatypes);
         when(ontology.getAllObjectProperties()).thenReturn(objectProperties);
         when(ontology.getAllDataProperties()).thenReturn(dataProperties);
-        when(ontology.getAllIndividuals()).thenReturn(individuals);
+        when(ontology.getAllNamedIndividuals()).thenReturn(namedIndividuals);
         when(ontology.getImportsClosure()).thenReturn(importedOntologies);
         when(ontology.asJsonLD(anyBoolean())).thenReturn(ontologyJsonLd);
         when(ontology.getUnloadableImportIRIs()).thenReturn(failedImports);
@@ -449,7 +447,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         when(importedOntology.getAllDatatypes()).thenReturn(datatypes);
         when(importedOntology.getAllObjectProperties()).thenReturn(objectProperties);
         when(importedOntology.getAllDataProperties()).thenReturn(dataProperties);
-        when(importedOntology.getAllIndividuals()).thenReturn(individuals);
+        when(importedOntology.getAllNamedIndividuals()).thenReturn(namedIndividuals);
         when(importedOntology.asJsonLD(anyBoolean())).thenReturn(importedOntologyJsonLd);
         when(importedOntology.getImportsClosure()).thenReturn(Collections.singleton(importedOntology));
 
@@ -619,12 +617,11 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(responseArray.size(), set.size());
     }
 
-    private void assertIndividuals(JSONObject responseObject, Set<Individual> set) {
+    private void assertIndividuals(JSONObject responseObject, Set<NamedIndividual> set) {
         JSONArray jsonIndividuals = responseObject.optJSONArray("namedIndividuals");
         assertNotNull(jsonIndividuals);
         assertEquals(jsonIndividuals.size(), set.size());
-        set.forEach(individual -> assertTrue(jsonIndividuals.contains(createJsonIRI(
-                ((NamedIndividual) individual).getIRI()))));
+        set.forEach(individual -> assertTrue(jsonIndividuals.contains(createJsonIRI(individual.getIRI()))));
     }
 
     private void assertDerivedConcepts(JSONObject responseObject, Set<IRI> set) {
@@ -692,7 +689,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertDatatypes(iriList, datatypes);
         assertObjectPropertyIRIs(iriList, objectProperties);
         assertDataPropertyIRIs(iriList, dataProperties);
-        assertIndividuals(iriList, individuals);
+        assertIndividuals(iriList, namedIndividuals);
         assertDerivedConcepts(iriList, derivedConcepts);
         assertDerivedConceptSchemes(iriList, derivedConceptSchemes);
         assertDerivedSemanticRelations(iriList, derivedSemanticRelations);
@@ -703,7 +700,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
             assertDatatypes(importedObject, datatypes);
             assertObjectPropertyIRIs(importedObject, objectProperties);
             assertDataPropertyIRIs(importedObject, dataProperties);
-            assertIndividuals(importedObject, individuals);
+            assertIndividuals(importedObject, namedIndividuals);
             assertDerivedConcepts(importedObject, derivedConcepts);
             assertDerivedConceptSchemes(importedObject, derivedConceptSchemes);
             assertDerivedSemanticRelations(importedObject, derivedSemanticRelations);
@@ -1331,7 +1328,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertDatatypes(responseObject, datatypes);
         assertObjectPropertyIRIs(responseObject, objectProperties);
         assertDataPropertyIRIs(responseObject, dataProperties);
-        assertIndividuals(responseObject, individuals);
+        assertIndividuals(responseObject, namedIndividuals);
         assertDerivedConcepts(responseObject, derivedConcepts);
         assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
         assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
@@ -1354,7 +1351,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertDatatypes(responseObject, datatypes);
         assertObjectPropertyIRIs(responseObject, objectProperties);
         assertDataPropertyIRIs(responseObject, dataProperties);
-        assertIndividuals(responseObject, individuals);
+        assertIndividuals(responseObject, namedIndividuals);
         assertDerivedConcepts(responseObject, derivedConcepts);
         assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
         assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
@@ -1382,7 +1379,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertDatatypes(responseObject, datatypes);
         assertObjectPropertyIRIs(responseObject, objectProperties);
         assertDataPropertyIRIs(responseObject, dataProperties);
-        assertIndividuals(responseObject, individuals);
+        assertIndividuals(responseObject, namedIndividuals);
         assertDerivedConcepts(responseObject, derivedConcepts);
         assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
         assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
@@ -1401,7 +1398,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertDatatypes(responseObject, datatypes);
         assertObjectPropertyIRIs(responseObject, objectProperties);
         assertDataPropertyIRIs(responseObject, dataProperties);
-        assertIndividuals(responseObject, individuals);
+        assertIndividuals(responseObject, namedIndividuals);
         assertDerivedConcepts(responseObject, derivedConcepts);
         assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
         assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
@@ -2483,7 +2480,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
-        assertIndividuals(getResponse(response), individuals);
+        assertIndividuals(getResponse(response), namedIndividuals);
     }
 
     @Test
@@ -2495,7 +2492,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
-        assertIndividuals(getResponse(response), individuals);
+        assertIndividuals(getResponse(response), namedIndividuals);
     }
 
     @Test
@@ -2514,7 +2511,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
-        assertIndividuals(getResponse(response), individuals);
+        assertIndividuals(getResponse(response), namedIndividuals);
     }
 
     @Test
@@ -2525,7 +2522,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 200);
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
-        assertIndividuals(getResponse(response), individuals);
+        assertIndividuals(getResponse(response), namedIndividuals);
     }
 
     @Test
@@ -2542,7 +2539,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
 
     @Test
     public void testGetNamedIndividualsInOntologyWhenNoNamedIndividuals() {
-        when(ontology.getAllIndividuals()).thenReturn(Collections.EMPTY_SET);
+        when(ontology.getAllNamedIndividuals()).thenReturn(Collections.EMPTY_SET);
 
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/named-individuals")
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
@@ -2712,7 +2709,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
             assertDatatypes(responseObject, datatypes);
             assertObjectPropertyIRIs(responseObject, objectProperties);
             assertDataPropertyIRIs(responseObject, dataProperties);
-            assertIndividuals(responseObject, individuals);
+            assertIndividuals(responseObject, namedIndividuals);
             assertDerivedConcepts(responseObject, derivedConcepts);
             assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
             assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
@@ -2736,7 +2733,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
             assertDatatypes(responseObject, datatypes);
             assertObjectPropertyIRIs(responseObject, objectProperties);
             assertDataPropertyIRIs(responseObject, dataProperties);
-            assertIndividuals(responseObject, individuals);
+            assertIndividuals(responseObject, namedIndividuals);
             assertDerivedConcepts(responseObject, derivedConcepts);
             assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
             assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
@@ -2765,7 +2762,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
             assertDatatypes(responseObject, datatypes);
             assertObjectPropertyIRIs(responseObject, objectProperties);
             assertDataPropertyIRIs(responseObject, dataProperties);
-            assertIndividuals(responseObject, individuals);
+            assertIndividuals(responseObject, namedIndividuals);
             assertDerivedConcepts(responseObject, derivedConcepts);
             assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
             assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
@@ -2786,7 +2783,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
             assertDatatypes(responseObject, datatypes);
             assertObjectPropertyIRIs(responseObject, objectProperties);
             assertDataPropertyIRIs(responseObject, dataProperties);
-            assertIndividuals(responseObject, individuals);
+            assertIndividuals(responseObject, namedIndividuals);
             assertDerivedConcepts(responseObject, derivedConcepts);
             assertDerivedConceptSchemes(responseObject, derivedConceptSchemes);
             assertDerivedSemanticRelations(responseObject, derivedSemanticRelations);
@@ -3334,7 +3331,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->
-                assertIndividuals(responseObject, individuals));
+                assertIndividuals(responseObject, namedIndividuals));
     }
 
     @Test
@@ -3349,7 +3346,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->
-                assertIndividuals(responseObject, individuals));
+                assertIndividuals(responseObject, namedIndividuals));
     }
 
     @Test
@@ -3369,7 +3366,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->
-                assertIndividuals(responseObject, individuals));
+                assertIndividuals(responseObject, namedIndividuals));
     }
 
     @Test
@@ -3381,7 +3378,7 @@ public class OntologyRestImplTest extends MobiRestTestNg {
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertImportedOntologies(JSONArray.fromObject(response.readEntity(String.class)), (responseObject) ->
-                assertIndividuals(responseObject, individuals));
+                assertIndividuals(responseObject, namedIndividuals));
     }
 
     @Test
