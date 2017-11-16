@@ -27,18 +27,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.apache.camel.CamelContext;
-import org.apache.camel.Route;
-import org.apache.camel.builder.RouteBuilder;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import com.mobi.etl.api.ontologies.etl.SubRouteFactory;
 import com.mobi.etl.api.ontologies.etl.Workflow;
 import com.mobi.etl.api.ontologies.etl.WorkflowFactory;
 import com.mobi.etl.api.workflows.WorkflowConverter;
@@ -61,14 +53,26 @@ import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
 import com.mobi.repository.api.Repository;
 import com.mobi.repository.api.RepositoryConnection;
 import com.mobi.repository.impl.sesame.SesameRepositoryWrapper;
+import org.apache.camel.CamelContext;
+import org.apache.camel.builder.RouteBuilder;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.repository.sail.SailRepository;
 import org.openrdf.sail.memory.MemoryStore;
+import org.osgi.framework.BundleContext;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.Optional;
 import java.util.Set;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(WorkflowManagerImpl.class)
 public class WorkflowManagerImplTest {
     private WorkflowManagerImpl service;
 
@@ -77,26 +81,23 @@ public class WorkflowManagerImplTest {
     private ModelFactory mf = LinkedHashModelFactory.getInstance();
     private ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
     private WorkflowFactory workflowFactory = new WorkflowFactory();
-    private SubRouteFactory subRouteFactory= new SubRouteFactory();
 
-    private final Resource ROUTE1_ID = vf.createIRI("http://test.com/id1");
-    private final Resource ROUTE2_ID = vf.createIRI("http://test.com/id2");
     private final Resource WORKFLOW1_ID = vf.createIRI("http://test.com/workflow1");
     private final Resource WORKFLOW2_ID = vf.createIRI("http://test.com/workflow2");
     private Workflow workflow1;
     private Workflow workflow2;
 
     @Mock
-    private CamelContext camelContext;
-
-    @Mock
-    private Route route;
+    private MobiCamelContext context;
 
     @Mock
     private WorkflowConverter converterService;
 
     @Mock
     private RouteBuilder routeBuilder;
+
+    @Mock
+    private BundleContext bundleContext;
 
     @Before
     public void setUp() throws Exception {
@@ -107,11 +108,6 @@ public class WorkflowManagerImplTest {
         workflowFactory.setValueFactory(vf);
         workflowFactory.setValueConverterRegistry(vcr);
         vcr.registerValueConverter(workflowFactory);
-
-        subRouteFactory.setModelFactory(mf);
-        subRouteFactory.setValueFactory(vf);
-        subRouteFactory.setValueConverterRegistry(vcr);
-        vcr.registerValueConverter(subRouteFactory);
 
         vcr.registerValueConverter(new ResourceValueConverter());
         vcr.registerValueConverter(new IRIValueConverter());
@@ -124,13 +120,12 @@ public class WorkflowManagerImplTest {
         vcr.registerValueConverter(new LiteralValueConverter());
 
         workflow1 = workflowFactory.createNew(WORKFLOW1_ID);
-        subRouteFactory.createNew(ROUTE1_ID, workflow1.getModel());
         workflow2 = workflowFactory.createNew(WORKFLOW2_ID);
-        subRouteFactory.createNew(ROUTE2_ID, workflow2.getModel());
 
         MockitoAnnotations.initMocks(this);
+        PowerMockito.whenNew(MobiCamelContext.class).withAnyArguments().thenReturn(context);
 
-        when(converterService.convert(any(Workflow.class))).thenReturn(routeBuilder);
+        when(converterService.convert(any(Workflow.class), any(CamelContext.class))).thenReturn(routeBuilder);
 
         service = new WorkflowManagerImpl();
         service.setConverterService(converterService);
@@ -138,10 +133,8 @@ public class WorkflowManagerImplTest {
         service.setMf(mf);
         service.setRepository(repo);
         service.setWorkflowFactory(workflowFactory);
-        service.setCamelContext(camelContext);
 
         // Start out with workflow2
-        service.workflows.add(WORKFLOW2_ID);
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.clear();
             conn.add(workflow2.getModel(), WORKFLOW2_ID);
@@ -154,28 +147,29 @@ public class WorkflowManagerImplTest {
     }
 
     @Test
-    public void startWithDeployedRoutesTest() throws Exception {
-        // Setup
-        when(camelContext.getRoute(anyString())).thenReturn(route);
-
-        service.start();
-        assertTrue(service.workflows.contains(WORKFLOW2_ID));
-        verify(camelContext).getRoute(ROUTE2_ID.stringValue());
-        verify(camelContext, times(0)).removeRoute(anyString());
-        verify(camelContext, times(0)).addRoutes(routeBuilder);
+    public void startTest() throws Exception {
+        service.activate(bundleContext);
+        Thread.sleep(100);
+        assertTrue(service.workflowMap.containsKey(WORKFLOW2_ID));
+        verify(context).addRoutes(routeBuilder);
     }
 
     @Test
-    public void startWithMissingRoutesTest() throws Exception {
-        service.start();
-        assertTrue(service.workflows.contains(WORKFLOW2_ID));
-        verify(camelContext).getRoute(ROUTE2_ID.stringValue());
-        verify(camelContext).removeRoute(ROUTE2_ID.stringValue());
-        verify(camelContext).addRoutes(routeBuilder);
+    public void startWithFailedWorkflowTest() throws Exception {
+        // Setup
+        doThrow(new IllegalArgumentException()).when(converterService).convert(any(Workflow.class), any(CamelContext.class));
+
+        service.activate(bundleContext);
+        Thread.sleep(3100);
+        assertFalse(service.workflowMap.containsKey(WORKFLOW2_ID));
+        assertTrue(service.failedWorkflows.contains(WORKFLOW2_ID));
     }
 
     @Test
     public void getWorkflowsTest() throws Exception {
+        // Setup:
+        service.workflowMap.put(WORKFLOW2_ID, context);
+
         Set<Workflow> result = service.getWorkflows();
         assertEquals(1, result.size());
         assertEquals(WORKFLOW2_ID, result.iterator().next().getResource());
@@ -184,16 +178,31 @@ public class WorkflowManagerImplTest {
     @Test(expected = IllegalStateException.class)
     public void getWorkflowsWithMissingTest() {
         // Setup:
-        service.workflows.add(WORKFLOW1_ID);
+        service.workflowMap.put(WORKFLOW1_ID, context);
 
         service.getWorkflows();
     }
 
     @Test
+    public void getFailedWorkflowsTest() throws Exception {
+        Set<Workflow> result = service.getFailedWorkflows();
+        assertEquals(0, result.size());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void getFailedWorkflowsWithMissingTest() {
+        // Setup:
+        service.failedWorkflows.add(WORKFLOW1_ID);
+
+        service.getFailedWorkflows();
+    }
+
+    @Test
     public void addWorkflowTest() throws Exception {
         service.addWorkflow(workflow1);
-        assertTrue(service.workflows.contains(WORKFLOW1_ID));
-        verify(camelContext).addRoutes(routeBuilder);
+        assertTrue(service.workflowMap.containsKey(WORKFLOW1_ID));
+        verify(converterService).convert(workflow1, context);
+        verify(context).addRoutes(routeBuilder);
         try (RepositoryConnection conn = repo.getConnection()) {
             workflow1.getModel().forEach(statement -> assertTrue(conn.contains(statement.getSubject(), statement.getPredicate(), statement.getObject(), WORKFLOW1_ID)));
         }
@@ -201,6 +210,9 @@ public class WorkflowManagerImplTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void addWorkflowThatAlreadyExistsTest() throws Exception {
+        // Setup:
+        service.workflowMap.put(WORKFLOW2_ID, context);
+
         service.addWorkflow(workflow2);
     }
 
@@ -213,13 +225,16 @@ public class WorkflowManagerImplTest {
     @Test(expected = IllegalStateException.class)
     public void getMissingWorkflowTest() throws Exception {
         // Setup:
-        service.workflows.add(WORKFLOW1_ID);
+        service.workflowMap.put(WORKFLOW1_ID, context);
 
         service.getWorkflow(WORKFLOW1_ID);
     }
 
     @Test
     public void getWorkflowTest() throws Exception {
+        // Setup:
+        service.workflowMap.put(WORKFLOW2_ID, context);
+
         Optional<Workflow> result = service.getWorkflow(WORKFLOW2_ID);
         assertTrue(result.isPresent());
         Workflow workflow = result.get();
@@ -232,18 +247,37 @@ public class WorkflowManagerImplTest {
         service.startWorkflow(WORKFLOW1_ID);
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void startMissingWorkflowTest() throws Exception {
+    @Test
+    public void startDeployedWorkflowTest() throws Exception {
         // Setup:
-        service.workflows.add(WORKFLOW1_ID);
+        service.workflowMap.put(WORKFLOW2_ID, context);
 
-        service.startWorkflow(WORKFLOW1_ID);
+        service.startWorkflow(WORKFLOW2_ID);
+        verify(context).start();
     }
 
     @Test
-    public void startWorkflowTest() throws Exception {
-        service.startWorkflow(WORKFLOW2_ID);
-        verify(camelContext).startRoute(ROUTE2_ID.stringValue());
+    public void startFailedWorkflowTest() throws Exception {
+        // Setup:
+        service.failedWorkflows.add(WORKFLOW1_ID);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(workflow1.getModel(), WORKFLOW1_ID);
+        }
+
+        service.startWorkflow(WORKFLOW1_ID);
+        verify(converterService).convert(any(Workflow.class), any(CamelContext.class));
+        verify(context).addRoutes(routeBuilder);
+        assertFalse(service.failedWorkflows.contains(WORKFLOW1_ID));
+        assertTrue(service.workflowMap.containsKey(WORKFLOW1_ID));
+    }
+
+    @Test
+    public void deactivateTest() throws Exception {
+        // Setup:
+        service.workflowMap.put(WORKFLOW2_ID, context);
+
+        service.deactivate();
+        verify(context).remove();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -251,17 +285,12 @@ public class WorkflowManagerImplTest {
         service.stopWorkflow(WORKFLOW1_ID);
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void stopMissingWorkflowTest() throws Exception {
-        // Setup:
-        service.workflows.add(WORKFLOW1_ID);
-
-        service.stopWorkflow(WORKFLOW1_ID);
-    }
-
     @Test
     public void stopWorkflowTest() throws Exception {
+        // Setup:
+        service.workflowMap.put(WORKFLOW2_ID, context);
+
         service.stopWorkflow(WORKFLOW2_ID);
-        verify(camelContext).stopRoute(ROUTE2_ID.stringValue());
+        verify(context).stop();
     }
 }

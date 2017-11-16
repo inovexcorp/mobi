@@ -21,9 +21,7 @@
  * #L%
  */
 {
-  "http://www.w3.org/2002/07/owl#Class": [
-    "http://mobi.com/ontology#Class1b",
-    "http://mobi.com/ontology#Class1a",
-    "https://mobi.com/vocabulary#ConceptSubClass"
+  "https://mobi.com#type": [
+    "https://mobi.com#entity"
   ]
 }

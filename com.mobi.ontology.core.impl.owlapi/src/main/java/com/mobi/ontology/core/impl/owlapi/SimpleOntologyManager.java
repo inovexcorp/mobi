@@ -367,9 +367,20 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public TupleQueryResult getSubClassesOf(RepositoryConnection conn) {
+        return runQueryOnOntology(GET_SUB_CLASSES_OF, null, "getSubClassesOf(conn)", conn);
+    }
+
+    @Override
     public TupleQueryResult getSubClassesFor(Ontology ontology, IRI iri) {
         return runQueryOnOntology(ontology, String.format(GET_CLASSES_FOR, iri.stringValue()), null,
                 "getSubClassesFor(ontology, iri)");
+    }
+
+    @Override
+    public TupleQueryResult getSubClassesFor(IRI iri, RepositoryConnection conn) {
+        return runQueryOnOntology(String.format(GET_CLASSES_FOR, iri.stringValue()), null,
+                "getSubClassesFor(iri, conn)", conn);
     }
 
     @Override
@@ -379,9 +390,20 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public TupleQueryResult getSubPropertiesFor(IRI iri, RepositoryConnection conn) {
+        return runQueryOnOntology(String.format(GET_PROPERTIES_FOR, iri.stringValue()), null,
+                "getSubPropertiesFor(iri, conn)", conn);
+    }
+
+    @Override
     public TupleQueryResult getSubDatatypePropertiesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_DATATYPE_PROPERTIES_OF, null,
                 "getSubDatatypePropertiesOf(ontology)");
+    }
+
+    @Override
+    public TupleQueryResult getSubDatatypePropertiesOf(RepositoryConnection conn) {
+        return runQueryOnOntology(GET_SUB_DATATYPE_PROPERTIES_OF, null, "getSubDatatypePropertiesOf(conn)", conn);
     }
 
     @Override
@@ -391,13 +413,28 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public TupleQueryResult getSubAnnotationPropertiesOf(RepositoryConnection conn) {
+        return runQueryOnOntology(GET_SUB_ANNOTATION_PROPERTIES_OF, null, "getSubAnnotationPropertiesOf(conn)", conn);
+    }
+
+    @Override
     public TupleQueryResult getSubObjectPropertiesOf(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_SUB_OBJECT_PROPERTIES_OF, null, "getSubObjectPropertiesOf(ontology)");
     }
 
     @Override
+    public TupleQueryResult getSubObjectPropertiesOf(RepositoryConnection conn) {
+        return runQueryOnOntology(GET_SUB_OBJECT_PROPERTIES_OF, null, "getSubObjectPropertiesOf(conn)", conn);
+    }
+
+    @Override
     public TupleQueryResult getClassesWithIndividuals(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_CLASSES_WITH_INDIVIDUALS, null, "getClassesWithIndividuals(ontology)");
+    }
+
+    @Override
+    public TupleQueryResult getClassesWithIndividuals(RepositoryConnection conn) {
+        return runQueryOnOntology(GET_CLASSES_WITH_INDIVIDUALS, null, "getClassesWithIndividuals(conn)", conn);
     }
 
     @Override
@@ -409,18 +446,36 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public TupleQueryResult getEntityUsages(Resource entity, RepositoryConnection conn) {
+        return runQueryOnOntology(SELECT_ENTITY_USAGES, tupleQuery -> {
+            tupleQuery.setBinding(ENTITY_BINDING, entity);
+            return tupleQuery;
+        }, "getEntityUsages(entity, conn)", conn);
+    }
+
+    @Override
     public Model constructEntityUsages(Ontology ontology, Resource entity) {
         long start = getStartTime();
         Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.add(ontology.asModel(modelFactory));
+            return constructEntityUsages(entity, conn);
+        } finally {
+            repo.shutDown();
+            logTrace("constructEntityUsages(ontology, entity)", start);
+        }
+    }
+
+    @Override
+    public Model constructEntityUsages(Resource entity, RepositoryConnection conn) {
+        long start = getStartTime();
+        try {
             GraphQuery query = conn.prepareGraphQuery(CONSTRUCT_ENTITY_USAGES);
             query.setBinding(ENTITY_BINDING, entity);
             return QueryResults.asModel(query.evaluate(), modelFactory);
         } finally {
-            repo.shutDown();
-            logTrace("constructEntityUsages(ontology, entity)", start);
+            logTrace("constructEntityUsages(entity, conn)", start);
         }
     }
 
@@ -430,9 +485,20 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     @Override
+    public TupleQueryResult getConceptRelationships(RepositoryConnection conn) {
+        return runQueryOnOntology(GET_CONCEPT_RELATIONSHIPS, null, "getConceptRelationships(ontology)", conn);
+    }
+
+    @Override
     public TupleQueryResult getConceptSchemeRelationships(Ontology ontology) {
         return runQueryOnOntology(ontology, GET_CONCEPT_SCHEME_RELATIONSHIPS, null,
                 "getConceptSchemeRelationships(ontology)");
+    }
+
+    @Override
+    public TupleQueryResult getConceptSchemeRelationships(RepositoryConnection conn) {
+        return runQueryOnOntology(GET_CONCEPT_SCHEME_RELATIONSHIPS, null, "getConceptSchemeRelationships(ontology)",
+                conn);
     }
 
     @Override
@@ -441,6 +507,14 @@ public class SimpleOntologyManager implements OntologyManager {
             tupleQuery.setBinding(SEARCH_TEXT, valueFactory.createLiteral(searchText.toLowerCase()));
             return tupleQuery;
         }, "getSearchResults(ontology, searchText)");
+    }
+
+    @Override
+    public TupleQueryResult getSearchResults(String searchText, RepositoryConnection conn) {
+        return runQueryOnOntology(GET_SEARCH_RESULTS, tupleQuery -> {
+            tupleQuery.setBinding(SEARCH_TEXT, valueFactory.createLiteral(searchText.toLowerCase()));
+            return tupleQuery;
+        }, "getSearchResults(ontology, searchText)", conn);
     }
 
     @Override
@@ -483,16 +557,17 @@ public class SimpleOntologyManager implements OntologyManager {
     }
 
     /**
-     * Executes the provided query on the provided Ontology.
+     * Executes the provided query on the provided RepositoryConnection.
      *
      * @param ontology    the ontology to query on.
      * @param queryString the query string that you wish to run.
+     * @param addBinding  the binding to add to the query, if needed.
+     * @param methodName  the name of the method to provide more accurate logging messages.
      * @return the results of the query.
      */
     private TupleQueryResult runQueryOnOntology(Ontology ontology, String queryString,
                                                 @Nullable Function<TupleQuery, TupleQuery> addBinding,
                                                 String methodName) {
-        long start = getStartTime();
         Repository repo = repositoryManager.createMemoryRepository();
         repo.initialize();
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -500,13 +575,32 @@ public class SimpleOntologyManager implements OntologyManager {
             conn.begin();
             importedOntologies.forEach(ont -> conn.add(ont.asModel(modelFactory)));
             conn.commit();
+            return runQueryOnOntology(queryString, addBinding, methodName, conn);
+        } finally {
+            repo.shutDown();
+        }
+    }
+
+    /**
+     * Executes the provided query on the provided RepositoryConnection.
+     *
+     * @param queryString the query string that you wish to run.
+     * @param addBinding  the binding to add to the query, if needed.
+     * @param methodName  the name of the method to provide more accurate logging messages.
+     * @param conn        the {@link RepositoryConnection} to run the query against.
+     * @return the results of the query.
+     */
+    private TupleQueryResult runQueryOnOntology(String queryString,
+                                                @Nullable Function<TupleQuery, TupleQuery> addBinding,
+                                                String methodName, RepositoryConnection conn) {
+        long start = getStartTime();
+        try {
             TupleQuery query = conn.prepareTupleQuery(queryString);
             if (addBinding != null) {
                 query = addBinding.apply(query);
             }
             return query.evaluateAndReturn();
         } finally {
-            repo.shutDown();
             logTrace(methodName, start);
         }
     }
