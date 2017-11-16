@@ -114,7 +114,7 @@ public class TokenUtils {
         }
 
         SignedJWT signedJWT = SignedJWT.parse(tokenString);
-        JWSVerifier verifier = new MACVerifier(key);
+        JWSVerifier verifier = new MACVerifier(padKey(key));
 
         // Verify Token
         if (signedJWT.verify(verifier)) {
@@ -136,7 +136,7 @@ public class TokenUtils {
 
         try {
             SignedJWT signedJWT = SignedJWT.parse(tokenString);
-            JWSVerifier verifier = new MACVerifier(key);
+            JWSVerifier verifier = new MACVerifier(padKey(key));
 
             // Verify Token
             if (signedJWT.verify(verifier)) {
@@ -207,15 +207,7 @@ public class TokenUtils {
     private static SignedJWT createJWT(String username, String scope, byte[] key, Map<String, Object> customClaims)
             throws JOSEException {
         // Create HMAC signer
-        JWSSigner signer;
-
-        if (key.length < 32) {
-            byte[] padded = new byte[32];
-            System.arraycopy(key, 0, padded, 32 - key.length, key.length);
-            signer = new MACSigner(padded);
-        } else {
-            signer = new MACSigner(key);
-        }
+        JWSSigner signer = new MACSigner(padKey(key));
 
         Date now = new Date();
         Date expirationDate = new Date(now.getTime() + TOKEN_DURATION);
@@ -237,5 +229,20 @@ public class TokenUtils {
         signedJWT.sign(signer);
 
         return signedJWT;
+    }
+
+    /**
+     * Pads the provided key to be 256 bits.
+     *
+     * @param key the byte array to pad
+     * @return Padded byte[] with 256 bits
+     */
+    private static byte[] padKey(byte[] key) {
+        if (key.length < 32) {
+            byte[] padded = new byte[32];
+            System.arraycopy(key, 0, padded, 32 - key.length, key.length);
+            return padded;
+        }
+        return key;
     }
 }
