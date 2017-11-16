@@ -21,7 +21,7 @@
  * #L%
  */
 describe('New Instance Property Overlay directive', function() {
-    var $compile, scope, element, discoverStateSvc, isolatedScope, util;
+    var $compile, scope, discoverStateSvc, util;
 
     beforeEach(function() {
         module('templates');
@@ -29,63 +29,74 @@ describe('New Instance Property Overlay directive', function() {
         mockDiscoverState();
         mockUtil();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _discoverStateService_, _utilService_) {
+        inject(function(_$compile_, _$rootScope_, _discoverStateService_, _utilService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             discoverStateSvc = _discoverStateService_;
             util = _utilService_;
         });
+
         scope.onCancel = jasmine.createSpy('onCancel');
         scope.onSubmit = jasmine.createSpy('onSubmit');
         scope.getProperties = jasmine.createSpy('getProperties');
-        element = $compile(angular.element('<new-instance-property-overlay on-cancel="onCancel()" on-submit="onSubmit()" get-properties="getProperties()"></new-instance-property-overlay>'))(scope);
+        this.element = $compile(angular.element('<new-instance-property-overlay on-cancel="onCancel()" on-submit="onSubmit()" get-properties="getProperties()"></new-instance-property-overlay>'))(scope);
         scope.$digest();
-        isolatedScope = element.isolateScope();
     });
-    
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        discoverStateSvc = null;
+        util = null;
+        this.element.remove();
+    });
+
     describe('controller bound variables', function() {
+        beforeEach(function() {
+            this.isolatedScope = this.element.isolateScope();
+        });
         it('onCancel should be called in parent scope when invoked', function() {
-            isolatedScope.onCancel();
+            this.isolatedScope.onCancel();
             expect(scope.onCancel).toHaveBeenCalled();
         });
         it('onSubmit should be called in parent scope when invoked', function() {
-            isolatedScope.onSubmit();
+            this.isolatedScope.onSubmit();
             expect(scope.onSubmit).toHaveBeenCalled();
         });
         it('getProperties should be called in parent scope when invoked', function() {
-            isolatedScope.getProperties();
+            this.isolatedScope.getProperties();
             expect(scope.getProperties).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('new-instance-property-overlay')).toBe(true);
-            expect(element.hasClass('overlay')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('new-instance-property-overlay')).toBe(true);
+            expect(this.element.hasClass('overlay')).toBe(true);
         });
         it('for a form', function() {
-            expect(element.find('form').length).toBe(1);
+            expect(this.element.find('form').length).toBe(1);
         });
         it('for a h6', function() {
-            expect(element.find('h6').length).toBe(1);
+            expect(this.element.find('h6').length).toBe(1);
         });
         it('for a .main', function() {
-            expect(element.querySelectorAll('.main').length).toBe(1);
+            expect(this.element.querySelectorAll('.main').length).toBe(1);
         });
         it('for a p', function() {
-            expect(element.find('p').length).toBe(1);
+            expect(this.element.find('p').length).toBe(1);
         });
         it('for md-autocomplete', function() {
-            expect(element.find('md-autocomplete').length).toBe(1);
+            expect(this.element.find('md-autocomplete').length).toBe(1);
         });
         it('for a .btn-container.clearfix', function() {
-            expect(element.querySelectorAll('.btn-container.clearfix').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn-container.clearfix').length).toBe(1);
         });
         it('for a .btn.btn-primary', function() {
-            expect(element.querySelectorAll('.btn.btn-primary').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn.btn-primary').length).toBe(1);
         });
         it('for a .btn.btn-default', function() {
-            expect(element.querySelectorAll('.btn.btn-default').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn.btn-default').length).toBe(1);
         });
     });
 });

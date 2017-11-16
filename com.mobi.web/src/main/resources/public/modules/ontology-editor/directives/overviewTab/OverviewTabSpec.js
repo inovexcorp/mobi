@@ -21,9 +21,7 @@
  * #L%
  */
 describe('Overview Tab directive', function() {
-    var $compile,
-        scope,
-        element;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -34,36 +32,42 @@ describe('Overview Tab directive', function() {
             scope = _$rootScope_;
         });
 
-        element = $compile(angular.element('<overview-tab></overview-tab>'))(scope);
+        this.element = $compile(angular.element('<overview-tab></overview-tab>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('overview-tab')).toBe(true);
-            expect(element.hasClass('row')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('overview-tab')).toBe(true);
+            expect(this.element.hasClass('row')).toBe(true);
         });
         it('with a association-block', function() {
-            expect(element.find('association-block').length).toBe(1);
+            expect(this.element.find('association-block').length).toBe(1);
         });
         it('with a .editor', function() {
-            expect(element.querySelectorAll('.editor').length).toBe(1);
+            expect(this.element.querySelectorAll('.editor').length).toBe(1);
         });
         it('with a selected-details', function() {
-            expect(element.find('selected-details').length).toBe(1);
+            expect(this.element.find('selected-details').length).toBe(1);
         });
         it('with a annotation-block', function() {
-            expect(element.find('annotation-block').length).toBe(1);
+            expect(this.element.find('annotation-block').length).toBe(1);
         });
         it('with a axiom-block', function() {
-            expect(element.find('axiom-block').length).toBe(1);
+            expect(this.element.find('axiom-block').length).toBe(1);
         });
         it('with a characteristics-row', function() {
-            expect(element.find('characteristics-row').length).toBe(1);
+            expect(this.element.find('characteristics-row').length).toBe(1);
         });
         it('with a usages-block', function() {
-            expect(element.find('usages-block').length).toBe(1);
+            expect(this.element.find('usages-block').length).toBe(1);
         });
     });
 });

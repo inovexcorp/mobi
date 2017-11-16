@@ -21,8 +21,7 @@
  * #L%
  */
 describe('Preview Block directive', function() {
-    var $compile, scope, $q, element, controller, ontologyStateSvc, ontologyManagerSvc;
-    var jsonFilter = 'json';
+    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -32,7 +31,7 @@ describe('Preview Block directive', function() {
 
         module(function($provide) {
             $provide.value('jsonFilter', function() {
-                return jsonFilter;
+                return 'json';
             });
         });
 
@@ -44,43 +43,52 @@ describe('Preview Block directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
-        element = $compile(angular.element('<preview-block></preview-block>'))(scope);
+        this.element = $compile(angular.element('<preview-block></preview-block>'))(scope);
         scope.$digest();
-        controller = element.controller('previewBlock');
+        this.controller = this.element.controller('previewBlock');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        ontologyStateSvc = null;
+        ontologyManagerSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('preview-block')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('preview-block')).toBe(true);
         });
         it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
+            expect(this.element.find('block').length).toBe(1);
         });
         it('with a block-header', function() {
-            expect(element.find('block-header').length).toBe(1);
+            expect(this.element.find('block-header').length).toBe(1);
         });
         it('with a block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('with a .preview-content', function() {
-            expect(element.querySelectorAll('.preview-content').length).toBe(1);
+            expect(this.element.querySelectorAll('.preview-content').length).toBe(1);
         });
         it('with a serialization-select', function() {
-            expect(element.find('serialization-select').length).toBe(1);
+            expect(this.element.find('serialization-select').length).toBe(1);
         });
         it('depending on whether a preview is generated', function() {
-            expect(element.find('ui-codemirror').length).toBe(0);
+            expect(this.element.find('ui-codemirror').length).toBe(0);
 
-            controller.activePage = {preview: 'test'};
+            this.controller.activePage = {preview: 'test'};
             scope.$digest();
-            expect(element.find('ui-codemirror').length).toBe(1);
+            expect(this.element.find('ui-codemirror').length).toBe(1);
         });
         it('depending on whether a serialization whas selected', function() {
-            var button = element.find('button');
+            var button = this.element.find('button');
             expect(button.attr('disabled')).toBeTruthy();
 
-            controller.activePage = {serialization: 'test'};
+            this.controller.activePage = {serialization: 'test'};
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
@@ -88,15 +96,15 @@ describe('Preview Block directive', function() {
     describe('controller methods', function() {
         describe('should get a preview', function() {
             it('if the format is JSON-LD', function() {
-                controller.activePage = {serialization: 'jsonld'};
-                controller.getPreview();
+                this.controller.activePage = {serialization: 'jsonld'};
+                this.controller.getPreview();
                 scope.$apply();
-                expect(controller.activePage.mode).toBe('application/ld+json');
+                expect(this.controller.activePage.mode).toBe('application/ld+json');
                 expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, 'jsonld', false, true);
-                expect(controller.activePage.preview).toEqual(jsonFilter);
+                expect(this.controller.activePage.preview).toEqual('json');
             });
             it('if the format is not JSON-LD', function() {
-                var tests = [
+                [
                     {
                         serialization: 'turtle',
                         mode: 'text/turtle'
@@ -105,22 +113,21 @@ describe('Preview Block directive', function() {
                         serialization: 'rdf/xml',
                         mode: 'application/xml'
                     }
-                ];
-                _.forEach(tests, function(test) {
-                    controller.activePage = {serialization: test.serialization};
-                    controller.getPreview();
+                ].forEach(function(test) {
+                    this.controller.activePage = {serialization: test.serialization};
+                    this.controller.getPreview();
                     scope.$apply();
-                    expect(controller.activePage.mode).toBe(test.mode);
+                    expect(this.controller.activePage.mode).toBe(test.mode);
                     expect(ontologyManagerSvc.getOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, ontologyStateSvc.listItem.ontologyRecord.branchId, ontologyStateSvc.listItem.ontologyRecord.commitId, test.serialization, false, true);
-                    expect(controller.activePage.preview).toEqual({});
-                });
+                    expect(this.controller.activePage.preview).toEqual({});
+                }.bind(this));
             });
         });
     });
     it('should call getPreview when the button is clicked', function() {
-        spyOn(controller, 'getPreview');
-        var button = element.find('button');
+        spyOn(this.controller, 'getPreview');
+        var button = this.element.find('button');
         button.triggerHandler('click');
-        expect(controller.getPreview).toHaveBeenCalled();
+        expect(this.controller.getPreview).toHaveBeenCalled();
     });
 });

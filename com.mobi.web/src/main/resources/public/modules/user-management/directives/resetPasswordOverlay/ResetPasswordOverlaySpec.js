@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Reset Password Overlay directive', function() {
-    var $compile,
-        scope,
-        $q,
-        element,
-        controller,
-        userManagerSvc,
-        userStateSvc;
+    var $compile, scope, $q, userManagerSvc, userStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -44,74 +38,83 @@ describe('Reset Password Overlay directive', function() {
         });
 
         userStateSvc.selectedUser = {username: 'user'};
-        element = $compile(angular.element('<reset-password-overlay></reset-password-overlay>'))(scope);
+        this.element = $compile(angular.element('<reset-password-overlay></reset-password-overlay>'))(scope);
         scope.$digest();
-        controller = element.controller('resetPasswordOverlay');
+        this.controller = this.element.controller('resetPasswordOverlay');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        userManagerSvc = null;
+        userStateSvc = null;
+        this.element.remove();
     });
 
     describe('controller methods', function() {
         describe('should reset the user password', function() {
             beforeEach(function() {
-                controller.password = 'abc';
+                this.controller.password = 'abc';
                 userStateSvc.displayResetPasswordOverlay = true;
             });
             it('unless an error occurs', function() {
                 userManagerSvc.resetPassword.and.returnValue($q.reject('Error message'));
-                controller.set();
+                this.controller.set();
                 scope.$apply();
-                expect(userManagerSvc.resetPassword).toHaveBeenCalledWith(userStateSvc.selectedUser.username, controller.password);
-                expect(controller.errorMessage).toBe('Error message');
+                expect(userManagerSvc.resetPassword).toHaveBeenCalledWith(userStateSvc.selectedUser.username, this.controller.password);
+                expect(this.controller.errorMessage).toBe('Error message');
                 expect(userStateSvc.displayResetPasswordOverlay).toBe(true);
             });
             it('successfully', function() {
-                controller.set();
+                this.controller.set();
                 scope.$apply();
-                expect(userManagerSvc.resetPassword).toHaveBeenCalledWith(userStateSvc.selectedUser.username, controller.password);
-                expect(controller.errorMessage).toBe('');
+                expect(userManagerSvc.resetPassword).toHaveBeenCalledWith(userStateSvc.selectedUser.username, this.controller.password);
+                expect(this.controller.errorMessage).toBe('');
                 expect(userStateSvc.displayResetPasswordOverlay).toBe(false);
             });
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.hasClass('reset-password-overlay')).toBe(true);
-            expect(element.querySelectorAll('form.content').length).toBe(1);
+            expect(this.element.hasClass('reset-password-overlay')).toBe(true);
+            expect(this.element.querySelectorAll('form.content').length).toBe(1);
         });
         it('with a password confirm input', function() {
-            expect(element.find('password-confirm-input').length).toBe(1);
+            expect(this.element.find('password-confirm-input').length).toBe(1);
         });
         it('depending on the form validity', function() {
-            controller.currentPassword = 'abc';
+            this.controller.currentPassword = 'abc';
             scope.$digest();
-            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
-            controller.form.$invalid = true;
+            this.controller.form.$invalid = true;
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
         it('depending on whether there is an error', function() {
-            expect(element.find('error-display').length).toBe(0);
-            controller.errorMessage = 'Error message';
+            expect(this.element.find('error-display').length).toBe(0);
+            this.controller.errorMessage = 'Error message';
             scope.$digest();
-            expect(element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toBe(1);
         });
         it('with buttons to cancel and set', function() {
-            var buttons = element.querySelectorAll('.btn-container button');
+            var buttons = this.element.querySelectorAll('.btn-container button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Set']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Set']).toContain(angular.element(buttons[1]).text().trim());
         });
     });
     it('should set the correct state when the cancel button is clicked', function() {
-        var cancelButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var cancelButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
         cancelButton.triggerHandler('click');
         expect(userStateSvc.displayResetPasswordOverlay).toBe(false);
     });
     it('should call set when the button is clicked', function() {
-        spyOn(controller, 'set');
-        var setButton = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        spyOn(this.controller, 'set');
+        var setButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
         setButton.triggerHandler('click');
-        expect(controller.set).toHaveBeenCalled();
+        expect(this.controller.set).toHaveBeenCalled();
     });
 });

@@ -92,7 +92,6 @@ describe('Individual Tree directive', function() {
         this.element.remove();
     });
 
-
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             spyOn(this.controller, 'isShown').and.returnValue(true);

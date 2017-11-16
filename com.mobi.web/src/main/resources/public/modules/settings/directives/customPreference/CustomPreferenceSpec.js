@@ -21,8 +21,7 @@
  * #L%
  */
 describe('Custom Preference directive', function() {
-    var $compile,
-        scope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -32,35 +31,35 @@ describe('Custom Preference directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
+
+        scope.header = '';
+        scope.question = '';
+        this.element = $compile(angular.element('<custom-preference header="header" question="question"></custom-preference>'))(scope);
+        scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
         beforeEach(function() {
-            scope.header = '';
-            scope.question = '';
-            this.element = $compile(angular.element('<custom-preference header="header" question="question"></custom-preference>'))(scope);
-            scope.$digest();
+            this.isolatedScope = this.element.isolateScope();
         });
         it('header should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.header = 'test';
+            this.isolatedScope.header = 'test';
             scope.$digest();
             expect(scope.header).toBe('test');
         });
         it('question should be two way bound', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.question = 'test';
+            this.isolatedScope.question = 'test';
             scope.$digest();
             expect(scope.question).toBe('test');
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            scope.header = '';
-            scope.question = '';
-            this.element = $compile(angular.element('<custom-preference header="header" question="question"></custom-preference>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('ARTICLE');
         });

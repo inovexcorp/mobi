@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Catalog Pagination directive', function() {
-    var $compile,
-        scope,
-        $q,
-        element,
-        controller,
-        catalogStateSvc,
-        utilSvc;
+    var $compile, scope, $q, catalogStateSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
@@ -43,9 +37,18 @@ describe('Catalog Pagination directive', function() {
             $q = _$q_;
         });
 
-        element = $compile(angular.element('<catalog-pagination></catalog-pagination>'))(scope);
+        this.element = $compile(angular.element('<catalog-pagination></catalog-pagination>'))(scope);
         scope.$digest();
-        controller = element.controller('catalogPagination');
+        this.controller = this.element.controller('catalogPagination');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        catalogStateSvc = null;
+        utilSvc = null;
+        this.element.remove();
     });
 
     describe('controller methods', function() {
@@ -53,7 +56,7 @@ describe('Catalog Pagination directive', function() {
             it('unless an error occurs', function() {
                 utilSvc.getResultsPage.and.returnValue($q.reject('Error message'));
                 var currentPage = catalogStateSvc.currentPage;
-                controller.getPage('next');
+                this.controller.getPage('next');
                 scope.$apply();
                 expect(utilSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.next);
                 expect(catalogStateSvc.currentPage).toBe(currentPage);
@@ -61,7 +64,7 @@ describe('Catalog Pagination directive', function() {
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
 
                 currentPage = catalogStateSvc.currentPage;
-                controller.getPage('prev');
+                this.controller.getPage('prev');
                 scope.$apply();
                 expect(utilSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.prev);
                 expect(catalogStateSvc.currentPage).toBe(currentPage);
@@ -70,7 +73,7 @@ describe('Catalog Pagination directive', function() {
             });
             it('successfully', function() {
                 var currentPage = catalogStateSvc.currentPage;
-                controller.getPage('next');
+                this.controller.getPage('next');
                 scope.$apply();
                 expect(utilSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.next);
                 expect(catalogStateSvc.currentPage).toBe(currentPage + 1);
@@ -78,7 +81,7 @@ describe('Catalog Pagination directive', function() {
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
 
                 currentPage = catalogStateSvc.currentPage;
-                controller.getPage('prev');
+                this.controller.getPage('prev');
                 scope.$apply();
                 expect(utilSvc.getResultsPage).toHaveBeenCalledWith(catalogStateSvc.links.prev);
                 expect(catalogStateSvc.currentPage).toBe(currentPage - 1);
@@ -89,10 +92,10 @@ describe('Catalog Pagination directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.hasClass('catalog-pagination')).toBe(true);
+            expect(this.element.hasClass('catalog-pagination')).toBe(true);
         });
         it('with a pagination', function() {
-            expect(element.find('pagination').length).toBe(1);
+            expect(this.element.find('pagination').length).toBe(1);
         });
     });
 });

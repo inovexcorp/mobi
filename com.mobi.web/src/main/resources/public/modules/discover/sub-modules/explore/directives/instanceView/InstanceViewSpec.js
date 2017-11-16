@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Instance View directive', function() {
-    var $compile, scope, element, controller, discoverStateSvc, exploreUtilsSvc, prefixes;
+    var $compile, scope, discoverStateSvc, exploreUtilsSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -58,48 +58,57 @@ describe('Instance View directive', function() {
             }
             return undefined;
         });
-        element = $compile(angular.element('<instance-view></instance-view>'))(scope);
+        this.element = $compile(angular.element('<instance-view></instance-view>'))(scope);
         scope.$digest();
-        controller = element.controller('instanceView');
+        this.controller = this.element.controller('instanceView');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        discoverStateSvc = null;
+        exploreUtilsSvc = null;
+        prefixes = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('instance-view')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('instance-view')).toBe(true);
         });
         it('for a block-header', function() {
-            expect(element.find('block-header').length).toBe(1);
+            expect(this.element.find('block-header').length).toBe(1);
         });
         it('with a breadcrumbs', function() {
-            expect(element.find('breadcrumbs').length).toBe(1);
+            expect(this.element.find('breadcrumbs').length).toBe(1);
         });
         it('with a .pull-right.edit-button', function() {
-            expect(element.querySelectorAll('.pull-right.edit-button').length).toBe(1);
+            expect(this.element.querySelectorAll('.pull-right.edit-button').length).toBe(1);
         });
         it('with a block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('with a .row', function() {
-            expect(element.querySelectorAll('.row').length).toBe(1);
+            expect(this.element.querySelectorAll('.row').length).toBe(1);
         });
         it('with a .col-xs-8.col-xs-offset-2', function() {
-            expect(element.querySelectorAll('.col-xs-8.col-xs-offset-2').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-xs-8.col-xs-offset-2').length).toBe(1);
         });
         it('with a h2', function() {
-            expect(element.find('h2').length).toBe(1);
+            expect(this.element.find('h2').length).toBe(1);
         });
         it('with a small', function() {
-            expect(element.find('small').length).toBe(1);
+            expect(this.element.find('small').length).toBe(1);
         });
         it('with three h3.property', function() {
-            expect(element.querySelectorAll('h3.property').length).toBe(3);
+            expect(this.element.querySelectorAll('h3.property').length).toBe(3);
         });
         it('with three ul.values', function() {
-            expect(element.querySelectorAll('ul.values').length).toBe(3);
+            expect(this.element.querySelectorAll('ul.values').length).toBe(3);
         });
         it('with a .values.show-link', function() {
-            expect(element.querySelectorAll('.values.show-link').length).toBe(1);
+            expect(this.element.querySelectorAll('.values.show-link').length).toBe(1);
 
             discoverStateSvc.getInstance.and.returnValue({
                 '@id': 'ignored',
@@ -108,29 +117,29 @@ describe('Instance View directive', function() {
                     '@id': 'http://mobi.com/id'
                 }]
             });
-            element = $compile(angular.element('<instance-view></instance-view>'))(scope);
+            this.element = $compile(angular.element('<instance-view></instance-view>'))(scope);
             scope.$digest();
 
-            expect(element.querySelectorAll('.values.show-link').length).toBe(0);
+            expect(this.element.querySelectorAll('.values.show-link').length).toBe(0);
         });
         it('with a .values.show-more', function() {
-            expect(element.querySelectorAll('.values.show-more').length).toBe(0);
-            angular.element(element.querySelectorAll('.link')[0]).triggerHandler('click');
-            expect(element.querySelectorAll('.values.show-more').length).toBe(1);
+            expect(this.element.querySelectorAll('.values.show-more').length).toBe(0);
+            angular.element(this.element.querySelectorAll('.link')[0]).triggerHandler('click');
+            expect(this.element.querySelectorAll('.values.show-more').length).toBe(1);
         });
         it('with three li.link-containers', function() {
-            expect(element.querySelectorAll('li.link-container').length).toBe(3);
+            expect(this.element.querySelectorAll('li.link-container').length).toBe(3);
         });
         it('with three a.links', function() {
-            expect(element.querySelectorAll('a.link').length).toBe(3);
+            expect(this.element.querySelectorAll('a.link').length).toBe(3);
         });
         it('with a a.more', function() {
-            expect(element.querySelectorAll('a.more').length).toBe(0);
-            angular.element(element.querySelectorAll('.link')[0]).triggerHandler('click');
-            expect(element.querySelectorAll('a.more').length).toBe(1);
+            expect(this.element.querySelectorAll('a.more').length).toBe(0);
+            angular.element(this.element.querySelectorAll('.link')[0]).triggerHandler('click');
+            expect(this.element.querySelectorAll('a.more').length).toBe(1);
         });
         it('depending on whether reification statements are shown', function() {
-            var showReification = angular.element(element.querySelectorAll('.show-reification')[0]);
+            var showReification = angular.element(this.element.querySelectorAll('.show-reification')[0]);
             var icon = angular.element(showReification.children()[0]);
             expect(icon.hasClass('fa-angle-down')).toBe(true);
             expect(icon.hasClass('fa-angle-up')).toBe(false);
@@ -143,10 +152,10 @@ describe('Instance View directive', function() {
     describe('controller methods', function() {
         describe('getLimit returns the proper value when limit and array.length are', function() {
             it('equal', function() {
-                expect(controller.getLimit(['', ''], 2)).toBe(1);
+                expect(this.controller.getLimit(['', ''], 2)).toBe(1);
             });
             it('not equal', function() {
-                expect(controller.getLimit(['', ''], 1)).toBe(2);
+                expect(this.controller.getLimit(['', ''], 1)).toBe(2);
             });
         });
         it('getReification should retrieve the Statement object for a property value', function() {
@@ -159,17 +168,17 @@ describe('Instance View directive', function() {
             statement[prefixes.rdf + 'predicate'] = [{'@id': 'predicate'}];
             statement[prefixes.rdf + 'object'] = [{'@value': 'value'}];
             exploreUtilsSvc.getReification.and.returnValue(statement);
-            expect(controller.getReification('', {})).toEqual({prop3: [{'@value': 'value'}]});
+            expect(this.controller.getReification('', {})).toEqual({prop3: [{'@value': 'value'}]});
             expect(exploreUtilsSvc.getReification).toHaveBeenCalledWith(discoverStateSvc.explore.instance.entity, discoverStateSvc.explore.instance.metadata.instanceIRI, '', {});
 
             exploreUtilsSvc.getReification.and.returnValue(undefined);
-            expect(controller.getReification('', {})).toBeUndefined();
+            expect(this.controller.getReification('', {})).toBeUndefined();
             expect(exploreUtilsSvc.getReification).toHaveBeenCalledWith(discoverStateSvc.explore.instance.entity, discoverStateSvc.explore.instance.metadata.instanceIRI, '', {});
         });
     });
     it('should set the variable correctly when edit button is clicked', function() {
         discoverStateSvc.explore.editing = false;
-        var button = angular.element(element.querySelectorAll('.pull-right.edit-button')[0]);
+        var button = angular.element(this.element.querySelectorAll('.pull-right.edit-button')[0]);
         button.triggerHandler('click');
         expect(discoverStateSvc.explore.editing).toBe(true);
     });

@@ -21,8 +21,7 @@
  * #L%
  */
 describe('Settings Tabset directive', function() {
-    var $compile,
-        scope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -32,13 +31,18 @@ describe('Settings Tabset directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
+
+        this.element = $compile(angular.element('<settings-tabset></settings-tabset>'))(scope);
+        scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<settings-tabset></settings-tabset>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('settings-tabset')).toBe(true);
         });

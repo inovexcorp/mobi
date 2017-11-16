@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Characteristics Row directive', function() {
-    var $compile, scope, element, ontologyStateSvc, $filter, controller, ontologyManagerSvc;
+    var $compile, scope, ontologyStateSvc, $filter, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -36,22 +36,30 @@ describe('Characteristics Row directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
-        element = $compile(angular.element('<characteristics-row></characteristics-row>'))(scope);
+        this.element = $compile(angular.element('<characteristics-row></characteristics-row>'))(scope);
         scope.$digest();
-        controller = element.controller('characteristicsRow');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        $filter = null;
+        ontologyManagerSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('characteristics-row')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('characteristics-row')).toBe(true);
         });
         describe('when selected is not an object or data property', function() {
             it('for a row', function() {
-                expect(element.querySelectorAll('.row').length).toBe(0);
+                expect(this.element.querySelectorAll('.row').length).toBe(0);
             });
             it('for a characteristics-block', function() {
-                expect(element.find('characteristics-block').length).toBe(0);
+                expect(this.element.find('characteristics-block').length).toBe(0);
             });
         });
         describe('when selected is an object property', function() {
@@ -61,10 +69,10 @@ describe('Characteristics Row directive', function() {
                 scope.$apply();
             });
             it('for a row', function() {
-                expect(element.querySelectorAll('.row').length).toBe(1);
+                expect(this.element.querySelectorAll('.row').length).toBe(1);
             });
             it('for a characteristics-block', function() {
-                expect(element.find('characteristics-block').length).toBe(1);
+                expect(this.element.find('characteristics-block').length).toBe(1);
             });
         });
         describe('when selected is a data property', function() {
@@ -74,10 +82,10 @@ describe('Characteristics Row directive', function() {
                 scope.$apply();
             });
             it('for a row', function() {
-                expect(element.querySelectorAll('.row').length).toBe(1);
+                expect(this.element.querySelectorAll('.row').length).toBe(1);
             });
             it('for a characteristics-block', function() {
-                expect(element.find('characteristics-block').length).toBe(1);
+                expect(this.element.find('characteristics-block').length).toBe(1);
             });
         });
     });

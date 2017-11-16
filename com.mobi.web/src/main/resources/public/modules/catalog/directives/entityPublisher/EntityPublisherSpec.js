@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Entity Publisher directive', function() {
-    var $compile, scope, element, isolatedScope, controller, $q, userManagerSvc, utilSvc;
+    var $compile, scope, $q, userManagerSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
@@ -38,21 +38,39 @@ describe('Entity Publisher directive', function() {
         });
 
         scope.entity = {};
-        element = $compile(angular.element('<entity-publisher entity="entity"></entity-publisher>'))(scope);
-        scope.$digest();
-        isolatedScope = element.isolateScope();
-        controller = element.controller('entityPublisher');
+    });
+
+    beforeEach(function() {
+        this.compile = function() {
+            this.element = $compile(angular.element('<entity-publisher entity="entity"></entity-publisher>'))(scope);
+            scope.$digest();
+            this.controller = this.element.controller('entityPublisher');
+        }
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        userManagerSvc = null;
+        utilSvc = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
+        beforeEach(function() {
+            this.compile();
+            this.isolatedScope = this.element.isolateScope();
+        });
         it('entity should be one way bound', function() {
-            isolatedScope.entity = {a: 'b'};
+            this.isolatedScope.entity = {a: 'b'};
             scope.$digest();
             expect(scope.entity).toEqual({});
         });
     });
     describe('should initialize', function() {
         it('if the entity does not have the publisher property', function() {
+            this.compile();
             expect(userManagerSvc.getUsername).not.toHaveBeenCalled();
         });
         describe('if the entity has the publisher property', function() {
@@ -62,23 +80,24 @@ describe('Entity Publisher directive', function() {
             });
             it('unless an error occurs', function() {
                 userManagerSvc.getUsername.and.returnValue($q.reject('Error message'));
-                element = $compile(angular.element('<entity-publisher entity="entity"></entity-publisher>'))(scope);
-                scope.$apply();
+                this.compile();
                 expect(userManagerSvc.getUsername).toHaveBeenCalledWith(this.iri);
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
-                expect(controller.username).toBe('(None)');
+                expect(this.controller.username).toBe('(None)');
             });
             it('successfully', function() {
                 userManagerSvc.getUsername.and.returnValue($q.when('username'));
-                element = $compile(angular.element('<entity-publisher entity="entity"></entity-publisher>'))(scope);
-                scope.$apply();
+                this.compile();
                 expect(userManagerSvc.getUsername).toHaveBeenCalledWith(this.iri);
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
-                expect(controller.username).toBe('username');
+                expect(this.controller.username).toBe('username');
             });
         });
     });
     describe('should update when', function() {
+        beforeEach(function() {
+            this.compile();
+        });
         it('the publisher changes', function() {
             var iri = 'iri';
             scope.entity.test = true;
@@ -88,18 +107,21 @@ describe('Entity Publisher directive', function() {
             userManagerSvc.getUsername.and.returnValue($q.when('username'));
             scope.$apply();
             expect(userManagerSvc.getUsername).toHaveBeenCalledWith(iri);
-            expect(controller.username).toBe('username');
+            expect(this.controller.username).toBe('username');
         });
     });
     describe('replaces the element with the correct html', function() {
+        beforeEach(function() {
+            this.compile();
+        });
         it('for wrapping containers', function() {
-            expect(element.hasClass('entity-publisher')).toBe(true);
-            expect(element.querySelectorAll('.field-name').length).toBe(1);
+            expect(this.element.hasClass('entity-publisher')).toBe(true);
+            expect(this.element.querySelectorAll('.field-name').length).toBe(1);
         });
         it('with the entity publisher username', function() {
-            controller.username = 'username';
+            this.controller.username = 'username';
             scope.$digest();
-            expect(element.html()).toContain(controller.username);
+            expect(this.element.html()).toContain(this.controller.username);
         });
     });
 });

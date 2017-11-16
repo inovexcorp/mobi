@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Usages Block directive', function() {
-    var $compile, scope, element, controller, ontologyStateSvc, ontologyManagerSvc, ontologyUtilsManagerSvc, splitIRIFilter;
+    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, ontologyUtilsManagerSvc, splitIRI;
 
     beforeEach(function() {
         module('templates');
@@ -38,7 +38,7 @@ describe('Usages Block directive', function() {
             ontologyStateSvc = _ontologyStateService_;
             ontologyManagerSvc = _ontologyManagerService_;
             ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
-            splitIRIFilter = _splitIRIFilter_;
+            splitIRI = _splitIRIFilter_;
         });
 
         ontologyStateSvc.state = {
@@ -47,49 +47,59 @@ describe('Usages Block directive', function() {
             }
         };
         ontologyStateSvc.getActiveKey.and.returnValue('test');
-        element = $compile(angular.element('<usages-block></usages-block>'))(scope);
+        this.element = $compile(angular.element('<usages-block></usages-block>'))(scope);
         scope.$digest();
-        controller = element.controller('usagesBlock');
+        this.controller = this.element.controller('usagesBlock');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        ontologyManagerSvc = null;
+        ontologyUtilsManagerSvc = null;
+        splitIRI = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('usages-block')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('usages-block')).toBe(true);
         });
         it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
+            expect(this.element.find('block').length).toBe(1);
         });
         it('with a block-header', function() {
-            expect(element.find('block-header').length).toBe(1);
+            expect(this.element.find('block-header').length).toBe(1);
         });
         it('with a block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('with a .text-center', function() {
-            expect(element.querySelectorAll('.text-center').length).toBe(1);
+            expect(this.element.querySelectorAll('.text-center').length).toBe(1);
         });
         it('depending on how many results there are', function() {
-            expect(element.querySelectorAll('block-content .property-values').length).toBe(0);
+            expect(this.element.querySelectorAll('block-content .property-values').length).toBe(0);
 
-            controller.results = {
+            this.controller.results = {
                 'iri': {}
             };
             scope.$digest();
-            expect(element.querySelectorAll('block-content .property-values').length).toBe(1);
-            expect(element.querySelectorAll('.property-values').length).toBe(_.keys(controller.results).length);
+            expect(this.element.querySelectorAll('block-content .property-values').length).toBe(1);
+            expect(this.element.querySelectorAll('.property-values').length).toBe(_.keys(this.controller.results).length);
         });
         it('depending on how many values a result has', function() {
-            controller.results = {
+            this.controller.results = {
                 'iri': {}
             };
             scope.$digest();
-            var result = angular.element(element.querySelectorAll('.property-values')[0]);
+            var result = angular.element(this.element.querySelectorAll('.property-values')[0]);
             expect(result.querySelectorAll('.value-container').length).toBe(0);
 
-            controller.results.iri = {'test': {}};
+            this.controller.results.iri = {'test': {}};
             scope.$digest();
-            expect(result.querySelectorAll('.value-container').length).toBe(_.keys(controller.results.iri).length);
+            expect(result.querySelectorAll('.value-container').length).toBe(_.keys(this.controller.results.iri).length);
         });
     });
     it('should update the results when the usages change', function() {
@@ -133,9 +143,9 @@ describe('Usages Block directive', function() {
         };
         ontologyStateSvc.listItem.selected = {'@id': 'test'};
         scope.$digest();
-        expect(angular.copy(controller.results)).toEqual(expected);
-        expect(controller.total).toBe(ontologyStateSvc.getActivePage().usages.length);
-        expect(controller.shown).toBe(_.min([ontologyStateSvc.getActivePage().usages.length, controller.size]));
+        expect(angular.copy(this.controller.results)).toEqual(expected);
+        expect(this.controller.total).toBe(ontologyStateSvc.getActivePage().usages.length);
+        expect(this.controller.shown).toBe(_.min([ontologyStateSvc.getActivePage().usages.length, this.controller.size]));
     });
     describe('controller methods', function() {
         it('getMoreResults populates variables correctly', function() {
@@ -170,12 +180,12 @@ describe('Usages Block directive', function() {
                     subject: 'B', predicate: 'test', object: 'A'
                 }]
             };
-            controller.index = -1;
-            controller.size = 2;
-            controller.getMoreResults();
-            expect(controller.index).toBe(0);
-            expect(controller.results).toEqual(expected);
-            expect(controller.shown).toBe(controller.size);
+            this.controller.index = -1;
+            this.controller.size = 2;
+            this.controller.getMoreResults();
+            expect(this.controller.index).toBe(0);
+            expect(this.controller.results).toEqual(expected);
+            expect(this.controller.shown).toBe(this.controller.size);
         });
     });
 });

@@ -21,7 +21,7 @@
  * #L%
  */
 describe('SPARQL Result Block directive', function() {
-    var $compile, scope, element, sparqlManagerSvc;
+    var $compile, scope, sparqlManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -45,48 +45,55 @@ describe('SPARQL Result Block directive', function() {
             }
         ];
         sparqlManagerSvc.bindings = ['var1', 'var2'];
-        element = $compile(angular.element('<sparql-result-block></sparql-result-block>'))(scope);
+        this.element = $compile(angular.element('<sparql-result-block></sparql-result-block>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        sparqlManagerSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('sparql-result-block')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('sparql-result-block')).toBe(true);
         });
         it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
+            expect(this.element.find('block').length).toBe(1);
         });
         it('with a block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('with a block-footer', function() {
-            expect(element.find('block-footer').length).toBe(1);
+            expect(this.element.find('block-footer').length).toBe(1);
         });
         it('with a sparql-result-table', function() {
-            expect(element.find('sparql-result-table').length).toBe(1);
+            expect(this.element.find('sparql-result-table').length).toBe(1);
         });
         it('with a pagination', function() {
-            expect(element.find('pagination').length).toBe(1);
+            expect(this.element.find('pagination').length).toBe(1);
         });
         it('with a download button', function() {
-            expect(element.querySelectorAll('button.download-button').length).toBe(1);
+            expect(this.element.querySelectorAll('button.download-button').length).toBe(1);
         });
         it('depending on whether an error occurred error message', function() {
-            expect(element.find('error-display').length).toBe(0);
-            expect(element.find('pre').length).toBe(0);
+            expect(this.element.find('error-display').length).toBe(0);
+            expect(this.element.find('pre').length).toBe(0);
 
             sparqlManagerSvc.errorMessage = 'Error message';
             scope.$digest();
-            expect(element.find('error-display').length).toBe(1);
-            expect(element.find('pre').length).toBe(1);
+            expect(this.element.find('error-display').length).toBe(1);
+            expect(this.element.find('pre').length).toBe(1);
         });
         it('depending on whether there is an info message', function() {
-            expect(element.find('info-message').length).toBe(0);
+            expect(this.element.find('info-message').length).toBe(0);
 
             sparqlManagerSvc.infoMessage = 'Info message';
             scope.$digest();
-            expect(element.find('info-message').length).toBe(1);
+            expect(this.element.find('info-message').length).toBe(1);
         });
     });
 });

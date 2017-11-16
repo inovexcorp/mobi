@@ -21,16 +21,7 @@
  * #L%
  */
 describe('Branch Select directive', function() {
-    var $compile, scope, element, controller, catalogManagerSvc, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc, $q, catalogId;
-
-    var branchId = 'branchId';
-    var branch = {'@id': branchId};
-    var commitId = 'commitId';
-    var headCommit = {
-        commit: {
-            '@id': commitId
-        }
-    }
+    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, ontologyManagerSvc, stateManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -53,80 +44,84 @@ describe('Branch Select directive', function() {
             stateManagerSvc = _stateManagerService_;
         });
 
-        scope.bindModel = {};
+        this.catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
+        this.branchId = 'branchId';
+        this.branch = {'@id': this.branchId};
+        this.commitId = 'commitId';
 
-        element = $compile(angular.element('<branch-select ng-model="bindModel"></branch-select>'))(scope);
+        scope.bindModel = {};
+        this.element = $compile(angular.element('<branch-select ng-model="bindModel"></branch-select>'))(scope);
         scope.$digest();
-        controller = element.controller('branchSelect');
-        catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
+        this.controller = this.element.controller('branchSelect');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        catalogManagerSvc = null;
+        ontologyStateSvc = null;
+        ontologyManagerSvc = null;
+        stateManagerSvc = null;
+        this.element.remove();
     });
 
     describe('controller bound variable', function() {
         it('ngModel should be two way bound', function() {
-            controller.bindModel = {id: 'id'};
+            this.controller.bindModel = {id: 'id'};
             scope.$digest();
             expect(scope.bindModel).toEqual({id: 'id'});
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('branch-select')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('branch-select')).toBe(true);
         });
         it('with a ui-select', function() {
-            expect(element.find('ui-select').length).toBe(1);
+            expect(this.element.find('ui-select').length).toBe(1);
         });
         it('depending on whether a branch is being deleted', function() {
-            expect(element.find('confirmation-overlay').length).toBe(0);
+            expect(this.element.find('confirmation-overlay').length).toBe(0);
 
-            controller.showDeleteConfirmation = true;
+            this.controller.showDeleteConfirmation = true;
             scope.$digest();
-            expect(element.find('confirmation-overlay').length).toBe(1);
+            expect(this.element.find('confirmation-overlay').length).toBe(1);
         });
         it('depending on whether an error occurred while deleting a branch', function() {
-            controller.showDeleteConfirmation = true;
+            this.controller.showDeleteConfirmation = true;
             scope.$digest();
-            expect(element.find('error-message').length).toBe(0);
+            expect(this.element.find('error-message').length).toBe(0);
 
-            controller.deleteError = 'Error';
+            this.controller.deleteError = 'Error';
             scope.$digest();
-            expect(element.find('error-message').length).toBe(1);
+            expect(this.element.find('error-message').length).toBe(1);
         });
         it('depending on whether a branch is being editing', function() {
-            expect(element.find('edit-branch-overlay').length).toBe(0);
+            expect(this.element.find('edit-branch-overlay').length).toBe(0);
 
-            controller.showEditOverlay = true;
+            this.controller.showEditOverlay = true;
             scope.$digest();
-            expect(element.find('edit-branch-overlay').length).toBe(1);
+            expect(this.element.find('edit-branch-overlay').length).toBe(1);
         });
     });
     describe('controller methods', function() {
         describe('changeBranch calls the correct methods', function() {
-            var getDeferred;
-            beforeEach(function() {
-                getDeferred = $q.defer();
-                catalogManagerSvc.getBranchHeadCommit.and.returnValue(getDeferred.promise);
-            });
             describe('when getBranchHeadCommit is resolved', function() {
-                var updateDeferred, changeDeferred;
                 beforeEach(function() {
-                    getDeferred.resolve(headCommit);
-                    updateDeferred = $q.defer();
-                    stateManagerSvc.updateOntologyState.and.returnValue(updateDeferred.promise);
-                    changeDeferred = $q.defer();
-                    ontologyStateSvc.updateOntology.and.returnValue(changeDeferred.promise)
+                    catalogManagerSvc.getBranchHeadCommit.and.returnValue($q.when({ commit: { '@id': this.commitId } }));
                 });
                 it('when updateOntologyState and updateOntology are resolved', function() {
-                    controller.changeBranch(branch);
-                    updateDeferred.resolve();
-                    changeDeferred.resolve();
+                    stateManagerSvc.updateOntologyState.and.returnValue($q.when());
+                    ontologyStateSvc.updateOntology.and.returnValue($q.when());
+                    this.controller.changeBranch(this.branch);
                     scope.$apply();
-                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(branchId,
-                        ontologyStateSvc.listItem.ontologyRecord.recordId, catalogId);
+                    expect(catalogManagerSvc.getBranchHeadCommit).toHaveBeenCalledWith(this.branchId,
+                        ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                     expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                        branchId, commitId);
+                        this.branchId, this.commitId);
                     expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                        branchId, commitId);
+                        this.branchId, this.commitId);
                     expect(ontologyStateSvc.resetStateTabs).toHaveBeenCalled();
                 });
             });
@@ -134,42 +129,39 @@ describe('Branch Select directive', function() {
         it('openDeleteConfirmation calls the correct methods', function() {
             var event = scope.$emit('click');
             spyOn(event, 'stopPropagation');
-            controller.openDeleteConfirmation(event, branch);
+            this.controller.openDeleteConfirmation(event, this.branch);
             expect(event.stopPropagation).toHaveBeenCalled();
-            expect(controller.branch).toEqual(branch);
-            expect(controller.showDeleteConfirmation).toBe(true);
+            expect(this.controller.branch).toEqual(this.branch);
+            expect(this.controller.showDeleteConfirmation).toBe(true);
         });
         it('openEditOverlay calls the correct methods', function() {
             var event = scope.$emit('click');
             spyOn(event, 'stopPropagation');
-            controller.openEditOverlay(event, branch);
+            this.controller.openEditOverlay(event, this.branch);
             expect(event.stopPropagation).toHaveBeenCalled();
-            expect(controller.branch).toEqual(branch);
-            expect(controller.showEditOverlay).toBe(true);
+            expect(this.controller.branch).toEqual(this.branch);
+            expect(this.controller.showEditOverlay).toBe(true);
         });
         describe('delete calls the correct methods', function() {
-            var deferred;
             beforeEach(function() {
-                deferred = $q.defer();
-                controller.showDeleteConfirmation = true;
-                controller.branch = branch;
-                ontologyStateSvc.listItem.branches = [branch];
-                ontologyManagerSvc.deleteOntology.and.returnValue(deferred.promise);
+                this.controller.showDeleteConfirmation = true;
+                this.controller.branch = this.branch;
+                ontologyStateSvc.listItem.branches = [this.branch];
             });
             it('when resolved', function() {
-                controller.delete();
-                deferred.resolve();
+                ontologyManagerSvc.deleteOntology.and.returnValue($q.when());
+                this.controller.delete();
                 scope.$apply();
                 expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                    controller.branch['@id']);
-                expect(controller.showDeleteConfirmation).toBe(false);
+                    this.controller.branch['@id']);
+                expect(this.controller.showDeleteConfirmation).toBe(false);
             });
             it('when rejected', function() {
                 var errorMessage = 'error';
-                controller.delete();
-                deferred.reject(errorMessage);
+                ontologyManagerSvc.deleteOntology.and.returnValue($q.reject(errorMessage));
+                this.controller.delete();
                 scope.$apply();
-                expect(controller.deleteError).toBe(errorMessage);
+                expect(this.controller.deleteError).toBe(errorMessage);
             });
         });
     });

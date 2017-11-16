@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Create Group Overlay directive', function() {
-    var $compile,
-        scope,
-        userManagerSvc,
-        userStateSvc,
-        loginManagerSvc,
-        $q,
-        controller;
+    var $compile, scope, $q, userManagerSvc, userStateSvc, loginManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -44,25 +38,30 @@ describe('Create Group Overlay directive', function() {
             loginManagerSvc = _loginManagerService_;
             $q = _$q_;
         });
+
+        loginManagerSvc.currentUser = 'user';
+        this.element = $compile(angular.element('<create-group-overlay></create-group-overlay>'))(scope);
+        scope.$digest();
+        this.controller = this.element.controller('createGroupOverlay');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        userManagerSvc = null;
+        userStateSvc = null;
+        loginManagerSvc = null;
+        this.element.remove();
     });
 
     it('should intialize with the correct value for members', function() {
-        loginManagerSvc.currentUser = 'user';
-        var element = $compile(angular.element('<create-group-overlay></create-group-overlay>'))(scope);
-        scope.$digest();
-        controller = element.controller('createGroupOverlay');
-        expect(controller.newGroup.members).toContain(loginManagerSvc.currentUser);
+        expect(this.controller.newGroup.members).toContain(loginManagerSvc.currentUser);
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            loginManagerSvc.currentUser = 'user';
-            this.element = $compile(angular.element('<create-group-overlay></create-group-overlay>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('createGroupOverlay');
-        });
         it('should get the list of used group titles', function() {
             userManagerSvc.groups = [{title: 'group'}];
-            var titles = controller.getTitles();
+            var titles = this.controller.getTitles();
             expect(titles.length).toBe(userManagerSvc.groups.length);
             _.forEach(titles, function(title, idx) {
                 expect(title).toBe(userManagerSvc.groups[idx].title);
@@ -70,55 +69,50 @@ describe('Create Group Overlay directive', function() {
         });
         describe('should add a group with the entered information', function() {
             beforeEach(function() {
-                controller.newGroup = {title: 'title', description: 'Description', members: ['user']};
+                this.controller.newGroup = {title: 'title', description: 'Description', members: ['user']};
                 userStateSvc.displayCreateGroupOverlay = true;
             });
             it('unless an error occurs', function() {
                 userManagerSvc.addGroupUsers.and.returnValue($q.reject('Error Message'));
-                controller.add();
+                this.controller.add();
                 scope.$apply();
-                expect(userManagerSvc.addGroup).toHaveBeenCalledWith(controller.newGroup);
-                expect(userManagerSvc.addGroupUsers).toHaveBeenCalledWith(controller.newGroup.title, controller.newGroup.members);
-                expect(controller.errorMessage).toBe('Error Message');
+                expect(userManagerSvc.addGroup).toHaveBeenCalledWith(this.controller.newGroup);
+                expect(userManagerSvc.addGroupUsers).toHaveBeenCalledWith(this.controller.newGroup.title, this.controller.newGroup.members);
+                expect(this.controller.errorMessage).toBe('Error Message');
                 expect(userStateSvc.displayCreateGroupOverlay).not.toBe(false);
 
                 userManagerSvc.addGroupUsers.calls.reset();
                 userManagerSvc.addGroup.and.returnValue($q.reject('Error Message'));
-                controller.add();
+                this.controller.add();
                 scope.$apply();
-                expect(userManagerSvc.addGroup).toHaveBeenCalledWith(controller.newGroup);
+                expect(userManagerSvc.addGroup).toHaveBeenCalledWith(this.controller.newGroup);
                 expect(userManagerSvc.addGroupUsers).not.toHaveBeenCalled();
-                expect(controller.errorMessage).toBe('Error Message');
+                expect(this.controller.errorMessage).toBe('Error Message');
                 expect(userStateSvc.displayCreateGroupOverlay).not.toBe(false);
             });
             it('successfully', function() {
-                controller.add();
+                this.controller.add();
                 scope.$apply();
-                expect(userManagerSvc.addGroup).toHaveBeenCalledWith(controller.newGroup);
-                expect(userManagerSvc.addGroupUsers).toHaveBeenCalledWith(controller.newGroup.title, controller.newGroup.members);
-                expect(controller.errorMessage).toBe('');
+                expect(userManagerSvc.addGroup).toHaveBeenCalledWith(this.controller.newGroup);
+                expect(userManagerSvc.addGroupUsers).toHaveBeenCalledWith(this.controller.newGroup.title, this.controller.newGroup.members);
+                expect(this.controller.errorMessage).toBe('');
                 expect(userStateSvc.displayCreateGroupOverlay).toBe(false);
             });
         });
         it('should add a member to the new group', function() {
             userStateSvc.memberName = 'John';
-            controller.addMember();
-            expect(controller.newGroup.members).toContain('John');
+            this.controller.addMember();
+            expect(this.controller.newGroup.members).toContain('John');
             expect(userStateSvc.memberName).toBe('');
         });
         it('should remove a member from the new group', function() {
             userStateSvc.memberName = 'user';
-            controller.removeMember();
-            expect(controller.newGroup.members).not.toContain('user');
+            this.controller.removeMember();
+            expect(this.controller.newGroup.members).not.toContain('user');
             expect(userStateSvc.memberName).toBe('');
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            loginManagerSvc.currentUser = 'user';
-            this.element = $compile(angular.element('<create-group-overlay></create-group-overlay>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('create-group-overlay')).toBe(true);
             expect(this.element.querySelectorAll('form.content').length).toBe(1);
@@ -130,31 +124,28 @@ describe('Create Group Overlay directive', function() {
             expect(this.element.find('text-area').length).toBe(1);
         });
         it('depending on the title field validity', function() {
-            controller = this.element.controller('createGroupOverlay');
             scope.$digest();
             var inputGroup = angular.element(this.element.querySelectorAll('.title')[0]);
             expect(inputGroup.hasClass('has-error')).toBe(false);
 
-            controller.form.title.$setDirty();
-            controller.form.title.$touched = true;
+            this.controller.form.title.$setDirty();
+            this.controller.form.title.$touched = true;
             scope.$digest();
             expect(inputGroup.hasClass('has-error')).toBe(true);
         });
         it('depending on the form validity', function() {
-            controller = this.element.controller('createGroupOverlay');
-            controller.form.$invalid = false;
+            this.controller.form.$invalid = false;
             scope.$digest();
             var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
-            controller.form.$invalid = true;
+            this.controller.form.$invalid = true;
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
         it('depending on whether there is an error', function() {
             expect(this.element.find('error-display').length).toBe(0);
-            controller = this.element.controller('createGroupOverlay');
-            controller.errorMessage = 'Error message';
+            this.controller.errorMessage = 'Error message';
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
         });
@@ -166,22 +157,16 @@ describe('Create Group Overlay directive', function() {
         });
     });
     it('should call add when the button is clicked', function() {
-        var element = $compile(angular.element('<create-group-overlay></create-group-overlay>'))(scope);
-        scope.$digest();
-        controller = element.controller('createGroupOverlay');
-        controller.name = 'group';
-        spyOn(controller, 'add');
+        this.controller.name = 'group';
+        spyOn(this.controller, 'add');
         scope.$digest();
 
-        var continueButton = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
         continueButton.triggerHandler('click');
-        expect(controller.add).toHaveBeenCalled();
+        expect(this.controller.add).toHaveBeenCalled();
     });
     it('should set the correct state when the cancel button is clicked', function() {
-        var element = $compile(angular.element('<create-group-overlay></create-group-overlay>'))(scope);
-        scope.$digest();
-
-        var cancelButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var cancelButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
         cancelButton.triggerHandler('click');
         expect(userStateSvc.displayCreateGroupOverlay).toBe(false);
     });

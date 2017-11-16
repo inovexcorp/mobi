@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Analytics Button Stack directive', function() {
-    var $compile, $q, scope, element, controller, analyticStateSvc, analyticManagerSvc, utilSvc;
+    var $compile, $q, scope, analyticStateSvc, analyticManagerSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
@@ -39,35 +39,45 @@ describe('Analytics Button Stack directive', function() {
             utilSvc = _utilService_;
         });
 
-        element = $compile(angular.element('<analytics-button-stack></analytics-button-stack>'))(scope);
+        this.element = $compile(angular.element('<analytics-button-stack></analytics-button-stack>'))(scope);
         scope.$digest();
-        controller = element.controller('analyticsButtonStack');
+        this.controller = this.element.controller('analyticsButtonStack');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        $q = null;
+        scope = null;
+        analyticStateSvc = null;
+        analyticManagerSvc = null;
+        utilSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('analytics-button-stack')).toBe(true);
-            expect(element.hasClass('ontology-button-stack')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('analytics-button-stack')).toBe(true);
+            expect(this.element.hasClass('ontology-button-stack')).toBe(true);
         });
         it('with a circle-button-stack', function() {
-            expect(element.find('circle-button-stack').length).toBe(1);
+            expect(this.element.find('circle-button-stack').length).toBe(1);
         });
         it('with circle-buttons', function() {
-            expect(element.find('circle-button').length).toBe(3);
+            expect(this.element.find('circle-button').length).toBe(3);
         });
         it('with a save-analytic-overlay', function() {
-            expect(element.find('save-analytic-overlay').length).toBe(0);
-            controller.showSaveOverlay = true;
+            expect(this.element.find('save-analytic-overlay').length).toBe(0);
+            this.controller.showSaveOverlay = true;
             scope.$apply();
-            expect(element.find('save-analytic-overlay').length).toBe(1);
+            expect(this.element.find('save-analytic-overlay').length).toBe(1);
         });
     });
     describe('controller methods', function() {
         describe('save should', function() {
             it('not call updateAnalytic when there is no analyticRecordId', function() {
-                controller.save();
-                expect(controller.showSaveOverlay).toEqual(true);
+                this.controller.save();
+                expect(this.controller.showSaveOverlay).toEqual(true);
                 expect(analyticManagerSvc.updateAnalytic).not.toHaveBeenCalled();
             });
             describe('call updateAnalytic and call correct methods when it', function() {
@@ -77,14 +87,14 @@ describe('Analytics Button Stack directive', function() {
                 });
                 it('resolves', function() {
                     analyticManagerSvc.updateAnalytic.and.returnValue($q.resolve());
-                    controller.save();
+                    this.controller.save();
                     scope.$apply();
                     expect(analyticManagerSvc.updateAnalytic).toHaveBeenCalledWith({analyticRecordId: 'recordId'});
                     expect(utilSvc.createSuccessToast).toHaveBeenCalledWith('Analytic successfully saved');
                 });
                 it('rejects', function() {
                     analyticManagerSvc.updateAnalytic.and.returnValue($q.reject('error'));
-                    controller.save();
+                    this.controller.save();
                     scope.$apply();
                     expect(analyticManagerSvc.updateAnalytic).toHaveBeenCalledWith({analyticRecordId: 'recordId'});
                     expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');

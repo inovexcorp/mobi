@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Upload Ontology Tab directive', function() {
-    var $compile,
-        scope,
-        $q,
-        element,
-        controller,
-        ontologyStateSvc,
-        ontologyManagerSvc;
+    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -44,77 +38,82 @@ describe('Upload Ontology Tab directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
-        element = $compile(angular.element('<upload-ontology-tab></upload-ontology-tab>'))(scope);
+        this.element = $compile(angular.element('<upload-ontology-tab></upload-ontology-tab>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('uploadOntologyTab');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        ontologyStateSvc = null;
+        ontologyManagerSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('upload-ontology-tab')).toBe(true);
-            expect(element.querySelectorAll('.actions').length).toBe(1);
-            expect(element.querySelectorAll('.form-container').length).toBe(1);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('upload-ontology-tab')).toBe(true);
+            expect(this.element.querySelectorAll('.actions').length).toBe(1);
+            expect(this.element.querySelectorAll('.form-container').length).toBe(1);
         });
         _.forEach(['form', 'file-input', 'custom-label', 'text-input', 'text-area', 'keyword-select', 'editor-radio-buttons'], function(tag) {
             it('with a ' + tag, function() {
-                expect(element.find(tag).length).toBe(1);
+                expect(this.element.find(tag).length).toBe(1);
             });
         });
         it('with a .btn-container', function() {
-            expect(element.querySelectorAll('.btn-container').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
         });
         it('with custom buttons to upload and cancel', function() {
-            var buttons = element.querySelectorAll('.btn-container button');
+            var buttons = this.element.querySelectorAll('.btn-container button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Upload']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Upload']).toContain(angular.element(buttons[1]).text().trim());
         });
         it('depending on whether the form is invalid', function() {
-            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
-            controller = element.controller('uploadOntologyTab');
-            controller.form.$invalid = false;
+            this.controller.form.$invalid = false;
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
         it('depending on whether there is an error', function() {
-            expect(element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toBe(0);
 
-            controller = element.controller('uploadOntologyTab');
-            controller.error = true;
+            this.controller.error = true;
             scope.$digest();
-            expect(element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toBe(1);
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('uploadOntologyTab');
-        });
         describe('should upload an ontology', function() {
             beforeEach(function() {
                 this.listItem = {ontology: []};
-                controller.file = {};
-                controller.title = '';
-                controller.description = '';
-                controller.keywords = ['one', 'two'];
+                this.controller.file = {};
+                this.controller.title = '';
+                this.controller.description = '';
+                this.controller.keywords = ['one', 'two'];
                 ontologyStateSvc.showUploadTab = true;
             });
             it('unless an error occurs', function() {
                 ontologyStateSvc.uploadThenGet.and.returnValue($q.reject('Error message'));
-                controller.upload();
+                this.controller.upload();
                 scope.$apply();
-                expect(ontologyStateSvc.uploadThenGet).toHaveBeenCalledWith(controller.file, controller.title, controller.description, 'one,two', controller.type);
+                expect(ontologyStateSvc.uploadThenGet).toHaveBeenCalledWith(this.controller.file, this.controller.title, this.controller.description, 'one,two', this.controller.type);
                 expect(ontologyManagerSvc.getOntologyIRI).not.toHaveBeenCalled();
                 expect(ontologyStateSvc.showUploadTab).toBe(true);
-                expect(controller.error).toBe('Error message');
+                expect(this.controller.error).toBe('Error message');
             });
             it('succesfully', function() {
-                controller.upload();
+                this.controller.upload();
                 scope.$apply();
-                expect(ontologyStateSvc.uploadThenGet).toHaveBeenCalledWith(controller.file, controller.title, controller.description, 'one,two', controller.type);
+                expect(ontologyStateSvc.uploadThenGet).toHaveBeenCalledWith(this.controller.file, this.controller.title, this.controller.description, 'one,two', this.controller.type);
                 expect(ontologyStateSvc.showUploadTab).toBe(false);
-                expect(controller.error).toBeUndefined();
+                expect(this.controller.error).toBeUndefined();
             });
         });
     });

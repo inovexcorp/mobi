@@ -21,10 +21,7 @@
  * #L%
  */
 describe('Ontology Default Tab directive', function() {
-    var $compile,
-        scope,
-        element,
-        ontologyStateSvc;
+    var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -37,32 +34,39 @@ describe('Ontology Default Tab directive', function() {
             ontologyStateSvc = _ontologyStateService_;
         });
 
-        element = $compile(angular.element('<ontology-default-tab></ontology-default-tab>'))(scope);
+        this.element = $compile(angular.element('<ontology-default-tab></ontology-default-tab>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('ontology-default-tab')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('ontology-default-tab')).toBe(true);
         });
         it('depending on whether a new ontology is being created', function() {
-            expect(element.find('open-ontology-tab').length).toBe(1);
-            expect(element.find('new-ontology-tab').length).toBe(0);
+            expect(this.element.find('open-ontology-tab').length).toBe(1);
+            expect(this.element.find('new-ontology-tab').length).toBe(0);
 
             ontologyStateSvc.showNewTab = true;
             scope.$digest();
-            expect(element.find('open-ontology-tab').length).toBe(0);
-            expect(element.find('new-ontology-tab').length).toBe(1);
+            expect(this.element.find('open-ontology-tab').length).toBe(0);
+            expect(this.element.find('new-ontology-tab').length).toBe(1);
         });
         it('depending on whether an ontology is being uploaded', function() {
-            expect(element.find('open-ontology-tab').length).toBe(1);
-            expect(element.find('upload-ontology-tab').length).toBe(0);
+            expect(this.element.find('open-ontology-tab').length).toBe(1);
+            expect(this.element.find('upload-ontology-tab').length).toBe(0);
 
             ontologyStateSvc.showUploadTab = true;
             scope.$digest();
-            expect(element.find('open-ontology-tab').length).toBe(0);
-            expect(element.find('upload-ontology-tab').length).toBe(1);
+            expect(this.element.find('open-ontology-tab').length).toBe(0);
+            expect(this.element.find('upload-ontology-tab').length).toBe(1);
         });
     });
 });

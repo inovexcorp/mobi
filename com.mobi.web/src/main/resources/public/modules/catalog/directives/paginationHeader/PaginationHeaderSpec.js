@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Pagination Header directive', function() {
-    var $compile,
-        scope,
-        catalogManagerSvc,
-        catalogStateSvc,
-        controller;
+    var $compile, scope, catalogManagerSvc, catalogStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -44,6 +40,14 @@ describe('Pagination Header directive', function() {
         scope.changeSort = jasmine.createSpy('changeSort');
         this.element = $compile(angular.element('<pagination-header list-key="listKey" change-sort="changeSort()"></pagination-header>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        catalogManagerSvc = null;
+        catalogStateSvc = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
