@@ -306,15 +306,9 @@ public abstract class AuthHttpContext implements HttpContext {
             }
         }
 
-//        Set<Bundle> transitiveBundles = new HashSet<>();
-
         if (!bundleSet.containsAll(bundles)) { // now let's scan transitively
             bundles.removeAll(bundleSet);
             bundleSet.addAll(bundles);
-//            for (Bundle importedBundle : bundles) {
-//                transitiveBundles.addAll(getBundlesInClassSpace(context,
-//                        importedBundle, bundleSet));
-//            }
         }
 
         // Sanity checkpoint to remove uninstalled bundles

@@ -81,8 +81,9 @@ public class FederationSecurityHelper implements SecurityHelper {
             String federationId = claimsSet.getStringClaim("federationId");
             String nodeId = claimsSet.getStringClaim("nodeId");
 
-            return serviceMap.containsKey(federationId) && authenticateToken(subject, tokenString, configuration,
-                    serviceMap.get(federationId), nodeId);
+            return federationId != null && nodeId != null && serviceMap.containsKey(federationId)
+                    && authenticateToken(subject, tokenString, configuration, serviceMap.get(federationId), nodeId);
+
         } catch (ParseException ex) {
             LOG.error(ex.getMessage(), ex);
             return false;

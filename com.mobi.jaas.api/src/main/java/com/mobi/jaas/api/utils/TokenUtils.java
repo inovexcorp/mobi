@@ -158,11 +158,11 @@ public class TokenUtils {
     }
 
     public static SignedJWT generateUnauthToken(HttpServletResponse res) throws IOException {
-        return generateToken(res, "anon", ANON_SCOPE);
+        return generateToken(res, "anon", ANON_SCOPE, KEY, null);
     }
 
     public static SignedJWT generateauthToken(HttpServletResponse res, String username) throws IOException {
-        return generateToken(res, username, AUTH_SCOPE);
+        return generateToken(res, username, AUTH_SCOPE, KEY, null);
     }
 
     public static Cookie createSecureTokenCookie(SignedJWT signedJWT) {
@@ -185,29 +185,6 @@ public class TokenUtils {
         SignedJWT authToken = null;
         try {
             authToken = createJWT(username, scope, key, claims);
-        } catch (JOSEException e) {
-            String msg = "Problem Creating JWT Token";
-            LOG.error(msg, e);
-            res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
-        }
-
-        return authToken;
-    }
-
-    /**
-     * Creates a JWT Token String.
-     *
-     * @param res The response to send an error message to
-     * @param username The sub of the token
-     * @param scope The scope of the token
-     * @return The String representing the encoded and compact JWT Token
-     * @throws IOException if there is a problem sending the error to the response
-     */
-    private static SignedJWT generateToken(HttpServletResponse res, String username, String scope)
-            throws IOException {
-        SignedJWT authToken = null;
-        try {
-            authToken = createJWT(username, scope, KEY, null);
         } catch (JOSEException e) {
             String msg = "Problem Creating JWT Token";
             LOG.error(msg, e);

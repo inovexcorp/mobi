@@ -29,8 +29,8 @@ import com.mobi.rdf.api.ValueFactory;
 
 import java.io.Serializable;
 import java.time.OffsetDateTime;
+import java.util.HashSet;
 import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * Class for serializing information about a {@link FederationNode}.
@@ -39,12 +39,12 @@ import java.util.TreeSet;
  */
 public class HazelcastFederationNode implements Serializable {
 
-    private static final long serialVersionUID = 0l;
+    private static final long serialVersionUID = 641287223909152985L;
 
     private final String fedNodeIri;
     private final String fedNodeId;
     private final String host;
-    private final Set<String> gateway = new TreeSet<>();
+    private final Set<String> gateway = new HashSet<>();
     private final String endpoint;
 
     private boolean nodeActive;
