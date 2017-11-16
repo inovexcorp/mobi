@@ -624,7 +624,6 @@ public class DatasetRestImplTest extends MobiRestTestNg {
                 .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 200);
         verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
-
     }
 
     @Test
