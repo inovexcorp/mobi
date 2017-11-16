@@ -26,6 +26,9 @@
     "id": "http://mobi.com/imported-ontology-id",
     "ontologyId": "http://mobi.com/imported-ontology-id",
     "ontology": [{
+      "@id":"http://mobi.com/ontology#Individual1a",
+      "@type":["http://www.w3.org/2002/07/owl#NamedIndividual"]
+    },{
       "@id": "https://mobi.com/vocabulary",
       "@type": ["http://www.w3.org/2002/07/owl#Ontology"],
       "http://purl.org/dc/terms/title": [{
