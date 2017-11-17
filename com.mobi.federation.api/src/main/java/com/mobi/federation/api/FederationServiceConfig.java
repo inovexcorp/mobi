@@ -53,4 +53,10 @@ public interface FederationServiceConfig {
      */
     @Meta.AD
     String sharedKey();
+
+    /**
+     * The host name.
+     */
+    @Meta.AD(required = false)
+    String hostName();
 }

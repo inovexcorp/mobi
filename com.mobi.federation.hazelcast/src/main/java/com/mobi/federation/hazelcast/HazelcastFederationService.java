@@ -48,6 +48,7 @@ import com.mobi.federation.utils.api.UserUtils;
 import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.utils.TokenUtils;
 import com.mobi.platform.config.api.server.Mobi;
+import com.mobi.platform.config.api.server.ServerUtils;
 import com.mobi.rdf.api.IRI;
 import com.mobi.rdf.api.ValueFactory;
 import com.nimbusds.jose.JOSEException;
@@ -61,6 +62,7 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.OffsetDateTime;
@@ -122,6 +124,7 @@ public class HazelcastFederationService implements FederationService {
     private UserUtils userUtils;
     private Engine rdfEngine;
     private ConfigurationAdmin configurationAdmin;
+    private ServerUtils serverUtils;
 
     /**
      * {@link HazelcastOSGiService} instance.
@@ -198,6 +201,11 @@ public class HazelcastFederationService implements FederationService {
         this.configurationAdmin = configurationAdmin;
     }
 
+    @Reference
+    void setServerUtils(ServerUtils serverUtils) {
+        this.serverUtils = serverUtils;
+    }
+
     /**
      * Method that joins the hazelcast federation when the service is activated.
      */
@@ -253,7 +261,7 @@ public class HazelcastFederationService implements FederationService {
                 this.listener = new FederationServiceLifecycleListener();
                 this.hazelcastInstance.getLifecycleService().addLifecycleListener(listener);
                 this.hazelcastInstance.getCluster().addMembershipListener(listener);
-                registerWithFederationNodes(hazelcastInstance);
+                registerWithFederationNodes(hazelcastInstance, serviceConfig.hostName());
                 this.tokenKey = serviceConfig.sharedKey().getBytes(StandardCharsets.UTF_8);
             } catch (Exception ex) {
                 LOGGER.error(ex.getMessage(), ex);
@@ -418,18 +426,22 @@ public class HazelcastFederationService implements FederationService {
     /**
      * Simple method that will register this node as it comes alive with the federation registry.
      */
-    private void registerWithFederationNodes(final HazelcastInstance hazelcastInstance) {
+    private void registerWithFederationNodes(final HazelcastInstance hazelcastInstance, String hostName) {
         this.federationNodes = hazelcastInstance.getReplicatedMap(FEDERATION_NODES_KEY);
         IRI fedNodeIri = vf.createIRI(String.format(NODE_BASE, getNodeId().toString()));
         FederationNode node = federationNodeFactory.createNew(fedNodeIri);
         node.setNodeId(getNodeId().toString());
         node.setNodeActive(Boolean.TRUE);
         node.setNodeLastUpdated(OffsetDateTime.now());
-        getHostAddress().ifPresent(host -> {
-            node.setHost(host);
-            node.setEndpoint(createRestEndpoint(host));
-        });
-
+        if (hostName != null) {
+            node.setHost(hostName);
+            node.setEndpoint(hostName);
+        } else {
+            getHostAddress().ifPresent(host -> {
+                node.setHost(host);
+                node.setEndpoint(createRestEndpoint(host));
+            });
+        }
         //TODO - add remaining metadata about this node.
         this.federationNodes.put(getNodeId(), new HazelcastFederationNode(node));
     }
@@ -444,34 +456,12 @@ public class HazelcastFederationService implements FederationService {
     }
 
     private Optional<String> getHostAddress() {
-        Optional<String> rtn = Optional.empty();
-
         try {
-            Collection<InetAddress> addresses = getAllLocalAddresses();
-            Optional<InetAddress> optIA = addresses.stream().filter(ia -> ia instanceof Inet4Address).findFirst();
-            if (optIA.isPresent()) {
-                rtn = Optional.of(optIA.get().getHostAddress());
-            }
+            return Optional.of(serverUtils.getLocalhost().getHostAddress());
         } catch (SocketException e) {
             LOGGER.error("Unable to get local host address", e);
         }
-        return rtn;
-    }
-
-    private Collection<InetAddress> getAllLocalAddresses() throws SocketException {
-        Collection<InetAddress> addresses = new HashSet<>();
-        Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
-        while (networkInterfaces.hasMoreElements()) {
-            NetworkInterface ni = networkInterfaces.nextElement();
-            Enumeration<InetAddress> nias = ni.getInetAddresses();
-            while (nias.hasMoreElements()) {
-                InetAddress ia = nias.nextElement();
-                if (!ia.isLinkLocalAddress() && !ia.isLoopbackAddress()) {
-                    addresses.add(ia);
-                }
-            }
-        }
-        return addresses;
+        return Optional.empty();
     }
 
     synchronized Optional<HazelcastInstance> getHazelcastInstance() {
