@@ -38,6 +38,7 @@ import com.mobi.federation.api.ontologies.federation.FederationNodeFactory;
 import com.mobi.federation.utils.api.UserUtils;
 import com.mobi.jaas.api.engines.Engine;
 import com.mobi.platform.config.api.server.Mobi;
+import com.mobi.platform.config.api.server.ServerUtils;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
@@ -66,6 +67,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -110,6 +112,12 @@ public class HazelcastFederationServiceTest {
     @Mock
     private Configuration configuration;
 
+    @Mock
+    private ServerUtils serverUtils;
+
+    @Mock
+    private InetAddress localHost;
+
     private final ValueFactory vf = SimpleValueFactory.getInstance();
     private final ModelFactory mf = LinkedHashModelFactory.getInstance();
     private final ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
@@ -143,6 +151,8 @@ public class HazelcastFederationServiceTest {
         when(engine.getUsers()).thenReturn(new HashSet<>());
         when(configurationAdmin.getConfiguration(anyString())).thenReturn(configuration);
         when(configuration.getProperties()).thenReturn(new Hashtable<>());
+        when(serverUtils.getLocalhost()).thenReturn(localHost);
+        when(localHost.getHostAddress()).thenReturn("address");
     }
 
     @Test
@@ -260,6 +270,7 @@ public class HazelcastFederationServiceTest {
         service.setRdfEngine(engine);
         service.setUserUtils(userUtils);
         service.setConfigurationAdmin(configurationAdmin);
+        service.setServerUtils(serverUtils);
         return service;
     }
 
