@@ -35,7 +35,7 @@ public interface ServerUtils {
      * @return The MAC id of the current server
      * @throws MobiException If there is an issue fetching the MAC id
      */
-    byte[] getMacId() throws MobiException;
+    byte[] getMacId();
 
     /**
      * Tries to identify the local network interface
@@ -43,5 +43,5 @@ public interface ServerUtils {
      * @return The local network address
      * @throws MobiException If there is an issue getting the local host address
      */
-    InetAddress getLocalhost() throws MobiException, SocketException;
+    InetAddress getLocalhost();
 }

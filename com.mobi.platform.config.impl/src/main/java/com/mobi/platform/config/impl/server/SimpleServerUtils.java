@@ -43,7 +43,7 @@ public class SimpleServerUtils implements ServerUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleServerUtils.class);
 
     @Override
-    public byte[] getMacId() throws MobiException {
+    public byte[] getMacId() {
         try {
             final InetAddress ip = getLocalhost();
             final NetworkInterface network = NetworkInterface.getByInetAddress(ip);
@@ -61,7 +61,7 @@ public class SimpleServerUtils implements ServerUtils {
     }
 
     @Override
-    public InetAddress getLocalhost() throws MobiException {
+    public InetAddress getLocalhost() {
         InetAddress ip = null;
         // Try and identify the local network interface to get the mac address from via network interfaces.
         try {
