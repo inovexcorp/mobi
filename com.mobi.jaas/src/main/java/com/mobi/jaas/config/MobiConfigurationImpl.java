@@ -30,7 +30,8 @@ import aQute.bnd.annotation.component.Reference;
 import com.mobi.jaas.api.config.LoginModuleConfig;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.modules.password.PasswordLoginModule;
-import com.mobi.jaas.api.modules.token.TokenLoginModule;
+import com.mobi.jaas.api.modules.token.SimpleTokenLoginModule;
+import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.jaas.proxy.ProxyLoginModule;
 import com.mobi.jaas.api.config.MobiConfiguration;
 import org.osgi.framework.BundleContext;
@@ -42,7 +43,6 @@ import javax.security.auth.login.Configuration;
 
 @Component(provide = MobiConfiguration.class)
 public class MobiConfigurationImpl extends MobiConfiguration {
-    private static final String RDF_ENGINE = "com.mobi.jaas.engines.RdfEngine";
     protected EngineManager engineManager;
     private BundleContext context;
 
@@ -66,14 +66,14 @@ public class MobiConfigurationImpl extends MobiConfiguration {
         if (name.equals("mobi")) {
             Map<String, Object> tokenOptions = new HashMap<>();
             tokenOptions.put(LoginModuleConfig.ENGINE_MANAGER, engineManager);
-            tokenOptions.put(LoginModuleConfig.ENGINE, RDF_ENGINE);
+            tokenOptions.put(LoginModuleConfig.ENGINE, RdfEngine.ENGINE_NAME);
             tokenOptions.put(BundleContext.class.getName(), context);
             tokenOptions.put(ProxyLoginModule.BUNDLE_ID, Long.toString(context.getBundle().getBundleId()));
-            tokenOptions.put(ProxyLoginModule.MODULE, TokenLoginModule.class.getName());
+            tokenOptions.put(ProxyLoginModule.MODULE, SimpleTokenLoginModule.class.getName());
 
             Map<String, Object> passwordOptions = new HashMap<>();
             passwordOptions.put(LoginModuleConfig.ENGINE_MANAGER, engineManager);
-            passwordOptions.put(LoginModuleConfig.ENGINE, RDF_ENGINE);
+            passwordOptions.put(LoginModuleConfig.ENGINE, RdfEngine.ENGINE_NAME);
             passwordOptions.put(BundleContext.class.getName(), context);
             passwordOptions.put(ProxyLoginModule.BUNDLE_ID, Long.toString(context.getBundle().getBundleId()));
             passwordOptions.put(ProxyLoginModule.MODULE, PasswordLoginModule.class.getName());

@@ -50,8 +50,8 @@ public class PasswordLoginModule implements LoginModule {
     private String userId;
 
     @Override
-    public void initialize(Subject subject, CallbackHandler callbackHandler,
-                           Map<String, ?> sharedState, Map<String, ?> options) {
+    public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?> sharedState,
+                           Map<String, ?> options) {
         this.subject = subject;
         this.callbackHandler = callbackHandler;
         engineManager = (EngineManager) options.get(LoginModuleConfig.ENGINE_MANAGER);
