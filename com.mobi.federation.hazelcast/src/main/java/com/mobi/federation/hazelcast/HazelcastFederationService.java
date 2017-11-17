@@ -458,7 +458,7 @@ public class HazelcastFederationService implements FederationService {
     private Optional<String> getHostAddress() {
         try {
             return Optional.of(serverUtils.getLocalhost().getHostAddress());
-        } catch (MobiException e) {
+        } catch (Exception e) {
             LOGGER.error("Unable to get local host address", e);
             return Optional.empty();
         }
