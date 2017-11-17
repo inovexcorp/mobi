@@ -435,7 +435,7 @@ public class HazelcastFederationService implements FederationService {
         node.setNodeLastUpdated(OffsetDateTime.now());
         if (hostName != null) {
             node.setHost(hostName);
-            node.setEndpoint(hostName);
+            node.setEndpoint(createRestEndpoint(hostName));
         } else {
             getHostAddress().ifPresent(host -> {
                 node.setHost(host);
@@ -460,8 +460,8 @@ public class HazelcastFederationService implements FederationService {
             return Optional.of(serverUtils.getLocalhost().getHostAddress());
         } catch (MobiException e) {
             LOGGER.error("Unable to get local host address", e);
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     synchronized Optional<HazelcastInstance> getHazelcastInstance() {
