@@ -59,12 +59,7 @@ public class GenerateUnauthToken implements Filter {
         boolean tokenExists = request.getAttribute(TokenUtils.VERIFIED_TOKEN) != null;
 
         // If token doesn't exist or if we aren't checking for existing token, create unauth token
-        if (!tokenExists) {
-            log.debug("Generating Unauthenticated Token.");
-            SignedJWT unauthToken = TokenUtils.generateUnauthToken(response);
-            response.addCookie(TokenUtils.createSecureTokenCookie(unauthToken));
-            request.setAttribute(TokenUtils.VERIFIED_TOKEN, unauthToken);
-        } else if (!skipIfTokenExists) {
+        if (!tokenExists || !skipIfTokenExists) {
             log.debug("Generating Unauthenticated Token.");
             SignedJWT unauthToken = TokenUtils.generateUnauthToken(response);
             response.addCookie(TokenUtils.createSecureTokenCookie(unauthToken));

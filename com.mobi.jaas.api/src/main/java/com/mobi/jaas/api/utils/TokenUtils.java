@@ -2,11 +2,11 @@ package com.mobi.jaas.api.utils;
 
 /*-
  * #%L
- * com.mobi.web
+ * com.mobi.jaas.api
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -39,7 +39,9 @@ import java.io.IOException;
 import java.security.SecureRandom;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -63,8 +65,8 @@ public class TokenUtils {
     private static final long ONE_DAY_MS = ONE_DAY_SEC * 1000;
     private static final long TOKEN_DURATION = ONE_DAY_MS;
     private static final String ISSUER = "http://mobi.com/";
-    public static final String ANON_SCOPE = "self anon";
-    public static final String AUTH_SCOPE = "self /*";
+    private static final String ANON_SCOPE = "self anon";
+    private static final String AUTH_SCOPE = "self /*";
 
     // Attribute set if token verification occurs
     public static final String TOKEN_VERIFICATION_FAILED = "com.mobi.attribute.verificationFailed";
@@ -103,12 +105,16 @@ public class TokenUtils {
     }
 
     public static Optional<SignedJWT> verifyToken(String tokenString) throws ParseException, JOSEException {
+        return verifyToken(tokenString, KEY);
+    }
+
+    public static Optional<SignedJWT> verifyToken(String tokenString, byte[] key) throws ParseException, JOSEException {
         if (tokenString == null) {
             return Optional.empty();
         }
 
         SignedJWT signedJWT = SignedJWT.parse(tokenString);
-        JWSVerifier verifier = new MACVerifier(KEY);
+        JWSVerifier verifier = new MACVerifier(padKey(key));
 
         // Verify Token
         if (signedJWT.verify(verifier)) {
@@ -119,13 +125,18 @@ public class TokenUtils {
     }
 
     public static Optional<SignedJWT> verifyToken(String tokenString, HttpServletResponse res) throws IOException {
+        return verifyToken(tokenString, res, KEY);
+    }
+
+    public static Optional<SignedJWT> verifyToken(String tokenString, HttpServletResponse res, byte[] key)
+            throws IOException {
         if (tokenString == null) {
             return Optional.empty();
         }
 
         try {
             SignedJWT signedJWT = SignedJWT.parse(tokenString);
-            JWSVerifier verifier = new MACVerifier(KEY);
+            JWSVerifier verifier = new MACVerifier(padKey(key));
 
             // Verify Token
             if (signedJWT.verify(verifier)) {
@@ -147,29 +158,11 @@ public class TokenUtils {
     }
 
     public static SignedJWT generateUnauthToken(HttpServletResponse res) throws IOException {
-        SignedJWT unauthToken = null;
-        try {
-            unauthToken = createJWT("anon", ANON_SCOPE);
-        } catch (JOSEException e) {
-            String msg = "Problem Creating JWT Token";
-            LOG.error(msg, e);
-            res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
-        }
-
-        return unauthToken;
+        return generateToken(res, "anon", ANON_SCOPE, KEY, null);
     }
 
     public static SignedJWT generateauthToken(HttpServletResponse res, String username) throws IOException {
-        SignedJWT authToken = null;
-        try {
-            authToken = createJWT(username, AUTH_SCOPE);
-        } catch (JOSEException e) {
-            String msg = "Problem Creating JWT Token";
-            LOG.error(msg, e);
-            res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
-        }
-
-        return authToken;
+        return generateToken(res, username, AUTH_SCOPE, KEY, null);
     }
 
     public static Cookie createSecureTokenCookie(SignedJWT signedJWT) {
@@ -187,34 +180,69 @@ public class TokenUtils {
         response.setContentType(MediaType.APPLICATION_JSON);
     }
 
+    public static SignedJWT generateToken(HttpServletResponse res, String username, String scope, byte[] key,
+                                          @Nullable Map<String, Object> claims) throws IOException {
+        SignedJWT authToken = null;
+        try {
+            authToken = createJWT(username, scope, key, claims);
+        } catch (JOSEException e) {
+            String msg = "Problem Creating JWT Token";
+            LOG.error(msg, e);
+            res.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
+        }
+
+        return authToken;
+    }
+
     /**
      * Creates a JWT Token String.
      *
      * @param username The sub of the token
      * @param scope The scope of the token
+     * @param key The key (or secret) of the token
+     * @param customClaims The map of custom claims to add to the token
      * @return The String representing the encoded and compact JWT Token
      * @throws JOSEException if there is a problem creating the token
      */
-    private static SignedJWT createJWT(String username, String scope) throws JOSEException {
+    private static SignedJWT createJWT(String username, String scope, byte[] key, Map<String, Object> customClaims)
+            throws JOSEException {
+        // Create HMAC signer
+        JWSSigner signer = new MACSigner(padKey(key));
+
         Date now = new Date();
         Date expirationDate = new Date(now.getTime() + TOKEN_DURATION);
 
-        // Create HMAC signer
-        JWSSigner signer = new MACSigner(KEY);
-
-        // Prepare JWT with claims set
-        JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
+        // Prepare JWT Builder with claims set
+        JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder()
                 .subject(username)
                 .issuer(ISSUER)
                 .expirationTime(expirationDate)
-                .claim("scope", scope)
-                .build();
+                .claim("scope", scope);
 
-        SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);
+        if (customClaims != null) {
+            customClaims.forEach(builder::claim);
+        }
+
+        SignedJWT signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), builder.build());
 
         // Apply the HMAC protection
         signedJWT.sign(signer);
 
         return signedJWT;
+    }
+
+    /**
+     * Pads the provided key to be 256 bits.
+     *
+     * @param key the byte array to pad
+     * @return Padded byte[] with 256 bits
+     */
+    private static byte[] padKey(byte[] key) {
+        if (key.length < 32) {
+            byte[] padded = new byte[32];
+            System.arraycopy(key, 0, padded, 32 - key.length, key.length);
+            return padded;
+        }
+        return key;
     }
 }

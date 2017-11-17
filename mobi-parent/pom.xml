@@ -300,6 +300,11 @@
                 <artifactId>org.eclipse.persistence.moxy</artifactId>
                 <version>${eclipse.persistence.version}</version>
             </dependency>
+            <dependency>
+                <groupId>org.jasypt</groupId>
+                <artifactId>jasypt</artifactId>
+                <version>1.9.0</version>
+            </dependency>
 
             <!-- Test Dependencies -->
             <dependency>

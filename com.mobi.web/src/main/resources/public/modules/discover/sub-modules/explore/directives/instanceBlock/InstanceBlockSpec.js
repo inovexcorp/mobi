@@ -97,6 +97,12 @@ describe('Instance Block directive', function() {
         it('with a pagination.pull-right', function() {
             expect(this.element.querySelectorAll('pagination.pull-right').length).toBe(1);
         });
+        it('with a paging-details.pull-left', function() {
+            expect(this.element.querySelectorAll('paging-details.pull-left').length).toBe(1);
+        });
+        it('with a pagination.pull-right', function() {
+            expect(this.element.querySelectorAll('pagination.pull-right').length).toBe(1);
+        });
     });
 
     describe('controller methods', function() {
