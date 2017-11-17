@@ -7,23 +7,49 @@
     top: 8px;
     width: 12%;
 
-    .ui-select-bootstrap .ui-select-choices-row > span {
-        padding: 3px 8px;
+    input {
+        font-size: 12px;
+    }
+
+    .ui-select-bootstrap {
+        .ui-select-choices-row > span {
+            font-size: 12px;
+            padding: 3px 8px;
+        }
+
+        .ui-select-match-text span {
+            font-size: 12px;
+            line-height: 20px;
+        }
     }
 
     .branch-display {
-        .pull-right {
+        display: flex;
+        flex-direction: row;
+
+        &.active {
+            font-weight: bold;
+        }
+
+        &.master .fa-fw {
+            display: none;
+        }
+
+        span {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .fa-fw {
             color: $gray-light;
             line-height: 20px;
+            margin-left: 5px;
             text-decoration: none;
 
             &:hover {
                 color: $gray-dark;
             }
-        }
-
-        &.master .pull-right {
-            display: none;
         }
     }
 
