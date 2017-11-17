@@ -44,7 +44,7 @@ describe('Activity List directive', function() {
         this.prevLink = 'http://example.com/prev';
         this.headers = {
             'x-total-count': 2,
-            link: '<' + this.nextLink + '>; rel=\"next\", <' + this.prevLink + '>; rel=\"prev\"'
+            link: ''
         };
         this.response = {
             data: {
@@ -78,7 +78,6 @@ describe('Activity List directive', function() {
 
     describe('should initialize with the correct data', function() {
         it('unless an error occurs', function() {
-            utilSvc.parseLinks.calls.reset();
             provManagerSvc.getActivities.and.returnValue($q.reject('Error message'));
             this.compile();
             expect(provManagerSvc.getActivities).toHaveBeenCalledWith(this.controller.paginatedConfig, this.controller.id);
