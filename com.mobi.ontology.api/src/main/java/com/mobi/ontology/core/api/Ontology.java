@@ -215,7 +215,19 @@ public interface Ontology {
      */
     Set<Resource> getDataPropertyRange(DataProperty dataProperty);
 
+    /**
+     * Retrieves a {@link Set} of all Individuals which includes NamedIndividuals and AnonymousIndividuals.
+     *
+     * @return a {@link Set} of all {@link Individual}s in the {@link Ontology}
+     */
     Set<Individual> getAllIndividuals();
+
+    /**
+     * Retrieves a {@link Set} of all NamedIndividuals.
+     *
+     * @return a {@link Set} of all {@link NamedIndividual}s in the {@link Ontology}
+     */
+    Set<NamedIndividual> getAllNamedIndividuals();
 
     /**
      * Searches for all individuals of a particular class or any sub-classes of the provided class.

@@ -25,6 +25,7 @@ package com.mobi.ontology.core.impl.owlapi;
 
 import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.Individual;
+import com.mobi.ontology.core.api.NamedIndividual;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
@@ -630,8 +631,15 @@ public class SimpleOntology implements Ontology {
 
     @Override
     public Set<Individual> getAllIndividuals() {
-        return owlOntology.individualsInSignature()
+        return Stream.concat(owlOntology.anonymousIndividuals(), owlOntology.individualsInSignature())
                 .map(SimpleOntologyValues::mobiIndividual)
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public Set<NamedIndividual> getAllNamedIndividuals() {
+        return owlOntology.individualsInSignature()
+                .map(SimpleOntologyValues::mobiNamedIndividual)
                 .collect(Collectors.toSet());
     }
 

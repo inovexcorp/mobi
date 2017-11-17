@@ -1266,10 +1266,11 @@ public class OntologyRestImpl implements OntologyRest {
      * @return a JSONArray of NamedIndividuals from the provided Ontology.
      */
     private JSONObject getNamedIndividualArray(Ontology ontology) {
-        List<IRI> iris = ontology.getAllIndividuals()
-                .stream()
-                .filter(ind -> ind instanceof NamedIndividual)
-                .map(ind -> ((NamedIndividual) ind).getIRI())
+        Model model = ontology.asModel(modelFactory);
+        List<IRI> iris = ontology.getAllNamedIndividuals().stream()
+                .filter(individual -> model.contains(individual.getIRI(),
+                        valueFactory.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), null))
+                .map(Entity::getIRI)
                 .collect(Collectors.toList());
         return new JSONObject().element("namedIndividuals", iriListToJsonArray(iris));
     }
