@@ -563,9 +563,6 @@ function mockOntologyState() {
                    savedChanges: {
                        active: false
                    },
-                   merge: {
-                       active: false
-                   },
                    commits: {
                        active: false
                    }
@@ -576,6 +573,7 @@ function mockOntologyState() {
                     branchId: '',
                     commitId: ''
                 },
+                merge: false,
                 dataPropertyRange: [],
                 derivedConcepts: [],
                 derivedConceptSchemes: [],

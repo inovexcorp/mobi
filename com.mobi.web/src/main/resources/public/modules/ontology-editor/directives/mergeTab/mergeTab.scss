@@ -2,7 +2,18 @@
 @import "./src/main/resources/public/css/variables";
 
 .merge-tab {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    .row-container {
+        flex: 1;
+        min-height: 0;
+        padding: 15px 0;
+        margin: 0;
+    }
     .form-container {
+        height: 100%;
         display: flex;
         flex-direction: row;
         justify-content: center;
@@ -14,36 +25,30 @@
                 padding-right: 5px;
                 vertical-align: top;
             }
-
             .select-branch {
                 display: inline-block;
                 margin-right: 5px;
                 vertical-align: top;
                 width: 400px;
             }
-
             button {
                 vertical-align: top;
             }
         }
     }
-
     .btn-resolution {
         margin-left: 10px;
     }
-
     .conflict-list-item {
         .fa {
             padding-right: 8px;
         }
-
         > span:hover {
             cursor: pointer;
             text-decoration: underline;
         }
     }
-
-    .conflict-container {
+    .resolve-conflicts-form {
         .flex-container {
             align-items: center;
             display: flex;
@@ -63,17 +68,14 @@
                         margin: 0;
                     }
                 }
-
                 &.not-selected {
                     opacity: .5;
                 }
-
                 &:hover,
                 &.active {
                     box-shadow: 0 0 20px 10px $gray-lighter;
                     opacity: 1;
                 }
-
                 pre {
                     border-radius: 0;
                     margin: 0;
@@ -83,7 +85,6 @@
                         background-color: $brand-success-light;
                         color: $brand-success;
                     }
-
                     &.deletions {
                         background-color: $brand-danger-light;
                         color: $brand-danger;

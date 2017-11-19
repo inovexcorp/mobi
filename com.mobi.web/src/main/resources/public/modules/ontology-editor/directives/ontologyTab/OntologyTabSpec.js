@@ -53,12 +53,22 @@ describe('Ontology Tab directive', function() {
             expect(this.element.find('tabset').length).toBe(1);
         });
         it('with tabs', function() {
-            expect(this.element.find('tab').length).toBe(11);
+            expect(this.element.find('tab').length).toBe(10);
         });
-        ['branch-select', 'ontology-button-stack', 'project-tab', 'overview-tab', 'classes-tab', 'properties-tab', 'individuals-tab', 'concepts-tab', 'concept-schemes-tab', 'search-tab', 'saved-changes-tab', 'merge-tab', 'commits-tab'].forEach(function(tag) {
+        ['branch-select', 'ontology-button-stack', 'project-tab', 'overview-tab', 'classes-tab', 'properties-tab', 'individuals-tab', 'concepts-tab', 'concept-schemes-tab', 'search-tab', 'saved-changes-tab', 'commits-tab'].forEach(function(tag) {
             it('with a ' + tag, function() {
                 expect(this.element.find(tag).length).toBe(1);
             });
         }, this);
+        it('if branches are being merged', function() {
+            expect(this.element.find('merge-tab').length).toBe(0);
+
+            ontologyStateSvc.listItem.merge = true;
+            scope.$digest();
+            expect(this.element.find('tabset').length).toBe(0);
+            expect(this.element.find('branch-select').length).toBe(0);
+            expect(this.element.find('ontology-button-stack').length).toBe(0);
+            expect(this.element.find('merge-tab').length).toBe(1);
+        });
     });
 });

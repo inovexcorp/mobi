@@ -41,21 +41,19 @@
                     var cm = catalogManagerService;
                     var catalogId = _.get(cm.localCatalog, '@id', '');
 
+                    dvm.os = ontologyStateService;
+                    dvm.util = utilService;
                     dvm.resolutions = {
                         additions: [],
                         deletions: []
                     };
-                    dvm.os = ontologyStateService;
-                    dvm.util = utilService;
                     dvm.branch = {};
                     dvm.branchTitle = '';
                     dvm.error = '';
                     dvm.targetId = undefined;
-                    dvm.index = undefined;
                     dvm.isUserBranch = false;
                     dvm.checkbox = false;
                     dvm.conflicts = [];
-                    dvm.selected = undefined;
 
                     dvm.attemptMerge = function() {
                         cm.getBranchConflicts(dvm.branch['@id'], dvm.targetId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
@@ -101,46 +99,14 @@
                                 }
                             }, onError);
                     }
-                    dvm.matchesCurrent = function(branch) {
-                        return branch['@id'] !== dvm.os.listItem.ontologyRecord.branchId;
-                    }
-                    dvm.allResolved = function() {
-                        return _.findIndex(dvm.conflicts, {resolved: false}) === -1;
-                    }
-                    dvm.go = function($event, id) {
-                        $event.stopPropagation();
-                        dvm.os.goTo(id);
-                    }
-                    dvm.select = function(index) {
-                        dvm.index = index;
-                        dvm.selected = dvm.conflicts[dvm.index];
-                    }
-                    dvm.hasNext = function() {
-                        return (dvm.index + 1) < dvm.conflicts.length;
-                    }
                     dvm.getTargetTitle = function() {
                         var targetBranch = _.find(dvm.os.listItem.branches, branch => branch['@id'] === dvm.targetId);
                         return dvm.util.getDctermsValue(targetBranch, 'title');
                     }
-                    dvm.backToList = function() {
-                        dvm.index = undefined;
-                        dvm.selected = undefined;
-                    }
 
                     function onSuccess() {
                         dvm.util.createSuccessToast('Your merge was successful.');
-                        dvm.targetId = undefined;
-                        dvm.selected = undefined;
-                        dvm.index = undefined;
-                        dvm.resolutions = {
-                            additions: [],
-                            deletions: []
-                        }
-                        dvm.conflicts = [];
-                        dvm.error = '';
-                        dvm.targetId = undefined;
-                        dvm.isUserBranch = false;
-                        dvm.checkbox = false;
+                        dvm.os.listItem.merge = false;
                     }
                     function onError(errorMessage) {
                         dvm.error = errorMessage;
@@ -163,7 +129,7 @@
                         dvm.resolutions.deletions = _.concat(dvm.resolutions.deletions, notSelected.additions);
                     }
 
-                    $scope.$watch('dvm.os.listItem.ontologyRecord.branchId', setupVariables);
+                    setupVariables();
                 }]
             }
         }

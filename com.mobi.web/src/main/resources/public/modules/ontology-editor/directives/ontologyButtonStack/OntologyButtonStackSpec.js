@@ -52,7 +52,7 @@ describe('Ontology Button Stack directive', function() {
             expect(this.element.find('circle-button-stack').length).toBe(1);
         });
         it('with circle-buttons', function() {
-            expect(this.element.find('circle-button').length).toBe(3);
+            expect(this.element.find('circle-button').length).toBe(4);
         });
     });
 });
