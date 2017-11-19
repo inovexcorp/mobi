@@ -27,14 +27,29 @@ import java.security.Principal;
 
 public class UserPrincipal implements Principal {
     private String name;
+    private String className;
 
     public UserPrincipal(String name) {
         this.name = name;
+        this.className = null;
+    }
+
+    public UserPrincipal(String name, String className) {
+        this.name = name;
+        this.className = className;
     }
 
     @Override
     public String getName() {
         return this.name;
+    }
+
+    public String getClassName() {
+        return this.className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
     }
 
     @Override

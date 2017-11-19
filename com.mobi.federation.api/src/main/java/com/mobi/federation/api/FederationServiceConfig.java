@@ -47,4 +47,16 @@ public interface FederationServiceConfig {
      */
     @Meta.AD(required = false)
     String description();
+
+    /**
+     * A key used to generate and verify the federation token.
+     */
+    @Meta.AD
+    String sharedKey();
+
+    /**
+     * The host name.
+     */
+    @Meta.AD(required = false)
+    String hostName();
 }

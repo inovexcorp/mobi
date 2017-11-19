@@ -23,13 +23,17 @@ package com.mobi.platform.config.impl.server;
  * #L%
  */
 
-import org.junit.Assert;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.mobi.platform.config.api.server.ServerUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -48,17 +52,23 @@ public class MobiImplTest {
     @Mock
     private Configuration configuration;
 
+    @Mock
+    private ServerUtils utils;
+
     @Captor
     private ArgumentCaptor<Dictionary<String, Object>> captor;
 
     @Test
     public void testGeneratedServerIdIsSaved() throws Exception {
-        Mockito.when(configurationAdmin.getConfiguration(Mockito.anyString())).thenReturn(configuration);
+        when(utils.getMacId()).thenReturn("serverId".getBytes());
+        when(configurationAdmin.getConfiguration(anyString())).thenReturn(configuration);
         MobiImpl impl = new MobiImpl();
         impl.setConfigurationAdmin(configurationAdmin);
+        impl.setServerUtils(utils);
         impl.activate(new HashMap<>());
-        Mockito.verify(configuration).update(captor.capture());
-        Assert.assertEquals(impl.getServerIdentifier().toString(), captor.getValue().get("serverId"));
+        verify(configuration).update(captor.capture());
+        verify(utils).getMacId();
+        assertEquals(impl.getServerIdentifier().toString(), captor.getValue().get("serverId"));
     }
 
     @Test
@@ -66,7 +76,7 @@ public class MobiImplTest {
         MobiImpl impl = new MobiImpl();
         String val = UUID.randomUUID().toString();
         impl.activate(Collections.singletonMap("serverId", val));
-        Assert.assertEquals(val, impl.getServerIdentifier().toString());
+        assertEquals(val, impl.getServerIdentifier().toString());
     }
 
 }

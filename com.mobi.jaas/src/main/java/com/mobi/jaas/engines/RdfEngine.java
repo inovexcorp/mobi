@@ -81,7 +81,7 @@ import java.util.stream.Stream;
         }
 )
 public class RdfEngine implements Engine {
-    private static final String ENGINE_NAME = "com.mobi.jaas.engines.RdfEngine";
+    public static final String ENGINE_NAME = "com.mobi.jaas.engines.RdfEngine";
     private static final Logger logger = LoggerFactory.getLogger(RdfEngine.class);
 
     private Resource context;

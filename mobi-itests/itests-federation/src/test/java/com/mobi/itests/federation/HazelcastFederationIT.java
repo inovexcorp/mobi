@@ -25,8 +25,8 @@ package com.mobi.itests.federation;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -106,9 +106,9 @@ public class HazelcastFederationIT extends KarafTestSupport {
         assertNotNull("Mobi service had no server identifier!", mobi.getServerIdentifier());
         Optional<UUID> uuid = service.getFederationNodeIds().stream().findFirst();
         if (uuid.isPresent()) {
-            assertEquals("", mobi.getServerIdentifier(), uuid.get());
+            assertEquals(mobi.getServerIdentifier(), uuid.get());
         } else {
-            Assert.fail("No UUID found in set of nodes in federation service");
+            fail("No UUID found in set of nodes in federation service");
         }
 
         LOGGER.info("Test hazelcastFederationStartsCorrectly complete.");

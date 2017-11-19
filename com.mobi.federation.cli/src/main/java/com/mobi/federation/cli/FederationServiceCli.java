@@ -25,13 +25,13 @@ package com.mobi.federation.cli;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
+import com.mobi.federation.api.FederationService;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import com.mobi.federation.api.FederationService;
 
 import java.util.List;
 import java.util.Optional;
@@ -50,7 +50,7 @@ public class FederationServiceCli implements Action {
     private static final String STOP_OPERATION = "stop";
 
     private static final String fedInfoFormatString = "%s\nid: %s\ndescription: %s\n\n";
-    private static final String fedNodeFormatString = "\t%s\n"; // TODO: Get more node information
+    private static final String fedNodeFormatString = "\t%s"; // TODO: Get more node information
 
     @Reference
     private List<FederationService> federationServices;
@@ -58,7 +58,7 @@ public class FederationServiceCli implements Action {
     @Argument(name = "operation", description = "Controls the interaction performed with the Federation Services.\n"
             + "mobi:fedsvc view - To view configuration information about connected federations.\n"
             + "mobi:fedsvc -f/--federation <id> view - To view nodes in a federation.\n"
-            + "mobi:fedsvc  -f/--federation <id> restart - To restart the connection to the specified federation.\n",
+            + "mobi:fedsvc -f/--federation <id> restart - To restart the connection to the specified federation.\n",
             required = true)
     private String operation = null;
 
@@ -96,7 +96,7 @@ public class FederationServiceCli implements Action {
     }
 
     private void viewFederations() {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("\n");
         federationServices.stream().map(FederationService::getFederationServiceConfig).forEach(config ->
                 sb.append(String.format(fedInfoFormatString, config.title(), config.id(), config.description())));
         System.out.print(sb.toString());
@@ -109,7 +109,15 @@ public class FederationServiceCli implements Action {
         if (fedService.isPresent()) {
             StringBuilder sb = new StringBuilder();
             sb.append(String.format("Federation (%s) Connected Nodes\n", federation));
-            fedService.get().getFederationNodeIds().forEach(id -> sb.append(String.format(fedNodeFormatString, id)));
+            FederationService service = fedService.get();
+            service.getFederationNodeIds().forEach(id -> {
+                sb.append(String.format(fedNodeFormatString, id));
+                service.getMetadataForNode(id.toString()).ifPresent(node -> {
+                    node.getHost().ifPresent(host -> sb.append("\t-\thost: ").append(host));
+                    node.getNodeActive().ifPresent(active -> sb.append("\t-\t").append(active ? "ACTIVE" : "INACTIVE"));
+                });
+                sb.append("\n");
+            });
             System.out.print(sb.toString());
         }
     }

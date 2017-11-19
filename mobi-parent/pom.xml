@@ -28,7 +28,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>mobi-parent</artifactId>
-    <version>1.10.27-SNAPSHOT</version>
+    <version>1.10.29-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -299,6 +299,11 @@
                 <groupId>org.eclipse.persistence</groupId>
                 <artifactId>org.eclipse.persistence.moxy</artifactId>
                 <version>${eclipse.persistence.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jasypt</groupId>
+                <artifactId>jasypt</artifactId>
+                <version>1.9.0</version>
             </dependency>
 
             <!-- Test Dependencies -->

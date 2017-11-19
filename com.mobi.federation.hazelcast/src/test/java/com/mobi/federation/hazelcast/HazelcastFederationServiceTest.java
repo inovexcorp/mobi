@@ -27,26 +27,52 @@ import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.when;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.instance.HazelcastInstanceImpl;
 import com.hazelcast.instance.HazelcastInstanceProxy;
 import com.hazelcast.instance.Node;
+import com.mobi.federation.api.ontologies.federation.FederationNodeFactory;
+import com.mobi.federation.utils.api.UserUtils;
+import com.mobi.jaas.api.engines.Engine;
 import com.mobi.platform.config.api.server.Mobi;
+import com.mobi.platform.config.api.server.ServerUtils;
+import com.mobi.rdf.api.ModelFactory;
+import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactory;
+import com.mobi.rdf.core.impl.sesame.SimpleValueFactory;
+import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
+import com.mobi.rdf.orm.conversion.impl.BooleanValueConverter;
+import com.mobi.rdf.orm.conversion.impl.DateValueConverter;
+import com.mobi.rdf.orm.conversion.impl.DefaultValueConverterRegistry;
+import com.mobi.rdf.orm.conversion.impl.DoubleValueConverter;
+import com.mobi.rdf.orm.conversion.impl.FloatValueConverter;
+import com.mobi.rdf.orm.conversion.impl.IRIValueConverter;
+import com.mobi.rdf.orm.conversion.impl.IntegerValueConverter;
+import com.mobi.rdf.orm.conversion.impl.LiteralValueConverter;
+import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
+import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
+import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
+import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
+import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -74,30 +100,68 @@ public class HazelcastFederationServiceTest {
     @Mock
     private Mobi mobi3;
 
+    @Mock
+    private UserUtils userUtils;
+
+    @Mock
+    private Engine engine;
+
+    @Mock
+    private ConfigurationAdmin configurationAdmin;
+
+    @Mock
+    private Configuration configuration;
+
+    @Mock
+    private ServerUtils serverUtils;
+
+    @Mock
+    private InetAddress localHost;
+
+    private final ValueFactory vf = SimpleValueFactory.getInstance();
+    private final ModelFactory mf = LinkedHashModelFactory.getInstance();
+    private final ValueConverterRegistry vcr = new DefaultValueConverterRegistry();
+    private final FederationNodeFactory fnf = new FederationNodeFactory();
+    private final FakeHazelcastOsgiService hazelcastOSGiService = new FakeHazelcastOsgiService();
+
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
+        fnf.setModelFactory(mf);
+        fnf.setValueFactory(vf);
+        fnf.setValueConverterRegistry(vcr);
+        vcr.registerValueConverter(fnf);
+
+        vcr.registerValueConverter(new ResourceValueConverter());
+        vcr.registerValueConverter(new IRIValueConverter());
+        vcr.registerValueConverter(new DoubleValueConverter());
+        vcr.registerValueConverter(new IntegerValueConverter());
+        vcr.registerValueConverter(new FloatValueConverter());
+        vcr.registerValueConverter(new ShortValueConverter());
+        vcr.registerValueConverter(new StringValueConverter());
+        vcr.registerValueConverter(new ValueValueConverter());
+        vcr.registerValueConverter(new LiteralValueConverter());
+        vcr.registerValueConverter(new BooleanValueConverter());
+        vcr.registerValueConverter(new DateValueConverter());
+
         when(mobi1.getServerIdentifier()).thenReturn(u1);
         when(mobi2.getServerIdentifier()).thenReturn(u2);
         when(mobi3.getServerIdentifier()).thenReturn(u3);
+        when(engine.getUsers()).thenReturn(new HashSet<>());
+        when(configurationAdmin.getConfiguration(anyString())).thenReturn(configuration);
+        when(configuration.getProperties()).thenReturn(new Hashtable<>());
+        when(serverUtils.getLocalhost()).thenReturn(localHost);
+        when(localHost.getHostAddress()).thenReturn("address");
     }
 
     @Test
     public void testFederation() throws Exception {
-        final FakeHazelcastOsgiService hazelcastOSGiService = new FakeHazelcastOsgiService();
-
         System.setProperty("hazelcast.logging.type", "slf4j");
         System.setProperty("java.net.preferIPv4Stack", "true");
-        final HazelcastFederationService s1 = new HazelcastFederationService();
-        s1.setMobiServer(mobi1);
-        s1.setHazelcastOSGiService(hazelcastOSGiService);
-        final HazelcastFederationService s2 = new HazelcastFederationService();
-        s2.setMobiServer(mobi2);
-        s2.setHazelcastOSGiService(hazelcastOSGiService);
-        final HazelcastFederationService s3 = new HazelcastFederationService();
-        s3.setMobiServer(mobi3);
-        s3.setHazelcastOSGiService(hazelcastOSGiService);
+        final HazelcastFederationService s1 = createService(mobi1);
+        final HazelcastFederationService s2 = createService(mobi2);
+        final HazelcastFederationService s3 = createService(mobi3);
         ForkJoinPool pool = new ForkJoinPool(3);
 
         ForkJoinTask<?> task1 = createNode(pool, s1, 5123, new HashSet<>(Arrays.asList("127.0.0.1:5234", "127.0.0.1:5345")));
@@ -151,14 +215,8 @@ public class HazelcastFederationServiceTest {
 
     @Test
     public void testDisconnected() throws Exception {
-        final FakeHazelcastOsgiService hazelcastOSGiService = new FakeHazelcastOsgiService();
-
-        final HazelcastFederationService s1 = new HazelcastFederationService();
-        s1.setMobiServer(mobi1);
-        s1.setHazelcastOSGiService(hazelcastOSGiService);
-        final HazelcastFederationService s2 = new HazelcastFederationService();
-        s2.setMobiServer(mobi2);
-        s2.setHazelcastOSGiService(hazelcastOSGiService);
+        final HazelcastFederationService s1 = createService(mobi1);
+        final HazelcastFederationService s2 = createService(mobi2);
         ForkJoinPool pool = new ForkJoinPool(2);
 
         ForkJoinTask<?> task1 = createNode(pool, s1, 5123, new HashSet<>(Collections.singletonList("127.0.0.1:5234")));
@@ -203,6 +261,18 @@ public class HazelcastFederationServiceTest {
         s2.deactivate();
     }
 
+    private HazelcastFederationService createService(Mobi mobi) {
+        HazelcastFederationService service = new HazelcastFederationService();
+        service.setMobiServer(mobi);
+        service.setFederationNodeFactory(fnf);
+        service.setValueFactory(vf);
+        service.setHazelcastOSGiService(hazelcastOSGiService);
+        service.setRdfEngine(engine);
+        service.setUserUtils(userUtils);
+        service.setConfigurationAdmin(configurationAdmin);
+        service.setServerUtils(serverUtils);
+        return service;
+    }
 
     private void waitOnInitialize(HazelcastFederationService s) throws Exception {
         Field f = s.getClass().getDeclaredField("initializationTask");
@@ -214,10 +284,12 @@ public class HazelcastFederationServiceTest {
     private ForkJoinTask<?> createNode(ForkJoinPool pool, HazelcastFederationService service, int port, Set<String> members) {
         return pool.submit(() -> {
             final Map<String, Object> map = new HashMap<>();
+            map.put("id", "test.cluster.service");
             map.put("instanceName", service.hashCode());
             map.put("listeningPort", Integer.toString(port));
             map.put("joinMechanism", "TCPIP");
             map.put("tcpIpMembers", StringUtils.join(members, ", "));
+            map.put("sharedKey", "key");
             map.put("maxNoHeartbeatSeconds", 10);
             service.activate(map);
             try {
@@ -289,3 +361,4 @@ public class HazelcastFederationServiceTest {
         fail("Timeout while waiting for condition.");
     }
 }
+

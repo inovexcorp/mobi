@@ -6,7 +6,7 @@ package com.mobi.web.security.util;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.security.auth.Subject;
 import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
 import javax.security.auth.callback.PasswordCallback;
 import javax.security.auth.callback.UnsupportedCallbackException;
@@ -40,40 +41,38 @@ public class RestSecurityUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(RestSecurityUtils.class.getName());
 
-    public static boolean authenticateToken(String realm, Subject subject, String tokenString, Configuration configuration) {
-        LoginContext loginContext;
-        try {
-            loginContext = new LoginContext(realm, subject, callbacks -> {
-                for (Callback callback : callbacks) {
-                    if (callback instanceof TokenCallback) {
-                        ((TokenCallback) callback).setTokenString(tokenString);
-                    } else {
-                        throw new UnsupportedCallbackException(callback);
-                    }
+    public static boolean authenticateToken(String realm, Subject subject, String tokenString,
+                                            Configuration configuration) {
+        return authenticateCommon(realm, subject, callbacks -> {
+            for (Callback callback : callbacks) {
+                if (callback instanceof TokenCallback) {
+                    ((TokenCallback) callback).setTokenString(tokenString);
+                } else {
+                    throw new UnsupportedCallbackException(callback);
                 }
-            }, configuration);
-            loginContext.login();
-        } catch (LoginException e) {
-            LOG.debug("Authentication failed.", e);
-            return false;
-        }
-        return true;
+            }
+        }, configuration);
     }
 
-    public static boolean authenticateUser(String realm, Subject subject, String username, String password, Configuration configuration) {
-        LoginContext loginContext;
-        try {
-            loginContext = new LoginContext(realm, subject, callbacks -> {
-                for (Callback callback : callbacks) {
-                    if (callback instanceof NameCallback) {
-                        ((NameCallback) callback).setName(username);
-                    } else if (callback instanceof PasswordCallback) {
-                        ((PasswordCallback) callback).setPassword(password.toCharArray());
-                    } else {
-                        throw new UnsupportedCallbackException(callback);
-                    }
+    public static boolean authenticateUser(String realm, Subject subject, String username, String password,
+                                           Configuration configuration) {
+        return authenticateCommon(realm, subject, callbacks -> {
+            for (Callback callback : callbacks) {
+                if (callback instanceof NameCallback) {
+                    ((NameCallback) callback).setName(username);
+                } else if (callback instanceof PasswordCallback) {
+                    ((PasswordCallback) callback).setPassword(password.toCharArray());
+                } else {
+                    throw new UnsupportedCallbackException(callback);
                 }
-            }, configuration);
+            }
+        }, configuration);
+    }
+
+    public static boolean authenticateCommon(String realm, Subject subject, CallbackHandler handler,
+                                             Configuration configuration) {
+        try {
+            LoginContext loginContext = new LoginContext(realm, subject, handler, configuration);
             loginContext.login();
         } catch (LoginException e) {
             LOG.debug("Authentication failed.", e);
