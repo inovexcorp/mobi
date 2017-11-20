@@ -24,7 +24,6 @@ package com.mobi.platform.config.api.application;
  */
 
 import com.mobi.platform.config.api.ontologies.platformconfig.Application;
-import com.mobi.platform.config.api.ontologies.platformconfig.Application;
 import com.mobi.exception.MobiException;
 
 import java.util.Map;
