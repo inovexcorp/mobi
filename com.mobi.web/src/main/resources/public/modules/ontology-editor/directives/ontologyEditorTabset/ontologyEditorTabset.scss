@@ -11,6 +11,10 @@
             font-size: 14px;
             line-height: 18px;
         }
+
+        .fa {
+            line-height: 18px;
+        }
     }
 
     .up-to-date .heading .fa.fa-exclamation-triangle {
@@ -23,7 +27,6 @@
         }
 
         .fa {
-            line-height: 18px;
             padding-right: 5px;
 
             &.fa-exclamation-triangle {
