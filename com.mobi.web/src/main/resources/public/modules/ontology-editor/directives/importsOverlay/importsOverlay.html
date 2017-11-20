@@ -24,7 +24,7 @@
     <form name="dvm.form" class="content clearfix" novalidate autocomplete="off">
         <h1>Import Ontology</h1>
         <tabset class="in-overlay">
-            <tab heading="'Web URL'" active="dvm.tabs.url" on-click="dvm.clickTab()" class="padding">
+            <tab heading="'Web URL'" active="dvm.tabs.url" on-click="dvm.clickTab()" class="web-url">
                 <error-display ng-if="dvm.urlError">{{dvm.urlError}}</error-display>
                 <div ng-class="{'has-error': dvm.form.url.$error.pattern}" class="form-group">
                     <custom-label>URL</custom-label>
