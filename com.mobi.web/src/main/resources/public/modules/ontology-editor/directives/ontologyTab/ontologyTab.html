@@ -20,9 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="ontology-tab">
+<div class="ontology-tab full-height">
     <merge-tab ng-if="dvm.sm.listItem.merge"></merge-tab>
-    <div class="main-tabs" ng-if="!dvm.sm.listItem.merge">
+    <div class="main-tabs full-height" ng-if="!dvm.sm.listItem.merge">
         <branch-select ng-model="dvm.sm.listItem.ontologyRecord.branchId"></branch-select>
         <tabset class="centered">
             <tab heading="'Project'" active="dvm.sm.listItem.editorTabStates.project.active"
