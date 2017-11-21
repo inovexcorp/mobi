@@ -57,8 +57,8 @@
                         server: false
                     };
 
-                    dvm.clickTab = function() {
-                        if (dvm.tabs.server && dvm.ontologies.length === 0) {
+                    dvm.clickTab = function(tabKey) {
+                        if (tabKey === 'server' && dvm.ontologies.length === 0) {
                             httpService.cancel(dvm.spinnerId);
                             om.getAllOntologyRecords(undefined, dvm.spinnerId)
                                 .then(ontologies => {
@@ -71,7 +71,7 @@
                                         };
                                     });
                                     dvm.serverError = '';
-                                }, onError);
+                                }, errorMessage => onError(errorMessage, tabKey));
                         }
                     }
                     dvm.ontologyIsSelected = function() {
@@ -84,13 +84,13 @@
                         if (dvm.tabs.url) {
                             $http.get('/mobirest/imported-ontologies/' + encodeURIComponent(dvm.url))
                                 .then(response => {
-                                    dvm.confirmed([dvm.url]);
-                                }, () => onError('The provided URL was unresolvable.'));
+                                    dvm.confirmed([dvm.url], 'url');
+                                }, () => onError('The provided URL was unresolvable.', 'url'));
                         } else if (dvm.tabs.server) {
-                            dvm.confirmed(_.map(_.filter(dvm.ontologies, 'selected'), 'ontologyIRI'));
+                            dvm.confirmed(_.map(_.filter(dvm.ontologies, 'selected'), 'ontologyIRI'), 'server');
                         }
                     }
-                    dvm.confirmed = function(urls) {
+                    dvm.confirmed = function(urls, tabKey) {
                         var importsIRI = prefixes.owl + 'imports';
                         _.forEach(urls, url => {
                             dvm.util.setPropertyId(os.listItem.selected, importsIRI, url);
@@ -103,16 +103,18 @@
                                 os.listItem.isSaved = os.isCommittable(os.listItem.ontologyRecord.recordId);
                                 dvm.onSubmit();
                                 dvm.onClose();
-                            }, onError);
+                            }, errorMessage => onError(errorMessage, tabKey));
                     }
 
                     function isOntologyUnused(ontologyRecord) {
                         return ontologyRecord['@id'] !== os.listItem.ontologyRecord.recordId && !_.includes(os.listItem.importedOntologyIds, dvm.getOntologyIRI(ontologyRecord));
                     }
-                    function onError(errorMessage) {
-                        if (dvm.tabs.url) {
+                    function onError(errorMessage, tabKey) {
+                        if (tabKey === 'url') {
+                        // if (dvm.tabs.url) {
                             dvm.urlError = errorMessage;
-                        } else if (dvm.tabs.server) {
+                        } else if (tabKey = 'server') {
+                        // } else if (dvm.tabs.server) {
                             dvm.serverError = errorMessage;
                         }
                     }
