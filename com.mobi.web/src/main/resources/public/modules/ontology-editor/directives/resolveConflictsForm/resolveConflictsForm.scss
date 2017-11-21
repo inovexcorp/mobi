@@ -18,41 +18,21 @@
         .conflict {
             cursor: pointer;
             flex: 1;
-            margin: 15px;
 
-            h6 {
-                border: 1px solid #CCC;
-                border-bottom: 0;
-                margin: 0;
-                padding: 10px;
-
-                input {
-                    margin: 0;
-                }
+            .value-container:hover {
+                background-color: initial;
             }
-            &.not-selected {
-                opacity: .5;
+            .statement-display {
+                background-color: initial;
             }
             &:hover,
             &.active {
                 box-shadow: 0 0 20px 10px $gray-lighter;
                 opacity: 1;
             }
-            pre {
-                border-radius: 0;
-                margin: 0;
-                white-space: pre-wrap;
-
-                &.additions {
-                    background-color: $brand-success-light;
-                    color: $brand-success;
-                }
-                &.deletions {
-                    background-color: $brand-danger-light;
-                    color: $brand-danger;
-                }
+            &.not-selected {
+                opacity: .5;
             }
         }
     }
-
 }
