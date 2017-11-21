@@ -56,7 +56,7 @@
                     dvm.conflicts = [];
 
                     dvm.allResolved = function() {
-                        return _.findIndex(dvm.conflicts, {resolved: false}) === -1;
+                        return !_.some(dvm.conflicts, {resolved: false});
                     }
                     dvm.attemptMerge = function() {
                         cm.getBranchConflicts(dvm.branch['@id'], dvm.targetId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
