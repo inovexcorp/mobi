@@ -149,7 +149,7 @@ gulp.task('cacheTemplates', function() {
 });
 
 // Run jasmine tests in PhantomJS with minified source files
-gulp.task('test-minified', ['cacheTemplates', 'minify-scripts'], function(done) {
+gulp.task('test-minified', ['cacheTemplates'], function(done) {
     return runKarma([dest + '**/*.js'], spec, true, done);
 });
 
@@ -178,7 +178,7 @@ gulp.task('test-minified-6', ['test-minified-5'], function(done) {
 });
 
 // Run jasmine tests in PhantomJS with unminified source files
-gulp.task('test-unminified', ['cacheTemplates', 'move-custom-js'], function(done) {
+gulp.task('test-unminified', ['cacheTemplates'], function(done) {
     return runKarma(nodeJsFiles(nodeDir).concat(bundledFiles).concat(jsFiles(dest)), spec, true, done);
 });
 

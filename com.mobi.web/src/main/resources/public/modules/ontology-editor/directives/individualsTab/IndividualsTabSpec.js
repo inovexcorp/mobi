@@ -21,9 +21,7 @@
  * #L%
  */
 describe('Individuals Tab directive', function() {
-    var $compile,
-        scope,
-        element;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -34,33 +32,39 @@ describe('Individuals Tab directive', function() {
             scope = _$rootScope_;
         });
 
-        element = $compile(angular.element('<individuals-tab></individuals-tab>'))(scope);
+        this.element = $compile(angular.element('<individuals-tab></individuals-tab>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('individuals-tab')).toBe(true);
-            expect(element.hasClass('row')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('individuals-tab')).toBe(true);
+            expect(this.element.hasClass('row')).toBe(true);
         });
         it('with a individual-hierarchy-block', function() {
-            expect(element.find('individual-hierarchy-block').length).toBe(1);
+            expect(this.element.find('individual-hierarchy-block').length).toBe(1);
         });
         it('with a .editor', function() {
-            expect(element.querySelectorAll('.editor').length).toBe(1);
+            expect(this.element.querySelectorAll('.editor').length).toBe(1);
         });
         it('with a selected-details', function() {
-            expect(element.find('selected-details').length).toBe(1);
+            expect(this.element.find('selected-details').length).toBe(1);
         });
         it('with a datatype-property-block', function() {
-            expect(element.find('datatype-property-block').length).toBe(1);
+            expect(this.element.find('datatype-property-block').length).toBe(1);
         });
         it('with a object-property-block', function() {
-            expect(element.find('object-property-block').length).toBe(1);
+            expect(this.element.find('object-property-block').length).toBe(1);
         });
         it('with a annotation-block', function() {
-            expect(element.find('annotation-block').length).toBe(1);
+            expect(this.element.find('annotation-block').length).toBe(1);
         });
     });
 });

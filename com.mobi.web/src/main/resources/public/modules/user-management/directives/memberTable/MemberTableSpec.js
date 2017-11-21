@@ -21,12 +21,7 @@
  * #L%
  */
 describe('Member Table directive', function() {
-    var $compile,
-        scope,
-        userStateSvc,
-        userManagerSvc,
-        loginManagerSvc,
-        controller;
+    var $compile, scope, userStateSvc, userManagerSvc, loginManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -47,43 +42,43 @@ describe('Member Table directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
+
+        userManagerSvc.users = [{username: 'user1'}];
+        scope.members = ['user1'];
+        scope.removeMember = jasmine.createSpy('removeMember');
+        scope.addMember = jasmine.createSpy('addMember');
+        this.element = $compile(angular.element('<member-table members="members" remove-member="removeMember()" add-member="addMember()"></member-table>'))(scope);
+        scope.$digest();
+        this.controller = this.element.controller('memberTable');
     });
 
-    describe('controller variable', function() {
-        beforeEach(function() {
-            scope.members = [];
-            scope.removeMember = jasmine.createSpy('removeMember');
-            scope.addMember = jasmine.createSpy('addMember');
-            this.element = $compile(angular.element('<member-table members="members" remove-member="removeMember()" add-member="addMember()"></member-table>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('memberTable');
-        });
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        userStateSvc = null;
+        userManagerSvc = null;
+        loginManagerSvc = null;
+        this.element.remove();
+    });
+
+    describe('controller bound variable', function() {
         it('members should be one way bound', function() {
-            controller.members = [''];
+            this.controller.members = [''];
             scope.$digest();
-            expect(scope.members).toEqual([]);
+            expect(scope.members).toEqual(['user1']);
         });
         it('removeMember should be called in parent scope when invoked', function() {
-            controller.removeMember();
+            this.controller.removeMember();
             expect(scope.removeMember).toHaveBeenCalled();
         });
         it('addMember should be called in parent scope when invoked', function() {
-            controller.addMember();
+            this.controller.addMember();
             expect(scope.addMember).toHaveBeenCalled();
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            userManagerSvc.users = [{username: 'user1'}];
-            scope.members = ['user1'];
-            scope.removeMember = jasmine.createSpy('removeMember');
-            scope.addMember = jasmine.createSpy('addMember');
-            this.element = $compile(angular.element('<member-table members="members" remove-member="removeMember()" add-member="addMember()"></member-table>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('memberTable');
-        });
         it('should get the list of group members', function() {
-            var result = controller.getMembers();
+            var result = this.controller.getMembers();
             expect(result.length).toBe(scope.members.length);
             _.forEach(result, function(user, idx) {
                 expect(user).toEqual(_.find(userManagerSvc.users, {username: scope.members[idx]}));
@@ -91,30 +86,22 @@ describe('Member Table directive', function() {
         });
         it('should get the list of available users', function() {
             userManagerSvc.users.push({username: 'user1'}, {username: 'user2'});
-            var result = controller.getAvailableUsers();
+            var result = this.controller.getAvailableUsers();
             _.forEach(result, function(user, idx) {
                 expect(scope.members).not.toContain(user.username);
             });
         });
         it('should set the right state and call addMember', function() {
             var username = 'user';
-            controller.selectedUser = {username: username};
-            controller.onSelect();
+            this.controller.selectedUser = {username: username};
+            this.controller.onSelect();
             expect(userStateSvc.memberName).toBe(username);
-            expect(controller.selectedUser).toBe(undefined);
-            expect(controller.addingMember).toBe(false);
+            expect(this.controller.selectedUser).toBe(undefined);
+            expect(this.controller.addingMember).toBe(false);
             expect(scope.addMember).toHaveBeenCalled();
         })
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            userManagerSvc.users = [{username: 'user1'}];
-            scope.members = ['user1'];
-            scope.removeMember = jasmine.createSpy('removeMember');
-            scope.addMember = jasmine.createSpy('addMember');
-            this.element = $compile(angular.element('<member-table members="members" remove-member="removeMember()" add-member="addMember()"></member-table>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('member-table')).toBe(true);
         });
@@ -122,24 +109,22 @@ describe('Member Table directive', function() {
             expect(this.element.querySelectorAll('tr.member').length).toBe(scope.members.length);
         });
         it('depending on whether there are users available to add', function() {
-            controller = this.element.controller('memberTable');
-            spyOn(controller, 'getAvailableUsers').and.returnValue([]);
+            spyOn(this.controller, 'getAvailableUsers').and.returnValue([]);
             userManagerSvc.isAdmin.and.returnValue(true);
             scope.$digest();
             expect(this.element.querySelectorAll('.add-member').length).toBe(0);
 
-            controller.getAvailableUsers.and.returnValue([{}]);
+            this.controller.getAvailableUsers.and.returnValue([{}]);
             scope.$digest();
             expect(this.element.querySelectorAll('.add-member').length).toBe(1);
         });
         it('depending on whether a member is being added', function() {
-            controller = this.element.controller('memberTable');
-            controller.addingMember = false;
+            this.controller.addingMember = false;
             scope.$digest();
             expect(this.element.querySelectorAll('.adding-member').length).toBe(0);
             expect(this.element.find('ui-select').length).toBe(0);
 
-            controller.addingMember = true;
+            this.controller.addingMember = true;
             scope.$digest();
             expect(this.element.querySelectorAll('.adding-member').length).toBe(1);
             expect(this.element.find('ui-select').length).toBe(1);
@@ -156,8 +141,7 @@ describe('Member Table directive', function() {
             expect(removeButton.attr('disabled')).toBeFalsy();
         });
         it('depending on whether the current user is an admin', function() {
-            controller = this.element.controller('memberTable');
-            spyOn(controller, 'getAvailableUsers').and.returnValue([{}]);
+            spyOn(this.controller, 'getAvailableUsers').and.returnValue([{}]);
             userManagerSvc.isAdmin.and.returnValue(false);
             loginManagerSvc.currentUser = 'user';
             scope.$digest();
@@ -184,30 +168,18 @@ describe('Member Table directive', function() {
         });
     });
     it('should set the correct state and call removeMember when a delete button is clicked', function() {
-        userManagerSvc.users = [{username: 'user1'}];
-        scope.members = ['user1'];
-        scope.removeMember = jasmine.createSpy('removeMember');
-        scope.addMember = jasmine.createSpy('addMember');
-        var element = $compile(angular.element('<member-table members="members" remove-member="removeMember()" add-member="addMember()"></member-table>'))(scope);
-        scope.$digest();
-
-        var removeButton = angular.element(element.querySelectorAll('.member td:last-child button')[0]);
+        var removeButton = angular.element(this.element.querySelectorAll('.member td:last-child button')[0]);
         removeButton.triggerHandler('click');
         expect(userStateSvc.memberName).toBe(scope.members[0]);
         expect(scope.removeMember).toHaveBeenCalled();
     });
     it('should set the correct state and call removeMember when a delete button is clicked', function() {
-        userManagerSvc.users = [{username: 'user1'}];
-        scope.members = [];
-        scope.removeMember = jasmine.createSpy('removeMember');
-        scope.addMember = jasmine.createSpy('addMember');
         userManagerSvc.isAdmin.and.returnValue(true);
-        var element = $compile(angular.element('<member-table members="members" remove-member="removeMember()" add-member="addMember()"></member-table>'))(scope);
+        scope.members = [];
         scope.$digest();
-        controller = element.controller('memberTable');
 
-        var addButton = angular.element(element.querySelectorAll('.add-member a')[0]);
+        var addButton = angular.element(this.element.querySelectorAll('.add-member a')[0]);
         addButton.triggerHandler('click');
-        expect(controller.addingMember).toBe(true);
+        expect(this.controller.addingMember).toBe(true);
     });
 });

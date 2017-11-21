@@ -1186,6 +1186,24 @@ public class SimpleCatalogManager implements CatalogManager {
     }
 
     @Override
+    public Difference getDifference(Resource sourceCommitId, Resource targetCommitId) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            utils.validateResource(sourceCommitId, commitFactory.getTypeIRI(), conn);
+            utils.validateResource(targetCommitId, commitFactory.getTypeIRI(), conn);
+            List<Resource> sourceCommits = utils.getCommitChain(sourceCommitId, true, conn);
+            List<Resource> targetCommits = utils.getCommitChain(targetCommitId, true, conn);
+            List<Resource> commonCommits = new ArrayList<>(sourceCommits);
+            commonCommits.retainAll(targetCommits);
+            if (commonCommits.size() == 0) {
+                throw new IllegalArgumentException("No common parent between Commit " + sourceCommitId + " and "
+                        + targetCommitId);
+            }
+            sourceCommits.removeAll(commonCommits);
+            return utils.getCommitDifference(sourceCommits, conn);
+        }
+    }
+
+    @Override
     public Set<Conflict> getConflicts(Resource leftId, Resource rightId) {
         try (RepositoryConnection conn = repository.getConnection()) {
             utils.validateResource(leftId, commitFactory.getTypeIRI(), conn);

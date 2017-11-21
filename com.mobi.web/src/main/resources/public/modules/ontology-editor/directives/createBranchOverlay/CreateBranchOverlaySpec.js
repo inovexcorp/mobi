@@ -21,21 +21,7 @@
  * #L%
  */
 describe('Create Branch Overlay directive', function() {
-    var $compile,
-        scope,
-        element,
-        controller,
-        $q,
-        catalogManagerSvc,
-        ontologyStateSvc,
-        stateManagerSvc,
-        catalogId,
-        prefixes;
-
-    var commitId = 'commitId';
-    var branchId = 'branchId';
-    var branch = {'@id': branchId};
-    var error = 'error';
+    var $compile, scope, $q, catalogManagerSvc, ontologyStateSvc, stateManagerSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -56,121 +42,125 @@ describe('Create Branch Overlay directive', function() {
             prefixes = _prefixes_;
         });
 
-        element = $compile(angular.element('<create-branch-overlay></create-branch-overlay>'))(scope);
-        scope.$digest();
+        this.catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
+        this.commitId = 'commitId';
+        this.branchId = 'branchId';
+        this.branch = {'@id': this.branchId};
+        this.error = 'error';
 
-        controller = element.controller('createBranchOverlay');
-        controller.error = 'error';
+        this.element = $compile(angular.element('<create-branch-overlay></create-branch-overlay>'))(scope);
         scope.$digest();
-        catalogId = _.get(catalogManagerSvc.localCatalog, '@id', '');
-        _.set(branch, "['" + prefixes.catalog + "head'][0]['@id']", commitId);
+        this.controller = this.element.controller('createBranchOverlay');
+        this.controller.error = this.error;
+        scope.$digest();
+        _.set(this.branch, "['" + prefixes.catalog + "head'][0]['@id']", this.commitId);
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        catalogManagerSvc = null;
+        ontologyStateSvc = null;
+        stateManagerSvc = null;
+        prefixes = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('create-branch-overlay')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('create-branch-overlay')).toBe(true);
         });
         _.forEach(['form', 'error-display', 'text-input', 'text-area'], function(item) {
             it('with a ' + item, function() {
-                expect(element.find(item).length).toBe(1);
+                expect(this.element.find(item).length).toBe(1);
             });
         });
         _.forEach(['btn-container', 'btn-primary', 'btn-default'], function(item) {
             it('with a .' + item, function() {
-                expect(element.querySelectorAll('.' + item).length).toBe(1);
+                expect(this.element.querySelectorAll('.' + item).length).toBe(1);
             });
         });
         it('with buttons to submit and cancel', function() {
-            var buttons = element.querySelectorAll('.btn-container button');
+            var buttons = this.element.querySelectorAll('.btn-container button');
             expect(buttons.length).toBe(2);
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[0]).text().trim());
             expect(['Cancel', 'Submit']).toContain(angular.element(buttons[1]).text().trim());
         });
         it('depending on the form validity', function() {
-            var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeTruthy();
 
-            controller.form.$invalid = false;
+            this.controller.form.$invalid = false;
             scope.$digest();
             expect(button.attr('disabled')).toBeFalsy();
         });
     });
     describe('controller methods', function() {
         describe('create calls the correct method', function() {
-            var createDeferred;
-            beforeEach(function() {
-                createDeferred = $q.defer();
-                catalogManagerSvc.createRecordBranch.and.returnValue(createDeferred.promise);
-            });
             describe('when createRecordBranch is resolved', function() {
-                var getDeferred;
                 beforeEach(function() {
-                    getDeferred = $q.defer();
-                    catalogManagerSvc.getRecordBranch.and.returnValue(getDeferred.promise);
-                    createDeferred.resolve(branchId);
+                    catalogManagerSvc.createRecordBranch.and.returnValue($q.when(this.branchId));
                 });
                 describe('and when getRecordBranch is resolved', function() {
-                    var updateDeferred;
                     beforeEach(function() {
-                        updateDeferred = $q.defer();
-                        stateManagerSvc.updateOntologyState.and.returnValue(updateDeferred.promise);
-                        getDeferred.resolve(branch);
+                        catalogManagerSvc.getRecordBranch.and.returnValue($q.when(this.branch));
                     });
                     it('and when updateOntologyState is resoled', function() {
-                        updateDeferred.resolve();
-                        controller.create();
+                        stateManagerSvc.updateOntologyState.and.returnValue($q.when());
+                        this.controller.create();
                         scope.$digest();
                         expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem
-                            .ontologyRecord.recordId, catalogId, controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
-                        expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(branchId,
-                            ontologyStateSvc.listItem.ontologyRecord.recordId, catalogId);
+                            .ontologyRecord.recordId, this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
+                        expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId,
+                            ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                         expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                            branchId, commitId);
+                            this.branchId, this.commitId);
                         expect(ontologyStateSvc.showCreateBranchOverlay).toBe(false);
                     });
                     it('and when updateOntologyState is rejected', function() {
-                        updateDeferred.reject(error);
-                        controller.create();
+                        stateManagerSvc.updateOntologyState.and.returnValue($q.reject(this.error));
+                        this.controller.create();
                         scope.$digest();
                         expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem
-                            .ontologyRecord.recordId, catalogId, controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
-                        expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(branchId,
-                            ontologyStateSvc.listItem.ontologyRecord.recordId, catalogId);
+                            .ontologyRecord.recordId, this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
+                        expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId,
+                            ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                         expect(stateManagerSvc.updateOntologyState).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                            branchId, commitId);
-                        expect(controller.error).toBe(error);
+                            this.branchId, this.commitId);
+                        expect(this.controller.error).toBe(this.error);
                     });
                 });
                 it('and when getRecordBranch is rejected', function() {
-                    getDeferred.reject(error);
-                    controller.create();
+                    catalogManagerSvc.getRecordBranch.and.returnValue($q.reject(this.error));
+                    this.controller.create();
                     scope.$digest();
                     expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem
-                        .ontologyRecord.recordId, catalogId, controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
-                    expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(branchId,
-                        ontologyStateSvc.listItem.ontologyRecord.recordId, catalogId);
-                    expect(controller.error).toBe(error);
+                        .ontologyRecord.recordId, this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
+                    expect(catalogManagerSvc.getRecordBranch).toHaveBeenCalledWith(this.branchId,
+                        ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
+                    expect(this.controller.error).toBe(this.error);
                 });
             });
             it('when createRecordBranch is rejected', function() {
-                createDeferred.reject(error);
-                controller.create();
+                catalogManagerSvc.createRecordBranch.and.returnValue($q.reject(this.error));
+                this.controller.create();
                 scope.$digest();
                 expect(catalogManagerSvc.createRecordBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId,
-                    catalogId, controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
-                expect(controller.error).toBe(error);
+                    this.catalogId, this.controller.branchConfig, ontologyStateSvc.listItem.ontologyRecord.commitId);
+                expect(this.controller.error).toBe(this.error);
             });
         });
     });
     it('should call create when the submit button is clicked', function() {
-        spyOn(controller, 'create');
-        var button = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        spyOn(this.controller, 'create');
+        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
         button.triggerHandler('click');
-        expect(controller.create).toHaveBeenCalled();
+        expect(this.controller.create).toHaveBeenCalled();
     });
     it('should set the correct state when the cancel button is clicked', function() {
-        var button = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
         button.triggerHandler('click');
         expect(ontologyStateSvc.showCreateBranchOverlay).toBe(false);
     });

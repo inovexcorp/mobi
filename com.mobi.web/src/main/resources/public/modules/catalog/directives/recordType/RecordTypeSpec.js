@@ -21,10 +21,7 @@
  * #L%
  */
 describe('Record Type directive', function() {
-    var $compile,
-        scope,
-        catalogManagerSvc,
-        controller;
+    var $compile, scope, catalogManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -43,6 +40,14 @@ describe('Record Type directive', function() {
         scope.type = '';
         this.element = $compile(angular.element('<record-type type="type"></record-type>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('recordType');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        catalogManagerSvc = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
@@ -56,11 +61,8 @@ describe('Record Type directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = this.element.controller('recordType');
-        });
         it('should get the color for a type', function() {
-            var result = controller.getColor('type');
+            var result = this.controller.getColor('type');
             expect(typeof result).toBe('string');
         });
     });
@@ -70,8 +72,7 @@ describe('Record Type directive', function() {
             expect(this.element.hasClass('label')).toBe(true);
         });
         it('with the correct background color depending on the record type', function() {
-            controller = this.element.controller('recordType');
-            spyOn(controller, 'getColor').and.returnValue('white');
+            spyOn(this.controller, 'getColor').and.returnValue('white');
             scope.$digest();
             expect(this.element.css('background-color')).toBe('white');
         });

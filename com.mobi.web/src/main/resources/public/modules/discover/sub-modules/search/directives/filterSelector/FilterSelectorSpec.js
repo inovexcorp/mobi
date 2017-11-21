@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Filter Selector directive', function() {
-    var $compile, scope, element, controller, utilSvc, prefixes;
+    var $compile, scope, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -43,198 +43,206 @@ describe('Filter Selector directive', function() {
         scope.regex = '/[a-zA-Z]/';
         scope.value = 'value';
         scope.boolean = false;
-        element = $compile(angular.element('<filter-selector begin="begin" end="end" filter-type="filterType" range="range" regex="regex" value="value" boolean="boolean"></filter-selector>'))(scope);
+        this.element = $compile(angular.element('<filter-selector begin="begin" end="end" filter-type="filterType" range="range" regex="regex" value="value" boolean="boolean"></filter-selector>'))(scope);
         scope.$digest();
-        controller = element.controller('filterSelector');
+        this.controller = this.element.controller('filterSelector');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        utilSvc = null;
+        prefixes = null;
+        this.element.remove();
     });
 
     describe('controller bound variable', function() {
         it('begin should be two way bound', function() {
-            controller.begin = 'new-begin';
+            this.controller.begin = 'new-begin';
             scope.$apply();
             expect(scope.begin).toEqual('new-begin');
         });
         it('end should be two way bound', function() {
-            controller.end = 'new-end';
+            this.controller.end = 'new-end';
             scope.$apply();
             expect(scope.end).toEqual('new-end');
         });
         it('filterType should be two way bound', function() {
-            controller.filterType = 'new-type';
+            this.controller.filterType = 'new-type';
             scope.$apply();
             expect(scope.filterType).toEqual('new-type');
         });
         it('range should be one way bound', function() {
-            controller.range = 'new-range';
+            this.controller.range = 'new-range';
             scope.$apply();
             expect(scope.range).toEqual('range');
         });
         it('regex should be two way bound', function() {
-            controller.regex = '/[a-z]/';
+            this.controller.regex = '/[a-z]/';
             scope.$apply();
             expect(scope.regex).toEqual('/[a-z]/');
         });
         it('value should be two way bound', function() {
-            controller.value = 'new-value';
+            this.controller.value = 'new-value';
             scope.$apply();
             expect(scope.value).toEqual('new-value');
         });
         it('boolean should be two way bound', function() {
-            controller.boolean = true;
+            this.controller.boolean = true;
             scope.$apply();
             expect(scope.boolean).toEqual(true);
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('filter-selector')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('filter-selector')).toBe(true);
         });
         describe('when isBoolean is', function() {
             describe('false', function() {
                 beforeEach(function() {
-                    spyOn(controller, 'isBoolean').and.returnValue(false);
+                    spyOn(this.controller, 'isBoolean').and.returnValue(false);
                     scope.$apply();
                 });
                 it('with a custom-label', function() {
-                    expect(element.find('custom-label').length).toBe(1);
+                    expect(this.element.find('custom-label').length).toBe(1);
                 });
                 it('with a md-select', function() {
-                    expect(element.find('md-select').length).toBe(1);
+                    expect(this.element.find('md-select').length).toBe(1);
                 });
                 describe('with md-options when type is', function() {
                     it('datetime-local', function() {
-                        controller.type = 'datetime-local';
+                        this.controller.type = 'datetime-local';
                         scope.$apply();
-                        expect(element.find('md-option').length).toBe(7);
+                        expect(this.element.find('md-option').length).toBe(7);
                     });
                     it('number', function() {
-                        controller.type = 'number';
+                        this.controller.type = 'number';
                         scope.$apply();
-                        expect(element.find('md-option').length).toBe(7);
+                        expect(this.element.find('md-option').length).toBe(7);
                     });
                     it('text', function() {
-                        controller.type = 'text';
+                        this.controller.type = 'text';
                         scope.$apply();
-                        expect(element.find('md-option').length).toBe(4);
+                        expect(this.element.find('md-option').length).toBe(4);
                     });
                 });
                 describe('and filterType is', function() {
                     it('Existence with a .input-container', function() {
-                        controller.filterType = 'Existence';
+                        this.controller.filterType = 'Existence';
                         scope.$apply();
-                        expect(element.find('.input-container').length).toBe(0);
+                        expect(this.element.find('.input-container').length).toBe(0);
                     });
                     describe('Regex', function() {
                         beforeEach(function() {
-                            controller.filterType = 'Regex';
+                            this.controller.filterType = 'Regex';
                             scope.$apply();
                         });
                         it('with a .input-container', function() {
-                            expect(element.querySelectorAll('.input-container').length).toBe(1);
+                            expect(this.element.querySelectorAll('.input-container').length).toBe(1);
                         });
                         it('with a custom-label', function() {
-                            expect(element.querySelectorAll('.input-container custom-label').length).toBe(1);
+                            expect(this.element.querySelectorAll('.input-container custom-label').length).toBe(1);
                         });
                         it('with a md-input-container', function() {
-                            expect(element.find('md-input-container').length).toBe(1);
+                            expect(this.element.find('md-input-container').length).toBe(1);
                         });
                         it('with a input', function() {
-                            expect(element.find('input').length).toBe(1);
+                            expect(this.element.find('input').length).toBe(1);
                         });
                     });
                     describe('Contains', function() {
                         beforeEach(function() {
-                            controller.filterType = 'Contains';
+                            this.controller.filterType = 'Contains';
                             scope.$apply();
                         });
                         it('with a .input-container', function() {
-                            expect(element.querySelectorAll('.input-container').length).toBe(1);
+                            expect(this.element.querySelectorAll('.input-container').length).toBe(1);
                         });
                         it('with a custom-label', function() {
-                            expect(element.querySelectorAll('.input-container custom-label').length).toBe(1);
+                            expect(this.element.querySelectorAll('.input-container custom-label').length).toBe(1);
                         });
                         it('with a md-input-container', function() {
-                            expect(element.find('md-input-container').length).toBe(1);
+                            expect(this.element.find('md-input-container').length).toBe(1);
                         });
                         it('with a input', function() {
-                            expect(element.find('input').length).toBe(1);
+                            expect(this.element.find('input').length).toBe(1);
                         });
                     });
                     describe('Exact', function() {
                         beforeEach(function() {
-                            controller.filterType = 'Exact';
+                            this.controller.filterType = 'Exact';
                             scope.$apply();
                         });
                         it('with a .input-container', function() {
-                            expect(element.querySelectorAll('.input-container').length).toBe(1);
+                            expect(this.element.querySelectorAll('.input-container').length).toBe(1);
                         });
                         it('with a custom-label', function() {
-                            expect(element.querySelectorAll('.input-container custom-label').length).toBe(1);
+                            expect(this.element.querySelectorAll('.input-container custom-label').length).toBe(1);
                         });
                         it('with a md-input-container', function() {
-                            expect(element.find('md-input-container').length).toBe(1);
+                            expect(this.element.find('md-input-container').length).toBe(1);
                         });
                         it('with a input', function() {
-                            expect(element.find('input').length).toBe(1);
+                            expect(this.element.find('input').length).toBe(1);
                         });
                     });
                     describe('Range', function() {
                         beforeEach(function() {
-                            controller.filterType = 'Range';
+                            this.controller.filterType = 'Range';
                             scope.$apply();
                         });
                         it('with a .input-container', function() {
-                            expect(element.querySelectorAll('.input-container').length).toBe(1);
+                            expect(this.element.querySelectorAll('.input-container').length).toBe(1);
                         });
                         it('with a custom-label', function() {
-                            expect(element.querySelectorAll('.input-container custom-label').length).toBe(1);
+                            expect(this.element.querySelectorAll('.input-container custom-label').length).toBe(1);
                         });
                         it('with a .range-container', function() {
-                            expect(element.querySelectorAll('.range-container').length).toBe(1);
+                            expect(this.element.querySelectorAll('.range-container').length).toBe(1);
                         });
                         it('with md-input-containers', function() {
-                            expect(element.find('md-input-container').length).toBe(2);
+                            expect(this.element.find('md-input-container').length).toBe(2);
                         });
                         it('with inputs', function() {
-                            expect(element.find('input').length).toBe(2);
+                            expect(this.element.find('input').length).toBe(2);
                         });
                     });
                 });
             });
             describe('true', function() {
                 beforeEach(function() {
-                    spyOn(controller, 'isBoolean').and.returnValue(true);
+                    spyOn(this.controller, 'isBoolean').and.returnValue(true);
                     scope.$apply();
                 });
                 it('with a custom-label', function() {
-                    expect(element.find('custom-label').length).toBe(1);
+                    expect(this.element.find('custom-label').length).toBe(1);
                 });
                 it('with a md-select', function() {
-                    expect(element.find('md-select').length).toBe(1);
+                    expect(this.element.find('md-select').length).toBe(1);
                 });
                 it('with md-options', function() {
-                    expect(element.find('md-option').length).toBe(2);
+                    expect(this.element.find('md-option').length).toBe(2);
                 });
             });
         });
     });
     describe('controller methods', function() {
         it('needsOneInput should return whether or not the value is in the array', function() {
-            _.forEach(['Contains', 'Exact', 'Greater than', 'Greater than or equal to', 'Less than', 'Less than or equal to'], function(item) {
-                controller.filterType = item;
-                expect(controller.needsOneInput()).toBe(true);
-            });
-            controller.filterType = 'Other';
-            expect(controller.needsOneInput()).toBe(false);
+            ['Contains', 'Exact', 'Greater than', 'Greater than or equal to', 'Less than', 'Less than or equal to'].forEach(function(item) {
+                this.controller.filterType = item;
+                expect(this.controller.needsOneInput()).toBe(true);
+            }, this);
+            this.controller.filterType = 'Other';
+            expect(this.controller.needsOneInput()).toBe(false);
         });
         describe('isBoolean returns the correct value when range', function() {
             it('is xsd:boolean', function() {
-                controller.range = prefixes.xsd + 'boolean';
-                expect(controller.isBoolean()).toBe(true);
+                this.controller.range = prefixes.xsd + 'boolean';
+                expect(this.controller.isBoolean()).toBe(true);
             });
             it('is not xsd:boolean', function() {
-                expect(controller.isBoolean()).toBe(false);
+                expect(this.controller.isBoolean()).toBe(false);
             });
         });
     });

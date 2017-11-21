@@ -784,6 +784,18 @@ public interface CatalogManager {
     Model getCompiledResource(Resource versionedRDFRecordId, Resource branchId, Resource commitId);
 
     /**
+     * Gets the Difference between the Commits identified by the two provided Resources. Essentially returns the
+     * culmination of changes from a common ancestor between the Commits to the source Commit.
+     *
+     * @param sourceCommitId The source (first) Commit.
+     * @param targetCommitId The target (second) Commit.
+     * @return The Difference between the two Commits identified by the provided Resources.
+     * @throws IllegalArgumentException Thrown if either Commit could not be found or the Commits have no common parent.
+     * @throws IllegalStateException Thrown if a Commit in either chain does not have the additions/deletions set.
+     */
+    Difference getDifference(Resource sourceCommitId, Resource targetCommitId);
+
+    /**
      * Gets all of the conflicts between the Commits identified by the two provided Resources.
      *
      * @param leftId The left (first) Commit.

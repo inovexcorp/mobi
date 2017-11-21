@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Catalog Breadcrumb directive', function() {
-    var $compile,
-        scope,
-        catalogManagerSvc,
-        catalogStateSvc,
-        controller;
+    var $compile, scope, catalogManagerSvc, catalogStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -46,12 +42,20 @@ describe('Catalog Breadcrumb directive', function() {
         scope.$digest();
     });
 
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        catalogManagerSvc = null;
+        catalogStateSvc = null;
+        this.element.remove();
+    });
+
     describe('controller methods', function() {
         beforeEach(function() {
-            controller = this.element.controller('catalogBreadcrumb');
+            this.controller = this.element.controller('catalogBreadcrumb');
         });
         it('should navigate to the selected crumb', function() {
-            controller.clickCrumb(0);
+            this.controller.clickCrumb(0);
             expect(catalogStateSvc.resetPagination).toHaveBeenCalled();
             expect(catalogStateSvc.getCurrentCatalog).toHaveBeenCalled();
             expect(this.catalog.openedPath.length).toBe(1);

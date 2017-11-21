@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Search Row directive', function() {
-    var $compile,
-        scope,
-        utilSvc,
-        catalogManagerSvc,
-        catalogStateSvc,
-        $q,
-        controller;
+    var $compile, scope, $q, utilSvc, catalogManagerSvc, catalogStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -49,55 +43,60 @@ describe('Search Row directive', function() {
         catalogStateSvc.getCurrentCatalog.and.returnValue(catalogStateSvc.catalogs.local);
         this.element = $compile(angular.element('<search-row></search-row>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('searchRow');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        utilSvc = null;
+        catalogManagerSvc = null;
+        catalogStateSvc = null;
+        this.element.remove();
     });
 
     describe('should initialize', function() {
-        beforeEach(function() {
-            controller = this.element.controller('searchRow');
-        });
         it('the current catalog record type filter', function() {
-            expect(controller.recordType).toBe(catalogStateSvc.catalogs.local.records.recordType);
+            expect(this.controller.recordType).toBe(catalogStateSvc.catalogs.local.records.recordType);
         });
         it('the current catalog search text', function() {
-            expect(controller.searchText).toBe(catalogStateSvc.catalogs.local.records.searchText);
+            expect(this.controller.searchText).toBe(catalogStateSvc.catalogs.local.records.searchText);
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = this.element.controller('searchRow');
-        });
         describe('should search for records', function() {
             beforeEach(function() {
                 catalogStateSvc.catalogs.local.openedPath = [{}, {}];
-                controller.searchText = 'text';
-                controller.recordType = 'type';
+                this.controller.searchText = 'text';
+                this.controller.recordType = 'type';
                 this.expectedPaginationConfig = {
                     pageIndex: 0,
                     limit: catalogStateSvc.catalogs.local.records.limit,
                     sortOption: catalogStateSvc.catalogs.local.records.sortOption,
-                    recordType: controller.recordType,
-                    searchText: controller.searchText,
+                    recordType: this.controller.recordType,
+                    searchText: this.controller.searchText,
                 };
             });
             it('unless an error occurs', function() {
                 catalogManagerSvc.getRecords.and.returnValue($q.reject('Error Message'));
-                controller.search();
+                this.controller.search();
                 scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
                 expect(catalogStateSvc.currentPage).toBe(0);
-                expect(catalogStateSvc.catalogs.local.records.recordType).not.toBe(controller.recordType);
-                expect(catalogStateSvc.catalogs.local.records.searchText).not.toBe(controller.searchText);
+                expect(catalogStateSvc.catalogs.local.records.recordType).not.toBe(this.controller.recordType);
+                expect(catalogStateSvc.catalogs.local.records.searchText).not.toBe(this.controller.searchText);
                 expect(catalogStateSvc.setPagination).not.toHaveBeenCalled();
                 expect(catalogStateSvc.catalogs.local.openedPath.length).toBe(2);
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
             });
             it('succesfully', function() {
-                controller.search();
+                this.controller.search();
                 scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
                 expect(catalogStateSvc.currentPage).toBe(0);
-                expect(catalogStateSvc.catalogs.local.records.recordType).toBe(controller.recordType);
-                expect(catalogStateSvc.catalogs.local.records.searchText).toBe(controller.searchText);
+                expect(catalogStateSvc.catalogs.local.records.recordType).toBe(this.controller.recordType);
+                expect(catalogStateSvc.catalogs.local.records.searchText).toBe(this.controller.searchText);
                 expect(catalogStateSvc.setPagination).toHaveBeenCalled();
                 expect(catalogStateSvc.catalogs.local.openedPath.length).toBe(1);
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
@@ -130,11 +129,9 @@ describe('Search Row directive', function() {
         });
     });
     it('should call search when the button is clicked', function() {
-        controller = this.element.controller('searchRow');
-        spyOn(controller, 'search');
-
+        spyOn(this.controller, 'search');
         var button = this.element.find('button');
         button.triggerHandler('click');
-        expect(controller.search).toHaveBeenCalled();
+        expect(this.controller.search).toHaveBeenCalled();
     });
 });

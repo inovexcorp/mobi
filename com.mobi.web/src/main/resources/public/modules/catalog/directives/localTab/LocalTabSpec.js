@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Local Tab directive', function() {
-    var $compile,
-        scope,
-        catalogStateSvc,
-        catalogManagerSvc,
-        controller;
+    var $compile, scope, catalogStateSvc, catalogManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -42,20 +38,26 @@ describe('Local Tab directive', function() {
 
         this.element = $compile(angular.element('<local-tab></local-tab>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('localTab');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        catalogStateSvc = null;
+        catalogManagerSvc = null;
+        this.element.remove();
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = this.element.controller('localTab');
-        });
         it('should get the opened entity in the local catalog', function() {
-            expect(controller.getOpenedEntity()).toBeUndefined();
+            expect(this.controller.getOpenedEntity()).toBeUndefined();
 
             catalogStateSvc.catalogs.local.openedPath = [{'@id': '1'}];
-            expect(controller.getOpenedEntity()).toEqual({'@id': '1'});
+            expect(this.controller.getOpenedEntity()).toEqual({'@id': '1'});
 
             catalogStateSvc.catalogs.local.openedPath = [{'@id': '1'}, {'@id': '2'}];
-            expect(controller.getOpenedEntity()).toEqual({'@id': '2'});
+            expect(this.controller.getOpenedEntity()).toEqual({'@id': '2'});
         });
     });
     describe('replaces the element with the correct html', function() {
@@ -87,7 +89,6 @@ describe('Local Tab directive', function() {
         it('depending on whether the opened entity is a branch', function() {
             expect(this.element.find('branch-block').length).toBe(0);
 
-            controller = this.element.controller('localTab');
             catalogManagerSvc.isBranch.and.returnValue(true);
             scope.$digest();
             expect(this.element.find('branch-block').length).toBe(1);

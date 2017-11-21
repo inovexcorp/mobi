@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Analytics Editor Page directive', function() {
-    var $compile, scope, element;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -31,29 +31,35 @@ describe('Analytics Editor Page directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
-        
-        element = $compile(angular.element('<analytics-editor-page></analytics-editor-page>'))(scope);
+
+        this.element = $compile(angular.element('<analytics-editor-page></analytics-editor-page>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('analytics-editor-page')).toBe(true);
-            expect(element.hasClass('full-height')).toBe(true);
-            expect(element.hasClass('clearfix')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('analytics-editor-page')).toBe(true);
+            expect(this.element.hasClass('full-height')).toBe(true);
+            expect(this.element.hasClass('clearfix')).toBe(true);
         });
         it('with a .blue-bar', function() {
-            expect(element.querySelectorAll('.blue-bar').length).toBe(1);
+            expect(this.element.querySelectorAll('.blue-bar').length).toBe(1);
         });
         it('with a .row', function() {
-            expect(element.querySelectorAll('.row').length).toBe(1);
+            expect(this.element.querySelectorAll('.row').length).toBe(1);
         });
         it('with a class-and-property-block', function() {
-            expect(element.find('class-and-property-block').length).toBe(1);
+            expect(this.element.find('class-and-property-block').length).toBe(1);
         });
         it('with a analytics-editor', function() {
-            expect(element.find('analytics-editor').length).toBe(1);
+            expect(this.element.find('analytics-editor').length).toBe(1);
         });
     });
 });

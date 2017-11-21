@@ -21,17 +21,7 @@
  * #L%
  */
 describe('Activity List directive', function() {
-    var $compile, scope, element, controller, $q, provManagerSvc, utilSvc, prefixes;
-    var headers = { 'x-total-count': 2 };
-    var response = {
-        data: {
-            activities: [{'@id': 'activity1'}, {'@id': 'activity2'}],
-            entities: [{'@id': 'entity1'}]
-        },
-        headers: jasmine.createSpy('headers').and.returnValue(headers)
-    };
-    var nextLink = 'http://example.com/next';
-    var prevLink = 'http://example.com/prev';
+    var $compile, scope, $q, provManagerSvc, utilSvc, prefixes;
 
     beforeEach(function() {
         module('templates');
@@ -50,74 +40,102 @@ describe('Activity List directive', function() {
             prefixes = _prefixes_;
         });
 
-        provManagerSvc.getActivities.and.returnValue($q.when(response));
-        headers.link = '<' + nextLink + '>; rel=\"next\", <' + prevLink + '>; rel=\"prev\"';
-        utilSvc.parseLinks.and.returnValue({next: nextLink, prev: prevLink});
-        element = $compile(angular.element('<activity-list></activity-list>'))(scope);
-        scope.$digest();
-        controller = element.controller('activityList');
+        this.nextLink = 'http://example.com/next';
+        this.prevLink = 'http://example.com/prev';
+        this.headers = {
+            'x-total-count': 2,
+            link: ''
+        };
+        this.response = {
+            data: {
+                activities: [{'@id': 'activity1'}, {'@id': 'activity2'}],
+                entities: [{'@id': 'entity1'}]
+            },
+            headers: jasmine.createSpy('headers').and.returnValue(this.headers)
+        };
+
+        provManagerSvc.getActivities.and.returnValue($q.when(this.response));
+        utilSvc.parseLinks.and.returnValue({next: this.nextLink, prev: this.prevLink});
+    });
+
+    beforeEach(function compile() {
+        this.compile = function() {
+            this.element = $compile(angular.element('<activity-list></activity-list>'))(scope);
+            scope.$digest();
+            this.controller = this.element.controller('activityList');
+        }
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        provManagerSvc = null;
+        utilSvc = null;
+        prefixes = null;
+        this.element.remove();
     });
 
     describe('should initialize with the correct data', function() {
         it('unless an error occurs', function() {
-            utilSvc.parseLinks.calls.reset();
             provManagerSvc.getActivities.and.returnValue($q.reject('Error message'));
-            element = $compile(angular.element('<activity-list></activity-list>'))(scope);
-            scope.$digest();
-            controller = element.controller('activityList');
-            expect(provManagerSvc.getActivities).toHaveBeenCalledWith(controller.paginatedConfig, controller.id);
+            this.compile();
+            expect(provManagerSvc.getActivities).toHaveBeenCalledWith(this.controller.paginatedConfig, this.controller.id);
             expect(utilSvc.parseLinks).not.toHaveBeenCalled();
-            expect(controller.activities).toEqual([]);
-            expect(controller.entities).toEqual([]);
-            expect(controller.totalSize).toEqual(0);
-            expect(controller.paginatedConfig).toEqual({limit: 50, pageIndex: 0});
-            expect(controller.links).toEqual({prev: '', next: ''});
+            expect(this.controller.activities).toEqual([]);
+            expect(this.controller.entities).toEqual([]);
+            expect(this.controller.totalSize).toEqual(0);
+            expect(this.controller.paginatedConfig).toEqual({limit: 50, pageIndex: 0});
+            expect(this.controller.links).toEqual({prev: '', next: ''});
             expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
         });
         it('successfully', function() {
-            expect(provManagerSvc.getActivities).toHaveBeenCalledWith(controller.paginatedConfig, controller.id);
-            expect(utilSvc.parseLinks).toHaveBeenCalledWith(headers.link);
-            expect(controller.activities).toEqual(response.data.activities);
-            expect(controller.entities).toEqual(response.data.entities);
-            expect(controller.totalSize).toEqual(headers['x-total-count']);
-            expect(controller.paginatedConfig).toEqual({limit: 50, pageIndex: 0});
-            expect(controller.links).toEqual({prev: prevLink, next: nextLink});
+            this.compile();
+            expect(provManagerSvc.getActivities).toHaveBeenCalledWith(this.controller.paginatedConfig, this.controller.id);
+            expect(utilSvc.parseLinks).toHaveBeenCalledWith(this.headers.link);
+            expect(this.controller.activities).toEqual(this.response.data.activities);
+            expect(this.controller.entities).toEqual(this.response.data.entities);
+            expect(this.controller.totalSize).toEqual(this.headers['x-total-count']);
+            expect(this.controller.paginatedConfig).toEqual({limit: 50, pageIndex: 0});
+            expect(this.controller.links).toEqual({prev: this.prevLink, next: this.nextLink});
             expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
         });
     });
     describe('controller methods', function() {
+        beforeEach(function() {
+            this.compile();
+        });
         describe('should get a page of Activities', function() {
-            var index;
             beforeEach(function() {
-                index = controller.paginatedConfig.pageIndex;
+                this.index = this.controller.paginatedConfig.pageIndex;
                 utilSvc.parseLinks.and.returnValue({});
                 utilSvc.parseLinks.calls.reset();
             });
             describe('successfully', function() {
                 beforeEach(function() {
-                    utilSvc.getResultsPage.and.returnValue($q.when(response));
+                    utilSvc.getResultsPage.and.returnValue($q.when(this.response));
                 });
                 it('if the direction is previous', function() {
-                    controller.getPage('prev');
+                    this.controller.getPage('prev');
                     scope.$apply();
-                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(prevLink, utilSvc.rejectError, controller.id);
-                    expect(utilSvc.parseLinks).toHaveBeenCalledWith(headers.link);
-                    expect(controller.paginatedConfig.pageIndex).toBe(index - 1);
-                    expect(controller.activities).toEqual(response.data.activities);
-                    expect(controller.entities).toEqual(response.data.entities);
-                    expect(controller.totalSize).toEqual(headers['x-total-count']);
-                    expect(controller.links).toEqual({prev: '', next: ''});
+                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(this.prevLink, utilSvc.rejectError, this.controller.id);
+                    expect(utilSvc.parseLinks).toHaveBeenCalledWith(this.headers.link);
+                    expect(this.controller.paginatedConfig.pageIndex).toBe(this.index - 1);
+                    expect(this.controller.activities).toEqual(this.response.data.activities);
+                    expect(this.controller.entities).toEqual(this.response.data.entities);
+                    expect(this.controller.totalSize).toEqual(this.headers['x-total-count']);
+                    expect(this.controller.links).toEqual({prev: '', next: ''});
                 });
                 it('if the direction is next', function() {
-                    controller.getPage('next');
+                    this.controller.getPage('next');
                     scope.$apply();
-                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(nextLink, utilSvc.rejectError, controller.id);
-                    expect(utilSvc.parseLinks).toHaveBeenCalledWith(headers.link);
-                    expect(controller.paginatedConfig.pageIndex).toBe(index + 1);
-                    expect(controller.activities).toEqual(response.data.activities);
-                    expect(controller.entities).toEqual(response.data.entities);
-                    expect(controller.totalSize).toEqual(headers['x-total-count']);
-                    expect(controller.links).toEqual({prev: '', next: ''});
+                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(this.nextLink, utilSvc.rejectError, this.controller.id);
+                    expect(utilSvc.parseLinks).toHaveBeenCalledWith(this.headers.link);
+                    expect(this.controller.paginatedConfig.pageIndex).toBe(this.index + 1);
+                    expect(this.controller.activities).toEqual(this.response.data.activities);
+                    expect(this.controller.entities).toEqual(this.response.data.entities);
+                    expect(this.controller.totalSize).toEqual(this.headers['x-total-count']);
+                    expect(this.controller.links).toEqual({prev: '', next: ''});
                 });
             });
             describe('unless an error occurs', function() {
@@ -125,15 +143,15 @@ describe('Activity List directive', function() {
                     utilSvc.getResultsPage.and.returnValue($q.reject('Error message'));
                 });
                 it('and the direction was previous', function() {
-                    controller.getPage('prev');
+                    this.controller.getPage('prev');
                     scope.$apply();
-                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(prevLink, utilSvc.rejectError, controller.id);
+                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(this.prevLink, utilSvc.rejectError, this.controller.id);
                     expect(utilSvc.parseLinks).not.toHaveBeenCalled();
                 });
                 it('and the direction was next', function() {
-                    controller.getPage('next');
+                    this.controller.getPage('next');
                     scope.$apply();
-                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(nextLink, utilSvc.rejectError, controller.id);
+                    expect(utilSvc.getResultsPage).toHaveBeenCalledWith(this.nextLink, utilSvc.rejectError, this.controller.id);
                     expect(utilSvc.parseLinks).not.toHaveBeenCalled();
                 });
             });
@@ -141,34 +159,37 @@ describe('Activity List directive', function() {
         it('should get the time stamp of an Activity', function() {
             utilSvc.getPropertyValue.and.returnValue('2017-01-01T00:00:00');
             utilSvc.getDate.and.returnValue('date');
-            expect(controller.getTimeStamp({})).toEqual('date');
+            expect(this.controller.getTimeStamp({})).toEqual('date');
             expect(utilSvc.getPropertyValue).toHaveBeenCalledWith({}, prefixes.prov + 'endedAtTime');
             expect(utilSvc.getDate).toHaveBeenCalledWith('2017-01-01T00:00:00', 'short');
         });
     });
     describe('replaces the element with the correct html', function() {
+        beforeEach(function() {
+            this.compile();
+        });
         it('for wrapping containers', function() {
-            expect(element.hasClass('activity-list')).toBe(true);
-            expect(element.hasClass('row')).toBe(true);
-            expect(element.querySelectorAll('.col-xs-8').length).toBe(1);
+            expect(this.element.hasClass('activity-list')).toBe(true);
+            expect(this.element.hasClass('row')).toBe(true);
+            expect(this.element.querySelectorAll('.col-xs-8').length).toBe(1);
         });
         it('with block', function() {
-            expect(element.find('block').length).toBe(1);
+            expect(this.element.find('block').length).toBe(1);
         });
         it('with block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('with block-footer', function() {
-            expect(element.find('block-footer').length).toBe(1);
+            expect(this.element.find('block-footer').length).toBe(1);
         });
         it('with a paging-details', function() {
-            expect(element.find('paging-details').length).toBe(1);
+            expect(this.element.find('paging-details').length).toBe(1);
         });
         it('with a pagination', function() {
-            expect(element.find('pagination').length).toBe(1);
+            expect(this.element.find('pagination').length).toBe(1);
         });
         it('depending on how many activities there are', function() {
-            expect(element.querySelectorAll('block-content .activity').length).toBe(controller.activities.length);
+            expect(this.element.querySelectorAll('block-content .activity').length).toBe(this.controller.activities.length);
         });
     });
 });

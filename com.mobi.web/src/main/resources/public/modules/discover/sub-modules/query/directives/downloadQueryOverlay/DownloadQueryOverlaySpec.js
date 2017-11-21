@@ -21,10 +21,7 @@
  * #L%
  */
 describe('Download Query Overlay directive', function() {
-    var $compile,
-        scope,
-        sparqlManagerSvc,
-        controller;
+    var $compile, scope, sparqlManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -39,19 +36,24 @@ describe('Download Query Overlay directive', function() {
 
         this.element = $compile(angular.element('<download-query-overlay></download-query-overlay>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('downloadQueryOverlay');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        sparqlManagerSvc = null;
+        this.element.remove();
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = this.element.controller('downloadQueryOverlay');
-        });
         it('should download the results of a query', function() {
-            controller.download();
-            expect(sparqlManagerSvc.downloadResults).toHaveBeenCalledWith(controller.fileType, controller.fileName);
+            this.controller.download();
+            expect(sparqlManagerSvc.downloadResults).toHaveBeenCalledWith(this.controller.fileType, this.controller.fileName);
             expect(sparqlManagerSvc.displayDownloadOverlay).toBe(false);
         });
         it('should set the correct state for canceling', function() {
-            controller.cancel();
+            this.controller.cancel();
             expect(sparqlManagerSvc.displayDownloadOverlay).toBe(false);
         });
     });
@@ -66,11 +68,10 @@ describe('Download Query Overlay directive', function() {
             expect(textInput.attr('display-text')).toBe("'File Name'");
         });
         it('depending on the validity of the form', function() {
-            controller = this.element.controller('downloadQueryOverlay');
             var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
-            controller.form.$setValidity('test', false);
+            this.controller.form.$setValidity('test', false);
             scope.$digest();
             expect(button.attr('disabled')).toBeTruthy();
         });
@@ -82,23 +83,15 @@ describe('Download Query Overlay directive', function() {
         });
     });
     it('should call download when the button is clicked', function() {
-        var element = $compile(angular.element('<download-query-overlay></download-query-overlay>'))(scope);
-        scope.$digest();
-        controller = element.controller('downloadQueryOverlay');
-        spyOn(controller, 'download');
-
-        var downloadButton = angular.element(element.querySelectorAll('.btn-container button.btn-primary')[0]);
+        spyOn(this.controller, 'download');
+        var downloadButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
         downloadButton.triggerHandler('click');
-        expect(controller.download).toHaveBeenCalled();
+        expect(this.controller.download).toHaveBeenCalled();
     });
     it('should call cancel when the button is clicked', function() {
-        var element = $compile(angular.element('<download-query-overlay></download-query-overlay>'))(scope);
-        scope.$digest();
-        controller = element.controller('downloadQueryOverlay');
-        spyOn(controller, 'cancel');
-
-        var continueButton = angular.element(element.querySelectorAll('.btn-container button.btn-default')[0]);
+        spyOn(this.controller, 'cancel');
+        var continueButton = angular.element(this.element.querySelectorAll('.btn-container button.btn-default')[0]);
         continueButton.triggerHandler('click');
-        expect(controller.cancel).toHaveBeenCalled();
+        expect(this.controller.cancel).toHaveBeenCalled();
     });
 });
