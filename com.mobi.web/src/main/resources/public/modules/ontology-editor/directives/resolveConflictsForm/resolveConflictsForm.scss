@@ -1,0 +1,41 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.resolve-conflicts-form {
+    .conflict-list-item {
+        .fa {
+            padding-right: 8px;
+        }
+        > span:hover {
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    }
+    .flex-container {
+        align-items: center;
+        display: flex;
+
+        .conflict {
+            cursor: pointer;
+            flex: 1;
+
+            h5 {
+                padding: 8px;
+            }
+            .value-container:hover {
+                background-color: initial;
+            }
+            .statement-display {
+                background-color: initial;
+            }
+            &:hover,
+            &.active {
+                box-shadow: 0 0 20px 10px $gray-lighter;
+                opacity: 1;
+            }
+            &.not-selected {
+                opacity: .5;
+            }
+        }
+    }
+}

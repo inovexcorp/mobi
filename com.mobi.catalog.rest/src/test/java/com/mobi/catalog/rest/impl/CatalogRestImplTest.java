@@ -488,6 +488,7 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         when(catalogManager.applyInProgressCommit(any(Resource.class), any(Model.class))).thenReturn(compiledResourceWithChanges);
         when(catalogManager.createInProgressCommit(any(User.class))).thenReturn(testInProgressCommit);
         when(catalogManager.getCommitDifference(any(Resource.class))).thenReturn(difference);
+        when(catalogManager.getDifference(any(Resource.class), any(Resource.class))).thenReturn(difference);
         when(catalogManager.removeRecord(any(Resource.class), eq(vf.createIRI(RECORD_IRI)), any(OrmFactory.class))).thenReturn(testRecord);
 
         when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString())).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
@@ -2574,6 +2575,60 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         assertEquals(response.getStatus(), 500);
     }
 
+    // GET catalogs/{catalogId}/records/{recordId}/branches/{branchId}/difference
+
+    @Test
+    public void getDifferenceTest() {
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+                + "/branches/" + encode(BRANCH_IRI) + "/difference")
+                .queryParam("targetId", BRANCH_IRI).request().get();
+        assertEquals(response.getStatus(), 200);
+        verify(catalogManager, times(2)).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI));
+        verify(catalogManager).getDifference(vf.createIRI(COMMIT_IRIS[0]), vf.createIRI(COMMIT_IRIS[0]));
+        try {
+            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            assertTrue(result.containsKey("additions"));
+            assertTrue(result.containsKey("deletions"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getDifferenceWithoutTargetTest() {
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+                + "/branches/" + encode(BRANCH_IRI) + "/difference").request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void getDifferenceWithIncorrectPathTest() {
+        // Setup:
+        doThrow(new IllegalArgumentException()).when(catalogManager).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(ERROR_IRI));
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+                + "/branches/" + encode(ERROR_IRI) + "/difference")
+                .queryParam("targetId", BRANCH_IRI).request().get();
+        assertEquals(response.getStatus(), 400);
+    }
+
+    @Test
+    public void getDifferenceWithErrorTest() {
+        // Setup:
+        doThrow(new MobiException()).when(catalogManager).getDifference(vf.createIRI(COMMIT_IRIS[0]), vf.createIRI(COMMIT_IRIS[0]));
+
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+                + "/branches/" + encode(BRANCH_IRI) + "/difference")
+                .queryParam("targetId", BRANCH_IRI).request().get();
+        assertEquals(response.getStatus(), 500);
+
+        doThrow(new IllegalStateException()).when(catalogManager).getDifference(vf.createIRI(COMMIT_IRIS[0]), vf.createIRI(COMMIT_IRIS[0]));
+        response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+                + "/branches/" + encode(BRANCH_IRI) + "/difference")
+                .queryParam("targetId", BRANCH_IRI).request().get();
+        assertEquals(response.getStatus(), 500);
+    }
+
     // GET catalogs/{catalogId}/records/{recordId}/branches/{branchId}/conflicts
 
     @Test
@@ -2600,6 +2655,13 @@ public class CatalogRestImplTest extends MobiRestTestNg {
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
+    }
+
+    @Test
+    public void getConflictsWithoutTargetTest() {
+        Response response = target().path("catalogs/" + encode(LOCAL_IRI) + "/records/" + encode(RECORD_IRI)
+                + "/branches/" + encode(BRANCH_IRI) + "/conflicts").request().get();
+        assertEquals(response.getStatus(), 400);
     }
 
     @Test

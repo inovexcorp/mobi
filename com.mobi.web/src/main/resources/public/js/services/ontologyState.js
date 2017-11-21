@@ -87,9 +87,6 @@
                 savedChanges: {
                     active: false
                 },
-                merge: {
-                    active: false
-                },
                 commits: {
                     active: false
                 }
@@ -110,6 +107,7 @@
                 ontology: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
+                merge: false,
                 dataPropertyRange: om.defaultDatatypes,
                 derivedConcepts: [],
                 derivedConceptSchemes: [],
