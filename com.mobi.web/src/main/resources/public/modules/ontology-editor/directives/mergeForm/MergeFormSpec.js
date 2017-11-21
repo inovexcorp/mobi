@@ -113,6 +113,30 @@ describe('Merge Form directive', function() {
             scope.$digest();
             expect(this.element.find('checkbox').length).toEqual(0);
         });
+        it('depending on whether the branch difference is set', function() {
+            expect(this.element.find('tabset').length).toEqual(0);
+
+            this.controller.difference = {};
+            scope.$digest();
+            var tabset = this.element.find('tabset');
+            expect(tabset.length).toEqual(1);
+            expect(tabset.find('tab').length).toEqual(1);
+            expect(tabset.find('commit-changes-display').length).toEqual(1);
+        });
+        it('depending on whether the branch difference has additions and deletions', function() {
+            this.controller.difference = {additions: [], deletions: []};
+            scope.$digest();
+            expect(this.element.querySelectorAll('tabset info-message').length).toEqual(1);
+
+            this.controller.difference.additions = [{}];
+            scope.$digest();
+            expect(this.element.querySelectorAll('tabset info-message').length).toEqual(0);
+
+            this.controller.difference.additions = [];
+            this.controller.difference.deletions = [{}];
+            scope.$digest();
+            expect(this.element.querySelectorAll('tabset info-message').length).toEqual(0);
+        });
     });
     describe('controller methods', function() {
         describe('matchesCurrent returns', function() {
