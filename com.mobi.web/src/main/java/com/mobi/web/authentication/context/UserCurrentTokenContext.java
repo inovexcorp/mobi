@@ -46,7 +46,6 @@ public class UserCurrentTokenContext extends AuthHttpContext {
         if (tokenOptional.isPresent()) {
             log.debug("Token found and verified. Writing payload to response.");
             TokenUtils.writePayload(response, tokenOptional.get());
-            return true;
         } else {
             log.debug("Token missing or unverified. Generating unauthenticated token.");
             SignedJWT unauthToken = TokenUtils.generateUnauthToken(response);
@@ -54,9 +53,8 @@ public class UserCurrentTokenContext extends AuthHttpContext {
 
             log.debug("Writing payload to response.");
             TokenUtils.writePayload(response, unauthToken);
-
-            return true;
         }
+        return true;
     }
 
     @Override

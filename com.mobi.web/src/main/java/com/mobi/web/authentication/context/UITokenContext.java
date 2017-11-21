@@ -45,13 +45,12 @@ public class UITokenContext extends AuthHttpContext {
 
         if (tokenOptional.isPresent()) {
             log.debug("Token found and verified.");
-            return true;
         } else {
             log.debug("Token missing or unverified. Generating unauthenticated token.");
             SignedJWT unauthToken = TokenUtils.generateUnauthToken(response);
             response.addCookie(TokenUtils.createSecureTokenCookie(unauthToken));
-            return true;
         }
+        return true;
     }
 
     @Override
