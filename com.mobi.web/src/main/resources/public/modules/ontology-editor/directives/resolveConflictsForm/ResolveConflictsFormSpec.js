@@ -151,13 +151,28 @@ describe('Resolve Conflicts Form directive', function() {
             expect(right.hasClass('active')).toEqual(true);
             expect(right.hasClass('not-selected')).toEqual(false);
         });
+        it('depending on whether a conflict has additions or deletions', function() {
+            this.controller.index = 0;
+            this.controller.selected = {};
+            this.controller.changes = {
+                left: {additions: [], deletions: [{}]},
+                right: {additions: [{}], deletions: []}
+            };
+            scope.$digest();
+            expect(this.element.querySelectorAll('.conflict.left statement-container[additions]').length).toEqual(0);
+            expect(this.element.querySelectorAll('.conflict.left statement-container[deletions]').length).toEqual(1);
+            expect(this.element.querySelectorAll('.conflict.right statement-container[additions]').length).toEqual(1);
+            expect(this.element.querySelectorAll('.conflict.right statement-container[deletions]').length).toEqual(0);
+        });
     });
     describe('controller methods', function() {
         it('should select a conflict', function() {
-            this.controller.conflicts = [{}];
+            this.controller.conflicts = [{left: {}, right: {}}];
+            util.getChangesById.and.returnValue([]);
             this.controller.select(0);
             expect(this.controller.index).toEqual(0);
-            expect(this.controller.selected).toEqual({});
+            expect(this.controller.selected).toEqual({left: {}, right: {}});
+            expect(this.controller.changes).toEqual({left: {additions: [], deletions: []}, right: {additions: [], deletions: []}});
         });
         it('should determine whether there is another conflict after the selected', function() {
             expect(this.controller.hasNext()).toEqual(false);
@@ -175,6 +190,7 @@ describe('Resolve Conflicts Form directive', function() {
             this.controller.backToList();
             expect(this.controller.index).toBeUndefined();
             expect(this.controller.selected).toBeUndefined();
+            expect(this.controller.changes).toBeUndefined();
         });
     });
     it('should select a conflict to resolve when clicked', function() {
