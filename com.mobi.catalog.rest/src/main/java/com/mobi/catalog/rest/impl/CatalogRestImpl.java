@@ -33,23 +33,20 @@ import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 
 import aQute.bnd.annotation.component.Component;
 import aQute.bnd.annotation.component.Reference;
-import com.mobi.catalog.api.PaginatedSearchResults;
-import com.mobi.catalog.api.builder.RecordConfig;
-import com.mobi.catalog.api.ontologies.mcat.DistributionFactory;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.apache.commons.lang3.StringUtils;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.PaginatedSearchParams;
+import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
+import com.mobi.catalog.api.builder.RecordConfig;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
+import com.mobi.catalog.api.ontologies.mcat.DistributionFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.Record;
@@ -78,6 +75,9 @@ import com.mobi.rdf.orm.Thing;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.jaxb.Links;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.openrdf.model.vocabulary.RDF;
 import org.slf4j.Logger;
@@ -782,9 +782,28 @@ public class CatalogRestImpl implements CatalogRest {
     }
 
     @Override
+    public Response getDifference(String catalogId, String recordId, String branchId, String targetBranchId,
+                                  String rdfFormat) {
+        try {
+            checkStringParam(targetBranchId, "Target branch is required");
+            Resource catalogIRI = vf.createIRI(catalogId);
+            Resource recordIRI = vf.createIRI(recordId);
+            Commit sourceHead = catalogManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(branchId));
+            Commit targetHead = catalogManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(targetBranchId));
+            Difference diff = catalogManager.getDifference(sourceHead.getResource(), targetHead.getResource());
+            return Response.ok(getDifferenceJsonString(diff, rdfFormat), MediaType.APPLICATION_JSON).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalStateException | MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Override
     public Response getConflicts(String catalogId, String recordId, String branchId, String targetBranchId,
                                  String rdfFormat) {
         try {
+            checkStringParam(targetBranchId, "Target branch is required");
             Resource catalogIRI = vf.createIRI(catalogId);
             Resource recordIRI = vf.createIRI(recordId);
             Commit sourceHead = catalogManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(branchId));

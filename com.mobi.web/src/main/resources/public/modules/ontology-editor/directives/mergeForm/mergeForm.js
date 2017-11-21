@@ -27,9 +27,9 @@
         .module('mergeForm', [])
         .directive('mergeForm', mergeForm);
 
-        mergeForm.$inject = ['utilService', 'ontologyStateService'];
+        mergeForm.$inject = ['utilService', 'ontologyStateService', 'catalogManagerService'];
 
-        function mergeForm(utilService, ontologyStateService) {
+        function mergeForm(utilService, ontologyStateService, catalogManagerService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -44,11 +44,30 @@
                 controllerAs: 'dvm',
                 controller: ['$scope', function($scope) {
                     var dvm = this;
+                    var cm = catalogManagerService;
+                    var catalogId = _.get(cm.localCatalog, '@id', '');
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
+                    dvm.difference = undefined;
+                    dvm.tabs = {
+                        changes: true
+                    };
 
                     dvm.matchesCurrent = function(branch) {
                         return branch['@id'] !== dvm.os.listItem.ontologyRecord.branchId;
+                    }
+                    dvm.changeTarget = function() {
+                        if (dvm.targetId) {
+                            cm.getBranchDifference(dvm.os.listItem.ontologyRecord.branchId, dvm.targetId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
+                                .then(diff => {
+                                    dvm.difference = diff;
+                                }, errorMessage => {
+                                    dvm.util.createErrorToast(errorMessage);
+                                    dvm.difference = undefined;
+                                });
+                        } else {
+                            dvm.difference = undefined;
+                        }
                     }
                 }]
             }

@@ -2,8 +2,39 @@
 @import "./src/main/resources/public/css/variables";
 
 .merge-form {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    .tabset {
+        flex: 1;
+        height: auto;
+
+        .tab {
+            height: auto;
+            font-size: 14px;
+        }
+        .tabset-headings {
+            border-top: 1px solid $gray-light;
+
+            .heading {
+                line-height: 18px;
+            }
+        }
+        .tabset-contents {
+            overflow-y: auto;
+            padding: 15px;
+        }
+        .property-values {
+            margin-bottom: 0px;
+            margin-top: 15px;
+
+            &:first-child {
+                margin-top: 0;
+            }
+        }
+    }
     .form-container {
-        height: 100%;
         display: flex;
         flex-direction: row;
         justify-content: center;

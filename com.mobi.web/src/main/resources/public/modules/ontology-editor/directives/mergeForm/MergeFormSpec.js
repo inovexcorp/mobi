@@ -21,22 +21,24 @@
  * #L%
  */
 describe('Merge Form directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, util;
+    var $compile, scope, $q, ontologyStateSvc, util, catalogManagerSvc;
 
     beforeEach(function() {
         module('templates');
         module('mergeForm');
         mockUtil();
         mockOntologyState();
+        mockCatalogManager();
         injectTrustedFilter();
         injectHighlightFilter();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _utilService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _utilService_, _catalogManagerService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
             util = _utilService_;
+            catalogManagerSvc = _catalogManagerService_;
         });
 
         scope.branchTitle = '';
@@ -44,6 +46,7 @@ describe('Merge Form directive', function() {
         scope.removeBranch = false;
         scope.targetId = '';
         ontologyStateSvc.listItem.ontologyRecord.branchId = 'branchId';
+        catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
         this.element = $compile(angular.element('<merge-form branch-title="branchTitle" is-user-branch="isUserBranch" target-id="targetId" remove-branch="removeBranch"></merge-form>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('mergeForm');
@@ -118,6 +121,38 @@ describe('Merge Form directive', function() {
             });
             it('false if it does match ontologyStateService.listItem.ontologyRecord.branchId', function() {
                 expect(this.controller.matchesCurrent({'@id': 'branchId'})).toBe(false);
+            });
+        });
+        describe('should collect differences when changing the target branch', function() {
+            beforeEach(function() {
+                this.controller.difference = {};
+            });
+            it('unless the target is empty', function() {
+                this.controller.changeTarget();
+                expect(catalogManagerSvc.getBranchDifference).not.toHaveBeenCalled();
+                expect(this.controller.difference).toBeUndefined();
+            });
+            describe('when target is not empty', function() {
+                beforeEach(function() {
+                    this.controller.targetId = 'test';
+                });
+                it('unless an error occurs', function() {
+                    catalogManagerSvc.getBranchDifference.and.returnValue($q.reject('Error'));
+                    this.controller.changeTarget();
+                    scope.$apply();
+                    expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.branchId, this.controller.targetId, ontologyStateSvc.listItem.ontologyRecord.recordId, 'catalogId');
+                    expect(util.createErrorToast).toHaveBeenCalledWith('Error');
+                    expect(this.controller.difference).toBeUndefined();
+                });
+                it('successfully', function() {
+                    var difference = {additions: [], deletions: []};
+                    catalogManagerSvc.getBranchDifference.and.returnValue($q.when(difference));
+                    this.controller.changeTarget();
+                    scope.$apply();
+                    expect(catalogManagerSvc.getBranchDifference).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.branchId, this.controller.targetId, ontologyStateSvc.listItem.ontologyRecord.recordId, 'catalogId');
+                    expect(util.createErrorToast).not.toHaveBeenCalled();
+                    expect(this.controller.difference).toEqual(difference);
+                });
             });
         });
     });
