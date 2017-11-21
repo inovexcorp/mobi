@@ -19,6 +19,9 @@
             cursor: pointer;
             flex: 1;
 
+            h5 {
+                padding: 8px;
+            }
             .value-container:hover {
                 background-color: initial;
             }
