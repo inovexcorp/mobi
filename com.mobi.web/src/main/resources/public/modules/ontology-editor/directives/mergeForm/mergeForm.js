@@ -34,9 +34,7 @@
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/mergeForm/mergeForm.html',
-                scope: {
-                    merge: '&'
-                },
+                scope: {},
                 bindToController: {
                     branchTitle: '<',
                     isUserBranch: '<',

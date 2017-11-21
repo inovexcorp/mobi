@@ -71,10 +71,15 @@ describe('Merge Tab directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('merge-tab')).toBe(true);
         });
-        _.forEach(['block', 'block-content'], function(item) {
+        _.forEach(['block', 'block-content', 'block-footer'], function(item) {
             it('for ' + item, function() {
                 expect(this.element.find(item).length).toBe(1);
             });
+        });
+        it('with a button to cancel', function() {
+            var buttons = this.element.querySelectorAll('block-footer .btn-default');
+            expect(buttons.length).toEqual(1);
+            expect(angular.element(buttons[0]).text().trim()).toEqual('Cancel');
         });
         it('depending on whether there is an error', function() {
             expect(this.element.find('error-display').length).toBe(0);
@@ -85,14 +90,46 @@ describe('Merge Tab directive', function() {
         it('depending on whether there are conflicts', function() {
             expect(this.element.find('merge-form').length).toBe(1);
             expect(this.element.find('resolve-conflicts-form').length).toBe(0);
+            expect(this.element.querySelectorAll('block-footer .btn-merge').length).toBe(1);
+            expect(this.element.querySelectorAll('block-footer .btn-resolution').length).toBe(0);
 
             this.controller.conflicts = [{}];
             scope.$digest();
             expect(this.element.find('merge-form').length).toBe(0);
             expect(this.element.find('resolve-conflicts-form').length).toBe(1);
+            expect(this.element.querySelectorAll('block-footer .btn-merge').length).toBe(0);
+            expect(this.element.querySelectorAll('block-footer .btn-resolution').length).toBe(1);
+        });
+        it('depending on whether all conflicts are resolved', function() {
+            this.controller.conflicts = [{}];
+            spyOn(this.controller, 'allResolved').and.returnValue(false);
+            scope.$digest();
+            var button = angular.element(this.element.querySelectorAll('block-footer .btn-resolution')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
+
+            this.controller.allResolved.and.returnValue(true);
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
+        });
+        it('depending on whether a target branch has been selected', function() {
+            var button = angular.element(this.element.querySelectorAll('block-footer .btn-merge')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
+
+            this.controller.targetId = 'test';
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
         });
     });
     describe('controller methods', function() {
+        it('should test whether all conflicts are resolved', function() {
+            expect(this.controller.allResolved()).toEqual(true);
+
+            this.controller.conflicts = [{resolved: true}];
+            expect(this.controller.allResolved()).toEqual(true);
+
+            this.controller.conflicts = [{resolved: false}];
+            expect(this.controller.allResolved()).toEqual(false);
+        });
         describe('attemptMerge calls the correct functions', function() {
             describe('when getBranchConflicts is resolved', function() {
                 it('and is empty', function() {
@@ -184,5 +221,20 @@ describe('Merge Tab directive', function() {
                 expect(this.controller.error).toEqual(this.error);
             });
         });
+    });
+    it('should call merge when the button is clicked', function() {
+        spyOn(this.controller, 'attemptMerge');
+        var button = angular.element(this.element.querySelectorAll('block-footer .btn-merge')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.attemptMerge).toHaveBeenCalled();
+    });
+    it('should call mergeWithResolutions when the Submit button is clicked', function() {
+        this.controller.conflicts = [{}];
+        scope.$digest();
+        spyOn(this.controller, 'mergeWithResolutions');
+
+        var button = angular.element(this.element.querySelectorAll('block-footer .btn-resolution')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.mergeWithResolutions).toHaveBeenCalled();
     });
 });

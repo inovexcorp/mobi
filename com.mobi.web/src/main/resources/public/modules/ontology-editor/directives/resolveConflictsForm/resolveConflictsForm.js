@@ -36,8 +36,7 @@
                 templateUrl: 'modules/ontology-editor/directives/resolveConflictsForm/resolveConflictsForm.html',
                 scope: {
                     branchTitle: '<',
-                    targetTitle: '<',
-                    merge: '&'
+                    targetTitle: '<'
                 },
                 bindToController: {
                     conflicts: '<',
@@ -50,9 +49,6 @@
                     dvm.index = undefined;
                     dvm.selected = undefined;
 
-                    dvm.allResolved = function() {
-                        return _.findIndex(dvm.conflicts, {resolved: false}) === -1;
-                    }
                     dvm.select = function(index) {
                         dvm.index = index;
                         dvm.selected = dvm.conflicts[dvm.index];

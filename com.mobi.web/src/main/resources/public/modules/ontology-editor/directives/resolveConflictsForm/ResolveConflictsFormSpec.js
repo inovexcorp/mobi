@@ -42,8 +42,7 @@ describe('Resolve Conflicts Form directive', function() {
         scope.targetTitle = '';
         scope.conflicts = [];
         scope.resolutions = [];
-        scope.merge = jasmine.createSpy('merge');
-        this.element = $compile(angular.element('<resolve-conflicts-form branch-title="branchTitle" target-title="targetTitle" conflicts="conflicts" resolutions="resolutions" merge="merge()"></resolve-conflicts-form>'))(scope);
+        this.element = $compile(angular.element('<resolve-conflicts-form branch-title="branchTitle" target-title="targetTitle" conflicts="conflicts" resolutions="resolutions"></resolve-conflicts-form>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('resolveConflictsForm');
     });
@@ -69,10 +68,6 @@ describe('Resolve Conflicts Form directive', function() {
             scope.$digest();
             expect(scope.targetTitle).toEqual('');
         });
-        it('merge is called in the parent scope', function() {
-            this.isolatedScope.merge();
-            expect(scope.merge).toHaveBeenCalled();
-        });
     });
     describe('controller bound variable', function() {
         it('conflicts is one way bound', function() {
@@ -90,19 +85,6 @@ describe('Resolve Conflicts Form directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('resolve-conflicts-form')).toBe(true);
-        });
-        it('with a button to merge', function() {
-            expect(this.element.querySelectorAll('.btn-resolution').length).toEqual(1);
-        });
-        it('depending on whether all conflicts are resolved', function() {
-            spyOn(this.controller, 'allResolved').and.returnValue(false);
-            scope.$digest();
-            var button = angular.element(this.element.querySelectorAll('.btn-resolution')[0]);
-            expect(button.attr('disabled')).toBeTruthy();
-
-            this.controller.allResolved.and.returnValue(true);
-            scope.$digest();
-            expect(button.attr('disabled')).toBeFalsy();
         });
         it('depending on how many conflicts there are', function() {
             scope.conflicts = [{}];
@@ -171,15 +153,6 @@ describe('Resolve Conflicts Form directive', function() {
         });
     });
     describe('controller methods', function() {
-        it('should test whether all conflicts are resolved', function() {
-            expect(this.controller.allResolved()).toEqual(true);
-
-            this.controller.conflicts = [{resolved: true}];
-            expect(this.controller.allResolved()).toEqual(true);
-
-            this.controller.conflicts = [{resolved: false}];
-            expect(this.controller.allResolved()).toEqual(false);
-        });
         it('should select a conflict', function() {
             this.controller.conflicts = [{}];
             this.controller.select(0);
@@ -203,11 +176,6 @@ describe('Resolve Conflicts Form directive', function() {
             expect(this.controller.index).toBeUndefined();
             expect(this.controller.selected).toBeUndefined();
         });
-    });
-    it('should call merge when the button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn-resolution')[0]);
-        button.triggerHandler('click');
-        expect(scope.merge).toHaveBeenCalled();
     });
     it('should select a conflict to resolve when clicked', function() {
         scope.conflicts = [{}];

@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="resolve-conflicts-form">
-    <p class="text-center">Merge <strong>Branch: {{branchTitle}}</strong> into <strong>Branch: {{targetTitle}}</strong><button class="btn btn-primary btn-resolution" type="button" ng-click="merge()" ng-disabled="!dvm.allResolved()">Submit with Resolutions</button></p>
+    <p class="text-center">Merge <strong>Branch: {{branchTitle}}</strong> into <strong>Branch: {{targetTitle}}</strong></p>
     <p class="text-center" ng-if="dvm.checkbox">Branch: {{branchTitle}} will be removed after conflicts are resolved.</p>
     <div class="list-info" ng-if="dvm.index === undefined">
         <p><strong>NOTE:</strong> There were conflicts found for the following entities. Please select the entity you want to resolve first.</p>

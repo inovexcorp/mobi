@@ -1,0 +1,61 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.resolve-conflicts-form {
+    /*.btn-resolution {
+        margin-left: 10px;
+    }*/
+    .conflict-list-item {
+        .fa {
+            padding-right: 8px;
+        }
+        > span:hover {
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    }
+    .flex-container {
+        align-items: center;
+        display: flex;
+
+        .conflict {
+            cursor: pointer;
+            flex: 1;
+            margin: 15px;
+
+            h6 {
+                border: 1px solid #CCC;
+                border-bottom: 0;
+                margin: 0;
+                padding: 10px;
+
+                input {
+                    margin: 0;
+                }
+            }
+            &.not-selected {
+                opacity: .5;
+            }
+            &:hover,
+            &.active {
+                box-shadow: 0 0 20px 10px $gray-lighter;
+                opacity: 1;
+            }
+            pre {
+                border-radius: 0;
+                margin: 0;
+                white-space: pre-wrap;
+
+                &.additions {
+                    background-color: $brand-success-light;
+                    color: $brand-success;
+                }
+                &.deletions {
+                    background-color: $brand-danger-light;
+                    color: $brand-danger;
+                }
+            }
+        }
+    }
+
+}

@@ -39,13 +39,12 @@ describe('Merge Form directive', function() {
             util = _utilService_;
         });
 
-        scope.merge = jasmine.createSpy('merge');
         scope.branchTitle = '';
         scope.isUserBranch = false;
         scope.removeBranch = false;
         scope.targetId = '';
         ontologyStateSvc.listItem.ontologyRecord.branchId = 'branchId';
-        this.element = $compile(angular.element('<merge-form merge="merge()" branch-title="branchTitle" is-user-branch="isUserBranch" target-id="targetId" remove-branch="removeBranch"></merge-form>'))(scope);
+        this.element = $compile(angular.element('<merge-form branch-title="branchTitle" is-user-branch="isUserBranch" target-id="targetId" remove-branch="removeBranch"></merge-form>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('mergeForm');
     });
@@ -59,13 +58,6 @@ describe('Merge Form directive', function() {
         this.element.remove();
     });
 
-    describe('in isolated scope', function() {
-        it('merge is called in the parent scope', function() {
-            var isolatedScope = this.element.isolateScope();
-            isolatedScope.merge();
-            expect(scope.merge).toHaveBeenCalled();
-        });
-    });
     describe('controller bound variable', function() {
         it('branchTitle is one way bound', function() {
             this.controller.branchTitle = 'test';
@@ -93,21 +85,13 @@ describe('Merge Form directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('merge-form')).toBe(true);
         });
-        _.forEach(['ui-select', 'button', 'checkbox'], function(item) {
+        _.forEach(['ui-select', 'checkbox'], function(item) {
             it('for ' + item, function() {
                 expect(this.element.find(item).length).toBe(1);
             });
         });
         it('with a .merge-message', function() {
             expect(this.element.querySelectorAll('.merge-message').length).toBe(1);
-        });
-        it('depending on the validity of the form', function() {
-            var button = angular.element(this.element.querySelectorAll('.btn.btn-primary')[0]);
-            expect(button.attr('disabled')).toBeTruthy();
-
-            this.controller.form.$invalid = false;
-            scope.$digest();
-            expect(button.attr('disabled')).toBeFalsy();
         });
         it('depending on whether the branch is a UserBranch', function() {
             var select = angular.element(this.element.find('ui-select')[0]);
@@ -136,10 +120,5 @@ describe('Merge Form directive', function() {
                 expect(this.controller.matchesCurrent({'@id': 'branchId'})).toBe(false);
             });
         });
-    });
-    it('should call merge when the button is clicked', function() {
-        var button = angular.element(this.element.querySelectorAll('.btn.btn-primary')[0]);
-        button.triggerHandler('click');
-        expect(scope.merge).toHaveBeenCalled();
     });
 });
