@@ -115,7 +115,8 @@
                             dvm.array = [];
                             return;
                         }
-                        var filtered = $filter('removeIriFromArray')(dvm.os.listItem[dvm.axiom.valuesKey].iris, dvm.os.listItem.selected['@id']);
+                        var array = _.has(dvm.os.listItem[dvm.axiom.valuesKey], 'iris') ? dvm.os.listItem[dvm.axiom.valuesKey].iris : dvm.os.listItem[dvm.axiom.valuesKey];
+                        var filtered = $filter('removeIriFromArray')(array, dvm.os.listItem.selected['@id']);
                         dvm.array = dvm.ontoUtils.getSelectList(filtered, searchText, dvm.ontoUtils.getDropDownText);
                     }
 

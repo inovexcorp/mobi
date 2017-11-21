@@ -379,6 +379,16 @@ describe('Axiom Overlay directive', function() {
                 expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['first', 'second'], 'I', ontoUtils.getDropDownText);
                 expect(this.controller.array).toEqual(['item']);
             });
+            it('has valuesKey but not iris', function() {
+                ontoUtils.getSelectList.and.returnValue(['item']);
+                ontologyStateSvc.listItem.selected = {'@id': 'id'};
+                ontologyStateSvc.listItem.list = ['first', 'second'];
+                this.controller.axiom = { valuesKey: 'list' };
+                this.controller.getValues('I');
+                expect(removeIriFromArray).toHaveBeenCalledWith(['first', 'second'], 'id');
+                expect(ontoUtils.getSelectList).toHaveBeenCalledWith(['first', 'second'], 'I', ontoUtils.getDropDownText);
+                expect(this.controller.array).toEqual(['item']);
+            });
             it('does not have valuesKey', function() {
                 this.controller.axiom = {};
                 this.controller.getValues('stuff');
