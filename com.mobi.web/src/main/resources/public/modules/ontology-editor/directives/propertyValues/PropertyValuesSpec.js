@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Property Values directive', function() {
-    var $compile, scope, element, isolatedScope, resObj, ontologyUtilsManagerSvc, ontologyManagerSvc;
+    var $compile, scope, resObj, ontologyUtilsManagerSvc, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -48,59 +48,67 @@ describe('Property Values directive', function() {
         scope.property = 'prop';
         scope.edit = jasmine.createSpy('edit');
         scope.remove = jasmine.createSpy('remove');
-        element = $compile(angular.element('<property-values property="property" entity="entity" edit="edit(property, index)" remove="remove(iri, index)"></property-values>'))(scope);
+        this.element = $compile(angular.element('<property-values property="property" entity="entity" edit="edit(property, index)" remove="remove(iri, index)"></property-values>'))(scope);
         scope.$digest();
-        isolatedScope = element.isolateScope();
+        this.isolatedScope = this.element.isolateScope();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        resObj = null;
+        ontologyUtilsManagerSvc = null;
+        ontologyManagerSvc = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
         it('property should be one way bound', function() {
-            isolatedScope.property = 'test';
+            this.isolatedScope.property = 'test';
             scope.$digest();
             expect(scope.property).toBe('prop');
         });
         it('entity should be one way bound', function() {
             var entity = angular.copy(scope.entity);
-            isolatedScope.entity = {test: 'test'};
+            this.isolatedScope.entity = {test: 'test'};
             scope.$digest();
             expect(scope.entity).not.toEqual({test: 'test'});
         });
         it('edit should be called in the parent scope', function() {
-            isolatedScope.edit();
+            this.isolatedScope.edit();
             expect(scope.edit).toHaveBeenCalled();
         });
         it('remove should be called in the parent scope', function() {
-            isolatedScope.remove();
+            this.isolatedScope.remove();
             expect(scope.remove).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('property-values')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('property-values')).toBe(true);
         });
         it('based on the number of values', function() {
-            var values = element.querySelectorAll('.value-container');
+            var values = this.element.querySelectorAll('.value-container');
             expect(values.length).toBe(2);
         });
         it('depending on whether a value is a blank node', function() {
-            var blankNodeValue = element.querySelectorAll('.value-container .value-display-wrapper blank-node-value-display');
+            var blankNodeValue = this.element.querySelectorAll('.value-container .value-display-wrapper blank-node-value-display');
             expect(blankNodeValue.length).toBe(1);
-            var editButtons = element.querySelectorAll('.value-container [title=Edit]');
+            var editButtons = this.element.querySelectorAll('.value-container [title=Edit]');
             expect(editButtons.length).toBe(1);
-            var deleteButtons = element.querySelectorAll('.value-container [title=Delete]');
+            var deleteButtons = this.element.querySelectorAll('.value-container [title=Delete]');
             expect(deleteButtons.length).toBe(2);
         });
         it('depending on whether the values are open or closed', function() {
-            var isolatedScope = element.isolateScope();
-            var icon = angular.element(element.querySelectorAll('h5 i')[0]);
-            var values = element.querySelectorAll('.value-container');
+            var icon = angular.element(this.element.querySelectorAll('h5 i')[0]);
+            var values = this.element.querySelectorAll('.value-container');
             expect(icon.hasClass('fa-chevron-up')).toBe(true);
             _.forEach(values, function(value) {
                 expect(angular.element(value).hasClass('ng-hide')).toBe(false);
             });
 
-            isolatedScope.isClosed = true;
+            this.isolatedScope.isClosed = true;
             scope.$digest();
             expect(icon.hasClass('fa-chevron-down')).toBe(true);
             _.forEach(values, function(value) {
@@ -110,13 +118,13 @@ describe('Property Values directive', function() {
     });
     it('should call edit when the appropriate button is clicked', function() {
         resObj.createItemFromIri.and.returnValue({});
-        var editButton = angular.element(element.querySelectorAll('.value-container [title=Edit]')[0]);
+        var editButton = angular.element(this.element.querySelectorAll('.value-container [title=Edit]')[0]);
         editButton.triggerHandler('click');
         expect(resObj.createItemFromIri).toHaveBeenCalledWith(scope.property);
         expect(scope.edit).toHaveBeenCalledWith({}, 0);
     });
     it('should call remove when the appropriate button is clicked', function() {
-        var removeButton = angular.element(element.querySelectorAll('.value-container [title=Delete]')[0]);
+        var removeButton = angular.element(this.element.querySelectorAll('.value-container [title=Delete]')[0]);
         removeButton.triggerHandler('click');
         expect(scope.remove).toHaveBeenCalledWith(scope.property, 0);
     });

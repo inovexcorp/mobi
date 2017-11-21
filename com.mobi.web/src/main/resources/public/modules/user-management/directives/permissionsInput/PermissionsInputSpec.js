@@ -21,8 +21,7 @@
  * #L%
  */
 describe('Permissions Input directive', function() {
-    var $compile,
-        scope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -38,6 +37,12 @@ describe('Permissions Input directive', function() {
         scope.onChange = jasmine.createSpy('onChange');
         this.element = $compile(angular.element('<permissions-input roles="roles" is-disabled-when="isDisabledWhen" on-change="onChange()"></permissions-input>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {

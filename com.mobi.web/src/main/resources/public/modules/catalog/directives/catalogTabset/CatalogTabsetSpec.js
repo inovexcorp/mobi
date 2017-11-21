@@ -21,9 +21,7 @@
  * #L%
  */
 describe('Catalog Tabset directive', function() {
-    var $compile,
-        scope,
-        catalogStateSvc;
+    var $compile, scope, catalogStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -38,6 +36,13 @@ describe('Catalog Tabset directive', function() {
 
         this.element = $compile(angular.element('<catalog-tabset></catalog-tabset>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        catalogStateSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {

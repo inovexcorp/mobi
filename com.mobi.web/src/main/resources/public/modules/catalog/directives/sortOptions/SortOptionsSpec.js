@@ -21,10 +21,7 @@
  * #L%
  */
 describe('Sort Options directive', function() {
-    var $compile,
-        scope,
-        catalogManagerSvc,
-        catalogStateSvc;
+    var $compile, scope, catalogManagerSvc, catalogStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -45,6 +42,14 @@ describe('Sort Options directive', function() {
         scope.changeSort = jasmine.createSpy('changeSort');
         this.element = $compile(angular.element('<sort-options list-key="listKey" change-sort="changeSort()"></sort-options>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        catalogManagerSvc = null;
+        catalogStateSvc = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {

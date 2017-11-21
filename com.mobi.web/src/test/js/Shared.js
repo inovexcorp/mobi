@@ -563,9 +563,6 @@ function mockOntologyState() {
                    savedChanges: {
                        active: false
                    },
-                   merge: {
-                       active: false
-                   },
                    commits: {
                        active: false
                    }
@@ -576,6 +573,7 @@ function mockOntologyState() {
                     branchId: '',
                     commitId: ''
                 },
+                merge: false,
                 dataPropertyRange: [],
                 derivedConcepts: [],
                 derivedConceptSchemes: [],
@@ -891,6 +889,7 @@ function mockCatalogManager() {
             this.createBranchCommit = jasmine.createSpy('createBranchCommit').and.returnValue($q.when());
             this.getBranchHeadCommit = jasmine.createSpy('getBranchHeadCommit').and.returnValue($q.when({}));
             this.getBranchCommit = jasmine.createSpy('getBranchCommit').and.returnValue($q.when({}));
+            this.getBranchDifference = jasmine.createSpy('getBranchDifference').and.returnValue($q.when({}));
             this.getBranchConflicts = jasmine.createSpy('getBranchConflicts').and.returnValue($q.when([]));
             this.mergeBranches = jasmine.createSpy('mergeBranches').and.returnValue($q.when(''));
             this.getResource = jasmine.createSpy('getResource').and.returnValue($q.when(''));

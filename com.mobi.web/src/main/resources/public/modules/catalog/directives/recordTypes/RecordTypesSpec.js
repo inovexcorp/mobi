@@ -21,11 +21,7 @@
  * #L%
  */
 describe('Record Types directive', function() {
-    var $compile,
-        scope,
-        catalogManagerSvc,
-        inArrayFilter,
-        controller;
+    var $compile, scope, catalogManagerSvc, inArray;
 
     beforeEach(function() {
         module('templates');
@@ -37,12 +33,20 @@ describe('Record Types directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
             catalogManagerSvc = _catalogManagerService_;
-            inArrayFilter = _inArrayFilter_;
+            inArray = _inArrayFilter_;
         });
 
         scope.record = {};
         this.element = $compile(angular.element('<record-types record="record"></record-types>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        catalogManagerSvc = null;
+        inArray = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
@@ -62,7 +66,7 @@ describe('Record Types directive', function() {
         it('depending on how many types the record has', function() {
             scope.record['@type'] = ['type0'];
             scope.$digest();
-            expect(inArrayFilter).toHaveBeenCalledWith(scope.record['@type'], catalogManagerSvc.recordTypes);
+            expect(inArray).toHaveBeenCalledWith(scope.record['@type'], catalogManagerSvc.recordTypes);
             expect(this.element.find('record-type').length).toBe(scope.record['@type'].length);
         });
     });

@@ -21,9 +21,7 @@
  * #L%
  */
 describe('Module Box directive', function() {
-    var $compile,
-        scope,
-        element;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -33,23 +31,28 @@ describe('Module Box directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
+
+        scope.backgroundColor = '#fff';
+        scope.headerText = 'header';
+        scope.iconName = 'icon';
+        this.element = $compile(angular.element('<module-box background-color="backgroundColor" header-text="headerText" icon-name="iconName"></module-box>'))(scope);
+        scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            scope.backgroundColor = '#fff';
-            scope.headerText = 'header';
-            scope.iconName = 'icon';
-
-            element = $compile(angular.element('<module-box background-color="backgroundColor" header-text="headerText" icon-name="iconName"></module-box>'))(scope);
-            scope.$digest();
+        beforeEach(function () {
+            this.isolatedScope = this.element.isolateScope();
         });
-
         it('props should be one way bound', function() {
-            var isolatedScope = element.isolateScope();
-            isolatedScope.backgroundColor = '#000';
-            isolatedScope.headerText = 'isolated-header';
-            isolatedScope.iconName = 'isolated-icon';
+            this.isolatedScope.backgroundColor = '#000';
+            this.isolatedScope.headerText = 'isolated-header';
+            this.isolatedScope.iconName = 'isolated-icon';
             scope.$digest();
 
             expect(scope.backgroundColor).toBe('#fff');
@@ -57,31 +60,21 @@ describe('Module Box directive', function() {
             expect(scope.iconName).toBe('icon');
         });
         it('isolated scope variables should match the scope variables', function() {
-            var isolatedScope = element.isolateScope();
-            expect(isolatedScope.backgroundColor).toBe(scope.backgroundColor);
-            expect(isolatedScope.headerText).toBe(scope.headerText);
-            expect(isolatedScope.iconName).toBe(scope.iconName);
+            expect(this.isolatedScope.backgroundColor).toBe(scope.backgroundColor);
+            expect(this.isolatedScope.headerText).toBe(scope.headerText);
+            expect(this.isolatedScope.iconName).toBe(scope.iconName);
         });
     });
-
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            scope.backgroundColor = '#fff';
-            scope.headerText = 'header';
-            scope.iconName = 'icon';
-
-            element = $compile(angular.element('<module-box background-color="backgroundColor" header-text="headerText" icon-name="iconName"></module-box>'))(scope);
-            scope.$digest();
-        });
         it('for div tag', function() {
-            expect(element.prop('tagName')).toBe('DIV');
+            expect(this.element.prop('tagName')).toBe('DIV');
         });
         it('for class selectors', function() {
-            var iconWrappers = element.querySelectorAll('.icon-wrapper');
+            var iconWrappers = this.element.querySelectorAll('.icon-wrapper');
             expect(iconWrappers.length).toBe(1);
-            var headers = element.querySelectorAll('h2');
+            var headers = this.element.querySelectorAll('h2');
             expect(headers.length).toBe(1);
-            var descriptions = element.querySelectorAll('.description');
+            var descriptions = this.element.querySelectorAll('.description');
             expect(descriptions.length).toBe(1);
         });
     });

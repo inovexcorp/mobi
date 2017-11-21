@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Profile Tab directive', function() {
-    var $compile,
-        scope,
-        userManagerSvc,
-        loginManagerSvc,
-        $q,
-        $timeout,
-        controller;
+    var $compile, scope, $q, userManagerSvc, loginManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -35,59 +29,55 @@ describe('Profile Tab directive', function() {
         mockUserManager();
         mockLoginManager();
 
-        inject(function(_userManagerService_, _loginManagerService_, _$q_, _$timeout_, _$compile_, _$rootScope_) {
-            userManagerSvc = _userManagerService_;
-            loginManagerSvc = _loginManagerService_;
-            $q = _$q_;
-            $timeout = _$timeout_;
+        inject(function(_$compile_, _$rootScope_, _$q_, _userManagerService_, _loginManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            $q = _$q_;
+            userManagerSvc = _userManagerService_;
+            loginManagerSvc = _loginManagerService_;
         });
+
+        loginManagerSvc.currentUser = 'user';
+        userManagerSvc.users = [{username: 'user'}];
+        this.element = $compile(angular.element('<profile-tab></profile-tab>'))(scope);
+        scope.$digest();
+        this.controller = this.element.controller('profileTab');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        userManagerSvc = null;
+        loginManagerSvc = null;
+        this.element.remove();
     });
 
     it('should initialize with the current user', function() {
-        loginManagerSvc.currentUser = 'user';
-        userManagerSvc.users = [{username: 'user'}];
-        var element = $compile(angular.element('<profile-tab></profile-tab>'))(scope);
-        scope.$digest();
-        controller = element.controller('profileTab');
-        expect(controller.currentUser).not.toBe(userManagerSvc.users[0]);
-        expect(controller.currentUser).toEqual(userManagerSvc.users[0]);
+        expect(this.controller.currentUser).not.toBe(userManagerSvc.users[0]);
+        expect(this.controller.currentUser).toEqual(userManagerSvc.users[0]);
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            loginManagerSvc.currentUser = 'user';
-            userManagerSvc.users = [{username: 'user'}];
-            this.element = $compile(angular.element('<profile-tab></profile-tab>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('profileTab');
-        });
         describe('should save changes to the user profile', function() {
             it('unless an error occurs', function() {
                 userManagerSvc.updateUser.and.returnValue($q.reject('Error message'));
-                controller.save();
-                $timeout.flush();
+                this.controller.save();
+                scope.$apply();
                 expect(userManagerSvc.updateUser).toHaveBeenCalledWith(loginManagerSvc.currentUser, userManagerSvc.users[0]);
-                expect(controller.success).toBe(false);
-                expect(controller.errorMessage).toBe('Error message');
+                expect(this.controller.success).toBe(false);
+                expect(this.controller.errorMessage).toBe('Error message');
             });
             it('successfully', function() {
-                controller.save();
-                $timeout.flush();
+                this.controller.save();
+                scope.$apply();
                 expect(userManagerSvc.updateUser).toHaveBeenCalledWith(loginManagerSvc.currentUser, userManagerSvc.users[0]);
-                expect(controller.success).toBe(true);
-                expect(controller.errorMessage).toBe('');
-                expect(controller.form.$pristine).toBe(true);
+                expect(this.controller.success).toBe(true);
+                expect(this.controller.errorMessage).toBe('');
+                expect(this.controller.form.$pristine).toBe(true);
             });
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            loginManagerSvc.currentUser = 'user';
-            userManagerSvc.users = [{username: 'user'}];
-            this.element = $compile(angular.element('<profile-tab></profile-tab>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('profile-tab')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
@@ -112,32 +102,26 @@ describe('Profile Tab directive', function() {
         it('depending on whether the password was saved successfully', function() {
             expect(this.element.querySelectorAll('.text-success').length).toBe(0);
 
-            controller = this.element.controller('profileTab');
-            controller.success = true;
+            this.controller.success = true;
             scope.$digest();
             expect(this.element.querySelectorAll('.text-success').length).toBe(1);
         });
         it('depending on the form validity and dirtiness', function() {
             expect(this.element.querySelectorAll('block-footer button').attr('disabled')).toBeTruthy();
 
-            controller = this.element.controller('profileTab');
-            controller.form.$invalid = false;
+            this.controller.form.$invalid = false;
             scope.$digest();
             expect(this.element.querySelectorAll('block-footer button').attr('disabled')).toBeTruthy();
 
-            controller.form.$setDirty();
+            this.controller.form.$setDirty();
             scope.$digest();
             expect(this.element.querySelectorAll('block-footer button').attr('disabled')).toBeFalsy();
         });
     });
     it('should save changes when the save button is clicked', function() {
-        var element = $compile(angular.element('<profile-tab></profile-tab>'))(scope);
-        scope.$digest();
-        controller = element.controller('profileTab');
-        spyOn(controller, 'save');
-
-        var button = angular.element(element.querySelectorAll('block-footer button')[0]);
+        spyOn(this.controller, 'save');
+        var button = angular.element(this.element.querySelectorAll('block-footer button')[0]);
         button.triggerHandler('click');
-        expect(controller.save).toHaveBeenCalled();
+        expect(this.controller.save).toHaveBeenCalled();
     });
 });

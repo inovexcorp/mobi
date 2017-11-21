@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Association Block directive', function() {
-    var $compile,
-        scope,
-        element,
-        ontologyStateSvc,
-        ontologyManagerSvc,
-        ontologyUtilsManagerSvc,
-        controller;
+    var $compile, scope, ontologyStateSvc, ontologyManagerSvc, ontologyUtilsManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -44,45 +38,54 @@ describe('Association Block directive', function() {
             ontologyUtilsManagerSvc = _ontologyUtilsManagerService_;
         });
 
-        element = $compile(angular.element('<association-block></association-block>'))(scope);
+        this.element = $compile(angular.element('<association-block></association-block>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('associationBlock');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        ontologyManagerSvc = null;
+        ontologyUtilsManagerSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('association-block')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('association-block')).toBe(true);
         });
         it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
+            expect(this.element.find('block').length).toBe(1);
         });
         it('with a block-header', function() {
-            expect(element.find('block-header').length).toBe(1);
+            expect(this.element.find('block-header').length).toBe(1);
         });
         it('with a block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('with a everything-tree', function() {
-            expect(element.find('everything-tree').length).toBe(1);
+            expect(this.element.find('everything-tree').length).toBe(1);
         });
         it('with a block-footer', function() {
-            expect(element.find('block-footer').length).toBe(1);
+            expect(this.element.find('block-footer').length).toBe(1);
         });
         it('with a button to delete an entity', function() {
-            var button = element.querySelectorAll('block-footer button');
+            var button = this.element.querySelectorAll('block-footer button');
             expect(button.length).toBe(1);
             expect(angular.element(button[0]).text()).toContain('Delete Entity');
         });
         it('based on whether a delete should be confirmed', function() {
-            expect(element.find('confirmation-overlay').length).toBe(0);
+            expect(this.element.find('confirmation-overlay').length).toBe(0);
 
-            controller = element.controller('associationBlock');
-            controller.showDeleteConfirmation = true;
+            this.controller.showDeleteConfirmation = true;
             scope.$digest();
-            expect(element.find('confirmation-overlay').length).toBe(1);
+            expect(this.element.find('confirmation-overlay').length).toBe(1);
         });
         it('based on whether something is selected', function() {
-            var button = angular.element(element.querySelectorAll('block-footer button')[0]);
+            var button = angular.element(this.element.querySelectorAll('block-footer button')[0]);
             expect(button.attr('disabled')).toBeFalsy();
 
             ontologyStateSvc.listItem.selected = undefined;
@@ -91,46 +94,42 @@ describe('Association Block directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = element.controller('associationBlock');
-        });
         describe('should delete an entity', function() {
             beforeEach(function() {
-                controller.showDeleteConfirmation = true;
+                this.controller.showDeleteConfirmation = true;
             });
             it('if it is a class', function() {
                 ontologyManagerSvc.isClass.and.returnValue(true);
-                controller.deleteEntity();
+                this.controller.deleteEntity();
                 expect(ontologyManagerSvc.isClass).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontologyUtilsManagerSvc.deleteClass).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).not.toHaveBeenCalled();
-                expect(controller.showDeleteConfirmation).toBe(false);
+                expect(this.controller.showDeleteConfirmation).toBe(false);
             });
             it('if it is a object property', function() {
                 ontologyManagerSvc.isObjectProperty.and.returnValue(true);
-                controller.deleteEntity();
+                this.controller.deleteEntity();
                 expect(ontologyManagerSvc.isObjectProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontologyUtilsManagerSvc.deleteClass).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).not.toHaveBeenCalled();
-                expect(controller.showDeleteConfirmation).toBe(false);
+                expect(this.controller.showDeleteConfirmation).toBe(false);
             });
             it('if it is a datatype property', function() {
                 ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
-                controller.deleteEntity();
+                this.controller.deleteEntity();
                 expect(ontologyManagerSvc.isDataTypeProperty).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected);
                 expect(ontologyUtilsManagerSvc.deleteClass).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteObjectProperty).not.toHaveBeenCalled();
                 expect(ontologyUtilsManagerSvc.deleteDataTypeProperty).toHaveBeenCalled();
-                expect(controller.showDeleteConfirmation).toBe(false);
+                expect(this.controller.showDeleteConfirmation).toBe(false);
             });
         });
     });
     it('should set the correct state when the delete entity button is clicked', function() {
-        controller = element.controller('associationBlock');
-        var button = angular.element(element.querySelectorAll('block-footer button')[0]);
+        var button = angular.element(this.element.querySelectorAll('block-footer button')[0]);
         button.triggerHandler('click');
-        expect(controller.showDeleteConfirmation).toBe(true);
+        expect(this.controller.showDeleteConfirmation).toBe(true);
     });
 });

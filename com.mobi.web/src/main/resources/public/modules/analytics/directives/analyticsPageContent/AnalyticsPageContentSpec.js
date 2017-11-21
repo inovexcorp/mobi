@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Analytics Page directive', function() {
-    var $compile, scope, element, analyticStateSvc;
+    var $compile, scope, analyticStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -33,28 +33,35 @@ describe('Analytics Page directive', function() {
             scope = _$rootScope_;
             analyticStateSvc = _analyticStateService_;
         });
-        
-        element = $compile(angular.element('<analytics-page-content></analytics-page-content>'))(scope);
+
+        this.element = $compile(angular.element('<analytics-page-content></analytics-page-content>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        analyticStateSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('analytics-page-content')).toBe(true);
-            expect(element.hasClass('full-height')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('analytics-page-content')).toBe(true);
+            expect(this.element.hasClass('full-height')).toBe(true);
         });
         it('with a analytics-landing-page', function() {
-            expect(element.find('analytics-landing-page').length).toBe(1);
+            expect(this.element.find('analytics-landing-page').length).toBe(1);
             analyticStateSvc.landing = false;
             scope.$apply();
-            expect(element.find('analytics-landing-page').length).toBe(0);
+            expect(this.element.find('analytics-landing-page').length).toBe(0);
         });
         it('with a analytics-editor-page', function() {
-            expect(element.find('analytics-editor-page').length).toBe(0);
+            expect(this.element.find('analytics-editor-page').length).toBe(0);
             analyticStateSvc.editor = true;
             scope.$apply();
-            expect(element.find('analytics-editor-page').length).toBe(1);
+            expect(this.element.find('analytics-editor-page').length).toBe(1);
         });
     });
 });

@@ -21,10 +21,7 @@
  * #L%
  */
 describe('Properties Tab directive', function() {
-    var $compile,
-        scope,
-        element,
-        ontologyManagerSvc;
+    var $compile, scope, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -38,39 +35,46 @@ describe('Properties Tab directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
-        element = $compile(angular.element('<properties-tab></properties-tab>'))(scope);
+        this.element = $compile(angular.element('<properties-tab></properties-tab>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyManagerSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('properties-tab')).toBe(true);
-            expect(element.hasClass('row')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('properties-tab')).toBe(true);
+            expect(this.element.hasClass('row')).toBe(true);
         });
         it('with a property-hierarchy-block', function() {
-            expect(element.find('property-hierarchy-block').length).toBe(1);
+            expect(this.element.find('property-hierarchy-block').length).toBe(1);
         });
         it('with a .editor', function() {
-            expect(element.querySelectorAll('.editor').length).toBe(1);
+            expect(this.element.querySelectorAll('.editor').length).toBe(1);
         });
         it('with a selected-details', function() {
-            expect(element.find('selected-details').length).toBe(1);
+            expect(this.element.find('selected-details').length).toBe(1);
         });
         it('with a annotation-block', function() {
-            expect(element.find('annotation-block').length).toBe(1);
+            expect(this.element.find('annotation-block').length).toBe(1);
         });
         it('with a axiom-block', function() {
-            expect(element.find('axiom-block').length).toBe(1);
+            expect(this.element.find('axiom-block').length).toBe(1);
             ontologyManagerSvc.isAnnotation.and.returnValue(true);
             scope.$apply();
-            expect(element.find('axiom-block').length).toBe(0);
+            expect(this.element.find('axiom-block').length).toBe(0);
         });
         it('with a characteristics-row', function() {
-            expect(element.find('characteristics-row').length).toBe(1);
+            expect(this.element.find('characteristics-row').length).toBe(1);
         });
         it('with a usages-block', function() {
-            expect(element.find('usages-block').length).toBe(1);
+            expect(this.element.find('usages-block').length).toBe(1);
         });
     });
 });

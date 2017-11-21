@@ -99,7 +99,9 @@ describe('Checkbox directive', function() {
     });
     it('calls changeEvent if value of checkbox is changed', function() {
         spyOn(this.controller, 'onChange');
-        this.element.find('input')[0].click();
+        var input = this.element.find('input');
+        input.prop('checked', !input.prop('checked'));
+        input.triggerHandler('click');
         scope.$digest();
         expect(this.controller.onChange).toHaveBeenCalled();
     });

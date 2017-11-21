@@ -21,10 +21,7 @@
  * #L%
  */
 describe('Project Tab directive', function() {
-    var $compile,
-        scope,
-        element,
-        ontologyStateSvc;
+    var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -38,30 +35,37 @@ describe('Project Tab directive', function() {
             ontologyStateSvc = _ontologyStateService_;
         });
 
-        element = $compile(angular.element('<project-tab></project-tab>'))(scope);
+        this.element = $compile(angular.element('<project-tab></project-tab>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('project-tab')).toBe(true);
-            expect(element.hasClass('row')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('project-tab')).toBe(true);
+            expect(this.element.hasClass('row')).toBe(true);
         });
         it('with a .editor', function() {
-            expect(element.querySelectorAll('.editor').length).toBe(1);
+            expect(this.element.querySelectorAll('.editor').length).toBe(1);
         });
         it('with a selected-details', function() {
-            expect(element.find('selected-details').length).toBe(1);
+            expect(this.element.find('selected-details').length).toBe(1);
         });
         it('with a ontology-properties-block', function() {
-            expect(element.find('ontology-properties-block').length).toBe(1);
+            expect(this.element.find('ontology-properties-block').length).toBe(1);
         });
         it('with a imports-block', function() {
-            expect(element.find('imports-block').length).toBe(1);
+            expect(this.element.find('imports-block').length).toBe(1);
         });
         it('with a preview-block', function() {
-            expect(element.find('preview-block').length).toBe(1);
+            expect(this.element.find('preview-block').length).toBe(1);
         });
     });
 });

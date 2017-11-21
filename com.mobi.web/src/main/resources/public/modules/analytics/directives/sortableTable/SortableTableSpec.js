@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Sortable Table directive', function() {
-    var $compile, scope, element, isolatedScope, controller;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -44,15 +44,21 @@ describe('Sortable Table directive', function() {
         scope.bindings = ['var1', 'var2'];
         scope.headers = {var1: 'var1', var2: 'var2'};
         scope.onSort = jasmine.createSpy('onSort');
-        element = $compile(angular.element('<sortable-table bindings="bindings" data="data" headers="headers" on-sort="onSort()"></sortable-table>'))(scope);
+        this.element = $compile(angular.element('<sortable-table bindings="bindings" data="data" headers="headers" on-sort="onSort()"></sortable-table>'))(scope);
         scope.$digest();
-        isolatedScope = element.isolateScope();
-        controller = element.controller('sortableTable');
+        this.isolatedScope = this.element.isolateScope();
+        this.controller = this.element.controller('sortableTable');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
         it('data is one way bound', function() {
-            isolatedScope.data = [];
+            this.isolatedScope.data = [];
             scope.$digest();
             expect(scope.data).toEqual([{
                 var1: {type: 'a-type1', value: 'a-value1'},
@@ -63,40 +69,40 @@ describe('Sortable Table directive', function() {
             }]);
         });
         it('headers is one way bound', function() {
-            isolatedScope.headers = [];
+            this.isolatedScope.headers = [];
             scope.$digest();
             expect(scope.headers).toEqual({var1: 'var1', var2: 'var2'});
         });
     });
     describe('controller bound variables', function() {
         it('bindings is one way bound', function() {
-            controller.bindings = [];
+            this.controller.bindings = [];
             scope.$digest();
             expect(scope.bindings).toEqual(['var1', 'var2']);
         });
         it('onSort to be called in parent scope', function() {
-            controller.onSort();
+            this.controller.onSort();
             expect(scope.onSort).toHaveBeenCalled();
         });
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('TABLE');
-            expect(element.hasClass('sortable-table')).toBe(true);
-            expect(element.hasClass('sparql-result-table')).toBe(true);
-            expect(element.hasClass('table')).toBe(true);
-            expect(element.hasClass('table-hover')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('TABLE');
+            expect(this.element.hasClass('sortable-table')).toBe(true);
+            expect(this.element.hasClass('sparql-result-table')).toBe(true);
+            expect(this.element.hasClass('table')).toBe(true);
+            expect(this.element.hasClass('table-hover')).toBe(true);
         });
         it('depending on how many binding names there are', function() {
-            var theadList = element.querySelectorAll('thead');
-            expect(element.html()).not.toContain('None');
+            var theadList = this.element.querySelectorAll('thead');
+            expect(this.element.html()).not.toContain('None');
             expect(theadList.length).toBe(1);
             var thead = theadList[0];
             expect(thead.querySelectorAll('th').length).toBe(scope.bindings.length);
         });
         it('depending on how many results there are', function() {
-            var tbodyList = element.querySelectorAll('tbody');
-            expect(element.html()).not.toContain('None');
+            var tbodyList = this.element.querySelectorAll('tbody');
+            expect(this.element.html()).not.toContain('None');
             expect(tbodyList.length).toBe(1);
             var tbody = tbodyList[0];
             expect(tbody.querySelectorAll('tr').length).toBe(scope.data.length);
@@ -104,15 +110,15 @@ describe('Sortable Table directive', function() {
     });
     describe('controller methods', function() {
         it('sort calls the correct methods and sets the correct variables', function() {
-            controller.sort('var1');
+            this.controller.sort('var1');
             expect(scope.onSort).toHaveBeenCalled();
-            expect(controller.descendingList.var1).toEqual(true);
+            expect(this.controller.descendingList.var1).toEqual(true);
         });
     });
     it('descendingList is kept in sync as bindings changes', function() {
-        controller.descendingList = {var1: true, var2: undefined};
+        this.controller.descendingList = {var1: true, var2: undefined};
         scope.bindings = ['var1', 'new'];
         scope.$apply();
-        expect(controller.descendingList).toEqual({var1: true, new: undefined});
+        expect(this.controller.descendingList).toEqual({var1: true, new: undefined});
     });
 });
