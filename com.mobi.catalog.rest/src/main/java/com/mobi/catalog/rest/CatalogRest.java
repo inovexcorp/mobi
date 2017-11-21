@@ -853,6 +853,32 @@ public interface CatalogRest {
                              @DefaultValue("jsonld") @QueryParam("format") String format);
 
     /**
+     * Gets the Difference between the HEAD Commit of the Branch identified by the provided IDs in the path and the
+     * HEAD Commit of the Branch identified by the query parameter. For this comparison to be done, the Commits must
+     * have an ancestor Commit in common.
+     *
+     * @param catalogId The String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId The String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param branchId The String representing the source Branch ID. NOTE: Assumes ID represents an IRI unless String
+     *                 begins with "_:".
+     * @param targetBranchId The String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
+     *                       String begins with "_:".
+     * @param rdfFormat The desired RDF return format. NOTE: Optional param - defaults to "jsonld".
+     * @return A Response with the Difference between the identified Branches' HEAD Commits as a JSON object.
+     */
+    @GET
+    @Path("{catalogId}/records/{recordId}/branches/{branchId}/difference")
+    @RolesAllowed("user")
+    @ApiOperation("Gets the difference between the two provided Branches' HEAD Commits.")
+    Response getDifference(@PathParam("catalogId") String catalogId,
+                           @PathParam("recordId") String recordId,
+                           @PathParam("branchId") String branchId,
+                           @QueryParam("targetId") String targetBranchId,
+                           @DefaultValue("jsonld") @QueryParam("format") String rdfFormat);
+
+    /**
      * Gets the Conflicts between the HEAD Commit of the Branch identified by the provided IDs in the path and the
      * HEAD Commit of the Branch identified by the query parameter. For this comparison to be done, the Commits must
      * have an ancestor Commit in common.
