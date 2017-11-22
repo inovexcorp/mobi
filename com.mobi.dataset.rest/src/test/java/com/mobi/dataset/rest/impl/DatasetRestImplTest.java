@@ -38,15 +38,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
-import com.mobi.dataset.api.DatasetManager;
-import com.mobi.dataset.api.builder.DatasetRecordConfig;
-import com.mobi.dataset.ontology.dataset.DatasetRecord;
-import com.mobi.dataset.ontology.dataset.DatasetRecordFactory;
-import net.sf.json.JSONArray;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.media.multipart.FormDataMultiPart;
-import org.glassfish.jersey.media.multipart.MultiPartFeature;
-import org.glassfish.jersey.server.ResourceConfig;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.PaginatedSearchResults;
@@ -54,7 +45,13 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
+import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.api.builder.DatasetRecordConfig;
+import com.mobi.dataset.ontology.dataset.DatasetRecord;
+import com.mobi.dataset.ontology.dataset.DatasetRecordFactory;
 import com.mobi.dataset.pagination.DatasetPaginatedSearchParams;
+import com.mobi.etl.api.config.rdf.ImportServiceConfig;
+import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -88,12 +85,21 @@ import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
 import com.mobi.repository.exception.RepositoryException;
 import com.mobi.rest.util.MobiRestTestNg;
 import com.mobi.rest.util.UsernameTestFilter;
+import net.sf.json.JSONArray;
+import org.glassfish.jersey.client.ClientConfig;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import org.glassfish.jersey.media.multipart.FormDataMultiPart;
+import org.glassfish.jersey.media.multipart.MultiPartFeature;
+import org.glassfish.jersey.server.ResourceConfig;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.openrdf.model.vocabulary.DCTERMS;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -152,6 +158,9 @@ public class DatasetRestImplTest extends MobiRestTestNg {
 
     @Mock
     private CatalogProvUtils provUtils;
+
+    @Mock
+    private RDFImportService importService;
 
     @Override
     protected Application configureApp() throws Exception {
@@ -233,6 +242,7 @@ public class DatasetRestImplTest extends MobiRestTestNg {
         rest.setCatalogManager(catalogManager);
         rest.setBNodeService(service);
         rest.setProvUtils(provUtils);
+        rest.setImportService(importService);
 
         return new ResourceConfig()
                 .register(rest)
@@ -247,7 +257,7 @@ public class DatasetRestImplTest extends MobiRestTestNg {
 
     @BeforeMethod
     public void setupMocks() {
-        reset(datasetManager, catalogManager, transformer, results, service, provUtils);
+        reset(datasetManager, catalogManager, transformer, results, service, provUtils, importService);
 
         when(transformer.sesameModel(any(Model.class)))
                 .thenAnswer(i -> Values.sesameModel(i.getArgumentAt(0, Model.class)));
@@ -599,5 +609,61 @@ public class DatasetRestImplTest extends MobiRestTestNg {
         response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .queryParam("force", true).request().delete();
         assertEquals(response.getStatus(), 500);
+    }
+
+    /* POST datasets/{datasetId}/data */
+
+    @Test
+    public void uploadDataTest() throws Exception {
+        // Setup:
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("test.ttl").build(),
+                getClass().getResourceAsStream("/test.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 200);
+        verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
+    }
+
+    @Test
+    public void uploadDataWithUnsupportedExtensionTest() throws Exception {
+        // Setup:
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("test.txt").build(),
+                getClass().getResourceAsStream("/test.txt"), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+        verify(importService, times(0)).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
+    }
+
+    @Test
+    public void uploadDataWithBadRequestTest() throws Exception {
+        // Setup:
+        doThrow(new IllegalArgumentException()).when(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("test.ttl").build(),
+                getClass().getResourceAsStream("/test.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 400);
+        verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
+    }
+
+    @Test
+    public void uploadDataWithServerErrorTest() throws Exception {
+        // Setup:
+        doThrow(new IOException()).when(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
+        FormDataMultiPart fd = new FormDataMultiPart();
+        fd.bodyPart(new FormDataBodyPart(FormDataContentDisposition.name("file").fileName("test.ttl").build(),
+                getClass().getResourceAsStream("/test.ttl"), MediaType.APPLICATION_OCTET_STREAM_TYPE));
+
+        Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
+                .request().post(Entity.entity(fd, MediaType.MULTIPART_FORM_DATA));
+        assertEquals(response.getStatus(), 500);
+        verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class));
     }
 }
