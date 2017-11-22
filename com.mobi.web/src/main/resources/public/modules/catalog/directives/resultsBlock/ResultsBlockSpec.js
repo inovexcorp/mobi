@@ -21,14 +21,7 @@
  * #L%
  */
 describe('Results Block directive', function() {
-    var $compile,
-        scope,
-        toastr,
-        catalogManagerSvc,
-        catalogStateSvc,
-        utilSvc,
-        $q,
-        controller;
+    var $compile, scope, $q, toastr, catalogManagerSvc, catalogStateSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
@@ -51,6 +44,18 @@ describe('Results Block directive', function() {
         catalogStateSvc.getCurrentCatalog.and.returnValue(catalogStateSvc.catalogs.local);
         this.element = $compile(angular.element('<results-block></results-block>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('resultsBlock');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        toastr = null;
+        catalogManagerSvc = null;
+        catalogStateSvc = null;
+        utilSvc = null;
+        this.element.remove();
     });
 
     describe('should initialize', function() {
@@ -59,9 +64,6 @@ describe('Results Block directive', function() {
         });
     });
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = this.element.controller('resultsBlock');
-        });
         describe('should change the sort', function() {
             beforeEach(function() {
                 scope.$apply();
@@ -77,7 +79,7 @@ describe('Results Block directive', function() {
             });
             it('unless an error occurs', function() {
                 catalogManagerSvc.getRecords.and.returnValue($q.reject('Error Message'));
-                controller.changeSort();
+                this.controller.changeSort();
                 scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
                 expect(catalogStateSvc.currentPage).toBe(0);
@@ -85,7 +87,7 @@ describe('Results Block directive', function() {
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error Message');
             });
             it('succesfully', function() {
-                controller.changeSort();
+                this.controller.changeSort();
                 scope.$apply();
                 expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith(catalogStateSvc.catalogs.local['@id'], this.expectedPaginationConfig);
                 expect(catalogStateSvc.currentPage).toBe(0);
@@ -99,7 +101,7 @@ describe('Results Block directive', function() {
             });
             it('unless an error occurs', function() {
                 catalogManagerSvc.getRecord.and.returnValue($q.reject('Error Message'));
-                controller.openRecord(this.record);
+                this.controller.openRecord(this.record);
                 scope.$apply();
                 expect(catalogManagerSvc.getRecord).toHaveBeenCalledWith(this.record['@id'], catalogStateSvc.catalogs.local['@id']);
                 expect(catalogStateSvc.resetPagination).not.toHaveBeenCalled();
@@ -108,7 +110,7 @@ describe('Results Block directive', function() {
             });
             it('succesfully', function() {
                 catalogManagerSvc.getRecord.and.returnValue($q.when(this.record));
-                controller.openRecord(this.record);
+                this.controller.openRecord(this.record);
                 scope.$apply();
                 expect(catalogManagerSvc.getRecord).toHaveBeenCalledWith(this.record['@id'], catalogStateSvc.catalogs.local['@id']);
                 expect(catalogStateSvc.resetPagination).toHaveBeenCalled();
@@ -159,12 +161,11 @@ describe('Results Block directive', function() {
     });
     it('should call openRecord when a record button is clicked', function() {
         catalogStateSvc.results = [{}];
-        controller = this.element.controller('resultsBlock');
-        spyOn(controller, 'openRecord');
+        spyOn(this.controller, 'openRecord');
         scope.$digest();
 
         var button = angular.element(this.element.querySelectorAll('.results-list button.record')[0]);
         button.triggerHandler('click');
-        expect(controller.openRecord).toHaveBeenCalledWith(catalogStateSvc.results[0]);
+        expect(this.controller.openRecord).toHaveBeenCalledWith(catalogStateSvc.results[0]);
     });
 });

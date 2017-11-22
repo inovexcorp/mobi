@@ -21,12 +21,7 @@
  * #L%
  */
 describe('Axiom Block directive', function() {
-    var $compile,
-        scope,
-        element,
-        ontologyStateSvc,
-        ontologyManagerSvc,
-        controller;
+    var $compile, scope, ontologyStateSvc, ontologyManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -41,61 +36,69 @@ describe('Axiom Block directive', function() {
             ontologyManagerSvc = _ontologyManagerService_;
         });
 
-        element = $compile(angular.element('<axiom-block></axiom-block>'))(scope);
+        this.element = $compile(angular.element('<axiom-block></axiom-block>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        ontologyManagerSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('axiom-block')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('axiom-block')).toBe(true);
         });
         it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
+            expect(this.element.find('block').length).toBe(1);
         });
         it('with a block-header', function() {
-            expect(element.find('block-header').length).toBe(1);
+            expect(this.element.find('block-header').length).toBe(1);
         });
         it('with a block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('based on whether something is selected', function() {
-            expect(element.querySelectorAll('block-header a').length).toBe(1);
+            expect(this.element.querySelectorAll('block-header a').length).toBe(1);
 
             ontologyStateSvc.listItem.selected = undefined;
             scope.$digest();
-            expect(element.querySelectorAll('block-header a').length).toBe(0);
+            expect(this.element.querySelectorAll('block-header a').length).toBe(0);
         });
         it('based on whether a class is selected', function() {
             ontologyManagerSvc.isClass.and.returnValue(true);
             scope.$digest();
-            expect(element.find('class-axioms').length).toBe(1);
+            expect(this.element.find('class-axioms').length).toBe(1);
 
             ontologyManagerSvc.isClass.and.returnValue(false);
             scope.$digest();
-            expect(element.find('class-axioms').length).toBe(0);
+            expect(this.element.find('class-axioms').length).toBe(0);
         });
         it('based on whether an object property is selected', function() {
             ontologyManagerSvc.isObjectProperty.and.returnValue(true);
             scope.$digest();
-            expect(element.find('object-property-axioms').length).toBe(1);
+            expect(this.element.find('object-property-axioms').length).toBe(1);
 
             ontologyManagerSvc.isObjectProperty.and.returnValue(false);
             scope.$digest();
-            expect(element.find('object-property-axioms').length).toBe(0);
+            expect(this.element.find('object-property-axioms').length).toBe(0);
         });
         it('based on whether a datatype property is selected', function() {
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(true);
             scope.$digest();
-            expect(element.find('datatype-property-axioms').length).toBe(1);
+            expect(this.element.find('datatype-property-axioms').length).toBe(1);
 
             ontologyManagerSvc.isDataTypeProperty.and.returnValue(false);
             scope.$digest();
-            expect(element.find('datatype-property-axioms').length).toBe(0);
+            expect(this.element.find('datatype-property-axioms').length).toBe(0);
         });
     });
     it('should set the correct state when the add axiom link is clicked', function() {
-        var link = angular.element(element.querySelectorAll('block-header a')[0]);
+        var link = angular.element(this.element.querySelectorAll('block-header a')[0]);
         link.triggerHandler('click');
         expect(ontologyStateSvc.showAxiomOverlay).toBe(true);
     });

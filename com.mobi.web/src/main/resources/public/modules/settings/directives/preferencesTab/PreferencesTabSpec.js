@@ -21,9 +21,7 @@
  * #L%
  */
 describe('Preferences Tab directive', function() {
-    var $compile,
-        scope,
-        settingsManagerSvc;
+    var $compile, scope, settingsManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -35,25 +33,27 @@ describe('Preferences Tab directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
+
+        this.element = $compile(angular.element('<preferences-tab></preferences-tab>'))(scope);
+        scope.$digest();
+        this.controller = this.element.controller('preferencesTab');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        settingsManagerSvc = null;
+        this.element.remove();
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<preferences-tab></preferences-tab>'))(scope);
-            scope.$digest();
-        });
         it('should save the settings entered', function() {
-            var controller = this.element.controller('preferencesTab');
-            controller.settings = {};
-            controller.save();
-            expect(settingsManagerSvc.setSettings).toHaveBeenCalledWith(controller.settings);
+            this.controller.settings = {};
+            this.controller.save();
+            expect(settingsManagerSvc.setSettings).toHaveBeenCalledWith(this.controller.settings);
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<preferences-tab></preferences-tab>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('preferences-tab')).toBe(true);
             expect(this.element.hasClass('row')).toBe(true);
@@ -80,13 +80,9 @@ describe('Preferences Tab directive', function() {
         });
     });
     it('should save when the save button is clicked', function() {
-        var element = $compile(angular.element('<preferences-tab></preferences-tab>'))(scope);
-        scope.$digest();
-        var controller = element.controller('preferencesTab');
-        spyOn(controller, 'save');
-
-        var saveBtn = angular.element(element.querySelectorAll('block-footer button')[0]);
+        spyOn(this.controller, 'save');
+        var saveBtn = angular.element(this.element.querySelectorAll('block-footer button')[0]);
         saveBtn.triggerHandler('click');
-        expect(controller.save).toHaveBeenCalled();
+        expect(this.controller.save).toHaveBeenCalled();
     });
 });

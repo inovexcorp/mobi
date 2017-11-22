@@ -21,13 +21,7 @@
  * #L%
  */
 describe('Groups Page directive', function() {
-    var $compile,
-        scope,
-        userStateSvc,
-        userManagerSvc,
-        loginManagerSvc,
-        utilSvc,
-        $q;
+    var $compile, scope, $q, userStateSvc, userManagerSvc, loginManagerSvc, utilSvc;
 
     beforeEach(function() {
         module('templates');
@@ -49,26 +43,35 @@ describe('Groups Page directive', function() {
 
         this.element = $compile(angular.element('<groups-page></groups-page>'))(scope);
         scope.$digest();
+        this.controller = this.element.controller('groupsPage');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        userStateSvc = null;
+        userManagerSvc = null;
+        loginManagerSvc = null;
+        utilSvc = null;
+        this.element.remove();
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            controller = this.element.controller('groupsPage');
-        });
         it('should set the correct state for creating a group', function() {
-            controller.createGroup();
+            this.controller.createGroup();
             expect(userStateSvc.displayCreateGroupOverlay).toBe(true);
         });
         it('should set the correct state for deleting a group', function() {
-            controller.deleteGroup();
+            this.controller.deleteGroup();
             expect(userStateSvc.displayDeleteGroupConfirm).toBe(true);
         });
         it('should set the correct state for editing a group description', function() {
-            controller.editDescription();
+            this.controller.editDescription();
             expect(userStateSvc.displayEditGroupInfoOverlay).toBe(true);
         });
         it('should set the correct state for removing a member', function() {
-            controller.removeMember();
+            this.controller.removeMember();
             expect(userStateSvc.displayRemoveMemberConfirm).toBe(true);
         });
         describe('should add a group member', function() {
@@ -78,17 +81,17 @@ describe('Groups Page directive', function() {
             });
             it('unless an error occurs', function() {
                 userManagerSvc.addUserGroup.and.returnValue($q.reject('Error message'));
-                controller.addMember();
+                this.controller.addMember();
                 scope.$apply();
                 expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(this.username, userStateSvc.selectedGroup.title);
                 expect(userStateSvc.memberName).toBe(this.username);
-                expect(controller.errorMessage).toBe('Error message');
+                expect(this.controller.errorMessage).toBe('Error message');
             });
             it('successfully', function() {
-                controller.addMember();
+                this.controller.addMember();
                 scope.$apply();
                 expect(userManagerSvc.addUserGroup).toHaveBeenCalledWith(this.username, userStateSvc.selectedGroup.title);
-                expect(controller.errorMessage).toBe('');
+                expect(this.controller.errorMessage).toBe('');
                 expect(userStateSvc.memberName).toBe('');
             });
         });
@@ -99,21 +102,21 @@ describe('Groups Page directive', function() {
             it('unless an error occurs', function() {
                 userManagerSvc.addGroupRoles.and.returnValue($q.reject('Error message'));
                 userManagerSvc.deleteGroupRole.and.returnValue($q.reject('Error message'));
-                controller.changeRoles();
+                this.controller.changeRoles();
                 scope.$apply();
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('Error message');
             });
             it('if the role has been added', function() {
-                controller.roles.admin = true;
-                controller.changeRoles();
+                this.controller.roles.admin = true;
+                this.controller.changeRoles();
                 scope.$apply();
                 expect(userManagerSvc.addGroupRoles).toHaveBeenCalledWith(userStateSvc.selectedGroup.title, ['admin']);
                 expect(userManagerSvc.deleteGroupRole).not.toHaveBeenCalled();
                 expect(utilSvc.createErrorToast).not.toHaveBeenCalled();
             });
             it('if the role has been removed', function() {
-                controller.roles.admin = false;
-                controller.changeRoles();
+                this.controller.roles.admin = false;
+                this.controller.changeRoles();
                 scope.$apply();
                 expect(userManagerSvc.deleteGroupRole).toHaveBeenCalledWith(userStateSvc.selectedGroup.title, 'admin');
                 expect(userManagerSvc.addGroupRoles).not.toHaveBeenCalled();
@@ -189,27 +192,21 @@ describe('Groups Page directive', function() {
         });
     });
     it('should call createGroup when the button is clicked', function() {
-        controller = this.element.controller('groupsPage');
-        spyOn(controller, 'createGroup');
-
+        spyOn(this.controller, 'createGroup');
         var createButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-header button.btn-link')[0]);
         createButton.triggerHandler('click');
-        expect(controller.createGroup).toHaveBeenCalled();
+        expect(this.controller.createGroup).toHaveBeenCalled();
     });
     it('should call deleteGroup when the button is clicked', function() {
-        controller = this.element.controller('groupsPage');
-        spyOn(controller, 'deleteGroup');
-
+        spyOn(this.controller, 'deleteGroup');
         var deleteButton = angular.element(this.element.querySelectorAll('.col-xs-4 block-footer button.btn-link')[0]);
         deleteButton.triggerHandler('click');
-        expect(controller.deleteGroup).toHaveBeenCalled();
+        expect(this.controller.deleteGroup).toHaveBeenCalled();
     });
     it('should call editDescription when the button is clicked', function() {
-        controller = this.element.controller('groupsPage');
-        spyOn(controller, 'editDescription');
-
+        spyOn(this.controller, 'editDescription');
         var editButton = angular.element(this.element.querySelectorAll('.col-xs-8 block-header button.btn-link')[0]);
         editButton.triggerHandler('click');
-        expect(controller.editDescription).toHaveBeenCalled();
+        expect(this.controller.editDescription).toHaveBeenCalled();
     });
 });

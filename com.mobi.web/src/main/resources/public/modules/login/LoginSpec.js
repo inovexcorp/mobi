@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Login controller', function() {
-    var $controller, scope, loginManagerSvc, $q, controller;
+    var $controller, scope, $q, loginManagerSvc;
 
     beforeEach(function() {
         module('login');
@@ -34,28 +34,35 @@ describe('Login controller', function() {
             $q = _$q_;
         });
 
-        controller = $controller('LoginController', {});
+        this.controller = $controller('LoginController', {});
+    });
+
+    afterEach(function() {
+        $controller = null;
+        scope = null;
+        $q = null;
+        loginManagerSvc = null;
     });
 
     describe('correctly validates a login combination', function() {
         beforeEach(function() {
-            controller.form = {
+            this.controller.form = {
                 username: 'user',
                 password: ''
             };
         });
         it('unless an error occurs', function() {
             loginManagerSvc.login.and.returnValue($q.reject('Error message'));
-            controller.login();
+            this.controller.login();
             scope.$digest();
-            expect(loginManagerSvc.login).toHaveBeenCalledWith(controller.form.username, controller.form.password);
-            expect(controller.errorMessage).toBe('Error message');
+            expect(loginManagerSvc.login).toHaveBeenCalledWith(this.controller.form.username, this.controller.form.password);
+            expect(this.controller.errorMessage).toBe('Error message');
         });
         it('successfully', function() {
-            controller.login();
+            this.controller.login();
             scope.$digest();
-            expect(loginManagerSvc.login).toHaveBeenCalledWith(controller.form.username, controller.form.password);
-            expect(controller.errorMessage).toBe('');
+            expect(loginManagerSvc.login).toHaveBeenCalledWith(this.controller.form.username, this.controller.form.password);
+            expect(this.controller.errorMessage).toBe('');
         });
     });
 });

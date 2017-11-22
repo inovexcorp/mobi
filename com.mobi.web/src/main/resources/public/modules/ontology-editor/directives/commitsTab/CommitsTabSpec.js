@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Commits Tab directive', function() {
-    var $compile, scope, $q, element, controller, ontologyStateSvc;
+    var $compile, scope, $q, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -34,30 +34,40 @@ describe('Commits Tab directive', function() {
             ontologyStateSvc = _ontologyStateService_;
         });
 
-        element = $compile(angular.element('<commits-tab></commits-tab>'))(scope);
+        this.element = $compile(angular.element('<commits-tab></commits-tab>'))(scope);
         scope.$digest();
-        controller = element.controller('commitsTab');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        $q = null;
+        ontologyStateSvc = null;
+        this.element.remove();
     });
 
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('commits-tab')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('commits-tab')).toBe(true);
         });
         _.forEach(['block', 'block-content', 'block-header', 'commit-history-table'], function(item) {
             it('for ' + item, function() {
-                expect(element.find(item).length).toBe(1);
+                expect(this.element.find(item).length).toBe(1);
             });
         });
         it('for .col-xs-8', function() {
-            expect(element.querySelectorAll('.col-xs-8').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-xs-8').length).toBe(1);
         });
     });
     describe('controller methods', function() {
+        beforeEach(function() {
+            this.controller = this.element.controller('commitsTab');
+        });
         it('should get the currently selected branch', function() {
             var branch = {'@id': 'branchId'};
             ontologyStateSvc.listItem = {branches: [branch], ontologyRecord: {branchId: branch['@id']}};
-            expect(controller.getBranch()).toEqual(branch);
+            expect(this.controller.getBranch()).toEqual(branch);
         });
     });
 });

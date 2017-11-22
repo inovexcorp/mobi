@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Discover Search Tab directive', function() {
-    var $compile, scope, element;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -33,27 +33,33 @@ describe('Discover Search Tab directive', function() {
             scope = _$rootScope_;
         });
 
-        element = $compile(angular.element('<discover-search-tab></discover-search-tab>'))(scope);
+        this.element = $compile(angular.element('<discover-search-tab></discover-search-tab>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('discover-search-tab')).toBe(true);
-            expect(element.hasClass('row')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('discover-search-tab')).toBe(true);
+            expect(this.element.hasClass('row')).toBe(true);
         });
         it('with a search-form', function() {
-            expect(element.find('search-form').length).toEqual(1);
+            expect(this.element.find('search-form').length).toEqual(1);
         });
         it('with a block', function() {
-            expect(element.find('block').length).toEqual(1);
+            expect(this.element.find('block').length).toEqual(1);
         });
         it('with a block-content', function() {
-            expect(element.find('block-content').length).toEqual(1);
+            expect(this.element.find('block-content').length).toEqual(1);
         });
         it('with a sparql-result-table', function() {
-            expect(element.find('sparql-result-table').length).toEqual(1);
+            expect(this.element.find('sparql-result-table').length).toEqual(1);
         });
     });
 });

@@ -21,8 +21,7 @@
  * #L%
  */
 describe('Preferences Container directive', function() {
-    var $compile,
-        scope;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -32,13 +31,18 @@ describe('Preferences Container directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
+
+        scope.header = '';
+        this.element = $compile(angular.element('<preferences-container header="header"></preferences-container>'))(scope); scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('in isolated scope', function() {
-        beforeEach(function() {
-            scope.header = '';
-            this.element = $compile(angular.element('<preferences-container header="header"></preferences-container>'))(scope); scope.$digest();
-        });
         it('header should be two way bound', function() {
             var isolatedScope = this.element.isolateScope();
             isolatedScope.header = 'test';
@@ -47,11 +51,6 @@ describe('Preferences Container directive', function() {
         });
     });
     describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            scope.header = '';
-            this.element = $compile(angular.element('<preferences-container header="header"></preferences-container>'))(scope);
-            scope.$digest();
-        });
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('SECTION');
         });

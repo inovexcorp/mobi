@@ -21,19 +21,7 @@
  * #L%
  */
 describe('Property Value Overlay directive', function() {
-    var $compile, scope, element, discoverStateSvc, controller, prefixes, exploreUtilsSvc;
-    var instance = {
-        '@id': 'id',
-        '@type': ['type'],
-        prop1: [{
-            '@id': 'http://mobi.com/id'
-        }],
-        prop2: [{
-            '@value': 'value1'
-        }, {
-            '@value': 'value2'
-        }]
-    };
+    var $compile, scope, discoverStateSvc, prefixes, exploreUtilsSvc;
 
     beforeEach(function() {
         module('templates');
@@ -74,17 +62,37 @@ describe('Property Value Overlay directive', function() {
             type: 'Data',
             range: [prefixes.xsd + 'boolean']
         }];
-        discoverStateSvc.getInstance.and.returnValue(instance);
-        element = $compile(angular.element('<property-value-overlay text="text" close-overlay="closeOverlay()" index="index" iri="iri" on-submit="onSubmit()" properties="properties"></property-value-overlay>'))(scope);
+        discoverStateSvc.getInstance.and.returnValue({
+            '@id': 'id',
+            '@type': ['type'],
+            prop1: [{
+                '@id': 'http://mobi.com/id'
+            }],
+            prop2: [{
+                '@value': 'value1'
+            }, {
+                '@value': 'value2'
+            }]
+        });
+        this.element = $compile(angular.element('<property-value-overlay text="text" close-overlay="closeOverlay()" index="index" iri="iri" on-submit="onSubmit()" properties="properties"></property-value-overlay>'))(scope);
         scope.$digest();
-        controller = element.controller('propertyValueOverlay');
-        controller.reification = {
+        this.controller = this.element.controller('propertyValueOverlay');
+        this.controller.reification = {
             '@id': '_:b0',
             '@type': [prefixes.rdf + 'Statement'],
             property1: [{'@value': 'value'}]
         };
-        controller.changed = ['iri'];
+        this.controller.changed = ['iri'];
         scope.$apply();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        discoverStateSvc = null;
+        prefixes = null;
+        exploreUtilsSvc = null;
+        this.element.remove();
     });
 
     it('should initialize with the correct values', function() {
@@ -92,32 +100,32 @@ describe('Property Value Overlay directive', function() {
     });
     describe('in isolated scope', function() {
         it('text should be one way bound', function() {
-            element.isolateScope().text = 'new';
+            this.element.isolateScope().text = 'new';
             scope.$digest();
             expect(scope.text).toBe('text');
         });
     });
     describe('controller bound variables', function() {
         it('closeOverlay should be called in the parent scope', function() {
-            controller.closeOverlay();
+            this.controller.closeOverlay();
             expect(scope.closeOverlay).toHaveBeenCalled();
         });
         it('index should be one way bound', function() {
-            controller.index = 1;
+            this.controller.index = 1;
             scope.$digest();
             expect(scope.index).toEqual(0);
         });
         it('iri should be one way bound', function() {
-            controller.iri = 'other';
+            this.controller.iri = 'other';
             scope.$digest();
             expect(scope.iri).toEqual('prop1');
         });
         it('onSubmit should be called in the parent scope', function() {
-            controller.onSubmit();
+            this.controller.onSubmit();
             expect(scope.onSubmit).toHaveBeenCalled();
         });
         it('properties should be one way bound', function() {
-            controller.iri = [];
+            this.controller.iri = [];
             scope.$digest();
             expect(scope.properties).toEqual([{
                 propertyIRI: 'propertyId',
@@ -135,86 +143,86 @@ describe('Property Value Overlay directive', function() {
     });
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('property-value-overlay')).toBe(true);
-            expect(element.hasClass('overlay')).toBe(true);
-            expect(element.hasClass('lg')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('property-value-overlay')).toBe(true);
+            expect(this.element.hasClass('overlay')).toBe(true);
+            expect(this.element.hasClass('lg')).toBe(true);
         });
         it('with a .content.clearfix', function() {
-            expect(element.querySelectorAll('.content.clearfix').length).toBe(1);
+            expect(this.element.querySelectorAll('.content.clearfix').length).toBe(1);
         });
         it('with a h6', function() {
-            expect(element.find('h6').length).toBe(1);
+            expect(this.element.find('h6').length).toBe(1);
         });
         it('with a .main', function() {
-            expect(element.querySelectorAll('.main').length).toBe(1);
+            expect(this.element.querySelectorAll('.main').length).toBe(1);
         });
         it('with a .form-group', function() {
-            expect(element.querySelectorAll('.form-group').length).toBe(1);
+            expect(this.element.querySelectorAll('.form-group').length).toBe(1);
         });
         it('with a custom-label', function() {
-            expect(element.find('custom-label').length).toBe(1);
+            expect(this.element.find('custom-label').length).toBe(1);
         });
         it('with a .boolean-property', function() {
-            expect(element.querySelectorAll('.boolean-property').length).toBe(1);
+            expect(this.element.querySelectorAll('.boolean-property').length).toBe(1);
 
             exploreUtilsSvc.isBoolean.and.returnValue(false);
             scope.$digest();
 
-            expect(element.querySelectorAll('.boolean-property').length).toBe(0);
+            expect(this.element.querySelectorAll('.boolean-property').length).toBe(0);
         });
         it('with a .data-property', function() {
             exploreUtilsSvc.isBoolean.and.returnValue(false);
             scope.$digest();
 
-            expect(element.querySelectorAll('.data-property').length).toBe(1);
+            expect(this.element.querySelectorAll('.data-property').length).toBe(1);
 
             exploreUtilsSvc.isPropertyOfType.and.returnValue(false);
             scope.$digest();
 
-            expect(element.querySelectorAll('.data-property').length).toBe(0);
+            expect(this.element.querySelectorAll('.data-property').length).toBe(0);
         });
         it('with a .object-property', function() {
-            expect(element.querySelectorAll('.object-property').length).toBe(1);
+            expect(this.element.querySelectorAll('.object-property').length).toBe(1);
 
             exploreUtilsSvc.isPropertyOfType.and.returnValue(false);
             scope.$digest();
 
-            expect(element.querySelectorAll('.object-property').length).toBe(0);
+            expect(this.element.querySelectorAll('.object-property').length).toBe(0);
         });
         it('with a .btn-container.clearfix', function() {
-            expect(element.querySelectorAll('.btn-container.clearfix').length).toBe(2);
+            expect(this.element.querySelectorAll('.btn-container.clearfix').length).toBe(2);
         });
         it('with a .btn.btn-link', function() {
-            expect(element.querySelectorAll('.btn.btn-link').length).toBe(1);
+            expect(this.element.querySelectorAll('.btn.btn-link').length).toBe(1);
         });
         it('with a new-instance-property-overlay', function() {
-            expect(element.find('new-instance-property-overlay').length).toBe(0);
+            expect(this.element.find('new-instance-property-overlay').length).toBe(0);
 
-            controller.showOverlay = true;
+            this.controller.showOverlay = true;
             scope.$digest();
 
-            expect(element.find('new-instance-property-overlay').length).toBe(1);
+            expect(this.element.find('new-instance-property-overlay').length).toBe(1);
         });
     });
     describe('controller methods', function() {
         it('addNewProperty should set variables correctly', function() {
-            spyOn(controller, 'addToChanged');
-            controller.showOverlay = true;
-            controller.addNewProperty('newProperty');
-            expect(_.has(controller.reification, 'newProperty')).toBe(true);
-            expect(controller.addToChanged).toHaveBeenCalledWith('newProperty');
-            expect(controller.showOverlay).toBe(false);
+            spyOn(this.controller, 'addToChanged');
+            this.controller.showOverlay = true;
+            this.controller.addNewProperty('newProperty');
+            expect(_.has(this.controller.reification, 'newProperty')).toBe(true);
+            expect(this.controller.addToChanged).toHaveBeenCalledWith('newProperty');
+            expect(this.controller.showOverlay).toBe(false);
         });
         it('notOmmitted should return the proper value depending on what is provided', function() {
-            _.forEach(['@id', '@type', prefixes.rdf + 'subject', prefixes.rdf + 'predicate', prefixes.rdf + 'object'], function(iri) {
-                expect(controller.notOmmitted(iri)).toBe(false);
-            });
-            expect(controller.notOmmitted('other')).toBe(true);
+            ['@id', '@type', prefixes.rdf + 'subject', prefixes.rdf + 'predicate', prefixes.rdf + 'object'].forEach(function(iri) {
+                expect(this.controller.notOmmitted(iri)).toBe(false);
+            }, this);
+            expect(this.controller.notOmmitted('other')).toBe(true);
         });
         describe('submit should call the correct methods when the entity', function() {
             it('contains reification property', function() {
-                controller.reification = {
+                this.controller.reification = {
                     '@id': '_:b0',
                     key: 'value'
                 };
@@ -222,7 +230,7 @@ describe('Property Value Overlay directive', function() {
                     '@id': '_:b0',
                     key: 'value'
                 }];
-                controller.submit();
+                this.controller.submit();
                 expect(discoverStateSvc.explore.instance.entity).toEqual([{
                     '@id': '_:b0',
                     key: 'value'
@@ -231,12 +239,12 @@ describe('Property Value Overlay directive', function() {
                 expect(scope.closeOverlay).toHaveBeenCalled();
             });
             it('does not contain the reification property', function() {
-                controller.reification = {
+                this.controller.reification = {
                     '@id': '_:b0',
                     key: 'value'
                 };
                 discoverStateSvc.explore.instance.entity = [];
-                controller.submit();
+                this.controller.submit();
                 expect(discoverStateSvc.explore.instance.entity).toEqual([{
                     '@id': '_:b0',
                     key: 'value'
@@ -247,17 +255,17 @@ describe('Property Value Overlay directive', function() {
         });
         describe('addToChanged adds the provided iri to the changed array', function() {
             it('when it is new', function() {
-                controller.addToChanged('new');
-                expect(controller.changed).toEqual(['iri', 'new']);
+                this.controller.addToChanged('new');
+                expect(this.controller.changed).toEqual(['iri', 'new']);
             });
             it('when it is not new', function() {
-                controller.addToChanged('iri');
-                expect(controller.changed).toEqual(['iri']);
+                this.controller.addToChanged('iri');
+                expect(this.controller.changed).toEqual(['iri']);
             });
         });
         it('isChanged should return the proper value', function() {
-            expect(controller.isChanged('iri')).toBe(true);
-            expect(controller.isChanged('new')).toBe(false);
+            expect(this.controller.isChanged('iri')).toBe(true);
+            expect(this.controller.isChanged('new')).toBe(false);
         });
     });
 });

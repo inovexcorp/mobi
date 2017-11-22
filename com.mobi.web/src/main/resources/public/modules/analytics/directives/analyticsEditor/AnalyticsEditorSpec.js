@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Analytics Editor directive', function() {
-    var $compile, scope, element, analyticStateSvc;
+    var $compile, scope, analyticStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -33,75 +33,82 @@ describe('Analytics Editor directive', function() {
             scope = _$rootScope_;
             analyticStateSvc = _analyticStateService_;
         });
-        
-        element = $compile(angular.element('<analytics-editor></analytics-editor>'))(scope);
+
+        this.element = $compile(angular.element('<analytics-editor></analytics-editor>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        analyticStateSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('analytics-editor')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('analytics-editor')).toBe(true);
         });
         it('with a block', function() {
-            expect(element.find('block').length).toBe(1);
+            expect(this.element.find('block').length).toBe(1);
         });
         it('with a block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('with .rows', function() {
-            expect(element.querySelectorAll('.row').length).toBe(2);
+            expect(this.element.querySelectorAll('.row').length).toBe(2);
         });
         it('with a .property-area', function() {
-            expect(element.querySelectorAll('.property-area').length).toBe(1);
+            expect(this.element.querySelectorAll('.property-area').length).toBe(1);
         });
         it('with a md-chips', function() {
-            expect(element.find('md-chips').length).toBe(0);
+            expect(this.element.find('md-chips').length).toBe(0);
             analyticStateSvc.selectedProperties = [{}];
             scope.$apply();
-            expect(element.find('md-chips').length).toBe(1);
+            expect(this.element.find('md-chips').length).toBe(1);
         });
         it('with a md-chip-template', function() {
-            expect(element.find('md-chip-template').length).toBe(0);
+            expect(this.element.find('md-chip-template').length).toBe(0);
             analyticStateSvc.selectedProperties = [{}];
             scope.$apply();
-            expect(element.find('md-chip-template').length).toBe(1);
+            expect(this.element.find('md-chip-template').length).toBe(1);
         });
         it('with a .class-area', function() {
-            expect(element.querySelectorAll('.class-area').length).toBe(1);
+            expect(this.element.querySelectorAll('.class-area').length).toBe(1);
         });
         it('with a .table-area', function() {
-            expect(element.querySelectorAll('.table-area').length).toBe(1);
+            expect(this.element.querySelectorAll('.table-area').length).toBe(1);
         });
         it('with a error-display', function() {
-            expect(element.find('error-display').length).toBe(0);
+            expect(this.element.find('error-display').length).toBe(0);
             analyticStateSvc.queryError = 'error';
             scope.$apply();
-            expect(element.find('error-display').length).toBe(1);
+            expect(this.element.find('error-display').length).toBe(1);
         });
         it('with a .table-wrapper', function() {
-            expect(element.querySelectorAll('.table-wrapper').length).toBe(1);
+            expect(this.element.querySelectorAll('.table-wrapper').length).toBe(1);
         });
         it('with a sortable-table', function() {
-            expect(element.find('sortable-table').length).toBe(1);
+            expect(this.element.find('sortable-table').length).toBe(1);
         });
         it('with a .paging-wrapper', function() {
-            expect(element.querySelectorAll('.paging-wrapper').length).toBe(0);
+            expect(this.element.querySelectorAll('.paging-wrapper').length).toBe(0);
             analyticStateSvc.results = {};
             scope.$apply();
-            expect(element.querySelectorAll('.paging-wrapper').length).toBe(1);
+            expect(this.element.querySelectorAll('.paging-wrapper').length).toBe(1);
         });
         it('with a paging-details', function() {
-            expect(element.find('paging-details').length).toBe(0);
+            expect(this.element.find('paging-details').length).toBe(0);
             analyticStateSvc.results = {};
             scope.$apply();
-            expect(element.find('paging-details').length).toBe(1);
+            expect(this.element.find('paging-details').length).toBe(1);
         });
         it('with a pagination', function() {
-            expect(element.find('pagination').length).toBe(0);
+            expect(this.element.find('pagination').length).toBe(0);
             analyticStateSvc.results = {};
             scope.$apply();
-            expect(element.find('pagination').length).toBe(1);
+            expect(this.element.find('pagination').length).toBe(1);
         });
     });
 });

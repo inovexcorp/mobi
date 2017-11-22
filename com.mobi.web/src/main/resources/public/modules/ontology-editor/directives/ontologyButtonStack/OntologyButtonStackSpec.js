@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology Button Stack directive', function() {
-    var $compile, scope, element;
+    var $compile, scope;
 
     beforeEach(function() {
         module('templates');
@@ -33,20 +33,26 @@ describe('Ontology Button Stack directive', function() {
             scope = _$rootScope_;
         });
 
-        element = $compile(angular.element('<ontology-button-stack></ontology-button-stack>'))(scope);
+        this.element = $compile(angular.element('<ontology-button-stack></ontology-button-stack>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('ontology-button-stack')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('ontology-button-stack')).toBe(true);
         });
         it('with a circle-button-stack', function() {
-            expect(element.find('circle-button-stack').length).toBe(1);
+            expect(this.element.find('circle-button-stack').length).toBe(1);
         });
         it('with circle-buttons', function() {
-            expect(element.find('circle-button').length).toBe(3);
+            expect(this.element.find('circle-button').length).toBe(4);
         });
     });
 });

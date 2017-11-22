@@ -1494,6 +1494,50 @@ describe('Catalog Manager service', function() {
             flushAndVerify($httpBackend);
         });
     });
+    describe('should get the difference between two Branches', function() {
+        beforeEach(function() {
+            this.config = {
+                format: 'jsonld',
+                targetId: this.branchId
+            };
+            this.url = '/mobirest/catalogs/' + encodeURIComponent(this.catalogId) + '/records/' + encodeURIComponent(this.recordId) + '/branches/' + encodeURIComponent(this.branchId) + '/difference';
+        });
+        it('unless an error occurs', function() {
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(400, null, null, 'Error Message');
+            catalogManagerSvc.getBranchDifference(this.branchId, this.branchId, this.recordId, this.catalogId, 'jsonld')
+                .then(function() {
+                    fail('Promise should have rejected');
+                }, function(response) {
+                    expect(response).toBe('Error Message');
+                });
+            flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({statusText: 'Error Message'}));
+        });
+        it('with a format', function() {
+            this.config.format = 'turtle';
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getBranchDifference(this.branchId, this.branchId, this.recordId, this.catalogId, 'turtle')
+                .then(function(response) {
+                    expect(response).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+        it('without a format', function() {
+            var params = $httpParamSerializer(this.config);
+            $httpBackend.whenGET(this.url + '?' + params).respond(200, []);
+            catalogManagerSvc.getBranchDifference(this.branchId, this.branchId, this.recordId, this.catalogId)
+                .then(function(response) {
+                    expect(response).toEqual([]);
+                }, function(response) {
+                    fail('Promise should have resolved');
+                });
+            flushAndVerify($httpBackend);
+        });
+    });
     describe('should get the conflicts between two Branches', function() {
         beforeEach(function() {
             this.config = {

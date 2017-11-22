@@ -1994,6 +1994,42 @@ public class SimpleCatalogManagerTest {
         result.forEach(statement -> assertTrue(expected.contains(statement)));
     }
 
+    /* getDifference */
+
+    @Test
+    public void testGetDifference() throws Exception {
+        // Setup:
+        Resource sourceId = vf.createIRI(COMMITS + "test4a");
+        Resource targetId = vf.createIRI(COMMITS + "test1");
+
+        Difference sourceDiff = new Difference.Builder()
+                .additions(mf.createModel())
+                .deletions(mf.createModel())
+                .build();
+        doReturn(sourceDiff).when(utilsService).getCommitDifference(eq(Collections.singletonList(sourceId)), any(RepositoryConnection.class));
+        doReturn(Stream.of(targetId, sourceId).collect(Collectors.toList())).when(utilsService).getCommitChain(eq(sourceId), any(Boolean.class), any(RepositoryConnection.class));
+        doReturn(Collections.singletonList(targetId)).when(utilsService).getCommitChain(eq(targetId), any(Boolean.class), any(RepositoryConnection.class));
+
+        Difference diff = manager.getDifference(sourceId, targetId);
+        assertEquals(sourceDiff, diff);
+        verify(utilsService).validateResource(eq(sourceId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).validateResource(eq(targetId), eq(commitFactory.getTypeIRI()), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(sourceId), eq(true), any(RepositoryConnection.class));
+        verify(utilsService).getCommitChain(eq(targetId), eq(true), any(RepositoryConnection.class));
+        verify(utilsService).getCommitDifference(eq(Collections.singletonList(sourceId)), any(RepositoryConnection.class));
+    }
+
+    @Test
+    public void testGetDifferenceDisconnectedNodes() throws Exception {
+        // Setup
+        Resource sourceId = vf.createIRI(COMMITS + "test4a");
+        Resource targetId = vf.createIRI(COMMITS + "test1");
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("No common parent between Commit " + sourceId + " and " + targetId);
+
+        manager.getDifference(sourceId, targetId);
+    }
+
     /* getConflicts */
 
     @Test

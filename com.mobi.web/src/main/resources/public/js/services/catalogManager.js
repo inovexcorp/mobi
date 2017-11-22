@@ -1059,6 +1059,30 @@
 
             /**
              * @ngdoc method
+             * @name getBranchDifference
+             * @methodOf catalogManager.service:catalogManagerService
+             *
+             * @description
+             * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/difference endpoint
+             * and returns an object with the culmination of additions and deletions between the identified source
+             * Branch and the target Branch identified by the passed id.
+             *
+             * @param {string} sourceId The id of the source Branch to retrieve differences from
+             * @param {string} targetId The id of the target Branch to compare against the source Branch
+             * @param {string} recordId The id of the Record with both specified Branches
+             * @param {string} catalogId The id of the Catalog the Record should be a part of
+             * @param {string} [format='jsonld'] The RDF format to return the difference additions and deletions in
+             * @return {Promise} A Promise the resolves to the object with key `additions` and key `deletions` or rejects
+             * with an error message.
+             */
+            self.getBranchDifference = function(sourceId, targetId, recordId, catalogId, format = 'jsonld') {
+                var config = { params: { format, targetId } };
+                return $http.get(prefix + '/' + encodeURIComponent(catalogId) + '/records/' + encodeURIComponent(recordId) + '/branches/' + encodeURIComponent(sourceId) + '/difference', config)
+                    .then(response => response.data, util.rejectError);
+            }
+
+            /**
+             * @ngdoc method
              * @name getBranchConflicts
              * @methodOf catalogManager.service:catalogManagerService
              *
@@ -1069,9 +1093,9 @@
              *
              * @param {string} sourceId The id of the source Branch to retrieve conflicts for
              * @param {string} targetId The id of the target Branch to retrieve conflicts for
-             * @param {[type]} recordId The id of the Record with both specified Records
-             * @param {[type]} catalogId The id of the Catalog the Record should be part of
-             * @param {string='jsonld'} format The RDF format to return the Conflict additions and deletions in
+             * @param {string} recordId The id of the Record with both specified Branches
+             * @param {string} catalogId The id of the Catalog the Record should be part of
+             * @param {string} [format='jsonld'] The RDF format to return the Conflict additions and deletions in
              * @return {Promise} A promise that resolves to the array of Conflict objects or rejects with an error message
              */
             self.getBranchConflicts = function(sourceId, targetId, recordId, catalogId, format = 'jsonld') {

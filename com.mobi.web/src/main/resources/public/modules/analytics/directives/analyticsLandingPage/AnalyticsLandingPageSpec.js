@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Analytics Landing Page directive', function() {
-    var $compile, $q, scope, element, controller, catalogManagerSvc, utilSvc, analyticStateSvc, analyticManagerSvc;
+    var $compile, $q, scope, catalogManagerSvc, utilSvc, analyticStateSvc, analyticManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -41,7 +41,7 @@ describe('Analytics Landing Page directive', function() {
             analyticStateSvc = _analyticStateService_;
             analyticManagerSvc = _analyticManagerService_;
         });
-        
+
         catalogManagerSvc.localCatalog = {'@id': 'catalogId'};
         catalogManagerSvc.getRecords.and.returnValue($q.when({
             data: [],
@@ -50,95 +50,106 @@ describe('Analytics Landing Page directive', function() {
                 link: 'link'
             })
         }));
-        element = $compile(angular.element('<analytics-landing-page></analytics-landing-page>'))(scope);
+        this.element = $compile(angular.element('<analytics-landing-page></analytics-landing-page>'))(scope);
         scope.$digest();
-        controller = element.controller('analyticsLandingPage');
+        this.controller = this.element.controller('analyticsLandingPage');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        $q = null;
+        scope = null;
+        catalogManagerSvc = null;
+        utilSvc = null;
+        analyticStateSvc = null;
+        analyticManagerSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('analytics-landing-page')).toBe(true);
-            expect(element.hasClass('full-height')).toBe(true);
-            expect(element.hasClass('clearfix')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('analytics-landing-page')).toBe(true);
+            expect(this.element.hasClass('full-height')).toBe(true);
+            expect(this.element.hasClass('clearfix')).toBe(true);
         });
         it('with a .blue-bar', function() {
-            expect(element.querySelectorAll('.blue-bar').length).toBe(1);
+            expect(this.element.querySelectorAll('.blue-bar').length).toBe(1);
         });
         it('with a .white-bar', function() {
-            expect(element.querySelectorAll('.white-bar').length).toBe(1);
+            expect(this.element.querySelectorAll('.white-bar').length).toBe(1);
         });
         it('with a .form-inline', function() {
-            expect(element.querySelectorAll('.form-inline').length).toBe(1);
+            expect(this.element.querySelectorAll('.form-inline').length).toBe(1);
         });
         it('with a .form-group', function() {
-            expect(element.querySelectorAll('.form-group').length).toBe(1);
+            expect(this.element.querySelectorAll('.form-group').length).toBe(1);
         });
         it('with a .input-group', function() {
-            expect(element.querySelectorAll('.input-group').length).toBe(1);
+            expect(this.element.querySelectorAll('.input-group').length).toBe(1);
         });
         it('with a .form-control', function() {
-            expect(element.querySelectorAll('.form-control').length).toBe(1);
+            expect(this.element.querySelectorAll('.form-control').length).toBe(1);
         });
         it('with a .input-group-btn', function() {
-            expect(element.querySelectorAll('.input-group-btn').length).toBe(1);
+            expect(this.element.querySelectorAll('.input-group-btn').length).toBe(1);
         });
         it('with .btn-primarys', function() {
-            expect(element.querySelectorAll('.btn-primary').length).toBe(2);
+            expect(this.element.querySelectorAll('.btn-primary').length).toBe(2);
         });
         it('with a .row', function() {
-            expect(element.querySelectorAll('.row').length).toBe(1);
+            expect(this.element.querySelectorAll('.row').length).toBe(1);
         });
         it('with a .col-xs-8', function() {
-            expect(element.querySelectorAll('.col-xs-8').length).toBe(1);
+            expect(this.element.querySelectorAll('.col-xs-8').length).toBe(1);
         });
         it('with a block-content', function() {
-            expect(element.find('block-content').length).toBe(1);
+            expect(this.element.find('block-content').length).toBe(1);
         });
         it('with a info-message', function() {
-            expect(element.find('info-message').length).toBe(1);
-            controller.records = [{'@id': 'recordId'}];
+            expect(this.element.find('info-message').length).toBe(1);
+            this.controller.records = [{'@id': 'recordId'}];
             scope.$apply();
-            expect(element.find('info-message').length).toBe(0);
+            expect(this.element.find('info-message').length).toBe(0);
         });
         it('with a md-list', function() {
-            expect(element.find('md-list').length).toBe(1);
+            expect(this.element.find('md-list').length).toBe(1);
         });
         it('with md-list-items', function() {
-            expect(element.find('md-list-item').length).toBe(0);
-            controller.records = [{'@id': 'recordId'}, {'@id': 'recordId2'}];
+            expect(this.element.find('md-list-item').length).toBe(0);
+            this.controller.records = [{'@id': 'recordId'}, {'@id': 'recordId2'}];
             scope.$apply();
-            expect(element.find('md-list-item').length).toBe(2);
+            expect(this.element.find('md-list-item').length).toBe(2);
         });
         it('with a block-footer', function() {
-            expect(element.find('block-footer').length).toBe(0);
-            controller.records = [{'@id': 'recordId'}, {'@id': 'recordId2'}];
+            expect(this.element.find('block-footer').length).toBe(0);
+            this.controller.records = [{'@id': 'recordId'}, {'@id': 'recordId2'}];
             scope.$apply();
-            expect(element.find('block-footer').length).toBe(1);
+            expect(this.element.find('block-footer').length).toBe(1);
         });
         it('with a paging-details', function() {
-            expect(element.find('paging-details').length).toBe(0);
-            controller.records = [{'@id': 'recordId'}, {'@id': 'recordId2'}];
+            expect(this.element.find('paging-details').length).toBe(0);
+            this.controller.records = [{'@id': 'recordId'}, {'@id': 'recordId2'}];
             scope.$apply();
-            expect(element.find('paging-details').length).toBe(1);
+            expect(this.element.find('paging-details').length).toBe(1);
         });
         it('with a pagination', function() {
-            expect(element.find('pagination').length).toBe(0);
-            controller.records = [{'@id': 'recordId'}, {'@id': 'recordId2'}];
+            expect(this.element.find('pagination').length).toBe(0);
+            this.controller.records = [{'@id': 'recordId'}, {'@id': 'recordId2'}];
             scope.$apply();
-            expect(element.find('pagination').length).toBe(1);
+            expect(this.element.find('pagination').length).toBe(1);
         });
         it('with a new-analytic-overlay', function() {
-            expect(element.find('new-analytic-overlay').length).toBe(0);
-            controller.showCreateOverlay = true;
+            expect(this.element.find('new-analytic-overlay').length).toBe(0);
+            this.controller.showCreateOverlay = true;
             scope.$apply();
-            expect(element.find('new-analytic-overlay').length).toBe(1);
+            expect(this.element.find('new-analytic-overlay').length).toBe(1);
         });
         it('with a confirmation-overlay', function() {
-            expect(element.find('confirmation-overlay').length).toBe(0);
-            controller.showDeleteOverlay = true;
+            expect(this.element.find('confirmation-overlay').length).toBe(0);
+            this.controller.showDeleteOverlay = true;
             scope.$apply();
-            expect(element.find('confirmation-overlay').length).toBe(1);
+            expect(this.element.find('confirmation-overlay').length).toBe(1);
         });
     });
     describe('controller methods', function() {
@@ -152,28 +163,28 @@ describe('Analytics Landing Page directive', function() {
                     })
                 }));
                 utilSvc.parseLinks.and.returnValue({next: 'next', prev: 'prev'});
-                controller.config.pageIndex = 1;
-                controller.getAnalyticRecords();
+                this.controller.config.pageIndex = 1;
+                this.controller.getAnalyticRecords();
                 scope.$apply();
-                expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith('catalogId', controller.config);
-                expect(controller.config.pageIndex).toEqual(0);
-                expect(controller.records).toEqual([{'@id': 'recordId'}]);
-                expect(controller.paging.total).toBe(10);
+                expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith('catalogId', this.controller.config);
+                expect(this.controller.config.pageIndex).toEqual(0);
+                expect(this.controller.records).toEqual([{'@id': 'recordId'}]);
+                expect(this.controller.paging.total).toBe(10);
                 expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
-                expect(controller.paging.links).toEqual({next: 'next', prev: 'prev'});
+                expect(this.controller.paging.links).toEqual({next: 'next', prev: 'prev'});
             });
             it('rejects', function() {
                 catalogManagerSvc.getRecords.and.returnValue($q.reject('error'));
-                controller.getAnalyticRecords();
+                this.controller.getAnalyticRecords();
                 scope.$apply();
-                expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith('catalogId', controller.config);
+                expect(catalogManagerSvc.getRecords).toHaveBeenCalledWith('catalogId', this.controller.config);
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
             });
         });
         describe('getPage should set the correct variables when getResultsPage', function() {
             beforeEach(function() {
-                controller.config.pageIndex = 1;
-                controller.paging.links = {
+                this.controller.config.pageIndex = 1;
+                this.controller.paging.links = {
                     next: 'next',
                     prev: 'prev'
                 };
@@ -190,29 +201,29 @@ describe('Analytics Landing Page directive', function() {
                     utilSvc.parseLinks.and.returnValue({next: 'next', prev: 'prev'});
                 });
                 it('next', function() {
-                    controller.getPage('next');
+                    this.controller.getPage('next');
                     scope.$apply();
                     expect(utilSvc.getResultsPage).toHaveBeenCalledWith('next');
-                    expect(controller.config.pageIndex).toEqual(2);
-                    expect(controller.records).toEqual([{'@id': 'recordId'}]);
-                    expect(controller.paging.total).toBe(10);
+                    expect(this.controller.config.pageIndex).toEqual(2);
+                    expect(this.controller.records).toEqual([{'@id': 'recordId'}]);
+                    expect(this.controller.paging.total).toBe(10);
                     expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
-                    expect(controller.paging.links).toEqual({next: 'next', prev: 'prev'});
+                    expect(this.controller.paging.links).toEqual({next: 'next', prev: 'prev'});
                 });
                 it('prev', function() {
-                    controller.getPage('prev');
+                    this.controller.getPage('prev');
                     scope.$apply();
                     expect(utilSvc.getResultsPage).toHaveBeenCalledWith('prev');
-                    expect(controller.config.pageIndex).toEqual(0);
-                    expect(controller.records).toEqual([{'@id': 'recordId'}]);
-                    expect(controller.paging.total).toBe(10);
+                    expect(this.controller.config.pageIndex).toEqual(0);
+                    expect(this.controller.records).toEqual([{'@id': 'recordId'}]);
+                    expect(this.controller.paging.total).toBe(10);
                     expect(utilSvc.parseLinks).toHaveBeenCalledWith('link');
-                    expect(controller.paging.links).toEqual({next: 'next', prev: 'prev'});
+                    expect(this.controller.paging.links).toEqual({next: 'next', prev: 'prev'});
                 });
             });
             it('rejects', function() {
                 utilSvc.getResultsPage.and.returnValue($q.reject('error'));
-                controller.getPage('next');
+                this.controller.getPage('next');
                 scope.$apply();
                 expect(utilSvc.getResultsPage).toHaveBeenCalledWith('next');
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
@@ -226,7 +237,7 @@ describe('Analytics Landing Page directive', function() {
                 describe('resolves and the response is', function() {
                     it('empty', function() {
                         analyticStateSvc.populateEditor.and.returnValue($q.when());
-                        controller.open('recordId');
+                        this.controller.open('recordId');
                         scope.$apply();
                         expect(analyticManagerSvc.getAnalytic).toHaveBeenCalledWith('recordId');
                         expect(analyticStateSvc.populateEditor).toHaveBeenCalled();
@@ -235,7 +246,7 @@ describe('Analytics Landing Page directive', function() {
                     });
                     it('populated', function() {
                         analyticStateSvc.populateEditor.and.returnValue($q.when('message'));
-                        controller.open('recordId');
+                        this.controller.open('recordId');
                         scope.$apply();
                         expect(analyticManagerSvc.getAnalytic).toHaveBeenCalledWith('recordId');
                         expect(analyticStateSvc.populateEditor).toHaveBeenCalled();
@@ -245,7 +256,7 @@ describe('Analytics Landing Page directive', function() {
                 });
                 it('rejects', function() {
                     analyticStateSvc.populateEditor.and.returnValue($q.reject('error'));
-                    controller.open('recordId');
+                    this.controller.open('recordId');
                     scope.$apply();
                     expect(analyticManagerSvc.getAnalytic).toHaveBeenCalledWith('recordId');
                     expect(analyticStateSvc.populateEditor).toHaveBeenCalled();
@@ -254,44 +265,44 @@ describe('Analytics Landing Page directive', function() {
             });
             it('rejects', function() {
                 analyticManagerSvc.getAnalytic.and.returnValue($q.reject('error'));
-                controller.open('recordId');
+                this.controller.open('recordId');
                 scope.$apply();
                 expect(analyticManagerSvc.getAnalytic).toHaveBeenCalledWith('recordId');
                 expect(utilSvc.createErrorToast).toHaveBeenCalledWith('error');
             });
         });
         it('showDeleteConfirmation should set the correct variables when passed a valid index.', function() {
-            controller.showDeleteConfirmation(2);
+            this.controller.showDeleteConfirmation(2);
             scope.$apply();
-            expect(controller.recordIndex).toEqual(2)
-            expect(controller.errorMessage).toBe('');
-            expect(controller.showDeleteOverlay).toBe(true);
+            expect(this.controller.recordIndex).toEqual(2)
+            expect(this.controller.errorMessage).toBe('');
+            expect(this.controller.showDeleteOverlay).toBe(true);
         });
         describe('deleteRecord should set the correct variables', function() {
             beforeEach(function() {
-                controller.records = [{'@id': 'zero', title: 'zero'}];
-                controller.recordIndex = 0;
-                controller.showDeleteOverlay = true;                
+                this.controller.records = [{'@id': 'zero', title: 'zero'}];
+                this.controller.recordIndex = 0;
+                this.controller.showDeleteOverlay = true;
             });
             it('when record deletion fails.', function() {
                 catalogManagerSvc.deleteRecord.and.returnValue($q.reject('error'));
-                controller.deleteRecord();
+                this.controller.deleteRecord();
                 scope.$apply();
-                expect(controller.recordIndex).toEqual(0);
-                expect(controller.errorMessage).toBe('error');
-                expect(element.find('error-display').length).toBe(1);
-                expect(controller.showDeleteOverlay).toBe(true);
-            }); 
+                expect(this.controller.recordIndex).toEqual(0);
+                expect(this.controller.errorMessage).toBe('error');
+                expect(this.element.find('error-display').length).toBe(1);
+                expect(this.controller.showDeleteOverlay).toBe(true);
+            });
             it('when record deletion succeeds.', function() {
                 catalogManagerSvc.deleteRecord.and.returnValue($q.when({}));
-                controller.deleteRecord();
+                this.controller.deleteRecord();
                 scope.$apply();
                 expect(catalogManagerSvc.deleteRecord).toHaveBeenCalledWith('zero', 'catalogId');
-                expect(controller.records).not.toContain({'@id': 'zero', title: 'zero'});
-                expect(controller.recordIndex).toEqual(-1);
-                expect(controller.errorMessage).toBeFalsy();
-                expect(controller.showDeleteOverlay).toBe(false);
-            }); 
+                expect(this.controller.records).not.toContain({'@id': 'zero', title: 'zero'});
+                expect(this.controller.recordIndex).toEqual(-1);
+                expect(this.controller.errorMessage).toBeFalsy();
+                expect(this.controller.showDeleteOverlay).toBe(false);
+            });
         });
     });
 });

@@ -30,13 +30,8 @@ describe('Merge Tab directive', function() {
         mockOntologyState();
         mockCatalogManager();
         mockPrefixes();
-        mockStateManager();
-        injectTrustedFilter();
-        injectHighlightFilter();
-        injectBeautifyFilter();
 
-        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_,
-            _catalogManagerService_, _utilService_) {
+        inject(function(_$q_, _$compile_, _$rootScope_, _ontologyStateService_, _catalogManagerService_, _utilService_) {
             $q = _$q_;
             $compile = _$compile_;
             scope = _$rootScope_;
@@ -76,10 +71,15 @@ describe('Merge Tab directive', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('merge-tab')).toBe(true);
         });
-        _.forEach(['block', 'block-content', 'ui-select', 'button', 'checkbox'], function(item) {
+        _.forEach(['block', 'block-content', 'block-footer'], function(item) {
             it('for ' + item, function() {
                 expect(this.element.find(item).length).toBe(1);
             });
+        });
+        it('with a button to cancel', function() {
+            var buttons = this.element.querySelectorAll('block-footer .btn-default');
+            expect(buttons.length).toEqual(1);
+            expect(angular.element(buttons[0]).text().trim()).toEqual('Cancel');
         });
         it('depending on whether there is an error', function() {
             expect(this.element.find('error-display').length).toBe(0);
@@ -87,20 +87,49 @@ describe('Merge Tab directive', function() {
             scope.$digest();
             expect(this.element.find('error-display').length).toBe(1);
         });
-        it('with a .merge-message', function() {
-            expect(this.element.querySelectorAll('.merge-message').length).toBe(1);
-        });
         it('depending on whether there are conflicts', function() {
-            expect(this.element.querySelectorAll('.form-container').length).toBe(1);
-            expect(this.element.querySelectorAll('.conflicts-container').length).toBe(0);
+            expect(this.element.find('merge-form').length).toBe(1);
+            expect(this.element.find('resolve-conflicts-form').length).toBe(0);
+            expect(this.element.querySelectorAll('block-footer .btn-merge').length).toBe(1);
+            expect(this.element.querySelectorAll('block-footer .btn-resolution').length).toBe(0);
 
             this.controller.conflicts = [{}];
             scope.$digest();
-            expect(this.element.querySelectorAll('.form-container').length).toBe(0);
-            expect(this.element.querySelectorAll('.conflicts-container').length).toBe(1);
+            expect(this.element.find('merge-form').length).toBe(0);
+            expect(this.element.find('resolve-conflicts-form').length).toBe(1);
+            expect(this.element.querySelectorAll('block-footer .btn-merge').length).toBe(0);
+            expect(this.element.querySelectorAll('block-footer .btn-resolution').length).toBe(1);
+        });
+        it('depending on whether all conflicts are resolved', function() {
+            this.controller.conflicts = [{}];
+            spyOn(this.controller, 'allResolved').and.returnValue(false);
+            scope.$digest();
+            var button = angular.element(this.element.querySelectorAll('block-footer .btn-resolution')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
+
+            this.controller.allResolved.and.returnValue(true);
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
+        });
+        it('depending on whether a target branch has been selected', function() {
+            var button = angular.element(this.element.querySelectorAll('block-footer .btn-merge')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
+
+            this.controller.targetId = 'test';
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
         });
     });
     describe('controller methods', function() {
+        it('should test whether all conflicts are resolved', function() {
+            expect(this.controller.allResolved()).toEqual(true);
+
+            this.controller.conflicts = [{resolved: true}];
+            expect(this.controller.allResolved()).toEqual(true);
+
+            this.controller.conflicts = [{resolved: false}];
+            expect(this.controller.allResolved()).toEqual(false);
+        });
         describe('attemptMerge calls the correct functions', function() {
             describe('when getBranchConflicts is resolved', function() {
                 it('and is empty', function() {
@@ -149,7 +178,6 @@ describe('Merge Tab directive', function() {
                             expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.targetId, this.commitId);
                             expect(catalogManagerSvc.deleteRecordBranch).toHaveBeenCalledWith(this.branchId, ontologyStateSvc.listItem.ontologyRecord.recordId, this.catalogId);
                             expect(ontologyStateSvc.removeBranch).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.branchId);
-                            expect(this.controller.targetId).toBe(undefined);
                             expect(util.createSuccessToast).toHaveBeenCalled();
                         });
                         it('and deleteRecordBranch is rejected', function() {
@@ -170,7 +198,6 @@ describe('Merge Tab directive', function() {
                         expect(ontologyStateSvc.updateOntology).toHaveBeenCalledWith(ontologyStateSvc.listItem.ontologyRecord.recordId, this.targetId, this.commitId);
                         expect(catalogManagerSvc.deleteRecordBranch).not.toHaveBeenCalled();
                         expect(ontologyStateSvc.removeBranch).not.toHaveBeenCalled();
-                        expect(this.controller.targetId).toBe(undefined);
                         expect(util.createSuccessToast).toHaveBeenCalled();
                     });
                 });
@@ -194,13 +221,20 @@ describe('Merge Tab directive', function() {
                 expect(this.controller.error).toEqual(this.error);
             });
         });
-        describe('matchesCurrent returns', function() {
-            it('true if it does not match ontologyStateService.listItem.ontologyRecord.branchId', function() {
-                expect(this.controller.matchesCurrent({'@id': 'differentId'})).toBe(true);
-            });
-            it('false if it does match ontologyStateService.listItem.ontologyRecord.branchId', function() {
-                expect(this.controller.matchesCurrent(this.branch)).toBe(false);
-            });
-        });
+    });
+    it('should call merge when the button is clicked', function() {
+        spyOn(this.controller, 'attemptMerge');
+        var button = angular.element(this.element.querySelectorAll('block-footer .btn-merge')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.attemptMerge).toHaveBeenCalled();
+    });
+    it('should call mergeWithResolutions when the Submit button is clicked', function() {
+        this.controller.conflicts = [{}];
+        scope.$digest();
+        spyOn(this.controller, 'mergeWithResolutions');
+
+        var button = angular.element(this.element.querySelectorAll('block-footer .btn-resolution')[0]);
+        button.triggerHandler('click');
+        expect(this.controller.mergeWithResolutions).toHaveBeenCalled();
     });
 });

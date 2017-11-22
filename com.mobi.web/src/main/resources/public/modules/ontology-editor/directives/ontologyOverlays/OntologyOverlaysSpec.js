@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Ontology Overlays directive', function() {
-    var $compile, scope, element, ontologyStateSvc;
+    var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -46,20 +46,27 @@ describe('Ontology Overlays directive', function() {
         ontologyStateSvc.showRemoveIndividualPropertyOverlay = true;
         ontologyStateSvc.showCommitOverlay = true;
         ontologyStateSvc.showCreateBranchOverlay = true;
-        element = $compile(angular.element('<ontology-overlays></ontology-overlays>'))(scope);
+        this.element = $compile(angular.element('<ontology-overlays></ontology-overlays>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        ontologyStateSvc = null;
+        this.element.remove();
     });
 
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('ONTOLOGY-OVERLAYS');
+            expect(this.element.prop('tagName')).toBe('ONTOLOGY-OVERLAYS');
         });
         _.forEach(['annotation-overlay', 'datatype-property-overlay', 'object-property-overlay',
         'ontology-download-overlay', 'create-class-overlay', 'create-property-overlay', 'create-individual-overlay',
         'ontology-close-overlay', 'commit-overlay', 'create-branch-overlay'],
         function(item) {
             it('with a ' + item, function() {
-                expect(element.find(item).length).toBe(1);
+                expect(this.element.find(item).length).toBe(1);
             });
         });
     });

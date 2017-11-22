@@ -20,51 +20,51 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="ontology-tab">
-    <branch-select ng-model="dvm.sm.listItem.ontologyRecord.branchId"></branch-select>
-    <tabset class="centered">
-        <tab heading="'Project'" active="dvm.sm.listItem.editorTabStates.project.active"
-             on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.project.entityIRI, false)">
-            <project-tab></project-tab>
-        </tab>
-        <tab heading="'Overview'" active="dvm.sm.listItem.editorTabStates.overview.active"
-             on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.overview.entityIRI)">
-            <overview-tab></overview-tab>
-        </tab>
-        <tab heading="'Classes'" active="dvm.sm.listItem.editorTabStates.classes.active"
-             on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.classes.entityIRI)">
-            <classes-tab></classes-tab>
-        </tab>
-        <tab heading="'Properties'" active="dvm.sm.listItem.editorTabStates.properties.active"
-             on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.properties.entityIRI)">
-            <properties-tab></properties-tab>
-        </tab>
-        <tab heading="'Individuals'" active="dvm.sm.listItem.editorTabStates.individuals.active"
-             on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.individuals.entityIRI, false)">
-            <individuals-tab></individuals-tab>
-        </tab>
-        <tab heading="'Schemes'" active="dvm.sm.listItem.editorTabStates.schemes.active" hide-tab="!dvm.sm.listItem.isVocabulary"
-            on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.schemes.entityIRI, false)">
-            <concept-schemes-tab></concept-schemes-tab>
-        </tab>
-        <tab heading="'Concepts'" active="dvm.sm.listItem.editorTabStates.concepts.active" hide-tab="!dvm.sm.listItem.isVocabulary"
-            on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.concepts.entityIRI, false)">
-            <concepts-tab></concepts-tab>
-        </tab>
-        <tab heading="'Search'" active="dvm.sm.listItem.editorTabStates.search.active"
-             on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.search.entityIRI, false)">
-            <search-tab></search-tab>
-        </tab>
-        <tab heading="dvm.savedChanges" active="dvm.sm.listItem.editorTabStates.savedChanges.active">
-            <saved-changes-tab></saved-changes-tab>
-        </tab>
-        <tab heading="'Merge'" active="dvm.sm.listItem.editorTabStates.merge.active">
-            <merge-tab></merge-tab>
-        </tab>
-        <tab heading="'Commits'" active="dvm.sm.listItem.editorTabStates.commits.active">
-            <commits-tab></commits-tab>
-        </tab>
-    </tabset>
-    <span ng-if="dvm.sm.listItem.isSaved" class="saved-text text-muted">Saved</span>
-    <ontology-button-stack></ontology-button-stack>
+<div class="ontology-tab full-height">
+    <merge-tab ng-if="dvm.sm.listItem.merge"></merge-tab>
+    <div class="main-tabs full-height" ng-if="!dvm.sm.listItem.merge">
+        <branch-select ng-model="dvm.sm.listItem.ontologyRecord.branchId"></branch-select>
+        <tabset class="centered">
+            <tab heading="'Project'" active="dvm.sm.listItem.editorTabStates.project.active"
+                 on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.project.entityIRI, false)">
+                <project-tab></project-tab>
+            </tab>
+            <tab heading="'Overview'" active="dvm.sm.listItem.editorTabStates.overview.active"
+                 on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.overview.entityIRI)">
+                <overview-tab></overview-tab>
+            </tab>
+            <tab heading="'Classes'" active="dvm.sm.listItem.editorTabStates.classes.active"
+                 on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.classes.entityIRI)">
+                <classes-tab></classes-tab>
+            </tab>
+            <tab heading="'Properties'" active="dvm.sm.listItem.editorTabStates.properties.active"
+                 on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.properties.entityIRI)">
+                <properties-tab></properties-tab>
+            </tab>
+            <tab heading="'Individuals'" active="dvm.sm.listItem.editorTabStates.individuals.active"
+                 on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.individuals.entityIRI, false)">
+                <individuals-tab></individuals-tab>
+            </tab>
+            <tab heading="'Schemes'" active="dvm.sm.listItem.editorTabStates.schemes.active" hide-tab="!dvm.sm.listItem.isVocabulary"
+                on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.schemes.entityIRI, false)">
+                <concept-schemes-tab></concept-schemes-tab>
+            </tab>
+            <tab heading="'Concepts'" active="dvm.sm.listItem.editorTabStates.concepts.active" hide-tab="!dvm.sm.listItem.isVocabulary"
+                on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.concepts.entityIRI, false)">
+                <concepts-tab></concepts-tab>
+            </tab>
+            <tab heading="'Search'" active="dvm.sm.listItem.editorTabStates.search.active"
+                 on-click="dvm.sm.setSelected(dvm.sm.listItem.editorTabStates.search.entityIRI, false)">
+                <search-tab></search-tab>
+            </tab>
+            <tab heading="dvm.savedChanges" active="dvm.sm.listItem.editorTabStates.savedChanges.active">
+                <saved-changes-tab></saved-changes-tab>
+            </tab>
+            <tab heading="'Commits'" active="dvm.sm.listItem.editorTabStates.commits.active">
+                <commits-tab></commits-tab>
+            </tab>
+        </tabset>
+        <span ng-if="dvm.sm.listItem.isSaved" class="saved-text text-muted">Saved</span>
+        <ontology-button-stack></ontology-button-stack>
+    </div>
 </div>

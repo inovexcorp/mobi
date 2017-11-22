@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Discover Tabset directive', function() {
-    var $compile, scope, element, discoverStateSvc;
+    var $compile, scope, discoverStateSvc;
 
     beforeEach(function() {
         module('templates');
@@ -33,30 +33,37 @@ describe('Discover Tabset directive', function() {
             scope = _$rootScope_;
             discoverStateSvc = _discoverStateService_;
         });
-        
-        element = $compile(angular.element('<discover-tabset></discover-tabset>'))(scope);
+
+        this.element = $compile(angular.element('<discover-tabset></discover-tabset>'))(scope);
         scope.$digest();
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        discoverStateSvc = null;
+        this.element.remove();
     });
 
     describe('replaces the element with the correct html', function() {
         it('for wrapping containers', function() {
-            expect(element.prop('tagName')).toBe('DIV');
-            expect(element.hasClass('discover-tabset')).toBe(true);
+            expect(this.element.prop('tagName')).toBe('DIV');
+            expect(this.element.hasClass('discover-tabset')).toBe(true);
         });
         it('with a tabset', function() {
-            expect(element.find('tabset').length).toBe(1);
+            expect(this.element.find('tabset').length).toBe(1);
         });
         it('with tabs', function() {
-            expect(element.find('tab').length).toBe(3);
+            expect(this.element.find('tab').length).toBe(3);
         });
         it('with explore-tab', function() {
-            expect(element.find('explore-tab').length).toBe(1);
+            expect(this.element.find('explore-tab').length).toBe(1);
         });
         it('with query-tab', function() {
-            expect(element.find('query-tab').length).toBe(1);
+            expect(this.element.find('query-tab').length).toBe(1);
         });
         it('with search-tab', function() {
-            expect(element.find('discover-search-tab').length).toBe(1);
+            expect(this.element.find('discover-search-tab').length).toBe(1);
         });
     });
 });

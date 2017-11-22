@@ -21,12 +21,7 @@
  * #L%
  */
 describe('Groups List directive', function() {
-    var $compile,
-        scope,
-        userManagerSvc,
-        userStateSvc,
-        loginManagerSvc,
-        controller;
+    var $compile, scope, userManagerSvc, userStateSvc, loginManagerSvc;
 
     beforeEach(function() {
         module('templates');
@@ -42,25 +37,31 @@ describe('Groups List directive', function() {
             $compile = _$compile_;
             scope = _$rootScope_;
         });
+
+        this.element = $compile(angular.element('<groups-list></groups-list>'))(scope);
+        scope.$digest();
+        this.controller = this.element.controller('groupsList');
+    });
+
+    afterEach(function() {
+        $compile = null;
+        scope = null;
+        userManagerSvc = null;
+        userStateSvc = null;
+        loginManagerSvc = null;
+        this.element.remove();
     });
 
     describe('controller methods', function() {
-        beforeEach(function() {
-            this.element = $compile(angular.element('<groups-list></groups-list>'))(scope);
-            scope.$digest();
-            controller = this.element.controller('groupsList');
-        });
         it('should set the selected group when clicked', function() {
             var group = {};
-            controller.onClick(group);
+            this.controller.onClick(group);
             expect(userStateSvc.selectedGroup).toEqual(group);
         });
     });
     describe('replaces the element with the correct html', function() {
         beforeEach(function() {
             userStateSvc.filteredGroupList = false;
-            this.element = $compile(angular.element('<groups-list></groups-list>'))(scope);
-            scope.$digest();
         });
         it('for wrapping containers', function() {
             expect(this.element.hasClass('groups-list')).toBe(true);
@@ -109,13 +110,11 @@ describe('Groups List directive', function() {
         var group = {title: 'group', members: []};
         userStateSvc.filteredGroupList = false;
         userManagerSvc.groups = [group];
-        var element = $compile(angular.element('<groups-list></groups-list>'))(scope);
+        spyOn(this.controller, 'onClick');
         scope.$digest();
-        controller = element.controller('groupsList');
-        spyOn(controller, 'onClick');
 
-        var groupLink = angular.element(element.querySelectorAll('li a')[0]);
+        var groupLink = angular.element(this.element.querySelectorAll('li a')[0]);
         groupLink.triggerHandler('click');
-        expect(controller.onClick).toHaveBeenCalledWith(group);
+        expect(this.controller.onClick).toHaveBeenCalledWith(group);
     });
 });
