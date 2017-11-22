@@ -46,6 +46,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -97,6 +98,16 @@ public class RDFImportServiceImpl implements RDFImportService {
         }
     }
 
+    @Override
+    public void importInputStream(ImportServiceConfig config, InputStream stream) throws IOException {
+        if (config.getFormat() == null) {
+            throw new IllegalArgumentException("Config must contain a format if importing an InputStream");
+        }
+        try (RepositoryConnection conn = getConnection(config)) {
+            importInputStream(conn, config, stream, config.getFormat());
+        }
+    }
+
     private Repository getRepo(String repositoryID) {
         Repository repository = initializedRepositories.get(repositoryID);
         if (repository == null) {
@@ -140,6 +151,11 @@ public class RDFImportServiceImpl implements RDFImportService {
 
     private void importFile(RepositoryConnection conn, ImportServiceConfig config, @Nonnull File file,
                             @Nonnull RDFFormat format) throws IOException {
+        importInputStream(conn, config, new FileInputStream(file), format);
+    }
+
+    private void importInputStream(RepositoryConnection conn, ImportServiceConfig config, @Nonnull InputStream stream,
+                                   @Nonnull RDFFormat format) throws IOException {
         RDFParser parser = Rio.createParser(format);
         ParserConfig parserConfig = new ParserConfig();
         if (config.getContinueOnError()) {
@@ -156,7 +172,6 @@ public class RDFImportServiceImpl implements RDFImportService {
             inserter.setPrintToSystem(true);
         }
         parser.setRDFHandler(inserter);
-        parser.parse(new FileInputStream(file), "");
-
+        parser.parse(stream, "");
     }
 }

@@ -26,8 +26,10 @@ package com.mobi.dataset.rest;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.glassfish.jersey.media.multipart.FormDataBodyPart;
+import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import java.io.InputStream;
 import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
@@ -140,4 +142,20 @@ public interface DatasetRest {
     @ApiOperation("Clears the data within a specific DatasetRecord in the local Catalog")
     Response clearDatasetRecord(@PathParam("datasetRecordId") String datasetRecordId,
                                 @DefaultValue("false") @QueryParam("force") boolean force);
+
+    /**
+     * Uploads all RDF data in the provided file into the Dataset of a specific DatasetRecord.
+     *
+     * @param datasetRecordId The IRI of a DatasetRecord
+     * @param fileInputStream An InputStream of a RDF file passed as form data
+     * @param fileDetail Information about the RDF file being uploaded, including the name
+     * @return A Response indicating the success of the request
+     */
+    @POST
+    @Path("{datasetRecordId}/data")
+    @RolesAllowed("user")
+    @ApiOperation("Uploads the data within an RDF file to a specific DatasetRecord in the local Catalog")
+    Response uploadData(@PathParam("datasetRecordId") String datasetRecordId,
+                        @FormDataParam("file") InputStream fileInputStream,
+                        @FormDataParam("file") FormDataContentDisposition fileDetail);
 }

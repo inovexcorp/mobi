@@ -23,6 +23,9 @@ package com.mobi.itests.rest;
  * #L%
  */
 
+import static com.mobi.itests.rest.utils.RestITUtils.authenticateUser;
+import static com.mobi.itests.rest.utils.RestITUtils.baseUrl;
+import static com.mobi.itests.rest.utils.RestITUtils.createHttpClient;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -75,9 +78,6 @@ import javax.inject.Inject;
 public class OntologyRestIT extends KarafTestSupport {
 
     private static Boolean setupComplete = false;
-    private static String userName = "admin";
-    private static String password = "admin";
-    private static String baseUrl = "https://localhost:9082/mobirest";
 
     @Inject
     protected static BundleContext thisBundleContext;
@@ -152,23 +152,6 @@ public class OntologyRestIT extends KarafTestSupport {
         }
     }
 
-    private CloseableHttpClient createHttpClient() throws GeneralSecurityException {
-        SSLContextBuilder builder = new SSLContextBuilder();
-        builder.loadTrustMaterial(null, (TrustStrategy) (chain, authType) -> true);
-        SSLConnectionSocketFactory factory = new SSLConnectionSocketFactory(builder.build(), (s, sslSession) -> true);
-        return HttpClients.custom().setSSLSocketFactory(factory).build();
-    }
-
-    private void authenticateUser(String username, String password) throws IOException, GeneralSecurityException {
-        try (CloseableHttpClient client = createHttpClient()) {
-            HttpGet get = new HttpGet(baseUrl + "/user/login?password="
-                    + URLEncoder.encode(password, "UTF-8") + "&username=" + URLEncoder.encode(username, "UTF-8"));
-            CloseableHttpResponse response = client.execute(get, context);
-            assertNotNull(response);
-            assertTrue(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
-        }
-    }
-
     private HttpEntity createFormData(String filename, String title) throws IOException {
         InputStream ontology = getBundleEntry(thisBundleContext, filename);
         MultipartEntityBuilder mb = MultipartEntityBuilder.create();
@@ -180,14 +163,14 @@ public class OntologyRestIT extends KarafTestSupport {
     }
 
     private CloseableHttpResponse uploadFile(CloseableHttpClient client, HttpEntity entity) throws IOException, GeneralSecurityException {
-        authenticateUser(userName, password);
+        authenticateUser(context);
         HttpPost post = new HttpPost(baseUrl + "/ontologies");
         post.setEntity(entity);
         return client.execute(post, context);
     }
 
     private CloseableHttpResponse deleteOntology(CloseableHttpClient client, String recordId) throws IOException, GeneralSecurityException {
-        authenticateUser(userName, password);
+        authenticateUser(context);
         HttpDelete delete = new HttpDelete(baseUrl + "/ontologies/" + URLEncoder.encode(recordId, "UTF-8"));
         return client.execute(delete, context);
     }
