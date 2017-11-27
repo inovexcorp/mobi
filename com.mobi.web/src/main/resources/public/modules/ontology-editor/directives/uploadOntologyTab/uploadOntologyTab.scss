@@ -13,6 +13,34 @@
 
         form {
             padding: 30px;
+
+            md-list-item {
+                border-bottom: 1px solid $gray-light;
+
+                &:last-child {
+                    border-bottom: none;
+                }
+
+                &:hover {
+                    background-color: $gray-lighter;
+                }
+
+                .fa {
+                    margin-right: 5px;
+
+                    &.fa-times {
+                        color: $brand-danger;
+                    }
+
+                    &.fa-check {
+                        color: $brand-success;
+                    }
+                }
+            }
+        }
+
+        .block-footer {
+            border: none;
         }
     }
 }

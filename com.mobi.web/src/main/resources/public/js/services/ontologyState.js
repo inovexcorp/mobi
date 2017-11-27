@@ -189,6 +189,35 @@
             self.vocabularySpinnerId = 'concepts-spinner';
 
             /**
+             * @ngdoc property
+             * @name uploadList
+             * @propertyOf ontologyState.service:ontologyStateService
+             * @type {Object[]}
+             *
+             * @description
+             * `uploadList` holds an array of upload objects which contain properties about the uploaded files.
+             * The structure of the upload object is:
+             * {
+             *     id: '',
+             *     promise: undefined,
+             *     title: ''
+             * }
+             */
+            self.uploadList = [];
+
+            /**
+             * @ngdoc method
+             * @name clearUploadList
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Clears the `uploadList` variable.
+             */
+            self.clearUploadList = function() {
+                self.uploadList = [];
+            }
+
+            /**
              * @ngdoc method
              * @name initialize
              * @methodOf ontologyState.service:ontologyStateService

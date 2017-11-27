@@ -27,9 +27,9 @@
         .module('uploadOntologyTab', [])
         .directive('uploadOntologyTab', uploadOntologyTab);
 
-        uploadOntologyTab.$inject = ['REGEX', 'ontologyManagerService', 'ontologyStateService'];
+        uploadOntologyTab.$inject = ['ontologyStateService'];
 
-        function uploadOntologyTab(REGEX, ontologyManagerService, ontologyStateService) {
+        function uploadOntologyTab(ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,15 +38,17 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.om = ontologyManagerService;
-                    dvm.os = ontologyStateService;
-                    dvm.type = 'ontology';
+                    dvm.state = ontologyStateService;
+                    dvm.files = [];
+                    dvm.showOntology = false;
 
-                    dvm.upload = function() {
-                        dvm.os.uploadThenGet(dvm.file, dvm.title, dvm.description,
-                            _.join(_.map(dvm.keywords, _.trim), ','), dvm.type).then(recordId => {
-                                dvm.os.showUploadTab = false;
-                            }, errorMessage => dvm.error = errorMessage);
+                    dvm.hasStatus = function(promise, value) {
+                        return promise.$$state.status === value;
+                    }
+
+                    dvm.cancel = function() {
+                        dvm.state.showUploadTab = false;
+                        dvm.state.clearUploadList();
                     }
                 }
             }

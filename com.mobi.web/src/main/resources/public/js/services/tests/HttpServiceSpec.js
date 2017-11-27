@@ -95,4 +95,28 @@ describe('Http service', function() {
             expect(httpSvc.pending[0].canceller).toEqual({resolve: 'different'});
         });
     });
+    describe('post should call the correct methods when id', function() {
+        beforeEach(function() {
+            spyOn($http, 'post').and.callThrough();
+            spyOn($q, 'defer').and.returnValue({resolve: 'different'});
+        });
+        it('exists in the pending array', function() {
+            httpSvc.pending = [{
+                id: 'id',
+                canceller: {
+                    resolve: jasmine.createSpy('resolve')
+                }
+            }];
+            httpSvc.post('url', {data: 'data'}, {prop: 'prop'}, 'id');
+            expect($http.post).toHaveBeenCalledWith('url', {data: 'data'}, jasmine.objectContaining({prop: 'prop'}));
+            expect(httpSvc.pending.length).toBe(2);
+            expect(httpSvc.pending[1].canceller).toEqual({resolve: 'different'});
+        });
+        it('does not exist in the pending array', function() {
+            httpSvc.post('url', {data: 'data'}, {prop: 'prop'}, 'id');
+            expect($http.post).toHaveBeenCalledWith('url', {data: 'data'}, jasmine.objectContaining({prop: 'prop'}));
+            expect(httpSvc.pending.length).toBe(1);
+            expect(httpSvc.pending[0].canceller).toEqual({resolve: 'different'});
+        });
+    });
 });

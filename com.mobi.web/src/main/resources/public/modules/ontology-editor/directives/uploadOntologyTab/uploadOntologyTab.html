@@ -29,22 +29,19 @@
             <block>
                 <block-content>
                     <form name="dvm.form" class="clearfix" novalidate autocomplete="off">
-                        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-                        <div class="form-group">
-                            <custom-label>Select a file</custom-label>
-                            <file-input id="file" name="file" ng-model="dvm.file" accept=".owl,.ttl,.xml,.jsonld,.owx,.rdf" required></file-input>
-                        </div>
-                        <text-input ng-model="dvm.title" input-name="title" required="true" display-text="'Title'"></text-input>
-                        <text-area ng-model="dvm.description" input-name="description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
-                        <keyword-select ng-model="dvm.keywords"></keyword-select>
-                        <editor-radio-buttons ng-model="dvm.type"></editor-radio-buttons>
-                        <div class="btn-container clearfix">
-                            <button type="button" class="btn btn-primary pull-right" ng-click="dvm.upload()" ng-disabled="dvm.form.$invalid">Upload</button>
-                            <button type="button" class="btn btn-default pull-right" ng-click="dvm.os.showUploadTab = false">Cancel</button>
-                        </div>
+                        <drag-file files="dvm.files" on-drop="dvm.showOverlay = true"></drag-file>
+                        <md-list>
+                            <md-list-item ng-repeat="item in dvm.state.uploadList" targeted-spinner="{{item.id}}">
+                                <p><i ng-class="{'fa-spinner fa-spin': dvm.hasStatus(item.promise, 0), 'fa-check': dvm.hasStatus(item.promise, 1), 'fa-times': dvm.hasStatus(item.promise, 2)}" class="fa fa-fw"></i>{{item.title}}</p>
+                            </md-list-item>
+                        </md-list>
                     </form>
                 </block-content>
+                <block-footer class="btn-container clearfix">
+                    <button class="btn btn-primary pull-right" ng-click="dvm.cancel()">Cancel</button>
+                </block-footer>
             </block>
         </div>
     </div>
+    <upload-ontology-overlay ng-if="dvm.showOverlay" close-overlay="dvm.showOverlay = false" files="dvm.files" list="dvm.uploadList"></upload-ontology-overlay>
 </div>

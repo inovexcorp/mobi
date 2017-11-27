@@ -3012,4 +3012,9 @@ describe('Ontology State Service', function() {
             expect(this.listItem.classes.iris).toEqual([]);
         });
     });
+    it('clearUploadList should clear the correct variable', function() {
+        ontologyStateSvc.uploadList = [{}];
+        ontologyStateSvc.clearUploadList();
+        expect(ontologyStateSvc.uploadList).toEqual([]);
+    });
 });
