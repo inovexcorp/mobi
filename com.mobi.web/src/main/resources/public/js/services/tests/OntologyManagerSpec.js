@@ -296,7 +296,10 @@ describe('Ontology Manager service', function() {
                         fail('Promise should have rejected');
                     });
                 flushAndVerify($httpBackend);
-                expect(util.rejectError).toHaveBeenCalled();
+                expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                    status: 400,
+                    statusText: this.error
+                }));
             });
         });
         describe('with an id and', function() {
@@ -336,14 +339,14 @@ describe('Ontology Manager service', function() {
                 expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/ontologies', this.fd, this.config, 'id');
             });
             it('unless an error occurs', function() {
-                httpSvc.post.and.returnValue($q.reject(this.error));
+                httpSvc.post.and.returnValue($q.reject({statusText: this.error}));
                 ontologyManagerSvc.uploadFile(this.file, this.title, undefined, undefined, 'id')
                     .then(function(response) {
                         fail('Promise should have rejected');
                     });
                 scope.$apply();
                 expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/ontologies', this.fd, this.config, 'id');
-                expect(util.rejectError).toHaveBeenCalledWith(this.error);
+                expect(util.rejectError).toHaveBeenCalledWith({statusText: this.error});
             });
         });
     });
@@ -1855,7 +1858,10 @@ describe('Ontology Manager service', function() {
                     fail('Promise should have rejected');
                 });
             flushAndVerify($httpBackend);
-            expect(util.rejectError).toHaveBeenCalled();
+            expect(util.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                status: 400,
+                statusText: this.error
+            }));
         });
     });
 });

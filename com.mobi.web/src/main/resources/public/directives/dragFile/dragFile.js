@@ -24,12 +24,30 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name dragFile
+         *
+         * @description
+         * The `dragFile` module only provides the `dragFile` directive which creates the draggable
+         * file section.
+         */
         .module('dragFile', [])
+        /**
+         * @ngdoc directive
+         * @name dragFile.directive:dragFile
+         * @scope
+         * @restrict E
+         * @requires $window
+         *
+         * @description
+         * HTML contents in the drag file which provides an area to drop or browse for files.
+         */
         .directive('dragFile', dragFile);
 
-    dragFile.$inject = ['$timeout', '$window'];
+    dragFile.$inject = ['$window'];
 
-    function dragFile($timeout, $window) {
+    function dragFile($window) {
         return {
             restrict: 'E',
             replace: true,
@@ -75,9 +93,7 @@
                     }
                     scope.$apply();
                 });
-                elem.on('dragleave', event => {
-                    elem.removeClass('hover');
-                });
+                elem.on('dragleave', event => elem.removeClass('hover'));
 
                 var windowElem = angular.element($window);
                 windowElem.on('dragenter', event => event.preventDefault());

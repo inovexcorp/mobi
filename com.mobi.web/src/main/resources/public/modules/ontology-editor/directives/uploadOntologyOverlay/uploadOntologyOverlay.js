@@ -24,7 +24,27 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name uploadOntologyOverlay
+         *
+         * @description
+         * The `uploadOntologyOverlay` module only provides the `uploadOntologyOverlay` directive which creates
+         * upload ontology overlay.
+         */
         .module('uploadOntologyOverlay', [])
+        /**
+         * @ngdoc directive
+         * @name uploadOntologyOverlay.directive:uploadOntologyOverlay
+         * @scope
+         * @restrict E
+         * @requires ontologyManager.service:ontologyManagerService
+         * @requires ontologyState.service:ontologyStateService
+         *
+         * @description
+         * HTML contents in the upload ontology overlay which provides an overlay to enter catalog record metadata
+         * about each of the uploaded files.
+         */
         .directive('uploadOntologyOverlay', uploadOntologyOverlay);
 
         uploadOntologyOverlay.$inject = ['ontologyManagerService', 'ontologyStateService'];
@@ -44,7 +64,6 @@
                     var dvm = this;
                     var om = ontologyManagerService;
                     var state = ontologyStateService;
-                    dvm.total = dvm.files.length;
                     dvm.index = 0;
                     dvm.title = '';
                     dvm.description = '';
@@ -55,7 +74,7 @@
                         var promise = om.uploadFile(dvm.files[dvm.index], dvm.title, dvm.description, _.join(_.map(dvm.keywords, _.trim), ','), id)
                             .then(_.noop, errorMessage => state.addErrorToUploadItem(id, errorMessage));
                         state.uploadList.push({title: dvm.title, id, promise, error: undefined});
-                        if ((dvm.index + 1) < dvm.total) {
+                        if ((dvm.index + 1) < dvm.files.length) {
                             dvm.index++;
                             setFormValues();
                         } else {
@@ -64,7 +83,7 @@
                     }
 
                     dvm.submitAll = function() {
-                        for (var i = dvm.index; i < dvm.total; i++) {
+                        for (var i = dvm.index; i < dvm.files.length; i++) {
                             dvm.submit();
                         }
                     }
@@ -75,7 +94,7 @@
                         dvm.keywords = [];
                     }
 
-                    if (dvm.total) {
+                    if (dvm.files.length) {
                         setFormValues();
                     }
                 }

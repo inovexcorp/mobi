@@ -84,44 +84,45 @@ describe('Upload Ontology Overlay directive', function() {
         });
     });
     describe('controller methods', function() {
-        describe('submit should call the correct method and set the values correctly if the adjusted controller.index is', function() {
-            beforeEach(function() {
-                this.controller.title = 'title';
-                this.controller.description = 'description';
-                this.controller.keywords = ['keywords'];
-                this.controller.index = 0;
+        describe('submit should call the correct method', function() {
+            describe('and set the values correctly if the adjusted controller.index is', function() {
+                beforeEach(function() {
+                    this.controller.title = 'title';
+                    this.controller.description = 'description';
+                    this.controller.keywords = ['keywords'];
+                    this.controller.index = 0;
+                });
+                it('less than controller.files.length', function() {
+                    this.controller.submit();
+                    expect(ontologyManagerSvc.uploadFile).toHaveBeenCalledWith({name: 'file1'}, 'title', 'description', 'keywords', 'upload-0');
+                    expect(this.controller.index).toBe(1);
+                    expect(this.controller.title).toBe('file2');
+                    expect(this.controller.description).toBe('');
+                    expect(this.controller.keywords).toEqual([]);
+                    expect(ontologyStateSvc.uploadList).toEqual([{promise: jasmine.any(Object), id: 'upload-0', title: 'title', error: undefined}]);
+                });
+                it('equal to controller.files.length', function() {
+                    this.controller.files = [{name: 'file1'}];
+                    this.controller.submit();
+                    expect(ontologyManagerSvc.uploadFile).toHaveBeenCalledWith({name: 'file1'}, 'title', 'description', 'keywords', 'upload-0');
+                    expect(scope.closeOverlay).toHaveBeenCalled();
+                    expect(ontologyStateSvc.uploadList).toEqual([{promise: jasmine.any(Object), id: 'upload-0', title: 'title', error: undefined}]);
+                });
             });
-            it('less than controller.total', function() {
-                this.controller.total = 2;
-                this.controller.submit();
-                expect(ontologyManagerSvc.uploadFile).toHaveBeenCalledWith({name: 'file1'}, 'title', 'description', 'keywords', 'upload-0');
-                expect(this.controller.index).toBe(1);
-                expect(this.controller.title).toBe('file2');
-                expect(this.controller.description).toBe('');
-                expect(this.controller.keywords).toEqual([]);
-                expect(ontologyStateSvc.uploadList).toEqual([{promise: jasmine.any(Object), id: 'upload-0', title: 'title', error: undefined}]);
-            });
-            it('equal to controller.total', function() {
-                this.controller.total = 1;
-                this.controller.submit();
-                expect(ontologyManagerSvc.uploadFile).toHaveBeenCalledWith({name: 'file1'}, 'title', 'description', 'keywords', 'upload-0');
-                expect(scope.closeOverlay).toHaveBeenCalled();
-                expect(ontologyStateSvc.uploadList).toEqual([{promise: jasmine.any(Object), id: 'upload-0', title: 'title', error: undefined}]);
-            });
-        });
-        describe('submit should call the right method when uploadFile is', function() {
-            it('resolved', function() {
-                ontologyManagerSvc.uploadFile.and.returnValue($q.when());
-                this.controller.submit();
-                scope.$apply();
-                expect(ontologyStateSvc.addErrorToUploadItem).not.toHaveBeenCalled();
-            });
-            it('rejected', function() {
-                this.controller.index = 0;
-                ontologyManagerSvc.uploadFile.and.returnValue($q.reject('error'));
-                this.controller.submit();
-                scope.$apply();
-                expect(ontologyStateSvc.addErrorToUploadItem).toHaveBeenCalledWith('upload-0', 'error');
+            describe('when uploadFile is', function() {
+                it('resolved', function() {
+                    ontologyManagerSvc.uploadFile.and.returnValue($q.when());
+                    this.controller.submit();
+                    scope.$apply();
+                    expect(ontologyStateSvc.addErrorToUploadItem).not.toHaveBeenCalled();
+                });
+                it('rejected', function() {
+                    this.controller.index = 0;
+                    ontologyManagerSvc.uploadFile.and.returnValue($q.reject('error'));
+                    this.controller.submit();
+                    scope.$apply();
+                    expect(ontologyStateSvc.addErrorToUploadItem).toHaveBeenCalledWith('upload-0', 'error');
+                });
             });
         });
         it('submitAll should call the submit method enough times', function() {
@@ -129,9 +130,13 @@ describe('Upload Ontology Overlay directive', function() {
                 this.controller.index++;
             }.bind(this));
             this.controller.index = 0;
-            this.controller.total = 2;
             this.controller.submitAll();
             expect(this.controller.submit.calls.count()).toBe(2);
         });
+    });
+    it('sets up variables correctly', function() {
+        this.controller.title = 'file1';
+        this.controller.description = '';
+        this.controller.keywords = [];
     });
 });

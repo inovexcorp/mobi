@@ -24,19 +24,39 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name uploadOntologyTab
+         *
+         * @description
+         * The `uploadOntologyTab` module only provides the `uploadOntologyTab` directive which creates
+         * upload ontology tab.
+         */
         .module('uploadOntologyTab', [])
+        /**
+         * @ngdoc directive
+         * @name uploadOntologyTab.directive:uploadOntologyTab
+         * @scope
+         * @restrict E
+         * @requires httpService.service:httpService
+         * @requires ontologyState.service:ontologyStateService
+         *
+         * @description
+         * HTML contents in the upload ontology tab which provides an area to drop or browse for files and
+         * displays a list of ontologies actively being uploaded to the system.
+         */
         .directive('uploadOntologyTab', uploadOntologyTab);
 
-        uploadOntologyTab.$inject = ['$document', 'httpService', 'ontologyStateService'];
+        uploadOntologyTab.$inject = ['httpService', 'ontologyStateService'];
 
-        function uploadOntologyTab($document, httpService, ontologyStateService) {
+        function uploadOntologyTab(httpService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/uploadOntologyTab/uploadOntologyTab.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: ['$scope', function($scope) {
+                controller: function() {
                     var dvm = this;
                     dvm.state = ontologyStateService;
                     dvm.files = [];
@@ -54,7 +74,7 @@
                     dvm.hasPending = function() {
                         return _.some(dvm.state.uploadList, item => httpService.isPending(item.id));
                     }
-                }]
+                }
             }
         }
 })();
