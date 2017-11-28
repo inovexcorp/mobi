@@ -209,7 +209,7 @@
              */
             self.reset = function() {
                 self.list = [];
-                self.listItem = {selected: {}};
+                self.listItem = {};
                 self.showNewTab = false;
                 self.showUploadTab = false;
             }
