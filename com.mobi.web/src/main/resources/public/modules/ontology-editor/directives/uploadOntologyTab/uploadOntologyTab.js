@@ -27,30 +27,34 @@
         .module('uploadOntologyTab', [])
         .directive('uploadOntologyTab', uploadOntologyTab);
 
-        uploadOntologyTab.$inject = ['ontologyStateService'];
+        uploadOntologyTab.$inject = ['$document', 'httpService', 'ontologyStateService'];
 
-        function uploadOntologyTab(ontologyStateService) {
+        function uploadOntologyTab($document, httpService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
                 templateUrl: 'modules/ontology-editor/directives/uploadOntologyTab/uploadOntologyTab.html',
                 scope: {},
                 controllerAs: 'dvm',
-                controller: function() {
+                controller: ['$scope', function($scope) {
                     var dvm = this;
                     dvm.state = ontologyStateService;
                     dvm.files = [];
                     dvm.showOntology = false;
 
                     dvm.hasStatus = function(promise, value) {
-                        return promise.$$state.status === value;
+                        return _.get(promise, '$$state.status') === value;
                     }
 
                     dvm.cancel = function() {
                         dvm.state.showUploadTab = false;
                         dvm.state.clearUploadList();
                     }
-                }
+
+                    dvm.hasPending = function() {
+                        return _.some(dvm.state.uploadList, item => httpService.isPending(item.id));
+                    }
+                }]
             }
         }
 })();

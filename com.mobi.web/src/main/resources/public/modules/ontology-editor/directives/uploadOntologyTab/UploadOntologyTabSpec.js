@@ -21,20 +21,32 @@
  * #L%
  */
 describe('Upload Ontology Tab directive', function() {
-    var $compile, scope, $q, ontologyStateSvc;
+    var $compile, scope, $q, ontologyStateSvc, httpSvc;
 
     beforeEach(function() {
         module('templates');
         module('uploadOntologyTab');
         mockOntologyState();
+        mockHttpService();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _httpService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
+            httpSvc = _httpService_;
         });
 
+        ontologyStateSvc.uploadList = [{
+            error: 'error',
+            id: 'id',
+            promise: {
+                '$$state': {
+                    status: 0
+                }
+            },
+            title: 'title'
+        }];
         this.element = $compile(angular.element('<upload-ontology-tab></upload-ontology-tab>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('uploadOntologyTab');
@@ -45,6 +57,7 @@ describe('Upload Ontology Tab directive', function() {
         scope = null;
         $q = null;
         ontologyStateSvc = null;
+        httpSvc = null;
         this.element.remove();
     });
 
@@ -52,15 +65,13 @@ describe('Upload Ontology Tab directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('upload-ontology-tab')).toBe(true);
-            expect(this.element.querySelectorAll('.actions').length).toBe(1);
-            expect(this.element.querySelectorAll('.form-container').length).toBe(1);
         });
-        _.forEach(['actions', 'header', 'form-container', 'col-xs-6'], function(item) {
+        _.forEach(['actions', 'header', 'row-container', 'md-list-item-text', 'col-xs-6'], function(item) {
             it('with a .' + item, function() {
                 expect(this.element.querySelectorAll('.' + item).length).toBe(1);
             });
         });
-        _.forEach(['block', 'block-content', 'form', 'drag-file'], function(tag) {
+        _.forEach(['block', 'block-content', 'drag-file', 'md-list', 'md-list-item', 'h3', 'i', 'block-footer', 'button'], function(tag) {
             it('with a ' + tag, function() {
                 expect(this.element.find(tag).length).toBe(1);
             });
@@ -92,6 +103,23 @@ describe('Upload Ontology Tab directive', function() {
             this.controller.cancel();
             expect(ontologyStateSvc.showUploadTab).toBe(false);
             expect(ontologyStateSvc.clearUploadList).toHaveBeenCalled();
-        })
+        });
+        describe('hasPending should return correct value when httpService.pending array is', function() {
+            beforeEach(function() {
+                ontologyStateSvc.uploadList = [{id: 'id'}, {id: 'id2'}];
+            });
+            it('empty', function() {
+                httpSvc.isPending.and.returnValue(false);
+                expect(this.controller.hasPending()).toBe(false);
+                expect(httpSvc.isPending).toHaveBeenCalledWith('id');
+                expect(httpSvc.isPending).toHaveBeenCalledWith('id2');
+            });
+            it('populated', function() {
+                httpSvc.isPending.and.returnValue(true);
+                expect(this.controller.hasPending()).toBe(true);
+                expect(httpSvc.isPending).toHaveBeenCalledWith('id');
+                expect(httpSvc.isPending).not.toHaveBeenCalledWith('id2');
+            });
+        });
     });
 });

@@ -23,6 +23,8 @@
 <div class="drag-file">
     <div class="inner-container">
         <i class="fa fa-cloud-upload fa-fw fa-3x"></i>
-        <p>Drag files to upload</p>
+        <p>Drag Files to Upload</p>
+        <p><small>or <a onclick="document.getElementById('drag-file-input').click()">Choose Files</a></small></p>
+        <file-input id="drag-file-input" class="hide" ng-model="dvm.inputFiles" multiple></file-input>
     </div>
 </div>

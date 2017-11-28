@@ -27,9 +27,9 @@
         .module('dragFile', [])
         .directive('dragFile', dragFile);
 
-    dragFile.$inject = ['$timeout'];
+    dragFile.$inject = ['$timeout', '$window'];
 
-    function dragFile($timeout) {
+    function dragFile($timeout, $window) {
         return {
             restrict: 'E',
             replace: true,
@@ -41,12 +41,23 @@
                 files: '='
             },
             controllerAs: 'dvm',
-            controller: function() {
+            controller: ['$scope', function($scope) {
                 var dvm = this;
+                dvm.inputFiles = [];
+
                 if (!_.isArray(dvm.files)) {
                     dvm.files = [];
                 }
-            },
+
+                $scope.$watch('dvm.inputFiles', (newValue, oldValue) => {
+                    if (_.isArray(newValue) && newValue.length) {
+                        dvm.files.push(...newValue);
+                        if ($scope.onDrop) {
+                            $scope.onDrop();
+                        }
+                    }
+                });
+            }],
             link: function(scope, elem, attrs, controller) {
                 elem.on('dragenter', event => event.preventDefault());
                 elem.on('dragover', event => {
@@ -66,6 +77,18 @@
                 });
                 elem.on('dragleave', event => {
                     elem.removeClass('hover');
+                });
+
+                var windowElem = angular.element($window);
+                windowElem.on('dragenter', event => event.preventDefault());
+                windowElem.on('dragover', event => event.preventDefault());
+                windowElem.on('drop', event => event.preventDefault());
+
+                scope.$on('$destroy', () => {
+                    var windowElem = angular.element($window);
+                    windowElem.off('dragenter');
+                    windowElem.off('dragover');
+                    windowElem.off('drop');
                 });
             }
         }

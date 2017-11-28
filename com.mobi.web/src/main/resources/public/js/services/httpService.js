@@ -118,7 +118,7 @@
          * @return {HttpPromise} The HttpPromise returned by the acutal $http.get method.
          */
         self.get = function(url, config, id) {
-            var promise = $http.get(url, addCanceller(config));
+            var promise = $http.get(url, addCanceller(config, id));
             promise.finally(() => _.remove(self.pending, {id}));
             return promise;
         }
@@ -141,7 +141,7 @@
          * @return {HttpPromise} The HttpPromise returned by the acutal $http.post method.
          */
         self.post = function(url, data, config, id) {
-            var promise = $http.post(url, data, addCanceller(config));
+            var promise = $http.post(url, data, addCanceller(config, id));
             promise.finally(() => _.remove(self.pending, {id}));
             return promise;
         }

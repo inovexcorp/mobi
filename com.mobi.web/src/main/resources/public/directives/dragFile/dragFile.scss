@@ -3,7 +3,7 @@
 
 .drag-file {
     background-color: $gray-lighter;
-    border: dashed 3px $gray;
+    border: dashed 1px $gray;
     text-align: center;
 
     &.hover {
@@ -15,6 +15,7 @@
 
         p {
             font-size: 18px;
+            margin: 0;
         }
     }
 }

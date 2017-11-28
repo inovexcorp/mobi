@@ -713,6 +713,7 @@ function mockOntologyState() {
             this.addToClassIRIs = jasmine.createSpy('addToClassIRIs');
             this.removeFromClassIRIs = jasmine.createSpy('removeFromClassIRIs');
             this.clearUploadList = jasmine.createSpy('clearUploadList');
+            this.addErrorToUploadItem = jasmine.createSpy('addErrorToUploadItem');
         });
     });
 }
