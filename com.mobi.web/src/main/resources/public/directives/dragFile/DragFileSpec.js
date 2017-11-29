@@ -38,14 +38,13 @@ describe('Drag File directive', function() {
 
     beforeEach(function helpers() {
         this.createEvent = function(type) {
-            return { type, preventDefault: jasmine.createSpy('preventDefault')};
+            return { type: type, preventDefault: jasmine.createSpy('preventDefault')};
         }
         this.compile = function() {
             this.element = $compile(angular.element('<drag-file files="files" on-drop="onDrop()"></drag-file>'))(scope);
             scope.$apply();
             this.controller = this.element.controller('dragFile');
         }
-        this.compile();
     });
 
     afterEach(function() {
@@ -55,6 +54,9 @@ describe('Drag File directive', function() {
     });
 
     describe('controller bound variables', function() {
+        beforeEach(function() {
+            this.compile();
+        });
         it('files should be two way bound', function() {
             this.controller.files = ['new'];
             scope.$apply();
@@ -63,6 +65,7 @@ describe('Drag File directive', function() {
     });
     describe('in isolated scope', function() {
         beforeEach(function() {
+            this.compile();
             this.isolatedScope = this.element.isolateScope();
         });
         it('onDrop is called in the parent scope', function() {
@@ -72,6 +75,9 @@ describe('Drag File directive', function() {
         });
     });
     describe('replaces the directive with the correct html', function() {
+        beforeEach(function() {
+            this.compile();
+        });
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('drag-file')).toBe(true);
@@ -95,18 +101,23 @@ describe('Drag File directive', function() {
         this.compile();
         expect(this.controller.files).toEqual([]);
     });
-    it('adds controller.inputFiles to controller.files when they get changed', function() {
+    it('adds controller.inputFiles to controller.files when they are changed', function() {
+        this.compile();
         this.controller.inputFiles = ['inputFile', 'inputFile2'];
         scope.$apply();
         this.controller.files = ['inputFile', 'inputFile2'];
         expect(scope.onDrop).toHaveBeenCalled();
     });
     it('dragenter should call correct method', function() {
+        this.compile();
         var event = this.createEvent('dragenter');
         this.element.triggerHandler(event);
         expect(event.preventDefault).toHaveBeenCalled();
     });
     describe('dragover should add the hover class when dataTransfer files is', function() {
+        beforeEach(function() {
+            this.compile();
+        });
         it('empty', function() {
             var event = this.createEvent('dragover');
             this.element.triggerHandler(event);
@@ -122,6 +133,7 @@ describe('Drag File directive', function() {
         });
     });
     it('drop should remove class and call correct methods', function() {
+        this.compile();
         var event = this.createEvent('drop');
         event.dataTransfer = { files: [{}] };
         this.element.addClass('hover');
@@ -131,6 +143,7 @@ describe('Drag File directive', function() {
         expect(scope.onDrop).toHaveBeenCalled();
     });
     it('dragleave should remove the hover class', function() {
+        this.compile();
         this.element.addClass('hover');
         this.element.triggerHandler('dragleave');
         expect(this.element.hasClass('hover')).toBe(false);
