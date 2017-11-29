@@ -3012,4 +3012,17 @@ describe('Ontology State Service', function() {
             expect(this.listItem.classes.iris).toEqual([]);
         });
     });
+    describe('addErrorToUploadItem should add the message to the correct message when', function() {
+        beforeEach(function() {
+            ontologyStateSvc.uploadList = [{id: 'id'}, {id: 'id2'}];
+        });
+        it('found', function() {
+            ontologyStateSvc.addErrorToUploadItem('id2', 'error');
+            expect(ontologyStateSvc.uploadList).toEqual([{id: 'id'}, {id: 'id2', error: 'error'}]);
+        });
+        it('not found', function() {
+            ontologyStateSvc.addErrorToUploadItem('missing', 'error');
+            expect(ontologyStateSvc.uploadList).toEqual([{id: 'id'}, {id: 'id2'}]);
+        });
+    });
 });

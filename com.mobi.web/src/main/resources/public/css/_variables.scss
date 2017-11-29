@@ -40,7 +40,7 @@ $screen-md-max:              ($screen-lg-min - 1) !default;
 
 //== Common Mixins
 @mixin right-arrow($size, $color) {
-    width: 0; 
+    width: 0;
     min-height: 0;
     border-top: $size solid transparent;
     border-bottom: $size solid transparent;

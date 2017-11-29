@@ -99,6 +99,7 @@
             'topConceptOverlay',
             'treeItem',
             'uploadChangesOverlay',
+            'uploadOntologyOverlay',
             'uploadOntologyTab',
             'usagesBlock',
 

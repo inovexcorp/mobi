@@ -448,6 +448,7 @@ function mockHttpService() {
             this.isPending = jasmine.createSpy('isPending');
             this.cancel = jasmine.createSpy('cancel');
             this.get = jasmine.createSpy('get');
+            this.post = jasmine.createSpy('post');
         });
     });
 }
@@ -643,6 +644,7 @@ function mockOntologyState() {
             };
             this.states = [];
             this.list = [];
+            this.uploadList = [];
             this.initialize = jasmine.createSpy('initialize');
             this.reset = jasmine.createSpy('reset');
             this.getOntology = jasmine.createSpy('getOntology').and.returnValue({});
@@ -710,6 +712,7 @@ function mockOntologyState() {
             this.hasInProgressCommit = jasmine.createSpy('hasInProgressCommit').and.returnValue(false);
             this.addToClassIRIs = jasmine.createSpy('addToClassIRIs');
             this.removeFromClassIRIs = jasmine.createSpy('removeFromClassIRIs');
+            this.addErrorToUploadItem = jasmine.createSpy('addErrorToUploadItem');
         });
     });
 }

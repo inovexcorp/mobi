@@ -189,6 +189,39 @@
             self.vocabularySpinnerId = 'concepts-spinner';
 
             /**
+             * @ngdoc property
+             * @name uploadList
+             * @propertyOf ontologyState.service:ontologyStateService
+             * @type {Object[]}
+             *
+             * @description
+             * `uploadList` holds an array of upload objects which contain properties about the uploaded files.
+             * The structure of the upload object is:
+             * {
+             *     error: '',
+             *     id: '',
+             *     promise: {},
+             *     title: ''
+             * }
+             */
+            self.uploadList = [];
+
+            /**
+             * @ngdoc method
+             * @name addErrorToUploadItem
+             * @methodOf ontologyState.service:ontologyStateService
+             *
+             * @description
+             * Adds the error message to the list item with the identified id.
+             *
+             * @param {string} id The id of the upload item.
+             * @param {string} error The error message for the upload item.
+             */
+            self.addErrorToUploadItem = function(id, error) {
+                _.set(_.find(self.uploadList, {id}), 'error', error);
+            }
+
+            /**
              * @ngdoc method
              * @name initialize
              * @methodOf ontologyState.service:ontologyStateService
