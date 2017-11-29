@@ -3012,11 +3012,6 @@ describe('Ontology State Service', function() {
             expect(this.listItem.classes.iris).toEqual([]);
         });
     });
-    it('clearUploadList should clear the correct variable', function() {
-        ontologyStateSvc.uploadList = [{}];
-        ontologyStateSvc.clearUploadList();
-        expect(ontologyStateSvc.uploadList).toEqual([]);
-    });
     describe('addErrorToUploadItem should add the message to the correct message when', function() {
         beforeEach(function() {
             ontologyStateSvc.uploadList = [{id: 'id'}, {id: 'id2'}];

@@ -100,9 +100,10 @@ describe('Upload Ontology Tab directive', function() {
             });
         });
         it('cancel should set and call correct things', function() {
+            ontologyStateSvc.uploadList = [{}];
             this.controller.cancel();
             expect(ontologyStateSvc.showUploadTab).toBe(false);
-            expect(ontologyStateSvc.clearUploadList).toHaveBeenCalled();
+            expect(ontologyStateSvc.uploadList).toEqual([]);
         });
         describe('hasPending should return correct value when httpService.pending array is', function() {
             beforeEach(function() {

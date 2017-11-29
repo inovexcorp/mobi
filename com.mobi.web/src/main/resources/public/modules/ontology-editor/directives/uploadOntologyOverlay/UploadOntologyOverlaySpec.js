@@ -102,7 +102,7 @@ describe('Upload Ontology Overlay directive', function() {
                     expect(ontologyStateSvc.uploadList).toEqual([{promise: jasmine.any(Object), id: 'upload-0', title: 'title', error: undefined}]);
                 });
                 it('equal to controller.files.length', function() {
-                    this.controller.files = [{name: 'file1'}];
+                    this.controller.total = 1;
                     this.controller.submit();
                     expect(ontologyManagerSvc.uploadFile).toHaveBeenCalledWith({name: 'file1'}, 'title', 'description', 'keywords', 'upload-0');
                     expect(scope.closeOverlay).toHaveBeenCalled();
@@ -132,6 +132,12 @@ describe('Upload Ontology Overlay directive', function() {
             this.controller.index = 0;
             this.controller.submitAll();
             expect(this.controller.submit.calls.count()).toBe(2);
+        });
+        it('cancel should call the correct method and set the correct variable', function() {
+            this.controller.files = [{}];
+            this.controller.cancel();
+            expect(this.controller.files).toEqual([]);
+            expect(scope.closeOverlay).toHaveBeenCalled();
         });
     });
     it('sets up variables correctly', function() {

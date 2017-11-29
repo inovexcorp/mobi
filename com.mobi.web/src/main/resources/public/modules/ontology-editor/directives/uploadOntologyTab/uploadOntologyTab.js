@@ -68,7 +68,7 @@
 
                     dvm.cancel = function() {
                         dvm.state.showUploadTab = false;
-                        dvm.state.clearUploadList();
+                        dvm.state.uploadList = [];
                     }
 
                     dvm.hasPending = function() {

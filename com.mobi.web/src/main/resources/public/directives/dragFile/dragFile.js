@@ -42,6 +42,9 @@
          *
          * @description
          * HTML contents in the drag file which provides an area to drop or browse for files.
+         *
+         * @param {Function} onDrop the function to execute on file drop
+         * @param {Object[]} files the list of files that were dropped
          */
         .directive('dragFile', dragFile);
 
@@ -79,9 +82,10 @@
             link: function(scope, elem, attrs, controller) {
                 elem.on('dragenter', event => event.preventDefault());
                 elem.on('dragover', event => {
-                    event.preventDefault();
-                    if (_.get(event.dataTransfer, 'files', []).length) {
+                    if (_.get(event.dataTransfer, 'items', []).length) {
                         elem.addClass('hover');
+                    } else {
+                        event.preventDefault();
                     }
                 });
                 elem.on('drop', event => {

@@ -7,7 +7,7 @@
     text-align: center;
 
     &.hover {
-        background-color: $gray-light;
+        box-shadow: 0 0 10px 2px $gray-light;
     }
 
     .inner-container {

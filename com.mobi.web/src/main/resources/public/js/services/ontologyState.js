@@ -208,18 +208,6 @@
 
             /**
              * @ngdoc method
-             * @name clearUploadList
-             * @methodOf ontologyState.service:ontologyStateService
-             *
-             * @description
-             * Clears the `uploadList` variable.
-             */
-            self.clearUploadList = function() {
-                self.uploadList = [];
-            }
-
-            /**
-             * @ngdoc method
              * @name addErrorToUploadItem
              * @methodOf ontologyState.service:ontologyStateService
              *

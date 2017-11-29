@@ -37,7 +37,7 @@ describe('Drag File directive', function() {
     });
 
     beforeEach(function helpers() {
-        this.createBasicEvent = function(name) {
+        this.createEvent = function(name) {
             this.event = new Event(name);
             spyOn(this.event, 'preventDefault');
         }
@@ -100,23 +100,33 @@ describe('Drag File directive', function() {
         this.controller.inputFiles = ['inputFile', 'inputFile2'];
         scope.$apply();
         this.controller.files = ['inputFile', 'inputFile2'];
+        expect(scope.onDrop).toHaveBeenCalled();
     });
+    // it('dragenter should call correct method', function() {
+    //     this.createEvent('dragover');
+    //     this.element.triggerHandler('dragenter', this.event);
+    //     expect(this.event.preventDefault).toHaveBeenCalled();
+    // });
     // describe('dragover should add the hover class when dataTransfer files is', function() {
     //     it('empty', function() {
-    //         this.element.triggerHandler('dragover', this.createBasicEvent('dragover'));
+    //         this.createEvent('dragover');
+    //         this.element.triggerHandler('dragover', this.event);
     //         expect(this.event.preventDefault).toHaveBeenCalled();
     //         expect(this.element.hasClass('hover')).toBe(false);
     //     });
     //     it('populated', function() {
-    //         this.event = new DragEvent('dragover', {
-    //             dataTransfer: {
-    //                 files: ['file']
-    //             }
-    //         });
+    //         this.event = new DragEvent('dragover');
     //         spyOn(this.event, 'preventDefault');
+    //         this.event.setData({items: ['file']});
     //         this.element.triggerHandler('dragover', this.event);
-    //         expect(this.event.preventDefault).toHaveBeenCalled();
+    //         expect(this.event.preventDefault).not.toHaveBeenCalled();
     //         expect(this.element.hasClass('hover')).toBe(true);
     //     });
+    // });
+    // it('dragleave should remove the hover class', function() {
+    //     this.element.addClass('hover');
+    //     this.createEvent('dragleave');
+    //     this.element.triggerHandler('dragleave', this.event);
+    //     expect(this.element.hasClass('hover')).toBe(false);
     // });
 });

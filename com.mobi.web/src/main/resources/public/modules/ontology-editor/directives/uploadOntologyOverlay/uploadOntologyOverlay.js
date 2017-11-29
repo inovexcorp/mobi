@@ -44,6 +44,9 @@
          * @description
          * HTML contents in the upload ontology overlay which provides an overlay to enter catalog record metadata
          * about each of the uploaded files.
+         *
+         * @param {Function} closeOverlay the function to call to close the overlay
+         * @param {Object[]} files the list of files to the need catalog metadata added
          */
         .directive('uploadOntologyOverlay', uploadOntologyOverlay);
 
@@ -64,6 +67,8 @@
                     var dvm = this;
                     var om = ontologyManagerService;
                     var state = ontologyStateService;
+                    var file = undefined;
+                    dvm.total = dvm.files.length;
                     dvm.index = 0;
                     dvm.title = '';
                     dvm.description = '';
@@ -71,10 +76,10 @@
 
                     dvm.submit = function() {
                         var id = 'upload-' + dvm.index;
-                        var promise = om.uploadFile(dvm.files[dvm.index], dvm.title, dvm.description, _.join(_.map(dvm.keywords, _.trim), ','), id)
+                        var promise = om.uploadFile(file, dvm.title, dvm.description, _.join(_.map(dvm.keywords, _.trim), ','), id)
                             .then(_.noop, errorMessage => state.addErrorToUploadItem(id, errorMessage));
                         state.uploadList.push({title: dvm.title, id, promise, error: undefined});
-                        if ((dvm.index + 1) < dvm.files.length) {
+                        if ((dvm.index + 1) < dvm.total) {
                             dvm.index++;
                             setFormValues();
                         } else {
@@ -83,18 +88,24 @@
                     }
 
                     dvm.submitAll = function() {
-                        for (var i = dvm.index; i < dvm.files.length; i++) {
+                        for (var i = dvm.index; i < dvm.total; i++) {
                             dvm.submit();
                         }
                     }
 
+                    dvm.cancel = function() {
+                        dvm.files.splice(0);
+                        dvm.closeOverlay();
+                    }
+
                     function setFormValues() {
-                        dvm.title = dvm.files[dvm.index].name;
+                        file = _.pullAt(dvm.files, 0)[0];
+                        dvm.title = file.name;
                         dvm.description = '';
                         dvm.keywords = [];
                     }
 
-                    if (dvm.files.length) {
+                    if (dvm.total) {
                         setFormValues();
                     }
                 }
