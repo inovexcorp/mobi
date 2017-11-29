@@ -37,9 +37,8 @@ describe('Drag File directive', function() {
     });
 
     beforeEach(function helpers() {
-        this.createEvent = function(name) {
-            this.event = new Event(name);
-            spyOn(this.event, 'preventDefault');
+        this.createEvent = function(type) {
+            return { type, preventDefault: jasmine.createSpy('preventDefault')};
         }
         this.compile = function() {
             this.element = $compile(angular.element('<drag-file files="files" on-drop="onDrop()"></drag-file>'))(scope);
@@ -102,31 +101,38 @@ describe('Drag File directive', function() {
         this.controller.files = ['inputFile', 'inputFile2'];
         expect(scope.onDrop).toHaveBeenCalled();
     });
-    // it('dragenter should call correct method', function() {
-    //     this.createEvent('dragover');
-    //     this.element.triggerHandler('dragenter', this.event);
-    //     expect(this.event.preventDefault).toHaveBeenCalled();
-    // });
-    // describe('dragover should add the hover class when dataTransfer files is', function() {
-    //     it('empty', function() {
-    //         this.createEvent('dragover');
-    //         this.element.triggerHandler('dragover', this.event);
-    //         expect(this.event.preventDefault).toHaveBeenCalled();
-    //         expect(this.element.hasClass('hover')).toBe(false);
-    //     });
-    //     it('populated', function() {
-    //         this.event = new DragEvent('dragover');
-    //         spyOn(this.event, 'preventDefault');
-    //         this.event.setData({items: ['file']});
-    //         this.element.triggerHandler('dragover', this.event);
-    //         expect(this.event.preventDefault).not.toHaveBeenCalled();
-    //         expect(this.element.hasClass('hover')).toBe(true);
-    //     });
-    // });
-    // it('dragleave should remove the hover class', function() {
-    //     this.element.addClass('hover');
-    //     this.createEvent('dragleave');
-    //     this.element.triggerHandler('dragleave', this.event);
-    //     expect(this.element.hasClass('hover')).toBe(false);
-    // });
+    it('dragenter should call correct method', function() {
+        var event = this.createEvent('dragenter');
+        this.element.triggerHandler(event);
+        expect(event.preventDefault).toHaveBeenCalled();
+    });
+    describe('dragover should add the hover class when dataTransfer files is', function() {
+        it('empty', function() {
+            var event = this.createEvent('dragover');
+            this.element.triggerHandler(event);
+            expect(event.preventDefault).toHaveBeenCalled();
+            expect(this.element.hasClass('hover')).toBe(false);
+        });
+        it('populated', function() {
+            var event = this.createEvent('dragover');
+            event.dataTransfer = { items: [{}] };
+            this.element.triggerHandler(event);
+            expect(event.preventDefault).not.toHaveBeenCalled();
+            expect(this.element.hasClass('hover')).toBe(true);
+        });
+    });
+    it('drop should remove class and call correct methods', function() {
+        var event = this.createEvent('drop');
+        event.dataTransfer = { files: [{}] };
+        this.element.addClass('hover');
+        this.element.triggerHandler(event);
+        expect(event.preventDefault).toHaveBeenCalled();
+        expect(this.element.hasClass('hover')).toBe(false);
+        expect(scope.onDrop).toHaveBeenCalled();
+    });
+    it('dragleave should remove the hover class', function() {
+        this.element.addClass('hover');
+        this.element.triggerHandler('dragleave');
+        expect(this.element.hasClass('hover')).toBe(false);
+    });
 });

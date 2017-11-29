@@ -46,7 +46,7 @@
          * about each of the uploaded files.
          *
          * @param {Function} closeOverlay the function to call to close the overlay
-         * @param {Object[]} files the list of files to the need catalog metadata added
+         * @param {Object[]} files the list of files that need catalog metadata added
          */
         .directive('uploadOntologyOverlay', uploadOntologyOverlay);
 
