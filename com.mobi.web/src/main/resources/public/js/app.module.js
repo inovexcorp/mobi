@@ -72,6 +72,7 @@
             'confirmationOverlay',
             'customHeader',
             'customLabel',
+            'dragFile',
             'dragMe',
             'dropOnMe',
             'emailInput',

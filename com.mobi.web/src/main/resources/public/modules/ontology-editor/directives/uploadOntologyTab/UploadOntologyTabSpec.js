@@ -21,23 +21,32 @@
  * #L%
  */
 describe('Upload Ontology Tab directive', function() {
-    var $compile, scope, $q, ontologyStateSvc, ontologyManagerSvc;
+    var $compile, scope, $q, ontologyStateSvc, httpSvc;
 
     beforeEach(function() {
         module('templates');
         module('uploadOntologyTab');
-        mockOntologyManager();
         mockOntologyState();
-        injectRegexConstant();
+        mockHttpService();
 
-        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _ontologyManagerService_) {
+        inject(function(_$compile_, _$rootScope_, _$q_, _ontologyStateService_, _httpService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             $q = _$q_;
             ontologyStateSvc = _ontologyStateService_;
-            ontologyManagerSvc = _ontologyManagerService_;
+            httpSvc = _httpService_;
         });
 
+        ontologyStateSvc.uploadList = [{
+            error: 'error',
+            id: 'id',
+            promise: {
+                '$$state': {
+                    status: 0
+                }
+            },
+            title: 'title'
+        }];
         this.element = $compile(angular.element('<upload-ontology-tab></upload-ontology-tab>'))(scope);
         scope.$digest();
         this.controller = this.element.controller('uploadOntologyTab');
@@ -48,7 +57,7 @@ describe('Upload Ontology Tab directive', function() {
         scope = null;
         $q = null;
         ontologyStateSvc = null;
-        ontologyManagerSvc = null;
+        httpSvc = null;
         this.element.remove();
     });
 
@@ -56,64 +65,61 @@ describe('Upload Ontology Tab directive', function() {
         it('for wrapping containers', function() {
             expect(this.element.prop('tagName')).toBe('DIV');
             expect(this.element.hasClass('upload-ontology-tab')).toBe(true);
-            expect(this.element.querySelectorAll('.actions').length).toBe(1);
-            expect(this.element.querySelectorAll('.form-container').length).toBe(1);
         });
-        _.forEach(['form', 'file-input', 'custom-label', 'text-input', 'text-area', 'keyword-select', 'editor-radio-buttons'], function(tag) {
+        _.forEach(['actions', 'header', 'row-container', 'md-list-item-text', 'col-xs-6'], function(item) {
+            it('with a .' + item, function() {
+                expect(this.element.querySelectorAll('.' + item).length).toBe(1);
+            });
+        });
+        _.forEach(['block', 'block-content', 'drag-file', 'md-list', 'md-list-item', 'h3', 'i', 'block-footer', 'button'], function(tag) {
             it('with a ' + tag, function() {
                 expect(this.element.find(tag).length).toBe(1);
             });
         });
-        it('with a .btn-container', function() {
-            expect(this.element.querySelectorAll('.btn-container').length).toBe(1);
-        });
-        it('with custom buttons to upload and cancel', function() {
-            var buttons = this.element.querySelectorAll('.btn-container button');
-            expect(buttons.length).toBe(2);
-            expect(['Cancel', 'Upload']).toContain(angular.element(buttons[0]).text().trim());
-            expect(['Cancel', 'Upload']).toContain(angular.element(buttons[1]).text().trim());
-        });
-        it('depending on whether the form is invalid', function() {
-            var button = angular.element(this.element.querySelectorAll('.btn-container button.btn-primary')[0]);
-            expect(button.attr('disabled')).toBeTruthy();
-
-            this.controller.form.$invalid = false;
-            scope.$digest();
-            expect(button.attr('disabled')).toBeFalsy();
-        });
-        it('depending on whether there is an error', function() {
-            expect(this.element.find('error-display').length).toBe(0);
-
-            this.controller.error = true;
-            scope.$digest();
-            expect(this.element.find('error-display').length).toBe(1);
+        it('with a upload-ontology-overlay', function() {
+            expect(this.element.find('upload-ontology-overlay').length).toBe(0);
+            this.controller.showOverlay = true;
+            scope.$apply();
+            expect(this.element.find('upload-ontology-overlay').length).toBe(1);
         });
     });
     describe('controller methods', function() {
-        describe('should upload an ontology', function() {
+        describe('hasStatus should return the correct boolean when value and status are', function() {
             beforeEach(function() {
-                this.listItem = {ontology: []};
-                this.controller.file = {};
-                this.controller.title = '';
-                this.controller.description = '';
-                this.controller.keywords = ['one', 'two'];
-                ontologyStateSvc.showUploadTab = true;
+                this.promise = {
+                    '$$state': {
+                        status: 0
+                    }
+                };
             });
-            it('unless an error occurs', function() {
-                ontologyStateSvc.uploadThenGet.and.returnValue($q.reject('Error message'));
-                this.controller.upload();
-                scope.$apply();
-                expect(ontologyStateSvc.uploadThenGet).toHaveBeenCalledWith(this.controller.file, this.controller.title, this.controller.description, 'one,two', this.controller.type);
-                expect(ontologyManagerSvc.getOntologyIRI).not.toHaveBeenCalled();
-                expect(ontologyStateSvc.showUploadTab).toBe(true);
-                expect(this.controller.error).toBe('Error message');
+            it('equal', function() {
+                expect(this.controller.hasStatus(this.promise, 0)).toBe(true);
             });
-            it('succesfully', function() {
-                this.controller.upload();
-                scope.$apply();
-                expect(ontologyStateSvc.uploadThenGet).toHaveBeenCalledWith(this.controller.file, this.controller.title, this.controller.description, 'one,two', this.controller.type);
-                expect(ontologyStateSvc.showUploadTab).toBe(false);
-                expect(this.controller.error).toBeUndefined();
+            it('not equal', function() {
+                expect(this.controller.hasStatus(this.promise, 1)).toBe(false);
+            });
+        });
+        it('cancel should set and call correct things', function() {
+            ontologyStateSvc.uploadList = [{}];
+            this.controller.cancel();
+            expect(ontologyStateSvc.showUploadTab).toBe(false);
+            expect(ontologyStateSvc.uploadList).toEqual([]);
+        });
+        describe('hasPending should return correct value when httpService.pending array is', function() {
+            beforeEach(function() {
+                ontologyStateSvc.uploadList = [{id: 'id'}, {id: 'id2'}];
+            });
+            it('empty', function() {
+                httpSvc.isPending.and.returnValue(false);
+                expect(this.controller.hasPending()).toBe(false);
+                expect(httpSvc.isPending).toHaveBeenCalledWith('id');
+                expect(httpSvc.isPending).toHaveBeenCalledWith('id2');
+            });
+            it('populated', function() {
+                httpSvc.isPending.and.returnValue(true);
+                expect(this.controller.hasPending()).toBe(true);
+                expect(httpSvc.isPending).toHaveBeenCalledWith('id');
+                expect(httpSvc.isPending).not.toHaveBeenCalledWith('id2');
             });
         });
     });

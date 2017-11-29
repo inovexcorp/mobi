@@ -118,18 +118,38 @@
          * @return {HttpPromise} The HttpPromise returned by the acutal $http.get method.
          */
         self.get = function(url, config, id) {
+            var promise = $http.get(url, addCanceller(config, id));
+            promise.finally(() => _.remove(self.pending, {id}));
+            return promise;
+        }
+
+        /**
+         * @ngdoc method
+         * @name post
+         * @methodOf httpService.service:httpService
+         *
+         * @description
+         * Wraps Angular's $http.post method to provide a way to track and cancel the associated request.
+         * The provided id will be used to create a new request item which is how this request will be
+         * tracked. After the request is completed, the associated request item is removed from the
+         * pending array.
+         *
+         * @param {string} url The URL that you want to perform a $http.post on.
+         * @param {Object} data The request content.
+         * @param {Object} config The configuration object associated with the $http.get.
+         * @param {string} id The id to be assigned to the request that you are making.
+         * @return {HttpPromise} The HttpPromise returned by the acutal $http.post method.
+         */
+        self.post = function(url, data, config, id) {
+            var promise = $http.post(url, data, addCanceller(config, id));
+            promise.finally(() => _.remove(self.pending, {id}));
+            return promise;
+        }
+
+        function addCanceller(config, id) {
             var canceller = $q.defer();
             self.pending.push({id, canceller});
-            var requestPromise = $http.get(url, _.merge(config, {timeout: canceller.promise}));
-            requestPromise.finally(() => {
-                _.forEach(self.pending, request => {
-                    if (request.id === id) {
-                        _.pull(self.pending, request);
-                        return false;
-                    }
-                });
-            });
-            return requestPromise;
+            return _.merge({}, config, {timeout: canceller.promise});
         }
     }
 })();

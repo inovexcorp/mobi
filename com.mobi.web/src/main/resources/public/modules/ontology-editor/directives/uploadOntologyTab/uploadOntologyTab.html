@@ -24,27 +24,26 @@
     <div class="actions">
         <span class="header active">Upload Ontology</span>
     </div>
-    <div class="row form-container">
+    <div class="row row-container">
         <div class="col-xs-6 col-xs-offset-3">
             <block>
-                <block-content>
-                    <form name="dvm.form" class="clearfix" novalidate autocomplete="off">
-                        <error-display ng-if="dvm.error">{{dvm.error}}</error-display>
-                        <div class="form-group">
-                            <custom-label>Select a file</custom-label>
-                            <file-input id="file" name="file" ng-model="dvm.file" accept=".owl,.ttl,.xml,.jsonld,.owx,.rdf" required></file-input>
-                        </div>
-                        <text-input ng-model="dvm.title" input-name="title" required="true" display-text="'Title'"></text-input>
-                        <text-area ng-model="dvm.description" input-name="description" display-text="'Description'" muted-text="'(Optional)'"></text-area>
-                        <keyword-select ng-model="dvm.keywords"></keyword-select>
-                        <editor-radio-buttons ng-model="dvm.type"></editor-radio-buttons>
-                        <div class="btn-container clearfix">
-                            <button type="button" class="btn btn-primary pull-right" ng-click="dvm.upload()" ng-disabled="dvm.form.$invalid">Upload</button>
-                            <button type="button" class="btn btn-default pull-right" ng-click="dvm.os.showUploadTab = false">Cancel</button>
-                        </div>
-                    </form>
+                <block-content class="padding">
+                    <drag-file files="dvm.files" on-drop="dvm.showOverlay = true"></drag-file>
+                    <md-list>
+                        <md-list-item ng-repeat="item in dvm.state.uploadList | orderBy:'title'" class="md-2-line">
+                            <i ng-class="{'fa-spinner fa-spin': dvm.hasStatus(item.promise, 0), 'fa-check': dvm.hasStatus(item.promise, 1) && !item.error, 'fa-times': item.error}" class="fa fa-fw"></i>
+                            <div class="md-list-item-text">
+                                <h3>{{item.title}}</h3>
+                                <p ng-if="item.error"><small>{{item.error}}</small></p>
+                            </div>
+                        </md-list-item>
+                    </md-list>
                 </block-content>
+                <block-footer class="btn-container clearfix">
+                    <button class="btn btn-primary pull-right" ng-click="dvm.cancel()" ng-disabled="dvm.hasPending()">Close</button>
+                </block-footer>
             </block>
         </div>
     </div>
+    <upload-ontology-overlay ng-if="dvm.showOverlay" close-overlay="dvm.showOverlay = false" files="dvm.files" list="dvm.uploadList"></upload-ontology-overlay>
 </div>

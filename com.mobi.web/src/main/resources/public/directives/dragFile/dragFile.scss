@@ -1,0 +1,21 @@
+/* Core variables */
+@import "./src/main/resources/public/css/variables";
+
+.drag-file {
+    background-color: $gray-lighter;
+    border: dashed 1px $gray;
+    text-align: center;
+
+    &.hover {
+        box-shadow: 0 0 10px 2px $gray-light;
+    }
+
+    .inner-container {
+        padding: 30px 0;
+
+        p {
+            font-size: 18px;
+            margin: 0;
+        }
+    }
+}

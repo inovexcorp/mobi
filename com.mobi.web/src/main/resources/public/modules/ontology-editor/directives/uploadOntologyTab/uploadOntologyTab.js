@@ -24,12 +24,32 @@
     'use strict';
 
     angular
+        /**
+         * @ngdoc overview
+         * @name uploadOntologyTab
+         *
+         * @description
+         * The `uploadOntologyTab` module only provides the `uploadOntologyTab` directive which creates
+         * upload ontology tab.
+         */
         .module('uploadOntologyTab', [])
+        /**
+         * @ngdoc directive
+         * @name uploadOntologyTab.directive:uploadOntologyTab
+         * @scope
+         * @restrict E
+         * @requires httpService.service:httpService
+         * @requires ontologyState.service:ontologyStateService
+         *
+         * @description
+         * HTML contents in the upload ontology tab which provides an area to drop or browse for files and
+         * displays a list of ontologies actively being uploaded to the system.
+         */
         .directive('uploadOntologyTab', uploadOntologyTab);
 
-        uploadOntologyTab.$inject = ['REGEX', 'ontologyManagerService', 'ontologyStateService'];
+        uploadOntologyTab.$inject = ['httpService', 'ontologyStateService'];
 
-        function uploadOntologyTab(REGEX, ontologyManagerService, ontologyStateService) {
+        function uploadOntologyTab(httpService, ontologyStateService) {
             return {
                 restrict: 'E',
                 replace: true,
@@ -38,15 +58,21 @@
                 controllerAs: 'dvm',
                 controller: function() {
                     var dvm = this;
-                    dvm.om = ontologyManagerService;
-                    dvm.os = ontologyStateService;
-                    dvm.type = 'ontology';
+                    dvm.state = ontologyStateService;
+                    dvm.files = [];
+                    dvm.showOntology = false;
 
-                    dvm.upload = function() {
-                        dvm.os.uploadThenGet(dvm.file, dvm.title, dvm.description,
-                            _.join(_.map(dvm.keywords, _.trim), ','), dvm.type).then(recordId => {
-                                dvm.os.showUploadTab = false;
-                            }, errorMessage => dvm.error = errorMessage);
+                    dvm.hasStatus = function(promise, value) {
+                        return _.get(promise, '$$state.status') === value;
+                    }
+
+                    dvm.cancel = function() {
+                        dvm.state.showUploadTab = false;
+                        dvm.state.uploadList = [];
+                    }
+
+                    dvm.hasPending = function() {
+                        return _.some(dvm.state.uploadList, item => httpService.isPending(item.id));
                     }
                 }
             }

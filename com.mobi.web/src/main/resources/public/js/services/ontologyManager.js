@@ -203,9 +203,10 @@
              * @param {string} title The record title.
              * @param {string} description The record description.
              * @param {string} keywords The record list of keywords separated by commas.
+             * @param {string} id The identifier for this request.
              * @returns {Promise} A promise indicating whether the ontology was persisted.
              */
-            self.uploadFile = function(file, title, description, keywords) {
+            self.uploadFile = function(file, title, description, keywords, id = '') {
                 var fd = new FormData(),
                     config = {
                         transformRequest: angular.identity,
@@ -221,8 +222,8 @@
                 if (keywords) {
                     fd.append('keywords', keywords);
                 }
-                return $http.post(prefix, fd, config)
-                    .then(response => response.data, util.rejectError);
+                var promise = id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
+                return promise.then(response => response.data, util.rejectError);
             }
             /**
              * @ngdoc method

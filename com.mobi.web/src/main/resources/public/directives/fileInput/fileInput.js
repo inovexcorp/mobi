@@ -28,9 +28,9 @@
          * @ngdoc overview
          * @name file-input
          *
-         * @description 
+         * @description
          * The `fileInput` module only provides the `fileInput` directive which
-         * adds ngModel functionality to the standard input element for files. 
+         * adds ngModel functionality to the standard input element for files.
          */
         .module('fileInput', [])
         /**
@@ -38,9 +38,9 @@
          * @name file-input.directive:fileInput
          * @restrict E
          *
-         * @description 
+         * @description
          * `fileInput` is a directive that creates a input element of type file
-         * that supports ngModel. The file chosen using the directive is returned 
+         * that supports ngModel. The file chosen using the directive is returned
          * as an object.
          *
          * @usage
@@ -51,24 +51,27 @@
     fileInput.$inject = ['$parse'];
 
         function fileInput($parse) {
-            function link(scope, element, attrs) {
-                var modelGet = $parse(attrs.ngModel),
-                    modelSet = modelGet.assign,
-                    onChange = $parse(attrs.onChange),
-                    updateModel = function() {
-                        scope.$apply(function() {
-                            modelSet(scope, element[0].files[0]);
-                            onChange(scope);
-                        });
-                    };
-                element.bind('change', updateModel);
-            }
-
             return {
                 restrict: 'E',
                 template: '<input type="file" />',
                 replace: true,
-                link: link
+                link: function(scope, element, attrs) {
+                    var modelSet = $parse(attrs.ngModel).assign;
+                    var onChange = $parse(attrs.onChange);
+                    var isMulti = _.has(attrs, 'multiple');
+
+                    if (isMulti) {
+                        element.attr('multiple', true);
+                    }
+
+                    element.bind('change', () => {
+                        scope.$apply(function() {
+                            var files = element[0].files;
+                            modelSet(scope, isMulti ? _.toArray(files) : files[0]);
+                            onChange(scope);
+                        });
+                    });
+                }
             };
         }
 })();
