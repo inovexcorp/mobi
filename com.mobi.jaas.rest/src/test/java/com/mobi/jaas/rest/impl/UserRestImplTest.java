@@ -328,11 +328,13 @@ public class UserRestImplTest extends MobiRestTestNg {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().get();
         assertEquals(response.getStatus(), 200);
         verify(engineManager).retrieveUser(anyString(), eq(UsernameTestFilter.USERNAME));
-        JSONObject user = JSONObject.fromObject(response.readEntity(String.class));
-        assertTrue(user.containsKey("username"));
-        assertEquals(user.getString("username"), UsernameTestFilter.USERNAME);
-        assertTrue(user.containsKey("email"));
-        assertEquals(user.getString("email"), email.getResource().stringValue());
+        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+        assertTrue(result.containsKey("iri"));
+        assertEquals(result.getString("iri"), user.getResource().stringValue());
+        assertTrue(result.containsKey("username"));
+        assertEquals(result.getString("username"), UsernameTestFilter.USERNAME);
+        assertTrue(result.containsKey("email"));
+        assertEquals(result.getString("email"), email.getResource().stringValue());
     }
 
     @Test

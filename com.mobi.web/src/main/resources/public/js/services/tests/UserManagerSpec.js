@@ -21,24 +21,33 @@
  * #L%
  */
 describe('User Manager service', function() {
-    var userManagerSvc, $httpBackend, scope, $httpParamSerializer;
+    var userManagerSvc, $q, $httpBackend, scope, $httpParamSerializer, utilSvc;
 
     beforeEach(function() {
         module('userManager');
-        mockLoginManager();
+        mockUtil();
         injectRestPathConstant();
 
-        inject(function(userManagerService, _$httpBackend_, _$rootScope_, _$httpParamSerializer_) {
+        inject(function(userManagerService, _$q_, _$httpBackend_, _$rootScope_, _$httpParamSerializer_, _utilService_) {
             userManagerSvc = userManagerService;
+            $q = _$q_;
             $httpBackend = _$httpBackend_;
             scope = _$rootScope_;
             $httpParamSerializer = _$httpParamSerializer_;
+            utilSvc = _utilService_;
         });
+
+        this.error = 'Error Message';
+        utilSvc.rejectError.and.returnValue($q.reject(this.error))
+        utilSvc.onError.and.callFake(function(error, deferred) {
+            return $q.reject(this.error);
+        }.bind(this));
     });
 
     afterEach(function() {
-        $httpBackend = null;
         userManagerSvc = null;
+        $q = null;
+        $httpBackend = null;
         scope = null;
         $httpParamSerializer = null;
     });
@@ -84,14 +93,15 @@ describe('User Manager service', function() {
         });
         describe('if it has not been found before', function() {
             it('unless an error occurs', function() {
-                $httpBackend.whenGET('/mobirest/users/username?' + $httpParamSerializer(this.params)).respond(400, null, null, 'Error Message');
+                $httpBackend.whenGET('/mobirest/users/username?' + $httpParamSerializer(this.params)).respond(400, null, null, this.error);
                 userManagerSvc.getUsername(this.params.iri)
                     .then(function(response) {
                         fail('Promise should have rejected');
                     }, function(response) {
-                        expect(response).toBe('Error Message');
-                    });
+                        expect(response).toBe(this.error);
+                    }.bind(this));
                 flushAndVerify($httpBackend);
+                expect(utilSvc.onError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}), jasmine.any(Object));
             });
             it('successfully', function() {
                 var username = 'username';
@@ -111,36 +121,43 @@ describe('User Manager service', function() {
             this.params = {
                 password: 'password'
             };
+            spyOn(userManagerSvc, 'getUser').and.returnValue({iri: 'iri'});
         });
         it('unless an error occurs', function() {
-            $httpBackend.whenPOST('/mobirest/users?' + $httpParamSerializer(this.params)).respond(400, null, null, 'Error Message');
+            $httpBackend.whenPOST('/mobirest/users?' + $httpParamSerializer(this.params)).respond(400, null, null, this.error);
             userManagerSvc.addUser({}, this.params.password)
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('successfully', function() {
             var newUser = {username: 'username'};
-            $httpBackend.whenPOST('/mobirest/users?' + $httpParamSerializer(this.params), newUser).respond(200, []);
-            userManagerSvc.addUser(newUser, this.params.password);
+            $httpBackend.whenPOST('/mobirest/users?' + $httpParamSerializer(this.params), newUser).respond(200, '');
+            userManagerSvc.addUser(newUser, this.params.password)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
-            expect(userManagerSvc.users).toContain(newUser);
+            expect(userManagerSvc.getUser).toHaveBeenCalledWith('username');
+            expect(userManagerSvc.users).toContain({iri: 'iri', username: 'username'});
         });
     });
     describe('should retrieve a user', function() {
         it('unless an error occurs', function() {
             var username = 'user';
-            $httpBackend.whenGET('/mobirest/users/' + username).respond(400, null, null, 'Error Message');
+            $httpBackend.whenGET('/mobirest/users/' + username).respond(400, null, null, this.error);
             userManagerSvc.getUser(username)
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('with the passed username', function() {
             var username = 'user';
@@ -158,21 +175,25 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function() {
             var username = userManagerSvc.users[0].username;
-            $httpBackend.whenPUT('/mobirest/users/' + username).respond(400, null, null, 'Error Message');
+            $httpBackend.whenPUT('/mobirest/users/' + username).respond(400, null, null, this.error);
             userManagerSvc.updateUser(username, userManagerSvc.users[0])
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('successfully', function() {
             var username = userManagerSvc.users[0].username;
             var newUser = _.clone(userManagerSvc.users[0]);
             newUser.firstName = 'Jane';
-            $httpBackend.whenPUT('/mobirest/users/' + username, newUser).respond(200, [])
-            userManagerSvc.updateUser(username, newUser);
+            $httpBackend.whenPUT('/mobirest/users/' + username, newUser).respond(200, '')
+            userManagerSvc.updateUser(username, newUser)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
             expect(_.find(userManagerSvc.users, {username: username})).toEqual(newUser);
         });
@@ -186,18 +207,22 @@ describe('User Manager service', function() {
             };
         });
         it('unless an error occurs', function() {
-            $httpBackend.whenPOST('/mobirest/users/' + this.username + '/password?' + $httpParamSerializer(this.params)).respond(400, null, null, 'Error Message');
+            $httpBackend.whenPOST('/mobirest/users/' + this.username + '/password?' + $httpParamSerializer(this.params)).respond(400, null, null, this.error);
             userManagerSvc.changePassword(this.username, this.params.currentPassword, this.params.newPassword)
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('successfully', function() {
-            $httpBackend.whenPOST('/mobirest/users/' + this.username + '/password?' + $httpParamSerializer(this.params)).respond(200, [])
-            userManagerSvc.changePassword(this.username, this.params.currentPassword, this.params.newPassword);
+            $httpBackend.whenPOST('/mobirest/users/' + this.username + '/password?' + $httpParamSerializer(this.params)).respond(200)
+            userManagerSvc.changePassword(this.username, this.params.currentPassword, this.params.newPassword)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
@@ -207,18 +232,22 @@ describe('User Manager service', function() {
             this.params = { newPassword: 'newPassword' };
         });
         it('unless an error occurs', function() {
-            $httpBackend.whenPUT('/mobirest/users/' + this.username + '/password?' + $httpParamSerializer(this.params)).respond(400, null, null, 'Error Message');
+            $httpBackend.whenPUT('/mobirest/users/' + this.username + '/password?' + $httpParamSerializer(this.params)).respond(400, null, null, this.error);
             userManagerSvc.resetPassword(this.username, this.params.newPassword)
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('successfully', function() {
-            $httpBackend.whenPUT('/mobirest/users/' + this.username + '/password?' + $httpParamSerializer(this.params)).respond(200, [])
-            userManagerSvc.resetPassword(this.username, this.params.newPassword);
+            $httpBackend.whenPUT('/mobirest/users/' + this.username + '/password?' + $httpParamSerializer(this.params)).respond(200)
+            userManagerSvc.resetPassword(this.username, this.params.newPassword)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
         });
     });
@@ -229,19 +258,23 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function() {
             var username = userManagerSvc.users[0].username;
-            $httpBackend.whenDELETE('/mobirest/users/' + username).respond(400, null, null, 'Error Message');
+            $httpBackend.whenDELETE('/mobirest/users/' + username).respond(400, null, null, this.error);
             userManagerSvc.deleteUser(username)
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('with the passed username', function() {
             var username = userManagerSvc.users[0].username;
-            $httpBackend.whenDELETE('/mobirest/users/' + username).respond(200, [])
-            userManagerSvc.deleteUser(username);
+            $httpBackend.whenDELETE('/mobirest/users/' + username).respond(200)
+            userManagerSvc.deleteUser(username)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
             expect(_.find(userManagerSvc.users, {username: username})).toBeFalsy();
             _.forEach(userManagerSvc.groups, function(group) {
@@ -258,18 +291,22 @@ describe('User Manager service', function() {
             };
         });
         it('unless an error occurs', function() {
-            $httpBackend.whenPUT('/mobirest/users/' + this.user.username + '/roles?' + $httpParamSerializer(this.params)).respond(400, null, null, 'Error Message');
+            $httpBackend.whenPUT('/mobirest/users/' + this.user.username + '/roles?' + $httpParamSerializer(this.params)).respond(400, null, null, this.error);
             userManagerSvc.addUserRoles(this.user.username, this.params.roles)
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('using the passed parameters', function() {
-            $httpBackend.whenPUT('/mobirest/users/' + this.user.username + '/roles?' + $httpParamSerializer(this.params)).respond(200, []);
-            userManagerSvc.addUserRoles(this.user.username, this.params.roles);
+            $httpBackend.whenPUT('/mobirest/users/' + this.user.username + '/roles?' + $httpParamSerializer(this.params)).respond(200);
+            userManagerSvc.addUserRoles(this.user.username, this.params.roles)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
             expect(this.user.roles).toEqual(this.params.roles);
         });
@@ -283,19 +320,23 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function() {
             var username = userManagerSvc.users[0].username;
-            $httpBackend.whenDELETE('/mobirest/users/' + username + '/roles?' + $httpParamSerializer(this.params)).respond(400, null, null, 'Error Message');
+            $httpBackend.whenDELETE('/mobirest/users/' + username + '/roles?' + $httpParamSerializer(this.params)).respond(400, null, null, this.error);
             userManagerSvc.deleteUserRole(username, this.params.role)
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('using the passed parameters', function() {
             var username = userManagerSvc.users[0].username;
-            $httpBackend.whenDELETE('/mobirest/users/' + username + '/roles?' + $httpParamSerializer(this.params)).respond(200, []);
-            userManagerSvc.deleteUserRole(username, this.params.role);
+            $httpBackend.whenDELETE('/mobirest/users/' + username + '/roles?' + $httpParamSerializer(this.params)).respond(200);
+            userManagerSvc.deleteUserRole(username, this.params.role)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
             var user = _.find(userManagerSvc.users, {username: username});
             expect(user.roles).not.toContain(this.params.role);
@@ -311,20 +352,24 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function() {
             var username = userManagerSvc.users[0].username;
-            $httpBackend.whenPUT('/mobirest/users/' + username + '/groups?' + $httpParamSerializer(this.params)).respond(400, null, null, 'Error Message');
+            $httpBackend.whenPUT('/mobirest/users/' + username + '/groups?' + $httpParamSerializer(this.params)).respond(400, null, null, this.error);
             userManagerSvc.addUserGroup(username, this.params.group)
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('using the passed parameters', function() {
             var username = userManagerSvc.users[0].username;
             var groupTitle = userManagerSvc.groups[0].title;
-            $httpBackend.whenPUT('/mobirest/users/' + username + '/groups?' + $httpParamSerializer(this.params)).respond(200, []);
-            userManagerSvc.addUserGroup(username, groupTitle);
+            $httpBackend.whenPUT('/mobirest/users/' + username + '/groups?' + $httpParamSerializer(this.params)).respond(200);
+            userManagerSvc.addUserGroup(username, groupTitle)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
             var group = _.find(userManagerSvc.groups, {title: groupTitle});
             expect(group.members).toContain(username);
@@ -340,20 +385,24 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function() {
             var username = userManagerSvc.users[0].username;
-            $httpBackend.whenDELETE('/mobirest/users/' + username + '/groups?' + $httpParamSerializer(this.params)).respond(400, null, null, 'Error Message');
+            $httpBackend.whenDELETE('/mobirest/users/' + username + '/groups?' + $httpParamSerializer(this.params)).respond(400, null, null, this.error);
             userManagerSvc.deleteUserGroup(username, this.params.group)
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('using the passed parameters', function() {
             var username = userManagerSvc.users[0].username;
             var groupTitle = userManagerSvc.groups[0].title;
-            $httpBackend.whenDELETE('/mobirest/users/' + username + '/groups?' + $httpParamSerializer(this.params)).respond(200, []);
-            userManagerSvc.deleteUserGroup(username, groupTitle);
+            $httpBackend.whenDELETE('/mobirest/users/' + username + '/groups?' + $httpParamSerializer(this.params)).respond(200);
+            userManagerSvc.deleteUserGroup(username, groupTitle)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
             var group = _.find(userManagerSvc.groups, {title: groupTitle});
             expect(group.members).not.toContain(username);
@@ -361,19 +410,23 @@ describe('User Manager service', function() {
     });
     describe('should add a group', function() {
         it('unless an error occurs', function() {
-            $httpBackend.whenPOST('/mobirest/groups').respond(400, null, null, 'Error Message');
+            $httpBackend.whenPOST('/mobirest/groups').respond(400, null, null, this.error);
             userManagerSvc.addGroup({})
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('successfully', function() {
             var newGroup = {title: 'title'};
-            $httpBackend.whenPOST('/mobirest/groups', newGroup).respond(200, []);
-            userManagerSvc.addGroup(newGroup);
+            $httpBackend.whenPOST('/mobirest/groups', newGroup).respond(200);
+            userManagerSvc.addGroup(newGroup)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
             expect(userManagerSvc.groups).toContain(newGroup);
         });
@@ -381,14 +434,15 @@ describe('User Manager service', function() {
     describe('should retrieve a group', function() {
         it('unless an error occurs', function() {
             var group = {title: 'group'};
-            $httpBackend.whenGET('/mobirest/groups/' + group.title).respond(400, null, null, 'Error Message');
+            $httpBackend.whenGET('/mobirest/groups/' + group.title).respond(400, null, null, this.error);
             userManagerSvc.getGroup(group.title)
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('with the passed name', function() {
             var group = {title: 'group'};
@@ -406,21 +460,25 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function() {
             var groupTitle = userManagerSvc.groups[0].title;
-            $httpBackend.whenPUT('/mobirest/groups/' + groupTitle).respond(400, null, null, 'Error Message');
+            $httpBackend.whenPUT('/mobirest/groups/' + groupTitle).respond(400, null, null, this.error);
             userManagerSvc.updateGroup(groupTitle, userManagerSvc.groups[0])
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('successfully', function() {
             var groupTitle = userManagerSvc.groups[0].title;
             var newGroup = _.clone(userManagerSvc.groups[0]);
             newGroup.description = 'New Description';
-            $httpBackend.whenPUT('/mobirest/groups/' + groupTitle, newGroup).respond(200, [])
-            userManagerSvc.updateGroup(groupTitle, newGroup);
+            $httpBackend.whenPUT('/mobirest/groups/' + groupTitle, newGroup).respond(200)
+            userManagerSvc.updateGroup(groupTitle, newGroup)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
             expect(_.find(userManagerSvc.groups, {title: groupTitle})).toEqual(newGroup);
         });
@@ -431,19 +489,23 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function() {
             var groupTitle = userManagerSvc.groups[0].title;
-            $httpBackend.whenDELETE('/mobirest/groups/' + groupTitle).respond(400, null, null, 'Error Message');
+            $httpBackend.whenDELETE('/mobirest/groups/' + groupTitle).respond(400, null, null, this.error);
             userManagerSvc.deleteGroup(groupTitle)
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('with the passed title', function() {
             var groupTitle = userManagerSvc.groups[0].title;
-            $httpBackend.whenDELETE('/mobirest/groups/' + groupTitle).respond(200, [])
-            userManagerSvc.deleteGroup(groupTitle);
+            $httpBackend.whenDELETE('/mobirest/groups/' + groupTitle).respond(200)
+            userManagerSvc.deleteGroup(groupTitle)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
             expect(_.find(userManagerSvc.groups, {title: groupTitle})).toBeFalsy();
         });
@@ -457,18 +519,22 @@ describe('User Manager service', function() {
             };
         });
         it('unless an error occurs', function() {
-            $httpBackend.whenPUT('/mobirest/groups/' + this.group.title + '/roles?' + $httpParamSerializer(this.params)).respond(400, null, null, 'Error Message');
+            $httpBackend.whenPUT('/mobirest/groups/' + this.group.title + '/roles?' + $httpParamSerializer(this.params)).respond(400, null, null, this.error);
             userManagerSvc.addGroupRoles(this.group.title, this.params.roles)
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('using the passed parameters', function() {
-            $httpBackend.whenPUT('/mobirest/groups/' + this.group.title + '/roles?' + $httpParamSerializer(this.params)).respond(200, []);
-            userManagerSvc.addGroupRoles(this.group.title, this.params.roles);
+            $httpBackend.whenPUT('/mobirest/groups/' + this.group.title + '/roles?' + $httpParamSerializer(this.params)).respond(200);
+            userManagerSvc.addGroupRoles(this.group.title, this.params.roles)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
             expect(this.group.roles).toEqual(this.params.roles);
         });
@@ -482,19 +548,23 @@ describe('User Manager service', function() {
         });
         it('unless an error occurs', function() {
             var groupTitle = userManagerSvc.groups[0].title;
-            $httpBackend.whenDELETE('/mobirest/groups/' + groupTitle + '/roles?' + $httpParamSerializer(this.params)).respond(400, null, null, 'Error Message');
+            $httpBackend.whenDELETE('/mobirest/groups/' + groupTitle + '/roles?' + $httpParamSerializer(this.params)).respond(400, null, null, this.error);
             userManagerSvc.deleteGroupRole(groupTitle, this.params.role)
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('using the passed parameters', function() {
             var groupTitle = userManagerSvc.groups[0].title;
-            $httpBackend.whenDELETE('/mobirest/groups/' + groupTitle + '/roles?' + $httpParamSerializer(this.params)).respond(200, []);
-            userManagerSvc.deleteGroupRole(groupTitle,this. params.role);
+            $httpBackend.whenDELETE('/mobirest/groups/' + groupTitle + '/roles?' + $httpParamSerializer(this.params)).respond(200);
+            userManagerSvc.deleteGroupRole(groupTitle,this. params.role)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
             var group = _.find(userManagerSvc.groups, {title: groupTitle});
             expect(group.roles).not.toContain(this.params.role);
@@ -505,14 +575,15 @@ describe('User Manager service', function() {
             this.groupTitle = 'group';
         });
         it('unless an error occurs', function() {
-            $httpBackend.whenGET('/mobirest/groups/' + this.groupTitle + '/users').respond(400, null, null, 'Error Message');
+            $httpBackend.whenGET('/mobirest/groups/' + this.groupTitle + '/users').respond(400, null, null, this.error);
             userManagerSvc.getGroupUsers(this.groupTitle)
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('successfully', function() {
             $httpBackend.whenGET('/mobirest/groups/' + this.groupTitle + '/users').respond(200, []);
@@ -535,18 +606,22 @@ describe('User Manager service', function() {
             userManagerSvc.groups = [this.group];
         });
         it('unless an error occurs', function() {
-            $httpBackend.whenPUT('/mobirest/groups/' + this.group.title + '/users?' + $httpParamSerializer(this.params)).respond(400, null, null, 'Error Message');
+            $httpBackend.whenPUT('/mobirest/groups/' + this.group.title + '/users?' + $httpParamSerializer(this.params)).respond(400, null, null, this.error);
             userManagerSvc.addGroupUsers(this.group.title, this.params.users)
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('successfully', function() {
-            $httpBackend.whenPUT('/mobirest/groups/' + this.group.title + '/users?' + $httpParamSerializer(this.params)).respond(200, '');
-            userManagerSvc.addGroupUsers(this.group.title, this.params.users);
+            $httpBackend.whenPUT('/mobirest/groups/' + this.group.title + '/users?' + $httpParamSerializer(this.params)).respond(200);
+            userManagerSvc.addGroupUsers(this.group.title, this.params.users)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
             expect(this.group.members).toEqual(this.params.users);
         });
@@ -563,18 +638,22 @@ describe('User Manager service', function() {
             userManagerSvc.groups = [this.group];
         });
         it('unless an error occurs', function() {
-            $httpBackend.whenDELETE('/mobirest/groups/' + this.group.title + '/users?' + $httpParamSerializer(this.params)).respond(400, null, null, 'Error Message');
+            $httpBackend.whenDELETE('/mobirest/groups/' + this.group.title + '/users?' + $httpParamSerializer(this.params)).respond(400, null, null, this.error);
             userManagerSvc.deleteGroupUser(this.group.title, this.params.user)
                 .then(function(response) {
                     fail('Promise should have rejected');
                 }, function(response) {
-                    expect(response).toBe('Error Message');
-                });
+                    expect(response).toBe(this.error);
+                }.bind(this));
             flushAndVerify($httpBackend);
+            expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
         });
         it('successfully', function() {
-            $httpBackend.whenDELETE('/mobirest/groups/' + this.group.title + '/users?' + $httpParamSerializer(this.params)).respond(200, '');
-            userManagerSvc.deleteGroupUser(this.group.title, this.params.user);
+            $httpBackend.whenDELETE('/mobirest/groups/' + this.group.title + '/users?' + $httpParamSerializer(this.params)).respond(200);
+            userManagerSvc.deleteGroupUser(this.group.title, this.params.user)
+                .then(_.noop, function() {
+                    fail('Promise should have resolved');
+                });
             flushAndVerify($httpBackend);
             expect(this.group.members).not.toContain(this.params.user);
         });
