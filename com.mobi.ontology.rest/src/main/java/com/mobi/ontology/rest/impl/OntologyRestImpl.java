@@ -45,7 +45,6 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.Entity;
-import com.mobi.ontology.core.api.NamedIndividual;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
@@ -942,12 +941,48 @@ public class OntologyRestImpl implements OntologyRest {
             }
         });
         topLevel.removeAll(lowerLevel);
-        JSONArray hierarchy = new JSONArray();
-        topLevel.forEach(classIRI -> {
-            JSONObject item = getHierarchyItem(classIRI, results);
-            hierarchy.add(item);
-        });
+        Set<String> hierarchy = createHierarchy(topLevel, results).stream()
+                .map(Object::toString)
+                .collect(Collectors.toSet());
         return new JSONObject().element("hierarchy", hierarchy).element("index", JSONObject.fromObject(index));
+    }
+
+    private Set<HierarchyNode> createHierarchy(Set<String> topLevel, Map<String, Set<String>> results) {
+        Map<String, HierarchyNode> nodes = new HashMap<>();
+        results.forEach((key, children) -> {
+            HierarchyNode node = nodes.getOrDefault(key, new HierarchyNode(key));
+            children.forEach(child -> {
+                HierarchyNode obj = nodes.getOrDefault(child, new HierarchyNode(child));
+                node.addChild(obj);
+                nodes.put(child, obj);
+            });
+            nodes.put(key, node);
+        });
+        return topLevel.stream().map(nodes::get).collect(Collectors.toSet());
+    }
+
+    private class HierarchyNode {
+        private String iri;
+        private Set<HierarchyNode> children = new HashSet<>();
+
+        HierarchyNode(String iri) {
+            this.iri = iri;
+        }
+
+        void addChild(HierarchyNode node) {
+            children.add(node);
+        }
+
+        public String toString() {
+            StringBuilder builder = new StringBuilder(String.format("{\"entityIRI\": \"%s\"", iri));
+            if (children.size() > 0) {
+                builder.append(", \"subEntities\": [")
+                        .append(String.join(", ", children.stream().map(Object::toString).collect(Collectors.toSet())))
+                        .append("]");
+            }
+            builder.append("}");
+            return builder.toString();
+        }
     }
 
     /**
