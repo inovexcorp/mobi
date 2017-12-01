@@ -23,7 +23,7 @@
 /* global expect, FormData */
 
 describe('Dataset Manager service', function() {
-    var $httpBackend, $httpParamSerializer, datasetManagerSvc, catalogManagerSvc, utilSvc, $q, scope, prefixes, discoverStateSvc;
+    var $httpBackend, $httpParamSerializer, $q, scope, datasetManagerSvc, catalogManagerSvc, utilSvc, prefixes, discoverStateSvc, httpSvc;
 
     beforeEach(function() {
         module('datasetManager');
@@ -32,9 +32,10 @@ describe('Dataset Manager service', function() {
         mockDiscoverState();
         mockCatalogManager();
         injectRestPathConstant();
+        mockHttpService();
 
-        inject(function(datasetManagerService, _catalogManagerService_, _$httpBackend_, _$httpParamSerializer_, _$q_, _utilService_, _$rootScope_, _prefixes_, _discoverStateService_) {
-            datasetManagerSvc = datasetManagerService;
+        inject(function(_$httpBackend_, _$httpParamSerializer_, _$q_, _$rootScope_, _datasetManagerService_, _catalogManagerService_, _utilService_, _prefixes_, _discoverStateService_, _httpService_) {
+            datasetManagerSvc = _datasetManagerService_;
             catalogManagerSvc = _catalogManagerService_;
             $httpBackend = _$httpBackend_;
             $httpParamSerializer = _$httpParamSerializer_;
@@ -43,6 +44,7 @@ describe('Dataset Manager service', function() {
             scope = _$rootScope_;
             prefixes = _prefixes_;
             discoverStateSvc = _discoverStateService_;
+            httpSvc = _httpService_;
         });
 
         this.recordId = 'http://mobi.com/records/test';
@@ -60,6 +62,7 @@ describe('Dataset Manager service', function() {
         scope = null;
         prefixes = null;
         discoverStateSvc = null;
+        httpSvc = null;
     });
 
     describe('should retrieve a list of DatasetRecords', function() {
@@ -315,6 +318,70 @@ describe('Dataset Manager service', function() {
             scope.$apply();
             expect(catalogManagerSvc.updateRecord).toHaveBeenCalledWith(this.recordId, '', expected[2]);
             expect(datasetManagerSvc.datasetRecords).toEqual(expected);
+        });
+    });
+    describe('should upload data to a Dataset', function() {
+        describe('with a promise id set', function() {
+            it('unless an error occurs', function() {
+                httpSvc.post.and.returnValue($q.reject({status: 400, statusText: 'Error Message'}));
+                datasetManagerSvc.uploadData(this.recordId, {}, 'id')
+                    .then(function() {
+                        fail('Promise should have rejected');
+                    }, function(response) {
+                        expect(response).toEqual('Error Message');
+                    });
+                scope.$apply();
+                expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '/data', jasmine.any(Object), {transformRequest: angular.identity, headers: {'Content-Type': undefined}}, 'id');
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                    status: 400,
+                    statusText: 'Error Message'
+                }));
+            });
+            it('successfully', function() {
+                httpSvc.post.and.returnValue($q.when());
+                datasetManagerSvc.uploadData(this.recordId, {}, 'id')
+                    .then(_.noop, function() {
+                        fail('Promise should have resolved');
+                    });
+                scope.$apply();
+                expect(httpSvc.post).toHaveBeenCalledWith('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '/data', jasmine.any(Object), {transformRequest: angular.identity, headers: {'Content-Type': undefined}}, 'id');
+                expect(utilSvc.rejectError).not.toHaveBeenCalled();
+            });
+        });
+        describe('with no promise id set', function() {
+            it('unless an error occurs', function() {
+                $httpBackend.expectPOST('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '/data',
+                    function(data) {
+                        return data instanceof FormData;
+                    }, function(headers) {
+                        return headers['Content-Type'] === undefined;
+                    }).respond(400, null, null, 'Error Message');
+                datasetManagerSvc.uploadData(this.recordId, {})
+                    .then(function() {
+                        fail('Promise should have rejected');
+                    }, function(response) {
+                        expect(response).toEqual('Error Message');
+                    });
+                flushAndVerify($httpBackend);
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({
+                    status: 400,
+                    statusText: 'Error Message'
+                }));
+            });
+            it('successfully', function() {
+                $httpBackend.expectPOST('/mobirest/datasets/' + encodeURIComponent(this.recordId) + '/data',
+                    function(data) {
+                        return data instanceof FormData;
+                    }, function(headers) {
+                        return headers['Content-Type'] === undefined;
+                    }).respond(200);
+                datasetManagerSvc.uploadData(this.recordId, {})
+                    .then(_.noop, function() {
+                        fail('Promise should have resolved');
+                    });
+                flushAndVerify($httpBackend);
+                expect(utilSvc.rejectError).not.toHaveBeenCalled();
+            });
         });
     });
     describe('initialize should call the correct method when getDatasetRecords was', function() {

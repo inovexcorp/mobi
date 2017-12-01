@@ -317,6 +317,16 @@ describe('Datasets List directive', function() {
         datasetDiv.triggerHandler('click');
         expect(this.controller.clickDataset).toHaveBeenCalledWith(dataset);
     });
+    it('should set the correct state when a upload data link is clicked', function() {
+        var dataset = {record: {'@id': 'dataset'}};
+        datasetStateSvc.results = [dataset];
+        scope.$digest();
+
+        var link = angular.element(this.element.querySelectorAll('block-content .dataset [uib-dropdown] .upload-data')[0]);
+        link.triggerHandler('click');
+        expect(datasetStateSvc.selectedDataset).toEqual(dataset);
+        expect(datasetStateSvc.showUploadOverlay).toBe(true);
+    });
     it('should set the correct state when a delete link is clicked', function() {
         var dataset = {record: {'@id': 'dataset'}};
         datasetStateSvc.results = [dataset];
