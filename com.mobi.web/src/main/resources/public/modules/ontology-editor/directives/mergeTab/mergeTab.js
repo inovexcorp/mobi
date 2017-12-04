@@ -43,32 +43,24 @@
 
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
-                    dvm.resolutions = {
-                        additions: [],
-                        deletions: []
-                    };
                     dvm.branch = {};
-                    dvm.branchTitle = '';
                     dvm.error = '';
-                    dvm.targetId = undefined;
                     dvm.isUserBranch = false;
-                    dvm.checkbox = false;
-                    dvm.conflicts = [];
 
                     dvm.allResolved = function() {
-                        return !_.some(dvm.conflicts, {resolved: false});
+                        return !_.some(dvm.os.listItem.merge.conflicts, {resolved: false});
                     }
                     dvm.attemptMerge = function() {
-                        cm.getBranchConflicts(dvm.branch['@id'], dvm.targetId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
+                        cm.getBranchConflicts(dvm.branch['@id'], dvm.os.listItem.merge.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId)
                             .then(conflicts => {
                                 if (_.isEmpty(conflicts)) {
                                     dvm.merge();
                                 } else {
                                     _.forEach(conflicts, conflict => {
                                         conflict.resolved = false;
-                                        var obj = _.find(dvm.conflicts, {iri: conflict.iri});
+                                        var obj = _.find(dvm.os.listItem.merge.conflicts, {iri: conflict.iri});
                                         if (_.isEmpty(obj)) {
-                                            dvm.conflicts.push(conflict);
+                                            dvm.os.listItem.merge.conflicts.push(conflict);
                                         } else {
                                             _.merge(obj, conflict);
                                         }
@@ -77,7 +69,7 @@
                             }, onError);
                     }
                     dvm.mergeWithResolutions = function() {
-                        _.forEach(dvm.conflicts, conflict => {
+                        _.forEach(dvm.os.listItem.merge.conflicts, conflict => {
                             if (conflict.resolved === 'left') {
                                 addToResolutions(conflict.right);
                             } else if (conflict.resolved === 'right') {
@@ -88,10 +80,10 @@
                     }
                     dvm.merge = function() {
                         var sourceId = angular.copy(dvm.branch['@id']);
-                        cm.mergeBranches(sourceId, dvm.targetId, dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.resolutions)
-                            .then(commitId => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.targetId, commitId), $q.reject)
+                        cm.mergeBranches(sourceId, dvm.os.listItem.merge.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId, dvm.os.listItem.merge.resolutions)
+                            .then(commitId => dvm.os.updateOntology(dvm.os.listItem.ontologyRecord.recordId, dvm.os.listItem.merge.target['@id'], commitId), $q.reject)
                             .then(() => {
-                                if (dvm.checkbox) {
+                                if (dvm.os.listItem.merge.checkbox) {
                                     cm.deleteRecordBranch(sourceId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
                                         .then(() => {
                                             dvm.os.removeBranch(dvm.os.listItem.ontologyRecord.recordId, sourceId);
@@ -102,34 +94,40 @@
                                 }
                             }, onError);
                     }
-                    dvm.getTargetTitle = function() {
-                        var targetBranch = _.find(dvm.os.listItem.branches, branch => branch['@id'] === dvm.targetId);
-                        return dvm.util.getDctermsValue(targetBranch, 'title');
+                    dvm.cancel = function() {
+                        dvm.os.listItem.merge.active = false;
+                        dvm.os.listItem.merge.target = undefined;
+                        dvm.os.listItem.merge.checkbox = false;
+                        dvm.os.listItem.merge.difference = undefined;
+                        dvm.os.listItem.merge.conflicts = [];
+                        dvm.os.listItem.merge.resolutions = {
+                            additions: [],
+                            deletions: []
+                        };
                     }
 
                     function onSuccess() {
                         dvm.util.createSuccessToast('Your merge was successful.');
-                        dvm.os.listItem.merge = false;
+                        dvm.cancel();
                     }
                     function onError(errorMessage) {
                         dvm.error = errorMessage;
                     }
                     function setupVariables() {
                         dvm.branch = _.find(dvm.os.listItem.branches, {'@id': dvm.os.listItem.ontologyRecord.branchId});
-                        dvm.branchTitle = dvm.util.getDctermsValue(dvm.branch, 'title');
                         if (_.includes(dvm.branch['@type'], prefixes.catalog + 'UserBranch')) {
-                            dvm.targetId = _.get(dvm.branch, "['" + prefixes.catalog + "createdFrom'][0]['@id']", '');
+                            if (!dvm.os.listItem.merge.target) {
+                                dvm.os.listItem.merge.target = _.find(dvm.os.listItem.branches, {'@id': dvm.util.getPropertyId(dvm.branch, prefixes.catalog + 'createdFrom')});
+                            }
                             dvm.isUserBranch = true;
-                            dvm.checkbox = true;
+                            dvm.os.listItem.merge.checkbox = true;
                         } else {
-                            dvm.targetId = undefined;
                             dvm.isUserBranch = false;
-                            dvm.checkbox = false;
                         }
                     }
                     function addToResolutions(notSelected) {
-                        dvm.resolutions.additions = _.concat(dvm.resolutions.additions, notSelected.deletions);
-                        dvm.resolutions.deletions = _.concat(dvm.resolutions.deletions, notSelected.additions);
+                        dvm.os.listItem.merge.resolutions.additions = _.concat(dvm.os.listItem.merge.resolutions.additions, notSelected.deletions);
+                        dvm.os.listItem.merge.resolutions.deletions = _.concat(dvm.os.listItem.merge.resolutions.deletions, notSelected.additions);
                     }
 
                     setupVariables();

@@ -107,7 +107,17 @@
                 ontology: [],
                 importedOntologies: [],
                 importedOntologyIds: [],
-                merge: false,
+                merge: {
+                    active: false,
+                    target: undefined,
+                    checkbox: false,
+                    difference: undefined,
+                    conflicts: [],
+                    resolutions: {
+                        additions: [],
+                        deletions: []
+                    }
+                },
                 dataPropertyRange: om.defaultDatatypes,
                 derivedConcepts: [],
                 derivedConceptSchemes: [],

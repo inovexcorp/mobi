@@ -36,9 +36,9 @@
                 templateUrl: 'modules/ontology-editor/directives/mergeForm/mergeForm.html',
                 scope: {},
                 bindToController: {
-                    branchTitle: '<',
+                    branch: '<',
                     isUserBranch: '<',
-                    targetId: '=',
+                    target: '=',
                     removeBranch: '='
                 },
                 controllerAs: 'dvm',
@@ -48,25 +48,24 @@
                     var catalogId = _.get(cm.localCatalog, '@id', '');
                     dvm.os = ontologyStateService;
                     dvm.util = utilService;
-                    dvm.difference = undefined;
                     dvm.tabs = {
                         changes: true
                     };
 
                     dvm.matchesCurrent = function(branch) {
-                        return branch['@id'] !== dvm.os.listItem.ontologyRecord.branchId;
+                        return branch['@id'] !== dvm.branch['@id'];
                     }
                     dvm.changeTarget = function() {
-                        if (dvm.targetId) {
-                            cm.getBranchDifference(dvm.os.listItem.ontologyRecord.branchId, dvm.targetId, dvm.os.listItem.ontologyRecord.recordId, catalogId)
+                        if (dvm.target) {
+                            cm.getBranchDifference(dvm.branch['@id'], dvm.target['@id'], dvm.os.listItem.ontologyRecord.recordId, catalogId)
                                 .then(diff => {
-                                    dvm.difference = diff;
+                                    dvm.os.listItem.merge.difference = diff;
                                 }, errorMessage => {
                                     dvm.util.createErrorToast(errorMessage);
-                                    dvm.difference = undefined;
+                                    dvm.os.listItem.merge.difference = undefined;
                                 });
                         } else {
-                            dvm.difference = undefined;
+                            dvm.os.listItem.merge.difference = undefined;
                         }
                     }
                 }]

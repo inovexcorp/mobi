@@ -23,22 +23,22 @@
 <div class="merge-form">
     <div class="form-container">
         <form name="dvm.form" novalidate autocomplete="off">
-            <span class="merge-message">Merge <strong>Branch: {{dvm.branchTitle}}</strong> into</span>
-            <ui-select ng-model="dvm.targetId" ng-required="true" class="select-branch" ng-disabled="dvm.isUserBranch" ng-change="dvm.changeTarget()">
+            <span class="merge-message">Merge <strong>Branch: {{dvm.util.getDctermsValue(dvm.branch, 'title')}}</strong> into</span>
+            <ui-select ng-model="dvm.target" ng-required="true" class="select-branch" ng-disabled="dvm.isUserBranch" ng-change="dvm.changeTarget()">
                 <ui-select-match placeholder="Select a Branch">
                     <span>Branch: {{dvm.util.getDctermsValue($select.selected, 'title')}}</span>
                 </ui-select-match>
-                <ui-select-choices repeat="branch['@id'] as branch in dvm.os.listItem.branches | filter:dvm.matchesCurrent | filter:$select.search">
+                <ui-select-choices repeat="branch in dvm.os.listItem.branches | filter:dvm.matchesCurrent | filter:$select.search">
                     <span ng-bind-html="dvm.util.getDctermsValue(branch, 'title') | highlight:$select.search | trusted"></span>
                 </ui-select-choices>
             </ui-select>
-            <checkbox ng-if="dvm.branchTitle !== 'MASTER' && !dvm.isUserBranch" ng-model="dvm.removeBranch" display-text="'Remove Branch: ' + dvm.branchTitle + ' after merge.'"></checkbox>
+            <checkbox ng-if="dvm.util.getDctermsValue(dvm.branch, 'title') !== 'MASTER' && !dvm.isUserBranch" ng-model="dvm.removeBranch" display-text="'Remove Branch: ' + dvm.util.getDctermsValue(dvm.branch, 'title') + ' after merge.'"></checkbox>
         </form>
     </div>
-    <tabset class="in-overlay" ng-if="dvm.difference">
+    <tabset class="in-overlay" ng-if="dvm.os.listItem.merge.difference">
         <tab heading="'Changes'" active="dvm.tabs.changes">
-            <commit-changes-display additions="dvm.difference.additions" deletions="dvm.difference.deletions"></commit-changes-display>
-            <info-message ng-if="!dvm.difference.additions.length && !dvm.difference.deletions.length">No changes to display</info-message>
+            <commit-changes-display additions="dvm.os.listItem.merge.difference.additions" deletions="dvm.os.listItem.merge.difference.deletions"></commit-changes-display>
+            <info-message ng-if="!dvm.os.listItem.merge.difference.additions.length && !dvm.os.listItem.merge.difference.deletions.length">No changes to display</info-message>
         </tab>
     </tabset>
 </div>

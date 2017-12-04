@@ -21,16 +21,17 @@
  * #L%
  */
 describe('Ontology Button Stack directive', function() {
-    var $compile, scope;
+    var $compile, scope, ontologyStateSvc;
 
     beforeEach(function() {
         module('templates');
         module('ontologyButtonStack');
         mockOntologyState();
 
-        inject(function(_$compile_, _$rootScope_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
+            ontologyStateSvc = _ontologyStateService_;
         });
 
         this.element = $compile(angular.element('<ontology-button-stack></ontology-button-stack>'))(scope);
@@ -40,6 +41,7 @@ describe('Ontology Button Stack directive', function() {
     afterEach(function() {
         $compile = null;
         scope = null;
+        ontologyStateSvc = null;
         this.element.remove();
     });
 
@@ -54,5 +56,33 @@ describe('Ontology Button Stack directive', function() {
         it('with circle-buttons', function() {
             expect(this.element.find('circle-button').length).toBe(4);
         });
+        it('depending on whether the ontology is committable', function() {
+            var button = angular.element(this.element.querySelectorAll('circle-button.btn-primary')[0]);
+            expect(button.attr('disabled')).toBeTruthy();
+
+            ontologyStateSvc.isCommittable.and.returnValue(true);
+            scope.$digest();
+            expect(button.attr('disabled')).toBeFalsy();
+        });
+    });
+    it('should set the correct state when the upload changes button is clicked', function() {
+        var button = angular.element(this.element.querySelectorAll('circle-button.btn-default')[0]);
+        button.triggerHandler('click');
+        expect(ontologyStateSvc.showUploadChangesOverlay).toEqual(true);
+    });
+    it('should set the correct state when the create branch button is clicked', function() {
+        var button = angular.element(this.element.querySelectorAll('circle-button.btn-warning')[0]);
+        button.triggerHandler('click');
+        expect(ontologyStateSvc.showCreateBranchOverlay).toEqual(true);
+    });
+    it('should set the correct state when the merge button is clicked', function() {
+        var button = angular.element(this.element.querySelectorAll('circle-button.btn-success')[0]);
+        button.triggerHandler('click');
+        expect(ontologyStateSvc.listItem.merge.active).toEqual(true);
+    });
+    it('should set the correct state when the commit button is clicked', function() {
+        var button = angular.element(this.element.querySelectorAll('circle-button.btn-primary')[0]);
+        button.triggerHandler('click');
+        expect(ontologyStateSvc.showCommitOverlay).toEqual(true);
     });
 });
