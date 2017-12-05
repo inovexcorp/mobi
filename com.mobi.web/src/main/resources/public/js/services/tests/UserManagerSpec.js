@@ -38,10 +38,7 @@ describe('User Manager service', function() {
         });
 
         this.error = 'Error Message';
-        utilSvc.rejectError.and.returnValue($q.reject(this.error))
-        utilSvc.onError.and.callFake(function(error, deferred) {
-            return $q.reject(this.error);
-        }.bind(this));
+        utilSvc.rejectError.and.returnValue($q.reject(this.error));
     });
 
     afterEach(function() {
@@ -101,7 +98,7 @@ describe('User Manager service', function() {
                         expect(response).toBe(this.error);
                     }.bind(this));
                 flushAndVerify($httpBackend);
-                expect(utilSvc.onError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}), jasmine.any(Object));
+                expect(utilSvc.rejectError).toHaveBeenCalledWith(jasmine.objectContaining({status: 400, statusText: this.error}));
             });
             it('successfully', function() {
                 var username = 'username';

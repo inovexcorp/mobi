@@ -171,19 +171,17 @@
              * error message otherwise
              */
             self.getUsername = function(iri) {
-                var deferred = $q.defer(),
-                    config = { params: { iri } };
+                var config = { params: { iri } };
                 var user = _.find(self.users, { iri });
                 if (user) {
-                    deferred.resolve(user.username);
+                    return $q.when(user.username);
                 } else {
-                    $http.get(userPrefix + '/username', config)
+                    return $http.get(userPrefix + '/username', config)
                         .then(response => {
-                            deferred.resolve(response.data);
                             _.set(_.find(self.users, {username: response.data}), 'iri', iri);
-                        }, error => util.onError(error, deferred));
+                            return response.data;
+                        }, util.rejectError);
                 }
-                return deferred.promise;
             }
 
             /**
