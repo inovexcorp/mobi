@@ -1574,8 +1574,7 @@ describe('Ontology State Service', function() {
     it('reset should clear the correct variables', function() {
         ontologyStateSvc.reset();
         expect(ontologyStateSvc.list).toEqual([]);
-        expect(ontologyStateSvc.listItem).toEqual({selected: {}});
-        expect(ontologyStateSvc.listItem.selected).toEqual({});
+        expect(ontologyStateSvc.listItem).toEqual({});
         expect(ontologyStateSvc.showNewTab).toEqual(false);
         expect(ontologyStateSvc.showUploadTab).toEqual(false);
     });
