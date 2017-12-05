@@ -40,7 +40,7 @@
                     <info-message ng-if="dvm.ontologies.length === 0" class="padding">No ontologies are available to import</info-message>
                     <md-list>
                         <md-list-item class="ontology" ng-repeat="ontology in dvm.ontologies track by ontology.recordId">
-                            <div>
+                            <div class="md-list-item-text">
                                 <h4 class="header">{{ontology.title}}</h4>
                                 <p><small class="ontology-iri text-muted">{{ontology.ontologyIRI}}</small></p>
                             </div>
