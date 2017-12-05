@@ -67,99 +67,25 @@
                 controller: function() {
                     var dvm = this;
                     var ro = responseObj;
-                    var broaderRelations = [
-                        prefixes.skos + 'broaderTransitive',
-                        prefixes.skos + 'broader',
-                        prefixes.skos + 'broadMatch'
-                    ];
-                    var narrowerRelations = [
-                        prefixes.skos + 'narrowerTransitive',
-                        prefixes.skos + 'narrower',
-                        prefixes.skos + 'narrowMatch'
-                    ];
-                    var conceptToScheme = [
-                        prefixes.skos + 'inScheme',
-                        prefixes.skos + 'topConceptOf'
-                    ];
-                    var schemeToConcept = [
-                        prefixes.skos + 'hasTopConcept'
-                    ];
                     dvm.om = ontologyManagerService;
                     dvm.os = ontologyStateService;
                     dvm.ontoUtils = ontologyUtilsManagerService;
-                    dvm.prefixes = prefixes;
                     dvm.showTopConceptOverlay = false;
+                    dvm.showRemoveOverlay = false;
 
                     dvm.openRemoveOverlay = function(key, index) {
                         dvm.key = key;
                         dvm.index = index;
                         dvm.showRemoveOverlay = true;
                     }
-
                     dvm.updateHierarchy = function(relationship, values) {
-                        var relationshipIRI = ro.getItemIri(relationship);
-                        if (shouldAdd(relationshipIRI, broaderRelations)) {
-                            commonAdd(relationshipIRI, values, dvm.os.listItem.selected['@id'], undefined, broaderRelations, narrowerRelations, 'concepts');
-                        } else if (shouldAdd(relationshipIRI, narrowerRelations)) {
-                            commonAdd(relationshipIRI, values, undefined, dvm.os.listItem.selected['@id'], narrowerRelations, broaderRelations, 'concepts');
-                        } else if (shouldAdd(relationshipIRI, conceptToScheme)) {
-                            commonAdd(relationshipIRI, values, dvm.os.listItem.selected['@id'], undefined, conceptToScheme, schemeToConcept, 'conceptSchemes')
-                        } else if (shouldAdd(relationshipIRI, schemeToConcept)) {
-                            commonAdd(relationshipIRI, values, undefined, dvm.os.listItem.selected['@id'], schemeToConcept, conceptToScheme, 'conceptSchemes')
-                        }
+                        dvm.ontoUtils.updateVocabularyHierarchies(ro.getItemIri(relationship), values);
                     }
-
                     dvm.removeFromHierarchy = function(axiomObject) {
-                        if (shouldDelete(axiomObject, broaderRelations, narrowerRelations)) {
-                            deleteFromConceptHierarchy(dvm.os.listItem.selected['@id'], axiomObject['@id']);
-                        } else if (shouldDelete(axiomObject, narrowerRelations, broaderRelations)) {
-                            deleteFromConceptHierarchy(axiomObject['@id'], dvm.os.listItem.selected['@id']);
-                        } else if (shouldDelete(axiomObject, conceptToScheme, schemeToConcept)) {
-                            deleteFromSchemeHierarchy(dvm.os.listItem.selected['@id']);
-                        } else if (shouldDelete(axiomObject, schemeToConcept, conceptToScheme)) {
-                            deleteFromSchemeHierarchy(axiomObject['@id']);
-                        }
+                        dvm.ontoUtils.removeFromVocabularyHierarchies(dvm.key, axiomObject);
                     }
-
                     dvm.hasTopConceptProperty = function() {
                         return !_.isEmpty(dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, prefixes.skos + 'hasTopConcept', dvm.os.listItem));
-                    }
-
-                    function containsProperty(entity, properties, value) {
-                        return _.some(properties, property => _.some(_.get(entity, property), {'@id': value}));
-                    }
-                    function shouldAdd(relationshipIRI, array) {
-                        return _.includes(array, relationshipIRI);
-                    }
-                    function commonAdd(relationshipIRI, values, entityIRI, parentIRI, targetArray, otherArray, key) {
-                        var update = false;
-                        _.forEach(values, value => {
-                            if (!containsProperty(dvm.os.listItem.selected, _.without(targetArray, relationshipIRI), value['@id']) && !containsProperty(dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, value['@id'], dvm.os.listItem), otherArray, value['@id'])) {
-                                dvm.os.addEntityToHierarchy(dvm.os.listItem[key].hierarchy, entityIRI || value['@id'], dvm.os.listItem[key].index, parentIRI || value['@id']);
-                                update = true;
-                            }
-                        });
-                        if (update) {
-                            dvm.os.listItem[key].flat = dvm.os.flattenHierarchy(dvm.os.listItem[key].hierarchy, dvm.os.listItem.ontologyRecord.recordId);
-                        }
-                    }
-                    function shouldDelete(axiomObject, targetArray, otherArray) {
-                        return _.includes(targetArray, dvm.key) && !containsProperty(dvm.os.listItem.selected, _.without(targetArray, dvm.key), axiomObject['@id']) && !containsProperty(dvm.os.getEntityByRecordId(dvm.os.listItem.ontologyRecord.recordId, axiomObject['@id'], dvm.os.listItem), otherArray, dvm.os.listItem.selected['@id']);
-                    }
-                    function deleteFromConceptHierarchy(entityIRI, parentIRI) {
-                        dvm.os.deleteEntityFromParentInHierarchy(dvm.os.listItem.concepts.hierarchy, entityIRI, parentIRI, dvm.os.listItem.concepts.index);
-                        commonDelete('concepts');
-                    }
-                    function deleteFromSchemeHierarchy(entityIRI) {
-                        dvm.os.deleteEntityFromHierarchy(dvm.os.listItem.conceptSchemes.hierarchy, entityIRI, dvm.os.listItem.conceptSchemes.index);
-                        if (_.get(dvm.os.listItem, 'editorTabStates.schemes.entityIRI') === entityIRI) {
-                            _.unset(dvm.os.listItem, 'editorTabStates.schemes.entityIRI');
-                        }
-                        commonDelete('conceptSchemes');
-                    }
-                    function commonDelete(key) {
-                        dvm.os.listItem[key].flat = dvm.os.flattenHierarchy(dvm.os.listItem[key].hierarchy, dvm.os.listItem.ontologyRecord.recordId);
-                        dvm.os.goTo(dvm.os.listItem.selected['@id']);
                     }
                 }
             }

@@ -248,9 +248,7 @@ ul {
 
         > span {
             flex: 1;
-            overflow-x: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            @include textOverflow;
         }
 
         > .fa.fa-fw {

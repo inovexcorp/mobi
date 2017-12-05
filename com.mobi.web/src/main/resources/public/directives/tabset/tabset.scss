@@ -6,12 +6,10 @@
     flex-direction: column;
     height: 100%;
 
-
     > .tabset-headings {
         display: flex;
         flex-direction: row;
         height: 48px;
-
 
         .heading {
             background-color: $gray-lighter;
@@ -35,31 +33,24 @@
             &.active {
                 background-color: white;
             }
-
             &:last-child {
                 margin-right: 10px;
             }
-
             .heading-text {
                 display: inline-block;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                @include textOverflow;
                 vertical-align: top;
-                white-space: nowrap;
                 max-width: 100px;
             }
-
             &.marked {
                 .heading-text,
                 .fa-times {
                     color: $brand-primary;
                 }
-
                 .heading-text {
                     font-weight: bold;
                 }
             }
-
             .fa-stack {
                 height: 22px;
                 line-height: 22px;
@@ -69,17 +60,14 @@
                 .fa-times {
                     top: -1px;
                 }
-
                 .fa-times-circle {
                     font-size: 22px;
                     visibility: hidden;
                 }
-
                 &:hover {
                     .fa-times-circle {
                         visibility: visible;
                     }
-
                     .fa-times {
                         visibility: hidden;
                     }
@@ -87,12 +75,10 @@
             }
         }
     }
-
     > .tabset-contents {
         flex: 1;
         min-height: 0;
     }
-
     &.centered {
         > .tabset-headings {
             background: white;
@@ -113,7 +99,6 @@
                     border-color: $brand-primary;
                     color: black;
                 }
-
                 .heading-text {
                     max-width: none;
                     width: auto;
@@ -143,7 +128,6 @@
                     border-color: $brand-primary;
                     color: black;
                 }
-
                 .heading-text {
                     max-width: none;
                     width: auto;

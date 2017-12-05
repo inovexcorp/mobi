@@ -57,19 +57,12 @@
                         dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], property, value));
                         dvm.os.showObjectPropertyOverlay = false;
                         dvm.ontoUtils.saveCurrentChanges();
-                    }
 
-                    dvm.editProperty = function(select, value) {
-                        var property = dvm.ro.getItemIri(select);
-                        if (property) {
-                            dvm.os.addToDeletions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], property, dvm.os.listItem.selected[property][dvm.os.propertyIndex]));
-                            dvm.os.listItem.selected[property][dvm.os.propertyIndex] = value;
-                            dvm.os.addToAdditions(dvm.os.listItem.ontologyRecord.recordId, dvm.util.createJson(dvm.os.listItem.selected['@id'], property, value));
+                        var types = dvm.os.listItem.selected['@type'];
+                        if (dvm.ontoUtils.containsDerivedConcept(types) || dvm.ontoUtils.containsDerivedConceptScheme(types)) {
+                            dvm.ontoUtils.updateVocabularyHierarchies(property, [value]);
                         }
-                        dvm.os.showObjectPropertyOverlay = false;
-                        dvm.ontoUtils.saveCurrentChanges();
                     }
-
                     dvm.getValues = function(searchText) {
                         dvm.values =  dvm.ontoUtils.getSelectList(dvm.os.listItem.objectProperties.iris, searchText, dvm.ontoUtils.getDropDownText);
                     }
