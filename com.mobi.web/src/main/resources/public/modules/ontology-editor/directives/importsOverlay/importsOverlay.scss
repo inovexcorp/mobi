@@ -25,6 +25,9 @@
                         margin-bottom: 0;
                         @include textOverflow;
                     }
+                    p {
+                        @include textOverflow;
+                    }
                 }
             }
         }
