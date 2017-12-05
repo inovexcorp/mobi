@@ -23,12 +23,12 @@
 <div class="object-property-overlay overlay">
     <form name="dvm.propertyForm" class="content clearfix" novalidate autocomplete="off">
         <!-- section header -->
-        <h6>{{dvm.os.editingProperty ? 'Edit Individual Object Property' : 'Add Individual Object Property'}}</h6>
+        <h6>Add Individual Object Property</h6>
 
         <!-- object property list -->
         <div class="form-group">
             <label class="control-label">Object Property</label>
-            <ui-select ng-model="dvm.os.propertySelect" ng-disabled="dvm.os.editingProperty" autofocus>
+            <ui-select ng-model="dvm.os.propertySelect" autofocus>
                 <ui-select-match placeholder="Select an object property">{{dvm.ro.getItemIri($select.selected)}}</ui-select-match>
                 <ui-select-choices refresh="dvm.getValues($select.search)" refresh-delay="300" group-by="dvm.util.getItemNamespace" repeat="property in dvm.values">
                     <div ng-bind-html="dvm.ontoUtils.getDropDownText(property) | highlight: $select.search | trusted"></div>
@@ -37,19 +37,11 @@
         </div>
 
         <!-- value -->
-        <object-select ng-model="dvm.valueSelect" display-text="'Value'" select-list="dvm.individuals"
-                       multi-select="false"></object-select>
+        <object-select ng-model="dvm.valueSelect" display-text="'Value'" select-list="dvm.individuals" multi-select="false"></object-select>
 
         <!-- object property buttons -->
         <div class="btn-container clearfix">
-            <button class="btn btn-primary pull-right" ng-if="!dvm.os.editingProperty"
-                    ng-disabled="dvm.propertyForm.$invalid || dvm.os.propertySelect === undefined || !dvm.valueSelect"
-                    ng-click="dvm.addProperty(dvm.os.propertySelect, dvm.valueSelect)">Add</button>
-
-            <button class="btn btn-primary pull-right" ng-if="dvm.os.editingProperty"
-                    ng-disabled="dvm.propertyForm.$invalid || !dvm.valueSelect"
-                    ng-click="dvm.editProperty(dvm.os.propertySelect, dvm.valueSelect)">Edit</button>
-
+            <button class="btn btn-primary pull-right" ng-disabled="dvm.propertyForm.$invalid || dvm.os.propertySelect === undefined || !dvm.valueSelect" ng-click="dvm.addProperty(dvm.os.propertySelect, dvm.valueSelect)">Submit</button>
             <button class="btn btn-default pull-right" ng-click="dvm.os.showObjectPropertyOverlay = false;">Cancel</button>
         </div>
     </form>

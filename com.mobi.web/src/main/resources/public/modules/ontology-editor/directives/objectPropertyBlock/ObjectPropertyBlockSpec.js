@@ -21,7 +21,7 @@
  * #L%
  */
 describe('Object Property Block directive', function() {
-    var $compile, scope, ontologyStateSvc;
+    var $compile, scope, ontologyStateSvc, ontoUtils;
 
     beforeEach(function() {
         module('templates');
@@ -33,10 +33,11 @@ describe('Object Property Block directive', function() {
         mockResponseObj();
         mockOntologyUtilsManager();
 
-        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_) {
+        inject(function(_$compile_, _$rootScope_, _ontologyStateService_, _responseObj_, _ontologyUtilsManagerService_) {
             $compile = _$compile_;
             scope = _$rootScope_;
             ontologyStateSvc = _ontologyStateService_;
+            ontoUtils = _ontologyUtilsManagerService_;
         });
 
         ontologyStateSvc.listItem.selected = {
@@ -52,6 +53,7 @@ describe('Object Property Block directive', function() {
         $compile = null;
         scope = null;
         ontologyStateSvc = null;
+        ontoUtils = null;
         this.element.remove();
     });
 
@@ -103,17 +105,29 @@ describe('Object Property Block directive', function() {
             expect(this.controller.index).toBe(1);
             expect(this.controller.showRemoveOverlay).toBe(true);
         });
-        it('should set the correct manager values when editing an object property', function() {
-            var propertyIRI = 'prop1';
-            ontologyStateSvc.listItem.selected = {
-                'prop1': [{'@id': 'value'}]
-            };
-            this.controller.editObjectProp(propertyIRI, 0);
-            expect(ontologyStateSvc.editingProperty).toBe(true);
-            expect(ontologyStateSvc.propertySelect).toEqual(propertyIRI);
-            expect(ontologyStateSvc.propertyValue).toBe(ontologyStateSvc.listItem.selected[propertyIRI][0]['@id']);
-            expect(ontologyStateSvc.propertyIndex).toBe(0);
-            expect(ontologyStateSvc.showObjectPropertyOverlay).toBe(true);
+        describe('should update vocabulary hierarchies on property removal', function() {
+            beforeEach(function() {
+                this.controller.key = 'prop';
+                ontologyStateSvc.listItem.selected = {'@type': []};
+            });
+            it('if selected is a derived Concept or ConceptScheme', function() {
+                ontoUtils.containsDerivedConcept.and.returnValue(true);
+                this.controller.removeObjectProperty({});
+                expect(ontoUtils.containsDerivedConcept).toHaveBeenCalledWith([]);
+                expect(ontoUtils.removeFromVocabularyHierarchies).toHaveBeenCalledWith('prop', {});
+
+                ontoUtils.containsDerivedConcept.and.returnValue(false);
+                ontoUtils.containsDerivedConceptScheme.and.returnValue(true);
+                this.controller.removeObjectProperty({});
+                expect(ontoUtils.containsDerivedConceptScheme).toHaveBeenCalledWith([]);
+                expect(ontoUtils.removeFromVocabularyHierarchies).toHaveBeenCalledWith('prop', {});
+            });
+            it('unless selected is not a derived Concept or ConceptScheme', function() {
+                this.controller.removeObjectProperty({});
+                expect(ontoUtils.containsDerivedConcept).toHaveBeenCalledWith([]);
+                expect(ontoUtils.containsDerivedConceptScheme).toHaveBeenCalledWith([]);
+                expect(ontoUtils.removeFromVocabularyHierarchies).not.toHaveBeenCalled();
+            });
         });
     });
     it('should call openAddObjectPropOverlay when the link is clicked', function() {
