@@ -17,15 +17,12 @@
 
         .text {
             margin: 0;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            @include textOverflow;
 
             small {
                 font-size: .875em;
             }
         }
-
         i.fa {
             position: absolute;
             right: 8px;

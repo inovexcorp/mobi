@@ -3,9 +3,7 @@
 
 .mapping-title {
     h3 {
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
+        @include textOverflow;
         position: relative;
         padding-right: 30px;
         max-width: 100%;
