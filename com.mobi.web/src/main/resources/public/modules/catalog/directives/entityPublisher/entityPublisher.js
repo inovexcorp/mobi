@@ -70,9 +70,8 @@
                     var iri = util.getDctermsId($scope.entity, 'publisher');
                     if (iri) {
                         return _.get(_.find(um.users, {iri}), 'username', '(None)');
-                    } else {
-                        return '(None)';
                     }
+                    return '(None)';
                 }
             }],
             templateUrl: 'modules/catalog/directives/entityPublisher/entityPublisher.html'
