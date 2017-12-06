@@ -33,7 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@Component(immediate = true)
+@Component
 public class SimpleApplicationManager implements ApplicationManager {
     private Map<String, ApplicationWrapper> applications = new HashMap<>();
 
