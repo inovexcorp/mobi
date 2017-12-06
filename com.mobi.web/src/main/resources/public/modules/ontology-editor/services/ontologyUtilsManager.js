@@ -139,9 +139,9 @@
                 } else if (isVocabPropAndEntity(relationshipIRI, narrowerRelations, self.containsDerivedConcept) && shouldUpdateVocabHierarchy(targetEntity, narrowerRelations, broaderRelations, relationshipIRI, self.containsDerivedConcept)) {
                     deleteFromConceptHierarchy(targetEntity['@id'], os.listItem.selected['@id']);
                 } else if (isVocabPropAndEntity(relationshipIRI, conceptToScheme, self.containsDerivedConcept) && shouldUpdateVocabHierarchy(targetEntity, conceptToScheme, schemeToConcept, relationshipIRI, self.containsDerivedConceptScheme)) {
-                    deleteFromSchemeHierarchy(os.listItem.selected['@id']);
+                    deleteFromSchemeHierarchy(os.listItem.selected['@id'], targetEntity['@id']);
                 } else if (isVocabPropAndEntity(relationshipIRI, schemeToConcept, self.containsDerivedConceptScheme) && shouldUpdateVocabHierarchy(targetEntity, schemeToConcept, conceptToScheme, relationshipIRI, self.containsDerivedConcept)) {
-                    deleteFromSchemeHierarchy(targetEntity['@id']);
+                    deleteFromSchemeHierarchy(targetEntity['@id'], os.listItem.selected['@id']);
                 }
             }
 
@@ -429,8 +429,8 @@
                 os.deleteEntityFromParentInHierarchy(os.listItem.concepts.hierarchy, entityIRI, parentIRI, os.listItem.concepts.index);
                 commonDeleteFromVocabHierarchy('concepts');
             }
-            function deleteFromSchemeHierarchy(entityIRI) {
-                os.deleteEntityFromHierarchy(os.listItem.conceptSchemes.hierarchy, entityIRI, os.listItem.conceptSchemes.index);
+            function deleteFromSchemeHierarchy(entityIRI, parentIRI) {
+                os.deleteEntityFromParentInHierarchy(os.listItem.conceptSchemes.hierarchy, entityIRI, parentIRI, os.listItem.conceptSchemes.index);
                 if (_.get(os.listItem, 'editorTabStates.schemes.entityIRI') === entityIRI) {
                     _.unset(os.listItem, 'editorTabStates.schemes.entityIRI');
                 }
