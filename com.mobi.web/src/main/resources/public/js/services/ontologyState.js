@@ -255,6 +255,7 @@
                 self.listItem = {};
                 self.showNewTab = false;
                 self.showUploadTab = false;
+                self.uploadList = [];
             }
             /**
              * @ngdoc method

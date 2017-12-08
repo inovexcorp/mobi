@@ -37,6 +37,24 @@
             var util = utilService;
             var ro = responseObj;
 
+            var broaderRelations = [
+                prefixes.skos + 'broaderTransitive',
+                prefixes.skos + 'broader',
+                prefixes.skos + 'broadMatch'
+            ];
+            var narrowerRelations = [
+                prefixes.skos + 'narrowerTransitive',
+                prefixes.skos + 'narrower',
+                prefixes.skos + 'narrowMatch'
+            ];
+            var conceptToScheme = [
+                prefixes.skos + 'inScheme',
+                prefixes.skos + 'topConceptOf'
+            ];
+            var schemeToConcept = [
+                prefixes.skos + 'hasTopConcept'
+            ];
+
             /**
              * @ngdoc method
              * @name containsDerivedConcept
@@ -65,9 +83,66 @@
             self.containsDerivedSemanticRelation = function(arr) {
                 return !!_.intersectionBy(arr, _.concat(os.listItem.derivedSemanticRelations, [{namespace: prefixes.skos, localName: 'semanticRelation'}]), ro.getItemIri).length;
             }
-
+            /**
+             * @ngdoc method
+             * @name containsDerivedConceptScheme
+             * @methodOf ontologyUtilsManager.service:ontologyUtilsManagerService
+             *
+             * @description
+             * Determines whether the provided array of IRI objects contains a derived skos:ConceptScheme or skos:ConceptScheme.
+             *
+             * @param {string[]} arr An array of IRI objects
+             * @return {boolean} True if the array contains a dervied skos:ConceptScheme or skos:ConceptScheme
+             */
             self.containsDerivedConceptScheme = function(arr) {
                 return !!_.intersection(arr, _.concat(os.listItem.derivedConceptSchemes, [prefixes.skos + 'ConceptScheme'])).length;
+            }
+            /**
+             * @ngdoc method
+             * @name containsDerivedConceptScheme
+             * @methodOf ontologyUtilsManager.service:ontologyUtilsManagerService
+             *
+             * @description
+             * Updates the appropriate vocabulary hierarchies when a relationship is added to a skos:Concept or
+             * skos:ConceptScheme and the entity is not already in the appropriate location.
+             *
+             * @param {string} relationshipIRI The IRI of the property added to the selected entity
+             * @param {Object[]} values The JSON-LD of the values of the property that were added
+             */
+            self.updateVocabularyHierarchies = function(relationshipIRI, values) {
+                if (isVocabPropAndEntity(relationshipIRI, broaderRelations, self.containsDerivedConcept)) {
+                    commonAddToVocabHierarchy(relationshipIRI, values, os.listItem.selected['@id'], undefined, broaderRelations, narrowerRelations, 'concepts', self.containsDerivedConcept);
+                } else if (isVocabPropAndEntity(relationshipIRI, narrowerRelations, self.containsDerivedConcept)) {
+                    commonAddToVocabHierarchy(relationshipIRI, values, undefined, os.listItem.selected['@id'], narrowerRelations, broaderRelations, 'concepts', self.containsDerivedConcept);
+                } else if (isVocabPropAndEntity(relationshipIRI, conceptToScheme, self.containsDerivedConcept)) {
+                    commonAddToVocabHierarchy(relationshipIRI, values, os.listItem.selected['@id'], undefined, conceptToScheme, schemeToConcept, 'conceptSchemes', self.containsDerivedConceptScheme)
+                } else if (isVocabPropAndEntity(relationshipIRI, schemeToConcept, self.containsDerivedConceptScheme)) {
+                    commonAddToVocabHierarchy(relationshipIRI, values, undefined, os.listItem.selected['@id'], schemeToConcept, conceptToScheme, 'conceptSchemes', self.containsDerivedConcept)
+                }
+            }
+            /**
+             * @ngdoc method
+             * @name containsDerivedConceptScheme
+             * @methodOf ontologyUtilsManager.service:ontologyUtilsManagerService
+             *
+             * @description
+             * Updates the appropriate vocabulary hierarchies when a relationship is removed from a skos:Concept or
+             * skos:ConceptScheme and the entity is not already in the appropriate location.
+             *
+             * @param {string} relationshipIRI The IRI of the property removed from the selected entity
+             * @param {Object} axiomObject The JSON-LD of the value that was removed
+             */
+            self.removeFromVocabularyHierarchies = function(relationshipIRI, axiomObject) {
+                var targetEntity = os.getEntityByRecordId(os.listItem.ontologyRecord.recordId, axiomObject['@id'], os.listItem);
+                if (isVocabPropAndEntity(relationshipIRI, broaderRelations, self.containsDerivedConcept) && shouldUpdateVocabHierarchy(targetEntity, broaderRelations, narrowerRelations, relationshipIRI, self.containsDerivedConcept)) {
+                    deleteFromConceptHierarchy(os.listItem.selected['@id'], targetEntity['@id']);
+                } else if (isVocabPropAndEntity(relationshipIRI, narrowerRelations, self.containsDerivedConcept) && shouldUpdateVocabHierarchy(targetEntity, narrowerRelations, broaderRelations, relationshipIRI, self.containsDerivedConcept)) {
+                    deleteFromConceptHierarchy(targetEntity['@id'], os.listItem.selected['@id']);
+                } else if (isVocabPropAndEntity(relationshipIRI, conceptToScheme, self.containsDerivedConcept) && shouldUpdateVocabHierarchy(targetEntity, conceptToScheme, schemeToConcept, relationshipIRI, self.containsDerivedConceptScheme)) {
+                    deleteFromSchemeHierarchy(os.listItem.selected['@id']);
+                } else if (isVocabPropAndEntity(relationshipIRI, schemeToConcept, self.containsDerivedConceptScheme) && shouldUpdateVocabHierarchy(targetEntity, schemeToConcept, conceptToScheme, relationshipIRI, self.containsDerivedConcept)) {
+                    deleteFromSchemeHierarchy(targetEntity['@id']);
+                }
             }
 
             self.addConcept = function(concept) {
@@ -326,6 +401,44 @@
                 return array;
             }
 
+            function containsProperty(entity, properties, value) {
+                return _.some(properties, property => _.some(_.get(entity, property), {'@id': value}));
+            }
+            function isVocabPropAndEntity(relationshipIRI, relationshipArray, validateSubjectType) {
+                return _.includes(relationshipArray, relationshipIRI) && validateSubjectType(os.listItem.selected['@type']);
+            }
+            function shouldUpdateVocabHierarchy(targetEntity, targetArray, otherArray, relationshipIRI, validateTargetType) {
+                return !containsProperty(os.listItem.selected, _.without(targetArray, relationshipIRI), targetEntity['@id'])
+                    && !containsProperty(targetEntity, otherArray, os.listItem.selected['@id'])
+                    && validateTargetType(targetEntity['@type']);
+            }
+            function commonAddToVocabHierarchy(relationshipIRI, values, entityIRI, parentIRI, targetArray, otherArray, key, validateTargetType) {
+                var update = false;
+                _.forEach(values, value => {
+                    var targetEntity = os.getEntityByRecordId(os.listItem.ontologyRecord.recordId, value['@id'], os.listItem);
+                    if (shouldUpdateVocabHierarchy(targetEntity, targetArray, otherArray, relationshipIRI, validateTargetType)) {
+                        os.addEntityToHierarchy(os.listItem[key].hierarchy, entityIRI || targetEntity['@id'], os.listItem[key].index, parentIRI || targetEntity['@id']);
+                        update = true;
+                    }
+                });
+                if (update) {
+                    os.listItem[key].flat = os.flattenHierarchy(os.listItem[key].hierarchy, os.listItem.ontologyRecord.recordId);
+                }
+            }
+            function deleteFromConceptHierarchy(entityIRI, parentIRI) {
+                os.deleteEntityFromParentInHierarchy(os.listItem.concepts.hierarchy, entityIRI, parentIRI, os.listItem.concepts.index);
+                commonDeleteFromVocabHierarchy('concepts');
+            }
+            function deleteFromSchemeHierarchy(entityIRI) {
+                os.deleteEntityFromHierarchy(os.listItem.conceptSchemes.hierarchy, entityIRI, os.listItem.conceptSchemes.index);
+                if (_.get(os.listItem, 'editorTabStates.schemes.entityIRI') === entityIRI) {
+                    _.unset(os.listItem, 'editorTabStates.schemes.entityIRI');
+                }
+                commonDeleteFromVocabHierarchy('conceptSchemes');
+            }
+            function commonDeleteFromVocabHierarchy(key) {
+                os.listItem[key].flat = os.flattenHierarchy(os.listItem[key].hierarchy, os.listItem.ontologyRecord.recordId);
+            }
             function removeConcept(entityIRI) {
                 os.deleteEntityFromHierarchy(os.listItem.concepts.hierarchy, entityIRI, os.listItem.concepts.index);
                 os.listItem.concepts.flat = os.flattenHierarchy(os.listItem.concepts.hierarchy, os.listItem.ontologyRecord.recordId);

@@ -1577,6 +1577,7 @@ describe('Ontology State Service', function() {
         expect(ontologyStateSvc.listItem).toEqual({});
         expect(ontologyStateSvc.showNewTab).toEqual(false);
         expect(ontologyStateSvc.showUploadTab).toEqual(false);
+        expect(ontologyStateSvc.uploadList).toEqual([]);
     });
     describe('afterSave calls the correct functions', function() {
         describe('when getInProgressCommit resolves', function() {
