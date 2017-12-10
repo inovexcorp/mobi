@@ -3,13 +3,14 @@ package com.mobi.meaning.extraction.expression.context;
 import com.mobi.meaning.extraction.ontology.ExtractedOntology;
 import com.mobi.rdf.api.IRI;
 
+import javax.validation.constraints.NotNull;
 import java.util.UUID;
 
 public class AbstractIriExpressionContext implements IriExpressionContext {
 
     protected final ExtractedOntology ontology;
 
-    public AbstractIriExpressionContext(ExtractedOntology ontology) {
+    public AbstractIriExpressionContext(@NotNull ExtractedOntology ontology) {
         this.ontology = ontology;
     }
 
@@ -19,8 +20,8 @@ public class AbstractIriExpressionContext implements IriExpressionContext {
     }
 
     @Override
-    public IRI getOntologyIri() {
-        return (IRI) ontology.getResource();
+    public String getOntologyIri() {
+        return ontology.getResource().stringValue();
     }
 
     @Override

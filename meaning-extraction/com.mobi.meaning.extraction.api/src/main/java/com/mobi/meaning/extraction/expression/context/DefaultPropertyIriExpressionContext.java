@@ -3,6 +3,8 @@ package com.mobi.meaning.extraction.expression.context;
 import com.mobi.meaning.extraction.ontology.ExtractedOntology;
 import com.mobi.rdf.api.IRI;
 
+import javax.validation.constraints.NotNull;
+
 public class DefaultPropertyIriExpressionContext extends AbstractIriExpressionContext implements PropertyIriExpressionContext {
 
     private final String name;
@@ -13,8 +15,8 @@ public class DefaultPropertyIriExpressionContext extends AbstractIriExpressionCo
 
     private final IRI range;
 
-    public DefaultPropertyIriExpressionContext(ExtractedOntology ontology, String name, String comment,
-                                               IRI domain, IRI range) {
+    public DefaultPropertyIriExpressionContext(@NotNull ExtractedOntology ontology, @NotNull String name, @NotNull String comment,
+                                               @NotNull IRI domain, @NotNull IRI range) {
         super(ontology);
         this.name = name;
         this.comment = comment;

@@ -7,7 +7,7 @@ public interface IriExpressionContext {
 
     ExtractedOntology getOntology();
 
-    IRI getOntologyIri();
+    String getOntologyIri();
 
     String uuid();
 
