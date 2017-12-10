@@ -1,8 +1,8 @@
-package com.mobi.meaning.extraction.stack;
+package com.mobi.meaning.extraction.json;
 
 /*-
  * #%L
- * meaning.extraction.api
+ * meaning.extraction.json
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,14 +23,21 @@ package com.mobi.meaning.extraction.stack;
  * #L%
  */
 
+import com.mobi.meaning.extraction.MeaningExtractionException;
 import com.mobi.meaning.extraction.MeaningExtractor;
+import com.mobi.meaning.extraction.ontology.ExtractedOntology;
+import com.mobi.meaning.extraction.stack.AbstractStackingMeaningExtractor;
+import com.mobi.meaning.extraction.stack.StackingMeaningExtractor;
+import com.mobi.rdf.api.Model;
 
-public interface StackingMeaningExtractor<T extends StackItem> extends MeaningExtractor {
+import java.io.InputStream;
+import java.nio.file.Path;
 
-    void pushStack(T item);
+public class JsonStackingMeaningExtractor extends AbstractStackingMeaningExtractor<JsonStackItem> implements StackingMeaningExtractor<JsonStackItem> {
 
-    T popStack();
-
-    String getCurrentLocation();
+    @Override
+    public Model extractMeaning(InputStream dataStream, String entityIdentifier, ExtractedOntology managedOntology) throws MeaningExtractionException {
+        return null;
+    }
 
 }
