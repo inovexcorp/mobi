@@ -48,7 +48,8 @@ public class AbstractStackingMeaningExtractorTest {
         Assert.assertEquals("{root|first}", testing.getCurrentLocation());
         testing.pushStack(new ExampleStackItem("second"));
         Assert.assertEquals("{root|first|second}", testing.getCurrentLocation());
-        Assert.assertEquals("second", testing.popStack().getIdentifier());
+        Assert.assertEquals("second", testing.popStack()
+                .orElse(null).getIdentifier());
         Assert.assertEquals("{root|first}", testing.getCurrentLocation());
     }
 

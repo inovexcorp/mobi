@@ -2,8 +2,8 @@ package com.mobi.meaning.extraction.expression;
 
 import com.mobi.meaning.extraction.MeaningExtractionException;
 import com.mobi.meaning.extraction.expression.context.ClassIriExpressionContext;
-import com.mobi.meaning.extraction.expression.context.DefaultClassIriExpressionContext;
-import com.mobi.meaning.extraction.expression.context.DefaultPropertyIriExpressionContext;
+import com.mobi.meaning.extraction.expression.context.impl.DefaultClassIriExpressionContext;
+import com.mobi.meaning.extraction.expression.context.impl.DefaultPropertyIriExpressionContext;
 import com.mobi.meaning.extraction.expression.context.PropertyIriExpressionContext;
 import com.mobi.meaning.extraction.ontology.*;
 import com.mobi.rdf.api.IRI;
@@ -14,7 +14,6 @@ import com.mobi.rdf.core.impl.sesame.ValueFactoryService;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.*;
 import com.mobi.rdf.orm.impl.ThingFactory;
-import javafx.beans.property.Property;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -88,7 +87,7 @@ public class DefaultIriExpressionProcessorTest {
         ExtractedOntology ont = EXTRACTED_ONTOLOGY_FACTORY.createNew(VF.createIRI("urn://sample.ontology"));
         ClassIriExpressionContext context = new DefaultClassIriExpressionContext(ont, "test-ontology",
                 "simple-test-ontology-for-iri-expressions");
-        IRI result = processor.processExpression("getOntologyIri().concat('#').concat(getName()).concat('/').concat(getComment())", context);
+        IRI result = processor.processExpression("getOntologyIri().concat('#').concat(getName()).concat('/').concat(getAddress())", context);
         Assert.assertEquals("urn://sample.ontology#test-ontology/simple-test-ontology-for-iri-expressions", result.stringValue());
     }
 
@@ -99,7 +98,7 @@ public class DefaultIriExpressionProcessorTest {
         ExtractedOntology ont = EXTRACTED_ONTOLOGY_FACTORY.createNew(VF.createIRI("urn://sample.ontology"));
         PropertyIriExpressionContext context = new DefaultPropertyIriExpressionContext(ont, "test-ontology",
                 "simple-test-ontology-for-iri-expressions", VF.createIRI("urn://domain"), VF.createIRI("urn://range"));
-        IRI result = processor.processExpression("getOntologyIri().concat('#').concat(getName()).concat('/').concat(getComment())", context);
+        IRI result = processor.processExpression("getOntologyIri().concat('#').concat(getName()).concat('/').concat(getAddress())", context);
         Assert.assertEquals("urn://sample.ontology#test-ontology/simple-test-ontology-for-iri-expressions", result.stringValue());
         Assert.assertEquals("urn://domain", processor.processExpression("getDomain()", context).stringValue());
         Assert.assertEquals("urn://range", processor.processExpression("getRange()", context).stringValue());

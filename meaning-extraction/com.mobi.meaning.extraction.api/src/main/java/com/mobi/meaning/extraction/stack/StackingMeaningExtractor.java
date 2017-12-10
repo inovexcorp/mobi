@@ -25,11 +25,15 @@ package com.mobi.meaning.extraction.stack;
 
 import com.mobi.meaning.extraction.MeaningExtractor;
 
+import java.util.Optional;
+
 public interface StackingMeaningExtractor<T extends StackItem> extends MeaningExtractor {
 
-    void pushStack(T item);
+    T pushStack(T item);
 
-    T popStack();
+    Optional<T> popStack();
+
+    Optional<T> peekStack();
 
     String getCurrentLocation();
 

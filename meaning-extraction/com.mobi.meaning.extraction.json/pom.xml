@@ -41,6 +41,10 @@
             <artifactId>meaning.extraction.api</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+        </dependency>
 
         <!-- Test dependencies -->
         <dependency>

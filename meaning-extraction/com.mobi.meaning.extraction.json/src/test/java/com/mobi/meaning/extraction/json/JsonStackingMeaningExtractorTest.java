@@ -23,14 +23,18 @@ package com.mobi.meaning.extraction.json;
          * #L%
          */
 
+import com.mobi.meaning.extraction.expression.DefaultIriExpressionProcessor;
 import com.mobi.meaning.extraction.ontology.*;
 import com.mobi.rdf.api.Model;
 import com.mobi.rdf.api.ModelFactory;
 import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.core.impl.sesame.LinkedHashModelFactoryService;
 import com.mobi.rdf.core.impl.sesame.ValueFactoryService;
+import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.conversion.impl.*;
+import com.mobi.rdf.orm.impl.OrmFactoryRegistryImpl;
 import com.mobi.rdf.orm.impl.ThingFactory;
 import org.junit.Assert;
 import org.junit.Before;
@@ -39,6 +43,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.lang.reflect.Method;
 import java.nio.file.Paths;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -52,13 +57,15 @@ public class JsonStackingMeaningExtractorTest {
 
     private static final ValueFactory VF = new ValueFactoryService();
 
+    private static final OrmFactoryRegistryImpl OFR = new OrmFactoryRegistryImpl();
+
     private static final ExtractedOntologyFactory EXTRACTED_ONTOLOGY_FACTORY = new ExtractedOntologyFactory();
     private static final ExtractedClassFactory EXTRACTED_CLASS_FACTORY = new ExtractedClassFactory();
     private static final ExtractedDatatypePropertyFactory EXTRACTED_DATATYPE_PROPERTY_FACTORY = new ExtractedDatatypePropertyFactory();
     private static final ExtractedObjectPropertyFactory EXTRACTED_OBJECT_PROPERTY_FACTORY = new ExtractedObjectPropertyFactory();
 
     @BeforeClass
-    public static void beforeClass() {
+    public static void beforeClass() throws Exception {
         final ValueConverterRegistry valueConverterRegistry = new DefaultValueConverterRegistry();
         valueConverterRegistry.registerValueConverter(new BigIntegerValueConverter());
         valueConverterRegistry.registerValueConverter(new BooleanValueConverter());
@@ -99,6 +106,11 @@ public class JsonStackingMeaningExtractorTest {
         valueConverterRegistry.registerValueConverter(EXTRACTED_DATATYPE_PROPERTY_FACTORY);
         valueConverterRegistry.registerValueConverter(EXTRACTED_ONTOLOGY_FACTORY);
         valueConverterRegistry.registerValueConverter(EXTRACTED_CLASS_FACTORY);
+        registerOrmFactory(EXTRACTED_CLASS_FACTORY);
+        registerOrmFactory(EXTRACTED_ONTOLOGY_FACTORY);
+        registerOrmFactory(EXTRACTED_DATATYPE_PROPERTY_FACTORY);
+        registerOrmFactory(EXTRACTED_OBJECT_PROPERTY_FACTORY);
+
     }
 
     private JsonStackingMeaningExtractor extractor;
@@ -109,13 +121,27 @@ public class JsonStackingMeaningExtractorTest {
     public void initExtractor() {
         this.extractor = new JsonStackingMeaningExtractor();
         this.ontology = EXTRACTED_ONTOLOGY_FACTORY.createNew(VF.createIRI(ONT_URI));
+        DefaultIriExpressionProcessor proc = new DefaultIriExpressionProcessor();
+        proc.setValueFactory(VF);
+        this.extractor.setExpressionProcessor(proc);
+        this.extractor.setOrmFactoryRegistry(OFR);
+        this.extractor.setValueFactory(VF);
+        this.extractor.setModelFactory(MF);
     }
 
     @Test
     public void basicTest() throws Exception {
         final Model output = this.extractor.extractMeaning(Paths.get("src/test/resources/test.json"), this.ontology);
+        this.ontology.getModel().stream().forEach(System.out::println);
+
         Assert.assertNotNull(output);
         Assert.assertFalse(output.isEmpty());
+    }
+
+    private static void registerOrmFactory(OrmFactory<?> factory) throws Exception {
+        Method m = OFR.getClass().getDeclaredMethod("addFactory", OrmFactory.class);
+        m.setAccessible(true);
+        m.invoke(OFR, factory);
     }
 
 }

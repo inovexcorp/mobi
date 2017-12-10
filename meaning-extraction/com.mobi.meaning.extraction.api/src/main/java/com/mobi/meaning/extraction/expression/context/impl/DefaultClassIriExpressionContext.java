@@ -1,5 +1,6 @@
-package com.mobi.meaning.extraction.expression.context;
+package com.mobi.meaning.extraction.expression.context.impl;
 
+import com.mobi.meaning.extraction.expression.context.ClassIriExpressionContext;
 import com.mobi.meaning.extraction.ontology.ExtractedOntology;
 
 import javax.validation.constraints.NotNull;
