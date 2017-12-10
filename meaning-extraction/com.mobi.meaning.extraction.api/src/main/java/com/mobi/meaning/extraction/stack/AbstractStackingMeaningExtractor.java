@@ -28,6 +28,7 @@ import com.mobi.meaning.extraction.MeaningExtractionException;
 import com.mobi.meaning.extraction.MeaningExtractor;
 import com.mobi.meaning.extraction.expression.IriExpressionProcessor;
 import com.mobi.meaning.extraction.expression.context.impl.DefaultClassIriExpressionContext;
+import com.mobi.meaning.extraction.expression.context.impl.DefaultInstanceIriExpressionContext;
 import com.mobi.meaning.extraction.expression.context.impl.DefaultPropertyIriExpressionContext;
 import com.mobi.meaning.extraction.ontology.ExtractedClass;
 import com.mobi.meaning.extraction.ontology.ExtractedDatatypeProperty;
@@ -40,6 +41,8 @@ import com.mobi.rdf.api.ValueFactory;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -51,11 +54,13 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractStackingMeaningExtractor<T extends StackItem> implements MeaningExtractor, StackingMeaningExtractor<T> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractStackingMeaningExtractor.class);
+
     private static final String DEFAULT_PROPERTY_IRI_EXPRESSION = "getOntologyIri().concat('#_').concat(getName())";
 
     private static final String DEFAULT_CLASS_IRI_EXPRESSION = "getOntologyIri().concat('#').concat(getName())";
 
-    private static final String DEFAULT_INSTANCE_IRI_EXPRESSION = "";
+    private static final String DEFAULT_INSTANCE_IRI_EXPRESSION = "classIri().concat('/').concat(uuid())";
 
     private final String delimiter;
 
@@ -72,6 +77,8 @@ public abstract class AbstractStackingMeaningExtractor<T extends StackItem> impl
     private IRI labelIri = null;
 
     private IRI commentIri = null;
+
+    private IRI rdfType = null;
 
     protected ValueFactory valueFactory;
 
@@ -154,6 +161,7 @@ public abstract class AbstractStackingMeaningExtractor<T extends StackItem> impl
         final IRI iri = this.expressionProcessor.processExpression(expression, new DefaultPropertyIriExpressionContext(managedOntology, name, address, domain, range));
         ExtractedDatatypeProperty prop = factory.getExisting(iri, managedOntology.getModel())
                 .orElseGet(() -> {
+                    LOG.debug("Creating new data type property {}", iri);
                     ExtractedDatatypeProperty val = factory.createNew(iri, managedOntology.getModel());
                     val.addProperty(valueFactory.createLiteral(name), getLabelIri());
                     return val;
@@ -172,6 +180,7 @@ public abstract class AbstractStackingMeaningExtractor<T extends StackItem> impl
         final IRI iri = this.expressionProcessor.processExpression(expression, new DefaultPropertyIriExpressionContext(managedOntology, name, address, domain, range));
         ExtractedObjectProperty prop = factory.getExisting(iri, managedOntology.getModel())
                 .orElseGet(() -> {
+                    LOG.debug("Creating new object property {}", iri);
                     ExtractedObjectProperty val = factory.createNew(iri, managedOntology.getModel());
                     val.addProperty(valueFactory.createLiteral(name), getLabelIri());
                     return val;
@@ -188,12 +197,31 @@ public abstract class AbstractStackingMeaningExtractor<T extends StackItem> impl
         OrmFactory<ExtractedClass> factory = factory(ExtractedClass.class);
         ExtractedClass extractedClass = factory.getExisting(classIri, managedOntology.getModel())
                 .orElseGet(() -> {
-                    ExtractedClass clazz = factory.createNew(classIri);
+                    LOG.debug("Creating new class {}", classIri);
+                    ExtractedClass clazz = factory.createNew(classIri, managedOntology.getModel());
                     clazz.addProperty(valueFactory.createLiteral(name), getLabelIri());
                     return clazz;
                 });
         extractedClass.addProperty(valueFactory.createLiteral(address), getCommentIri());
         return extractedClass;
+    }
+
+    protected void createInstance(Model result, ExtractedOntology managedOntology, T stackItem, ExtractedClass instanceClass)
+            throws MeaningExtractionException {
+        final IRI instance = generateInstanceIri(instanceClass, managedOntology, stackItem);
+        // Create instance.
+        result.add(instance, getRdfType(), instanceClass.getResource());
+        // Add properties.
+        stackItem.getProperties().keySet().forEach(predicate ->
+                stackItem.getProperties().get(predicate).forEach(val -> result.add(instance, predicate, val))
+        );
+    }
+
+    protected IRI generateInstanceIri(ExtractedClass instanceClass, ExtractedOntology managedOntology, T stackItem)
+            throws MeaningExtractionException {
+        final String expression = instanceClass.getSpelInstanceUri().orElse(DEFAULT_INSTANCE_IRI_EXPRESSION);
+        return this.expressionProcessor.processExpression(expression,
+                new DefaultInstanceIriExpressionContext(managedOntology, instanceClass, stackItem.getProperties(), this.valueFactory));
     }
 
     protected IRI generateClassIri(ExtractedOntology managedOntology, final String name, final String address) throws MeaningExtractionException {
@@ -228,5 +256,12 @@ public abstract class AbstractStackingMeaningExtractor<T extends StackItem> impl
             commentIri = valueFactory.createIRI("http://www.w3.org/2000/01/rdf-schema#", "comment");
         }
         return commentIri;
+    }
+
+    private IRI getRdfType(){
+        if(rdfType == null){
+            rdfType = valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "type");
+        }
+        return rdfType;
     }
 }

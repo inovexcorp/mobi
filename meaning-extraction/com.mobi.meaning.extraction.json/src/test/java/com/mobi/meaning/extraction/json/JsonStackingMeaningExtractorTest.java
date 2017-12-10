@@ -133,9 +133,10 @@ public class JsonStackingMeaningExtractorTest {
     public void basicTest() throws Exception {
         final Model output = this.extractor.extractMeaning(Paths.get("src/test/resources/test.json"), this.ontology);
         this.ontology.getModel().stream().forEach(System.out::println);
-
+        System.out.println("\n\n\n");
         Assert.assertNotNull(output);
         Assert.assertFalse(output.isEmpty());
+        output.forEach(System.out::println);
     }
 
     private static void registerOrmFactory(OrmFactory<?> factory) throws Exception {
