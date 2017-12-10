@@ -51,6 +51,11 @@
             <artifactId>rdf.orm</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-expression</artifactId>
+            <version>5.0.2.RELEASE</version>
+        </dependency>
 
         <!-- Test dependencies -->
         <dependency>
@@ -83,7 +88,9 @@
                         <configuration>
                             <generates>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/ontologies/meaning-extraction-ont.trig</ontologyFile>
+                                    <ontologyFile>
+                                        ${project.basedir}/src/main/resources/ontologies/meaning-extraction-ont.trig
+                                    </ontologyFile>
                                     <outputPackage>com.mobi.meaning.extraction.ontology</outputPackage>
                                     <ontologyName>MeaningExtraction</ontologyName>
                                 </ontology>
