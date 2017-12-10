@@ -35,6 +35,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>com.mobi.meaning.extraction.api</module>
+        <module>com.mobi.meaning.extraction.json</module>
     </modules>
 
     <artifactId>meaning-extraction</artifactId>

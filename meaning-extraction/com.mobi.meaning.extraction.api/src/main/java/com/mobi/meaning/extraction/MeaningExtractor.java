@@ -23,6 +23,7 @@ package com.mobi.meaning.extraction;
  * #L%
  */
 
+import com.mobi.meaning.extraction.ontology.ExtractedOntology;
 import com.mobi.rdf.api.Model;
 
 import java.io.InputStream;
@@ -30,7 +31,9 @@ import java.nio.file.Path;
 
 public interface MeaningExtractor {
 
-    Model extractMeaning(Path rawFile);
+    Model extractMeaning(Path rawFile, ExtractedOntology managedOntology) throws MeaningExtractionException;
+
+    Model extractMeaning(InputStream dataStream, String entityIdentifier, ExtractedOntology managedOntology) throws MeaningExtractionException;
 
 
 }
