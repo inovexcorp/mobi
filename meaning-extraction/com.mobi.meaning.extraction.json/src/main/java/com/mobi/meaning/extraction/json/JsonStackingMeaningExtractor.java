@@ -14,10 +14,7 @@ import com.mobi.meaning.extraction.ontology.ExtractedObjectProperty;
 import com.mobi.meaning.extraction.ontology.ExtractedOntology;
 import com.mobi.meaning.extraction.stack.AbstractStackingMeaningExtractor;
 import com.mobi.meaning.extraction.stack.StackingMeaningExtractor;
-import com.mobi.rdf.api.IRI;
-import com.mobi.rdf.api.Model;
-import com.mobi.rdf.api.ModelFactory;
-import com.mobi.rdf.api.ValueFactory;
+import com.mobi.rdf.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,50 +50,56 @@ public class JsonStackingMeaningExtractor extends AbstractStackingMeaningExtract
     public void parseToken(Model result, ExtractedOntology managedOntology, JsonToken token, JsonParser jsonParser) throws IOException, MeaningExtractionException {
         final String address = getCurrentLocation();
         final Optional<JsonStackItem> top = peekStack();
+        final String jsonCurrentName = jsonParser.getCurrentName();
         switch (token) {
             case END_OBJECT:
+                LOG.debug("Ending {}", getCurrentLocation());
                 final JsonStackItem endItem = popStack().orElseThrow(() -> new MeaningExtractionException("Got a null object from the stack on an object end!"));
                 final ExtractedClass extractedClass = getOrCreateClass(managedOntology, endItem.getClassIri(), endItem.getIdentifier(), address);
                 createInstance(result, managedOntology, endItem, extractedClass, peekStack());
                 break;
             case START_ARRAY:
-                //TODO
+//                JsonStackItem startArr = pushStack(new JsonStackItem(jsonCurrentName != null ? jsonCurrentName : "rootArray", top.isPresent()));
+//                startArr.setArray(true);
+//                if(top.isPresent()){
+//                    startArr.setClassIri(top.get().getClassIri());
+//                }else{
+//                    //TODO
+//                }
                 break;
             case END_ARRAY:
-                //TODO
+//                final JsonStackItem endArr = popStack().orElseThrow(() -> new MeaningExtractionException("Got a null object from the stack on an array end!"));
+//                if (!endArr.isArray()) {
+//                    throw new MeaningExtractionException("Mismatch on start/end array!");
+//                }
                 break;
             case START_OBJECT:
-                JsonStackItem item = pushStack(new JsonStackItem(jsonParser.getCurrentName() != null ? jsonParser.getCurrentName() : "root", top == null));
+                JsonStackItem item = pushStack(new JsonStackItem(
+                        jsonParser.getCurrentName() != null ? jsonParser.getCurrentName() : top.isPresent() ? "unknown" : "root",
+                        !top.isPresent()));
                 item.setClassIri(generateClassIri(managedOntology, item.getIdentifier(), getCurrentLocation()));
-                if (top.isPresent()) {
-                    JsonStackItem topItem = top.get();
-//                    topItem.getProperties().add(objectProperty.getResource(), );
-                }
+                LOG.debug("Starting object {}", getCurrentLocation());
                 break;
             // Property identified
             case VALUE_TRUE:
-                break;
             case VALUE_FALSE:
+                if (top.isPresent()) {
+                    addDatatypeProperty(managedOntology, top.get(), valueFactory.createLiteral(jsonParser.getValueAsBoolean()), xsdBoolean());
+                }
                 break;
             case VALUE_NUMBER_FLOAT:
                 if (top.isPresent()) {
-                    JsonStackItem topItem = top.get();
-                    ExtractedDatatypeProperty datatypeProperty = getOrCreateDatatypeProperty(managedOntology, topItem.getClassIri(), xsdFloat(), topItem.getIdentifier(), getCurrentLocation());
-                    topItem.getProperties().add((IRI) datatypeProperty.getResource(), valueFactory.createLiteral(jsonParser.getValueAsDouble()));
+                    addDatatypeProperty(managedOntology, top.get(), valueFactory.createLiteral(jsonParser.getValueAsDouble()), xsdFloat());
                 }
                 break;
             case VALUE_NUMBER_INT:
                 if (top.isPresent()) {
-                    JsonStackItem topItem = top.get();
-                    ExtractedDatatypeProperty datatypeProperty = getOrCreateDatatypeProperty(managedOntology, topItem.getClassIri(), xsdInt(), topItem.getIdentifier(), getCurrentLocation());
-                    topItem.getProperties().add((IRI) datatypeProperty.getResource(), valueFactory.createLiteral(jsonParser.getValueAsInt()));
+                    addDatatypeProperty(managedOntology, top.get(), valueFactory.createLiteral(jsonParser.getValueAsInt()), xsdInt());
                 }
                 break;
             case VALUE_STRING:
                 if (top.isPresent()) {
-                    JsonStackItem topItem = top.get();
-                    ExtractedDatatypeProperty datatypeProperty = getOrCreateDatatypeProperty(managedOntology, topItem.getClassIri(), xsdString(), topItem.getIdentifier(), getCurrentLocation());
-                    topItem.getProperties().add((IRI) datatypeProperty.getResource(), valueFactory.createLiteral(jsonParser.getValueAsString()));
+                    addDatatypeProperty(managedOntology, top.get(), valueFactory.createLiteral(jsonParser.getValueAsString()), xsdString());
                 }
                 break;
             case VALUE_NULL:
@@ -107,7 +110,15 @@ public class JsonStackingMeaningExtractor extends AbstractStackingMeaningExtract
                 break;
             case NOT_AVAILABLE:
             default:
+                break;
         }
+    }
+
+    private void addDatatypeProperty(ExtractedOntology managedOntology, JsonStackItem item, Value value, IRI range)
+            throws MeaningExtractionException {
+        ExtractedDatatypeProperty datatypeProperty = getOrCreateDatatypeProperty(managedOntology, item.getClassIri(),
+                range, item.getIdentifier(), getCurrentLocation());
+        item.getProperties().add((IRI) datatypeProperty.getResource(), value);
     }
 
     private IRI xsdString = null;
@@ -135,6 +146,15 @@ public class JsonStackingMeaningExtractor extends AbstractStackingMeaningExtract
             xsdFloat = valueFactory.createIRI("http://www.w3.org/2001/XMLSchema#", "float");
         }
         return xsdFloat;
+    }
+
+    private IRI xsdBoolean = null;
+
+    private IRI xsdBoolean() {
+        if (xsdBoolean == null) {
+            xsdBoolean = valueFactory.createIRI("http://www.w3.org/2001/XMLSchema#", "boolean");
+        }
+        return xsdBoolean;
     }
 
     @Reference

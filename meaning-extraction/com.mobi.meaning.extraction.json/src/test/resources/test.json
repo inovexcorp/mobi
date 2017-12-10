@@ -7,9 +7,18 @@
     "string": "some long string value"
   },
   "emptyObject": {},
+  "anotherEmpty": {
+  },
   "array": [
     {},
     {"test":"one"},
     {"different":"value", "anotherDifferent": "value again"}
+  ],
+  "weirdSubArray": [
+    [ { "subArrayExample":"subArrayExample_value", "subArrayExample_again":1 }],
+    [ {}, {}],
+    [
+      { "subsubArray": [{"subsubArrayValue": "subsubArrayExample_value"}] }
+    ]
   ]
 }

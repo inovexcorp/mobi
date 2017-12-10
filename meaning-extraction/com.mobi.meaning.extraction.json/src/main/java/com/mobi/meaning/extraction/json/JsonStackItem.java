@@ -42,4 +42,9 @@ public class JsonStackItem extends AbstractStackItem implements StackItem {
     public void setArray(boolean array) {
         this.array = array;
     }
+
+    @Override
+    public String toString() {
+        return "JsonStackElement{" + id + "}";
+    }
 }
