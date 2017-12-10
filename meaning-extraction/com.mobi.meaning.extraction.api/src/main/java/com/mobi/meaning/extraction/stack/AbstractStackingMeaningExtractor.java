@@ -206,7 +206,8 @@ public abstract class AbstractStackingMeaningExtractor<T extends StackItem> impl
         return extractedClass;
     }
 
-    protected void createInstance(Model result, ExtractedOntology managedOntology, T stackItem, ExtractedClass instanceClass)
+    protected IRI createInstance(Model result, ExtractedOntology managedOntology, T stackItem, ExtractedClass instanceClass,
+                                 Optional<T> parentOpt)
             throws MeaningExtractionException {
         final IRI instance = generateInstanceIri(instanceClass, managedOntology, stackItem);
         // Create instance.
@@ -215,6 +216,12 @@ public abstract class AbstractStackingMeaningExtractor<T extends StackItem> impl
         stackItem.getProperties().keySet().forEach(predicate ->
                 stackItem.getProperties().get(predicate).forEach(val -> result.add(instance, predicate, val))
         );
+        if (parentOpt.isPresent()) {
+            T parent = parentOpt.get();
+            ExtractedObjectProperty objectProperty = getOrCreateObjectProperty(managedOntology, parent.getClassIri(), stackItem.getClassIri(), stackItem.getIdentifier(), getCurrentLocation());
+            parent.getProperties().add((IRI) objectProperty.getResource(), instance);
+        }
+        return instance;
     }
 
     protected IRI generateInstanceIri(ExtractedClass instanceClass, ExtractedOntology managedOntology, T stackItem)
@@ -258,8 +265,8 @@ public abstract class AbstractStackingMeaningExtractor<T extends StackItem> impl
         return commentIri;
     }
 
-    private IRI getRdfType(){
-        if(rdfType == null){
+    private IRI getRdfType() {
+        if (rdfType == null) {
             rdfType = valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#", "type");
         }
         return rdfType;

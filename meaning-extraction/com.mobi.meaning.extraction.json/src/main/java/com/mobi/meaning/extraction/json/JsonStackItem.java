@@ -29,8 +29,17 @@ import com.mobi.rdf.api.IRI;
 
 public class JsonStackItem extends AbstractStackItem implements StackItem {
 
+    boolean array = false;
+
     public JsonStackItem(String id, boolean root) {
         super(id, root);
     }
 
+    public boolean isArray() {
+        return array;
+    }
+
+    public void setArray(boolean array) {
+        this.array = array;
+    }
 }

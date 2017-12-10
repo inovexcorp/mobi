@@ -10,6 +10,7 @@ import com.mobi.meaning.extraction.MeaningExtractionException;
 import com.mobi.meaning.extraction.expression.DefaultIriExpressionProcessor;
 import com.mobi.meaning.extraction.ontology.ExtractedClass;
 import com.mobi.meaning.extraction.ontology.ExtractedDatatypeProperty;
+import com.mobi.meaning.extraction.ontology.ExtractedObjectProperty;
 import com.mobi.meaning.extraction.ontology.ExtractedOntology;
 import com.mobi.meaning.extraction.stack.AbstractStackingMeaningExtractor;
 import com.mobi.meaning.extraction.stack.StackingMeaningExtractor;
@@ -22,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Optional;
 
 @Component
 public class JsonStackingMeaningExtractor extends AbstractStackingMeaningExtractor<JsonStackItem> implements StackingMeaningExtractor<JsonStackItem> {
@@ -49,15 +51,13 @@ public class JsonStackingMeaningExtractor extends AbstractStackingMeaningExtract
     }
 
     public void parseToken(Model result, ExtractedOntology managedOntology, JsonToken token, JsonParser jsonParser) throws IOException, MeaningExtractionException {
-        final String currentName = jsonParser.getCurrentName();
         final String address = getCurrentLocation();
-        final JsonStackItem top = peekStack().orElse(null);
+        final Optional<JsonStackItem> top = peekStack();
         switch (token) {
             case END_OBJECT:
                 final JsonStackItem endItem = popStack().orElseThrow(() -> new MeaningExtractionException("Got a null object from the stack on an object end!"));
                 final ExtractedClass extractedClass = getOrCreateClass(managedOntology, endItem.getClassIri(), endItem.getIdentifier(), address);
-                //TODO - create instance!
-                createInstance(result, managedOntology, endItem, extractedClass);
+                createInstance(result, managedOntology, endItem, extractedClass, peekStack());
                 break;
             case START_ARRAY:
                 //TODO
@@ -68,6 +68,10 @@ public class JsonStackingMeaningExtractor extends AbstractStackingMeaningExtract
             case START_OBJECT:
                 JsonStackItem item = pushStack(new JsonStackItem(jsonParser.getCurrentName() != null ? jsonParser.getCurrentName() : "root", top == null));
                 item.setClassIri(generateClassIri(managedOntology, item.getIdentifier(), getCurrentLocation()));
+                if (top.isPresent()) {
+                    JsonStackItem topItem = top.get();
+//                    topItem.getProperties().add(objectProperty.getResource(), );
+                }
                 break;
             // Property identified
             case VALUE_TRUE:
@@ -75,27 +79,24 @@ public class JsonStackingMeaningExtractor extends AbstractStackingMeaningExtract
             case VALUE_FALSE:
                 break;
             case VALUE_NUMBER_FLOAT:
-                if (top == null) {
-                    //TODO
-                } else {
-                    ExtractedDatatypeProperty datatypeProperty = getOrCreateDatatypeProperty(managedOntology, top.getClassIri(), xsdFloat(), top.getIdentifier(), getCurrentLocation());
-                    top.getProperties().add((IRI) datatypeProperty.getResource(), valueFactory.createLiteral(jsonParser.getValueAsDouble()));
+                if (top.isPresent()) {
+                    JsonStackItem topItem = top.get();
+                    ExtractedDatatypeProperty datatypeProperty = getOrCreateDatatypeProperty(managedOntology, topItem.getClassIri(), xsdFloat(), topItem.getIdentifier(), getCurrentLocation());
+                    topItem.getProperties().add((IRI) datatypeProperty.getResource(), valueFactory.createLiteral(jsonParser.getValueAsDouble()));
                 }
                 break;
             case VALUE_NUMBER_INT:
-                if (top == null) {
-                    //TODO
-                } else {
-                    ExtractedDatatypeProperty datatypeProperty = getOrCreateDatatypeProperty(managedOntology, top.getClassIri(), xsdInt(), top.getIdentifier(), getCurrentLocation());
-                    top.getProperties().add((IRI) datatypeProperty.getResource(), valueFactory.createLiteral(jsonParser.getValueAsInt()));
+                if (top.isPresent()) {
+                    JsonStackItem topItem = top.get();
+                    ExtractedDatatypeProperty datatypeProperty = getOrCreateDatatypeProperty(managedOntology, topItem.getClassIri(), xsdInt(), topItem.getIdentifier(), getCurrentLocation());
+                    topItem.getProperties().add((IRI) datatypeProperty.getResource(), valueFactory.createLiteral(jsonParser.getValueAsInt()));
                 }
                 break;
             case VALUE_STRING:
-                if (top == null) {
-                    //TODO
-                } else {
-                    ExtractedDatatypeProperty datatypeProperty = getOrCreateDatatypeProperty(managedOntology, top.getClassIri(), xsdString(), top.getIdentifier(), getCurrentLocation());
-                    top.getProperties().add((IRI) datatypeProperty.getResource(), valueFactory.createLiteral(jsonParser.getValueAsString()));
+                if (top.isPresent()) {
+                    JsonStackItem topItem = top.get();
+                    ExtractedDatatypeProperty datatypeProperty = getOrCreateDatatypeProperty(managedOntology, topItem.getClassIri(), xsdString(), topItem.getIdentifier(), getCurrentLocation());
+                    topItem.getProperties().add((IRI) datatypeProperty.getResource(), valueFactory.createLiteral(jsonParser.getValueAsString()));
                 }
                 break;
             case VALUE_NULL:
