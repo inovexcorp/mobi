@@ -22,6 +22,10 @@
  */
 describe('Ontology Utils Manager service', function() {
     var ontologyUtilsManagerSvc, ontologyManagerSvc, ontologyStateSvc, prefixes, splitIRI, util, updateRefs, scope, $q, responseObj;
+    var broaderRelations = ['broader', 'broaderTransitive', 'broadMatch'];
+    var narrowerRelations = ['narrower', 'narrowerTransitive', 'narrowMatch'];
+    var conceptToScheme = ['inScheme', 'topConceptOf'];
+    var schemeToConcept = ['hasTopConcept'];
 
     beforeEach(function() {
         module('ontologyUtilsManager');
@@ -46,7 +50,23 @@ describe('Ontology Utils Manager service', function() {
             responseObj = _responseObj_;
         });
 
-        ontologyStateSvc.flattenHierarchy.and.returnValue([{entityIRI: 'iri'}]);
+        this.flatHierarchy = [{entityIRI: 'iri'}];
+        ontologyStateSvc.flattenHierarchy.and.returnValue(this.flatHierarchy);
+        this.values = [{'@id': 'value1'}, {'@id': 'value2'}];
+    });
+
+    beforeEach(function utility() {
+        this.createDummyEntity = function(id, property, vals) {
+            if (id) {
+                var entity = {'@id': id, '@type': ['dummy']};
+                if (property) {
+                    entity[prefixes.skos + property] = vals || this.values;
+                }
+                return entity;
+            } else {
+                return undefined;
+            }
+        };
     });
 
     afterEach(function() {
@@ -62,8 +82,15 @@ describe('Ontology Utils Manager service', function() {
         responseObj = null;
     });
 
+    afterAll(function() {
+        broaderRelations = null;
+        narrowerRelations = null;
+        conceptToScheme = null;
+        schemeToConcept = null;
+    });
+
     describe('containsDerivedConcept returns', function() {
-        beforeEach(function () {
+        beforeEach(function() {
             ontologyStateSvc.listItem.derivedConcepts = ['derived'];
         });
         describe('true if array contains', function() {
@@ -79,7 +106,7 @@ describe('Ontology Utils Manager service', function() {
         });
     });
     describe('containsDerivedSemanticRelation returns', function() {
-        beforeEach(function () {
+        beforeEach(function() {
             ontologyStateSvc.listItem.derivedSemanticRelations = [{localName: 'derived', namespace: ''}];
             responseObj.getItemIri.and.callFake(function(obj) {
                 return obj.namespace + obj.localName;
@@ -98,7 +125,7 @@ describe('Ontology Utils Manager service', function() {
         });
     });
     describe('containsDerivedConceptScheme returns', function() {
-        beforeEach(function () {
+        beforeEach(function() {
             ontologyStateSvc.listItem.derivedConceptSchemes = ['derived'];
         });
         describe('true if array contains', function() {
@@ -111,6 +138,270 @@ describe('Ontology Utils Manager service', function() {
         });
         it('false if array does not contain a derived ConceptScheme or skos:ConceptScheme', function() {
             expect(ontologyUtilsManagerSvc.containsDerivedConceptScheme(['test'])).toEqual(false);
+        });
+    });
+    describe('updateVocabularyHierarchies should call proper methods', function() {
+        beforeEach(function() {
+            spyOn(ontologyUtilsManagerSvc, 'containsDerivedConcept').and.returnValue(true);
+            spyOn(ontologyUtilsManagerSvc, 'containsDerivedConceptScheme').and.returnValue(true);
+            ontologyStateSvc.getEntityByRecordId.and.callFake(function(recordId, id) {
+                return this.createDummyEntity(id);
+            }.bind(this));
+            ontologyStateSvc.listItem = {
+                ontologyRecord: {recordId: 'recordId'},
+                selected: {'@id': 'selectedId', '@type': ['selected']},
+                concepts: {
+                    hierarchy: [],
+                    index: {}
+                },
+                conceptSchemes: {
+                    hierarchy: [],
+                    index: {}
+                }
+            };
+        });
+        it('unless the property is not a relationship', function() {
+            ontologyUtilsManagerSvc.updateVocabularyHierarchies('test', this.values);
+            expect(ontologyUtilsManagerSvc.containsDerivedConcept).not.toHaveBeenCalled();
+            expect(ontologyUtilsManagerSvc.containsDerivedConceptScheme).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.getEntityByRecordId).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+        });
+        describe('when the relationship is', function() {
+            [
+                {
+                    targetArray: broaderRelations,
+                    otherArray: narrowerRelations,
+                    key: 'concepts',
+                    entityIRI: 'selectedId',
+                    parentIRI: '',
+                    selectedTypeExpect: 'containsDerivedConcept',
+                    targetTypeExpect: 'containsDerivedConcept'
+                },
+                {
+                    targetArray: narrowerRelations,
+                    otherArray: broaderRelations,
+                    key: 'concepts',
+                    entityIRI: '',
+                    parentIRI: 'selectedId',
+                    selectedTypeExpect: 'containsDerivedConcept',
+                    targetTypeExpect: 'containsDerivedConcept'
+                },
+                {
+                    targetArray: conceptToScheme,
+                    otherArray: schemeToConcept,
+                    key: 'conceptSchemes',
+                    entityIRI: 'selectedId',
+                    parentIRI: '',
+                    selectedTypeExpect: 'containsDerivedConcept',
+                    targetTypeExpect: 'containsDerivedConceptScheme'
+                },
+                {
+                    targetArray: schemeToConcept,
+                    otherArray: conceptToScheme,
+                    key: 'conceptSchemes',
+                    entityIRI: '',
+                    parentIRI: 'selectedId',
+                    selectedTypeExpect: 'containsDerivedConceptScheme',
+                    targetTypeExpect: 'containsDerivedConcept'
+                },
+            ].forEach(function(test) {
+                _.forEach(test.targetArray, function(relationship) {
+                    describe(relationship + ' and', function() {
+                        it('should be updated', function() {
+                            ontologyUtilsManagerSvc.updateVocabularyHierarchies(prefixes.skos + relationship, this.values);
+                            expect(ontologyUtilsManagerSvc[test.selectedTypeExpect]).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@type']);
+                            expect(ontologyUtilsManagerSvc[test.targetTypeExpect]).toHaveBeenCalledWith(['dummy']);
+                            _.forEach(this.values, function(value) {
+                                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', value['@id'], ontologyStateSvc.listItem);
+                                expect(ontologyStateSvc.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem[test.key].hierarchy, test.entityIRI || value['@id'], ontologyStateSvc.listItem[test.key].index, test.parentIRI || value['@id']);
+                            });
+                            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem[test.key].hierarchy, 'recordId');
+                            expect(ontologyStateSvc.listItem[test.key].flat).toEqual(this.flatHierarchy);
+                        });
+                        describe('should not be updated when', function() {
+                            it('selected is incorrect type', function() {
+                                ontologyUtilsManagerSvc[test.selectedTypeExpect].and.returnValue(false);
+                                ontologyUtilsManagerSvc.updateVocabularyHierarchies(prefixes.skos + relationship, this.values);
+                                expect(ontologyUtilsManagerSvc[test.selectedTypeExpect]).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@type']);
+                                expect(ontologyStateSvc.getEntityByRecordId).not.toHaveBeenCalled();
+                                expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
+                                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                            });
+                            describe('target entity', function() {
+                                describe('has relationship', function() {
+                                    _.forEach(test.otherArray, function(otherRelationship) {
+                                        it(otherRelationship, function() {
+                                            ontologyStateSvc.getEntityByRecordId.and.callFake(function(recordId, id) {
+                                                return this.createDummyEntity(id, otherRelationship, [{'@id': 'selectedId'}]);
+                                            }.bind(this));
+                                            ontologyUtilsManagerSvc.updateVocabularyHierarchies(prefixes.skos + relationship, this.values);
+                                            expect(ontologyUtilsManagerSvc[test.selectedTypeExpect]).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@type']);
+                                            expect(ontologyUtilsManagerSvc[test.targetTypeExpect]).not.toHaveBeenCalledWith(['dummy']);
+                                            _.forEach(this.values, function(value) {
+                                                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', value['@id'], ontologyStateSvc.listItem);
+                                            });
+                                            expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
+                                            expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                                        });
+                                    });
+                                });
+                                it('is incorrect type', function() {
+                                    ontologyUtilsManagerSvc[test.targetTypeExpect].and.callFake(function(types) {
+                                        return !_.includes(types, 'dummy');
+                                    });
+                                    ontologyUtilsManagerSvc.updateVocabularyHierarchies(prefixes.skos + relationship, this.values);
+                                    expect(ontologyUtilsManagerSvc[test.selectedTypeExpect]).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@type']);
+                                    expect(ontologyUtilsManagerSvc[test.targetTypeExpect]).toHaveBeenCalledWith(['dummy']);
+                                    _.forEach(this.values, function(value) {
+                                        expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', value['@id'], ontologyStateSvc.listItem);
+                                    });
+                                    expect(ontologyStateSvc.addEntityToHierarchy).not.toHaveBeenCalled();
+                                    expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+    });
+    describe('removeFromHierarchy should call the proper methods', function() {
+        beforeEach(function() {
+            spyOn(ontologyUtilsManagerSvc, 'containsDerivedConcept').and.returnValue(true);
+            spyOn(ontologyUtilsManagerSvc, 'containsDerivedConceptScheme').and.returnValue(true);
+            ontologyStateSvc.getEntityByRecordId.and.callFake(function(recordId, id) {
+                return this.createDummyEntity(id);
+            }.bind(this));
+            ontologyStateSvc.listItem = {
+                ontologyRecord: {recordId: 'recordId'},
+                selected: {'@id': 'selectedId', '@type': ['selected']},
+                editorTabStates: { schemes: { entityIRI: '' } },
+                concepts: {
+                    hierarchy: [],
+                    index: {}
+                },
+                conceptSchemes: {
+                    hierarchy: [],
+                    index: {}
+                }
+            };
+        });
+        it('unless the property is not a relationship', function() {
+            ontologyUtilsManagerSvc.removeFromVocabularyHierarchies('test', {'@id': 'value1'});
+            expect(ontologyUtilsManagerSvc.containsDerivedConcept).not.toHaveBeenCalled();
+            expect(ontologyUtilsManagerSvc.containsDerivedConceptScheme).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', 'value1', ontologyStateSvc.listItem);
+            expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.deleteEntityFromHierarchy).not.toHaveBeenCalled();
+            expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+        });
+        describe('when the relationship', function() {
+            [
+                {
+                    targetArray: broaderRelations,
+                    otherArray: narrowerRelations,
+                    key: 'concepts',
+                    entityIRI: 'selectedId',
+                    parentIRI: 'value1',
+                    selectedTypeExpect: 'containsDerivedConcept',
+                    targetTypeExpect: 'containsDerivedConcept'
+                },
+                {
+                    targetArray: narrowerRelations,
+                    otherArray: broaderRelations,
+                    key: 'concepts',
+                    entityIRI: 'value1',
+                    parentIRI: 'selectedId',
+                    selectedTypeExpect: 'containsDerivedConcept',
+                    targetTypeExpect: 'containsDerivedConcept'
+                },
+                {
+                    targetArray: conceptToScheme,
+                    otherArray: schemeToConcept,
+                    key: 'conceptSchemes',
+                    entityIRI: 'selectedId',
+                    parentIRI: '',
+                    selectedTypeExpect: 'containsDerivedConcept',
+                    targetTypeExpect: 'containsDerivedConceptScheme'
+                },
+                {
+                    targetArray: schemeToConcept,
+                    otherArray: conceptToScheme,
+                    key: 'conceptSchemes',
+                    entityIRI: 'value1',
+                    parentIRI: '',
+                    selectedTypeExpect: 'containsDerivedConceptScheme',
+                    targetTypeExpect: 'containsDerivedConcept'
+                }
+            ].forEach(function(test) {
+                _.forEach(test.targetArray, function(relationship) {
+                    describe(relationship + ' and', function() {
+                        beforeEach(function() {
+                            _.set(ontologyStateSvc.listItem, 'editorTabStates.schemes.entityIRI', test.entityIRI);
+                        });
+                        it('should be updated', function() {
+                            ontologyUtilsManagerSvc.removeFromVocabularyHierarchies(prefixes.skos + relationship, {'@id': 'value1'});
+                            expect(ontologyUtilsManagerSvc[test.selectedTypeExpect]).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@type']);
+                            expect(ontologyUtilsManagerSvc[test.targetTypeExpect]).toHaveBeenCalledWith(['dummy']);
+                            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', 'value1', ontologyStateSvc.listItem);
+                            if (test.parentIRI) {
+                                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.concepts.hierarchy, test.entityIRI, test.parentIRI, ontologyStateSvc.listItem.concepts.index);
+                            } else {
+                                expect(ontologyStateSvc.deleteEntityFromHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem.conceptSchemes.hierarchy, test.entityIRI, ontologyStateSvc.listItem.conceptSchemes.index);
+                                expect(ontologyStateSvc.listItem.editorTabStates.schemes.entityIRI).toBeUndefined();
+                            }
+                            expect(ontologyStateSvc.flattenHierarchy).toHaveBeenCalledWith(ontologyStateSvc.listItem[test.key].hierarchy, 'recordId');
+                            expect(ontologyStateSvc.listItem[test.key].flat).toEqual(this.flatHierarchy);
+                        });
+                        describe('should not be updated when', function() {
+                            it('selected is incorrect type', function() {
+                                ontologyUtilsManagerSvc[test.selectedTypeExpect].and.returnValue(false);
+                                ontologyUtilsManagerSvc.removeFromVocabularyHierarchies(prefixes.skos + relationship, {'@id': 'value1'});
+                                expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', 'value1', ontologyStateSvc.listItem);
+                                expect(ontologyUtilsManagerSvc[test.selectedTypeExpect]).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@type']);
+                                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
+                                expect(ontologyStateSvc.deleteEntityFromHierarchy).not.toHaveBeenCalled();
+                                expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                            });
+                            describe('targetEntity', function() {
+                                describe('has relationship', function() {
+                                    _.forEach(test.otherArray, function(otherRelationship) {
+                                        it(otherRelationship, function() {
+                                            ontologyStateSvc.getEntityByRecordId.and.callFake(function(recordId, id) {
+                                                return this.createDummyEntity(id, otherRelationship, [{'@id': 'selectedId'}]);
+                                            }.bind(this));
+                                            ontologyUtilsManagerSvc.removeFromVocabularyHierarchies(prefixes.skos + relationship, {'@id': 'value1'});
+                                            expect(ontologyUtilsManagerSvc[test.selectedTypeExpect]).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@type']);
+                                            expect(ontologyUtilsManagerSvc[test.targetTypeExpect]).not.toHaveBeenCalledWith(['dummy']);
+                                            expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', 'value1', ontologyStateSvc.listItem);
+                                            if (test.parentIRI) {
+                                                expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
+                                            } else {
+                                                expect(ontologyStateSvc.deleteEntityFromHierarchy).not.toHaveBeenCalled();
+                                            }
+                                            expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                                        });
+                                    });
+                                });
+                                it('is incorrect type', function() {
+                                    ontologyUtilsManagerSvc[test.targetTypeExpect].and.callFake(function(types) {
+                                        return !_.includes(types, 'dummy');
+                                    });
+                                    ontologyUtilsManagerSvc.removeFromVocabularyHierarchies(prefixes.skos + relationship, {'@id': 'value1'});
+                                    expect(ontologyStateSvc.getEntityByRecordId).toHaveBeenCalledWith('recordId', 'value1', ontologyStateSvc.listItem);
+                                    expect(ontologyUtilsManagerSvc[test.selectedTypeExpect]).toHaveBeenCalledWith(ontologyStateSvc.listItem.selected['@type']);
+                                    expect(ontologyUtilsManagerSvc[test.targetTypeExpect]).toHaveBeenCalledWith(['dummy']);
+                                    expect(ontologyStateSvc.deleteEntityFromParentInHierarchy).not.toHaveBeenCalled();
+                                    expect(ontologyStateSvc.deleteEntityFromHierarchy).not.toHaveBeenCalled();
+                                    expect(ontologyStateSvc.flattenHierarchy).not.toHaveBeenCalled();
+                                });
+                            });
+                        });
+                    });
+                });
+            });
         });
     });
     it('addConcept should update relevant lists when a concept is added', function() {

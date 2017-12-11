@@ -14,7 +14,6 @@
                 margin-left: 5px;
             }
         }
-
         .refresh-link {
             display: inline-block;
             height: 33px;
@@ -22,7 +21,6 @@
             margin: 25px 0 15px 5px;
             vertical-align: bottom;
         }
-
         a {
             font-size: 0;
 
@@ -32,7 +30,6 @@
             }
         }
     }
-
     .boolean-operator {
         md-radio-group md-radio-button {
             display: inline-block;
@@ -40,7 +37,6 @@
             margin-left: 10px;
         }
     }
-
     .strike {
         color: $gray-light;
         font-weight: bold;
@@ -59,25 +55,21 @@
             width: 9999px;
         }
     }
-
     .md-chips .md-chip-input-container {
         width: 100%;
 
         input {
             width: 100%;
         }
-
         md-autocomplete md-autocomplete-wrap {
             width: 100%;
         }
     }
-
     .properties-container {
         .header-wrapper .property-label {
             margin: 7px 0;
         }
     }
-
     md-list {
         border: 1px solid $gray-custom;
         min-height: 250px;
@@ -90,11 +82,9 @@
                 background: transparent;
             }
         }
-
         md-list-item:hover {
             background: $gray-custom;
         }
-
         .fa {
             font-size: 1.5em;
         }
