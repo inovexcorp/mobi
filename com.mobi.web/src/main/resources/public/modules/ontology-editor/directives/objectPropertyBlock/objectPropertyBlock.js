@@ -49,19 +49,16 @@
                         dvm.os.propertyIndex = 0;
                         dvm.os.showObjectPropertyOverlay = true;
                     }
-
-                    dvm.editObjectProp = function(property, index) {
-                        dvm.os.editingProperty = true;
-                        dvm.os.propertySelect = property;
-                        dvm.os.propertyValue = dvm.os.listItem.selected[dvm.ro.getItemIri(property)][index]['@id'];
-                        dvm.os.propertyIndex = index;
-                        dvm.os.showObjectPropertyOverlay = true;
-                    }
-
                     dvm.showRemovePropertyOverlay = function(key, index) {
                         dvm.key = key;
                         dvm.index = index;
                         dvm.showRemoveOverlay = true;
+                    }
+                    dvm.removeObjectProperty = function(axiomObject) {
+                        var types = dvm.os.listItem.selected['@type'];
+                        if (dvm.ontoUtils.containsDerivedConcept(types) || dvm.ontoUtils.containsDerivedConceptScheme(types)) {
+                            dvm.ontoUtils.removeFromVocabularyHierarchies(dvm.key, axiomObject);
+                        }
                     }
                 }
             }

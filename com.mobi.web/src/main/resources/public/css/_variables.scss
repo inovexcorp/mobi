@@ -70,6 +70,12 @@ $screen-md-max:              ($screen-lg-min - 1) !default;
     height:         calc(100% - $offset);
 }
 
+@mixin textOverflow() {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 $btn-bg-darker: #204d74 !default;
 $btn-bg-dark: #286090 !default;
 $btn-bg: $brand-primary !default;

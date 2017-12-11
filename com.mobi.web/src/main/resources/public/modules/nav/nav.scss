@@ -33,36 +33,29 @@ body.collapsed-nav {
         &:hover {
             color: lightgray;
         }
-
         &.active {
             background: darkslategray;
             color: lightgray;
         }
-
         &.toggle {
             padding-top: 12px;
         }
-
         * {
            vertical-align: middle;
         }
-
         i {
             font-size: 1.5em;
         }
-
         span {
             font-size: 1.125em;
             opacity: 1;
             padding-left: 10px;
         }
 	}
-
     a span,
 	.version-details {
 	    transition: opacity .25s ease-in, visibility .25s ease-in;
 	}
-
 	.version-details {
 	    bottom: 0;
         color: white;
@@ -75,7 +68,6 @@ body.collapsed-nav {
             height: 30px;
             padding-left: 10px;
         }
-
         .version-text {
             display: inline-block;
             line-height: 30px;

@@ -37,9 +37,7 @@
                         padding: 8px;
                         display: block;
                         position: relative;
-                        text-overflow: ellipsis;
-                        white-space: nowrap;
-                        overflow: hidden;
+                        @include textOverflow;
                         top: 50%;
                         -webkit-transform: translateY(-50%);
                                 transform: translateY(-50%);
