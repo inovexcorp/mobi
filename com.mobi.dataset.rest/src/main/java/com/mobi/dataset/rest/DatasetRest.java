@@ -82,7 +82,8 @@ public interface DatasetRest {
      * @param repositoryId The required id of a repository in Mobi
      * @param datasetIRI The optional IRI for the new Dataset
      * @param description The optional description for the new DatasetRecord
-     * @param keywords The optional comma separated list of keywords for the new DatasetRecord
+     * @param keywords The optional list of keywords strings for the new DatasetRecord
+     * @param ontologies The optional list of OntologyRecord IRI strings for the new DatasetRecord
      * @return A Response with the IRI string of the created DatasetRecord
      */
     @POST
@@ -95,7 +96,7 @@ public interface DatasetRest {
                                  @FormDataParam("repositoryId") String repositoryId,
                                  @FormDataParam("datasetIRI") String datasetIRI,
                                  @FormDataParam("description") String description,
-                                 @FormDataParam("keywords") String keywords,
+                                 @FormDataParam("keywords") List<FormDataBodyPart> keywords,
                                  @FormDataParam("ontologies") List<FormDataBodyPart> ontologies);
 
     /**

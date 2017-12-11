@@ -202,7 +202,7 @@
              * @param {File} file The ontology file.
              * @param {string} title The record title.
              * @param {string} description The record description.
-             * @param {string} keywords The record list of keywords separated by commas.
+             * @param {string} keywords The array of keywords for the record.
              * @param {string} id The identifier for this request.
              * @returns {Promise} A promise indicating whether the ontology was persisted.
              */
@@ -219,9 +219,10 @@
                 if (description) {
                     fd.append('description', description);
                 }
-                if (keywords) {
+                _.forEach(keywords, word => fd.append('keywords', word));
+                /*if (keywords) {
                     fd.append('keywords', keywords);
-                }
+                }*/
                 var promise = id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
                 return promise.then(response => response.data, util.rejectError);
             }
@@ -271,7 +272,7 @@
              * @param {string} ontologyJson The JSON-LD representing the ontology.
              * @param {string} title The title for the OntologyRecord.
              * @param {string} description The description for the OntologyRecord.
-             * @param {string} keywords The keywords for the OntologyRecord.
+             * @param {string} keywords The array of keywords for the OntologyRecord.
              * @param {string} type The type (either "ontology" or "vocabulary") for the document being created.
              * @returns {Promise} A promise with the ontologyId, recordId, branchId, and commitId for the state of the newly created
              * ontology.
@@ -287,7 +288,7 @@
                 if (description) {
                     config.params.description = description;
                 }
-                if (keywords) {
+                if (keywords && keywords.length) {
                     config.params.keywords = keywords;
                 }
                 $http.post(prefix, ontologyJson, config)

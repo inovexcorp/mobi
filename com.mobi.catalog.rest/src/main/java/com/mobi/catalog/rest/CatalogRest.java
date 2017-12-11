@@ -25,8 +25,10 @@ package com.mobi.catalog.rest;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import java.util.List;
 import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -134,7 +136,7 @@ public interface CatalogRest {
      * @param title The required title for the new Record.
      * @param identifier The required identifier for the new Record. Must be a valid IRI.
      * @param description The optional description for the new Record.
-     * @param keywords The optional comma separated list of keywords for the new Record.
+     * @param keywords The optional list of keywords strings for the new Record.
      * @return A Response with the IRI string of the created Record.
      */
     @POST
@@ -149,7 +151,7 @@ public interface CatalogRest {
                           @FormDataParam("title") String title,
                           @FormDataParam("identifier") String identifier,
                           @FormDataParam("description") String description,
-                          @FormDataParam("keywords") String keywords);
+                          @FormDataParam("keywords") List<FormDataBodyPart> keywords);
 
     /**
      * Deletes a Record from the repository. Returns a Response which indicates whether or not the requested Record was

@@ -59,7 +59,7 @@ describe('Ontology Manager service', function() {
         this.file = {};
         this.title = 'title';
         this.description = 'description';
-        this.keywords = 'keyword1,keyword2';
+        this.keywords = ['keyword1', 'keyword2'];
         this.error = 'error';
         this.records = {
             data: [{
@@ -317,7 +317,9 @@ describe('Ontology Manager service', function() {
             it('with description and keywords', function() {
                 httpSvc.post.and.returnValue($q.when({data: {ontologyId: this.ontologyId, recordId: this.recordId}}));
                 this.fd.append('description', this.description);
-                this.fd.append('keywords', this.keywords);
+                this.keywords.forEach(function(word) {
+                    this.fd.append('keywords', word);
+                }.bind(this));
                 ontologyManagerSvc.uploadFile(this.file, this.title, this.description, this.keywords, 'id')
                     .then(function(response) {
                         expect(response).toEqual({ontologyId: this.ontologyId, recordId: this.recordId});

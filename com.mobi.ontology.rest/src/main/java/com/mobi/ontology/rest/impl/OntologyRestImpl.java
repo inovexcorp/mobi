@@ -45,7 +45,6 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.Annotation;
 import com.mobi.ontology.core.api.Entity;
-import com.mobi.ontology.core.api.NamedIndividual;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
@@ -79,6 +78,7 @@ import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.glassfish.jersey.media.multipart.FormDataBodyPart;
 import org.openrdf.model.vocabulary.OWL;
 import org.openrdf.model.vocabulary.SKOS;
 import org.slf4j.Logger;
@@ -90,7 +90,6 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -175,7 +174,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response uploadFile(ContainerRequestContext context, InputStream fileInputStream, String title,
-                               String description, String keywords) {
+                               String description, List<FormDataBodyPart> keywords) {
         checkStringParam(title, "The title is missing.");
         if (fileInputStream == null) {
             throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
@@ -185,7 +184,11 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             createActivity = provUtils.startCreateActivity(user);
             Ontology ontology = ontologyManager.createOntology(fileInputStream);
-            return uploadOntology(user, createActivity, ontology, title, description, keywords);
+            Set<String> keywordSet = Collections.emptySet();
+            if (keywords != null) {
+                keywordSet = keywords.stream().map(FormDataBodyPart::getValue).collect(Collectors.toSet());
+            }
+            return uploadOntology(user, createActivity, ontology, title, description, keywordSet);
         } catch (MobiException ex) {
             provUtils.removeActivity(createActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -199,7 +202,7 @@ public class OntologyRestImpl implements OntologyRest {
 
     @Override
     public Response uploadOntologyJson(ContainerRequestContext context, String title, String description,
-                                       String keywords, String ontologyJson) {
+                                       List<String> keywords, String ontologyJson) {
         checkStringParam(title, "The title is missing.");
         checkStringParam(ontologyJson, "The ontologyJson is missing.");
         User user = getActiveUser(context, engineManager);
@@ -207,7 +210,7 @@ public class OntologyRestImpl implements OntologyRest {
         try {
             createActivity = provUtils.startCreateActivity(user);
             Ontology ontology = ontologyManager.createOntology(ontologyJson);
-            return uploadOntology(user, createActivity, ontology, title, description, keywords);
+            return uploadOntology(user, createActivity, ontology, title, description, new HashSet<>(keywords));
         } catch (MobiException ex) {
             provUtils.removeActivity(createActivity);
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -1532,15 +1535,15 @@ public class OntologyRestImpl implements OntologyRest {
      * @return a Response indicating the success of the upload.
      */
     private Response uploadOntology(User user, CreateActivity createActivity, Ontology ontology, String title,
-                                    String description, String keywords) throws MobiException {
+                                    String description, Set<String> keywords) throws MobiException {
         OntologyRecordConfig.OntologyRecordBuilder builder = new OntologyRecordConfig.OntologyRecordBuilder(title,
                 Collections.singleton(user));
         ontology.getOntologyId().getOntologyIRI().ifPresent(builder::ontologyIRI);
         if (description != null) {
             builder.description(description);
         }
-        if (keywords != null) {
-            builder.keywords(Arrays.stream(StringUtils.split(keywords, ",")).collect(Collectors.toSet()));
+        if (keywords != null && !keywords.isEmpty()) {
+            builder.keywords(keywords);
         }
         Resource catalogId = catalogManager.getLocalCatalogIRI();
         OntologyRecord record = ontologyManager.createOntologyRecord(builder.build());

@@ -76,7 +76,7 @@
 
                     dvm.submit = function() {
                         var id = 'upload-' + dvm.index;
-                        var promise = om.uploadFile(file, dvm.title, dvm.description, _.join(_.map(dvm.keywords, _.trim), ','), id)
+                        var promise = om.uploadFile(file, dvm.title, dvm.description, _.map(dvm.keywords, _.trim), id)
                             .then(_.noop, errorMessage => state.addErrorToUploadItem(id, errorMessage));
                         state.uploadList.push({title: dvm.title, id, promise, error: undefined});
                         if ((dvm.index + 1) < dvm.total) {
