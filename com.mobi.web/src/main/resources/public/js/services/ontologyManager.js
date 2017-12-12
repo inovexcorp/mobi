@@ -220,9 +220,6 @@
                     fd.append('description', description);
                 }
                 _.forEach(keywords, word => fd.append('keywords', word));
-                /*if (keywords) {
-                    fd.append('keywords', keywords);
-                }*/
                 var promise = id ? httpService.post(prefix, fd, config, id) : $http.post(prefix, fd, config);
                 return promise.then(response => response.data, util.rejectError);
             }
