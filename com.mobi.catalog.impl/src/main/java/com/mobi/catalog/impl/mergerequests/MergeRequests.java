@@ -1,14 +1,12 @@
-@Version("1.1.1.${build}")
-
-package com.mobi.catalog.rest;
+package com.mobi.catalog.impl.mergerequests;
 
 /*-
  * #%L
- * com.mobi.catalog.rest
+ * com.mobi.catalog.impl
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2017 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,4 +23,6 @@ package com.mobi.catalog.rest;
  * #L%
  */
 
-import aQute.bnd.annotation.Version;
+public class MergeRequests {
+    public static final String MERGE_REQUEST_NAMESPACE = "https://mobi.com/merge-requests#";
+}
