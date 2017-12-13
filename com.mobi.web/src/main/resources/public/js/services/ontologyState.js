@@ -455,9 +455,8 @@
             }
             self.createOntologyListItem = function(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit,
                 upToDate = true, title) {
-                var deferred = $q.defer();
                 var listItem = setupListItem(ontologyId, recordId, branchId, commitId, ontology, inProgressCommit, upToDate, title);
-                $q.all([
+                return $q.all([
                     om.getOntologyStuff(recordId, branchId, commitId),
                     cm.getRecordBranches(recordId, catalogId)
                 ]).then(response => {
@@ -507,9 +506,8 @@
                     _.pullAllWith(listItem.annotations.iris, _.concat(om.ontologyProperties, listItem.dataProperties.iris, listItem.objectProperties.iris, angular.copy(om.conceptRelationshipList), angular.copy(om.schemeRelationshipList)), compareIriObjs);
                     listItem.failedImports = _.get(response[0], 'failedImports', []);
                     listItem.branches = response[1].data;
-                    deferred.resolve(listItem);
-                }, error => _.has(error, 'statusText') ? util.onError(response, deferred) : deferred.reject(error));
-                return deferred.promise;
+                    return listItem;
+                }, error => _.has(error, 'statusText') ? util.rejectError(response) : $q.reject(error));
             }
             self.getIndividualsParentPath = function(listItem) {
                 var result = [];
